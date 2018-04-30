@@ -22,6 +22,9 @@ func Provider() terraform.ResourceProvider {
 				Description: "Base endpoint to work with the Selectel VPC API.",
 			},
 		},
+		ResourcesMap: map[string]*schema.Resource{
+			"selvpc_floatingip_v2": resourceResellFloatingIPV2(),
+		},
 		ConfigureFunc: configureProvider,
 	}
 }
