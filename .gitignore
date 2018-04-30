@@ -1,3 +1,5 @@
 *.tf
 .terraform/
 terraform-provider-selvpc
+terraform.tfstate
+terraform.tfstate.backup
