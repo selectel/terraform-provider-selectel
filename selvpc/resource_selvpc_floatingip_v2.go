@@ -110,6 +110,7 @@ func resourceResellFloatingIPV2Read(d *schema.ResourceData, meta interface{}) er
 	d.Set("floating_ip_address", floatingIP.FloatingIPAddress)
 	d.Set("port_id", floatingIP.PortID)
 	d.Set("project_id", floatingIP.ProjectID)
+	d.Set("region", floatingIP.Region)
 	d.Set("status", floatingIP.Status)
 	// Convert servers to a list of maps.
 	associatedServers := make([]map[string]interface{}, len(floatingIP.Servers))
