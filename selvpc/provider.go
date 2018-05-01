@@ -25,6 +25,7 @@ func Provider() terraform.ResourceProvider {
 		ResourcesMap: map[string]*schema.Resource{
 			"selvpc_floatingip_v2": resourceResellFloatingIPV2(),
 			"selvpc_license_v2":    resourceResellLicenseV2(),
+			"selvpc_project_v2":    resourceResellProjectV2(),
 		},
 		ConfigureFunc: configureProvider,
 	}

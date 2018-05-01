@@ -323,6 +323,8 @@
     "selvpcclient/resell/v2",
     "selvpcclient/resell/v2/floatingips",
     "selvpcclient/resell/v2/licenses",
+    "selvpcclient/resell/v2/projects",
+    "selvpcclient/resell/v2/quotas",
     "selvpcclient/resell/v2/servers"
   ]
   revision = "05482fd697519884ae1ff819e77c95e633591ff6"
@@ -454,6 +456,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a1410846b0a078915ebd3b8b5c2b1264a1d8999bd41805eab92c5fb6a0fc2383"
+  inputs-digest = "7ba86ce72ff49149b5e372c2d5c1c49ec909f0a4e1cd8243d1a77813b08e66f0"
   solver-name = "gps-cdcl"
   solver-version = 1
