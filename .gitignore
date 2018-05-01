@@ -1,5 +1,8 @@
 *.tf
+*.tfstate
+*.tfstate.backup
+*.log
+*.json
+*.yaml
 .terraform/
 terraform-provider-selvpc
-terraform.tfstate
-terraform.tfstate.backup
