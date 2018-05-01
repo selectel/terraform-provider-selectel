@@ -73,11 +73,10 @@ func resourceResellFloatingIPV2Create(d *schema.ResourceData, meta interface{}) 
 	ctx := context.Background()
 
 	projectID := d.Get("project_id").(string)
-	region := d.Get("region").(string)
 	opts := floatingips.FloatingIPOpts{
 		FloatingIPs: []floatingips.FloatingIPOpt{
 			{
-				Region:   region,
+				Region:   d.Get("region").(string),
 				Quantity: 1,
 			},
 		},
