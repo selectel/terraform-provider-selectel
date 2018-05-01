@@ -17,46 +17,46 @@ func resourceResellFloatingIPV2() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 		Schema: map[string]*schema.Schema{
-			"project_id": &schema.Schema{
+			"project_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"port_id": &schema.Schema{
+			"port_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"floating_ip_address": &schema.Schema{
+			"floating_ip_address": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"fixed_ip_address": &schema.Schema{
+			"fixed_ip_address": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"status": &schema.Schema{
+			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"servers": &schema.Schema{
+			"servers": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"id": &schema.Schema{
+						"id": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"name": &schema.Schema{
+						"name": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"status": &schema.Schema{
+						"status": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
