@@ -1,7 +1,8 @@
+TEST?=$$(go list ./... |grep -v 'vendor')
+
 default: build
 
-build:
-	fmtcheck
+build: fmtcheck
 	go install
 
 fmtcheck:
@@ -16,4 +17,7 @@ lintcheck:
 vetcheck:
 	@sh -c "'$(CURDIR)/scripts/vetcheck.sh'"
 
-.PHONY: build fmtcheck importscheck lintcheck vetcheck
+testacc: fmtcheck
+	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 30m
+
+.PHONY: build fmtcheck importscheck lintcheck vetcheck testacc
