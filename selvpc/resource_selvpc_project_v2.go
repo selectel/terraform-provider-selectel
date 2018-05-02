@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
@@ -174,10 +175,14 @@ func resourceResellProjectV2Read(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
+	projectCustomURL, err := resourceResellProjectV2URLWithoutSchema(project.CustomURL)
+	if err != nil {
+		return err
+	}
+	d.Set("custom_url", projectCustomURL)
 	d.Set("name", project.Name)
 	d.Set("url", project.URL)
 	d.Set("enabled", project.Enabled)
-	d.Set("custom_url", project.CustomURL)
 	d.Set("theme", project.Theme)
 
 	// Set all quotas.
@@ -397,4 +402,19 @@ func resourceProjectV2UpdateThemeOptsFromMap(themeOptsMap map[string]interface{}
 	themeUpdateOpts.Logo = &themeLogo
 
 	return themeUpdateOpts
+}
+
+// resourceResellProjectV2URLWithoutSchema strips the scheme part from project URL.
+func resourceResellProjectV2URLWithoutSchema(customURL string) (string, error) {
+	var customURLWithoutSchema string
+
+	if customURL != "" {
+		u, err := url.Parse(customURL)
+		if err != nil {
+			return "", err
+		}
+		customURLWithoutSchema = u.Hostname()
+	}
+
+	return customURLWithoutSchema, nil
 }
