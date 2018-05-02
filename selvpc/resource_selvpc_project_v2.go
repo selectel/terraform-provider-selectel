@@ -37,7 +37,6 @@ func resourceResellProjectV2() *schema.Resource {
 			"custom_url": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
 				ForceNew: false,
 			},
 			"theme": {
