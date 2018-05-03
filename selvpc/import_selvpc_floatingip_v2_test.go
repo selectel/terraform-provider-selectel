@@ -23,7 +23,6 @@ func TestAccResellV2FloatingIPImportBasic(t *testing.T) {
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				// ImportStateVerifyIgnore: []string{"public_key"},
 			},
 		},
 	})
