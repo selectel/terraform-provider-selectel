@@ -100,7 +100,7 @@ func resourceResellLicenseV2Read(d *schema.ResourceData, meta interface{}) error
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	log.Printf("[DEBUG] Getting license %s with", d.Id())
+	log.Printf("[DEBUG] Getting license %s", d.Id())
 	license, _, err := licenses.Get(ctx, resellV2Client, d.Id())
 	if err != nil {
 		return err
