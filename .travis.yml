@@ -2,6 +2,8 @@ sudo: false
 language: go
 go:
   - "1.10.1"
+services:
+  - "docker"
 
 install:
 # This script is used by the Travis build to install a cookie for
@@ -19,6 +21,7 @@ script:
   - make importscheck
   - make lintcheck
   - make vet
+  - make website-test
 
 branches:
   only:

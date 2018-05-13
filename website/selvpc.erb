@@ -1,0 +1,33 @@
+<% wrap_layout :inner do %>
+  <% content_for :sidebar do %>
+    <div class="docs-sidebar hidden-print affix-top" role="complementary">
+      <ul class="nav docs-sidenav">
+        <li<%= sidebar_current("docs-home") %>>
+          <a href="/docs/providers/index.html">All Providers</a>
+        </li>
+
+        <li<%= sidebar_current("docs-selvpc-index") %>>
+          <a href="/docs/providers/selvpc/index.html">SelVPC Provider</a>
+        </li>
+
+        <li<%= sidebar_current("docs-selvpc-resource-resell") %>>
+          <a href="#">Resell Resources</a>
+          <ul class="nav nav-visible">
+            <li<%= sidebar_current("docs-selvpc-resource-resell-project-v2") %>>
+              <a href="/docs/providers/selvpc/r/resell_project_v2.html">selvpc_resell_project_v2</a>
+            </li>
+            <li<%= sidebar_current("docs-selvpc-resource-resell-floatingip-v2") %>>
+              <a href="/docs/providers/selvpc/r/resell_floatingip_v2.html">selvpc_resell_floatingip_v2</a>
+            </li>
+            <li<%= sidebar_current("docs-selvpc-resource-resell-license-v2") %>>
+              <a href="/docs/providers/selvpc/r/resell_license_v2.html">selvpc_resell_license_v2</a>
+            </li>
+          </ul>
+        </li>
+
+      </ul>
+    </div>
+  <% end %>
+
+  <%= yield %>
+<% end %>
