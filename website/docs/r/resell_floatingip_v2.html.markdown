@@ -13,7 +13,7 @@ Manages a V2 floatingip resource within Resell Selectel VPC.
 ## Example Usage
 
 ```hcl
-resource "selvpc_floatingip_v2" "floatingip_1" {
+resource "selvpc_resell_floatingip_v2" "floatingip_1" {
   project_id = "887e5e35458d4ee38a6ae0543555dec5"
   region     = "ru-1"
 }

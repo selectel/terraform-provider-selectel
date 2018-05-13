@@ -8,7 +8,7 @@ import (
 )
 
 func TestAccResellV2ProjectImportBasic(t *testing.T) {
-	resourceName := "selvpc_project_v2.project_tf_acc_test_1"
+	resourceName := "selvpc_resell_project_v2.project_tf_acc_test_1"
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
 	resource.Test(t, resource.TestCase{

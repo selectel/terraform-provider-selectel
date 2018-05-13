@@ -8,7 +8,7 @@ import (
 )
 
 func TestAccResellV2FloatingIPImportBasic(t *testing.T) {
-	resourceName := "selvpc_floatingip_v2.floatingip_tf_acc_test_1"
+	resourceName := "selvpc_resell_floatingip_v2.floatingip_tf_acc_test_1"
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
 	resource.Test(t, resource.TestCase{

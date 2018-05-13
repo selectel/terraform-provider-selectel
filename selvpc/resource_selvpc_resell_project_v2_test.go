@@ -27,65 +27,65 @@ func TestAccResellV2ProjectBasic(t *testing.T) {
 			{
 				Config: testAccResellV2ProjectBasic(projectName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckResellV2ProjectExists("selvpc_project_v2.project_tf_acc_test_1", &project),
-					resource.TestCheckResourceAttr("selvpc_project_v2.project_tf_acc_test_1", "name", projectName),
+					testAccCheckResellV2ProjectExists("selvpc_resell_project_v2.project_tf_acc_test_1", &project),
+					resource.TestCheckResourceAttr("selvpc_resell_project_v2.project_tf_acc_test_1", "name", projectName),
 				),
 			},
 			{
 				Config: testAccResellV2ProjectUpdate1(projectName, projectCustomURL),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "name", projectName),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "name", projectName),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "custom_url", projectCustomURL),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "custom_url", projectCustomURL),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "theme.color", "000000"),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "theme.color", "000000"),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "theme.logo", "fake.png"),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "theme.logo", "fake.png"),
 				),
 			},
 			{
 				Config: testAccResellV2ProjectUpdate2(projectName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "name", projectName),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "name", projectName),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "custom_url", ""),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "custom_url", ""),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "theme.color", "FF0000"),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "theme.color", "FF0000"),
 				),
 			},
 			{
 				Config: testAccResellV2ProjectUpdate3(projectNameUpdated),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "name", projectNameUpdated),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "name", projectNameUpdated),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "custom_url", ""),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "custom_url", ""),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "theme.color", "5D6D7E"),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "theme.color", "5D6D7E"),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "quotas.0.resource_name", "image_gigabytes"),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.0.resource_name", "image_gigabytes"),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "quotas.0.resource_quotas.0.region", "ru-1"),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.0.resource_quotas.0.region", "ru-1"),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "quotas.0.resource_quotas.0.zone", ""),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.0.resource_quotas.0.zone", ""),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "quotas.0.resource_quotas.0.value", "1"),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.0.resource_quotas.0.value", "1"),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "quotas.1.resource_name", "volume_gigabytes_basic"),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.1.resource_name", "volume_gigabytes_basic"),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.0.region", "ru-1"),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.0.region", "ru-1"),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.0.zone", "ru-1a"),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.0.zone", "ru-1a"),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.0.value", "1"),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.0.value", "1"),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.1.region", "ru-2"),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.1.region", "ru-2"),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.1.zone", "ru-2a"),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.1.zone", "ru-2a"),
 					resource.TestCheckResourceAttr(
-						"selvpc_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.1.value", "2"),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.1.value", "2"),
 				),
 			},
 		},
@@ -98,7 +98,7 @@ func testAccCheckResellV2ProjectDestroy(s *terraform.State) error {
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "selvpc_project_v2" {
+		if rs.Type != "selvpc_resell_project_v2" {
 			continue
 		}
 
@@ -143,14 +143,14 @@ func testAccCheckResellV2ProjectExists(n string, project *projects.Project) reso
 
 func testAccResellV2ProjectBasic(name string) string {
 	return fmt.Sprintf(`
-resource "selvpc_project_v2" "project_tf_acc_test_1" {
+resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
   name = "%s"
 }`, name)
 }
 
 func testAccResellV2ProjectUpdate1(name, customURL string) string {
 	return fmt.Sprintf(`
-resource "selvpc_project_v2" "project_tf_acc_test_1" {
+resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
   name       = "%s"
   custom_url = "%s"
   theme {
@@ -162,7 +162,7 @@ resource "selvpc_project_v2" "project_tf_acc_test_1" {
 
 func testAccResellV2ProjectUpdate2(name string) string {
 	return fmt.Sprintf(`
-resource "selvpc_project_v2" "project_tf_acc_test_1" {
+resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
   name       = "%s"
   theme {
     color = "FF0000"
@@ -172,7 +172,7 @@ resource "selvpc_project_v2" "project_tf_acc_test_1" {
 
 func testAccResellV2ProjectUpdate3(name string) string {
 	return fmt.Sprintf(`
-resource "selvpc_project_v2" "project_tf_acc_test_1" {
+resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
   name = "%s"
   theme {
     color = "5D6D7E"

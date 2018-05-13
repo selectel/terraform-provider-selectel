@@ -13,7 +13,7 @@ Manages a V2 project resource within Resell Selectel VPC.
 ## Example Usage
 
 ```hcl
-resource "selvpc_project_v2" "kubernetes_cluster" {
+resource "selvpc_resell_project_v2" "kubernetes_cluster" {
   name       = "kubernetes_cluster"
   custom_url = "kubernetes-cluster-123.selvpc.ru"
   theme {

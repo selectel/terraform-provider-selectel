@@ -25,10 +25,10 @@ func TestAccResellV2FloatingIPBasic(t *testing.T) {
 			{
 				Config: testAccResellV2FloatingIPBasic(projectName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckResellV2ProjectExists("selvpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckResellV2FloatingIPExists("selvpc_floatingip_v2.floatingip_tf_acc_test_1", &floatingip),
-					resource.TestCheckResourceAttr("selvpc_floatingip_v2.floatingip_tf_acc_test_1", "region", "ru-2"),
-					resource.TestCheckResourceAttr("selvpc_floatingip_v2.floatingip_tf_acc_test_1", "status", "DOWN"),
+					testAccCheckResellV2ProjectExists("selvpc_resell_project_v2.project_tf_acc_test_1", &project),
+					testAccCheckResellV2FloatingIPExists("selvpc_resell_floatingip_v2.floatingip_tf_acc_test_1", &floatingip),
+					resource.TestCheckResourceAttr("selvpc_resell_floatingip_v2.floatingip_tf_acc_test_1", "region", "ru-2"),
+					resource.TestCheckResourceAttr("selvpc_resell_floatingip_v2.floatingip_tf_acc_test_1", "status", "DOWN"),
 				),
 			},
 		},
@@ -41,7 +41,7 @@ func testAccCheckResellV2FloatingIPDestroy(s *terraform.State) error {
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "selvpc_floatingip_v2" {
+		if rs.Type != "selvpc_resell_floatingip_v2" {
 			continue
 		}
 
@@ -86,12 +86,12 @@ func testAccCheckResellV2FloatingIPExists(n string, floatingip *floatingips.Floa
 
 func testAccResellV2FloatingIPBasic(projectName string) string {
 	return fmt.Sprintf(`
-resource "selvpc_project_v2" "project_tf_acc_test_1" {
+resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
   name = "%s"
 }
 
-resource "selvpc_floatingip_v2" "floatingip_tf_acc_test_1" {
-  project_id = "${selvpc_project_v2.project_tf_acc_test_1.id}"
+resource "selvpc_resell_floatingip_v2" "floatingip_tf_acc_test_1" {
+  project_id = "${selvpc_resell_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-2"
 }`, projectName)
 }

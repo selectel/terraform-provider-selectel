@@ -13,7 +13,7 @@ Manages a V2 license resource within Resell Selectel VPC.
 ## Example Usage
 
 ```hcl
-resource "selvpc_license_v2" "license_windows_2016_standard" {
+resource "selvpc_resell_license_v2" "license_windows_2016_standard" {
   project_id = "887e5e35458d4ee38a6ae0543555dec5"
   region     = "ru-2"
   type       = "license_windows_2012_standard"

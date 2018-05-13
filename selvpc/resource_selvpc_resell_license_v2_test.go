@@ -26,11 +26,11 @@ func TestAccResellV2LicenseBasic(t *testing.T) {
 			{
 				Config: testAccResellV2LicenseBasic(projectName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckResellV2ProjectExists("selvpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckResellV2LicenseExists("selvpc_license_v2.license_tf_acc_test_1", &license),
-					resource.TestCheckResourceAttr("selvpc_license_v2.license_tf_acc_test_1", "region", "ru-1"),
-					resource.TestCheckResourceAttr("selvpc_license_v2.license_tf_acc_test_1", "type", "license_windows_2012_standard"),
-					resource.TestCheckResourceAttr("selvpc_license_v2.license_tf_acc_test_1", "status", "DOWN"),
+					testAccCheckResellV2ProjectExists("selvpc_resell_project_v2.project_tf_acc_test_1", &project),
+					testAccCheckResellV2LicenseExists("selvpc_resell_license_v2.license_tf_acc_test_1", &license),
+					resource.TestCheckResourceAttr("selvpc_resell_license_v2.license_tf_acc_test_1", "region", "ru-1"),
+					resource.TestCheckResourceAttr("selvpc_resell_license_v2.license_tf_acc_test_1", "type", "license_windows_2012_standard"),
+					resource.TestCheckResourceAttr("selvpc_resell_license_v2.license_tf_acc_test_1", "status", "DOWN"),
 				),
 			},
 		},
@@ -43,7 +43,7 @@ func testAccCheckResellV2LicenseDestroy(s *terraform.State) error {
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "selvpc_license_v2" {
+		if rs.Type != "selvpc_resell_license_v2" {
 			continue
 		}
 
@@ -89,12 +89,12 @@ func testAccCheckResellV2LicenseExists(n string, license *licenses.License) reso
 
 func testAccResellV2LicenseBasic(projectName string) string {
 	return fmt.Sprintf(`
-resource "selvpc_project_v2" "project_tf_acc_test_1" {
+resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
   name = "%s"
 }
 
-resource "selvpc_license_v2" "license_tf_acc_test_1" {
-  project_id = "${selvpc_project_v2.project_tf_acc_test_1.id}"
+resource "selvpc_resell_license_v2" "license_tf_acc_test_1" {
+  project_id = "${selvpc_resell_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-1"
   type       = "license_windows_2012_standard"
 }`, projectName)
