@@ -66,6 +66,9 @@ The following arguments are supported:
 * `theme` - (Optional) An additional theme settings for this project. The structure is
   described below.
 
+* `auto_quotas` - (Optional) A boolean parameter that specifies if project should
+  get automatically calculated quotas.
+
 * `quotas` - (Optional) An array of desired quotas for this project. The structure is
   described below.
 

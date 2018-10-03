@@ -65,7 +65,7 @@ func (result *Project) UnmarshalJSON(b []byte) error {
 		i := 0
 		for resourceName, resourceQuotas := range s.Quotas {
 			resourceQuotasSlice[i] = quotas.Quota{
-				Name: resourceName,
+				Name:                   resourceName,
 				ResourceQuotasEntities: resourceQuotas,
 			}
 			i++

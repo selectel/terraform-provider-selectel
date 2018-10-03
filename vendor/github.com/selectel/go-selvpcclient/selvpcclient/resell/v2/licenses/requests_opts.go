@@ -17,3 +17,8 @@ type LicenseOpt struct {
 	// Type represents needed type of the license.
 	Type string `json:"type"`
 }
+
+// ListOpts represents options for the licenses List request.
+type ListOpts struct {
+	Detailed bool `param:"detailed"`
+}

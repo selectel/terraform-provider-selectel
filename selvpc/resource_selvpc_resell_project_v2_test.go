@@ -92,6 +92,30 @@ func TestAccResellV2ProjectBasic(t *testing.T) {
 	})
 }
 
+func TestAccResellV2ProjectAutoQuotas(t *testing.T) {
+	var project projects.Project
+	projectName := acctest.RandomWithPrefix("tf-acc")
+
+	// Selectel VPC service has 10 different quotas that will be numbered 0 - 9.
+	allQuotasCount := "9"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccSelVPCPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckResellV2ProjectDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResellV2ProjectAutoQuotas(projectName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckResellV2ProjectExists("selvpc_resell_project_v2.project_tf_acc_test_1", &project),
+					resource.TestCheckResourceAttr("selvpc_resell_project_v2.project_tf_acc_test_1", "name", projectName),
+					resource.TestCheckResourceAttr("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.#", allQuotasCount),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckResellV2ProjectDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
 	resellV2Client := config.resellV2Client()
@@ -203,6 +227,14 @@ resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
       ]
     }
   ]
+}`, name)
+}
+
+func testAccResellV2ProjectAutoQuotas(name string) string {
+	return fmt.Sprintf(`
+resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
+  name        = "%s"
+  auto_quotas = true
 }`, name)
 }
 

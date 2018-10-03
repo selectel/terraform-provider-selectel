@@ -13,32 +13,41 @@ type CreateOpts struct {
 
 	// Quotas sets quotas for a new project.
 	Quotas []quotas.QuotaOpts `json:"-"`
+
+	// AutoQuotas allows to automatically set quotas for the new project.
+	// Quota values will be calculated in the Resell V2 service.
+	AutoQuotas bool `json:"-"`
 }
 
 // MarshalJSON implements custom marshalling method for the CreateOpts.
 func (opts *CreateOpts) MarshalJSON() ([]byte, error) {
-	// Return create options with name only if quotas isn't provided.
+	// Return create options with only name and auto_quotas parameters if quotas
+	// parameter hadn't been provided.
 	if len(opts.Quotas) == 0 {
 		return json.Marshal(&struct {
-			Name string `json:"name"`
+			Name       string `json:"name"`
+			AutoQuotas bool   `json:"auto_quotas"`
 		}{
-			Name: opts.Name,
+			Name:       opts.Name,
+			AutoQuotas: opts.AutoQuotas,
 		})
 	}
 
-	// Convert opts's quotas update options slice to a map that has resource names
-	// as keys and resource quotas update options as values.
+	// Convert opts's quotas update options slice to a map that has resource
+	// names as keys and resource quotas update options as values.
 	quotasMap := make(map[string][]quotas.ResourceQuotaOpts, len(opts.Quotas))
 	for _, quota := range opts.Quotas {
 		quotasMap[quota.Name] = quota.ResourceQuotasOpts
 	}
 
 	return json.Marshal(&struct {
-		Name   string                                `json:"name"`
-		Quotas map[string][]quotas.ResourceQuotaOpts `json:"quotas"`
+		Name       string                                `json:"name"`
+		AutoQuotas bool                                  `json:"auto_quotas"`
+		Quotas     map[string][]quotas.ResourceQuotaOpts `json:"quotas"`
 	}{
-		Name:   opts.Name,
-		Quotas: quotasMap,
+		Name:       opts.Name,
+		AutoQuotas: opts.AutoQuotas,
+		Quotas:     quotasMap,
 	})
 }
 

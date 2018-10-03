@@ -14,3 +14,8 @@ type FloatingIPOpt struct {
 	// Quantity represents how many floating ips do we need to create in a single request.
 	Quantity int `json:"quantity"`
 }
+
+// ListOpts represents options for the floating ips List request.
+type ListOpts struct {
+	Detailed bool `param:"detailed"`
+}

@@ -12,7 +12,7 @@ Example of getting a single floating ip referenced by its id
 
 Example of getting all floating ips
 
-  allFloatingIPs, _, err := floatingips.List(ctx, resellClient)
+  allFloatingIPs, _, err := floatingips.List(ctx, resellClient, floatingips.ListOpts{})
   if err != nil {
     log.Fatal(err)
   }

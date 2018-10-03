@@ -58,6 +58,11 @@ func resourceResellProjectV2() *schema.Resource {
 					},
 				},
 			},
+			"auto_quotas": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: false,
+			},
 			"quotas": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -151,6 +156,7 @@ func resourceResellProjectV2Create(d *schema.ResourceData, meta interface{}) err
 		opts.Quotas = quotasOpts
 	}
 	opts.Name = d.Get("name").(string)
+	opts.AutoQuotas = d.Get("auto_quotas").(bool)
 
 	log.Printf("[DEBUG] Creating project with options: %v\n", opts)
 	project, _, err := projects.Create(ctx, resellV2Client, opts)

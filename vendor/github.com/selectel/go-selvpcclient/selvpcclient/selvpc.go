@@ -4,10 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"reflect"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -50,10 +55,10 @@ type ResponseResult struct {
 }
 
 // DoRequest performs the HTTP request with the current ServiceClient's HTTPClient.
-// Authentication and optional headers will be automatically added.
-func (client *ServiceClient) DoRequest(ctx context.Context, method, url string, body io.Reader) (*ResponseResult, error) {
+// Authentication and optional headers will be added automatically.
+func (client *ServiceClient) DoRequest(ctx context.Context, method, path string, body io.Reader) (*ResponseResult, error) {
 	// Prepare a HTTP request with the provided context.
-	request, err := http.NewRequest(method, url, body)
+	request, err := http.NewRequest(method, path, body)
 	if err != nil {
 		return nil, err
 	}
@@ -129,3 +134,55 @@ const (
 
 // IPVersion represents a type for the IP versions of the different Selectel VPC APIs.
 type IPVersion string
+
+// BuildQueryParameters converts provided options struct to the string of URL parameters.
+func BuildQueryParameters(opts interface{}) (string, error) {
+	optsValue := reflect.ValueOf(opts)
+	if optsValue.Kind() != reflect.Struct {
+		return "", errors.New("provided options is not a structure")
+	}
+	optsType := reflect.TypeOf(opts)
+
+	params := url.Values{}
+
+	for i := 0; i < optsValue.NumField(); i++ {
+		fieldValue := optsValue.Field(i)
+		fieldType := optsType.Field(i)
+
+		queryTag := fieldType.Tag.Get("param")
+		if queryTag != "" {
+			if isZero(fieldValue) {
+				continue
+			}
+
+			tags := strings.Split(queryTag, ",")
+		loop:
+			switch fieldValue.Kind() {
+			case reflect.Ptr:
+				fieldValue = fieldValue.Elem()
+				goto loop
+			case reflect.String:
+				params.Add(tags[0], fieldValue.String())
+			case reflect.Int:
+				params.Add(tags[0], strconv.FormatInt(fieldValue.Int(), 10))
+			case reflect.Bool:
+				params.Add(tags[0], strconv.FormatBool(fieldValue.Bool()))
+			}
+		}
+	}
+
+	return params.Encode(), nil
+}
+
+// isZero checks if provided value is zero.
+func isZero(v reflect.Value) bool {
+	if v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return true
+		}
+		return false
+	}
+
+	z := reflect.Zero(v.Type())
+	return v.Interface() == z.Interface()
+}

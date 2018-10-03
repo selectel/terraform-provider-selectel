@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"net/http"
 	"strings"
 
 	"github.com/selectel/go-selvpcclient/selvpcclient"
@@ -14,7 +15,7 @@ const resourceURL = "quotas"
 // GetAll returns the total amount of resources available to be allocated to projects.
 func GetAll(ctx context.Context, client *selvpcclient.ServiceClient) ([]*Quota, *selvpcclient.ResponseResult, error) {
 	url := strings.Join([]string{client.Endpoint, resourceURL}, "/")
-	responseResult, err := client.DoRequest(ctx, "GET", url, nil)
+	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -35,7 +36,7 @@ func GetAll(ctx context.Context, client *selvpcclient.ServiceClient) ([]*Quota, 
 // GetFree returns the current amount of resources available to be allocated to projects.
 func GetFree(ctx context.Context, client *selvpcclient.ServiceClient) ([]*Quota, *selvpcclient.ResponseResult, error) {
 	url := strings.Join([]string{client.Endpoint, resourceURL, "free"}, "/")
-	responseResult, err := client.DoRequest(ctx, "GET", url, nil)
+	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -56,7 +57,7 @@ func GetFree(ctx context.Context, client *selvpcclient.ServiceClient) ([]*Quota,
 // GetProjectsQuotas returns the quotas info for all domain projects.
 func GetProjectsQuotas(ctx context.Context, client *selvpcclient.ServiceClient) ([]*ProjectQuota, *selvpcclient.ResponseResult, error) {
 	url := strings.Join([]string{client.Endpoint, resourceURL, "projects"}, "/")
-	responseResult, err := client.DoRequest(ctx, "GET", url, nil)
+	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -77,7 +78,7 @@ func GetProjectsQuotas(ctx context.Context, client *selvpcclient.ServiceClient) 
 // GetProjectQuotas returns the quotas info for a single project referenced by id.
 func GetProjectQuotas(ctx context.Context, client *selvpcclient.ServiceClient, id string) ([]*Quota, *selvpcclient.ResponseResult, error) {
 	url := strings.Join([]string{client.Endpoint, resourceURL, "projects", id}, "/")
-	responseResult, err := client.DoRequest(ctx, "GET", url, nil)
+	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -103,7 +104,7 @@ func UpdateProjectQuotas(ctx context.Context, client *selvpcclient.ServiceClient
 	}
 
 	url := strings.Join([]string{client.Endpoint, resourceURL, "projects", id}, "/")
-	responseResult, err := client.DoRequest(ctx, "PATCH", url, bytes.NewReader(requestBody))
+	responseResult, err := client.DoRequest(ctx, http.MethodPatch, url, bytes.NewReader(requestBody))
 	if err != nil {
 		return nil, nil, err
 	}

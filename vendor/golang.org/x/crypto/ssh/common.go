@@ -9,7 +9,6 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
-	"math"
 	"sync"
 
 	_ "crypto/sha1"
@@ -24,21 +23,11 @@ const (
 	serviceSSH      = "ssh-connection"
 )
 
-// supportedCiphers lists ciphers we support but might not recommend.
+// supportedCiphers specifies the supported ciphers in preference order.
 var supportedCiphers = []string{
 	"aes128-ctr", "aes192-ctr", "aes256-ctr",
 	"aes128-gcm@openssh.com",
-	chacha20Poly1305ID,
-	"arcfour256", "arcfour128", "arcfour",
-	aes128cbcID,
-	tripledescbcID,
-}
-
-// preferredCiphers specifies the default preference for ciphers.
-var preferredCiphers = []string{
-	"aes128-gcm@openssh.com",
-	chacha20Poly1305ID,
-	"aes128-ctr", "aes192-ctr", "aes256-ctr",
+	"arcfour256", "arcfour128",
 }
 
 // supportedKexAlgos specifies the supported key-exchange algorithms in
@@ -51,7 +40,7 @@ var supportedKexAlgos = []string{
 	kexAlgoDH14SHA1, kexAlgoDH1SHA1,
 }
 
-// supportedHostKeyAlgos specifies the supported host-key algorithms (i.e. methods
+// supportedKexAlgos specifies the supported host-key algorithms (i.e. methods
 // of authenticating servers) in preference order.
 var supportedHostKeyAlgos = []string{
 	CertAlgoRSAv01, CertAlgoDSAv01, CertAlgoECDSA256v01,
@@ -197,7 +186,7 @@ type Config struct {
 
 	// The maximum number of bytes sent or received after which a
 	// new key is negotiated. It must be at least 256. If
-	// unspecified, a size suitable for the chosen cipher is used.
+	// unspecified, 1 gigabyte is used.
 	RekeyThreshold uint64
 
 	// The allowed key exchanges algorithms. If unspecified then a
@@ -221,7 +210,7 @@ func (c *Config) SetDefaults() {
 		c.Rand = rand.Reader
 	}
 	if c.Ciphers == nil {
-		c.Ciphers = preferredCiphers
+		c.Ciphers = supportedCiphers
 	}
 	var ciphers []string
 	for _, c := range c.Ciphers {
@@ -241,18 +230,17 @@ func (c *Config) SetDefaults() {
 	}
 
 	if c.RekeyThreshold == 0 {
-		// cipher specific default
-	} else if c.RekeyThreshold < minRekeyThreshold {
+		// RFC 4253, section 9 suggests rekeying after 1G.
+		c.RekeyThreshold = 1 << 30
+	}
+	if c.RekeyThreshold < minRekeyThreshold {
 		c.RekeyThreshold = minRekeyThreshold
-	} else if c.RekeyThreshold >= math.MaxInt64 {
-		// Avoid weirdness if somebody uses -1 as a threshold.
-		c.RekeyThreshold = math.MaxInt64
 	}
 }
 
 // buildDataSignedForAuth returns the data that is signed in order to prove
 // possession of a private key. See RFC 4252, section 7.
-func buildDataSignedForAuth(sessionID []byte, req userAuthRequestMsg, algo, pubKey []byte) []byte {
+func buildDataSignedForAuth(sessionId []byte, req userAuthRequestMsg, algo, pubKey []byte) []byte {
 	data := struct {
 		Session []byte
 		Type    byte
@@ -263,7 +251,7 @@ func buildDataSignedForAuth(sessionID []byte, req userAuthRequestMsg, algo, pubK
 		Algo    []byte
 		PubKey  []byte
 	}{
-		sessionID,
+		sessionId,
 		msgUserAuthRequest,
 		req.User,
 		req.Service,

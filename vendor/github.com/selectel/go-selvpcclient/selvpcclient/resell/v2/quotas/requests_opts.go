@@ -2,7 +2,7 @@ package quotas
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 )
 
 // QuotaOpts represents quota options for a single resource that can be used in the update request.
@@ -54,7 +54,7 @@ We need it to marshal structure to a a JSON that the Resell v2 API wants:
 func (opts *UpdateProjectQuotasOpts) MarshalJSON() ([]byte, error) {
 	// Check the opts.
 	if len(opts.QuotasOpts) == 0 {
-		return nil, fmt.Errorf("got empty QuotasOpts")
+		return nil, errors.New("got empty QuotasOpts")
 	}
 
 	// Convert opts's quotas update options slice to a map that has resource names

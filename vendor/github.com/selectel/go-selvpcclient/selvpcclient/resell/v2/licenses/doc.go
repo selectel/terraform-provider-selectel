@@ -12,7 +12,7 @@ Example of getting a single license referenced by its id
 
 Example of getting all licenses
 
-  allLicenses, _, err := licenses.List(ctx, resellClient)
+  allLicenses, _, err := licenses.List(ctx, resellClient, licenses.ListOpts{})
   if err != nil {
     log.Fatal(err)
   }
