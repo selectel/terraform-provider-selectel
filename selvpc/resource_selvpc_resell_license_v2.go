@@ -2,7 +2,7 @@ package selvpc
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"log"
 	"strconv"
 
@@ -87,7 +87,7 @@ func resourceResellLicenseV2Create(d *schema.ResourceData, meta interface{}) err
 	}
 
 	if len(newLicenses) != 1 {
-		return fmt.Errorf("can't get license from the response")
+		return errors.New("can't get license from the response")
 	}
 
 	d.SetId(strconv.Itoa(newLicenses[0].ID))

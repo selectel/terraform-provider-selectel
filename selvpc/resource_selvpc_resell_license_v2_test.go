@@ -2,6 +2,7 @@ package selvpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"testing"
@@ -49,7 +50,7 @@ func testAccCheckResellV2LicenseDestroy(s *terraform.State) error {
 
 		_, _, err := licenses.Get(ctx, resellV2Client, rs.Primary.ID)
 		if err == nil {
-			return fmt.Errorf("license still exists")
+			return errors.New("license still exists")
 		}
 	}
 
@@ -64,7 +65,7 @@ func testAccCheckResellV2LicenseExists(n string, license *licenses.License) reso
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("no ID is set")
+			return errors.New("no ID is set")
 		}
 
 		config := testAccProvider.Meta().(*Config)
@@ -78,7 +79,7 @@ func testAccCheckResellV2LicenseExists(n string, license *licenses.License) reso
 
 		foundLicenseStrID := strconv.Itoa(foundLicense.ID)
 		if foundLicenseStrID != rs.Primary.ID {
-			return fmt.Errorf("license not found")
+			return errors.New("license not found")
 		}
 
 		*license = *foundLicense

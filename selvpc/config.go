@@ -1,7 +1,7 @@
 package selvpc
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -20,7 +20,7 @@ type Config struct {
 // Validate performs config validation.
 func (c *Config) Validate() error {
 	if c.Token == "" {
-		return fmt.Errorf("token must be specified")
+		return errors.New("token must be specified")
 	}
 	if c.Endpoint == "" {
 		c.Endpoint = selvpcclient.DefaultEndpoint

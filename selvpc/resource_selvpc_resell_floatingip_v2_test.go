@@ -2,6 +2,7 @@ package selvpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -47,7 +48,7 @@ func testAccCheckResellV2FloatingIPDestroy(s *terraform.State) error {
 
 		_, _, err := floatingips.Get(ctx, resellV2Client, rs.Primary.ID)
 		if err == nil {
-			return fmt.Errorf("floatingip still exists")
+			return errors.New("floatingip still exists")
 		}
 	}
 
@@ -62,7 +63,7 @@ func testAccCheckResellV2FloatingIPExists(n string, floatingip *floatingips.Floa
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("no ID is set")
+			return errors.New("no ID is set")
 		}
 
 		config := testAccProvider.Meta().(*Config)
@@ -75,7 +76,7 @@ func testAccCheckResellV2FloatingIPExists(n string, floatingip *floatingips.Floa
 		}
 
 		if foundFloatingIP.ID != rs.Primary.ID {
-			return fmt.Errorf("floatingip not found")
+			return errors.New("floatingip not found")
 		}
 
 		*floatingip = *foundFloatingIP

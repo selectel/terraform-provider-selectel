@@ -2,7 +2,7 @@ package selvpc
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -90,7 +90,7 @@ func resourceResellFloatingIPV2Create(d *schema.ResourceData, meta interface{}) 
 	}
 
 	if len(floatingIPs) != 1 {
-		return fmt.Errorf("can't get floating ip from the response")
+		return errors.New("can't get floating ip from the response")
 	}
 
 	d.SetId(floatingIPs[0].ID)

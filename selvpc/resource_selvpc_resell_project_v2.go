@@ -2,6 +2,7 @@ package selvpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -273,7 +274,7 @@ func resourceResellProjectV2Delete(d *schema.ResourceData, meta interface{}) err
 // the slice of quotas.QuotaOpts. It then can be used to make requests with quotas data.
 func resourceResellProjectV2QuotasOptsFromList(quotasList []interface{}) ([]quotas.QuotaOpts, error) {
 	if len(quotasList) == 0 {
-		return nil, fmt.Errorf("got empty quotas list")
+		return nil, errors.New("got empty quotas list")
 	}
 
 	// Pre-populate quotasOpts slice in memory as we already know it's length.
@@ -287,10 +288,10 @@ func resourceResellProjectV2QuotasOptsFromList(quotasList []interface{}) ([]quot
 		// Cast type of the current resource quotas map and check provided values.
 		resourceQuotasMap := resourceQuotasData.(map[string]interface{})
 		if resourceNameRaw, ok = resourceQuotasMap["resource_name"]; !ok {
-			return nil, fmt.Errorf("resource_name value isn't provided")
+			return nil, errors.New("resource_name value isn't provided")
 		}
 		if resourceQuotasRaw, ok = resourceQuotasMap["resource_quotas"]; !ok {
-			return nil, fmt.Errorf("resource_quotas value isn't provided")
+			return nil, errors.New("resource_quotas value isn't provided")
 		}
 
 		// Cast types of provided values and pre-populate slice of []quotas.ResourceQuotaOpts

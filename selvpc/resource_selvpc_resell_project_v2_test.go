@@ -2,6 +2,7 @@ package selvpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -128,7 +129,7 @@ func testAccCheckResellV2ProjectDestroy(s *terraform.State) error {
 
 		_, _, err := projects.Get(ctx, resellV2Client, rs.Primary.ID)
 		if err == nil {
-			return fmt.Errorf("project still exists")
+			return errors.New("project still exists")
 		}
 	}
 
@@ -143,7 +144,7 @@ func testAccCheckResellV2ProjectExists(n string, project *projects.Project) reso
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("no ID is set")
+			return errors.New("no ID is set")
 		}
 
 		config := testAccProvider.Meta().(*Config)
@@ -156,7 +157,7 @@ func testAccCheckResellV2ProjectExists(n string, project *projects.Project) reso
 		}
 
 		if foundProject.ID != rs.Primary.ID {
-			return fmt.Errorf("project not found")
+			return errors.New("project not found")
 		}
 
 		*project = *foundProject

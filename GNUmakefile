@@ -25,6 +25,15 @@ vet:
 		exit 1; \
 	fi
 
+critic:
+	@echo "gocritic check-project --enable=all -withExperimental -withOpinionated ."
+	@gocritic check-project --enable=all -withExperimental -withOpinionated .; if [ $$? -eq 1 ]; then \
+		echo ""; \
+		echo "Gocritic found suspicious constructs. Please check the reported constructs"; \
+		echo "and fix them if necessary before submitting the code for review."; \
+		exit 1; \
+	fi
+
 fmt:
 	gofmt -w $(GOFMT_FILES)
 
@@ -68,4 +77,4 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck imports importscheck lintcheck vendor-status test-compile website website-test
+.PHONY: build test testacc vet critic fmt fmtcheck errcheck imports importscheck lintcheck vendor-status test-compile website website-test

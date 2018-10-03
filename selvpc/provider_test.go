@@ -24,7 +24,7 @@ func TestProvider(t *testing.T) {
 	}
 }
 
-func TestProviderImpl(t *testing.T) {
+func TestProviderImpl(_ *testing.T) {
 	var _ terraform.ResourceProvider = Provider()
 }
 
