@@ -389,7 +389,7 @@
   version = "v1.1.2"
 
 [[projects]]
-  digest = "1:d276928437845a5a8939a36c4dd52040b97437b588f266088eaaf03a83b8f417"
+  digest = "1:5556e7f163df26769936b0d9d93927bb902ab958f8c6cd9299084b5e0c8891ba"
   name = "github.com/selectel/go-selvpcclient"
   packages = [
     "selvpcclient",
@@ -402,8 +402,8 @@
     "selvpcclient/resell/v2/servers",
   ]
   pruneopts = "UT"
-  revision = "297f8914bc8281d8778a71d7f917895bc2c2c6f8"
-  version = "v1.3.2"
+  revision = "7b020f257892077543143c9c77cb432af5fcc71a"
+  version = "v1.4.0"
 
 [[projects]]
   digest = "1:18752d0b95816a1b777505a97f71c7467a8445b8ffb55631a7bf779f6ba4fa83"

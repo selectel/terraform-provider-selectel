@@ -18,10 +18,10 @@ import (
 
 const (
 	// AppVersion is a version of the application.
-	AppVersion = "1.0.0"
+	AppVersion = "1.4.0"
 
 	// AppName is a global application name.
-	AppName = "selvpcclient"
+	AppName = "go-selvpcclient"
 
 	// DefaultEndpoint contains basic endpoint for queries.
 	DefaultEndpoint = "https://api.selectel.ru/vpc"
