@@ -1,3 +1,13 @@
+## 0.3.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* Updated `go-selvpcclient` dependency to `v1.4.0` ([GH-51])
+
+BUG FIXES: 
+
+* Fixed `golint` URL in the TravisCI configuration ([GH-49])
+
 ## 0.2.0 (Oct 3, 2018)
 
 FEATURES:
