@@ -7,6 +7,9 @@ IMPROVEMENTS:
 BUG FIXES: 
 
 * Fixed `golint` URL in the TravisCI configuration ([GH-49])
+* Fixed `all_quotas` attribute checking in the `TestAccResellV2ProjectAutoQuotas` ([GH-57])
+* Fixed quotas in the created project of the `selvpc_resell_floatingip_v2` resource ([GH-58])
+* Fixed `structLitKeyOrder` errors in the CI ([GH-60])
 
 ## 0.2.0 (Oct 3, 2018)
 
