@@ -97,9 +97,6 @@ func TestAccResellV2ProjectAutoQuotas(t *testing.T) {
 	var project projects.Project
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
-	// Selectel VPC service has 10 different quotas that will be numbered 0 - 9.
-	allQuotasCount := "9"
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccSelVPCPreCheck(t) },
 		Providers:    testAccProviders,
@@ -110,7 +107,30 @@ func TestAccResellV2ProjectAutoQuotas(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckResellV2ProjectExists("selvpc_resell_project_v2.project_tf_acc_test_1", &project),
 					resource.TestCheckResourceAttr("selvpc_resell_project_v2.project_tf_acc_test_1", "name", projectName),
-					resource.TestCheckResourceAttr("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.#", allQuotasCount),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.0.resource_quotas.0.region"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.0.resource_quotas.0.value"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.0.resource_quotas.0.used"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.1.resource_quotas.0.region"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.1.resource_quotas.0.value"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.1.resource_quotas.0.used"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.2.resource_quotas.0.region"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.2.resource_quotas.0.value"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.2.resource_quotas.0.used"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.3.resource_quotas.0.region"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.3.resource_quotas.0.value"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.3.resource_quotas.0.used"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.4.resource_quotas.0.region"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.4.resource_quotas.0.value"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.4.resource_quotas.0.used"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.5.resource_quotas.0.region"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.5.resource_quotas.0.value"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.5.resource_quotas.0.used"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.6.resource_quotas.0.region"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.6.resource_quotas.0.value"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.6.resource_quotas.0.used"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.7.resource_quotas.0.region"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.7.resource_quotas.0.value"),
+					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.7.resource_quotas.0.used"),
 				),
 			},
 		},
