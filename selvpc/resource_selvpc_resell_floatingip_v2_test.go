@@ -88,7 +88,8 @@ func testAccCheckResellV2FloatingIPExists(n string, floatingip *floatingips.Floa
 func testAccResellV2FloatingIPBasic(projectName string) string {
 	return fmt.Sprintf(`
 resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
-  name = "%s"
+  name        = "%s"
+  auto_quotas = true
 }
 
 resource "selvpc_resell_floatingip_v2" "floatingip_tf_acc_test_1" {
