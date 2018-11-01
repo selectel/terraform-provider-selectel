@@ -30,22 +30,16 @@ The following arguments are supported:
 * `region` - (Required) A region of where the license resides. Changing this
   creates a new license.
 
-* `type` - (Required) A type of the license. Changing this creates a new license.
+* `type` - (Required) The type of license. Changing this creates a new license.
 
 ## Attributes Reference
 
 The following attributes are exported:
 
-* `project_id` - See Argument Reference above.
-
-* `region` - See Argument Reference above.
-
 * `status` - Shows if the license is used or not.
 
 * `servers` - Shows information about servers that use this license. Contains
   `id`, `name` and `status` fields.
-
-* `type` - See Argument Reference above.
 
 ## Import
 

@@ -60,8 +60,8 @@ The following arguments are supported:
 
 * `name` - (Required) The name of the project.
 
-* `custom_url` - (Optional) The custom url for the project. Needs to be the 3d-level
-  domain for the `selvpc.ru`. Example: `terraform-project-001.selvpc.ru`.
+* `custom_url` - (Optional) The custom url for the project. Needs to be the
+  3rd-level domain for the `selvpc.ru`. Example: `terraform-project-001.selvpc.ru`.
 
 * `theme` - (Optional) An additional theme settings for this project. The structure is
   described below.
@@ -97,18 +97,10 @@ The `resource_quotas` block supports:
 
 The following attributes are exported:
 
-* `name` - See Argument Reference above.
-
 * `url` - An url of the Selectel VP project. It is set by the Selectel and can't
   be changed by the user.
 
-* `custom_url` - See Argument Reference above.
-
 * `enabled` - Shows if project is active or it was disabled by the Selectel.
-
-* `theme` - See Argument Reference above.
-
-* `quotas` - See Argument Reference above.
 
 * `all_quotas` - Contains all quotas. They can differ from the configurable `quota`
   argument since the project will have all available resource quotas automatically applied.

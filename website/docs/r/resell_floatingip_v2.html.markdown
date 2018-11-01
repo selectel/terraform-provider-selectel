@@ -33,15 +33,11 @@ The following arguments are supported:
 
 The following attributes are exported:
 
-* `project_id` - See Argument Reference above.
-
 * `port_id` - Contains id of the Networking service port.
 
 * `floating_ip_address` - Contains floating IP address.
 
 * `fixed_ip_address` - Contains internal IP address of the Networking service port.
-
-* `region` - See Argument Reference above.
 
 * `status` - Shows if the license is used or not.
 
