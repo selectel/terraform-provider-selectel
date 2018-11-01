@@ -3,6 +3,7 @@
 IMPROVEMENTS:
 
 * Updated `go-selvpcclient` dependency to `v1.4.0` ([GH-51])
+* Updated documentation for `floatingip_v2`, `license_v2` and `project_v2` resources ([GH-50])
 
 BUG FIXES: 
 
