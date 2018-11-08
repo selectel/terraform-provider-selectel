@@ -39,8 +39,9 @@ func resourceResellLicenseV2() *schema.Resource {
 				ForceNew: true,
 			},
 			"servers": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Computed: true,
+				Set:      hashServers,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {

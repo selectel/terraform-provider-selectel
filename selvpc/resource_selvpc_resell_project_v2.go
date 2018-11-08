@@ -1,12 +1,14 @@
 package selvpc
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"log"
 	"net/url"
 
+	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
@@ -65,9 +67,10 @@ func resourceResellProjectV2() *schema.Resource {
 				ForceNew: false,
 			},
 			"quotas": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: false,
+				Set:      hashQuotas,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"resource_name": {
@@ -76,9 +79,10 @@ func resourceResellProjectV2() *schema.Resource {
 							ForceNew: false,
 						},
 						"resource_quotas": {
-							Type:     schema.TypeList,
+							Type:     schema.TypeSet,
 							Required: true,
 							ForceNew: false,
+							Set:      hashResourceQuotas,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"region": {
@@ -103,8 +107,9 @@ func resourceResellProjectV2() *schema.Resource {
 				},
 			},
 			"all_quotas": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Computed: true,
+				Set:      hashQuotas,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"resource_name": {
@@ -112,8 +117,9 @@ func resourceResellProjectV2() *schema.Resource {
 							Computed: true,
 						},
 						"resource_quotas": {
-							Type:     schema.TypeList,
+							Type:     schema.TypeSet,
 							Computed: true,
+							Set:      hashResourceQuotas,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"region": {
@@ -148,9 +154,9 @@ func resourceResellProjectV2Create(d *schema.ResourceData, meta interface{}) err
 	ctx := context.Background()
 
 	var opts projects.CreateOpts
-	quotasList := d.Get("quotas").([]interface{})
-	if len(quotasList) != 0 {
-		quotasOpts, err := resourceResellProjectV2QuotasOptsFromList(quotasList)
+	quotaSet := d.Get("quotas").(*schema.Set)
+	if quotaSet.Len() != 0 {
+		quotasOpts, err := resourceResellProjectV2QuotasOptsFromSet(quotaSet)
 		if err != nil {
 			return fmt.Errorf(errParseProjectV2QuotasFmt, err)
 		}
@@ -191,11 +197,10 @@ func resourceResellProjectV2Read(d *schema.ResourceData, meta interface{}) error
 	d.Set("enabled", project.Enabled)
 	d.Set("theme", project.Theme)
 
-	// Set all quotas.
-	// This can be different from what the user specified since the project
-	// will have all available resource quotas automatically applied.
-	projectQuotas := resourceResellProjectV2QuotasToList(project.Quotas)
-	d.Set("all_quotas", projectQuotas)
+	// Set all quotas. This can be different from what the user specified since
+	// the project will have all available resource quotas automatically applied.
+	allQuotas := resourceResellProjectV2QuotasToSet(project.Quotas)
+	d.Set("all_quotas", allQuotas)
 
 	return nil
 }
@@ -226,8 +231,8 @@ func resourceResellProjectV2Update(d *schema.ResourceData, meta interface{}) err
 	}
 	if d.HasChange("quotas") {
 		hasChange, quotaChange = true, true
-		quotasList := d.Get("quotas").([]interface{})
-		quotasOpts, err := resourceResellProjectV2QuotasOptsFromList(quotasList)
+		quotaSet := d.Get("quotas").(*schema.Set)
+		quotasOpts, err := resourceResellProjectV2QuotasOptsFromSet(quotaSet)
 		if err != nil {
 			return fmt.Errorf(errParseProjectV2QuotasFmt, err)
 		}
@@ -270,18 +275,20 @@ func resourceResellProjectV2Delete(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
-// resourceResellProjectV2QuotasOptsFromList converts the provided quotasList to
-// the slice of quotas.QuotaOpts. It then can be used to make requests with quotas data.
-func resourceResellProjectV2QuotasOptsFromList(quotasList []interface{}) ([]quotas.QuotaOpts, error) {
-	if len(quotasList) == 0 {
-		return nil, errors.New("got empty quotas list")
+// resourceResellProjectV2QuotasOptsFromSet converts the provided quotaSet to
+// the slice of quotas.QuotaOpts. It then can be used to make requests with
+// quotas data.
+func resourceResellProjectV2QuotasOptsFromSet(quotaSet *schema.Set) ([]quotas.QuotaOpts, error) {
+	quotaSetLen := quotaSet.Len()
+	if quotaSetLen == 0 {
+		return nil, errors.New("got empty quotas")
 	}
 
-	// Pre-populate quotasOpts slice in memory as we already know it's length.
-	quotasOpts := make([]quotas.QuotaOpts, len(quotasList))
+	// Pre-allocate memory for quotasOpts slice since we already know it's length.
+	quotasOpts := make([]quotas.QuotaOpts, quotaSetLen)
 
 	// Iterate over each billing resource quotas map.
-	for i, resourceQuotasData := range quotasList {
+	for i, resourceQuotasData := range quotaSet.List() {
 		var resourceNameRaw, resourceQuotasRaw interface{}
 		var ok bool
 
@@ -297,12 +304,12 @@ func resourceResellProjectV2QuotasOptsFromList(quotasList []interface{}) ([]quot
 		// Cast types of provided values and pre-populate slice of []quotas.ResourceQuotaOpts
 		// in memory as we already know it's length.
 		resourceName := resourceNameRaw.(string)
-		resourceQuotasEntities := resourceQuotasRaw.([]interface{})
-		resourceQuotasOpts := make([]quotas.ResourceQuotaOpts, len(resourceQuotasEntities))
+		resourceQuotasEntities := resourceQuotasRaw.(*schema.Set)
+		resourceQuotasOpts := make([]quotas.ResourceQuotaOpts, resourceQuotasEntities.Len())
 
 		// Populate every quotas.ResourceQuotaOpts with data from a single
 		// resourceQuotasMap's region zone and value.
-		for j, resourceQuotasEntityRaw := range resourceQuotasEntities {
+		for j, resourceQuotasEntityRaw := range resourceQuotasEntities.List() {
 			var resourceQuotasEntityRegion, resourceQuotasEntityZone string
 			var resourceQuotasEntityValue int
 			resourceQuotasEntity := resourceQuotasEntityRaw.(map[string]interface{})
@@ -334,66 +341,42 @@ func resourceResellProjectV2QuotasOptsFromList(quotasList []interface{}) ([]quot
 	return quotasOpts, nil
 }
 
-// resourceResellProjectV2QuotasToMap converts the provided quotas.Quota slice
-// to a nested complex map structure correspondingly to the resource's schema.
-func resourceResellProjectV2QuotasToMap(quotasStructures []quotas.Quota) map[string]interface{} {
-	quotasMap := make(map[string]interface{}, len(quotasStructures))
-
-	if quotasStructures != nil {
-		// Iterate over each billing resource quota.
-		for _, quota := range quotasStructures {
-			// For each billing resource populate corresponding slice of maps that
-			// contain quota data (region, zone and value).
-			resourceQuotasEntities := make([]map[string]interface{}, len(quota.ResourceQuotasEntities))
-			for i, resourceQuotasEntity := range quota.ResourceQuotasEntities {
-				resourceQuotasEntities[i] = map[string]interface{}{
-					"region": resourceQuotasEntity.Region,
-					"zone":   resourceQuotasEntity.Zone,
-					"value":  resourceQuotasEntity.Value,
-					"used":   resourceQuotasEntity.Used,
-				}
-			}
-
-			quotasMap[quota.Name] = resourceQuotasEntities
-		}
+// resourceResellProjectV2QuotasToSet converts the provided quotas.Quota slice
+// to a nested complex set structure correspondingly to the resource's schema.
+func resourceResellProjectV2QuotasToSet(quotasStructures []quotas.Quota) *schema.Set {
+	quotaSet := &schema.Set{
+		F: quotasHashSetFunc(),
 	}
 
-	return quotasMap
-}
-
-// resourceResellProjectV2QuotasToMap converts the provided quotas.Quota slice
-// to a nested complex list structure correspondingly to the resource's schema.
-func resourceResellProjectV2QuotasToList(quotasStructures []quotas.Quota) []interface{} {
-	quotasList := make([]interface{}, len(quotasStructures))
-
-	if quotasStructures != nil {
-		// Iterate over each billing resource quota.
-		for i, quota := range quotasStructures {
-			// For each billing resource populate corresponding slice of maps that
-			// contain quota data (region, zone and value).
-			resourceQuotasEntities := make([]map[string]interface{}, len(quota.ResourceQuotasEntities))
-			for i, resourceQuotasEntity := range quota.ResourceQuotasEntities {
-				resourceQuotasEntities[i] = map[string]interface{}{
-					"region": resourceQuotasEntity.Region,
-					"zone":   resourceQuotasEntity.Zone,
-					"value":  resourceQuotasEntity.Value,
-					"used":   resourceQuotasEntity.Used,
-				}
-			}
-
-			// Populate single quota element.
-			quotasList[i] = map[string]interface{}{
-				"resource_name":   quota.Name,
-				"resource_quotas": resourceQuotasEntities,
-			}
+	// Iterate over each billing resource quota.
+	for _, quota := range quotasStructures {
+		// For each billing resource populate corresponding resourceQuotasSet that
+		// contain quota data (region, zone and value).
+		resourceQuotasSet := &schema.Set{
+			F: resourceQuotasHashSetFunc(),
 		}
+		for _, resourceQuotasEntity := range quota.ResourceQuotasEntities {
+			resourceQuotasSet.Add(map[string]interface{}{
+				"region": resourceQuotasEntity.Region,
+				"zone":   resourceQuotasEntity.Zone,
+				"value":  resourceQuotasEntity.Value,
+				"used":   resourceQuotasEntity.Used,
+			})
+		}
+
+		// Populate single quota element.
+		quotaSet.Add(map[string]interface{}{
+			"resource_name":   quota.Name,
+			"resource_quotas": resourceQuotasSet,
+		})
 	}
 
-	return quotasList
+	return quotaSet
 }
 
 // resourceProjectV2UpdateThemeOptsFromMap converts the provided themeOptsMap to
-// the *project.ThemeUpdateOpts. It then can be used to make requests with theme data.
+// the *project.ThemeUpdateOpts.
+// It can be used to make requests with project theme parameters.
 func resourceProjectV2UpdateThemeOptsFromMap(themeOptsMap map[string]interface{}) *projects.ThemeUpdateOpts {
 	themeUpdateOpts := &projects.ThemeUpdateOpts{}
 
@@ -423,4 +406,45 @@ func resourceResellProjectV2URLWithoutSchema(customURL string) (string, error) {
 	}
 
 	return customURLWithoutSchema, nil
+}
+
+// quotasSchema returns *schema.Resource from the "quotas" attribute.
+func quotasSchema() *schema.Resource {
+	return resourceResellProjectV2().Schema["quotas"].Elem.(*schema.Resource)
+}
+
+// quotasSchema returns *schema.Resource from the "resource_quotas" attribute.
+func resourceQuotasSchema() *schema.Resource {
+	return quotasSchema().Schema["resource_quotas"].Elem.(*schema.Resource)
+}
+
+// quotasHashSetFunc returns schema.SchemaSetFunc that can be used to
+// create a new schema.Set for the "quotas" or "all_quotas" attributes.
+func quotasHashSetFunc() schema.SchemaSetFunc {
+	return schema.HashResource(quotasSchema())
+}
+
+// resourceQuotasHashSetFunc returns schema.SchemaSetFunc that can be used to
+// create a new schema.Set for the "resource_quotas" attribute.
+func resourceQuotasHashSetFunc() schema.SchemaSetFunc {
+	return schema.HashResource(resourceQuotasSchema())
+}
+
+// hashQuotas is a hash function to use with the "quotas" and "all_quotas" sets.
+func hashQuotas(v interface{}) int {
+	m := v.(map[string]interface{})
+	return hashcode.String(fmt.Sprintf("%s-", m["resource_name"].(string)))
+}
+
+// hashResourceQuotas is a hash function to use with the "resource_quotas" set.
+func hashResourceQuotas(v interface{}) int {
+	var buf bytes.Buffer
+	m := v.(map[string]interface{})
+	if m["region"] != "" {
+		buf.WriteString(fmt.Sprintf("%s-", m["region"].(string)))
+	}
+	if m["zone"] != "" {
+		buf.WriteString(fmt.Sprintf("%s-", m["zone"].(string)))
+	}
+	return hashcode.String(buf.String())
 }

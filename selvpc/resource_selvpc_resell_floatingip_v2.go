@@ -45,8 +45,9 @@ func resourceResellFloatingIPV2() *schema.Resource {
 				Computed: true,
 			},
 			"servers": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Computed: true,
+				Set:      hashServers,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {

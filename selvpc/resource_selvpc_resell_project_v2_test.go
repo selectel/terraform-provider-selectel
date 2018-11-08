@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
@@ -66,27 +67,7 @@ func TestAccResellV2ProjectBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"selvpc_resell_project_v2.project_tf_acc_test_1", "theme.color", "5D6D7E"),
 					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.0.resource_name", "image_gigabytes"),
-					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.0.resource_quotas.0.region", "ru-1"),
-					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.0.resource_quotas.0.zone", ""),
-					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.0.resource_quotas.0.value", "1"),
-					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.1.resource_name", "volume_gigabytes_basic"),
-					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.0.region", "ru-1"),
-					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.0.zone", "ru-1a"),
-					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.0.value", "1"),
-					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.1.region", "ru-2"),
-					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.1.zone", "ru-2a"),
-					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.1.resource_quotas.1.value", "2"),
+						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.#", "2"),
 				),
 			},
 		},
@@ -259,19 +240,23 @@ resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
 }`, name)
 }
 
-func TestResourceResellProjectV2QuotasOptsFromList(t *testing.T) {
-	quotasList := []interface{}{
-		map[string]interface{}{
-			"resource_name": "volume_gigabytes_fast",
-			"resource_quotas": []interface{}{
-				map[string]interface{}{
-					"region": "ru-3",
-					"zone":   "ru-3a",
-					"value":  100,
-				},
-			},
-		},
+func TestResourceResellProjectV2QuotasOptsFromSet(t *testing.T) {
+	quotaSet := &schema.Set{
+		F: quotasHashSetFunc(),
 	}
+	resourceQuotas := &schema.Set{
+		F: resourceQuotasHashSetFunc(),
+	}
+	resourceQuotas.Add(map[string]interface{}{
+		"region": "ru-3",
+		"zone":   "ru-3a",
+		"value":  100,
+	})
+	quotaSet.Add(map[string]interface{}{
+		"resource_name":   "volume_gigabytes_fast",
+		"resource_quotas": resourceQuotas,
+	})
+
 	expectedResourceQuotaValue := 100
 	expectedQuotasOpts := []quotas.QuotaOpts{
 		{
@@ -286,71 +271,47 @@ func TestResourceResellProjectV2QuotasOptsFromList(t *testing.T) {
 		},
 	}
 
-	actualQuotaOpts, err := resourceResellProjectV2QuotasOptsFromList(quotasList)
+	actualQuotaOpts, err := resourceResellProjectV2QuotasOptsFromSet(quotaSet)
 
 	assert.Empty(t, err)
 	assert.Equal(t, expectedQuotasOpts, actualQuotaOpts)
 }
 
 func TestResourceResellProjectV2QuotasOptsFromListNoName(t *testing.T) {
-	quotasList := []interface{}{
-		map[string]interface{}{
-			"resource_quotas": []interface{}{
-				map[string]interface{}{
-					"region": "ru-3",
-					"zone":   "ru-3a",
-					"value":  100,
-				},
-			},
-		},
+	quotaSet := &schema.Set{
+		F: quotasHashSetFunc(),
 	}
+	resourceQuotas := &schema.Set{
+		F: resourceQuotasHashSetFunc(),
+	}
+	resourceQuotas.Add(map[string]interface{}{
+		"region": "ru-3",
+		"zone":   "ru-3a",
+		"value":  100,
+	})
+	quotaSet.Add(map[string]interface{}{
+		"resource_quotas": resourceQuotas,
+	})
 
-	quotaOpts, err := resourceResellProjectV2QuotasOptsFromList(quotasList)
+	quotaOpts, err := resourceResellProjectV2QuotasOptsFromSet(quotaSet)
 
 	assert.Empty(t, quotaOpts)
 	assert.EqualError(t, err, "resource_name value isn't provided")
 }
 
 func TestResourceResellProjectV2QuotasOptsFromListNoQuotas(t *testing.T) {
-	quotasList := []interface{}{
-		map[string]interface{}{
-			"resource_name": "volume_gigabytes_fast",
-		},
-	}
+	quotaSet := schema.NewSet(
+		schema.HashResource(resourceResellProjectV2().Schema["quotas"].Elem.(*schema.Resource)),
+		[]interface{}{
+			map[string]interface{}{
+				"resource_name": "volume_gigabytes_fast",
+			},
+		})
 
-	quotaOpts, err := resourceResellProjectV2QuotasOptsFromList(quotasList)
+	quotaOpts, err := resourceResellProjectV2QuotasOptsFromSet(quotaSet)
 
 	assert.Empty(t, quotaOpts)
 	assert.EqualError(t, err, "resource_quotas value isn't provided")
-}
-
-func TestResourceResellProjectV2QuotasToMap(t *testing.T) {
-	quotasOpts := []quotas.Quota{
-		{
-			Name: "compute_cores",
-			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
-				{
-					Region: "ru-2",
-					Value:  12,
-					Used:   2,
-				},
-			},
-		},
-	}
-	expectedQuotasMap := map[string]interface{}{
-		"compute_cores": []map[string]interface{}{
-			{
-				"region": "ru-2",
-				"zone":   "",
-				"value":  12,
-				"used":   2,
-			},
-		},
-	}
-
-	actualQuotasMap := resourceResellProjectV2QuotasToMap(quotasOpts)
-
-	assert.Equal(t, expectedQuotasMap, actualQuotasMap)
 }
 
 func TestResourceProjectV2UpdateThemeOptsFromMap(t *testing.T) {
