@@ -4,12 +4,12 @@ IMPROVEMENTS:
 
 * Updated `go-selvpcclient` dependency to `v1.4.0` ([GH-51])
 * Updated documentation for `floatingip_v2`, `license_v2` and `project_v2` resources ([GH-50])
-* Changed `TypeList` to `TypeSet` for the `servers`, `quotas`, `all_quotas`, `resource_quotas` attributes.
+* Changed `TypeList` to `TypeSet` for the `servers`, `quotas`, `all_quotas`, `resource_quotas` attributes ([GH-48])
 
 BUG FIXES: 
 
 * Fixed `golint` URL in the TravisCI configuration ([GH-49])
-* Fixed `all_quotas` attribute checking in the `TestAccResellV2ProjectAutoQuotas` ([GH-57])
+* Fixed `all_quotas` attribute checking in the `TestAccResellV2ProjectAutoQuotas` ([GH-57]), ([GH-62])
 * Fixed quotas in the created project of the `selvpc_resell_floatingip_v2` resource ([GH-58])
 * Fixed `structLitKeyOrder` errors in the CI ([GH-60])
 
