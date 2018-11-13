@@ -24,6 +24,11 @@ func resourceResellFloatingIPV2() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"region": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
 			"port_id": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -35,11 +40,6 @@ func resourceResellFloatingIPV2() *schema.Resource {
 			"fixed_ip_address": {
 				Type:     schema.TypeString,
 				Computed: true,
-			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
 			},
 			"status": {
 				Type:     schema.TypeString,

@@ -86,6 +86,11 @@ func resourceResellProjectV2() *schema.Resource {
 							Set:      hashResourceQuotas,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
+									"value": {
+										Type:     schema.TypeInt,
+										Required: true,
+										ForceNew: false,
+									},
 									"region": {
 										Type:     schema.TypeString,
 										Optional: true,
@@ -94,11 +99,6 @@ func resourceResellProjectV2() *schema.Resource {
 									"zone": {
 										Type:     schema.TypeString,
 										Optional: true,
-										ForceNew: false,
-									},
-									"value": {
-										Type:     schema.TypeInt,
-										Required: true,
 										ForceNew: false,
 									},
 								},

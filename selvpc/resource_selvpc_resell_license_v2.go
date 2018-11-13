@@ -30,14 +30,14 @@ func resourceResellLicenseV2() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"type": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+			},
+			"status": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"servers": {
 				Type:     schema.TypeSet,
