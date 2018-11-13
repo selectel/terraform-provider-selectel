@@ -5,6 +5,9 @@ IMPROVEMENTS:
 * Updated `go-selvpcclient` dependency to `v1.4.0` ([GH-51])
 * Updated documentation for `floatingip_v2`, `license_v2` and `project_v2` resources ([GH-50])
 * Changed `TypeList` to `TypeSet` for the `servers`, `quotas`, `all_quotas`, `resource_quotas` attributes ([GH-48])
+* Added a check for error on setting non-scalars ([GH-52])
+* Added a check for if resources don’t exist during read with unsetting the ID ([GH-53])
+* Grouped attributes at the top of resources followed by the optional attributes ([GH-54]) 
 
 BUG FIXES: 
 
