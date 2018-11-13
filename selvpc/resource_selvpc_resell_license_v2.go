@@ -112,7 +112,9 @@ func resourceResellLicenseV2Read(d *schema.ResourceData, meta interface{}) error
 	d.Set("status", license.Status)
 	d.Set("type", license.Type)
 	associatedServers := serversMapsFromStructs(license.Servers)
-	d.Set("servers", associatedServers)
+	if err := d.Set("servers", associatedServers); err != nil {
+		log.Printf("[DEBUG] servers: %s", err)
+	}
 
 	return nil
 }

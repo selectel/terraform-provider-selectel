@@ -116,8 +116,11 @@ func resourceResellFloatingIPV2Read(d *schema.ResourceData, meta interface{}) er
 	d.Set("project_id", floatingIP.ProjectID)
 	d.Set("region", floatingIP.Region)
 	d.Set("status", floatingIP.Status)
+
 	associatedServers := serversMapsFromStructs(floatingIP.Servers)
-	d.Set("servers", associatedServers)
+	if err := d.Set("servers", associatedServers); err != nil {
+		log.Printf("[DEBUG] servers: %s", err)
+	}
 
 	return nil
 }

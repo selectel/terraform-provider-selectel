@@ -195,12 +195,16 @@ func resourceResellProjectV2Read(d *schema.ResourceData, meta interface{}) error
 	d.Set("name", project.Name)
 	d.Set("url", project.URL)
 	d.Set("enabled", project.Enabled)
-	d.Set("theme", project.Theme)
+	if err := d.Set("theme", project.Theme); err != nil {
+		log.Printf("[DEBUG] theme: %s", err)
+	}
 
 	// Set all quotas. This can be different from what the user specified since
 	// the project will have all available resource quotas automatically applied.
 	allQuotas := resourceResellProjectV2QuotasToSet(project.Quotas)
-	d.Set("all_quotas", allQuotas)
+	if err := d.Set("all_quotas", allQuotas); err != nil {
+		log.Printf("[DEBUG] all_quotas: %s", err)
+	}
 
 	return nil
 }
