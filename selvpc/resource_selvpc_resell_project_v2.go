@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"net/url"
 
 	"github.com/hashicorp/terraform/helper/hashcode"
@@ -182,8 +183,13 @@ func resourceResellProjectV2Read(d *schema.ResourceData, meta interface{}) error
 	ctx := context.Background()
 
 	log.Printf("[DEBUG] Getting project %s\n", d.Id())
-	project, _, err := projects.Get(ctx, resellV2Client, d.Id())
+	project, response, err := projects.Get(ctx, resellV2Client, d.Id())
 	if err != nil {
+		if response.StatusCode == http.StatusNotFound {
+			d.SetId("")
+			return nil
+		}
+
 		return err
 	}
 
@@ -271,8 +277,13 @@ func resourceResellProjectV2Delete(d *schema.ResourceData, meta interface{}) err
 	ctx := context.Background()
 
 	log.Printf("[DEBUG] Deleting project %s\n", d.Id())
-	_, err := projects.Delete(ctx, resellV2Client, d.Id())
+	response, err := projects.Delete(ctx, resellV2Client, d.Id())
 	if err != nil {
+		if response.StatusCode == http.StatusNotFound {
+			d.SetId("")
+			return nil
+		}
+
 		return err
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"net/http"
 	"strconv"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -102,8 +103,13 @@ func resourceResellLicenseV2Read(d *schema.ResourceData, meta interface{}) error
 	ctx := context.Background()
 
 	log.Printf("[DEBUG] Getting license %s", d.Id())
-	license, _, err := licenses.Get(ctx, resellV2Client, d.Id())
+	license, response, err := licenses.Get(ctx, resellV2Client, d.Id())
 	if err != nil {
+		if response.StatusCode == http.StatusNotFound {
+			d.SetId("")
+			return nil
+		}
+
 		return err
 	}
 
@@ -125,8 +131,13 @@ func resourceResellLicenseV2Delete(d *schema.ResourceData, meta interface{}) err
 	ctx := context.Background()
 
 	log.Printf("[DEBUG] Deleting license %s\n", d.Id())
-	_, err := licenses.Delete(ctx, resellV2Client, d.Id())
+	response, err := licenses.Delete(ctx, resellV2Client, d.Id())
 	if err != nil {
+		if response.StatusCode == http.StatusNotFound {
+			d.SetId("")
+			return nil
+		}
+
 		return err
 	}
 

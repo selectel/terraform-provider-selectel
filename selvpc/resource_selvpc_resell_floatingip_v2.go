@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"net/http"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/floatingips"
@@ -105,8 +106,13 @@ func resourceResellFloatingIPV2Read(d *schema.ResourceData, meta interface{}) er
 	ctx := context.Background()
 
 	log.Printf("[DEBUG] Getting floating ip %s", d.Id())
-	floatingIP, _, err := floatingips.Get(ctx, resellV2Client, d.Id())
+	floatingIP, response, err := floatingips.Get(ctx, resellV2Client, d.Id())
 	if err != nil {
+		if response.StatusCode == http.StatusNotFound {
+			d.SetId("")
+			return nil
+		}
+
 		return err
 	}
 
@@ -131,8 +137,13 @@ func resourceResellFloatingIPV2Delete(d *schema.ResourceData, meta interface{}) 
 	ctx := context.Background()
 
 	log.Printf("[DEBUG] Deleting floating ip %s\n", d.Id())
-	_, err := floatingips.Delete(ctx, resellV2Client, d.Id())
+	response, err := floatingips.Delete(ctx, resellV2Client, d.Id())
 	if err != nil {
+		if response.StatusCode == http.StatusNotFound {
+			d.SetId("")
+			return nil
+		}
+
 		return err
 	}
 
