@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/hashicorp/terraform/plugin"
-	"github.com/selectel/terraform-provider-selvpc/selvpc"
+	"github.com/terraform-providers/terraform-provider-selvpc/selvpc"
 )
 
 func main() {
