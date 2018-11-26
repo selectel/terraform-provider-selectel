@@ -28,17 +28,17 @@ Requirements
 Building The Provider
 ---------------------
 
-Clone repository to: `$GOPATH/src/github.com/selectel/terraform-provider-selvpc`
+Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-selvpc`
 
 ```sh
 $ mkdir -p $GOPATH/src/github.com/selectel; cd $GOPATH/src/github.com/selectel
-$ git clone git@github.com:selectel/terraform-provider-selvpc.git
+$ git clone git@github.com:terraform-providers/terraform-provider-selvpc.git
 ```
 
 Enter the provider directory and build the provider
 
 ```sh
-$ cd $GOPATH/src/github.com/selectel/terraform-provider-selvpc
+$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-selvpc
 $ make build
 ```
 
