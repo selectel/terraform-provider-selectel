@@ -1,3 +1,8 @@
+Deprecated
+==========
+
+This provider was deprecated in favour of [terraform-provider-selvpc](https://github.com/terraform-providers/terraform-provider-selvpc)
+
 Terraform SelVPC Provider
 =========================
 
