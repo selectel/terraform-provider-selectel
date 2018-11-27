@@ -1,4 +1,9 @@
-## 0.3.1 (Unreleased)
+## 1.0.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* Updated `Building The Provider` section in the Readme.
+
 ## 0.3.0 (November 26, 2018)
 
 IMPROVEMENTS:
