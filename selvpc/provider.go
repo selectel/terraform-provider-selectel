@@ -26,6 +26,7 @@ func Provider() terraform.ResourceProvider {
 			"selvpc_resell_floatingip_v2": resourceResellFloatingIPV2(),
 			"selvpc_resell_license_v2":    resourceResellLicenseV2(),
 			"selvpc_resell_project_v2":    resourceResellProjectV2(),
+			"selvpc_resell_subnet_v2":     resourceResellSubnetV2(),
 		},
 		ConfigureFunc: configureProvider,
 	}
