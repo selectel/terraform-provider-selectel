@@ -76,14 +76,14 @@ func resourceResellUserV2Update(d *schema.ResourceData, meta interface{}) error 
 	ctx := context.Background()
 
 	enabled := d.Get("enabled").(bool)
-	userOpts := users.UserOpts{
+	opts := users.UserOpts{
 		Name:     d.Get("name").(string),
 		Password: d.Get("password").(string),
 		Enabled:  &enabled,
 	}
 
-	log.Printf("[DEBUG] Updating user %s with options: %v\n", d.Id(), userOpts)
-	_, _, err := users.Update(ctx, resellV2Client, d.Id(), userOpts)
+	log.Printf("[DEBUG] Updating user %s with options: %v\n", d.Id(), opts)
+	_, _, err := users.Update(ctx, resellV2Client, d.Id(), opts)
 	if err != nil {
 		return err
 	}
