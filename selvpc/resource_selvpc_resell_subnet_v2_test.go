@@ -7,15 +7,13 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/selectel/go-selvpcclient/selvpcclient"
-
-	"github.com/stretchr/testify/assert"
-
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/selectel/go-selvpcclient/selvpcclient"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/subnets"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAccResellV2SubnetBasic(t *testing.T) {
