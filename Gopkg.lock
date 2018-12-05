@@ -391,7 +391,7 @@
   version = "v1.1.2"
 
 [[projects]]
-  digest = "1:f21783cf85ee7d55e9b24e806658b3f72b7a67e85392a8930da139a0d3d441db"
+  digest = "1:c405e8daed988523f2720ef39152926f76481ac9254a42b4f5bf90b5e9f860fb"
   name = "github.com/selectel/go-selvpcclient"
   packages = [
     "selvpcclient",
@@ -403,6 +403,7 @@
     "selvpcclient/resell/v2/quotas",
     "selvpcclient/resell/v2/servers",
     "selvpcclient/resell/v2/subnets",
+    "selvpcclient/resell/v2/users",
   ]
   pruneopts = "UT"
   revision = "7b020f257892077543143c9c77cb432af5fcc71a"
@@ -580,6 +581,7 @@
     "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas",
     "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/servers",
     "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/subnets",
+    "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/users",
     "github.com/stretchr/testify/assert",
   ]
   solver-name = "gps-cdcl"
