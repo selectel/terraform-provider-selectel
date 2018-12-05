@@ -7,6 +7,10 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/selectel/go-selvpcclient/selvpcclient"
+
+	"github.com/stretchr/testify/assert"
+
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
@@ -35,6 +39,39 @@ func TestAccResellV2SubnetBasic(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestResourceResellSubnetV2PrefixLengthFromCIDR(t *testing.T) {
+	testingData := map[string]int{
+		"192.0.2.100/29":   29,
+		"192.0.2.200/28":   28,
+		"203.0.113.10/24":  24,
+		"203.0.113.129/25": 25,
+	}
+
+	for cidr, expected := range testingData {
+		actual, err := resourceResellSubnetV2PrefixLengthFromCIDR(cidr)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+	}
+}
+
+func TestResourceResellSubnetV2GetIPVersionFromPrefixLength(t *testing.T) {
+	testingData := map[int]string{
+		29: string(selvpcclient.IPv4),
+		28: string(selvpcclient.IPv4),
+		48: string(selvpcclient.IPv6),
+		64: string(selvpcclient.IPv6),
+		24: string(selvpcclient.IPv4),
+		25: string(selvpcclient.IPv4),
+	}
+
+	for prefixLength, expected := range testingData {
+		actual := resourceResellSubnetV2GetIPVersionFromPrefixLength(prefixLength)
+
+		assert.Equal(t, expected, actual)
+	}
 }
 
 func testAccCheckResellV2SubnetDestroy(s *terraform.State) error {
