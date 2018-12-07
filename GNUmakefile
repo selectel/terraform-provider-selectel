@@ -16,41 +16,20 @@ test: fmtcheck
 testacc: fmtcheck
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
 
-vet:
-	@echo "go vet ."
-	@go vet $$(go list ./... | grep -v vendor/) ; if [ $$? -eq 1 ]; then \
-		echo ""; \
-		echo "Vet found suspicious constructs. Please check the reported constructs"; \
-		echo "and fix them if necessary before submitting the code for review."; \
-		exit 1; \
-	fi
-
-critic:
-	@echo "gocritic check-project --enable=all -disable structLitKeyOrder -withExperimental -withOpinionated ."
-	@gocritic check-project --enable=all -disable structLitKeyOrder -withExperimental -withOpinionated .; if [ $$? -eq 1 ]; then \
-		echo ""; \
-		echo "Gocritic found suspicious constructs. Please check the reported constructs"; \
-		echo "and fix them if necessary before submitting the code for review."; \
-		exit 1; \
-	fi
-
 fmt:
+	@echo "==> Fixing source code with gofmt..."
 	gofmt -w $(GOFMT_FILES)
 
 fmtcheck:
 	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
 
-errcheck:
-	@sh -c "'$(CURDIR)/scripts/errcheck.sh'"
-
 imports:
+	@echo "==> Fixing source code with goimports..."
 	goimports -w $(GOFMT_FILES)
 
-importscheck:
-	@sh -c "'$(CURDIR)/scripts/goimportscheck.sh'"
-
 lintcheck:
-	@sh -c "'$(CURDIR)/scripts/golintcheck.sh'"
+	@echo "==> Checking source code against linters..."
+	@sh -c "'$(CURDIR)/scripts/golangcilint.sh'"
 
 vendor-status:
 	dep status
@@ -77,4 +56,4 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build test testacc vet critic fmt fmtcheck errcheck imports importscheck lintcheck vendor-status test-compile website website-test
+.PHONY: build test testacc fmt fmtcheck imports lintcheck vendor-status test-compile website website-test
