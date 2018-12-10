@@ -3,6 +3,7 @@
 IMPROVEMENTS:
 
 * Updated `Building The Provider` section in the Readme.
+* Added `GolangCI-Lint` in the `TravisCI`, removed separated linters scripts and cleaned up `GNUmakefile`.
 
 ## 0.3.0 (November 26, 2018)
 
