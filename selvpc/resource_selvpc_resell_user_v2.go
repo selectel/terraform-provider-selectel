@@ -15,9 +15,6 @@ func resourceResellUserV2() *schema.Resource {
 		Read:   resourceResellUserV2Read,
 		Update: resourceResellUserV2Update,
 		Delete: resourceResellUserV2Delete,
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
