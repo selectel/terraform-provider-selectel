@@ -3,6 +3,7 @@
 FEATURES:
 
 * __New Resource:__ `selvpc_resell_subnet_v2` [GH-1]
+* __New Resource:__ `selvpc_resell_user_v2` [GH-3]
 
 IMPROVEMENTS:
 
