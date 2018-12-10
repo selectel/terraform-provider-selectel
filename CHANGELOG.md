@@ -1,5 +1,9 @@
 ## 1.0.0 (Unreleased)
 
+FEATURES:
+
+* __New Resource:__ `selvpc_resell_subnet_v2` [GH-1]
+
 IMPROVEMENTS:
 
 * Updated `Building The Provider` section in the Readme.
