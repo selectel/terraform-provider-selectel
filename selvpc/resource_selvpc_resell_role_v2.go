@@ -47,7 +47,7 @@ func resourceResellRoleV2Create(d *schema.ResourceData, meta interface{}) error 
 	log.Printf("[DEBUG] Creating role with options: %v\n", opts)
 	role, _, err := roles.Create(ctx, resellV2Client, opts)
 	if err != nil {
-		return err
+		return errCreatingObject("role", err)
 	}
 
 	d.SetId(resourceResellRoleV2BuildID(role.ProjectID, role.UserID))
@@ -67,7 +67,7 @@ func resourceResellRoleV2Read(d *schema.ResourceData, meta interface{}) error {
 	}
 	projectRoles, _, err := roles.ListProject(ctx, resellV2Client, projectID)
 	if err != nil {
-		return fmt.Errorf("can't find role for project '%s': %s", projectID, err)
+		return errSearchingProjectRole(projectID, err)
 	}
 
 	found := false
@@ -109,7 +109,7 @@ func resourceResellRoleV2Delete(d *schema.ResourceData, meta interface{}) error 
 			return nil
 		}
 
-		return err
+		return errDeletingObject("role", d.Id(), err)
 	}
 
 	return nil

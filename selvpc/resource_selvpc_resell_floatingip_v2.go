@@ -85,10 +85,10 @@ func resourceResellFloatingIPV2Create(d *schema.ResourceData, meta interface{}) 
 		},
 	}
 
-	log.Printf("[DEBUG] Creating floating ip with options: %v\n", opts)
+	log.Printf("[DEBUG] Creating floating IP with options: %v\n", opts)
 	floatingIPs, _, err := floatingips.Create(ctx, resellV2Client, projectID, opts)
 	if err != nil {
-		return err
+		return errCreatingObject("floating IP", err)
 	}
 
 	if len(floatingIPs) != 1 {
@@ -105,7 +105,7 @@ func resourceResellFloatingIPV2Read(d *schema.ResourceData, meta interface{}) er
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	log.Printf("[DEBUG] Getting floating ip %s", d.Id())
+	log.Printf("[DEBUG] Getting floating IP %s", d.Id())
 	floatingIP, response, err := floatingips.Get(ctx, resellV2Client, d.Id())
 	if err != nil {
 		if response.StatusCode == http.StatusNotFound {
@@ -113,7 +113,7 @@ func resourceResellFloatingIPV2Read(d *schema.ResourceData, meta interface{}) er
 			return nil
 		}
 
-		return err
+		return errGettingObject("floating IP", d.Id(), err)
 	}
 
 	d.Set("fixed_ip_address", floatingIP.FixedIPAddress)
@@ -136,7 +136,7 @@ func resourceResellFloatingIPV2Delete(d *schema.ResourceData, meta interface{}) 
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	log.Printf("[DEBUG] Deleting floating ip %s\n", d.Id())
+	log.Printf("[DEBUG] Deleting floating IP %s\n", d.Id())
 	response, err := floatingips.Delete(ctx, resellV2Client, d.Id())
 	if err != nil {
 		if response.StatusCode == http.StatusNotFound {
@@ -144,7 +144,7 @@ func resourceResellFloatingIPV2Delete(d *schema.ResourceData, meta interface{}) 
 			return nil
 		}
 
-		return err
+		return errDeletingObject("floating IP", d.Id(), err)
 	}
 
 	return nil

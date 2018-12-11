@@ -85,7 +85,7 @@ func resourceResellLicenseV2Create(d *schema.ResourceData, meta interface{}) err
 	log.Printf("[DEBUG] Creating license with options: %v\n", opts)
 	newLicenses, _, err := licenses.Create(ctx, resellV2Client, projectID, opts)
 	if err != nil {
-		return err
+		return errCreatingObject("license", err)
 	}
 
 	if len(newLicenses) != 1 {
@@ -110,7 +110,7 @@ func resourceResellLicenseV2Read(d *schema.ResourceData, meta interface{}) error
 			return nil
 		}
 
-		return err
+		return errGettingObject("license", d.Id(), err)
 	}
 
 	d.Set("project_id", license.ProjectID)
@@ -138,7 +138,7 @@ func resourceResellLicenseV2Delete(d *schema.ResourceData, meta interface{}) err
 			return nil
 		}
 
-		return err
+		return errDeletingObject("license", d.Id(), err)
 	}
 
 	return nil

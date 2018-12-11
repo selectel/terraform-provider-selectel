@@ -159,7 +159,7 @@ func resourceResellProjectV2Create(d *schema.ResourceData, meta interface{}) err
 	if quotaSet.Len() != 0 {
 		quotasOpts, err := resourceResellProjectV2QuotasOptsFromSet(quotaSet)
 		if err != nil {
-			return fmt.Errorf(errParseProjectV2QuotasFmt, err)
+			return errParseProjectV2Quotas(err)
 		}
 		opts.Quotas = quotasOpts
 	}
@@ -169,7 +169,7 @@ func resourceResellProjectV2Create(d *schema.ResourceData, meta interface{}) err
 	log.Printf("[DEBUG] Creating project with options: %v\n", opts)
 	project, _, err := projects.Create(ctx, resellV2Client, opts)
 	if err != nil {
-		return err
+		return errCreatingObject("project", err)
 	}
 
 	d.SetId(project.ID)
@@ -190,7 +190,7 @@ func resourceResellProjectV2Read(d *schema.ResourceData, meta interface{}) error
 			return nil
 		}
 
-		return err
+		return errGettingObject("project", d.Id(), err)
 	}
 
 	projectCustomURL, err := resourceResellProjectV2URLWithoutSchema(project.CustomURL)
@@ -244,7 +244,7 @@ func resourceResellProjectV2Update(d *schema.ResourceData, meta interface{}) err
 		quotaSet := d.Get("quotas").(*schema.Set)
 		quotasOpts, err := resourceResellProjectV2QuotasOptsFromSet(quotaSet)
 		if err != nil {
-			return fmt.Errorf(errParseProjectV2QuotasFmt, err)
+			return errParseProjectV2Quotas(err)
 		}
 		projectQuotasOpts.QuotasOpts = quotasOpts
 	}
@@ -255,7 +255,7 @@ func resourceResellProjectV2Update(d *schema.ResourceData, meta interface{}) err
 			log.Printf("[DEBUG] Updating project %s with options: %v\n", d.Id(), projectOpts)
 			_, _, err := projects.Update(ctx, resellV2Client, d.Id(), projectOpts)
 			if err != nil {
-				return err
+				return fmt.Errorf("error updating project '%s': %s", d.Id(), err)
 			}
 		}
 		// Update project quotas if needed.
@@ -263,7 +263,7 @@ func resourceResellProjectV2Update(d *schema.ResourceData, meta interface{}) err
 			log.Printf("[DEBUG] Updating project %s quotas with options: %v\n", d.Id(), projectQuotasOpts)
 			_, _, err := quotas.UpdateProjectQuotas(ctx, resellV2Client, d.Id(), projectQuotasOpts)
 			if err != nil {
-				return err
+				return fmt.Errorf("error updating quotas for project '%s': %s", d.Id(), err)
 			}
 		}
 	}
@@ -284,7 +284,7 @@ func resourceResellProjectV2Delete(d *schema.ResourceData, meta interface{}) err
 			return nil
 		}
 
-		return err
+		return errDeletingObject("project", d.Id(), err)
 	}
 
 	return nil
