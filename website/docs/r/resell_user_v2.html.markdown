@@ -34,7 +34,7 @@ The following arguments are supported:
 
 ## Attributes Reference
 
-There is no additional attributes for this resource.
+There are no additional attributes for this resource.
 
 ## Import
 
