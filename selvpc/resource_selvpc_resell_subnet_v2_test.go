@@ -17,8 +17,10 @@ import (
 )
 
 func TestAccResellV2SubnetBasic(t *testing.T) {
-	var subnet subnets.Subnet
-	var project projects.Project
+	var (
+		subnet  subnets.Subnet
+		project projects.Project
+	)
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
 	resource.Test(t, resource.TestCase{

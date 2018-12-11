@@ -14,8 +14,10 @@ import (
 )
 
 func TestAccResellV2FloatingIPBasic(t *testing.T) {
-	var floatingip floatingips.FloatingIP
-	var project projects.Project
+	var (
+		floatingip floatingips.FloatingIP
+		project    projects.Project
+	)
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
 	resource.Test(t, resource.TestCase{
