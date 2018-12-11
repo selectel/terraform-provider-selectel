@@ -17,7 +17,7 @@ resource "selvpc_resell_project_v2" "project_1" {
   auto_quotas = true
 }
 
-resource "selvpc_resell_subnet_v2" "subnet_tf_acc_test_1" {
+resource "selvpc_resell_subnet_v2" "subnet_1" {
   project_id    = "${selvpc_resell_project_v2.project_1.id}"
   region        = "ru-3"
   ip_version    = "ipv4"
