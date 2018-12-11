@@ -49,7 +49,7 @@ func resourceResellUserV2Create(d *schema.ResourceData, meta interface{}) error 
 	log.Printf("[DEBUG] Creating user with options: %v\n", opts)
 	user, _, err := users.Create(ctx, resellV2Client, opts)
 	if err != nil {
-		return err
+		return errCreatingObject("user", err)
 	}
 
 	d.SetId(user.ID)
@@ -101,7 +101,7 @@ func resourceResellUserV2Delete(d *schema.ResourceData, meta interface{}) error 
 			return nil
 		}
 
-		return err
+		return errDeletingObject("user", d.Id(), err)
 	}
 
 	return nil

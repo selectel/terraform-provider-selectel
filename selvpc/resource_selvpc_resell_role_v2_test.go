@@ -89,7 +89,7 @@ func testAccCheckResellV2RoleExists(n string, role *roles.Role) resource.TestChe
 		}
 		projectRoles, _, err := roles.ListProject(ctx, resellV2Client, projectID)
 		if err != nil {
-			return fmt.Errorf("can't find role for project '%s': %s", projectID, err)
+			return errSearchingProjectRole(projectID, err)
 		}
 
 		found := false

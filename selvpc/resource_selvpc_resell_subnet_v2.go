@@ -112,7 +112,7 @@ func resourceResellSubnetV2Create(d *schema.ResourceData, meta interface{}) erro
 	log.Printf("[DEBUG] Creating subnet with options: %v\n", opts)
 	subnetsResponse, _, err := subnets.Create(ctx, resellV2Client, projectID, opts)
 	if err != nil {
-		return err
+		return errCreatingObject("subnet", err)
 	}
 
 	if len(subnetsResponse) != 1 {
@@ -137,7 +137,7 @@ func resourceResellSubnetV2Read(d *schema.ResourceData, meta interface{}) error 
 			return nil
 		}
 
-		return err
+		return errGettingObject("subnet", d.Id(), err)
 	}
 
 	d.Set("cidr", subnet.CIDR)
@@ -177,7 +177,7 @@ func resourceResellSubnetV2Delete(d *schema.ResourceData, meta interface{}) erro
 			return nil
 		}
 
-		return err
+		return errDeletingObject("subnet", d.Id(), err)
 	}
 
 	return nil
