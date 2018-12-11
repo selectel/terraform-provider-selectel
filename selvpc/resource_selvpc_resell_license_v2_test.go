@@ -15,8 +15,10 @@ import (
 )
 
 func TestAccResellV2LicenseBasic(t *testing.T) {
-	var license licenses.License
-	var project projects.Project
+	var (
+		license licenses.License
+		project projects.Project
+	)
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
 	resource.Test(t, resource.TestCase{
