@@ -9,10 +9,10 @@ FEATURES:
 
 IMPROVEMENTS:
 
-* Updated `Building The Provider` section in the Readme [GH-6]
+* Updated `Building The Provider` and `Using the provider` sections in the Readme [GH-6]
 * Added `GolangCI-Lint` in the `TravisCI`, removed separated linters scripts and cleaned up `GNUmakefile` [GH-12]
 * Added more context into error messages [GH-17]
-* Added tuned HTTP timeouts instead of default [GH-14]
+* Added tuned HTTP timeouts instead of the default ones from Go's `net/http` package [GH-14]
 * Updated `go-selvpcclient` dependency to `v1.5.0` [GH-14]
 
 ## 0.3.0 (November 26, 2018)
