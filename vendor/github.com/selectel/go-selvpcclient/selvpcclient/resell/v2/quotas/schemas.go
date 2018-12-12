@@ -141,7 +141,7 @@ func (result *ProjectsQuotas) UnmarshalJSON(b []byte) error {
 	if len(s.ProjectsQuotas) != 0 {
 		// Convert projects quota maps to the slice of ProjectQuota types.
 		// Here we're allocating memory in advance for both of project and resource quotas
-		// because we already know the lenght of each slices from the JSON bytearray.
+		// because we already know the length of each slices from the JSON bytearray.
 		projectQuotasSlice := make([]*ProjectQuota, len(s.ProjectsQuotas))
 		i := 0
 		for projectName, projectQuotas := range s.ProjectsQuotas {
