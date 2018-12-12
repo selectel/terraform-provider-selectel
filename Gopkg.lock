@@ -391,7 +391,7 @@
   version = "v1.1.2"
 
 [[projects]]
-  digest = "1:5853baca6cffe3060cf5aa72dd74d4f1e901c9eb5bca46a3041c9b497234982e"
+  digest = "1:050630e163e7ddb8f4f0644a042a7368644e8c8b2bd79139a62a530f14eb63cf"
   name = "github.com/selectel/go-selvpcclient"
   packages = [
     "selvpcclient",
@@ -404,6 +404,7 @@
     "selvpcclient/resell/v2/roles",
     "selvpcclient/resell/v2/servers",
     "selvpcclient/resell/v2/subnets",
+    "selvpcclient/resell/v2/tokens",
     "selvpcclient/resell/v2/users",
   ]
   pruneopts = "UT"
@@ -583,6 +584,7 @@
     "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/roles",
     "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/servers",
     "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/subnets",
+    "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens",
     "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/users",
     "github.com/stretchr/testify/assert",
   ]
