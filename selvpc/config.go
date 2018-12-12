@@ -2,13 +2,11 @@ package selvpc
 
 import (
 	"errors"
-	"net/http"
 	"strings"
 
-	"github.com/hashicorp/terraform/httpclient"
 	"github.com/selectel/go-selvpcclient/selvpcclient"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell"
-	resellv2 "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2"
+	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2"
 )
 
 // Config contains all available configuration options.
@@ -23,19 +21,11 @@ func (c *Config) Validate() error {
 		return errors.New("token must be specified")
 	}
 	if c.Endpoint == "" {
-		c.Endpoint = selvpcclient.DefaultEndpoint
+		c.Endpoint = strings.Join([]string{resell.Endpoint, v2.APIVersion}, "/")
 	}
 	return nil
 }
 
 func (c *Config) resellV2Client() *selvpcclient.ServiceClient {
-	endpoint := strings.Join([]string{c.Endpoint, resell.ServiceType, resellv2.APIVersion},
-		"/")
-	resellV2Client := &selvpcclient.ServiceClient{
-		HTTPClient: &http.Client{},
-		Endpoint:   endpoint,
-		TokenID:    c.Token,
-		UserAgent:  httpclient.UserAgentString(),
-	}
-	return resellV2Client
+	return v2.NewV2ResellClientWithEndpoint(c.Token, c.Endpoint)
 }
