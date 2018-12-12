@@ -16,7 +16,6 @@ func TestAccResellV2TokenBasic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccSelVPCPreCheck(t) },
 		Providers: testAccProviders,
-		// CheckDestroy: testAccCheckResellV2TokenDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResellV2TokenBasic(projectName),
@@ -24,6 +23,21 @@ func TestAccResellV2TokenBasic(t *testing.T) {
 					testAccCheckResellV2ProjectExists("selvpc_resell_project_v2.project_tf_acc_test_1", &project),
 					resource.TestCheckResourceAttrSet("selvpc_resell_token_v2.token_tf_acc_test_1", "project_id"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccResellV2TokenAccount(t *testing.T) {
+	accountName := "79414"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccSelVPCPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResellV2TokenAccount(accountName),
+				Check:  resource.TestCheckResourceAttrSet("selvpc_resell_token_v2.token_tf_acc_test_1", "account_name"),
 			},
 		},
 	})
@@ -40,4 +54,12 @@ resource "selvpc_resell_token_v2" "token_tf_acc_test_1" {
   project_id = "${selvpc_resell_project_v2.project_tf_acc_test_1.id}"
 }
 `, projectName)
+}
+
+func testAccResellV2TokenAccount(accountName string) string {
+	return fmt.Sprintf(`
+resource "selvpc_resell_token_v2" "token_tf_acc_test_1" {
+  account_name = "%s"
+}
+`, accountName)
 }

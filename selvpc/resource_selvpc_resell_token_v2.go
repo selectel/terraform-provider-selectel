@@ -16,11 +16,11 @@ func resourceResellTokenV2() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"project_id": {
 				Type:          schema.TypeString,
-				ConflictsWith: []string{"domain_name"},
+				ConflictsWith: []string{"account_name"},
 				Optional:      true,
 				ForceNew:      true,
 			},
-			"domain_name": {
+			"account_name": {
 				Type:          schema.TypeString,
 				ConflictsWith: []string{"project_id"},
 				Optional:      true,
@@ -37,7 +37,7 @@ func resourceResellTokenV2Create(d *schema.ResourceData, meta interface{}) error
 
 	opts := tokens.TokenOpts{
 		ProjectID:  d.Get("project_id").(string),
-		DomainName: d.Get("domain_name").(string),
+		DomainName: d.Get("account_name").(string),
 	}
 
 	log.Printf("[DEBUG] Creating token with options: %v\n", opts)
