@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -18,7 +19,7 @@ import (
 
 const (
 	// AppVersion is a version of the application.
-	AppVersion = "1.4.0"
+	AppVersion = "1.5.0"
 
 	// AppName is a global application name.
 	AppName = "go-selvpcclient"
@@ -28,7 +29,39 @@ const (
 
 	// DefaultUserAgent contains basic user agent that will be used in queries.
 	DefaultUserAgent = AppName + "/" + AppVersion
+
+	// defaultHTTPTimeout represents default timeout (in seconds) for HTTP
+	// requests.
+	defaultHTTPTimeout = 40
+
+	// defaultDialTimeout represents default timeout (in seconds) for HTTP
+	// connection establishments.
+	defaultDialTimeout = 5
+
+	// defaultTLSHandshakeTimeout represents default timeout (in seconds) for
+	// TSL handshake timeout.
+	defaultTLSHandshakeTimeout = 5
 )
+
+// NewHTTPClient returns a reference to an initialized HTTP client with
+// configured timeouts.
+func NewHTTPClient() *http.Client {
+	return &http.Client{
+		Timeout:   time.Second * defaultHTTPTimeout,
+		Transport: newHTTPTransport(),
+	}
+}
+
+// newHTTPTransport returns a reference to an initialized HTTP transport with
+// configured timeouts.
+func newHTTPTransport() *http.Transport {
+	return &http.Transport{
+		Dial: (&net.Dialer{
+			Timeout: time.Second * defaultDialTimeout,
+		}).Dial,
+		TLSHandshakeTimeout: time.Second * defaultTLSHandshakeTimeout,
+	}
+}
 
 // ServiceClient stores details that are needed to work with different Selectel VPC APIs.
 type ServiceClient struct {
@@ -177,12 +210,9 @@ func BuildQueryParameters(opts interface{}) (string, error) {
 // isZero checks if provided value is zero.
 func isZero(v reflect.Value) bool {
 	if v.Kind() == reflect.Ptr {
-		if v.IsNil() {
-			return true
-		}
-		return false
+		return v.IsNil()
 	}
-
 	z := reflect.Zero(v.Type())
+
 	return v.Interface() == z.Interface()
 }

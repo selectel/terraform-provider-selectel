@@ -391,7 +391,7 @@
   version = "v1.1.2"
 
 [[projects]]
-  digest = "1:050630e163e7ddb8f4f0644a042a7368644e8c8b2bd79139a62a530f14eb63cf"
+  digest = "1:52fc55b304a1450078dbf7f7f209b62aae80a264e163332771c13e972a160752"
   name = "github.com/selectel/go-selvpcclient"
   packages = [
     "selvpcclient",
@@ -408,8 +408,8 @@
     "selvpcclient/resell/v2/users",
   ]
   pruneopts = "UT"
-  revision = "7b020f257892077543143c9c77cb432af5fcc71a"
-  version = "v1.4.0"
+  revision = "300c0ca2cf0b2798a840b708a7a5f6bfa20d7cb3"
+  version = "v1.5.0"
 
 [[projects]]
   digest = "1:18752d0b95816a1b777505a97f71c7467a8445b8ffb55631a7bf779f6ba4fa83"
@@ -571,7 +571,6 @@
     "github.com/hashicorp/terraform/helper/resource",
     "github.com/hashicorp/terraform/helper/schema",
     "github.com/hashicorp/terraform/helper/validation",
-    "github.com/hashicorp/terraform/httpclient",
     "github.com/hashicorp/terraform/plugin",
     "github.com/hashicorp/terraform/terraform",
     "github.com/selectel/go-selvpcclient/selvpcclient",
