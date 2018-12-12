@@ -4,6 +4,7 @@ FEATURES:
 
 * __New Resource:__ `selvpc_resell_role_v2` [GH-4]
 * __New Resource:__ `selvpc_resell_subnet_v2` [GH-1]
+* __New Resource:__ `selvpc_resell_token_v2` [GH-2]
 * __New Resource:__ `selvpc_resell_user_v2` [GH-3]
 
 IMPROVEMENTS:
@@ -11,6 +12,8 @@ IMPROVEMENTS:
 * Updated `Building The Provider` section in the Readme [GH-6]
 * Added `GolangCI-Lint` in the `TravisCI`, removed separated linters scripts and cleaned up `GNUmakefile` [GH-12]
 * Added more context into error messages [GH-17]
+* Added tuned HTTP timeouts instead of default [GH-14]
+* Updated `go-selvpcclient` dependency to `v1.5.0` [GH-14]
 
 ## 0.3.0 (November 26, 2018)
 
