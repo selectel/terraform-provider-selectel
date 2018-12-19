@@ -1,19 +1,19 @@
-## 1.0.0 (Unreleased)
+## 1.0.0 (December 19, 2018)
 
 FEATURES:
 
-* __New Resource:__ `selvpc_resell_role_v2` [GH-4]
-* __New Resource:__ `selvpc_resell_subnet_v2` [GH-1]
-* __New Resource:__ `selvpc_resell_token_v2` [GH-2]
-* __New Resource:__ `selvpc_resell_user_v2` [GH-3]
+* __New Resource:__ `selvpc_resell_role_v2` ([#4](https://github.com/terraform-providers/terraform-provider-aws/issues/4))
+* __New Resource:__ `selvpc_resell_subnet_v2` ([#1](https://github.com/terraform-providers/terraform-provider-aws/issues/1))
+* __New Resource:__ `selvpc_resell_token_v2` ([#2](https://github.com/terraform-providers/terraform-provider-aws/issues/2))
+* __New Resource:__ `selvpc_resell_user_v2` ([#3](https://github.com/terraform-providers/terraform-provider-aws/issues/3))
 
 IMPROVEMENTS:
 
-* Updated `Building The Provider` and `Using the provider` sections in the Readme [GH-6]
-* Added `GolangCI-Lint` in the `TravisCI`, removed separated linters scripts and cleaned up `GNUmakefile` [GH-12]
-* Added more context into error messages [GH-17]
-* Added tuned HTTP timeouts instead of the default ones from Go's `net/http` package [GH-14]
-* Updated `go-selvpcclient` dependency to `v1.5.0` [GH-14]
+* Updated `Building The Provider` and `Using the provider` sections in the Readme ([#6](https://github.com/terraform-providers/terraform-provider-aws/issues/6))
+* Added `GolangCI-Lint` in the `TravisCI`, removed separated linters scripts and cleaned up `GNUmakefile` ([#12](https://github.com/terraform-providers/terraform-provider-aws/issues/12))
+* Added more context into error messages ([#17](https://github.com/terraform-providers/terraform-provider-aws/issues/17))
+* Added tuned HTTP timeouts instead of the default ones from Go's `net/http` package ([#14](https://github.com/terraform-providers/terraform-provider-aws/issues/14))
+* Updated `go-selvpcclient` dependency to `v1.5.0` ([#14](https://github.com/terraform-providers/terraform-provider-aws/issues/14))
 
 ## 0.3.0 (November 26, 2018)
 
