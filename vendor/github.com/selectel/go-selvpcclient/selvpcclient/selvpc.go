@@ -30,21 +30,36 @@ const (
 	// DefaultUserAgent contains basic user agent that will be used in queries.
 	DefaultUserAgent = AppName + "/" + AppVersion
 
-	// defaultHTTPTimeout represents default timeout (in seconds) for HTTP
+	// defaultHTTPTimeout represents the default timeout (in seconds) for HTTP
 	// requests.
-	defaultHTTPTimeout = 40
+	defaultHTTPTimeout = 60
 
-	// defaultDialTimeout represents default timeout (in seconds) for HTTP
+	// defaultDialTimeout represents the default timeout (in seconds) for HTTP
 	// connection establishments.
-	defaultDialTimeout = 5
+	defaultDialTimeout = 40
 
-	// defaultTLSHandshakeTimeout represents default timeout (in seconds) for
-	// TSL handshake timeout.
-	defaultTLSHandshakeTimeout = 5
+	// defaultKeepalive represents the default keep-alive period for an active
+	// network connection.
+	defaultKeepaliveTimeout = 40
+
+	// defaultMaxIdleConns represents the maximum number of idle (keep-alive)
+	// connections.
+	defaultMaxIdleConns = 100
+
+	// defaultIdleConnTimeout represents the maximum amount of time an idle
+	// (keep-alive) connection will remain idle before closing itself.
+	defaultIdleConnTimeout = 100
+
+	// defaultTLSHandshakeTimeout represents the default timeout (in seconds)
+	// for TLS handshake.
+	defaultTLSHandshakeTimeout = 30
+
+	// defaultExpectContinueTimeout represents the default amount of time to
+	// wait for a server's first response headers.
+	defaultExpectContinueTimeout = 1
 )
 
-// NewHTTPClient returns a reference to an initialized HTTP client with
-// configured timeouts.
+// NewHTTPClient returns a reference to an initialized configured HTTP client.
 func NewHTTPClient() *http.Client {
 	return &http.Client{
 		Timeout:   time.Second * defaultHTTPTimeout,
@@ -52,14 +67,20 @@ func NewHTTPClient() *http.Client {
 	}
 }
 
-// newHTTPTransport returns a reference to an initialized HTTP transport with
-// configured timeouts.
+// newHTTPTransport returns a reference to an initialized configured HTTP
+// transport.
 func newHTTPTransport() *http.Transport {
 	return &http.Transport{
-		Dial: (&net.Dialer{
-			Timeout: time.Second * defaultDialTimeout,
-		}).Dial,
-		TLSHandshakeTimeout: time.Second * defaultTLSHandshakeTimeout,
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   defaultDialTimeout * time.Second,
+			KeepAlive: defaultKeepaliveTimeout * time.Second,
+			DualStack: true,
+		}).DialContext,
+		MaxIdleConns:          defaultMaxIdleConns,
+		IdleConnTimeout:       defaultIdleConnTimeout * time.Second,
+		TLSHandshakeTimeout:   defaultTLSHandshakeTimeout * time.Second,
+		ExpectContinueTimeout: defaultExpectContinueTimeout * time.Second,
 	}
 }
 
