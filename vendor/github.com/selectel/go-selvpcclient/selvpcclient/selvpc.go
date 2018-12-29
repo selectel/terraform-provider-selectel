@@ -32,15 +32,15 @@ const (
 
 	// defaultHTTPTimeout represents the default timeout (in seconds) for HTTP
 	// requests.
-	defaultHTTPTimeout = 60
+	defaultHTTPTimeout = 120
 
 	// defaultDialTimeout represents the default timeout (in seconds) for HTTP
 	// connection establishments.
-	defaultDialTimeout = 40
+	defaultDialTimeout = 60
 
 	// defaultKeepalive represents the default keep-alive period for an active
 	// network connection.
-	defaultKeepaliveTimeout = 40
+	defaultKeepaliveTimeout = 60
 
 	// defaultMaxIdleConns represents the maximum number of idle (keep-alive)
 	// connections.
@@ -52,7 +52,7 @@ const (
 
 	// defaultTLSHandshakeTimeout represents the default timeout (in seconds)
 	// for TLS handshake.
-	defaultTLSHandshakeTimeout = 30
+	defaultTLSHandshakeTimeout = 60
 
 	// defaultExpectContinueTimeout represents the default amount of time to
 	// wait for a server's first response headers.
