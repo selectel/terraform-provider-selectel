@@ -1,4 +1,9 @@
-## 1.0.1 (Unreleased)
+## 1.1.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* Added Go-selvpc library with tuned HTTP client to prevent errors when making call to the Resell API [GH-30]
+
 ## 1.0.0 (December 19, 2018)
 
 FEATURES:
