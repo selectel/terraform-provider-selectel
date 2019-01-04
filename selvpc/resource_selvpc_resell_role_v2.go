@@ -44,10 +44,10 @@ func resourceResellRoleV2Create(d *schema.ResourceData, meta interface{}) error 
 		UserID:    d.Get("user_id").(string),
 	}
 
-	log.Printf("[DEBUG] Creating role with options: %v\n", opts)
+	log.Print(msgCreate(objectRole, opts))
 	role, _, err := roles.Create(ctx, resellV2Client, opts)
 	if err != nil {
-		return errCreatingObject("role", err)
+		return errCreatingObject(objectRole, err)
 	}
 
 	d.SetId(resourceResellRoleV2BuildID(role.ProjectID, role.UserID))
@@ -60,10 +60,10 @@ func resourceResellRoleV2Read(d *schema.ResourceData, meta interface{}) error {
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	log.Printf("[DEBUG] Getting role %s", d.Id())
+	log.Print(msgGet(objectRole, d.Id()))
 	projectID, userID, err := resourceResellRoleV2ParseID(d.Id())
 	if err != nil {
-		return err
+		return errParseID(objectRole, d.Id())
 	}
 	projectRoles, _, err := roles.ListProject(ctx, resellV2Client, projectID)
 	if err != nil {
@@ -101,7 +101,7 @@ func resourceResellRoleV2Delete(d *schema.ResourceData, meta interface{}) error 
 		UserID:    userID,
 	}
 
-	log.Printf("[DEBUG] Deleting role %s\n", d.Id())
+	log.Print(msgDelete(objectRole, d.Id()))
 	response, err := roles.Delete(ctx, resellV2Client, opts)
 	if err != nil {
 		if response.StatusCode == http.StatusNotFound {
@@ -109,7 +109,7 @@ func resourceResellRoleV2Delete(d *schema.ResourceData, meta interface{}) error 
 			return nil
 		}
 
-		return errDeletingObject("role", d.Id(), err)
+		return errDeletingObject(objectRole, d.Id(), err)
 	}
 
 	return nil

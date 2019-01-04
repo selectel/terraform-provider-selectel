@@ -2,7 +2,6 @@ package selvpc
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -109,14 +108,13 @@ func resourceResellSubnetV2Create(d *schema.ResourceData, meta interface{}) erro
 		},
 	}
 
-	log.Printf("[DEBUG] Creating subnet with options: %v\n", opts)
+	log.Print(msgCreate(objectSubnet, opts))
 	subnetsResponse, _, err := subnets.Create(ctx, resellV2Client, projectID, opts)
 	if err != nil {
-		return errCreatingObject("subnet", err)
+		return errCreatingObject(objectSubnet, err)
 	}
-
 	if len(subnetsResponse) != 1 {
-		return errors.New("can't get subnets from the response")
+		return errReadFromResponse(objectSubnet)
 	}
 
 	d.SetId(strconv.Itoa(subnetsResponse[0].ID))
@@ -129,7 +127,7 @@ func resourceResellSubnetV2Read(d *schema.ResourceData, meta interface{}) error 
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	log.Printf("[DEBUG] Getting subnet %s", d.Id())
+	log.Print(msgGet(objectSubnet, d.Id()))
 	subnet, response, err := subnets.Get(ctx, resellV2Client, d.Id())
 	if err != nil {
 		if response.StatusCode == http.StatusNotFound {
@@ -137,7 +135,7 @@ func resourceResellSubnetV2Read(d *schema.ResourceData, meta interface{}) error 
 			return nil
 		}
 
-		return errGettingObject("subnet", d.Id(), err)
+		return errGettingObject(objectSubnet, d.Id(), err)
 	}
 
 	d.Set("cidr", subnet.CIDR)
@@ -149,7 +147,7 @@ func resourceResellSubnetV2Read(d *schema.ResourceData, meta interface{}) error 
 
 	prefixLength, err := resourceResellSubnetV2PrefixLengthFromCIDR(subnet.CIDR)
 	if err != nil {
-		log.Printf("[DEBUG] can't parse prefix length from CIDR: %s", err)
+		log.Printf("[DEBUG] can't parse prefix length from subnet '%s' CIDR: %s", d.Id(), err)
 	} else {
 		d.Set("prefix_length", prefixLength)
 	}
@@ -158,7 +156,7 @@ func resourceResellSubnetV2Read(d *schema.ResourceData, meta interface{}) error 
 
 	associatedServers := serversMapsFromStructs(subnet.Servers)
 	if err := d.Set("servers", associatedServers); err != nil {
-		log.Printf("[DEBUG] servers: %s", err)
+		log.Print(errSettingComplexAttr("servers", err))
 	}
 
 	return nil
@@ -169,7 +167,7 @@ func resourceResellSubnetV2Delete(d *schema.ResourceData, meta interface{}) erro
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	log.Printf("[DEBUG] Deleting subnet %s\n", d.Id())
+	log.Print(msgDelete(objectSubnet, d.Id()))
 	response, err := subnets.Delete(ctx, resellV2Client, d.Id())
 	if err != nil {
 		if response.StatusCode == http.StatusNotFound {
@@ -177,7 +175,7 @@ func resourceResellSubnetV2Delete(d *schema.ResourceData, meta interface{}) erro
 			return nil
 		}
 
-		return errDeletingObject("subnet", d.Id(), err)
+		return errDeletingObject(objectSubnet, d.Id(), err)
 	}
 
 	return nil

@@ -46,10 +46,10 @@ func resourceResellUserV2Create(d *schema.ResourceData, meta interface{}) error 
 		Password: d.Get("password").(string),
 	}
 
-	log.Printf("[DEBUG] Creating user with options: %v\n", opts)
+	log.Print(msgCreate(objectUser, opts))
 	user, _, err := users.Create(ctx, resellV2Client, opts)
 	if err != nil {
-		return errCreatingObject("user", err)
+		return errCreatingObject(objectUser, err)
 	}
 
 	d.SetId(user.ID)
@@ -79,10 +79,10 @@ func resourceResellUserV2Update(d *schema.ResourceData, meta interface{}) error 
 		Enabled:  &enabled,
 	}
 
-	log.Printf("[DEBUG] Updating user %s with options: %v\n", d.Id(), opts)
+	log.Print(msgUpdate(objectUser, d.Id(), opts))
 	_, _, err := users.Update(ctx, resellV2Client, d.Id(), opts)
 	if err != nil {
-		return err
+		return errUpdatingObject(objectUser, d.Id(), err)
 	}
 
 	return resourceResellUserV2Read(d, meta)
@@ -93,7 +93,7 @@ func resourceResellUserV2Delete(d *schema.ResourceData, meta interface{}) error 
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	log.Printf("[DEBUG] Deleting user %s\n", d.Id())
+	log.Print(msgDelete(objectUser, d.Id()))
 	response, err := users.Delete(ctx, resellV2Client, d.Id())
 	if err != nil {
 		if response.StatusCode == http.StatusNotFound {
@@ -101,7 +101,7 @@ func resourceResellUserV2Delete(d *schema.ResourceData, meta interface{}) error 
 			return nil
 		}
 
-		return errDeletingObject("user", d.Id(), err)
+		return errDeletingObject(objectUser, d.Id(), err)
 	}
 
 	return nil

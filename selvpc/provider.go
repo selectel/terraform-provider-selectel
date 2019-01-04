@@ -5,6 +5,18 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
+const (
+	objectFloatingIP    = "floating IP"
+	objectKeypair       = "keypair"
+	objectLicense       = "license"
+	objectProject       = "project"
+	objectProjectQuotas = "quotas for project"
+	objectRole          = "role"
+	objectSubnet        = "subnet"
+	objectToken         = "token"
+	objectUser          = "user"
+)
+
 // Provider returns the selvpc terraform provider.
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{

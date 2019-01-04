@@ -40,10 +40,10 @@ func resourceResellTokenV2Create(d *schema.ResourceData, meta interface{}) error
 		DomainName: d.Get("account_name").(string),
 	}
 
-	log.Printf("[DEBUG] Creating token with options: %v\n", opts)
+	log.Print(msgCreate(objectToken, opts))
 	token, _, err := tokens.Create(ctx, resellV2Client, opts)
 	if err != nil {
-		return errCreatingObject("token", err)
+		return errCreatingObject(objectToken, err)
 	}
 
 	d.SetId(token.ID)
