@@ -391,13 +391,14 @@
   version = "v1.1.2"
 
 [[projects]]
-  digest = "1:55e2a84b20c6968e8f65941685cb4507956130f9985bc451fa41888a5fb40480"
+  digest = "1:f456c5f00e656ca74225486b15a0de78f3d25ece59698c9e130531bfb142a234"
   name = "github.com/selectel/go-selvpcclient"
   packages = [
     "selvpcclient",
     "selvpcclient/resell",
     "selvpcclient/resell/v2",
     "selvpcclient/resell/v2/floatingips",
+    "selvpcclient/resell/v2/keypairs",
     "selvpcclient/resell/v2/licenses",
     "selvpcclient/resell/v2/projects",
     "selvpcclient/resell/v2/quotas",
@@ -408,8 +409,8 @@
     "selvpcclient/resell/v2/users",
   ]
   pruneopts = "UT"
-  revision = "7bfa64fe8a011da4ee1bed49c1ae5840b65a4c47"
-  version = "v1.5.2"
+  revision = "8839192ef6aedfe28640a314c6b0333fe5e55c63"
+  version = "v1.6.0"
 
 [[projects]]
   digest = "1:18752d0b95816a1b777505a97f71c7467a8445b8ffb55631a7bf779f6ba4fa83"
@@ -577,6 +578,7 @@
     "github.com/selectel/go-selvpcclient/selvpcclient/resell",
     "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2",
     "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/floatingips",
+    "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/keypairs",
     "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/licenses",
     "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects",
     "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas",

@@ -12,6 +12,29 @@ import (
 
 const resourceURL = "roles"
 
+// List returns all roles in the current domain.
+func List(ctx context.Context, client *selvpcclient.ServiceClient) ([]*Role, *selvpcclient.ResponseResult, error) {
+	url := strings.Join([]string{client.Endpoint, resourceURL}, "/")
+	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	if responseResult.Err != nil {
+		return nil, responseResult, responseResult.Err
+	}
+
+	//Extract roles from the response body.
+	var result struct {
+		Roles []*Role `json:"roles"`
+	}
+	err = responseResult.ExtractResult(&result)
+	if err != nil {
+		return nil, responseResult, err
+	}
+
+	return result.Roles, responseResult, nil
+}
+
 // ListProject returns all roles in the specified project.
 func ListProject(ctx context.Context, client *selvpcclient.ServiceClient, id string) ([]*Role, *selvpcclient.ResponseResult, error) {
 	url := strings.Join([]string{client.Endpoint, resourceURL, "projects", id}, "/")
