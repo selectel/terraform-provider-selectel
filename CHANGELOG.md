@@ -1,5 +1,9 @@
 ## 1.1.0 (Unreleased)
 
+FEATURES:
+
+* __New Resource:__ `selvpc_resell_keypair_v2` [GH-29]
+
 IMPROVEMENTS:
 
 * Added Go-selvpc library with tuned HTTP client to prevent errors when making call to the Resell API [GH-30]
