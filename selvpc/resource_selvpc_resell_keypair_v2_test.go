@@ -34,6 +34,7 @@ func TestAccResellV2KeypairBasic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckResellV2UserExists("selvpc_resell_user_v2.user_tf_acc_test_1", &user),
 					testAccCheckResellV2KeypairExists("selvpc_resell_keypair_v2.keypair_tf_acc_test_1", &keypair),
+					resource.TestCheckResourceAttr("selvpc_resell_keypair_v2.keypair_tf_acc_test_1", "name", keypairName),
 					resource.TestCheckResourceAttr("selvpc_resell_keypair_v2.keypair_tf_acc_test_1", "public_key", publicKey),
 					resource.TestCheckResourceAttr("selvpc_resell_keypair_v2.keypair_tf_acc_test_1", "regions.#", "2"),
 					resource.TestCheckResourceAttrSet("selvpc_resell_keypair_v2.keypair_tf_acc_test_1", "user_id"),
