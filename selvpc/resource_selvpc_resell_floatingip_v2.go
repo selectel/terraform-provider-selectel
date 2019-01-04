@@ -2,7 +2,6 @@ package selvpc
 
 import (
 	"context"
-	"errors"
 	"log"
 	"net/http"
 
@@ -85,14 +84,13 @@ func resourceResellFloatingIPV2Create(d *schema.ResourceData, meta interface{}) 
 		},
 	}
 
-	log.Printf("[DEBUG] Creating floating IP with options: %v\n", opts)
+	log.Print(msgCreate(objectFloatingIP, opts))
 	floatingIPs, _, err := floatingips.Create(ctx, resellV2Client, projectID, opts)
 	if err != nil {
-		return errCreatingObject("floating IP", err)
+		return errCreatingObject(objectFloatingIP, err)
 	}
-
 	if len(floatingIPs) != 1 {
-		return errors.New("can't get floating ip from the response")
+		return errReadFromResponse(objectFloatingIP)
 	}
 
 	d.SetId(floatingIPs[0].ID)
@@ -105,7 +103,7 @@ func resourceResellFloatingIPV2Read(d *schema.ResourceData, meta interface{}) er
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	log.Printf("[DEBUG] Getting floating IP %s", d.Id())
+	log.Print(msgGet(objectFloatingIP, d.Id()))
 	floatingIP, response, err := floatingips.Get(ctx, resellV2Client, d.Id())
 	if err != nil {
 		if response.StatusCode == http.StatusNotFound {
@@ -113,7 +111,7 @@ func resourceResellFloatingIPV2Read(d *schema.ResourceData, meta interface{}) er
 			return nil
 		}
 
-		return errGettingObject("floating IP", d.Id(), err)
+		return errGettingObject(objectFloatingIP, d.Id(), err)
 	}
 
 	d.Set("fixed_ip_address", floatingIP.FixedIPAddress)
@@ -125,7 +123,7 @@ func resourceResellFloatingIPV2Read(d *schema.ResourceData, meta interface{}) er
 
 	associatedServers := serversMapsFromStructs(floatingIP.Servers)
 	if err := d.Set("servers", associatedServers); err != nil {
-		log.Printf("[DEBUG] servers: %s", err)
+		log.Print(errSettingComplexAttr("servers", err))
 	}
 
 	return nil
@@ -136,7 +134,7 @@ func resourceResellFloatingIPV2Delete(d *schema.ResourceData, meta interface{}) 
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	log.Printf("[DEBUG] Deleting floating IP %s\n", d.Id())
+	log.Print(msgDelete(objectFloatingIP, d.Id()))
 	response, err := floatingips.Delete(ctx, resellV2Client, d.Id())
 	if err != nil {
 		if response.StatusCode == http.StatusNotFound {
@@ -144,7 +142,7 @@ func resourceResellFloatingIPV2Delete(d *schema.ResourceData, meta interface{}) 
 			return nil
 		}
 
-		return errDeletingObject("floating IP", d.Id(), err)
+		return errDeletingObject(objectFloatingIP, d.Id(), err)
 	}
 
 	return nil

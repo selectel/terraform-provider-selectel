@@ -7,10 +7,32 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const errString = "got 503"
+const testErrString = "got 503"
+
+func TestErrSettingComplexAttr(t *testing.T) {
+	attr := "servers"
+	err := errors.New(testErrString)
+
+	expected := "[DEBUG] error setting servers: got 503"
+
+	actual := errSettingComplexAttr(attr, err)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestErrParseID(t *testing.T) {
+	object := "floating IP"
+	id := "c0d10656-a4ae-468e-92db-44b2032e256b"
+
+	expected := errors.New("unable to parse floating IP ID: 'c0d10656-a4ae-468e-92db-44b2032e256b'")
+
+	actual := errParseID(object, id)
+
+	assert.Equal(t, expected, actual)
+}
 
 func TestErrParseProjectV2Quotas(t *testing.T) {
-	err := errors.New(errString)
+	err := errors.New(testErrString)
 
 	expected := errors.New("got error parsing quotas: got 503")
 
@@ -21,7 +43,7 @@ func TestErrParseProjectV2Quotas(t *testing.T) {
 
 func TestErrSearchingProjectRole(t *testing.T) {
 	projectID := "uuid"
-	err := errors.New(errString)
+	err := errors.New(testErrString)
 
 	expected := errors.New("can't find role for project 'uuid': got 503")
 
@@ -30,11 +52,22 @@ func TestErrSearchingProjectRole(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestErrSearchingKeypair(t *testing.T) {
+	keypairName := "key1"
+	err := errors.New(testErrString)
+
+	expected := errors.New("can't find keypair 'key1': got 503")
+
+	actual := errSearchingKeypair(keypairName, err)
+
+	assert.Equal(t, expected, actual)
+}
+
 func TestErrCreatingObject(t *testing.T) {
 	object := "some stuff"
-	err := errors.New(errString)
+	err := errors.New(testErrString)
 
-	expected := errors.New("[DEBUG] error creating some stuff: got 503")
+	expected := errors.New("error creating some stuff: got 503")
 
 	actual := errCreatingObject(object, err)
 
@@ -44,9 +77,9 @@ func TestErrCreatingObject(t *testing.T) {
 func TestErrUpdatingObject(t *testing.T) {
 	object := "license"
 	licenseID := "aaa"
-	err := errors.New(errString)
+	err := errors.New(testErrString)
 
-	expected := errors.New("[DEBUG] error updating license 'aaa': got 503")
+	expected := errors.New("error updating license 'aaa': got 503")
 
 	actual := errUpdatingObject(object, licenseID, err)
 
@@ -56,9 +89,9 @@ func TestErrUpdatingObject(t *testing.T) {
 func TestErrGettingObject(t *testing.T) {
 	object := "project"
 	projectID := "project_1"
-	err := errors.New(errString)
+	err := errors.New(testErrString)
 
-	expected := errors.New("[DEBUG] error getting project 'project_1': got 503")
+	expected := errors.New("error getting project 'project_1': got 503")
 
 	actual := errGettingObject(object, projectID, err)
 
@@ -68,9 +101,9 @@ func TestErrGettingObject(t *testing.T) {
 func TestErrDeletingObject(t *testing.T) {
 	object := "user"
 	projectID := "some_user"
-	err := errors.New(errString)
+	err := errors.New(testErrString)
 
-	expected := errors.New("[DEBUG] error deleting user 'some_user': got 503")
+	expected := errors.New("error deleting user 'some_user': got 503")
 
 	actual := errDeletingObject(object, projectID, err)
 

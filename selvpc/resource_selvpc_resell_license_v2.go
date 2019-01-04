@@ -2,7 +2,6 @@ package selvpc
 
 import (
 	"context"
-	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -82,14 +81,14 @@ func resourceResellLicenseV2Create(d *schema.ResourceData, meta interface{}) err
 		},
 	}
 
-	log.Printf("[DEBUG] Creating license with options: %v\n", opts)
+	log.Print(msgCreate(objectLicense, opts))
 	newLicenses, _, err := licenses.Create(ctx, resellV2Client, projectID, opts)
 	if err != nil {
-		return errCreatingObject("license", err)
+		return errCreatingObject(objectLicense, err)
 	}
 
 	if len(newLicenses) != 1 {
-		return errors.New("can't get license from the response")
+		return errReadFromResponse(objectLicense)
 	}
 
 	d.SetId(strconv.Itoa(newLicenses[0].ID))
@@ -102,7 +101,7 @@ func resourceResellLicenseV2Read(d *schema.ResourceData, meta interface{}) error
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	log.Printf("[DEBUG] Getting license %s", d.Id())
+	log.Print(msgGet(objectLicense, d.Id()))
 	license, response, err := licenses.Get(ctx, resellV2Client, d.Id())
 	if err != nil {
 		if response.StatusCode == http.StatusNotFound {
@@ -110,7 +109,7 @@ func resourceResellLicenseV2Read(d *schema.ResourceData, meta interface{}) error
 			return nil
 		}
 
-		return errGettingObject("license", d.Id(), err)
+		return errGettingObject(objectLicense, d.Id(), err)
 	}
 
 	d.Set("project_id", license.ProjectID)
@@ -119,7 +118,7 @@ func resourceResellLicenseV2Read(d *schema.ResourceData, meta interface{}) error
 	d.Set("type", license.Type)
 	associatedServers := serversMapsFromStructs(license.Servers)
 	if err := d.Set("servers", associatedServers); err != nil {
-		log.Printf("[DEBUG] servers: %s", err)
+		log.Print(errSettingComplexAttr("servers", err))
 	}
 
 	return nil
@@ -130,7 +129,7 @@ func resourceResellLicenseV2Delete(d *schema.ResourceData, meta interface{}) err
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	log.Printf("[DEBUG] Deleting license %s\n", d.Id())
+	log.Print(msgDelete(objectLicense, d.Id()))
 	response, err := licenses.Delete(ctx, resellV2Client, d.Id())
 	if err != nil {
 		if response.StatusCode == http.StatusNotFound {
@@ -138,7 +137,7 @@ func resourceResellLicenseV2Delete(d *schema.ResourceData, meta interface{}) err
 			return nil
 		}
 
-		return errDeletingObject("license", d.Id(), err)
+		return errDeletingObject(objectLicense, d.Id(), err)
 	}
 
 	return nil

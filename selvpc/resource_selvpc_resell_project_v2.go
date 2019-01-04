@@ -166,10 +166,10 @@ func resourceResellProjectV2Create(d *schema.ResourceData, meta interface{}) err
 	opts.Name = d.Get("name").(string)
 	opts.AutoQuotas = d.Get("auto_quotas").(bool)
 
-	log.Printf("[DEBUG] Creating project with options: %v\n", opts)
+	log.Print(msgCreate(objectProject, opts))
 	project, _, err := projects.Create(ctx, resellV2Client, opts)
 	if err != nil {
-		return errCreatingObject("project", err)
+		return errCreatingObject(objectProject, err)
 	}
 
 	d.SetId(project.ID)
@@ -182,7 +182,7 @@ func resourceResellProjectV2Read(d *schema.ResourceData, meta interface{}) error
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	log.Printf("[DEBUG] Getting project %s\n", d.Id())
+	log.Print(msgGet(objectProject, d.Id()))
 	project, response, err := projects.Get(ctx, resellV2Client, d.Id())
 	if err != nil {
 		if response.StatusCode == http.StatusNotFound {
@@ -190,7 +190,7 @@ func resourceResellProjectV2Read(d *schema.ResourceData, meta interface{}) error
 			return nil
 		}
 
-		return errGettingObject("project", d.Id(), err)
+		return errGettingObject(objectProject, d.Id(), err)
 	}
 
 	projectCustomURL, err := resourceResellProjectV2URLWithoutSchema(project.CustomURL)
@@ -202,14 +202,14 @@ func resourceResellProjectV2Read(d *schema.ResourceData, meta interface{}) error
 	d.Set("url", project.URL)
 	d.Set("enabled", project.Enabled)
 	if err := d.Set("theme", project.Theme); err != nil {
-		log.Printf("[DEBUG] theme: %s", err)
+		log.Print(errSettingComplexAttr("theme", err))
 	}
 
 	// Set all quotas. This can be different from what the user specified since
 	// the project will have all available resource quotas automatically applied.
 	allQuotas := resourceResellProjectV2QuotasToSet(project.Quotas)
 	if err := d.Set("all_quotas", allQuotas); err != nil {
-		log.Printf("[DEBUG] all_quotas: %s", err)
+		log.Print(errSettingComplexAttr("all_quotas", err))
 	}
 
 	return nil
@@ -252,18 +252,18 @@ func resourceResellProjectV2Update(d *schema.ResourceData, meta interface{}) err
 	if hasChange {
 		// Update project options if needed.
 		if projectChange {
-			log.Printf("[DEBUG] Updating project %s with options: %v\n", d.Id(), projectOpts)
+			log.Print(msgUpdate(objectProject, d.Id(), projectOpts))
 			_, _, err := projects.Update(ctx, resellV2Client, d.Id(), projectOpts)
 			if err != nil {
-				return fmt.Errorf("error updating project '%s': %s", d.Id(), err)
+				return errUpdatingObject(objectProject, d.Id(), err)
 			}
 		}
 		// Update project quotas if needed.
 		if quotaChange {
-			log.Printf("[DEBUG] Updating project %s quotas with options: %v\n", d.Id(), projectQuotasOpts)
+			log.Print(msgUpdate(objectProjectQuotas, d.Id(), projectQuotasOpts))
 			_, _, err := quotas.UpdateProjectQuotas(ctx, resellV2Client, d.Id(), projectQuotasOpts)
 			if err != nil {
-				return fmt.Errorf("error updating quotas for project '%s': %s", d.Id(), err)
+				return errUpdatingObject(objectProjectQuotas, d.Id(), err)
 			}
 		}
 	}
@@ -276,7 +276,7 @@ func resourceResellProjectV2Delete(d *schema.ResourceData, meta interface{}) err
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	log.Printf("[DEBUG] Deleting project %s\n", d.Id())
+	log.Print(msgDelete(objectProject, d.Id()))
 	response, err := projects.Delete(ctx, resellV2Client, d.Id())
 	if err != nil {
 		if response.StatusCode == http.StatusNotFound {
@@ -284,7 +284,7 @@ func resourceResellProjectV2Delete(d *schema.ResourceData, meta interface{}) err
 			return nil
 		}
 
-		return errDeletingObject("project", d.Id(), err)
+		return errDeletingObject(objectProject, d.Id(), err)
 	}
 
 	return nil

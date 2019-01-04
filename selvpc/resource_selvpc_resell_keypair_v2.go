@@ -2,7 +2,6 @@ package selvpc
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -58,16 +57,16 @@ func resourceResellKeypairV2Create(d *schema.ResourceData, meta interface{}) err
 		Regions:   expandResellV2Regions(d.Get("regions").(*schema.Set)),
 	}
 
-	log.Printf("[DEBUG] Creating keypair with options: %v\n", opts)
+	log.Print(msgCreate(objectKeypair, opts))
 	newKeypairs, _, err := keypairs.Create(ctx, resellV2Client, opts)
 	if err != nil {
-		return errCreatingObject("keypair", err)
+		return errCreatingObject(objectKeypair, err)
 	}
 
 	// There can be several keypairs if user specified more than one region.
 	// All those keypairs will have the same name and user ID attributes.
 	if len(newKeypairs) == 0 {
-		return errors.New("no keypairs were created")
+		return errReadFromResponse(objectKeypair)
 	}
 	// Retrieve same attributes to build ID of the resource.
 	userID := newKeypairs[0].UserID
@@ -83,10 +82,10 @@ func resourceResellKeypairV2Read(d *schema.ResourceData, meta interface{}) error
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	log.Printf("[DEBUG] Getting keypair %s", d.Id())
+	log.Print(msgGet(objectKeypair, d.Id()))
 	userID, keypairName, err := resourceResellKeypairV2ParseID(d.Id())
 	if err != nil {
-		return err
+		return errParseID(objectKeypair, d.Id())
 	}
 	existingKeypairs, _, err := keypairs.List(ctx, resellV2Client)
 	if err != nil {
@@ -121,7 +120,7 @@ func resourceResellKeypairV2Delete(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
-	log.Printf("[DEBUG] Deleting keypair %s\n", d.Id())
+	log.Print(msgDelete(objectKeypair, d.Id()))
 	response, err := keypairs.Delete(ctx, resellV2Client, keypairName, userID)
 	if err != nil {
 		if response.StatusCode == http.StatusNotFound {
@@ -129,7 +128,7 @@ func resourceResellKeypairV2Delete(d *schema.ResourceData, meta interface{}) err
 			return nil
 		}
 
-		return errDeletingObject("keypair", d.Id(), err)
+		return errDeletingObject(objectKeypair, d.Id(), err)
 	}
 
 	return nil
@@ -142,7 +141,7 @@ func resourceResellKeypairV2BuildID(userID, keypairName string) string {
 func resourceResellKeypairV2ParseID(id string) (string, string, error) {
 	idParts := strings.Split(id, "/")
 	if len(idParts) != 2 {
-		return "", "", errParseID(id)
+		return "", "", errParseID(objectKeypair, id)
 	}
 
 	return idParts[0], idParts[1], nil
