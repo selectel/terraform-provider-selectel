@@ -17,6 +17,9 @@ func resourceResellKeypairV2() *schema.Resource {
 		Create: resourceResellKeypairV2Create,
 		Read:   resourceResellKeypairV2Read,
 		Delete: resourceResellKeypairV2Delete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -94,8 +97,10 @@ func resourceResellKeypairV2Read(d *schema.ResourceData, meta interface{}) error
 	for _, keypair := range existingKeypairs {
 		if keypair.UserID == userID && keypair.Name == keypairName {
 			found = true
+			d.Set("name", keypair.Name)
 			d.Set("public_key", keypair.PublicKey)
 			d.Set("regions", keypair.Regions)
+			d.Set("user_id", keypair.UserID)
 		}
 	}
 
