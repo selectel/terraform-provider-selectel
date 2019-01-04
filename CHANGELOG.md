@@ -7,6 +7,7 @@ FEATURES:
 IMPROVEMENTS:
 
 * Added Go-selvpc library with tuned HTTP client to prevent errors when making call to the Resell API [GH-30]
+* Added same format for all debug messages [GH-32]
 
 ## 1.0.0 (December 19, 2018)
 
