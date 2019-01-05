@@ -41,8 +41,6 @@ The following arguments are supported:
 * `ip_version` - (Optional) A version of the IP protocol of the subnet. Defaults
   to "ipv4". Changing this creates a new subnet.
 
-* `type` - (Required) The type of the subnet. Changing this creates a new subnet.
-
 ## Attributes Reference
 
 The following attributes are exported:
