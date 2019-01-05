@@ -2,6 +2,10 @@ package selvpc
 
 import "fmt"
 
+func errParsingPrefixLength(object, id string, err error) string {
+	return fmt.Sprintf("[DEBUG] can't parse prefix length from %s '%s' CIDR: %s", object, id, err)
+}
+
 func errSettingComplexAttr(attr string, err error) string {
 	return fmt.Sprintf("[DEBUG] error setting %s: %s", attr, err)
 }
