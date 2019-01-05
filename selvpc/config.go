@@ -6,7 +6,7 @@ import (
 
 	"github.com/selectel/go-selvpcclient/selvpcclient"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2"
+	v2 "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2"
 )
 
 // Config contains all available configuration options.
