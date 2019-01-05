@@ -9,6 +9,18 @@ import (
 
 const testErrString = "got 503"
 
+func TestErrParsingPrefixLength(t *testing.T) {
+	id := "5"
+	object := "subnet"
+	err := errors.New(testErrString)
+
+	expected := "[DEBUG] can't parse prefix length from subnet '5' CIDR: got 503"
+
+	actual := errParsingPrefixLength(object, id, err)
+
+	assert.Equal(t, expected, actual)
+}
+
 func TestErrSettingComplexAttr(t *testing.T) {
 	attr := "servers"
 	err := errors.New(testErrString)

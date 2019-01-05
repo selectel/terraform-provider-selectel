@@ -2,11 +2,9 @@ package selvpc
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
@@ -145,14 +143,14 @@ func resourceResellSubnetV2Read(d *schema.ResourceData, meta interface{}) error 
 	d.Set("region", subnet.Region)
 	d.Set("status", subnet.Status)
 
-	prefixLength, err := resourceResellSubnetV2PrefixLengthFromCIDR(subnet.CIDR)
+	prefixLength, err := getPrefixLengthFromCIDR(subnet.CIDR)
 	if err != nil {
-		log.Printf("[DEBUG] can't parse prefix length from subnet '%s' CIDR: %s", d.Id(), err)
+		log.Print(errParsingPrefixLength(objectSubnet, d.Id(), err))
 	} else {
 		d.Set("prefix_length", prefixLength)
 	}
 
-	d.Set("ip_version", resourceResellSubnetV2GetIPVersionFromPrefixLength(prefixLength))
+	d.Set("ip_version", getIPVersionFromPrefixLength(prefixLength))
 
 	associatedServers := serversMapsFromStructs(subnet.Servers)
 	if err := d.Set("servers", associatedServers); err != nil {
@@ -179,28 +177,4 @@ func resourceResellSubnetV2Delete(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	return nil
-}
-
-func resourceResellSubnetV2PrefixLengthFromCIDR(cidr string) (int, error) {
-	cidrParts := strings.Split(cidr, "/")
-	if len(cidrParts) != 2 {
-		return 0, fmt.Errorf("got invalid CIDR: %s", cidr)
-	}
-
-	prefixLenght, err := strconv.Atoi(cidrParts[1])
-	if err != nil {
-		return 0, fmt.Errorf("error reading prefix length from '%s': %s", cidrParts[1], err)
-	}
-
-	return prefixLenght, nil
-}
-
-func resourceResellSubnetV2GetIPVersionFromPrefixLength(prefixLength int) string {
-	// Any subnet with prefix length larger than 32 is a IPv6 protocol subnet
-	// and Selectel doesn't provide any IPv6 subnets with smaller prefix lengths.
-	if prefixLength > 32 {
-		return string(selvpcclient.IPv6)
-	}
-
-	return string(selvpcclient.IPv4)
 }
