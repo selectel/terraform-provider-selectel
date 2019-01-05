@@ -3,11 +3,13 @@
 FEATURES:
 
 * __New Resource:__ `selvpc_resell_keypair_v2` [GH-29]
+* __New Resource:__ `selvpc_resell_vrrp_subnet_v2` [GH-35]
 
 IMPROVEMENTS:
 
-* Added Go-selvpc library with tuned HTTP client to prevent errors when making call to the Resell API [GH-30]
-* Added same format for all debug messages [GH-32]
+* Updated to Go-selvpc library with tuned HTTP client to prevent errors when making call to the Resell API [GH-30]
+* Added the same format for all debug messages [GH-32]
+* Remove the `type` argument of the `selvpc_resell_subnet_v2` from the documentation as it doesn't exist [GH-36]
 
 ## 1.0.0 (December 19, 2018)
 
