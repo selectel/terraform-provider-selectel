@@ -12,13 +12,11 @@ import (
 func serversMapsFromStructs(serverStructs []servers.Server) []map[string]interface{} {
 	associatedServers := make([]map[string]interface{}, len(serverStructs))
 
-	if len(serverStructs) != 0 {
-		for i, server := range serverStructs {
-			associatedServers[i] = map[string]interface{}{
-				"id":     server.ID,
-				"name":   server.Name,
-				"status": server.Status,
-			}
+	for i, server := range serverStructs {
+		associatedServers[i] = map[string]interface{}{
+			"id":     server.ID,
+			"name":   server.Name,
+			"status": server.Status,
 		}
 	}
 
