@@ -11,7 +11,7 @@ IMPROVEMENTS:
 * Added the same format for all debug messages [GH-32]
 * Remove the `type` argument of the `selvpc_resell_subnet_v2` from the documentation as it doesn't exist [GH-36]
 * Updated Go-selvpcclient dependency to `v1.6.0` [GH-33]
-* Updated Go in Travis CI to `v1.11.4` [GH-38]
+* Used `v1.11.x` Go version in Travis CI [GH-40]
 * Updated GolangCI-Lint in Travis CI to `v1.12.5` [GH-37]
 
 ## 1.0.0 (December 19, 2018)
