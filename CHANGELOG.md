@@ -1,18 +1,18 @@
-## 1.1.0 (Unreleased)
+## 1.1.0 (January 08, 2019)
 
 FEATURES:
 
-* __New Resource:__ `selvpc_resell_keypair_v2` [GH-29]
-* __New Resource:__ `selvpc_resell_vrrp_subnet_v2` [GH-35]
+* __New Resource:__ `selvpc_resell_keypair_v2` ([#29](https://github.com/terraform-providers/terraform-provider-aws/issues/29))
+* __New Resource:__ `selvpc_resell_vrrp_subnet_v2` ([#35](https://github.com/terraform-providers/terraform-provider-aws/issues/35))
 
 IMPROVEMENTS:
 
-* Added tuned HTTP client to prevent errors when making call to the Resell API [GH-30]
-* Added the same format for all debug messages [GH-32]
-* Remove the `type` argument of the `selvpc_resell_subnet_v2` from the documentation as it doesn't exist [GH-36]
-* Updated Go-selvpcclient dependency to `v1.6.0` [GH-33]
-* Used `v1.11.x` Go version in Travis CI [GH-40]
-* Updated GolangCI-Lint in Travis CI to `v1.12.5` [GH-37]
+* Added tuned HTTP client to prevent errors when making call to the Resell API ([#30](https://github.com/terraform-providers/terraform-provider-aws/issues/30))
+* Added the same format for all debug messages ([#32](https://github.com/terraform-providers/terraform-provider-aws/issues/32))
+* Remove the `type` argument of the `selvpc_resell_subnet_v2` from the documentation as it doesn't exist ([#36](https://github.com/terraform-providers/terraform-provider-aws/issues/36))
+* Updated Go-selvpcclient dependency to `v1.6.0` ([#33](https://github.com/terraform-providers/terraform-provider-aws/issues/33))
+* Used `v1.11.x` Go version in Travis CI ([#40](https://github.com/terraform-providers/terraform-provider-aws/issues/40))
+* Updated GolangCI-Lint in Travis CI to `v1.12.5` ([#37](https://github.com/terraform-providers/terraform-provider-aws/issues/37))
 
 ## 1.0.0 (December 19, 2018)
 
