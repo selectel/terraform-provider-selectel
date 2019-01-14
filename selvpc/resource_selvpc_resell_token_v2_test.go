@@ -2,6 +2,8 @@ package selvpc
 
 import (
 	"fmt"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/acctest"
@@ -29,7 +31,11 @@ func TestAccResellV2TokenBasic(t *testing.T) {
 }
 
 func TestAccResellV2TokenAccount(t *testing.T) {
-	accountName := "79414"
+	accountName := ""
+
+	if selToken := os.Getenv("SEL_TOKEN"); strings.ContainsAny(selToken, "_") {
+		accountName = strings.Split(selToken, "_")[1]
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccSelVPCPreCheck(t) },
