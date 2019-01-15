@@ -1,4 +1,9 @@
 ## 1.2.0 (Unreleased)
+
+BUG FIXES:
+
+* Fixed Resell V2 Token Account acceptance test [GH-41]
+
 ## 1.1.0 (January 08, 2019)
 
 FEATURES:
