@@ -40,10 +40,28 @@ func subnetsMapsFromStructs(subnetsStructs []subnets.Subnet) []map[string]interf
 	associatedSubnets := make([]map[string]interface{}, len(subnetsStructs))
 
 	for i, subnet := range subnetsStructs {
-		associatedSubnets[i] = map[string]interface{}{
-			"network_id": subnet.NetworkID,
-			"subnet_id":  subnet.SubnetID,
-			"region":     subnet.Region,
+		associatedSubnets[i] = make(map[string]interface{})
+
+		if subnet.NetworkID != "" {
+			associatedSubnets[i]["network_id"] = subnet.NetworkID
+		}
+		if subnet.SubnetID != "" {
+			associatedSubnets[i]["subnet_id"] = subnet.SubnetID
+		}
+		if subnet.Region != "" {
+			associatedSubnets[i]["region"] = subnet.Region
+		}
+		if subnet.CIDR != "" {
+			associatedSubnets[i]["cidr"] = subnet.CIDR
+		}
+		if subnet.VLANID != 0 {
+			associatedSubnets[i]["vlan_id"] = subnet.VLANID
+		}
+		if subnet.ProjectID != "" {
+			associatedSubnets[i]["project_id"] = subnet.ProjectID
+		}
+		if subnet.VTEPIPAddress != "" {
+			associatedSubnets[i]["vtep_ip_address"] = subnet.VTEPIPAddress
 		}
 	}
 
