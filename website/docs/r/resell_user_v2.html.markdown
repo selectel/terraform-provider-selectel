@@ -1,19 +1,19 @@
 ---
-layout: "selvpc"
-page_title: "SelVPC: selvpc_resell_user_v2"
-sidebar_current: "docs-selvpc-resource-resell-user-v2"
+layout: "selectel"
+page_title: "Selectel: selectel_vpc_user_v2"
+sidebar_current: "docs-selectel-resource-vpc-user-v2"
 description: |-
-  Manages a V2 user resource within Resell Selectel VPC.
+  Manages a V2 user resource within Selectel VPC.
 ---
 
-# selvpc\_resell\_user_v2
+# selectel\_vpc\_user_v2
 
-Manages a V2 user resource within Resell Selectel VPC.
+Manages a V2 user resource within Selectel VPC.
 
 ## Example Usage
 
 ```hcl
-resource "selvpc_resell_user_v2" "user_1" {
+resource "selectel_vpc_user_v2" "user_1" {
   password = "verysecret"
   enabled  = true
 }
