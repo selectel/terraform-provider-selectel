@@ -1,14 +1,14 @@
 ---
-layout: "selvpc"
-page_title: "SelVPC: selvpc_resell_token_v2"
-sidebar_current: "docs-selvpc-resource-resell-token-v2"
+layout: "selectel"
+page_title: "Selectel: selectel_vpc_token_v2"
+sidebar_current: "docs-selectel-resource-vpc-token-v2"
 description: |-
-  Manages a V2 token resource within Resell Selectel VPC.
+  Manages a V2 token resource within Selectel VPC.
 ---
 
-# selvpc\_resell\_token_v2
+# selectel\_vpc\_token_v2
 
-Manages a V2 token resource within Resell Selectel VPC.
+Manages a V2 token resource within Selectel VPC.
 
 ID of this resource can be used within the OpenStack API Identity service as
 the `X-Auth-Token` value.
@@ -16,12 +16,12 @@ the `X-Auth-Token` value.
 ## Example Usage
 
 ```hcl
-resource "selvpc_resell_project_v2" "project_1" {
+resource "selectel_vpc_project_v2" "project_1" {
   auto_quotas = true
 }
 
-resource "selvpc_resell_token_v2" "token_tf_acc_test_1" {
-  project_id = "${selvpc_resell_project_v2.project_1.id}"
+resource "selectel_vpc_token_v2" "token_tf_acc_test_1" {
+  project_id = "${selectel_vpc_project_v2.project_1.id}"
 }
 ```
 
