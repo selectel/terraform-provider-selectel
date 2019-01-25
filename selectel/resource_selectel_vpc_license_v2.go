@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"context"
@@ -10,11 +10,11 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/licenses"
 )
 
-func resourceResellLicenseV2() *schema.Resource {
+func resourceVPCLicenseV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceResellLicenseV2Create,
-		Read:   resourceResellLicenseV2Read,
-		Delete: resourceResellLicenseV2Delete,
+		Create: resourceVPCLicenseV2Create,
+		Read:   resourceVPCLicenseV2Read,
+		Delete: resourceVPCLicenseV2Delete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -63,7 +63,7 @@ func resourceResellLicenseV2() *schema.Resource {
 	}
 }
 
-func resourceResellLicenseV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCLicenseV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
@@ -93,10 +93,10 @@ func resourceResellLicenseV2Create(d *schema.ResourceData, meta interface{}) err
 
 	d.SetId(strconv.Itoa(newLicenses[0].ID))
 
-	return resourceResellLicenseV2Read(d, meta)
+	return resourceVPCLicenseV2Read(d, meta)
 }
 
-func resourceResellLicenseV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCLicenseV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
@@ -124,7 +124,7 @@ func resourceResellLicenseV2Read(d *schema.ResourceData, meta interface{}) error
 	return nil
 }
 
-func resourceResellLicenseV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCLicenseV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()

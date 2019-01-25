@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
 )
 
-func TestAccResellV2LicenseBasic(t *testing.T) {
+func TestAccVPCV2LicenseBasic(t *testing.T) {
 	var (
 		license licenses.License
 		project projects.Project
@@ -22,31 +22,31 @@ func TestAccResellV2LicenseBasic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelVPCPreCheck(t) },
+		PreCheck:     func() { testAccSelectelPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckResellV2LicenseDestroy,
+		CheckDestroy: testAccCheckVPCV2LicenseDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResellV2LicenseBasic(projectName),
+				Config: testAccVPCV2LicenseBasic(projectName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckResellV2ProjectExists("selvpc_resell_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckResellV2LicenseExists("selvpc_resell_license_v2.license_tf_acc_test_1", &license),
-					resource.TestCheckResourceAttr("selvpc_resell_license_v2.license_tf_acc_test_1", "region", "ru-1"),
-					resource.TestCheckResourceAttr("selvpc_resell_license_v2.license_tf_acc_test_1", "type", "license_windows_2012_standard"),
-					resource.TestCheckResourceAttr("selvpc_resell_license_v2.license_tf_acc_test_1", "status", "DOWN"),
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccCheckVPCV2LicenseExists("selectel_vpc_license_v2.license_tf_acc_test_1", &license),
+					resource.TestCheckResourceAttr("selectel_vpc_license_v2.license_tf_acc_test_1", "region", "ru-1"),
+					resource.TestCheckResourceAttr("selectel_vpc_license_v2.license_tf_acc_test_1", "type", "license_windows_2012_standard"),
+					resource.TestCheckResourceAttr("selectel_vpc_license_v2.license_tf_acc_test_1", "status", "DOWN"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckResellV2LicenseDestroy(s *terraform.State) error {
+func testAccCheckVPCV2LicenseDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "selvpc_resell_license_v2" {
+		if rs.Type != "selectel_vpc_license_v2" {
 			continue
 		}
 
@@ -59,7 +59,7 @@ func testAccCheckResellV2LicenseDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckResellV2LicenseExists(n string, license *licenses.License) resource.TestCheckFunc {
+func testAccCheckVPCV2LicenseExists(n string, license *licenses.License) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -90,14 +90,14 @@ func testAccCheckResellV2LicenseExists(n string, license *licenses.License) reso
 	}
 }
 
-func testAccResellV2LicenseBasic(projectName string) string {
+func testAccVPCV2LicenseBasic(projectName string) string {
 	return fmt.Sprintf(`
-resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name = "%s"
 }
 
-resource "selvpc_resell_license_v2" "license_tf_acc_test_1" {
-  project_id = "${selvpc_resell_project_v2.project_tf_acc_test_1.id}"
+resource "selectel_vpc_license_v2" "license_tf_acc_test_1" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-1"
   type       = "license_windows_2012_standard"
 }`, projectName)

@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"testing"
@@ -7,17 +7,17 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 )
 
-func TestAccResellV2LicenseImportBasic(t *testing.T) {
-	resourceName := "selvpc_resell_license_v2.license_tf_acc_test_1"
+func TestAccVPCV2LicenseImportBasic(t *testing.T) {
+	resourceName := "selectel_vpc_license_v2.license_tf_acc_test_1"
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelVPCPreCheck(t) },
+		PreCheck:     func() { testAccSelectelPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckResellV2LicenseDestroy,
+		CheckDestroy: testAccCheckVPCV2LicenseDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResellV2LicenseBasic(projectName),
+				Config: testAccVPCV2LicenseBasic(projectName),
 			},
 			{
 				ResourceName:      resourceName,
