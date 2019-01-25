@@ -1,24 +1,24 @@
 ---
-layout: "selvpc"
-page_title: "SelVPC: selvpc_resell_vrrp_subnet_v2"
-sidebar_current: "docs-selvpc-resource-resell-vrrp-subnet-v2"
+layout: "selectel"
+page_title: "Selectel: selectel_vpc_vrrp_subnet_v2"
+sidebar_current: "docs-selectel-resource-vpc-vrrp-subnet-v2"
 description: |-
-  Manages a V2 VRRP subnet resource within Resell Selectel VPC.
+  Manages a V2 VRRP subnet resource within Selectel VPC.
 ---
 
-# selvpc\_resell\_vrrp_subnet_v2
+# selectel\_vpc\_vrrp_subnet_v2
 
-Manages a V2 VRRP subnet resource within Resell Selectel VPC.
+Manages a V2 VRRP subnet resource within Selectel VPC.
 
 ## Example Usage
 
 ```hcl
-resource "selvpc_resell_project_v2" "project_1" {
+resource "selectel_vpc_project_v2" "project_1" {
   auto_quotas = true
 }
 
-resource "selvpc_resell_vrrp_subnet_v2" "vrrp_subnet_1" {
-  project_id    = "${selvpc_resell_project_v2.project_1.id}"
+resource "selectel_vpc_vrrp_subnet_v2" "vrrp_subnet_1" {
+  project_id    = "${selectel_vpc_project_v2.project_1.id}"
   master_region = "ru-1"
   slave_region  = "ru-2"
   ip_version    = "ipv4"
@@ -64,5 +64,5 @@ The following attributes are exported:
 VRRP subnets can be imported using the `id`, e.g.
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selvpc_resell_vrrp_subnet_v2.vrrp_subnet_1 2060
+$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selectel_vpc_vrrp_subnet_v2.vrrp_subnet_1 2060
 ```
