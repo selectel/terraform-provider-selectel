@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"testing"
@@ -7,17 +7,17 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 )
 
-func TestAccResellV2FloatingIPImportBasic(t *testing.T) {
-	resourceName := "selvpc_resell_floatingip_v2.floatingip_tf_acc_test_1"
+func TestAccVPCV2FloatingIPImportBasic(t *testing.T) {
+	resourceName := "selectel_vpc_floatingip_v2.floatingip_tf_acc_test_1"
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelVPCPreCheck(t) },
+		PreCheck:     func() { testAccSelectelPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckResellV2FloatingIPDestroy,
+		CheckDestroy: testAccCheckVPCV2FloatingIPDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResellV2FloatingIPBasic(projectName),
+				Config: testAccVPCV2FloatingIPBasic(projectName),
 			},
 			{
 				ResourceName:      resourceName,

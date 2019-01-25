@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"context"
@@ -9,11 +9,11 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/floatingips"
 )
 
-func resourceResellFloatingIPV2() *schema.Resource {
+func resourceVPCFloatingIPV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceResellFloatingIPV2Create,
-		Read:   resourceResellFloatingIPV2Read,
-		Delete: resourceResellFloatingIPV2Delete,
+		Create: resourceVPCFloatingIPV2Create,
+		Read:   resourceVPCFloatingIPV2Read,
+		Delete: resourceVPCFloatingIPV2Delete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -69,7 +69,7 @@ func resourceResellFloatingIPV2() *schema.Resource {
 	}
 }
 
-func resourceResellFloatingIPV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCFloatingIPV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
@@ -95,10 +95,10 @@ func resourceResellFloatingIPV2Create(d *schema.ResourceData, meta interface{}) 
 
 	d.SetId(floatingIPs[0].ID)
 
-	return resourceResellFloatingIPV2Read(d, meta)
+	return resourceVPCFloatingIPV2Read(d, meta)
 }
 
-func resourceResellFloatingIPV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCFloatingIPV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
@@ -129,7 +129,7 @@ func resourceResellFloatingIPV2Read(d *schema.ResourceData, meta interface{}) er
 	return nil
 }
 
-func resourceResellFloatingIPV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCFloatingIPV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()

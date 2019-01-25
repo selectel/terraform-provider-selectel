@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
 )
 
-func TestAccResellV2FloatingIPBasic(t *testing.T) {
+func TestAccVPCV2FloatingIPBasic(t *testing.T) {
 	var (
 		floatingip floatingips.FloatingIP
 		project    projects.Project
@@ -21,30 +21,30 @@ func TestAccResellV2FloatingIPBasic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelVPCPreCheck(t) },
+		PreCheck:     func() { testAccSelectelPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckResellV2FloatingIPDestroy,
+		CheckDestroy: testAccCheckVPCV2FloatingIPDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResellV2FloatingIPBasic(projectName),
+				Config: testAccVPCV2FloatingIPBasic(projectName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckResellV2ProjectExists("selvpc_resell_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckResellV2FloatingIPExists("selvpc_resell_floatingip_v2.floatingip_tf_acc_test_1", &floatingip),
-					resource.TestCheckResourceAttr("selvpc_resell_floatingip_v2.floatingip_tf_acc_test_1", "region", "ru-2"),
-					resource.TestCheckResourceAttr("selvpc_resell_floatingip_v2.floatingip_tf_acc_test_1", "status", "DOWN"),
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccCheckVPCV2FloatingIPExists("selectel_vpc_floatingip_v2.floatingip_tf_acc_test_1", &floatingip),
+					resource.TestCheckResourceAttr("selectel_vpc_floatingip_v2.floatingip_tf_acc_test_1", "region", "ru-2"),
+					resource.TestCheckResourceAttr("selectel_vpc_floatingip_v2.floatingip_tf_acc_test_1", "status", "DOWN"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckResellV2FloatingIPDestroy(s *terraform.State) error {
+func testAccCheckVPCV2FloatingIPDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "selvpc_resell_floatingip_v2" {
+		if rs.Type != "selectel_vpc_floatingip_v2" {
 			continue
 		}
 
@@ -57,7 +57,7 @@ func testAccCheckResellV2FloatingIPDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckResellV2FloatingIPExists(n string, floatingip *floatingips.FloatingIP) resource.TestCheckFunc {
+func testAccCheckVPCV2FloatingIPExists(n string, floatingip *floatingips.FloatingIP) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -87,15 +87,15 @@ func testAccCheckResellV2FloatingIPExists(n string, floatingip *floatingips.Floa
 	}
 }
 
-func testAccResellV2FloatingIPBasic(projectName string) string {
+func testAccVPCV2FloatingIPBasic(projectName string) string {
 	return fmt.Sprintf(`
-resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
   auto_quotas = true
 }
 
-resource "selvpc_resell_floatingip_v2" "floatingip_tf_acc_test_1" {
-  project_id = "${selvpc_resell_project_v2.project_tf_acc_test_1.id}"
+resource "selectel_vpc_floatingip_v2" "floatingip_tf_acc_test_1" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-2"
 }`, projectName)
 }
