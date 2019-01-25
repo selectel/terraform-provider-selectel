@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"os"
@@ -14,7 +14,7 @@ var testAccProvider *schema.Provider
 func init() {
 	testAccProvider = Provider().(*schema.Provider)
 	testAccProviders = map[string]terraform.ResourceProvider{
-		"selvpc": testAccProvider,
+		"selectel": testAccProvider,
 	}
 }
 
@@ -28,7 +28,7 @@ func TestProviderImpl(_ *testing.T) {
 	var _ terraform.ResourceProvider = Provider()
 }
 
-func testAccSelVPCPreCheck(t *testing.T) {
+func testAccSelectelPreCheck(t *testing.T) {
 	if v := os.Getenv("SEL_TOKEN"); v == "" {
 		t.Fatal("SEL_TOKEN must be set for acceptance tests")
 	}

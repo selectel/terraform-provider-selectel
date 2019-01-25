@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"github.com/hashicorp/terraform/helper/schema"
@@ -19,7 +19,7 @@ const (
 	objectCrossRegionSubnet = "cross-region subnet"
 )
 
-// Provider returns the selvpc terraform provider.
+// Provider returns the Selectel terraform provider.
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
@@ -27,26 +27,26 @@ func Provider() terraform.ResourceProvider {
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SEL_TOKEN", nil),
-				Description: "Token to authorize with the Selectel VPC API.",
+				Description: "Token to authorize with the Selectel API.",
 			},
 			"endpoint": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SEL_ENDPOINT", nil),
-				Description: "Base endpoint to work with the Selectel VPC API.",
+				Description: "Base endpoint to work with the Selectel API.",
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"selvpc_resell_floatingip_v2":         resourceResellFloatingIPV2(),
-			"selvpc_resell_keypair_v2":            resourceResellKeypairV2(),
-			"selvpc_resell_license_v2":            resourceResellLicenseV2(),
-			"selvpc_resell_project_v2":            resourceResellProjectV2(),
-			"selvpc_resell_role_v2":               resourceResellRoleV2(),
-			"selvpc_resell_subnet_v2":             resourceResellSubnetV2(),
-			"selvpc_resell_token_v2":              resourceResellTokenV2(),
-			"selvpc_resell_user_v2":               resourceResellUserV2(),
-			"selvpc_resell_vrrp_subnet_v2":        resourceResellVRRPSubnetV2(),
-			"selvpc_resell_crossregion_subnet_v2": resourceResellCrossRegionSubnetV2(),
+			"selectel_vpc_floatingip_v2":         resourceVPCFloatingIPV2(),
+			"selectel_vpc_keypair_v2":            resourceVPCKeypairV2(),
+			"selectel_vpc_license_v2":            resourceVPCLicenseV2(),
+			"selectel_vpc_project_v2":            resourceVPCProjectV2(),
+			"selectel_vpc_role_v2":               resourceVPCRoleV2(),
+			"selectel_vpc_subnet_v2":             resourceVPCSubnetV2(),
+			"selectel_vpc_token_v2":              resourceVPCTokenV2(),
+			"selectel_vpc_user_v2":               resourceVPCUserV2(),
+			"selectel_vpc_vrrp_subnet_v2":        resourceVPCVRRPSubnetV2(),
+			"selectel_vpc_crossregion_subnet_v2": resourceResellCrossRegionSubnetV2(),
 		},
 		ConfigureFunc: configureProvider,
 	}

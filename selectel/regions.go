@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/subnets"
 )
 
-func expandResellV2Regions(rawRegions *schema.Set) []string {
+func expandVPCV2Regions(rawRegions *schema.Set) []string {
 	regions := rawRegions.List()
 
 	expandedRegions := make([]string, len(regions))

@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"fmt"
