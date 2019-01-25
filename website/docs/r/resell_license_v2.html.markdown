@@ -1,19 +1,19 @@
 ---
-layout: "selvpc"
-page_title: "SelVPC: selvpc_resell_license_v2"
-sidebar_current: "docs-selvpc-resource-resell-license-v2"
+layout: "selectel"
+page_title: "Selectel: selectel_vpc_license_v2"
+sidebar_current: "docs-selectel-resource-vpc-license-v2"
 description: |-
-  Manages a V2 license resource within Resell Selectel VPC.
+  Manages a V2 license resource within Selectel VPC.
 ---
 
-# selvpc\_resell\_license_v2
+# selectel\_vpc\_license_v2
 
-Manages a V2 license resource within Resell Selectel VPC.
+Manages a V2 license resource within Selectel VPC.
 
 ## Example Usage
 
 ```hcl
-resource "selvpc_resell_license_v2" "license_windows_2016_standard" {
+resource "selectel_vpc_license_v2" "license_windows_2016_standard" {
   project_id = "887e5e35458d4ee38a6ae0543555dec5"
   region     = "ru-2"
   type       = "license_windows_2012_standard"
@@ -46,5 +46,5 @@ The following attributes are exported:
 Licenses can be imported using the `id`, e.g.
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selvpc_resell_license_v2.license_1 4123
+$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selectel_vpc_license_v2.license_1 4123
 ```
