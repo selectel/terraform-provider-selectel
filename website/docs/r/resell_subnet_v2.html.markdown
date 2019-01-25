@@ -1,24 +1,24 @@
 ---
-layout: "selvpc"
-page_title: "SelVPC: selvpc_resell_subnet_v2"
-sidebar_current: "docs-selvpc-resource-resell-subnet-v2"
+layout: "selectel"
+page_title: "Selectel: selectel_vpc_subnet_v2"
+sidebar_current: "docs-selectel-resource-vpc-subnet-v2"
 description: |-
-  Manages a V2 subnet resource within Resell Selectel VPC.
+  Manages a V2 subnet resource within Selectel VPC.
 ---
 
-# selvpc\_resell\_subnet_v2
+# selectel\_vpc\_subnet_v2
 
-Manages a V2 subnet resource within Resell Selectel VPC.
+Manages a V2 subnet resource within Selectel VPC.
 
 ## Example Usage
 
 ```hcl
-resource "selvpc_resell_project_v2" "project_1" {
+resource "selectel_vpc_project_v2" "project_1" {
   auto_quotas = true
 }
 
-resource "selvpc_resell_subnet_v2" "subnet_1" {
-  project_id    = "${selvpc_resell_project_v2.project_1.id}"
+resource "selectel_vpc_subnet_v2" "subnet_1" {
+  project_id    = "${selectel_vpc_project_v2.project_1.id}"
   region        = "ru-3"
   ip_version    = "ipv4"
   prefix_length = 29
@@ -61,5 +61,5 @@ The following attributes are exported:
 Subnets can be imported using the `id`, e.g.
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selvpc_resell_subnet_v2.subnet_1 2060
+$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selectel_vpc_subnet_v2.subnet_1 2060
 ```
