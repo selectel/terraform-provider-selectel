@@ -1,4 +1,4 @@
-Terraform SelVPC Provider
+Terraform Selectel Provider
 =========================
 
 - Website: https://www.terraform.io
@@ -23,25 +23,25 @@ Requirements
 Building The Provider
 ---------------------
 
-Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-selvpc`
+Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-selectel`
 
 ```sh
 $ mkdir -p $GOPATH/src/github.com/terraform-providers; cd $GOPATH/src/github.com/terraform-providers
-$ git clone git@github.com:terraform-providers/terraform-provider-selvpc.git
+$ git clone git@github.com:terraform-providers/terraform-provider-selectel.git
 ```
 
 Enter the provider directory and build the provider
 
 ```sh
-$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-selvpc
+$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-selectel
 $ make build
 ```
 
 Using the provider
 ----------------------
 
-Documentation is available at: [docs/providers/selvpc](https://www.terraform.io/docs/providers/selvpc/index.html).  
-You can find examples in this repository: [examples](https://github.com/terraform-providers/terraform-provider-selvpc/tree/master/examples).  
+Documentation is available at: [docs/providers/selectel](https://www.terraform.io/docs/providers/selectel/index.html).  
+You can find examples in this repository: [examples](https://github.com/terraform-providers/terraform-provider-selectel/tree/master/examples).  
 Also there are lots of examples in the [selectel/terraform-examples](https://github.com/selectel/terraform-examples).
 
 Developing the Provider
