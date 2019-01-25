@@ -1,19 +1,19 @@
 ---
-layout: "selvpc"
-page_title: "SelVPC: selvpc_resell_floatingip_v2"
-sidebar_current: "docs-selvpc-resource-resell-floatingip-v2"
+layout: "selectel"
+page_title: "Selectel: selectel_vpc_floatingip_v2"
+sidebar_current: "docs-selectel-resource-vpc-floatingip-v2"
 description: |-
-  Manages a V2 floatingip resource within Resell Selectel VPC.
+  Manages a V2 floating IP resource within Selectel VPC.
 ---
 
-# selvpc\_resell\_floatingip_v2
+# selectel\_vpc\_floatingip_v2
 
-Manages a V2 floatingip resource within Resell Selectel VPC.
+Manages a V2 floating IP resource within Selectel VPC.
 
 ## Example Usage
 
 ```hcl
-resource "selvpc_resell_floatingip_v2" "floatingip_1" {
+resource "selectel_vpc_floatingip_v2" "floatingip_1" {
   project_id = "887e5e35458d4ee38a6ae0543555dec5"
   region     = "ru-1"
 }
@@ -49,5 +49,5 @@ The following attributes are exported:
 Floating IPs can be imported using the `id`, e.g.
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selvpc_resell_floatingip_v2.floatingip_1 aa402146-d83e-4c8c-8b74-1f415d4b8253
+$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selectel_vpc_floatingip_v2.floatingip_1 aa402146-d83e-4c8c-8b74-1f415d4b8253
 ```
