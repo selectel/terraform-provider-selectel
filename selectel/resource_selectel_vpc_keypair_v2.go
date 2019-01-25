@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"context"
@@ -11,11 +11,11 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/keypairs"
 )
 
-func resourceResellKeypairV2() *schema.Resource {
+func resourceVPCKeypairV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceResellKeypairV2Create,
-		Read:   resourceResellKeypairV2Read,
-		Delete: resourceResellKeypairV2Delete,
+		Create: resourceVPCKeypairV2Create,
+		Read:   resourceVPCKeypairV2Read,
+		Delete: resourceVPCKeypairV2Delete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -45,7 +45,7 @@ func resourceResellKeypairV2() *schema.Resource {
 	}
 }
 
-func resourceResellKeypairV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCKeypairV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
@@ -54,7 +54,7 @@ func resourceResellKeypairV2Create(d *schema.ResourceData, meta interface{}) err
 		Name:      d.Get("name").(string),
 		PublicKey: d.Get("public_key").(string),
 		UserID:    d.Get("user_id").(string),
-		Regions:   expandResellV2Regions(d.Get("regions").(*schema.Set)),
+		Regions:   expandVPCV2Regions(d.Get("regions").(*schema.Set)),
 	}
 
 	log.Print(msgCreate(objectKeypair, opts))
@@ -72,18 +72,18 @@ func resourceResellKeypairV2Create(d *schema.ResourceData, meta interface{}) err
 	userID := newKeypairs[0].UserID
 	keypairName := newKeypairs[0].Name
 
-	d.SetId(resourceResellKeypairV2BuildID(userID, keypairName))
+	d.SetId(resourceVPCKeypairV2BuildID(userID, keypairName))
 
-	return resourceResellKeypairV2Read(d, meta)
+	return resourceVPCKeypairV2Read(d, meta)
 }
 
-func resourceResellKeypairV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCKeypairV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
 	log.Print(msgGet(objectKeypair, d.Id()))
-	userID, keypairName, err := resourceResellKeypairV2ParseID(d.Id())
+	userID, keypairName, err := resourceVPCKeypairV2ParseID(d.Id())
 	if err != nil {
 		return errParseID(objectKeypair, d.Id())
 	}
@@ -110,12 +110,12 @@ func resourceResellKeypairV2Read(d *schema.ResourceData, meta interface{}) error
 	return nil
 }
 
-func resourceResellKeypairV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCKeypairV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	userID, keypairName, err := resourceResellKeypairV2ParseID(d.Id())
+	userID, keypairName, err := resourceVPCKeypairV2ParseID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -134,11 +134,11 @@ func resourceResellKeypairV2Delete(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
-func resourceResellKeypairV2BuildID(userID, keypairName string) string {
+func resourceVPCKeypairV2BuildID(userID, keypairName string) string {
 	return fmt.Sprintf("%s/%s", userID, keypairName)
 }
 
-func resourceResellKeypairV2ParseID(id string) (string, string, error) {
+func resourceVPCKeypairV2ParseID(id string) (string, string, error) {
 	idParts := strings.Split(id, "/")
 	if len(idParts) != 2 {
 		return "", "", errParseID(objectKeypair, id)

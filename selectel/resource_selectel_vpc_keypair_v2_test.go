@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAccResellV2KeypairBasic(t *testing.T) {
+func TestAccVPCV2KeypairBasic(t *testing.T) {
 	var (
 		user    users.User
 		keypair keypairs.Keypair
@@ -25,36 +25,36 @@ func TestAccResellV2KeypairBasic(t *testing.T) {
 	userPassword := acctest.RandString(8)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelVPCPreCheck(t) },
+		PreCheck:     func() { testAccSelectelPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckResellV2KeypairDestroy,
+		CheckDestroy: testAccCheckVPCV2KeypairDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResellV2KeypairBasic(userName, userPassword, keypairName, publicKey),
+				Config: testAccVPCV2KeypairBasic(userName, userPassword, keypairName, publicKey),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckResellV2UserExists("selvpc_resell_user_v2.user_tf_acc_test_1", &user),
-					testAccCheckResellV2KeypairExists("selvpc_resell_keypair_v2.keypair_tf_acc_test_1", &keypair),
-					resource.TestCheckResourceAttr("selvpc_resell_keypair_v2.keypair_tf_acc_test_1", "name", keypairName),
-					resource.TestCheckResourceAttr("selvpc_resell_keypair_v2.keypair_tf_acc_test_1", "public_key", publicKey),
-					resource.TestCheckResourceAttr("selvpc_resell_keypair_v2.keypair_tf_acc_test_1", "regions.#", "2"),
-					resource.TestCheckResourceAttrSet("selvpc_resell_keypair_v2.keypair_tf_acc_test_1", "user_id"),
+					testAccCheckVPCV2UserExists("selectel_vpc_user_v2.user_tf_acc_test_1", &user),
+					testAccCheckVPCV2KeypairExists("selectel_vpc_keypair_v2.keypair_tf_acc_test_1", &keypair),
+					resource.TestCheckResourceAttr("selectel_vpc_keypair_v2.keypair_tf_acc_test_1", "name", keypairName),
+					resource.TestCheckResourceAttr("selectel_vpc_keypair_v2.keypair_tf_acc_test_1", "public_key", publicKey),
+					resource.TestCheckResourceAttr("selectel_vpc_keypair_v2.keypair_tf_acc_test_1", "regions.#", "2"),
+					resource.TestCheckResourceAttrSet("selectel_vpc_keypair_v2.keypair_tf_acc_test_1", "user_id"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckResellV2KeypairDestroy(s *terraform.State) error {
+func testAccCheckVPCV2KeypairDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "selvpc_resell_keypair_v2" {
+		if rs.Type != "selectel_vpc_keypair_v2" {
 			continue
 		}
 
-		userID, keypairName, err := resourceResellKeypairV2ParseID(rs.Primary.ID)
+		userID, keypairName, err := resourceVPCKeypairV2ParseID(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -78,7 +78,7 @@ func testAccCheckResellV2KeypairDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckResellV2KeypairExists(n string, keypair *keypairs.Keypair) resource.TestCheckFunc {
+func testAccCheckVPCV2KeypairExists(n string, keypair *keypairs.Keypair) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -93,7 +93,7 @@ func testAccCheckResellV2KeypairExists(n string, keypair *keypairs.Keypair) reso
 		resellV2Client := config.resellV2Client()
 		ctx := context.Background()
 
-		userID, keypairName, err := resourceResellKeypairV2ParseID(rs.Primary.ID)
+		userID, keypairName, err := resourceVPCKeypairV2ParseID(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -121,25 +121,25 @@ func testAccCheckResellV2KeypairExists(n string, keypair *keypairs.Keypair) reso
 	}
 }
 
-func testAccResellV2KeypairBasic(userName, userPassword, keypairName, publicKey string) string {
+func testAccVPCV2KeypairBasic(userName, userPassword, keypairName, publicKey string) string {
 	return fmt.Sprintf(`
-resource "selvpc_resell_user_v2" "user_tf_acc_test_1" {
+resource "selectel_vpc_user_v2" "user_tf_acc_test_1" {
   name        = "%s"
   password    = "%s"
 }
 
-resource "selvpc_resell_keypair_v2" "keypair_tf_acc_test_1" {
+resource "selectel_vpc_keypair_v2" "keypair_tf_acc_test_1" {
   name       = "%s"
   public_key = "%s"
   regions    = ["ru-1", "ru-3"]
-  user_id    = "${selvpc_resell_user_v2.user_tf_acc_test_1.id}"
+  user_id    = "${selectel_vpc_user_v2.user_tf_acc_test_1.id}"
 }`, userName, userPassword, keypairName, publicKey)
 }
 
-func TestResourceResellKeypairV2BuildID(t *testing.T) {
+func TestResourceVPCKeypairV2BuildID(t *testing.T) {
 	expected := "db9e1958679a4d8cbd7561e8f060aa15/key1"
 
-	actual := resourceResellKeypairV2BuildID(
+	actual := resourceVPCKeypairV2BuildID(
 		"db9e1958679a4d8cbd7561e8f060aa15",
 		"key1",
 	)
@@ -147,11 +147,11 @@ func TestResourceResellKeypairV2BuildID(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestResourceResellKeypairV2ParseID(t *testing.T) {
+func TestResourceVPCKeypairV2ParseID(t *testing.T) {
 	expectedUserID := "db9e1958679a4d8cbd7561e8f060aa15"
 	expectedKeypairName := "key1"
 
-	actualUserID, actualUserName, err := resourceResellKeypairV2ParseID(
+	actualUserID, actualUserName, err := resourceVPCKeypairV2ParseID(
 		"db9e1958679a4d8cbd7561e8f060aa15/key1",
 	)
 
