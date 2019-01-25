@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"testing"
@@ -7,17 +7,17 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 )
 
-func TestAccResellV2ProjectImportBasic(t *testing.T) {
-	resourceName := "selvpc_resell_project_v2.project_tf_acc_test_1"
+func TestAccVPCV2ProjectImportBasic(t *testing.T) {
+	resourceName := "selectel_vpc_project_v2.project_tf_acc_test_1"
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelVPCPreCheck(t) },
+		PreCheck:     func() { testAccSelectelPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckResellV2ProjectDestroy,
+		CheckDestroy: testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResellV2ProjectBasic(projectName),
+				Config: testAccVPCV2ProjectBasic(projectName),
 			},
 			{
 				ResourceName:            resourceName,

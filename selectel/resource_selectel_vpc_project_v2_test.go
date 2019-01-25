@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"context"
@@ -15,93 +15,93 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAccResellV2ProjectBasic(t *testing.T) {
+func TestAccVPCV2ProjectBasic(t *testing.T) {
 	var project projects.Project
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	projectNameUpdated := acctest.RandomWithPrefix("tf-acc-updated")
 	projectCustomURL := acctest.RandomWithPrefix("tf-acc-url") + ".selvpc.ru"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelVPCPreCheck(t) },
+		PreCheck:     func() { testAccSelectelPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckResellV2ProjectDestroy,
+		CheckDestroy: testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResellV2ProjectBasic(projectName),
+				Config: testAccVPCV2ProjectBasic(projectName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckResellV2ProjectExists("selvpc_resell_project_v2.project_tf_acc_test_1", &project),
-					resource.TestCheckResourceAttr("selvpc_resell_project_v2.project_tf_acc_test_1", "name", projectName),
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					resource.TestCheckResourceAttr("selectel_vpc_project_v2.project_tf_acc_test_1", "name", projectName),
 				),
 			},
 			{
-				Config: testAccResellV2ProjectUpdate1(projectName, projectCustomURL),
+				Config: testAccVPCV2ProjectUpdate1(projectName, projectCustomURL),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "name", projectName),
+						"selectel_vpc_project_v2.project_tf_acc_test_1", "name", projectName),
 					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "custom_url", projectCustomURL),
+						"selectel_vpc_project_v2.project_tf_acc_test_1", "custom_url", projectCustomURL),
 					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "theme.color", "000000"),
+						"selectel_vpc_project_v2.project_tf_acc_test_1", "theme.color", "000000"),
 					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "theme.logo", "fake.png"),
+						"selectel_vpc_project_v2.project_tf_acc_test_1", "theme.logo", "fake.png"),
 				),
 			},
 			{
-				Config: testAccResellV2ProjectUpdate2(projectName),
+				Config: testAccVPCV2ProjectUpdate2(projectName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "name", projectName),
+						"selectel_vpc_project_v2.project_tf_acc_test_1", "name", projectName),
 					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "custom_url", ""),
+						"selectel_vpc_project_v2.project_tf_acc_test_1", "custom_url", ""),
 					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "theme.color", "FF0000"),
+						"selectel_vpc_project_v2.project_tf_acc_test_1", "theme.color", "FF0000"),
 				),
 			},
 			{
-				Config: testAccResellV2ProjectUpdate3(projectNameUpdated),
+				Config: testAccVPCV2ProjectUpdate3(projectNameUpdated),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "name", projectNameUpdated),
+						"selectel_vpc_project_v2.project_tf_acc_test_1", "name", projectNameUpdated),
 					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "custom_url", ""),
+						"selectel_vpc_project_v2.project_tf_acc_test_1", "custom_url", ""),
 					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "theme.color", "5D6D7E"),
+						"selectel_vpc_project_v2.project_tf_acc_test_1", "theme.color", "5D6D7E"),
 					resource.TestCheckResourceAttr(
-						"selvpc_resell_project_v2.project_tf_acc_test_1", "quotas.#", "2"),
+						"selectel_vpc_project_v2.project_tf_acc_test_1", "quotas.#", "2"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccResellV2ProjectAutoQuotas(t *testing.T) {
+func TestAccVPCV2ProjectAutoQuotas(t *testing.T) {
 	var project projects.Project
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelVPCPreCheck(t) },
+		PreCheck:     func() { testAccSelectelPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckResellV2ProjectDestroy,
+		CheckDestroy: testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResellV2ProjectAutoQuotas(projectName),
+				Config: testAccVPCV2ProjectAutoQuotas(projectName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckResellV2ProjectExists("selvpc_resell_project_v2.project_tf_acc_test_1", &project),
-					resource.TestCheckResourceAttr("selvpc_resell_project_v2.project_tf_acc_test_1", "name", projectName),
-					resource.TestCheckResourceAttrSet("selvpc_resell_project_v2.project_tf_acc_test_1", "all_quotas.#"),
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					resource.TestCheckResourceAttr("selectel_vpc_project_v2.project_tf_acc_test_1", "name", projectName),
+					resource.TestCheckResourceAttrSet("selectel_vpc_project_v2.project_tf_acc_test_1", "all_quotas.#"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckResellV2ProjectDestroy(s *terraform.State) error {
+func testAccCheckVPCV2ProjectDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "selvpc_resell_project_v2" {
+		if rs.Type != "selectel_vpc_project_v2" {
 			continue
 		}
 
@@ -114,7 +114,7 @@ func testAccCheckResellV2ProjectDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckResellV2ProjectExists(n string, project *projects.Project) resource.TestCheckFunc {
+func testAccCheckVPCV2ProjectExists(n string, project *projects.Project) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -144,16 +144,16 @@ func testAccCheckResellV2ProjectExists(n string, project *projects.Project) reso
 	}
 }
 
-func testAccResellV2ProjectBasic(name string) string {
+func testAccVPCV2ProjectBasic(name string) string {
 	return fmt.Sprintf(`
-resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name = "%s"
 }`, name)
 }
 
-func testAccResellV2ProjectUpdate1(name, customURL string) string {
+func testAccVPCV2ProjectUpdate1(name, customURL string) string {
 	return fmt.Sprintf(`
-resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name       = "%s"
   custom_url = "%s"
   theme {
@@ -163,9 +163,9 @@ resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
 }`, name, customURL)
 }
 
-func testAccResellV2ProjectUpdate2(name string) string {
+func testAccVPCV2ProjectUpdate2(name string) string {
 	return fmt.Sprintf(`
-resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name       = "%s"
   theme {
     color = "FF0000"
@@ -173,9 +173,9 @@ resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
 }`, name)
 }
 
-func testAccResellV2ProjectUpdate3(name string) string {
+func testAccVPCV2ProjectUpdate3(name string) string {
 	return fmt.Sprintf(`
-resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name = "%s"
   theme {
     color = "5D6D7E"
@@ -209,15 +209,15 @@ resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
 }`, name)
 }
 
-func testAccResellV2ProjectAutoQuotas(name string) string {
+func testAccVPCV2ProjectAutoQuotas(name string) string {
 	return fmt.Sprintf(`
-resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
   auto_quotas = true
 }`, name)
 }
 
-func TestResourceResellProjectV2QuotasOptsFromSet(t *testing.T) {
+func TestResourceVPCProjectV2QuotasOptsFromSet(t *testing.T) {
 	quotaSet := &schema.Set{
 		F: quotasHashSetFunc(),
 	}
@@ -248,13 +248,13 @@ func TestResourceResellProjectV2QuotasOptsFromSet(t *testing.T) {
 		},
 	}
 
-	actualQuotaOpts, err := resourceResellProjectV2QuotasOptsFromSet(quotaSet)
+	actualQuotaOpts, err := resourceVPCProjectV2QuotasOptsFromSet(quotaSet)
 
 	assert.Empty(t, err)
 	assert.Equal(t, expectedQuotasOpts, actualQuotaOpts)
 }
 
-func TestResourceResellProjectV2QuotasOptsFromListNoName(t *testing.T) {
+func TestResourceVPCProjectV2QuotasOptsFromListNoName(t *testing.T) {
 	quotaSet := &schema.Set{
 		F: quotasHashSetFunc(),
 	}
@@ -270,22 +270,22 @@ func TestResourceResellProjectV2QuotasOptsFromListNoName(t *testing.T) {
 		"resource_quotas": resourceQuotas,
 	})
 
-	quotaOpts, err := resourceResellProjectV2QuotasOptsFromSet(quotaSet)
+	quotaOpts, err := resourceVPCProjectV2QuotasOptsFromSet(quotaSet)
 
 	assert.Empty(t, quotaOpts)
 	assert.EqualError(t, err, "resource_name value isn't provided")
 }
 
-func TestResourceResellProjectV2QuotasOptsFromListNoQuotas(t *testing.T) {
+func TestResourceVPCProjectV2QuotasOptsFromListNoQuotas(t *testing.T) {
 	quotaSet := schema.NewSet(
-		schema.HashResource(resourceResellProjectV2().Schema["quotas"].Elem.(*schema.Resource)),
+		schema.HashResource(resourceVPCProjectV2().Schema["quotas"].Elem.(*schema.Resource)),
 		[]interface{}{
 			map[string]interface{}{
 				"resource_name": "volume_gigabytes_fast",
 			},
 		})
 
-	quotaOpts, err := resourceResellProjectV2QuotasOptsFromSet(quotaSet)
+	quotaOpts, err := resourceVPCProjectV2QuotasOptsFromSet(quotaSet)
 
 	assert.Empty(t, quotaOpts)
 	assert.EqualError(t, err, "resource_quotas value isn't provided")
@@ -308,11 +308,11 @@ func TestResourceProjectV2UpdateThemeOptsFromMap(t *testing.T) {
 	assert.Equal(t, expectedThemeUpdateOpts, actualThemeUpdateOpts)
 }
 
-func TestResourceResellProjectV2URLWithoutSchema(t *testing.T) {
+func TestResourceVPCProjectV2URLWithoutSchema(t *testing.T) {
 	customURL := "https://my-url.selvpc.ru"
 	expectedURL := "my-url.selvpc.ru"
 
-	actualURL, err := resourceResellProjectV2URLWithoutSchema(customURL)
+	actualURL, err := resourceVPCProjectV2URLWithoutSchema(customURL)
 
 	assert.Empty(t, err)
 	assert.Equal(t, expectedURL, actualURL)

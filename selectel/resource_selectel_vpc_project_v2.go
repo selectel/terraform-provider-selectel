@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"bytes"
@@ -15,12 +15,12 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
 )
 
-func resourceResellProjectV2() *schema.Resource {
+func resourceVPCProjectV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceResellProjectV2Create,
-		Read:   resourceResellProjectV2Read,
-		Update: resourceResellProjectV2Update,
-		Delete: resourceResellProjectV2Delete,
+		Create: resourceVPCProjectV2Create,
+		Read:   resourceVPCProjectV2Read,
+		Update: resourceVPCProjectV2Update,
+		Delete: resourceVPCProjectV2Delete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -149,7 +149,7 @@ func resourceResellProjectV2() *schema.Resource {
 	}
 }
 
-func resourceResellProjectV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCProjectV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
@@ -157,7 +157,7 @@ func resourceResellProjectV2Create(d *schema.ResourceData, meta interface{}) err
 	var opts projects.CreateOpts
 	quotaSet := d.Get("quotas").(*schema.Set)
 	if quotaSet.Len() != 0 {
-		quotasOpts, err := resourceResellProjectV2QuotasOptsFromSet(quotaSet)
+		quotasOpts, err := resourceVPCProjectV2QuotasOptsFromSet(quotaSet)
 		if err != nil {
 			return errParseProjectV2Quotas(err)
 		}
@@ -174,10 +174,10 @@ func resourceResellProjectV2Create(d *schema.ResourceData, meta interface{}) err
 
 	d.SetId(project.ID)
 
-	return resourceResellProjectV2Read(d, meta)
+	return resourceVPCProjectV2Read(d, meta)
 }
 
-func resourceResellProjectV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCProjectV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
@@ -193,7 +193,7 @@ func resourceResellProjectV2Read(d *schema.ResourceData, meta interface{}) error
 		return errGettingObject(objectProject, d.Id(), err)
 	}
 
-	projectCustomURL, err := resourceResellProjectV2URLWithoutSchema(project.CustomURL)
+	projectCustomURL, err := resourceVPCProjectV2URLWithoutSchema(project.CustomURL)
 	if err != nil {
 		return err
 	}
@@ -207,7 +207,7 @@ func resourceResellProjectV2Read(d *schema.ResourceData, meta interface{}) error
 
 	// Set all quotas. This can be different from what the user specified since
 	// the project will have all available resource quotas automatically applied.
-	allQuotas := resourceResellProjectV2QuotasToSet(project.Quotas)
+	allQuotas := resourceVPCProjectV2QuotasToSet(project.Quotas)
 	if err := d.Set("all_quotas", allQuotas); err != nil {
 		log.Print(errSettingComplexAttr("all_quotas", err))
 	}
@@ -215,7 +215,7 @@ func resourceResellProjectV2Read(d *schema.ResourceData, meta interface{}) error
 	return nil
 }
 
-func resourceResellProjectV2Update(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCProjectV2Update(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
@@ -242,7 +242,7 @@ func resourceResellProjectV2Update(d *schema.ResourceData, meta interface{}) err
 	if d.HasChange("quotas") {
 		hasChange, quotaChange = true, true
 		quotaSet := d.Get("quotas").(*schema.Set)
-		quotasOpts, err := resourceResellProjectV2QuotasOptsFromSet(quotaSet)
+		quotasOpts, err := resourceVPCProjectV2QuotasOptsFromSet(quotaSet)
 		if err != nil {
 			return errParseProjectV2Quotas(err)
 		}
@@ -268,10 +268,10 @@ func resourceResellProjectV2Update(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
-	return resourceResellProjectV2Read(d, meta)
+	return resourceVPCProjectV2Read(d, meta)
 }
 
-func resourceResellProjectV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCProjectV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
@@ -290,10 +290,10 @@ func resourceResellProjectV2Delete(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
-// resourceResellProjectV2QuotasOptsFromSet converts the provided quotaSet to
+// resourceVPCProjectV2QuotasOptsFromSet converts the provided quotaSet to
 // the slice of quotas.QuotaOpts. It then can be used to make requests with
 // quotas data.
-func resourceResellProjectV2QuotasOptsFromSet(quotaSet *schema.Set) ([]quotas.QuotaOpts, error) {
+func resourceVPCProjectV2QuotasOptsFromSet(quotaSet *schema.Set) ([]quotas.QuotaOpts, error) {
 	quotaSetLen := quotaSet.Len()
 	if quotaSetLen == 0 {
 		return nil, errors.New("got empty quotas")
@@ -356,9 +356,9 @@ func resourceResellProjectV2QuotasOptsFromSet(quotaSet *schema.Set) ([]quotas.Qu
 	return quotasOpts, nil
 }
 
-// resourceResellProjectV2QuotasToSet converts the provided quotas.Quota slice
+// resourceVPCProjectV2QuotasToSet converts the provided quotas.Quota slice
 // to a nested complex set structure correspondingly to the resource's schema.
-func resourceResellProjectV2QuotasToSet(quotasStructures []quotas.Quota) *schema.Set {
+func resourceVPCProjectV2QuotasToSet(quotasStructures []quotas.Quota) *schema.Set {
 	quotaSet := &schema.Set{
 		F: quotasHashSetFunc(),
 	}
@@ -408,8 +408,8 @@ func resourceProjectV2UpdateThemeOptsFromMap(themeOptsMap map[string]interface{}
 	return themeUpdateOpts
 }
 
-// resourceResellProjectV2URLWithoutSchema strips the scheme part from project URL.
-func resourceResellProjectV2URLWithoutSchema(customURL string) (string, error) {
+// resourceVPCProjectV2URLWithoutSchema strips the scheme part from project URL.
+func resourceVPCProjectV2URLWithoutSchema(customURL string) (string, error) {
 	var customURLWithoutSchema string
 
 	if customURL != "" {
@@ -425,7 +425,7 @@ func resourceResellProjectV2URLWithoutSchema(customURL string) (string, error) {
 
 // quotasSchema returns *schema.Resource from the "quotas" attribute.
 func quotasSchema() *schema.Resource {
-	return resourceResellProjectV2().Schema["quotas"].Elem.(*schema.Resource)
+	return resourceVPCProjectV2().Schema["quotas"].Elem.(*schema.Resource)
 }
 
 // quotasSchema returns *schema.Resource from the "resource_quotas" attribute.
