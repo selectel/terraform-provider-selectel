@@ -1,19 +1,19 @@
 ---
-layout: "selvpc"
-page_title: "SelVPC: selvpc_resell_project_v2"
-sidebar_current: "docs-selvpc-resource-resell-project-v2"
+layout: "selectel"
+page_title: "Selectel: selectel_vpc_project_v2"
+sidebar_current: "docs-selectel-resource-vpc-project-v2"
 description: |-
-  Manages a V2 project resource within Resell Selectel VPC.
+  Manages a V2 project resource within Selectel VPC.
 ---
 
-# selvpc\_resell\_project_v2
+# selectel\_vpc\_project_v2
 
-Manages a V2 project resource within Resell Selectel VPC.
+Manages a V2 project resource within Selectel VPC.
 
 ## Example Usage
 
 ```hcl
-resource "selvpc_resell_project_v2" "kubernetes_cluster" {
+resource "selectel_vpc_project_v2" "kubernetes_cluster" {
   name       = "kubernetes_cluster"
   custom_url = "kubernetes-cluster-123.selvpc.ru"
   theme {
@@ -110,5 +110,5 @@ The following attributes are exported:
 Projects can be imported using the `id`, e.g.
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selvpc_resell_project_v2.project_1 0a343062504b4d06a0fac375e466db25
+$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selectel_vpc_project_v2.project_1 0a343062504b4d06a0fac375e466db25
 ```
