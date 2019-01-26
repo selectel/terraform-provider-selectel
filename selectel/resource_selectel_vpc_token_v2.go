@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"context"
@@ -8,11 +8,11 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 )
 
-func resourceResellTokenV2() *schema.Resource {
+func resourceVPCTokenV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceResellTokenV2Create,
-		Read:   resourceResellTokenV2Read,
-		Delete: resourceResellTokenV2Delete,
+		Create: resourceVPCTokenV2Create,
+		Read:   resourceVPCTokenV2Read,
+		Delete: resourceVPCTokenV2Delete,
 		Schema: map[string]*schema.Schema{
 			"project_id": {
 				Type:          schema.TypeString,
@@ -30,7 +30,7 @@ func resourceResellTokenV2() *schema.Resource {
 	}
 }
 
-func resourceResellTokenV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCTokenV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
@@ -48,16 +48,16 @@ func resourceResellTokenV2Create(d *schema.ResourceData, meta interface{}) error
 
 	d.SetId(token.ID)
 
-	return resourceResellTokenV2Read(d, meta)
+	return resourceVPCTokenV2Read(d, meta)
 }
 
-func resourceResellTokenV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCTokenV2Read(d *schema.ResourceData, meta interface{}) error {
 	// There is no API support for getting a token yet.
 
 	return nil
 }
 
-func resourceResellTokenV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCTokenV2Delete(d *schema.ResourceData, meta interface{}) error {
 	// There is no API support for deleting a token yet.
 
 	return nil
