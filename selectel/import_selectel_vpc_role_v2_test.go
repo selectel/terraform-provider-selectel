@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"testing"
@@ -7,19 +7,19 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 )
 
-func TestAccResellV2RoleImportBasic(t *testing.T) {
-	resourceName := "selvpc_resell_role_v2.role_tf_acc_test_1"
+func TestAccVPCV2RoleImportBasic(t *testing.T) {
+	resourceName := "selectel_vpc_role_v2.role_tf_acc_test_1"
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	userName := acctest.RandomWithPrefix("tf-acc")
 	userPassword := acctest.RandString(8)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelVPCPreCheck(t) },
+		PreCheck:     func() { testAccSelectelPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckResellV2RoleDestroy,
+		CheckDestroy: testAccCheckVPCV2RoleDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResellV2RoleBasic(projectName, userName, userPassword),
+				Config: testAccVPCV2RoleBasic(projectName, userName, userPassword),
 			},
 			{
 				ResourceName:      resourceName,

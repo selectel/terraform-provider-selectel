@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/users"
 )
 
-func TestAccResellV2RoleBasic(t *testing.T) {
+func TestAccVPCV2RoleBasic(t *testing.T) {
 	var (
 		role    roles.Role
 		project projects.Project
@@ -25,35 +25,35 @@ func TestAccResellV2RoleBasic(t *testing.T) {
 	userPassword := acctest.RandString(8)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelVPCPreCheck(t) },
+		PreCheck:     func() { testAccSelectelPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckResellV2RoleDestroy,
+		CheckDestroy: testAccCheckVPCV2RoleDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResellV2RoleBasic(projectName, userName, userPassword),
+				Config: testAccVPCV2RoleBasic(projectName, userName, userPassword),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckResellV2RoleExists("selvpc_resell_role_v2.role_tf_acc_test_1", &role),
-					testAccCheckResellV2ProjectExists("selvpc_resell_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckResellV2UserExists("selvpc_resell_user_v2.user_tf_acc_test_1", &user),
-					resource.TestCheckResourceAttrSet("selvpc_resell_role_v2.role_tf_acc_test_1", "project_id"),
-					resource.TestCheckResourceAttrSet("selvpc_resell_role_v2.role_tf_acc_test_1", "user_id"),
+					testAccCheckVPCV2RoleExists("selectel_vpc_role_v2.role_tf_acc_test_1", &role),
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccCheckVPCV2UserExists("selectel_vpc_user_v2.user_tf_acc_test_1", &user),
+					resource.TestCheckResourceAttrSet("selectel_vpc_role_v2.role_tf_acc_test_1", "project_id"),
+					resource.TestCheckResourceAttrSet("selectel_vpc_role_v2.role_tf_acc_test_1", "user_id"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckResellV2RoleDestroy(s *terraform.State) error {
+func testAccCheckVPCV2RoleDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "selvpc_resell_role_v2" {
+		if rs.Type != "selectel_vpc_role_v2" {
 			continue
 		}
 
-		projectID, _, err := resourceResellRoleV2ParseID(rs.Primary.ID)
+		projectID, _, err := resourceVPCRoleV2ParseID(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -68,7 +68,7 @@ func testAccCheckResellV2RoleDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckResellV2RoleExists(n string, role *roles.Role) resource.TestCheckFunc {
+func testAccCheckVPCV2RoleExists(n string, role *roles.Role) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -83,7 +83,7 @@ func testAccCheckResellV2RoleExists(n string, role *roles.Role) resource.TestChe
 		resellV2Client := config.resellV2Client()
 		ctx := context.Background()
 
-		projectID, userID, err := resourceResellRoleV2ParseID(rs.Primary.ID)
+		projectID, userID, err := resourceVPCRoleV2ParseID(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -111,20 +111,20 @@ func testAccCheckResellV2RoleExists(n string, role *roles.Role) resource.TestChe
 	}
 }
 
-func testAccResellV2RoleBasic(projectName, userName, userPassword string) string {
+func testAccVPCV2RoleBasic(projectName, userName, userPassword string) string {
 	return fmt.Sprintf(`
-resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
   auto_quotas = true
 }
 
-resource "selvpc_resell_user_v2" "user_tf_acc_test_1" {
+resource "selectel_vpc_user_v2" "user_tf_acc_test_1" {
   name        = "%s"
   password    = "%s"
 }
 
-resource "selvpc_resell_role_v2" "role_tf_acc_test_1" {
-  project_id = "${selvpc_resell_project_v2.project_tf_acc_test_1.id}"
-  user_id    = "${selvpc_resell_user_v2.user_tf_acc_test_1.id}"
+resource "selectel_vpc_role_v2" "role_tf_acc_test_1" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  user_id    = "${selectel_vpc_user_v2.user_tf_acc_test_1.id}"
 }`, projectName, userName, userPassword)
 }

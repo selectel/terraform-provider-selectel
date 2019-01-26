@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"context"
@@ -11,11 +11,11 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/roles"
 )
 
-func resourceResellRoleV2() *schema.Resource {
+func resourceVPCRoleV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceResellRoleV2Create,
-		Read:   resourceResellRoleV2Read,
-		Delete: resourceResellRoleV2Delete,
+		Create: resourceVPCRoleV2Create,
+		Read:   resourceVPCRoleV2Read,
+		Delete: resourceVPCRoleV2Delete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -34,7 +34,7 @@ func resourceResellRoleV2() *schema.Resource {
 	}
 }
 
-func resourceResellRoleV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCRoleV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
@@ -50,18 +50,18 @@ func resourceResellRoleV2Create(d *schema.ResourceData, meta interface{}) error 
 		return errCreatingObject(objectRole, err)
 	}
 
-	d.SetId(resourceResellRoleV2BuildID(role.ProjectID, role.UserID))
+	d.SetId(resourceVPCRoleV2BuildID(role.ProjectID, role.UserID))
 
 	return nil
 }
 
-func resourceResellRoleV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCRoleV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
 	log.Print(msgGet(objectRole, d.Id()))
-	projectID, userID, err := resourceResellRoleV2ParseID(d.Id())
+	projectID, userID, err := resourceVPCRoleV2ParseID(d.Id())
 	if err != nil {
 		return errParseID(objectRole, d.Id())
 	}
@@ -86,12 +86,12 @@ func resourceResellRoleV2Read(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceResellRoleV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCRoleV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	projectID, userID, err := resourceResellRoleV2ParseID(d.Id())
+	projectID, userID, err := resourceVPCRoleV2ParseID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -115,11 +115,11 @@ func resourceResellRoleV2Delete(d *schema.ResourceData, meta interface{}) error 
 	return nil
 }
 
-func resourceResellRoleV2BuildID(projectID, userID string) string {
+func resourceVPCRoleV2BuildID(projectID, userID string) string {
 	return fmt.Sprintf("%s/%s", projectID, userID)
 }
 
-func resourceResellRoleV2ParseID(id string) (string, string, error) {
+func resourceVPCRoleV2ParseID(id string) (string, string, error) {
 	idParts := strings.Split(id, "/")
 	if len(idParts) != 2 {
 		return "", "", fmt.Errorf("unable to parse id: '%s'", id)
