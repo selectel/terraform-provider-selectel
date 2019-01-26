@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"context"
@@ -9,12 +9,12 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/users"
 )
 
-func resourceResellUserV2() *schema.Resource {
+func resourceVPCUserV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceResellUserV2Create,
-		Read:   resourceResellUserV2Read,
-		Update: resourceResellUserV2Update,
-		Delete: resourceResellUserV2Delete,
+		Create: resourceVPCUserV2Create,
+		Read:   resourceVPCUserV2Read,
+		Update: resourceVPCUserV2Update,
+		Delete: resourceVPCUserV2Delete,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -36,7 +36,7 @@ func resourceResellUserV2() *schema.Resource {
 	}
 }
 
-func resourceResellUserV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCUserV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
@@ -54,10 +54,10 @@ func resourceResellUserV2Create(d *schema.ResourceData, meta interface{}) error 
 
 	d.SetId(user.ID)
 
-	return resourceResellUserV2Read(d, meta)
+	return resourceVPCUserV2Read(d, meta)
 }
 
-func resourceResellUserV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCUserV2Read(d *schema.ResourceData, meta interface{}) error {
 	// There is no API support for getting a single user yet, so we don't
 	// set actual user name and enabled state from the API.
 	if !d.Get("enabled").(bool) {
@@ -67,7 +67,7 @@ func resourceResellUserV2Read(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceResellUserV2Update(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCUserV2Update(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
@@ -85,10 +85,10 @@ func resourceResellUserV2Update(d *schema.ResourceData, meta interface{}) error 
 		return errUpdatingObject(objectUser, d.Id(), err)
 	}
 
-	return resourceResellUserV2Read(d, meta)
+	return resourceVPCUserV2Read(d, meta)
 }
 
-func resourceResellUserV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCUserV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
