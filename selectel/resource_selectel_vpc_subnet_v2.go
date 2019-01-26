@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"context"
@@ -12,11 +12,11 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/subnets"
 )
 
-func resourceResellSubnetV2() *schema.Resource {
+func resourceVPCSubnetV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceResellSubnetV2Create,
-		Read:   resourceResellSubnetV2Read,
-		Delete: resourceResellSubnetV2Delete,
+		Create: resourceVPCSubnetV2Create,
+		Read:   resourceVPCSubnetV2Read,
+		Delete: resourceVPCSubnetV2Delete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -89,7 +89,7 @@ func resourceResellSubnetV2() *schema.Resource {
 	}
 }
 
-func resourceResellSubnetV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCSubnetV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
@@ -117,10 +117,10 @@ func resourceResellSubnetV2Create(d *schema.ResourceData, meta interface{}) erro
 
 	d.SetId(strconv.Itoa(subnetsResponse[0].ID))
 
-	return resourceResellSubnetV2Read(d, meta)
+	return resourceVPCSubnetV2Read(d, meta)
 }
 
-func resourceResellSubnetV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCSubnetV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
@@ -160,7 +160,7 @@ func resourceResellSubnetV2Read(d *schema.ResourceData, meta interface{}) error 
 	return nil
 }
 
-func resourceResellSubnetV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCSubnetV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()

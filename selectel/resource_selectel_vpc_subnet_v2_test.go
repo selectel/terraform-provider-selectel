@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/subnets"
 )
 
-func TestAccResellV2SubnetBasic(t *testing.T) {
+func TestAccVPCV2SubnetBasic(t *testing.T) {
 	var (
 		subnet  subnets.Subnet
 		project projects.Project
@@ -22,30 +22,30 @@ func TestAccResellV2SubnetBasic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelVPCPreCheck(t) },
+		PreCheck:     func() { testAccSelectelPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckResellV2SubnetDestroy,
+		CheckDestroy: testAccCheckVPCV2SubnetDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResellV2SubnetBasic(projectName),
+				Config: testAccVPCV2SubnetBasic(projectName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckResellV2ProjectExists("selvpc_resell_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckResellV2SubnetExists("selvpc_resell_subnet_v2.subnet_tf_acc_test_1", &subnet),
-					resource.TestCheckResourceAttr("selvpc_resell_subnet_v2.subnet_tf_acc_test_1", "region", "ru-3"),
-					resource.TestCheckResourceAttr("selvpc_resell_subnet_v2.subnet_tf_acc_test_1", "status", "DOWN"),
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccCheckVPCV2SubnetExists("selectel_vpc_subnet_v2.subnet_tf_acc_test_1", &subnet),
+					resource.TestCheckResourceAttr("selectel_vpc_subnet_v2.subnet_tf_acc_test_1", "region", "ru-3"),
+					resource.TestCheckResourceAttr("selectel_vpc_subnet_v2.subnet_tf_acc_test_1", "status", "DOWN"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckResellV2SubnetDestroy(s *terraform.State) error {
+func testAccCheckVPCV2SubnetDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "selvpc_resell_subnet_v2" {
+		if rs.Type != "selectel_resell_subnet_v2" {
 			continue
 		}
 
@@ -58,7 +58,7 @@ func testAccCheckResellV2SubnetDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckResellV2SubnetExists(n string, subnet *subnets.Subnet) resource.TestCheckFunc {
+func testAccCheckVPCV2SubnetExists(n string, subnet *subnets.Subnet) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -88,15 +88,15 @@ func testAccCheckResellV2SubnetExists(n string, subnet *subnets.Subnet) resource
 	}
 }
 
-func testAccResellV2SubnetBasic(projectName string) string {
+func testAccVPCV2SubnetBasic(projectName string) string {
 	return fmt.Sprintf(`
-resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
   auto_quotas = true
 }
 
-resource "selvpc_resell_subnet_v2" "subnet_tf_acc_test_1" {
-  project_id = "${selvpc_resell_project_v2.project_tf_acc_test_1.id}"
+resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
 }`, projectName)
 }
