@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/vrrpsubnets"
 )
 
-func TestAccResellV2VRRPSubnetBasic(t *testing.T) {
+func TestAccVPCV2VRRPSubnetBasic(t *testing.T) {
 	var (
 		vrrpSubnet vrrpsubnets.VRRPSubnet
 		project    projects.Project
@@ -22,34 +22,34 @@ func TestAccResellV2VRRPSubnetBasic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelVPCPreCheck(t) },
+		PreCheck:     func() { testAccSelectelPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckResellV2VRRPSubnetDestroy,
+		CheckDestroy: testAccCheckVPCV2VRRPSubnetDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResellV2VRRPSubnetBasic(projectName),
+				Config: testAccVPCV2VRRPSubnetBasic(projectName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckResellV2ProjectExists("selvpc_resell_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckResellV2VRRPSubnetExists("selvpc_resell_vrrp_subnet_v2.vrrp_subnet_tf_acc_test_1", &vrrpSubnet),
-					resource.TestCheckResourceAttr("selvpc_resell_vrrp_subnet_v2.vrrp_subnet_tf_acc_test_1", "master_region", "ru-1"),
-					resource.TestCheckResourceAttr("selvpc_resell_vrrp_subnet_v2.vrrp_subnet_tf_acc_test_1", "slave_region", "ru-2"),
-					resource.TestCheckResourceAttr("selvpc_resell_vrrp_subnet_v2.vrrp_subnet_tf_acc_test_1", "prefix_length", "29"),
-					resource.TestCheckResourceAttr("selvpc_resell_vrrp_subnet_v2.vrrp_subnet_tf_acc_test_1", "ip_version", "ipv4"),
-					resource.TestCheckResourceAttr("selvpc_resell_vrrp_subnet_v2.vrrp_subnet_tf_acc_test_1", "subnets.#", "2"),
-					resource.TestCheckResourceAttr("selvpc_resell_vrrp_subnet_v2.vrrp_subnet_tf_acc_test_1", "status", "DOWN"),
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccCheckVPCV2VRRPSubnetExists("selectel_vpc_vrrp_subnet_v2.vrrp_subnet_tf_acc_test_1", &vrrpSubnet),
+					resource.TestCheckResourceAttr("selectel_vpc_vrrp_subnet_v2.vrrp_subnet_tf_acc_test_1", "master_region", "ru-1"),
+					resource.TestCheckResourceAttr("selectel_vpc_vrrp_subnet_v2.vrrp_subnet_tf_acc_test_1", "slave_region", "ru-2"),
+					resource.TestCheckResourceAttr("selectel_vpc_vrrp_subnet_v2.vrrp_subnet_tf_acc_test_1", "prefix_length", "29"),
+					resource.TestCheckResourceAttr("selectel_vpc_vrrp_subnet_v2.vrrp_subnet_tf_acc_test_1", "ip_version", "ipv4"),
+					resource.TestCheckResourceAttr("selectel_vpc_vrrp_subnet_v2.vrrp_subnet_tf_acc_test_1", "subnets.#", "2"),
+					resource.TestCheckResourceAttr("selectel_vpc_vrrp_subnet_v2.vrrp_subnet_tf_acc_test_1", "status", "DOWN"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckResellV2VRRPSubnetDestroy(s *terraform.State) error {
+func testAccCheckVPCV2VRRPSubnetDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "selvpc_resell_vrrp_subnet_v2" {
+		if rs.Type != "selectel_vpc_vrrp_subnet_v2" {
 			continue
 		}
 
@@ -62,7 +62,7 @@ func testAccCheckResellV2VRRPSubnetDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckResellV2VRRPSubnetExists(n string, vrrpSubnet *vrrpsubnets.VRRPSubnet) resource.TestCheckFunc {
+func testAccCheckVPCV2VRRPSubnetExists(n string, vrrpSubnet *vrrpsubnets.VRRPSubnet) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -92,15 +92,15 @@ func testAccCheckResellV2VRRPSubnetExists(n string, vrrpSubnet *vrrpsubnets.VRRP
 	}
 }
 
-func testAccResellV2VRRPSubnetBasic(projectName string) string {
+func testAccVPCV2VRRPSubnetBasic(projectName string) string {
 	return fmt.Sprintf(`
-resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
   auto_quotas = true
 }
 
-resource "selvpc_resell_vrrp_subnet_v2" "vrrp_subnet_tf_acc_test_1" {
-  project_id    = "${selvpc_resell_project_v2.project_tf_acc_test_1.id}"
+resource "selectel_vpc_vrrp_subnet_v2" "vrrp_subnet_tf_acc_test_1" {
+  project_id    = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   master_region = "ru-1"
   slave_region  = "ru-2"
 }`, projectName)
