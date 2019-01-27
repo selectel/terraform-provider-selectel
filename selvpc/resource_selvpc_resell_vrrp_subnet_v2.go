@@ -79,6 +79,22 @@ func resourceResellVRRPSubnetV2() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"cidr": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"vlan_id": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"project_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"vtep_ip_address": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
