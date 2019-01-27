@@ -54,10 +54,8 @@ func regionsMapsFromSubnetsStructs(subnetsStructs []subnets.Subnet) []map[string
 	associatedRegions := make([]map[string]interface{}, len(subnetsStructs))
 
 	for i, subnet := range subnetsStructs {
-		associatedRegions[i] = make(map[string]interface{})
-
-		if subnet.Region != "" {
-			associatedRegions[i]["region"] = subnet.Region
+		associatedRegions[i] = map[string]interface{}{
+			"region": subnet.Region,
 		}
 	}
 

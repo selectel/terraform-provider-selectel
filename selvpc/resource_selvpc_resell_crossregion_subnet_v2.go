@@ -2,6 +2,7 @@ package selvpc
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -119,7 +120,6 @@ func resourceResellCrossRegionSubnetV2Create(d *schema.ResourceData, meta interf
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	projectID := d.Get("project_id").(string)
 	regionsOpts, err := expandResellV2CrossRegionOpts(d.Get("regions").(*schema.Set))
 	if err != nil {
 		return errParseCrossRegionSubnetV2Regions(err)
@@ -133,6 +133,7 @@ func resourceResellCrossRegionSubnetV2Create(d *schema.ResourceData, meta interf
 			},
 		},
 	}
+	projectID := d.Get("project_id").(string)
 
 	log.Print(msgCreate(objectCrossRegionSubnet, opts))
 	crossRegionSubnetsResponse, _, err := crossregionsubnets.Create(ctx, resellV2Client, projectID, opts)
@@ -183,7 +184,10 @@ func resourceResellCrossRegionSubnetV2Read(d *schema.ResourceData, meta interfac
 		log.Print(errSettingComplexAttr("regions", err))
 	}
 
-	associatedProjectID := associatedSubnets[0]["project_id"]
+	associatedProjectID, err := projectIDFromSubnetsMaps(associatedSubnets)
+	if err != nil {
+		log.Print(errParseCrossRegionSubnetV2ProjectID(err))
+	}
 	if err := d.Set("project_id", associatedProjectID); err != nil {
 		log.Print(errSettingComplexAttr("project_id", err))
 	}
@@ -208,4 +212,19 @@ func resourceResellCrossRegionSubnetV2Delete(d *schema.ResourceData, meta interf
 	}
 
 	return nil
+}
+
+func projectIDFromSubnetsMaps(associatedSubnets []map[string]interface{}) (interface{}, error) {
+	if len(associatedSubnets) == 0 {
+		return nil, errors.New("got empty associated subnets")
+	}
+
+	var associatedProjectID interface{}
+	if projectID, ok := associatedSubnets[0]["project_id"]; ok {
+		associatedProjectID = projectID
+	} else {
+		return nil, errors.New("no project ID key in associated subnet map")
+	}
+
+	return associatedProjectID, nil
 }

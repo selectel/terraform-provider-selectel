@@ -53,6 +53,26 @@ func TestErrParseProjectV2Quotas(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestErrParseCrossRegionSubnetV2Regions(t *testing.T) {
+	err := errors.New(testErrString)
+
+	expected := errors.New("got error parsing regions: got 503")
+
+	actual := errParseCrossRegionSubnetV2Regions(err)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestErrParseCrossRegionSubnetV2ProjectID(t *testing.T) {
+	err := errors.New(testErrString)
+
+	expected := errors.New("got error parsing project ID: got 503")
+
+	actual := errParseCrossRegionSubnetV2ProjectID(err)
+
+	assert.Equal(t, expected, actual)
+}
+
 func TestErrSearchingProjectRole(t *testing.T) {
 	projectID := "uuid"
 	err := errors.New(testErrString)
