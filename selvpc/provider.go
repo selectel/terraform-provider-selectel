@@ -16,7 +16,7 @@ const (
 	objectToken             = "token"
 	objectUser              = "user"
 	objectVRRPSubnet        = "VRRP subnet"
-	objectCrossRegionSubnet = "Cross-region subnet"
+	objectCrossRegionSubnet = "cross-region subnet"
 )
 
 // Provider returns the selvpc terraform provider.
