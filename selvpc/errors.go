@@ -18,6 +18,14 @@ func errParseProjectV2Quotas(err error) error {
 	return fmt.Errorf("got error parsing quotas: %s", err)
 }
 
+func errParseCrossRegionSubnetV2Regions(err error) error {
+	return fmt.Errorf("got error parsing regions: %s", err)
+}
+
+func errParseCrossRegionSubnetV2ProjectID(err error) error {
+	return fmt.Errorf("got error parsing project ID: %s", err)
+}
+
 func errSearchingProjectRole(projectID string, err error) error {
 	return fmt.Errorf("can't find role for project '%s': %s", projectID, err)
 }

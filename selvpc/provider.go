@@ -6,16 +6,17 @@ import (
 )
 
 const (
-	objectFloatingIP    = "floating IP"
-	objectKeypair       = "keypair"
-	objectLicense       = "license"
-	objectProject       = "project"
-	objectProjectQuotas = "quotas for project"
-	objectRole          = "role"
-	objectSubnet        = "subnet"
-	objectToken         = "token"
-	objectUser          = "user"
-	objectVRRPSubnet    = "VRRP subnet"
+	objectFloatingIP        = "floating IP"
+	objectKeypair           = "keypair"
+	objectLicense           = "license"
+	objectProject           = "project"
+	objectProjectQuotas     = "quotas for project"
+	objectRole              = "role"
+	objectSubnet            = "subnet"
+	objectToken             = "token"
+	objectUser              = "user"
+	objectVRRPSubnet        = "VRRP subnet"
+	objectCrossRegionSubnet = "Cross-region subnet"
 )
 
 // Provider returns the selvpc terraform provider.
@@ -36,15 +37,16 @@ func Provider() terraform.ResourceProvider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"selvpc_resell_floatingip_v2":  resourceResellFloatingIPV2(),
-			"selvpc_resell_keypair_v2":     resourceResellKeypairV2(),
-			"selvpc_resell_license_v2":     resourceResellLicenseV2(),
-			"selvpc_resell_project_v2":     resourceResellProjectV2(),
-			"selvpc_resell_role_v2":        resourceResellRoleV2(),
-			"selvpc_resell_subnet_v2":      resourceResellSubnetV2(),
-			"selvpc_resell_token_v2":       resourceResellTokenV2(),
-			"selvpc_resell_user_v2":        resourceResellUserV2(),
-			"selvpc_resell_vrrp_subnet_v2": resourceResellVRRPSubnetV2(),
+			"selvpc_resell_floatingip_v2":         resourceResellFloatingIPV2(),
+			"selvpc_resell_keypair_v2":            resourceResellKeypairV2(),
+			"selvpc_resell_license_v2":            resourceResellLicenseV2(),
+			"selvpc_resell_project_v2":            resourceResellProjectV2(),
+			"selvpc_resell_role_v2":               resourceResellRoleV2(),
+			"selvpc_resell_subnet_v2":             resourceResellSubnetV2(),
+			"selvpc_resell_token_v2":              resourceResellTokenV2(),
+			"selvpc_resell_user_v2":               resourceResellUserV2(),
+			"selvpc_resell_vrrp_subnet_v2":        resourceResellVRRPSubnetV2(),
+			"selvpc_resell_crossregion_subnet_v2": resourceResellCrossRegionSubnetV2(),
 		},
 		ConfigureFunc: configureProvider,
 	}

@@ -27,4 +27,10 @@ type Subnet struct {
 
 	// ProjectID represents an associated Identity service project.
 	ProjectID string `json:"project_id"`
+
+	// VLANID represents id of the associated VLAN in the Networking service.
+	VLANID int `json:"vlan_id"`
+
+	// VTEPIPAddress represents an ip address of the associated VTEP in the Networking service.
+	VTEPIPAddress string `json:"vtep_ip_address"`
 }

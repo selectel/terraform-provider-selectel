@@ -41,9 +41,13 @@ func subnetsMapsFromStructs(subnetsStructs []subnets.Subnet) []map[string]interf
 
 	for i, subnet := range subnetsStructs {
 		associatedSubnets[i] = map[string]interface{}{
-			"network_id": subnet.NetworkID,
-			"subnet_id":  subnet.SubnetID,
-			"region":     subnet.Region,
+			"network_id":      subnet.NetworkID,
+			"subnet_id":       subnet.SubnetID,
+			"region":          subnet.Region,
+			"cidr":            subnet.CIDR,
+			"vlan_id":         subnet.VLANID,
+			"project_id":      subnet.ProjectID,
+			"vtep_ip_address": subnet.VTEPIPAddress,
 		}
 	}
 
