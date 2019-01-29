@@ -82,7 +82,7 @@ func testAccCheckResellV2CrossRegionSubnetExists(n string, crossRegionSubnet *cr
 		}
 
 		if strconv.Itoa(foundCrossRegionSubnet.ID) != rs.Primary.ID {
-			return errors.New("Cross-region subnet not found")
+			return errors.New("cross-region subnet not found")
 		}
 
 		*crossRegionSubnet = *foundCrossRegionSubnet
