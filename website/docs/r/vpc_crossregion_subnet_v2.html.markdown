@@ -1,31 +1,31 @@
 ---
-layout: "selvpc"
-page_title: "SelVPC: selvpc_resell_crossregion_subnet_v2"
-sidebar_current: "docs-selvpc-resource-resell-crossregion-subnet-v2"
+layout: "selectel"
+page_title: "Selectel: selectel_vpc_crossregion_subnet_v2"
+sidebar_current: "docs-selectel-resource-vpc-crossregion-subnet-v2"
 description: |-
-  Manages a V2 Cross-region subnet resource within Resell Selectel VPC.
+  Manages a V2 Cross-region subnet resource within VPC Selectel VPC.
 ---
 
-# selvpc\_resell\_crossregion_subnet_v2
+# selectel\_vpc\_crossregion_subnet_v2
 
-Manages a V2 Cross-region subnet resource within Resell Selectel VPC.
+Manages a V2 Cross-region subnet resource within VPC Selectel VPC.
 
 ## Example Usage
 
 ```hcl
-resource "selvpc_resell_project_v2" "project_1" {
+resource "selectel_vpc_project_v2" "project_1" {
   auto_quotas = true
 }
 
-resource "selvpc_resell_crossregion_subnet_v2" "crossregion_subnet_1" {
-  project_id = "${selvpc_resell_project_v2.project_1.id}"
+resource "selectel_vpc_crossregion_subnet_v2" "crossregion_subnet_1" {
+  project_id = "${selectel_vpc_project_v2.project_1.id}"
   regions = [
     {
       region = "ru-1"
     },
     {
       region = "ru-3"
-    },
+    }
   ]
   cidr = "192.168.200.0/24"
 }
@@ -70,5 +70,5 @@ The following attributes are exported:
 Cross-region subnets can be imported using the `id`, e.g.
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selvpc_resell_crossregion_subnet_v2.crossregion_subnet_1 2060
+$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selectel_vpc_crossregion_subnet_v2.crossregion_subnet_1 2060
 ```
