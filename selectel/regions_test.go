@@ -23,8 +23,8 @@ func TestExpandVPCV2Regions(t *testing.T) {
 	assert.ElementsMatch(t, expected, actual)
 }
 
-func TestExpandResellV2CrossRegionOpts(t *testing.T) {
-	r := resourceResellCrossRegionSubnetV2()
+func TestExpandVPCV2CrossRegionOpts(t *testing.T) {
+	r := resourceVPCCrossRegionSubnetV2()
 	d := r.TestResourceData()
 	d.SetId("1")
 	regions := []interface{}{
@@ -46,7 +46,7 @@ func TestExpandResellV2CrossRegionOpts(t *testing.T) {
 		},
 	}
 
-	actual, err := expandResellV2CrossRegionOpts(d.Get("regions").(*schema.Set))
+	actual, err := expandVPCV2CrossRegionOpts(d.Get("regions").(*schema.Set))
 
 	assert.Empty(t, err)
 	assert.ElementsMatch(t, expected, actual)

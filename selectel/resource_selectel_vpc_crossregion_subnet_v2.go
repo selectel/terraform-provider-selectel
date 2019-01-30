@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"context"
@@ -11,11 +11,11 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/crossregionsubnets"
 )
 
-func resourceResellCrossRegionSubnetV2() *schema.Resource {
+func resourceVPCCrossRegionSubnetV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceResellCrossRegionSubnetV2Create,
-		Read:   resourceResellCrossRegionSubnetV2Read,
-		Delete: resourceResellCrossRegionSubnetV2Delete,
+		Create: resourceVPCCrossRegionSubnetV2Create,
+		Read:   resourceVPCCrossRegionSubnetV2Read,
+		Delete: resourceVPCCrossRegionSubnetV2Delete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -115,12 +115,12 @@ func resourceResellCrossRegionSubnetV2() *schema.Resource {
 	}
 }
 
-func resourceResellCrossRegionSubnetV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCCrossRegionSubnetV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
-	regionsOpts, err := expandResellV2CrossRegionOpts(d.Get("regions").(*schema.Set))
+	regionsOpts, err := expandVPCV2CrossRegionOpts(d.Get("regions").(*schema.Set))
 	if err != nil {
 		return errParseCrossRegionSubnetV2Regions(err)
 	}
@@ -146,10 +146,10 @@ func resourceResellCrossRegionSubnetV2Create(d *schema.ResourceData, meta interf
 
 	d.SetId(strconv.Itoa(crossRegionSubnetsResponse[0].ID))
 
-	return resourceResellCrossRegionSubnetV2Read(d, meta)
+	return resourceVPCCrossRegionSubnetV2Read(d, meta)
 }
 
-func resourceResellCrossRegionSubnetV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCCrossRegionSubnetV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
@@ -195,7 +195,7 @@ func resourceResellCrossRegionSubnetV2Read(d *schema.ResourceData, meta interfac
 	return nil
 }
 
-func resourceResellCrossRegionSubnetV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCCrossRegionSubnetV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()

@@ -46,7 +46,7 @@ func Provider() terraform.ResourceProvider {
 			"selectel_vpc_token_v2":              resourceVPCTokenV2(),
 			"selectel_vpc_user_v2":               resourceVPCUserV2(),
 			"selectel_vpc_vrrp_subnet_v2":        resourceVPCVRRPSubnetV2(),
-			"selectel_vpc_crossregion_subnet_v2": resourceResellCrossRegionSubnetV2(),
+			"selectel_vpc_crossregion_subnet_v2": resourceVPCCrossRegionSubnetV2(),
 		},
 		ConfigureFunc: configureProvider,
 	}

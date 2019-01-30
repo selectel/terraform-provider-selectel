@@ -22,9 +22,9 @@ func expandVPCV2Regions(rawRegions *schema.Set) []string {
 	return expandedRegions
 }
 
-// expandResellV2CrossRegionOpts converts the provided rawRegions structure to
+// expandVPCV2CrossRegionOpts converts the provided rawRegions structure to
 // the slice of crossregionsubnets.CrossRegionOpt.
-func expandResellV2CrossRegionOpts(rawRegions *schema.Set) ([]crossregionsubnets.CrossRegionOpt, error) {
+func expandVPCV2CrossRegionOpts(rawRegions *schema.Set) ([]crossregionsubnets.CrossRegionOpt, error) {
 	rawRegionsLen := rawRegions.Len()
 	if rawRegionsLen == 0 {
 		return nil, errors.New("got empty regions")

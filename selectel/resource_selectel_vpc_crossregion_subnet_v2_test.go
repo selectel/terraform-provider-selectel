@@ -1,4 +1,4 @@
-package selvpc
+package selectel
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAccResellV2CrossRegionSubnetBasic(t *testing.T) {
+func TestAccVPCV2CrossRegionSubnetBasic(t *testing.T) {
 	var (
 		crossRegionSubnet crossregionsubnets.CrossRegionSubnet
 		project           projects.Project
@@ -23,32 +23,32 @@ func TestAccResellV2CrossRegionSubnetBasic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelVPCPreCheck(t) },
+		PreCheck:     func() { testAccSelectelPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckResellV2CrossRegionSubnetDestroy,
+		CheckDestroy: testAccCheckVPCV2CrossRegionSubnetDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResellV2CrossRegionSubnetBasic(projectName),
+				Config: testAccVPCV2CrossRegionSubnetBasic(projectName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckResellV2ProjectExists("selvpc_resell_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckResellV2CrossRegionSubnetExists("selvpc_resell_crossregion_subnet_v2.crossregion_subnet_tf_acc_test_1", &crossRegionSubnet),
-					resource.TestCheckResourceAttr("selvpc_resell_crossregion_subnet_v2.crossregion_subnet_tf_acc_test_1", "cidr", "192.168.200.0/24"),
-					resource.TestCheckResourceAttr("selvpc_resell_crossregion_subnet_v2.crossregion_subnet_tf_acc_test_1", "regions.#", "2"),
-					resource.TestCheckResourceAttr("selvpc_resell_crossregion_subnet_v2.crossregion_subnet_tf_acc_test_1", "subnets.#", "2"),
-					resource.TestCheckResourceAttr("selvpc_resell_crossregion_subnet_v2.crossregion_subnet_tf_acc_test_1", "status", "DOWN"),
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccCheckVPCV2CrossRegionSubnetExists("selectel_vpc_crossregion_subnet_v2.crossregion_subnet_tf_acc_test_1", &crossRegionSubnet),
+					resource.TestCheckResourceAttr("selectel_vpc_crossregion_subnet_v2.crossregion_subnet_tf_acc_test_1", "cidr", "192.168.200.0/24"),
+					resource.TestCheckResourceAttr("selectel_vpc_crossregion_subnet_v2.crossregion_subnet_tf_acc_test_1", "regions.#", "2"),
+					resource.TestCheckResourceAttr("selectel_vpc_crossregion_subnet_v2.crossregion_subnet_tf_acc_test_1", "subnets.#", "2"),
+					resource.TestCheckResourceAttr("selectel_vpc_crossregion_subnet_v2.crossregion_subnet_tf_acc_test_1", "status", "DOWN"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckResellV2CrossRegionSubnetDestroy(s *terraform.State) error {
+func testAccCheckVPCV2CrossRegionSubnetDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "selvpc_resell_crossregion_subnet_v2" {
+		if rs.Type != "selectel_vpc_crossregion_subnet_v2" {
 			continue
 		}
 
@@ -61,7 +61,7 @@ func testAccCheckResellV2CrossRegionSubnetDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckResellV2CrossRegionSubnetExists(n string, crossRegionSubnet *crossregionsubnets.CrossRegionSubnet) resource.TestCheckFunc {
+func testAccCheckVPCV2CrossRegionSubnetExists(n string, crossRegionSubnet *crossregionsubnets.CrossRegionSubnet) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -91,15 +91,15 @@ func testAccCheckResellV2CrossRegionSubnetExists(n string, crossRegionSubnet *cr
 	}
 }
 
-func testAccResellV2CrossRegionSubnetBasic(projectName string) string {
+func testAccVPCV2CrossRegionSubnetBasic(projectName string) string {
 	return fmt.Sprintf(`
-resource "selvpc_resell_project_v2" "project_tf_acc_test_1" {
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
   auto_quotas = true
 }
 
-resource "selvpc_resell_crossregion_subnet_v2" "crossregion_subnet_tf_acc_test_1" {
-  project_id = "${selvpc_resell_project_v2.project_tf_acc_test_1.id}"
+resource "selectel_vpc_crossregion_subnet_v2" "crossregion_subnet_tf_acc_test_1" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   regions = [
     {
       region = "ru-1"
