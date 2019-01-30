@@ -1,12 +1,16 @@
-## 1.2.0 (Unreleased)
+## 2.0.0 (Unreleased)
+
+BREAKING CHANGES:
+
+* All `selvpc_resell_*` resources were renamed to `selectel_vpc_*` resources [GH-45]
 
 FEATURES:
 
-* __New Resource:__ `selvpc_resell_crossregion_subnet_v2` [GH-43]
+* __New Resource:__ `selectel_vpc_crossregion_subnet_v2` [GH-43]
 
 BUG FIXES:
 
-* Fixed Resell V2 Token Account acceptance test [GH-41]
+* Fixed VPC V2 Token Account acceptance test [GH-41]
 
 ## 1.1.0 (January 08, 2019)
 
