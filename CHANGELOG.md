@@ -1,5 +1,9 @@
 ## 1.2.0 (Unreleased)
 
+FEATURES:
+
+* __New Resource:__ `selvpc_resell_crossregion_subnet_v2` [GH-43]
+
 BUG FIXES:
 
 * Fixed Resell V2 Token Account acceptance test [GH-41]
