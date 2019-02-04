@@ -7,8 +7,8 @@ Run `terraform -v` to show the version. If you are not running the latest versio
 
 ### Affected Resource(s)
 Please list the resources as a list, for example:
-- selvpc_project_v2
-- selvpc_floatingip_v2
+- selectel_vpc_project_v2
+- selectel_vpc_floatingip_v2
 
 If this issue appears to affect multiple resources, it may be an issue with Terraform's core, so please mention this.
 

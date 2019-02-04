@@ -1,14 +1,14 @@
 ---
-layout: "selvpc"
-page_title: "Provider: SelVPC"
-sidebar_current: "docs-selvpc-index"
+layout: "selectel"
+page_title: "Provider: Selectel"
+sidebar_current: "docs-selectel-index"
 description: |-
-  The SelVPC provider is used to interact with the Selectel VPC resources. The provider needs the Selectel API key token to authorize its requests.
+  The Selectel provider is used to interact with the Selectel resources. The provider needs the Selectel API key token to authorize its requests.
 ---
 
-# SelVPC provider
+# Selectel provider
 
-The SelVPC provider is used to interact with the Selectel VPC resources. The provider
+The Selectel provider is used to interact with the Selectel resources. The provider
 needs the Selectel API key token to authorize its requests.
 
 Use the navigation to the left to read about the available resources.
@@ -16,13 +16,13 @@ Use the navigation to the left to read about the available resources.
 ## Example Usage
 
 ```hcl
-# Configure the SelVPC Provider
-provider "selvpc" {
+# Configure the Selectel Provider
+provider "selectel" {
   token = "SELECTEL_API_TOKEN_KEY"
 }
 
 # Create a project
-resource "selvpc_resell_project_v2" "project_1" {
+resource "selectel_vpc_project_v2" "project_1" {
   # ...
 }
 ```
@@ -52,7 +52,7 @@ In order to run the Acceptance Tests for development you need to set
 the `SEL_TOKEN` environment variable:
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN TF_ACC=1 go test -v ./selvpc/...
+$ env SEL_TOKEN=SELECTEL_API_TOKEN TF_ACC=1 go test -v ./selectel/...
 ```
 
 Please create an issue describing a new feature or bug prior creating a pull

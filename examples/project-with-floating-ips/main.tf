@@ -1,4 +1,4 @@
-resource "selvpc_resell_project_v2" "webservice" {
+resource "selectel_vpc_project_v2" "webservice" {
   name   = "webservice"
   quotas = [
     {
@@ -49,20 +49,20 @@ resource "selvpc_resell_project_v2" "webservice" {
   ]
 }
 
-resource "selvpc_resell_floatingip_v2" "webservice_floating_ip_ru1_1" {
-  project_id = "${selvpc_resell_project_v2.webservice.id}"
+resource "selectel_vpc_floatingip_v2" "webservice_floating_ip_ru1_1" {
+  project_id = "${selectel_vpc_project_v2.webservice.id}"
   region     = "ru-1"
-  depends_on = ["selvpc_resell_project_v2.webservice"]
+  depends_on = ["selectel_vpc_project_v2.webservice"]
 }
 
-resource "selvpc_resell_floatingip_v2" "webservice_floating_ip_ru1_2" {
-  project_id = "${selvpc_resell_project_v2.webservice.id}"
+resource "selectel_vpc_floatingip_v2" "webservice_floating_ip_ru1_2" {
+  project_id = "${selectel_vpc_project_v2.webservice.id}"
   region     = "ru-1"
-  depends_on = ["selvpc_resell_project_v2.webservice"]
+  depends_on = ["selectel_vpc_project_v2.webservice"]
 }
 
-resource "selvpc_resell_floatingip_v2" "webservice_floating_ip_ru2_1" {
-  project_id = "${selvpc_resell_project_v2.webservice.id}"
+resource "selectel_vpc_floatingip_v2" "webservice_floating_ip_ru2_1" {
+  project_id = "${selectel_vpc_project_v2.webservice.id}"
   region     = "ru-2"
-  depends_on = ["selvpc_resell_project_v2.webservice"]
+  depends_on = ["selectel_vpc_project_v2.webservice"]
 }

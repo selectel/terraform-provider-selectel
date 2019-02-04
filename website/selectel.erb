@@ -1,0 +1,54 @@
+<% wrap_layout :inner do %>
+  <% content_for :sidebar do %>
+    <div class="docs-sidebar hidden-print affix-top" role="complementary">
+      <ul class="nav docs-sidenav">
+        <li<%= sidebar_current("docs-home") %>>
+          <a href="/docs/providers/index.html">All Providers</a>
+        </li>
+
+        <li<%= sidebar_current("docs-selectel-index") %>>
+          <a href="/docs/providers/selectel/index.html">selectel Provider</a>
+        </li>
+
+        <li<%= sidebar_current("docs-selectel-resource-vpc") %>>
+          <a href="#">VPC Resources</a>
+          <ul class="nav nav-visible">
+            <li<%= sidebar_current("docs-selectel-resource-vpc-crossregion-subnet-v2") %>>
+              <a href="/docs/providers/selectel/r/vpc_crossregion_subnet_v2.html">selectel_vpc_crossregion_subnet_v2</a>
+            </li>
+            <li<%= sidebar_current("docs-selectel-resource-vpc-floatingip-v2") %>>
+              <a href="/docs/providers/selectel/r/vpc_floatingip_v2.html">selectel_vpc_floatingip_v2</a>
+            </li>
+            <li<%= sidebar_current("docs-selectel-resource-vpc-keypair-v2") %>>
+              <a href="/docs/providers/selectel/r/vpc_keypair_v2.html">selectel_vpc_keypair_v2</a>
+            </li>
+            <li<%= sidebar_current("docs-selectel-resource-vpc-license-v2") %>>
+              <a href="/docs/providers/selectel/r/vpc_license_v2.html">selectel_vpc_license_v2</a>
+            </li>
+            <li<%= sidebar_current("docs-selectel-resource-vpc-project-v2") %>>
+              <a href="/docs/providers/selectel/r/vpc_project_v2.html">selectel_vpc_project_v2</a>
+            </li>
+            <li<%= sidebar_current("docs-selectel-resource-vpc-role-v2") %>>
+              <a href="/docs/providers/selectel/r/vpc_role_v2.html">selectel_vpc_role_v2</a>
+            </li>
+            <li<%= sidebar_current("docs-selectel-resource-vpc-subnet-v2") %>>
+              <a href="/docs/providers/selectel/r/vpc_subnet_v2.html">selectel_vpc_subnet_v2</a>
+            </li>
+            <li<%= sidebar_current("docs-selectel-resource-vpc-token-v2") %>>
+              <a href="/docs/providers/selectel/r/vpc_token_v2.html">selectel_vpc_token_v2</a>
+            </li>
+            <li<%= sidebar_current("docs-selectel-resource-vpc-user-v2") %>>
+              <a href="/docs/providers/selectel/r/vpc_user_v2.html">selectel_vpc_user_v2</a>
+            </li>
+            <li<%= sidebar_current("docs-selectel-resource-vpc-vrrp-subnet-v2") %>>
+              <a href="/docs/providers/selectel/r/vpc_vrrp_subnet_v2.html">selectel_vpc_vrrp_subnet_v2</a>
+            </li>
+          </ul>
+        </li>
+
+      </ul>
+    </div>
+  <% end %>
+
+  <%= yield %>
+<% end %>

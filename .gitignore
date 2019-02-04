@@ -5,4 +5,4 @@
 *.json
 *.yaml
 .terraform/
-terraform-provider-selvpc
+terraform-provider-selectel
