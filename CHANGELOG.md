@@ -1,16 +1,16 @@
-## 2.0.0 (Unreleased)
+## 2.0.0 (February 04, 2019)
 
 BREAKING CHANGES:
 
-* All `selvpc_resell_*` resources were renamed to `selectel_vpc_*` resources [GH-45]
+* All `selvpc_resell_*` resources were renamed to `selectel_vpc_*` resources ([#45](https://github.com/terraform-providers/terraform-provider-aws/issues/45))
 
 FEATURES:
 
-* __New Resource:__ `selectel_vpc_crossregion_subnet_v2` [GH-43]
+* __New Resource:__ `selectel_vpc_crossregion_subnet_v2` ([#43](https://github.com/terraform-providers/terraform-provider-aws/issues/43))
 
 BUG FIXES:
 
-* Fixed VPC V2 Token Account acceptance test [GH-41]
+* Fixed VPC V2 Token Account acceptance test ([#41](https://github.com/terraform-providers/terraform-provider-aws/issues/41))
 
 ## 1.1.0 (January 08, 2019)
 
