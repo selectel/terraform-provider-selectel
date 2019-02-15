@@ -31,9 +31,6 @@ lintcheck:
 	@echo "==> Checking source code against linters..."
 	@sh -c "'$(CURDIR)/scripts/golangcilint.sh'"
 
-vendor-status:
-	dep status
-
 test-compile:
 	@if [ "$(TEST)" = "./..." ]; then \
 		echo "ERROR: Set TEST to a specific package. For example,"; \
@@ -56,4 +53,4 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build test testacc fmt fmtcheck imports lintcheck vendor-status test-compile website website-test
+.PHONY: build test testacc fmt fmtcheck imports lintcheck test-compile website website-test
