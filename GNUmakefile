@@ -23,10 +23,6 @@ fmt:
 fmtcheck:
 	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
 
-imports:
-	@echo "==> Fixing source code with goimports..."
-	goimports -w $(GOFMT_FILES)
-
 lintcheck:
 	@echo "==> Checking source code against linters..."
 	@sh -c "'$(CURDIR)/scripts/golangcilint.sh'"
@@ -53,4 +49,4 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build test testacc fmt fmtcheck imports lintcheck test-compile website website-test
+.PHONY: build test testacc fmt fmtcheck lintcheck test-compile website website-test
