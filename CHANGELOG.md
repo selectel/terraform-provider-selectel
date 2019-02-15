@@ -1,4 +1,9 @@
 ## 2.0.1 (Unreleased)
+
+IMPROVEMENTS:
+
+* Migrated to Go Modules (GH-48)
+
 ## 2.0.0 (February 04, 2019)
 
 BREAKING CHANGES:
