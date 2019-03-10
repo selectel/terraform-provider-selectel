@@ -16,41 +16,33 @@ Manages a V2 project resource within Selectel VPC.
 resource "selectel_vpc_project_v2" "kubernetes_cluster" {
   name       = "kubernetes_cluster"
   custom_url = "kubernetes-cluster-123.selvpc.ru"
-  theme {
+  theme = {
     color = "2753E9"
   }
-  quotas     = [
-    {
-      resource_name = "compute_cores"
-      resource_quotas = [
-        {
-          region = "ru-3"
-          zone = "ru-3a"
-          value = 12
-        }
-      ]
-    },
-    {
-      resource_name   = "compute_ram"
-      resource_quotas = [
-        {
-          region = "ru-3"
-          zone = "ru-3a"
-          value = 20480
-        }
-      ]
-    },
-    {
-      resource_name   = "volume_gigabytes_fast"
-      resource_quotas = [
-        {
-          region = "ru-3"
-          zone = "ru-3a"
-          value = 100
-        }
-      ]
+  quotas {
+    resource_name = "compute_cores"
+    resource_quotas {
+      region = "ru-3"
+      zone = "ru-3a"
+      value = 12
     }
-  ]
+  }
+  quotas {
+    resource_name = "compute_ram"
+    resource_quotas {
+      region = "ru-3"
+      zone = "ru-3a"
+      value = 20480
+    }
+  }
+  quotas {
+    resource_name = "volume_gigabytes_fast"
+    resource_quotas {
+      region = "ru-3"
+      zone = "ru-3a"
+      value = 100
+    }
+  }
 }
 ```
 
