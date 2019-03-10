@@ -11,3 +11,5 @@ to manage OpenStack instances inside the created project.
 
 To run this example you need to set `SEL_TOKEN` variable with a token key string
 that you can get from the [apikeys](https://my.selectel.ru/profile/apikeys) page.
+
+You can find additional examples in the [selectel/terraform-examples](https://github.com/selectel/terraform-examples).
