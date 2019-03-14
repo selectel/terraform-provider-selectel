@@ -19,6 +19,9 @@ type CrossRegionSubnet struct {
 	// Status shows if cross-region subnet is used.
 	Status string `json:"status"`
 
+	// ProjectID represents an associated Identity service project.
+	ProjectID string `json:"project_id"`
+
 	// Servers contains info about servers to which cross-region subnet is associated to.
 	Servers []servers.Server `json:"servers"`
 

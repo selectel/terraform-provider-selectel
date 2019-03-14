@@ -168,6 +168,7 @@ func resourceVPCCrossRegionSubnetV2Read(d *schema.ResourceData, meta interface{}
 	d.Set("cidr", crossRegionSubnet.CIDR)
 	d.Set("status", crossRegionSubnet.Status)
 	d.Set("vlan_id", crossRegionSubnet.VLANID)
+	d.Set("project_id", crossRegionSubnet.ProjectID)
 
 	associatedServers := serversMapsFromStructs(crossRegionSubnet.Servers)
 	if err := d.Set("servers", associatedServers); err != nil {
@@ -182,14 +183,6 @@ func resourceVPCCrossRegionSubnetV2Read(d *schema.ResourceData, meta interface{}
 	associatedRegions := regionsMapsFromSubnetsStructs(crossRegionSubnet.Subnets)
 	if err := d.Set("regions", associatedRegions); err != nil {
 		log.Print(errSettingComplexAttr("regions", err))
-	}
-
-	associatedProjectID, err := projectIDFromSubnetsMaps(associatedSubnets)
-	if err != nil {
-		log.Print(errParseCrossRegionSubnetV2ProjectID(err))
-	}
-	if err := d.Set("project_id", associatedProjectID); err != nil {
-		log.Print(errSettingComplexAttr("project_id", err))
 	}
 
 	return nil
