@@ -1,10 +1,13 @@
 ## 2.0.1 (Unreleased)
 
+BUG FIXES:
+
+* Fixed an issue with empty `project_id` argument of the `selectel_vpc_crossregion_subnet_v2` resource (GH-52)
+
 IMPROVEMENTS:
 
 * Migrated to Go Modules (GH-47)
 * Updated Terraform SDK to `v1.12.0-beta1` (GH-51)
-* Fixed issue with empty `project_id` argument of the `selectel_vpc_crossregion_subnet_v2` resource (GH-52)
 * Updated `golangci-lint` in CI to `v1.15.0` (GH-54)
 
 ## 2.0.0 (February 04, 2019)
