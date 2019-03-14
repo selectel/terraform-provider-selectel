@@ -13,7 +13,7 @@ require (
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
 	github.com/mattn/go-isatty v0.0.6 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/selectel/go-selvpcclient v1.7.0
+	github.com/selectel/go-selvpcclient v1.8.1
 	github.com/stretchr/testify v1.3.0
 	github.com/ulikunitz/xz v0.5.6 // indirect
 	github.com/vmihailenco/msgpack v4.0.2+incompatible // indirect
