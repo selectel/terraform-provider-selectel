@@ -1,14 +1,14 @@
-## 2.1.0 (Unreleased)
+## 2.1.0 (March 14, 2019)
 
 BUG FIXES:
 
-* Fixed an issue with empty `project_id` argument of the `selectel_vpc_crossregion_subnet_v2` resource (GH-52)
+* Fixed an issue with empty `project_id` argument of the `selectel_vpc_crossregion_subnet_v2` resource ([#52](https://github.com/terraform-providers/terraform-provider-aws/issues/52))
 
 IMPROVEMENTS:
 
-* Migrated to Go Modules (GH-47)
-* Updated Terraform SDK to `v1.12.0-beta1` (GH-51)
-* Updated `golangci-lint` in CI to `v1.15.0` (GH-54)
+* Migrated to Go Modules ([#47](https://github.com/terraform-providers/terraform-provider-aws/issues/47))
+* Updated Terraform SDK to `v1.12.0-beta1` ([#51](https://github.com/terraform-providers/terraform-provider-aws/issues/51))
+* Updated `golangci-lint` in CI to `v1.15.0` ([#54](https://github.com/terraform-providers/terraform-provider-aws/issues/54))
 
 ## 2.0.0 (February 04, 2019)
 
