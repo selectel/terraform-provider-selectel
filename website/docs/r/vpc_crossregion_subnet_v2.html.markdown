@@ -19,15 +19,13 @@ resource "selectel_vpc_project_v2" "project_1" {
 
 resource "selectel_vpc_crossregion_subnet_v2" "crossregion_subnet_1" {
   project_id = "${selectel_vpc_project_v2.project_1.id}"
-  regions = [
-    {
-      region = "ru-1"
-    },
-    {
-      region = "ru-3"
-    }
-  ]
   cidr = "192.168.200.0/24"
+  regions {
+    region = "ru-1"
+  }
+  regions {
+    region = "ru-3"
+  }
 }
 ```
 

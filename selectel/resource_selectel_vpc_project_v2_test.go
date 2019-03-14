@@ -156,7 +156,7 @@ func testAccVPCV2ProjectUpdate1(name, customURL string) string {
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name       = "%s"
   custom_url = "%s"
-  theme {
+  theme = {
     color = "000000"
     logo  = "fake.png"
   }
@@ -167,7 +167,7 @@ func testAccVPCV2ProjectUpdate2(name string) string {
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name       = "%s"
-  theme {
+  theme = {
     color = "FF0000"
   }
 }`, name)
@@ -177,35 +177,29 @@ func testAccVPCV2ProjectUpdate3(name string) string {
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name = "%s"
-  theme {
+  theme = {
     color = "5D6D7E"
   }
-  quotas = [
-    {
-      resource_name = "image_gigabytes"
-      resource_quotas = [
-        {
-          region = "ru-1"
-          value = 1
-        }
-      ]
-    },
-    {
-      resource_name = "volume_gigabytes_basic"
-      resource_quotas = [
-        {
-          region = "ru-1"
-          zone = "ru-1a"
-          value = 1
-        },
-        {
-          region = "ru-2"
-          zone = "ru-2a"
-          value = 2
-        }
-      ]
+  quotas {
+    resource_name = "image_gigabytes"
+    resource_quotas {
+      region = "ru-1"
+      value = 1
     }
-  ]
+  }
+  quotas {
+    resource_name = "volume_gigabytes_basic"
+    resource_quotas {
+      region = "ru-1"
+      zone = "ru-1a"
+      value = 1
+    }
+    resource_quotas {
+      region = "ru-2"
+      zone = "ru-2a"
+      value = 2
+    }
+  }
 }`, name)
 }
 
