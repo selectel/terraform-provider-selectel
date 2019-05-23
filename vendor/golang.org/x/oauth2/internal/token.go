@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"math"
 	"mime"
 	"net/http"
 	"net/url"
@@ -90,9 +89,6 @@ func (e *expirationTime) UnmarshalJSON(b []byte) error {
 	i, err := n.Int64()
 	if err != nil {
 		return err
-	}
-	if i > math.MaxInt32 {
-		i = math.MaxInt32
 	}
 	*e = expirationTime(i)
 	return nil
