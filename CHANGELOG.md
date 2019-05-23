@@ -1,4 +1,10 @@
 ## 2.2.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* Updated Terraform SDK to `v1.12.0` from `v1.12.0-beta1` [GH-58] 
+* Updated `golangci-lint` in CI to `v1.16.0` [GH-55]
+
 ## 2.1.0 (March 14, 2019)
 
 BUG FIXES:
