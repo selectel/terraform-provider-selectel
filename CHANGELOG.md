@@ -1,14 +1,14 @@
-## 2.3.0 (Unreleased)
+## 2.3.0 (July 09, 2019)
 
 BUG FIXES:
 
-* Fixed an issue with `selectel_vpc_project_v2` when `quotas` argument has been updated incorrectly [GH-64]
+* Fixed an issue with `selectel_vpc_project_v2` when `quotas` argument has been updated incorrectly ([#64](https://github.com/terraform-providers/terraform-provider-selectel/issues/64))
 
 IMPROVEMENTS:
 
-* Updated Terraform SDK to `v1.12.2` from `v1.12.0` [GH-61]
-* Updated `golangci-lint` in CI to `v1.17.1` [GH-63]
-* Fixed Terraform and Go versions in documentation [GH-63]
+* Updated Terraform SDK to `v1.12.2` from `v1.12.0` ([#61](https://github.com/terraform-providers/terraform-provider-selectel/issues/61))
+* Updated `golangci-lint` in CI to `v1.17.1` ([#63](https://github.com/terraform-providers/terraform-provider-selectel/issues/63))
+* Fixed Terraform and Go versions in documentation ([#63](https://github.com/terraform-providers/terraform-provider-selectel/issues/63))
 
 ## 2.2.0 (May 23, 2019)
 
