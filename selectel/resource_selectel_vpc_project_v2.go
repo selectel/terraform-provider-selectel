@@ -71,7 +71,6 @@ func resourceVPCProjectV2() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: false,
-				Set:      hashQuotas,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"resource_name": {
@@ -110,7 +109,6 @@ func resourceVPCProjectV2() *schema.Resource {
 			"all_quotas": {
 				Type:     schema.TypeSet,
 				Computed: true,
-				Set:      hashQuotas,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"resource_name": {
@@ -445,12 +443,6 @@ func resourceQuotasHashSetFunc() schema.SchemaSetFunc {
 	return schema.HashResource(resourceQuotasSchema())
 }
 
-// hashQuotas is a hash function to use with the "quotas" and "all_quotas" sets.
-func hashQuotas(v interface{}) int {
-	m := v.(map[string]interface{})
-	return hashcode.String(fmt.Sprintf("%s-", m["resource_name"].(string)))
-}
-
 // hashResourceQuotas is a hash function to use with the "resource_quotas" set.
 func hashResourceQuotas(v interface{}) int {
 	var buf bytes.Buffer
@@ -461,5 +453,6 @@ func hashResourceQuotas(v interface{}) int {
 	if m["zone"] != "" {
 		buf.WriteString(fmt.Sprintf("%s-", m["zone"].(string)))
 	}
+
 	return hashcode.String(buf.String())
 }
