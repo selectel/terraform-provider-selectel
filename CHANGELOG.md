@@ -14,7 +14,7 @@ IMPROVEMENTS:
 
 IMPROVEMENTS:
 
-* Updated Terraform SDK to `v1.12.0` from `v1.12.0-beta1` [[#58](https://github.com/terraform-providers/terraform-provider-selectel/issues/58)] 
+* Updated Terraform SDK to `v1.12.0` from `v1.12.0-beta1` ([#58](https://github.com/terraform-providers/terraform-provider-selectel/issues/58))
 * Updated `golangci-lint` in CI to `v1.16.0` ([#55](https://github.com/terraform-providers/terraform-provider-selectel/issues/55))
 
 ## 2.1.0 (March 14, 2019)
