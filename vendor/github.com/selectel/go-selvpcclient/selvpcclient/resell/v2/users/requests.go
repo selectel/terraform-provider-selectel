@@ -12,6 +12,29 @@ import (
 
 const resourceURL = "users"
 
+// Get returns a single user by its id.
+func Get(ctx context.Context, client *selvpcclient.ServiceClient, id string) (*User, *selvpcclient.ResponseResult, error) {
+	url := strings.Join([]string{client.Endpoint, resourceURL, id}, "/")
+	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	if responseResult.Err != nil {
+		return nil, responseResult, responseResult.Err
+	}
+
+	// Extract an user from the response body.
+	var result struct {
+		User *User `json:"user"`
+	}
+	err = responseResult.ExtractResult(&result)
+	if err != nil {
+		return nil, responseResult, err
+	}
+
+	return result.User, responseResult, nil
+}
+
 // List gets a list of users in the current domain.
 func List(ctx context.Context, client *selvpcclient.ServiceClient) ([]*User, *selvpcclient.ResponseResult, error) {
 	url := strings.Join([]string{client.Endpoint, resourceURL}, "/")

@@ -80,19 +80,9 @@ func testAccCheckVPCV2UserDestroy(s *terraform.State) error {
 			continue
 		}
 
-		userList, _, err := users.List(ctx, resellV2Client)
-		if err != nil {
-			return err
-		}
+		_, _, err := users.Get(ctx, resellV2Client, rs.Primary.ID)
 
-		found := false
-		for _, user := range userList {
-			if user.ID == rs.Primary.ID {
-				found = true
-			}
-		}
-
-		if found {
+		if err == nil {
 			return errors.New("user still exists")
 		}
 	}
@@ -115,25 +105,16 @@ func testAccCheckVPCV2UserExists(n string, user *users.User) resource.TestCheckF
 		resellV2Client := config.resellV2Client()
 		ctx := context.Background()
 
-		userList, _, err := users.List(ctx, resellV2Client)
+		foundUser, _, err := users.Get(ctx, resellV2Client, rs.Primary.ID)
 		if err != nil {
 			return err
 		}
 
-		found := false
-		foundUserIdx := 0
-		for i, resellV2User := range userList {
-			if resellV2User.ID == rs.Primary.ID {
-				found = true
-				foundUserIdx = i
-			}
-		}
-
-		if !found {
+		if foundUser.ID != rs.Primary.ID {
 			return errors.New("user not found")
 		}
 
-		*user = *userList[foundUserIdx]
+		*user = *foundUser
 
 		return nil
 	}
