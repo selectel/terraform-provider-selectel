@@ -44,3 +44,16 @@ func Create(ctx context.Context, client *selvpcclient.ServiceClient, createOpts 
 
 	return result.Token, responseResult, nil
 }
+
+// Delete a user owned Identity token by its id.
+func Delete(ctx context.Context, client *selvpcclient.ServiceClient, id string) (*selvpcclient.ResponseResult, error) {
+	url := strings.Join([]string{client.Endpoint, resourceURL, id}, "/")
+	responseResult, err := client.DoRequest(ctx, http.MethodDelete, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	if responseResult.Err != nil {
+		err = responseResult.Err
+	}
+	return responseResult, err
+}
