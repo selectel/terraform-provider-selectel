@@ -2,6 +2,14 @@
 Package users provides the ability to retrieve and manage users through the
 Resell v2 API.
 
+Example of getting a single user referenced by its id
+
+  user, _, err := users.Get(context, resellClient, userID)
+  if err != nil {
+    log.Fatal(err)
+  }
+  fmt.Println(user)
+
 Example of getting all users
 
   allUsers, _, err := users.List(ctx, resellClient)

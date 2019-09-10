@@ -3,6 +3,7 @@ package selectel
 import (
 	"context"
 	"log"
+	"net/http"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
@@ -58,7 +59,20 @@ func resourceVPCTokenV2Read(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceVPCTokenV2Delete(d *schema.ResourceData, meta interface{}) error {
-	// There is no API support for deleting a token yet.
+	config := meta.(*Config)
+	resellV2Client := config.resellV2Client()
+	ctx := context.Background()
+
+	log.Print(msgDelete(objectToken, d.Id()))
+	response, err := tokens.Delete(ctx, resellV2Client, d.Id())
+	if err != nil {
+		if response.StatusCode == http.StatusNotFound {
+			d.SetId("")
+			return nil
+		}
+
+		return errDeletingObject(objectToken, d.Id(), err)
+	}
 
 	return nil
 }

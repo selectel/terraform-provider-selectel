@@ -22,5 +22,12 @@ Example of creating a domain-scoped token
     log.Fatal(err)
   }
   fmt.Println(token.ID)
+
+Example of deleting a token
+
+  _, err = tokens.Delete(context, resellClient, token.ID)
+  if err != nil {
+    log.Fatal(err)
+  }
 */
 package tokens
