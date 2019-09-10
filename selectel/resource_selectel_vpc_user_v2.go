@@ -58,11 +58,24 @@ func resourceVPCUserV2Create(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceVPCUserV2Read(d *schema.ResourceData, meta interface{}) error {
-	// There is no API support for getting a single user yet, so we don't
-	// set actual user name and enabled state from the API.
-	if !d.Get("enabled").(bool) {
-		d.Set("enabled", false)
+	config := meta.(*Config)
+	resellV2Client := config.resellV2Client()
+	ctx := context.Background()
+
+	log.Print(msgGet(objectUser, d.Id()))
+	user, response, err := users.Get(ctx, resellV2Client, d.Id())
+	if err != nil {
+		if response.StatusCode == http.StatusNotFound {
+			d.SetId("")
+			return nil
+		}
+
+		return errGettingObject(objectUser, d.Id(), err)
 	}
+
+	d.Set("id", user.ID)
+	d.Set("name", user.Name)
+	d.Set("enabled", user.Enabled)
 
 	return nil
 }
