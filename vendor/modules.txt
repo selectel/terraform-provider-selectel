@@ -210,11 +210,10 @@ github.com/posener/complete/cmd
 github.com/posener/complete/match
 # github.com/satori/go.uuid v1.2.0
 github.com/satori/go.uuid
-# github.com/selectel/go-selvpcclient v1.8.2-0.20190903073256-2cf3ce95212c
+# github.com/selectel/go-selvpcclient v1.9.0
 github.com/selectel/go-selvpcclient/selvpcclient
 github.com/selectel/go-selvpcclient/selvpcclient/resell
 github.com/selectel/go-selvpcclient/selvpcclient/resell/v2
-github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/crossregionsubnets
 github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/floatingips
 github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/keypairs
 github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/licenses
