@@ -21,9 +21,10 @@ func TestAccVPCV2UserImportBasic(t *testing.T) {
 				Config: testAccVPCV2UserBasic(userName, userPassword),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"password"},
 			},
 		},
 	})

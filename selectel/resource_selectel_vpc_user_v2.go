@@ -15,6 +15,9 @@ func resourceVPCUserV2() *schema.Resource {
 		Read:   resourceVPCUserV2Read,
 		Update: resourceVPCUserV2Update,
 		Delete: resourceVPCUserV2Delete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
