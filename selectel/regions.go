@@ -3,8 +3,8 @@ package selectel
 import (
 	"fmt"
 
-	"github.com/hashicorp/terraform/helper/hashcode"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func expandVPCV2Regions(rawRegions *schema.Set) []string {
