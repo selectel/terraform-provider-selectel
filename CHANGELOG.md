@@ -1,19 +1,19 @@
-## 3.0.0 (Unreleased)
+## 3.0.0 (September 26, 2019)
 
 BREAKING CHANGES:
 
-* Removed `selectel_vpc_crossregion_subnet_v2` resource because it has been depreacted in the Selectel VPC V2 API [GH-69]
+* Removed `selectel_vpc_crossregion_subnet_v2` resource because it has been depreacted in the Selectel VPC V2 API ([#69](https://github.com/terraform-providers/terraform-provider-selectel/issues/69))
 
 IMPROVEMENTS:
 
-* Added ability to revoke tokens in API while deleting `selvpc_resell_token_v2` resource [GH-66]
-* Added ability to import `selvpc_resell_user_v2` resource [GH-65]
-* Added extended error messages to all resources [GH-73]
-* Migrated from Terraform in-tree `helper/*` SDK to the separate `terraform-plugin-sdk` v1.0.0 [GH-72]
+* Added ability to revoke tokens in API while deleting `selvpc_resell_token_v2` resource ([#66](https://github.com/terraform-providers/terraform-provider-selectel/issues/66))
+* Added ability to import `selvpc_resell_user_v2` resource ([#65](https://github.com/terraform-providers/terraform-provider-selectel/issues/65))
+* Added extended error messages to all resources ([#73](https://github.com/terraform-providers/terraform-provider-selectel/issues/73))
+* Migrated from Terraform in-tree `helper/*` SDK to the separate `terraform-plugin-sdk` v1.0.0 ([#72](https://github.com/terraform-providers/terraform-provider-selectel/issues/72))
 
 BUG FIXES:
 
-* Fixed an issue where checks for 404 errors could cause panics [GH-73]
+* Fixed an issue where checks for 404 errors could cause panics ([#73](https://github.com/terraform-providers/terraform-provider-selectel/issues/73))
 
 ## 2.3.0 (July 09, 2019)
 
