@@ -7,3 +7,4 @@
 .terraform/
 terraform-provider-selectel
 .idea
+.DS_Store
