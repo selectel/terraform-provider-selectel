@@ -106,9 +106,11 @@ func resourceVPCFloatingIPV2Read(d *schema.ResourceData, meta interface{}) error
 	log.Print(msgGet(objectFloatingIP, d.Id()))
 	floatingIP, response, err := floatingips.Get(ctx, resellV2Client, d.Id())
 	if err != nil {
-		if response.StatusCode == http.StatusNotFound {
-			d.SetId("")
-			return nil
+		if response != nil {
+			if response.StatusCode == http.StatusNotFound {
+				d.SetId("")
+				return nil
+			}
 		}
 
 		return errGettingObject(objectFloatingIP, d.Id(), err)
@@ -137,9 +139,11 @@ func resourceVPCFloatingIPV2Delete(d *schema.ResourceData, meta interface{}) err
 	log.Print(msgDelete(objectFloatingIP, d.Id()))
 	response, err := floatingips.Delete(ctx, resellV2Client, d.Id())
 	if err != nil {
-		if response.StatusCode == http.StatusNotFound {
-			d.SetId("")
-			return nil
+		if response != nil {
+			if response.StatusCode == http.StatusNotFound {
+				d.SetId("")
+				return nil
+			}
 		}
 
 		return errDeletingObject(objectFloatingIP, d.Id(), err)

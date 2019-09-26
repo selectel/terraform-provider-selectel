@@ -104,9 +104,11 @@ func resourceVPCRoleV2Delete(d *schema.ResourceData, meta interface{}) error {
 	log.Print(msgDelete(objectRole, d.Id()))
 	response, err := roles.Delete(ctx, resellV2Client, opts)
 	if err != nil {
-		if response.StatusCode == http.StatusNotFound {
-			d.SetId("")
-			return nil
+		if response != nil {
+			if response.StatusCode == http.StatusNotFound {
+				d.SetId("")
+				return nil
+			}
 		}
 
 		return errDeletingObject(objectRole, d.Id(), err)

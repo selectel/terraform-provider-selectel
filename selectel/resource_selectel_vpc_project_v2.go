@@ -183,9 +183,11 @@ func resourceVPCProjectV2Read(d *schema.ResourceData, meta interface{}) error {
 	log.Print(msgGet(objectProject, d.Id()))
 	project, response, err := projects.Get(ctx, resellV2Client, d.Id())
 	if err != nil {
-		if response.StatusCode == http.StatusNotFound {
-			d.SetId("")
-			return nil
+		if response != nil {
+			if response.StatusCode == http.StatusNotFound {
+				d.SetId("")
+				return nil
+			}
 		}
 
 		return errGettingObject(objectProject, d.Id(), err)
@@ -277,9 +279,11 @@ func resourceVPCProjectV2Delete(d *schema.ResourceData, meta interface{}) error 
 	log.Print(msgDelete(objectProject, d.Id()))
 	response, err := projects.Delete(ctx, resellV2Client, d.Id())
 	if err != nil {
-		if response.StatusCode == http.StatusNotFound {
-			d.SetId("")
-			return nil
+		if response != nil {
+			if response.StatusCode == http.StatusNotFound {
+				d.SetId("")
+				return nil
+			}
 		}
 
 		return errDeletingObject(objectProject, d.Id(), err)

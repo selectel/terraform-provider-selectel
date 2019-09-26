@@ -128,9 +128,11 @@ func resourceVPCSubnetV2Read(d *schema.ResourceData, meta interface{}) error {
 	log.Print(msgGet(objectSubnet, d.Id()))
 	subnet, response, err := subnets.Get(ctx, resellV2Client, d.Id())
 	if err != nil {
-		if response.StatusCode == http.StatusNotFound {
-			d.SetId("")
-			return nil
+		if response != nil {
+			if response.StatusCode == http.StatusNotFound {
+				d.SetId("")
+				return nil
+			}
 		}
 
 		return errGettingObject(objectSubnet, d.Id(), err)
@@ -168,9 +170,11 @@ func resourceVPCSubnetV2Delete(d *schema.ResourceData, meta interface{}) error {
 	log.Print(msgDelete(objectSubnet, d.Id()))
 	response, err := subnets.Delete(ctx, resellV2Client, d.Id())
 	if err != nil {
-		if response.StatusCode == http.StatusNotFound {
-			d.SetId("")
-			return nil
+		if response != nil {
+			if response.StatusCode == http.StatusNotFound {
+				d.SetId("")
+				return nil
+			}
 		}
 
 		return errDeletingObject(objectSubnet, d.Id(), err)

@@ -68,9 +68,11 @@ func resourceVPCUserV2Read(d *schema.ResourceData, meta interface{}) error {
 	log.Print(msgGet(objectUser, d.Id()))
 	user, response, err := users.Get(ctx, resellV2Client, d.Id())
 	if err != nil {
-		if response.StatusCode == http.StatusNotFound {
-			d.SetId("")
-			return nil
+		if response != nil {
+			if response.StatusCode == http.StatusNotFound {
+				d.SetId("")
+				return nil
+			}
 		}
 
 		return errGettingObject(objectUser, d.Id(), err)
@@ -112,9 +114,11 @@ func resourceVPCUserV2Delete(d *schema.ResourceData, meta interface{}) error {
 	log.Print(msgDelete(objectUser, d.Id()))
 	response, err := users.Delete(ctx, resellV2Client, d.Id())
 	if err != nil {
-		if response.StatusCode == http.StatusNotFound {
-			d.SetId("")
-			return nil
+		if response != nil {
+			if response.StatusCode == http.StatusNotFound {
+				d.SetId("")
+				return nil
+			}
 		}
 
 		return errDeletingObject(objectUser, d.Id(), err)

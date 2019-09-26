@@ -104,9 +104,11 @@ func resourceVPCLicenseV2Read(d *schema.ResourceData, meta interface{}) error {
 	log.Print(msgGet(objectLicense, d.Id()))
 	license, response, err := licenses.Get(ctx, resellV2Client, d.Id())
 	if err != nil {
-		if response.StatusCode == http.StatusNotFound {
-			d.SetId("")
-			return nil
+		if response != nil {
+			if response.StatusCode == http.StatusNotFound {
+				d.SetId("")
+				return nil
+			}
 		}
 
 		return errGettingObject(objectLicense, d.Id(), err)
@@ -132,9 +134,11 @@ func resourceVPCLicenseV2Delete(d *schema.ResourceData, meta interface{}) error 
 	log.Print(msgDelete(objectLicense, d.Id()))
 	response, err := licenses.Delete(ctx, resellV2Client, d.Id())
 	if err != nil {
-		if response.StatusCode == http.StatusNotFound {
-			d.SetId("")
-			return nil
+		if response != nil {
+			if response.StatusCode == http.StatusNotFound {
+				d.SetId("")
+				return nil
+			}
 		}
 
 		return errDeletingObject(objectLicense, d.Id(), err)

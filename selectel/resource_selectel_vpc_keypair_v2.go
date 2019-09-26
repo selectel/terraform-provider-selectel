@@ -123,9 +123,11 @@ func resourceVPCKeypairV2Delete(d *schema.ResourceData, meta interface{}) error 
 	log.Print(msgDelete(objectKeypair, d.Id()))
 	response, err := keypairs.Delete(ctx, resellV2Client, keypairName, userID)
 	if err != nil {
-		if response.StatusCode == http.StatusNotFound {
-			d.SetId("")
-			return nil
+		if response != nil {
+			if response.StatusCode == http.StatusNotFound {
+				d.SetId("")
+				return nil
+			}
 		}
 
 		return errDeletingObject(objectKeypair, d.Id(), err)
