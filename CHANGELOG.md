@@ -8,6 +8,7 @@ IMPROVEMENTS:
 
 * Added ability to revoke tokens in API while deleting `selvpc_resell_token_v2` resource [GH-66]
 * Added ability to import `selvpc_resell_user_v2` resource [GH-65]
+* Migrated from Terraform in-tree `helper/*` SDK to the separate `terraform-plugin-sdk` v1.0.0 [GH-72]
 
 ## 2.3.0 (July 09, 2019)
 
