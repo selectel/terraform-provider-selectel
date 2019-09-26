@@ -141,3 +141,13 @@ func TestErrDeletingObject(t *testing.T) {
 
 	assert.Equal(t, expected, actual)
 }
+
+func TestErrResourceDeprecated(t *testing.T) {
+	resource := "some_vpc_object"
+
+	expected := errors.New("some_vpc_object resource has been deprecated")
+
+	actual := errResourceDeprecated(resource)
+
+	assert.Equal(t, expected, actual)
+}

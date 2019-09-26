@@ -1,4 +1,8 @@
-## 2.4.0 (Unreleased)
+## 3.0.0 (Unreleased)
+
+BREAKING CHANGES:
+
+* Removed `selectel_vpc_crossregion_subnet_v2` resource because it has been depreacted in the Selectel VPC V2 API
 
 IMPROVEMENTS:
 

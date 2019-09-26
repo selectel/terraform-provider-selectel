@@ -53,3 +53,7 @@ func errGettingObject(object, id string, err error) error {
 func errDeletingObject(object, id string, err error) error {
 	return fmt.Errorf("error deleting %s '%s': %s", object, id, err)
 }
+
+func errResourceDeprecated(resource string) error {
+	return fmt.Errorf("%s resource has been deprecated", resource)
+}
