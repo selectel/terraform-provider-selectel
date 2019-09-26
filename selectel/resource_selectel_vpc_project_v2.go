@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/hashicorp/terraform/helper/hashcode"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
 )

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/terraform/helper/hashcode"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/selectel/go-selvpcclient/selvpcclient"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/subnets"
 )

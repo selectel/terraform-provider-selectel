@@ -1,7 +1,7 @@
 package selectel
 
 import (
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceVPCCrossRegionSubnetV2() *schema.Resource {
