@@ -66,9 +66,11 @@ func resourceVPCTokenV2Delete(d *schema.ResourceData, meta interface{}) error {
 	log.Print(msgDelete(objectToken, d.Id()))
 	response, err := tokens.Delete(ctx, resellV2Client, d.Id())
 	if err != nil {
-		if response.StatusCode == http.StatusNotFound {
-			d.SetId("")
-			return nil
+		if response != nil {
+			if response.StatusCode == http.StatusNotFound {
+				d.SetId("")
+				return nil
+			}
 		}
 
 		return errDeletingObject(objectToken, d.Id(), err)

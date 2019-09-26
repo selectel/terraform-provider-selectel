@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 const (
@@ -108,6 +109,40 @@ type ResponseResult struct {
 	Err error
 }
 
+// ExtractResult allows to provide an object into which ResponseResult body will be extracted.
+func (result *ResponseResult) ExtractResult(to interface{}) error {
+	body, err := ioutil.ReadAll(result.Body)
+	defer result.Body.Close()
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(body, to)
+	return err
+}
+
+// ExtractErr build a string without whitespaces from the error body.
+// We don't unmarshal it into some struct because there are no strict error definition in the API.
+func (result *ResponseResult) ExtractErr() (string, error) {
+	body, err := ioutil.ReadAll(result.Body)
+	defer result.Body.Close()
+	if err != nil {
+		return "", err
+	}
+
+	resp := string(body)
+
+	var builder strings.Builder
+	builder.Grow(len(resp))
+	for _, ch := range resp {
+		if !unicode.IsSpace(ch) {
+			builder.WriteRune(ch)
+		}
+	}
+
+	return builder.String(), nil
+}
+
 // DoRequest performs the HTTP request with the current ServiceClient's HTTPClient.
 // Authentication and optional headers will be added automatically.
 func (client *ServiceClient) DoRequest(ctx context.Context, method, path string, body io.Reader) (*ResponseResult, error) {
@@ -132,24 +167,18 @@ func (client *ServiceClient) DoRequest(ctx context.Context, method, path string,
 		response,
 		nil,
 	}
+
+	// Check status code and populate extended error message if it's possible.
 	if response.StatusCode >= 400 && response.StatusCode <= 599 {
-		err = fmt.Errorf("selvpcclient: got the %d error status code from the server", response.StatusCode)
-		responseResult.Err = err
+		extendedError, err := responseResult.ExtractErr()
+		if err != nil {
+			responseResult.Err = fmt.Errorf("selvpcclient: got the %d status code from the server", response.StatusCode)
+		} else {
+			responseResult.Err = fmt.Errorf("selvpcclient: got the %d status code from the server: %s", response.StatusCode, extendedError)
+		}
 	}
 
 	return responseResult, nil
-}
-
-// ExtractResult allows to provide an object into which ResponseResult body will be extracted.
-func (result *ResponseResult) ExtractResult(to interface{}) error {
-	body, err := ioutil.ReadAll(result.Body)
-	defer result.Body.Close()
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(body, to)
-	return err
 }
 
 // RFC3339NoZ describes a timestamp format used by some SelVPC responses.
