@@ -2,7 +2,7 @@
 
 BREAKING CHANGES:
 
-* Removed `selectel_vpc_crossregion_subnet_v2` resource because it has been depreacted in the Selectel VPC V2 API
+* Removed `selectel_vpc_crossregion_subnet_v2` resource because it has been depreacted in the Selectel VPC V2 API [GH-69]
 
 IMPROVEMENTS:
 
