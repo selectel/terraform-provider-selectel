@@ -6,9 +6,11 @@ linters:
   fast: false
   enable-all: true
   disable:
+    - gomnd
     - errcheck
     - gochecknoglobals
     - gochecknoinits
     - lll
     - unparam
     - funlen
+    - wsl
