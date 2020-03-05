@@ -41,6 +41,10 @@ The following attributes are exported:
 * `servers` - Shows information about servers that use this license. Contains
   `id`, `name` and `status` fields.
 
+* `network_id` - Represents id of the associated network in the Networking service.
+
+* `subnet_id` - Represents id of the associated network in the Networking service.
+
 ## Import
 
 Licenses can be imported using the `id`, e.g.
