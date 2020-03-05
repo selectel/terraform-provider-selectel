@@ -34,6 +34,8 @@ func TestAccVPCV2LicenseBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_vpc_license_v2.license_tf_acc_test_1", "region", "ru-1"),
 					resource.TestCheckResourceAttr("selectel_vpc_license_v2.license_tf_acc_test_1", "type", "license_windows_2012_standard"),
 					resource.TestCheckResourceAttr("selectel_vpc_license_v2.license_tf_acc_test_1", "status", "DOWN"),
+					resource.TestCheckResourceAttrSet("selectel_vpc_license_v2.license_tf_acc_test_1", "network_id"),
+					resource.TestCheckResourceAttrSet("selectel_vpc_license_v2.license_tf_acc_test_1", "subnet_id"),
 				),
 			},
 		},
