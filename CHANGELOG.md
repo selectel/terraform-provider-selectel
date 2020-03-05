@@ -1,9 +1,15 @@
-## 3.0.1 (Unreleased)
+## 3.1.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* Updated `terraform-plugin-sdk` to `v1.7.0` [GH-76]
+* Updated `golangci-lint` in CI to `v1.23.8` [GH-77]
+
 ## 3.0.0 (September 26, 2019)
 
 BREAKING CHANGES:
 
-* Removed `selectel_vpc_crossregion_subnet_v2` resource because it has been depreacted in the Selectel VPC V2 API ([#69](https://github.com/terraform-providers/terraform-provider-selectel/issues/69))
+* Removed `selectel_vpc_crossregion_subnet_v2` resource because it has been deprecated in the Selectel VPC V2 API ([#69](https://github.com/terraform-providers/terraform-provider-selectel/issues/69))
 
 IMPROVEMENTS:
 
