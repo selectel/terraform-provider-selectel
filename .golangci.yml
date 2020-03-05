@@ -1,10 +1,16 @@
+run:
+  deadline: 5m
+  modules-download-mode: vendor
+
 linters:
   fast: false
   enable-all: true
   disable:
+    - gomnd
     - errcheck
     - gochecknoglobals
     - gochecknoinits
     - lll
     - unparam
     - funlen
+    - wsl
