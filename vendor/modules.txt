@@ -211,7 +211,7 @@ github.com/posener/complete
 github.com/posener/complete/cmd/install
 github.com/posener/complete/cmd
 github.com/posener/complete/match
-# github.com/selectel/go-selvpcclient v1.9.1-0.20190926153401-3b82e9bcb326
+# github.com/selectel/go-selvpcclient v1.10.0
 github.com/selectel/go-selvpcclient/selvpcclient
 github.com/selectel/go-selvpcclient/selvpcclient/resell
 github.com/selectel/go-selvpcclient/selvpcclient/resell/v2
