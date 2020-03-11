@@ -38,6 +38,18 @@ func resourceVPCLicenseV2() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"network_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"subnet_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"port_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"servers": {
 				Type:     schema.TypeSet,
 				Computed: true,
@@ -117,6 +129,9 @@ func resourceVPCLicenseV2Read(d *schema.ResourceData, meta interface{}) error {
 	d.Set("project_id", license.ProjectID)
 	d.Set("region", license.Region)
 	d.Set("status", license.Status)
+	d.Set("network_id", license.NetworkID)
+	d.Set("subnet_id", license.SubnetID)
+	d.Set("port_id", license.PortID)
 	d.Set("type", license.Type)
 	associatedServers := serversMapsFromStructs(license.Servers)
 	if err := d.Set("servers", associatedServers); err != nil {

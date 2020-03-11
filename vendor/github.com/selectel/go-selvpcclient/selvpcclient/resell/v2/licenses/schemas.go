@@ -21,4 +21,13 @@ type License struct {
 
 	// Type represent a license type.
 	Type string `json:"type"`
+
+	// NetworkID represents id of the associated network in the Networking service.
+	NetworkID string `json:"network_id"`
+
+	// SubnetID represents id of the associated subnet in the Networking service.
+	SubnetID string `json:"subnet_id"`
+
+	// PortID represents id of the associated ports in the Networking service.
+	PortID string `json:"port_id"`
 }
