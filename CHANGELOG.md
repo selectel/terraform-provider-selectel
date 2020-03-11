@@ -1,10 +1,10 @@
-## 3.1.0 (Unreleased)
+## 3.1.0 (March 11, 2020)
 
 IMPROVEMENTS:
 
-* Added `network_id`, `subnet_id`, `port_id` attributes into `selectel_vpc_license_v2` resource [GH-78]
-* Updated `terraform-plugin-sdk` to `v1.7.0` [GH-76]
-* Updated `golangci-lint` in CI to `v1.23.8` [GH-77]
+* Added `network_id`, `subnet_id`, `port_id` attributes into `selectel_vpc_license_v2` resource ([#78](https://github.com/terraform-providers/terraform-provider-selectel/issues/78))
+* Updated `terraform-plugin-sdk` to `v1.7.0` ([#76](https://github.com/terraform-providers/terraform-provider-selectel/issues/76))
+* Updated `golangci-lint` in CI to `v1.23.8` ([#77](https://github.com/terraform-providers/terraform-provider-selectel/issues/77))
 
 ## 3.0.0 (September 26, 2019)
 
