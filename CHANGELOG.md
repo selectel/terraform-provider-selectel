@@ -2,6 +2,7 @@
 
 IMPROVEMENTS:
 
+* Added `network_id`, `subnet_id`, `port_id` attributes into `selectel_vpc_license_v2` resource [GH-78]
 * Updated `terraform-plugin-sdk` to `v1.7.0` [GH-76]
 * Updated `golangci-lint` in CI to `v1.23.8` [GH-77]
 
@@ -13,8 +14,8 @@ BREAKING CHANGES:
 
 IMPROVEMENTS:
 
-* Added ability to revoke tokens in API while deleting `selvpc_resell_token_v2` resource ([#66](https://github.com/terraform-providers/terraform-provider-selectel/issues/66))
-* Added ability to import `selvpc_resell_user_v2` resource ([#65](https://github.com/terraform-providers/terraform-provider-selectel/issues/65))
+* Added ability to revoke tokens in API while deleting `selectel_vpc_project_v2` resource ([#66](https://github.com/terraform-providers/terraform-provider-selectel/issues/66))
+* Added ability to import `selectel_vpc_user_v2` resource ([#65](https://github.com/terraform-providers/terraform-provider-selectel/issues/65))
 * Added extended error messages to all resources ([#73](https://github.com/terraform-providers/terraform-provider-selectel/issues/73))
 * Migrated from Terraform in-tree `helper/*` SDK to the separate `terraform-plugin-sdk` v1.0.0 ([#72](https://github.com/terraform-providers/terraform-provider-selectel/issues/72))
 
