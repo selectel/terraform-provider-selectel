@@ -172,6 +172,8 @@ github.com/posener/complete v1.2.1 h1:LrvDIY//XNo65Lq84G/akBuMGlawHvGBABv8f/ZN6D
 github.com/posener/complete v1.2.1/go.mod h1:6gapUrK/U1TAN7ciCoNRIdVC5sbdBTUh1DKN0g6uH7E=
 github.com/selectel/go-selvpcclient v1.11.0 h1:M3p6LpTHe3AnQlQ+qIup3XLclztFcX5cSsLDmopK+X8=
 github.com/selectel/go-selvpcclient v1.11.0/go.mod h1:GBDQZFsZNNn/Uv/Y+WT/dDCGqTPzkQakVgD48QzxVZI=
+github.com/selectel/mks-go v0.2.0 h1:DyAbcjM03bO6Jq7J7apX+engY4GVZP1RHMkSfrzHFnc=
+github.com/selectel/mks-go v0.2.0/go.mod h1:OrlLnGes+HK7HNxUab/8Rll5iT0XQQnx4+dW1Ysph2o=
 github.com/sergi/go-diff v1.0.0 h1:Kpca3qRNrduNnOQeazBd0ysaKrUJiIuISHxogkT9RPQ=
 github.com/sergi/go-diff v1.0.0/go.mod h1:0CfEIISq7TuYL3j771MWULgwwjU+GofnZX9QAmXWZgo=
 github.com/spf13/afero v1.2.2 h1:5jhuqJyZCZf2JRofRvN/nIFgIWNzPa3/Vz8mYylgbWc=

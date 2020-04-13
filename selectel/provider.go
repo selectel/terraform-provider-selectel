@@ -6,16 +6,18 @@ import (
 )
 
 const (
-	objectFloatingIP    = "floating IP"
-	objectKeypair       = "keypair"
-	objectLicense       = "license"
-	objectProject       = "project"
-	objectProjectQuotas = "quotas for project"
-	objectRole          = "role"
-	objectSubnet        = "subnet"
-	objectToken         = "token"
-	objectUser          = "user"
-	objectVRRPSubnet    = "VRRP subnet"
+	objectFloatingIP        = "floating IP"
+	objectKeypair           = "keypair"
+	objectLicense           = "license"
+	objectProject           = "project"
+	objectProjectQuotas     = "quotas for project"
+	objectRole              = "role"
+	objectSubnet            = "subnet"
+	objectToken             = "token"
+	objectUser              = "user"
+	objectVRRPSubnet        = "VRRP subnet"
+	objectCluster           = "cluster"
+	objectClusterNodegroups = "nodegroups of cluster"
 )
 
 // Provider returns the Selectel terraform provider.
@@ -46,6 +48,7 @@ func Provider() terraform.ResourceProvider {
 			"selectel_vpc_user_v2":               resourceVPCUserV2(),
 			"selectel_vpc_vrrp_subnet_v2":        resourceVPCVRRPSubnetV2(),
 			"selectel_vpc_crossregion_subnet_v2": resourceVPCCrossRegionSubnetV2(),
+			"selectel_mks_cluster_v1":            resourceMKSClusterV1(),
 		},
 		ConfigureFunc: configureProvider,
 	}

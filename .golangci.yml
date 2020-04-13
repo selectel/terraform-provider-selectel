@@ -14,3 +14,8 @@ linters:
     - unparam
     - funlen
     - wsl
+
+linters-settings:
+  gocognit:
+    # cognitive complexity 75 of func `resourceMKSClusterV1Update` is high (> 30) (gocognit)
+    min-complexity: 75
