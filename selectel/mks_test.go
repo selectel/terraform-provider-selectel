@@ -2,7 +2,6 @@ package selectel
 
 import (
 	"testing"
-	"time"
 
 	"github.com/selectel/mks-go/pkg/v1/node"
 	"github.com/selectel/mks-go/pkg/v1/nodegroup"
@@ -27,24 +26,20 @@ func TestGetMKSClusterV1Endpoint(t *testing.T) {
 func TestExpandMKSClusterNodegroupsV1CreateOpts(t *testing.T) {
 	opts := map[string]interface{}{
 		"count":             1,
-		"flavor_id":         "edc0b355-b540-495a-982f-efa28988ed5c",
 		"cpus":              1,
 		"ram_mb":            1024,
 		"volume_gb":         10,
 		"volume_type":       "fast.ru-3a",
-		"local_volume":      false,
 		"keypair_name":      "ssh-key",
 		"availability_zone": "ru-3a",
 	}
 
 	expected := &nodegroup.CreateOpts{
 		Count:            1,
-		FlavorID:         "edc0b355-b540-495a-982f-efa28988ed5c",
 		CPUs:             1,
 		RAMMB:            1024,
 		VolumeGB:         10,
 		VolumeType:       "fast.ru-3a",
-		LocalVolume:      false,
 		KeypairName:      "ssh-key",
 		AvailabilityZone: "ru-3a",
 	}
@@ -71,13 +66,9 @@ func TestFlattenMKSClusterNodegroupsV1(t *testing.T) {
 	}
 	d.Set("nodegroups", nodegroups)
 
-	ts, _ := time.Parse(time.RFC3339, "0001-01-01 00:00:00 +0000 UTC")
 	views := []*nodegroup.View{
 		{
 			ID:               "be49545a-3a6d-447c-8e90-fd40ee1c3a3a",
-			CreatedAt:        &ts,
-			UpdatedAt:        &ts,
-			ClusterID:        "9c4c1f09-1c4c-44cc-a848-a9a0ba648ffa",
 			FlavorID:         "edc0b355-b540-495a-982f-efa28988ed5c",
 			VolumeGB:         10,
 			VolumeType:       "fast.ru-3a",
@@ -85,12 +76,9 @@ func TestFlattenMKSClusterNodegroupsV1(t *testing.T) {
 			AvailabilityZone: "ru-3a",
 			Nodes: []*node.View{
 				{
-					ID:          "8d7bbe81-6521-4253-a9ba-f7e0bce7470c",
-					CreatedAt:   &ts,
-					UpdatedAt:   &ts,
-					Hostname:    "test-cluster-0-node-xd9jk",
-					IP:          "198.51.100.11",
-					NodegroupID: "be49545a-3a6d-447c-8e90-fd40ee1c3a3a",
+					ID:       "8d7bbe81-6521-4253-a9ba-f7e0bce7470c",
+					Hostname: "test-cluster-0-node-xd9jk",
+					IP:       "198.51.100.11",
 				},
 			},
 		},
@@ -100,9 +88,6 @@ func TestFlattenMKSClusterNodegroupsV1(t *testing.T) {
 		{
 			"name":              "test-nodegroup-0",
 			"id":                "be49545a-3a6d-447c-8e90-fd40ee1c3a3a",
-			"created_at":        "0001-01-01 00:00:00 +0000 UTC",
-			"updated_at":        "0001-01-01 00:00:00 +0000 UTC",
-			"cluster_id":        "9c4c1f09-1c4c-44cc-a848-a9a0ba648ffa",
 			"flavor_id":         "edc0b355-b540-495a-982f-efa28988ed5c",
 			"count":             1,
 			"cpus":              1,
@@ -115,12 +100,9 @@ func TestFlattenMKSClusterNodegroupsV1(t *testing.T) {
 			"affinity_policy":   "",
 			"nodes": []map[string]interface{}{
 				{
-					"id":           "8d7bbe81-6521-4253-a9ba-f7e0bce7470c",
-					"created_at":   "0001-01-01 00:00:00 +0000 UTC",
-					"updated_at":   "0001-01-01 00:00:00 +0000 UTC",
-					"hostname":     "test-cluster-0-node-xd9jk",
-					"ip":           "198.51.100.11",
-					"nodegroup_id": "be49545a-3a6d-447c-8e90-fd40ee1c3a3a",
+					"id":       "8d7bbe81-6521-4253-a9ba-f7e0bce7470c",
+					"hostname": "test-cluster-0-node-xd9jk",
+					"ip":       "198.51.100.11",
 				},
 			},
 		},

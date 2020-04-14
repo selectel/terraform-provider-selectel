@@ -24,22 +24,6 @@ func resourceMKSClusterV1() *schema.Resource {
 		Importer: nil,
 		CustomizeDiff: customdiff.All(
 			customdiff.ComputedIf(
-				"updated_at",
-				func(d *schema.ResourceDiff, meta interface{}) bool {
-					var hasChange bool
-					if d.HasChange("maintenance_window_start") {
-						hasChange = true
-					}
-					if d.HasChange("enable_autorepair") {
-						hasChange = true
-					}
-					if d.HasChange("enable_patch_version_auto_upgrade") {
-						hasChange = true
-					}
-
-					return hasChange
-				}),
-			customdiff.ComputedIf(
 				"maintenance_window_end",
 				func(d *schema.ResourceDiff, meta interface{}) bool {
 					return d.HasChange("maintenance_window_start")
@@ -116,36 +100,21 @@ func resourceMKSClusterV1() *schema.Resource {
 						"volume_gb": {
 							Type:     schema.TypeInt,
 							Optional: true,
-							Computed: true,
 						},
 						"volume_type": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Computed: true,
 						},
 						"local_volume": {
 							Type:     schema.TypeBool,
 							Optional: true,
-							Computed: true,
 						},
 						"flavor_id": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
 						},
-						"cluster_id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
 						"id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"created_at": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"updated_at": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -158,23 +127,11 @@ func resourceMKSClusterV1() *schema.Resource {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
-									"created_at": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"updated_at": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
 									"hostname": {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
 									"ip": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"nodegroup_id": {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
@@ -215,22 +172,6 @@ func resourceMKSClusterV1() *schema.Resource {
 				ForceNew: false,
 			},
 			"maintenance_window_end": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"maintenance_last_start": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"created_at": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"updated_at": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"pki_tree_updated_at": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -381,19 +322,6 @@ func resourceMKSClusterV1Read(d *schema.ResourceData, meta interface{}) error {
 	d.Set("maintenance_window_end", mksCluster.MaintenanceWindowEnd)
 	d.Set("enable_autorepair", mksCluster.EnableAutorepair)
 	d.Set("enable_patch_version_auto_upgrade", mksCluster.EnablePatchVersionAutoUpgrade)
-
-	if mksCluster.CreatedAt != nil {
-		d.Set("created_at", mksCluster.CreatedAt.String())
-	}
-	if mksCluster.UpdatedAt != nil {
-		d.Set("updated_at", mksCluster.UpdatedAt.String())
-	}
-	if mksCluster.PKITreeUpdatedAt != nil {
-		d.Set("pki_tree_updated_at", mksCluster.PKITreeUpdatedAt.String())
-	}
-	if mksCluster.MaintenanceLastStart != nil {
-		d.Set("maintenance_last_start", mksCluster.MaintenanceLastStart.String())
-	}
 
 	log.Print(msgGet(objectClusterNodegroups, d.Id()))
 	allNodegroups, _, err := nodegroup.List(ctx, mksClient, d.Id())

@@ -133,20 +133,12 @@ func flattenMKSClusterNodegroupsV1(d *schema.ResourceData, views []*nodegroup.Vi
 		if _, ok := m["id"]; ok {
 			for _, view := range views {
 				if m["id"] == view.ID {
-					m["cluster_id"] = view.ClusterID
 					m["flavor_id"] = view.FlavorID
 					m["volume_gb"] = view.VolumeGB
 					m["volume_type"] = view.VolumeType
 					m["local_volume"] = view.LocalVolume
 					m["availability_zone"] = view.AvailabilityZone
 					m["nodes"] = flattenMKSClusterNodesV1(view.Nodes)
-
-					if view.CreatedAt != nil {
-						m["created_at"] = view.CreatedAt.String()
-					}
-					if view.UpdatedAt != nil {
-						m["updated_at"] = view.UpdatedAt.String()
-					}
 				}
 				nodegroups[i] = m
 			}
@@ -163,14 +155,6 @@ func flattenMKSClusterNodesV1(views []*node.View) []map[string]interface{} {
 		nodes[i]["id"] = view.ID
 		nodes[i]["hostname"] = view.Hostname
 		nodes[i]["ip"] = view.IP
-		nodes[i]["nodegroup_id"] = view.NodegroupID
-
-		if view.CreatedAt != nil {
-			nodes[i]["created_at"] = view.CreatedAt.String()
-		}
-		if view.UpdatedAt != nil {
-			nodes[i]["updated_at"] = view.UpdatedAt.String()
-		}
 	}
 
 	return nodes
