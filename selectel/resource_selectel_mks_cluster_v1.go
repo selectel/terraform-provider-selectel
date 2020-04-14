@@ -2,11 +2,14 @@ package selectel
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
@@ -482,6 +485,32 @@ func resourceMKSClusterV1Delete(d *schema.ResourceData, meta interface{}) error 
 	_, err = cluster.Delete(ctx, mksClient, d.Id())
 	if err != nil {
 		return errDeletingObject(objectCluster, d.Id(), err)
+	}
+
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{strconv.Itoa(http.StatusOK)},
+		Target:  []string{strconv.Itoa(http.StatusNotFound)},
+		Refresh: func() (result interface{}, state string, err error) {
+			result, response, err := cluster.Get(ctx, mksClient, d.Id())
+			if err != nil {
+				if response != nil {
+					return result, strconv.Itoa(response.StatusCode), nil
+				}
+
+				return nil, "", err
+			}
+
+			return result, strconv.Itoa(response.StatusCode), err
+		},
+		Timeout:    d.Timeout(schema.TimeoutDelete),
+		Delay:      10 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+
+	log.Printf("[DEBUG] waiting for cluster %s to become deleted", d.Id())
+	_, err = stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf("error waiting for the cluster %s to become deleted: %s", d.Id(), err)
 	}
 
 	return nil
