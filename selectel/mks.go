@@ -21,36 +21,36 @@ const (
 	ru7Region = "ru-7"
 	ru8Region = "ru-8"
 
-	ru1Endpoint = "https://ru-1.mks.selcloud.ru/v1"
-	ru2Endpoint = "https://ru-2.mks.selcloud.ru/v1"
-	ru3Endpoint = "https://ru-3.mks.selcloud.ru/v1"
-	ru7Endpoint = "https://ru-7.mks.selcloud.ru/v1"
-	ru8Endpoint = "https://ru-8.mks.selcloud.ru/v1"
+	ru1MKSClusterV1Endpoint = "https://ru-1.mks.selcloud.ru/v1"
+	ru2MKSClusterV1Endpoint = "https://ru-2.mks.selcloud.ru/v1"
+	ru3MKSClusterV1Endpoint = "https://ru-3.mks.selcloud.ru/v1"
+	ru7MKSClusterV1Endpoint = "https://ru-7.mks.selcloud.ru/v1"
+	ru8MKSClusterV1Endpoint = "https://ru-8.mks.selcloud.ru/v1"
 )
 
-func getClusterV1Endpoint(region string) (endpoint string) {
+func getMKSClusterV1Endpoint(region string) (endpoint string) {
 	switch region {
 	case ru1Region:
-		endpoint = ru1Endpoint
+		endpoint = ru1MKSClusterV1Endpoint
 	case ru2Region:
-		endpoint = ru2Endpoint
+		endpoint = ru2MKSClusterV1Endpoint
 	case ru3Region:
-		endpoint = ru3Endpoint
+		endpoint = ru3MKSClusterV1Endpoint
 	case ru7Region:
-		endpoint = ru7Endpoint
+		endpoint = ru7MKSClusterV1Endpoint
 	case ru8Region:
-		endpoint = ru8Endpoint
+		endpoint = ru8MKSClusterV1Endpoint
 	}
 
 	return
 }
 
-func hashNodegroups(v interface{}) int {
+func hashMKSClusterNodegroupsV1(v interface{}) int {
 	m := v.(map[string]interface{})
 	return hashcode.String(fmt.Sprintf("%s-", m["name"].(string)))
 }
 
-func expandNodegroupCreateOpts(v interface{}) *nodegroup.CreateOpts {
+func expandMKSClusterNodegroupsV1CreateOpts(v interface{}) *nodegroup.CreateOpts {
 	m := v.(map[string]interface{})
 	opts := nodegroup.CreateOpts{}
 	if _, ok := m["count"]; ok {
@@ -84,7 +84,7 @@ func expandNodegroupCreateOpts(v interface{}) *nodegroup.CreateOpts {
 	return &opts
 }
 
-func waitForClusterV1ActiveState(
+func waitForMKSClusterV1ActiveState(
 	ctx context.Context, client *v1.ServiceClient, clusterID string, timeout time.Duration) error {
 	pending := []string{
 		string(cluster.StatusPendingCreate),
@@ -98,7 +98,7 @@ func waitForClusterV1ActiveState(
 	stateConf := &resource.StateChangeConf{
 		Pending:    pending,
 		Target:     target,
-		Refresh:    clusterV1StateRefreshFunc(ctx, client, clusterID),
+		Refresh:    mksClusterV1StateRefreshFunc(ctx, client, clusterID),
 		Timeout:    timeout,
 		Delay:      10 * time.Second,
 		MinTimeout: 3 * time.Second,
@@ -114,7 +114,7 @@ func waitForClusterV1ActiveState(
 	return nil
 }
 
-func clusterV1StateRefreshFunc(
+func mksClusterV1StateRefreshFunc(
 	ctx context.Context, client *v1.ServiceClient, clusterID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		c, _, err := cluster.Get(ctx, client, clusterID)
@@ -126,7 +126,7 @@ func clusterV1StateRefreshFunc(
 	}
 }
 
-func flattenNodegroups(d *schema.ResourceData, views []*nodegroup.View) []interface{} {
+func flattenMKSClusterNodegroupsV1(d *schema.ResourceData, views []*nodegroup.View) []interface{} {
 	nodegroups := d.Get("nodegroups").(*schema.Set).List()
 	for i, v := range nodegroups {
 		m := v.(map[string]interface{})
@@ -139,7 +139,7 @@ func flattenNodegroups(d *schema.ResourceData, views []*nodegroup.View) []interf
 					m["volume_type"] = view.VolumeType
 					m["local_volume"] = view.LocalVolume
 					m["availability_zone"] = view.AvailabilityZone
-					m["nodes"] = flattenNodes(view.Nodes)
+					m["nodes"] = flattenMKSClusterNodesV1(view.Nodes)
 
 					if view.CreatedAt != nil {
 						m["created_at"] = view.CreatedAt.String()
@@ -156,7 +156,7 @@ func flattenNodegroups(d *schema.ResourceData, views []*nodegroup.View) []interf
 	return nodegroups
 }
 
-func flattenNodes(views []*node.View) []map[string]interface{} {
+func flattenMKSClusterNodesV1(views []*node.View) []map[string]interface{} {
 	nodes := make([]map[string]interface{}, len(views))
 	for i, view := range views {
 		nodes[i] = make(map[string]interface{})

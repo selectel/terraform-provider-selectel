@@ -82,7 +82,7 @@ func resourceMKSClusterV1() *schema.Resource {
 				Type:     schema.TypeSet,
 				Required: true,
 				ForceNew: false,
-				Set:      hashNodegroups,
+				Set:      hashMKSClusterNodegroupsV1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -261,7 +261,7 @@ func resourceMKSClusterV1Create(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	region := d.Get("region").(string)
-	endpoint := getClusterV1Endpoint(region)
+	endpoint := getMKSClusterV1Endpoint(region)
 	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
 
 	// Get all nodegroups from the schema and prepare cluster create options with the first nodegroup only.
@@ -277,7 +277,7 @@ func resourceMKSClusterV1Create(d *schema.ResourceData, meta interface{}) error 
 		EnableAutorepair:              &enableAutorepair,
 		EnablePatchVersionAutoUpgrade: &enablePatchVersionAutoUpgrade,
 		Region:                        region,
-		Nodegroups:                    []*nodegroup.CreateOpts{expandNodegroupCreateOpts(nodegroups[0])},
+		Nodegroups:                    []*nodegroup.CreateOpts{expandMKSClusterNodegroupsV1CreateOpts(nodegroups[0])},
 	}
 
 	log.Print(msgCreate(objectCluster, createOpts))
@@ -288,7 +288,7 @@ func resourceMKSClusterV1Create(d *schema.ResourceData, meta interface{}) error 
 
 	log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", newCluster.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForClusterV1ActiveState(ctx, mksClient, newCluster.ID, timeout)
+	err = waitForMKSClusterV1ActiveState(ctx, mksClient, newCluster.ID, timeout)
 	if err != nil {
 		return errCreatingObject(objectCluster, err)
 	}
@@ -299,7 +299,7 @@ func resourceMKSClusterV1Create(d *schema.ResourceData, meta interface{}) error 
 	for i := 0; i < len(nodegroups); i++ {
 		// If there is more than one nodegroup in the schema, create these nodegroups separately.
 		if i > 0 {
-			opts := expandNodegroupCreateOpts(nodegroups[i])
+			opts := expandMKSClusterNodegroupsV1CreateOpts(nodegroups[i])
 
 			log.Print(msgCreate(objectClusterNodegroups, opts))
 			_, err := nodegroup.Create(ctx, mksClient, newCluster.ID, opts)
@@ -309,7 +309,7 @@ func resourceMKSClusterV1Create(d *schema.ResourceData, meta interface{}) error 
 
 			log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", newCluster.ID)
 			timeout := d.Timeout(schema.TimeoutCreate)
-			err = waitForClusterV1ActiveState(ctx, mksClient, newCluster.ID, timeout)
+			err = waitForMKSClusterV1ActiveState(ctx, mksClient, newCluster.ID, timeout)
 			if err != nil {
 				return errCreatingObject(objectClusterNodegroups, err)
 			}
@@ -353,7 +353,7 @@ func resourceMKSClusterV1Read(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	region := d.Get("region").(string)
-	endpoint := getClusterV1Endpoint(region)
+	endpoint := getMKSClusterV1Endpoint(region)
 	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
 
 	log.Print(msgGet(objectCluster, d.Id()))
@@ -401,7 +401,7 @@ func resourceMKSClusterV1Read(d *schema.ResourceData, meta interface{}) error {
 		return errGettingObject(objectClusterNodegroups, d.Id(), err)
 	}
 
-	nodegroups := flattenNodegroups(d, allNodegroups)
+	nodegroups := flattenMKSClusterNodegroupsV1(d, allNodegroups)
 	if err := d.Set("nodegroups", nodegroups); err != nil {
 		log.Print(errSettingComplexAttr("nodegroups", err))
 	}
@@ -424,7 +424,7 @@ func resourceMKSClusterV1Update(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	region := d.Get("region").(string)
-	endpoint := getClusterV1Endpoint(region)
+	endpoint := getMKSClusterV1Endpoint(region)
 	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
 
 	var updateOpts cluster.UpdateOpts
@@ -449,7 +449,7 @@ func resourceMKSClusterV1Update(d *schema.ResourceData, meta interface{}) error 
 
 		log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", d.Id())
 		timeout := d.Timeout(schema.TimeoutUpdate)
-		err = waitForClusterV1ActiveState(ctx, mksClient, d.Id(), timeout)
+		err = waitForMKSClusterV1ActiveState(ctx, mksClient, d.Id(), timeout)
 		if err != nil {
 			return errUpdatingObject(objectCluster, d.Id(), err)
 		}
@@ -479,7 +479,7 @@ func resourceMKSClusterV1Update(d *schema.ResourceData, meta interface{}) error 
 			for _, newNG := range newNGSet.List() {
 				for _, addNG := range nodegroupsToAdd.List() {
 					if addNG.(map[string]interface{})["name"] == newNG.(map[string]interface{})["name"] {
-						opts := expandNodegroupCreateOpts(addNG)
+						opts := expandMKSClusterNodegroupsV1CreateOpts(addNG)
 
 						log.Print(msgCreate(objectClusterNodegroups, opts))
 						_, err := nodegroup.Create(ctx, mksClient, d.Id(), opts)
@@ -489,7 +489,7 @@ func resourceMKSClusterV1Update(d *schema.ResourceData, meta interface{}) error 
 
 						log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", d.Id())
 						timeout := d.Timeout(schema.TimeoutUpdate)
-						err = waitForClusterV1ActiveState(ctx, mksClient, d.Id(), timeout)
+						err = waitForMKSClusterV1ActiveState(ctx, mksClient, d.Id(), timeout)
 						if err != nil {
 							return errCreatingObject(objectClusterNodegroups, err)
 						}
@@ -521,7 +521,7 @@ func resourceMKSClusterV1Update(d *schema.ResourceData, meta interface{}) error 
 				}
 
 				timeout := d.Timeout(schema.TimeoutDelete)
-				err = waitForClusterV1ActiveState(ctx, mksClient, d.Id(), timeout)
+				err = waitForMKSClusterV1ActiveState(ctx, mksClient, d.Id(), timeout)
 				if err != nil {
 					return errDeletingObject(objectClusterNodegroups, d.Id(), err)
 				}
@@ -547,7 +547,7 @@ func resourceMKSClusterV1Delete(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	region := d.Get("region").(string)
-	endpoint := getClusterV1Endpoint(region)
+	endpoint := getMKSClusterV1Endpoint(region)
 	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
 
 	log.Print(msgDelete(objectCluster, d.Id()))

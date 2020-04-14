@@ -9,22 +9,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetClusterV1Endpoint(t *testing.T) {
+func TestGetMKSClusterV1Endpoint(t *testing.T) {
 	expectedEndpoints := map[string]string{
-		ru1Region: ru1Endpoint,
-		ru2Region: ru2Endpoint,
-		ru3Region: ru3Endpoint,
-		ru7Region: ru7Endpoint,
-		ru8Region: ru8Endpoint,
+		ru1Region: ru1MKSClusterV1Endpoint,
+		ru2Region: ru2MKSClusterV1Endpoint,
+		ru3Region: ru3MKSClusterV1Endpoint,
+		ru7Region: ru7MKSClusterV1Endpoint,
+		ru8Region: ru8MKSClusterV1Endpoint,
 	}
 
 	for region, expected := range expectedEndpoints {
-		actual := getClusterV1Endpoint(region)
+		actual := getMKSClusterV1Endpoint(region)
 		assert.Equal(t, expected, actual)
 	}
 }
 
-func TestExpandNodegroupCreateOpts(t *testing.T) {
+func TestExpandMKSClusterNodegroupsV1CreateOpts(t *testing.T) {
 	opts := map[string]interface{}{
 		"count":             1,
 		"flavor_id":         "edc0b355-b540-495a-982f-efa28988ed5c",
@@ -49,11 +49,11 @@ func TestExpandNodegroupCreateOpts(t *testing.T) {
 		AvailabilityZone: "ru-3a",
 	}
 
-	actual := expandNodegroupCreateOpts(opts)
+	actual := expandMKSClusterNodegroupsV1CreateOpts(opts)
 	assert.Equal(t, expected, actual)
 }
 
-func TestFlattenNodegroups(t *testing.T) {
+func TestFlattenMKSClusterNodegroupsV1(t *testing.T) {
 	r := resourceMKSClusterV1()
 	d := r.TestResourceData()
 	d.SetId("1")
@@ -126,6 +126,6 @@ func TestFlattenNodegroups(t *testing.T) {
 		},
 	}
 
-	actual := flattenNodegroups(d, views)
+	actual := flattenMKSClusterNodegroupsV1(d, views)
 	assert.ElementsMatch(t, expected, actual)
 }

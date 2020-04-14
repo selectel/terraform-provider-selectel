@@ -15,7 +15,7 @@ import (
 	"github.com/selectel/mks-go/pkg/v1/cluster"
 )
 
-func TestAccMKSV1ClusterBasic(t *testing.T) {
+func TestAccMKSClusterV1Basic(t *testing.T) {
 	var (
 		mksCluster cluster.View
 		project    projects.Project
@@ -30,10 +30,10 @@ func TestAccMKSV1ClusterBasic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMKSV1ClusterBasic(projectName, clusterName, nodegroupName),
+				Config: testAccMKSClusterV1Basic(projectName, clusterName, nodegroupName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckMKSV1ClusterExists("selectel_mks_cluster_v1.cluster_tf_acc_test_1", &mksCluster),
+					testAccCheckMKSClusterV1Exists("selectel_mks_cluster_v1.cluster_tf_acc_test_1", &mksCluster),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "kube_version", "1.16.8"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "region", "ru-3"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "nodegroups.#", "1"),
@@ -48,7 +48,7 @@ func TestAccMKSV1ClusterBasic(t *testing.T) {
 	})
 }
 
-func testAccCheckMKSV1ClusterExists(name string, mksCluster *cluster.View) resource.TestCheckFunc {
+func testAccCheckMKSClusterV1Exists(name string, mksCluster *cluster.View) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[name]
 		if !ok {
@@ -63,7 +63,7 @@ func testAccCheckMKSV1ClusterExists(name string, mksCluster *cluster.View) resou
 			projectID = id
 		}
 		if region, ok := rs.Primary.Attributes["region"]; ok {
-			endpoint = getClusterV1Endpoint(region)
+			endpoint = getMKSClusterV1Endpoint(region)
 		}
 
 		config := testAccProvider.Meta().(*Config)
@@ -94,7 +94,7 @@ func testAccCheckMKSV1ClusterExists(name string, mksCluster *cluster.View) resou
 	}
 }
 
-func testAccMKSV1ClusterBasic(projectName, clusterName, nodegroupName string) string {
+func testAccMKSClusterV1Basic(projectName, clusterName, nodegroupName string) string {
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
