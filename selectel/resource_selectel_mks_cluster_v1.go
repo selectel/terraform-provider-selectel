@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
@@ -46,7 +47,10 @@ func resourceMKSClusterV1() *schema.Resource {
 			"kube_version": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
+				ForceNew: false,
+				StateFunc: func(v interface{}) string {
+					return strings.Trim(v.(string), "v")
+				},
 			},
 			"project_id": {
 				Type:     schema.TypeString,
@@ -382,6 +386,12 @@ func resourceMKSClusterV1Update(d *schema.ResourceData, meta interface{}) error 
 		timeout := d.Timeout(schema.TimeoutUpdate)
 		err = waitForMKSClusterV1ActiveState(ctx, mksClient, d.Id(), timeout)
 		if err != nil {
+			return errUpdatingObject(objectCluster, d.Id(), err)
+		}
+	}
+
+	if d.HasChange("kube_version") {
+		if err := updateMKSClusterV1KubeVersion(ctx, d, mksClient); err != nil {
 			return errUpdatingObject(objectCluster, d.Id(), err)
 		}
 	}

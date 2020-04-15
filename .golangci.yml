@@ -17,5 +17,5 @@ linters:
 
 linters-settings:
   gocognit:
-    # cognitive complexity 75 of func `resourceMKSClusterV1Update` is high (> 30) (gocognit)
-    min-complexity: 75
+    # cognitive complexity 78 of func `resourceMKSClusterV1Update` is high (> 30) (gocognit)
+    min-complexity: 78

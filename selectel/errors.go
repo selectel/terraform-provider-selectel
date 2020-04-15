@@ -57,3 +57,7 @@ func errDeletingObject(object, id string, err error) error {
 func errResourceDeprecated(resource string) error {
 	return fmt.Errorf("%s resource has been deprecated", resource)
 }
+
+func errKubeVersionIsInvalidFmt(kubeVersion string, errMsg string) error {
+	return fmt.Errorf("kube version %s is invalid: %s", kubeVersion, errMsg)
+}
