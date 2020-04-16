@@ -44,14 +44,6 @@ func resourceMKSClusterV1() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-			"kube_version": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: false,
-				StateFunc: func(v interface{}) string {
-					return strings.Trim(v.(string), "v")
-				},
-			},
 			"project_id": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -68,6 +60,14 @@ func resourceMKSClusterV1() *schema.Resource {
 					ru7Region,
 					ru8Region,
 				}, false),
+			},
+			"kube_version": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: false,
+				StateFunc: func(v interface{}) string {
+					return strings.TrimPrefix(v.(string), "v")
+				},
 			},
 			"nodegroups": {
 				Type:     schema.TypeSet,
@@ -391,7 +391,7 @@ func resourceMKSClusterV1Update(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	if d.HasChange("kube_version") {
-		if err := updateMKSClusterV1KubeVersion(ctx, d, mksClient); err != nil {
+		if err := upgradeMKSClusterV1KubeVersion(ctx, d, mksClient); err != nil {
 			return errUpdatingObject(objectCluster, d.Id(), err)
 		}
 	}

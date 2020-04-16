@@ -165,7 +165,7 @@ func flattenMKSClusterNodesV1(views []*node.View) []map[string]interface{} {
 	return nodes
 }
 
-func updateMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData, client *v1.ServiceClient) error {
+func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData, client *v1.ServiceClient) error {
 	o, n := d.GetChange("kube_version")
 	currentVersion := o.(string)
 	desiredVersion := n.(string)
@@ -234,14 +234,14 @@ func updateMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData, 
 
 	_, err = cluster.UpgradePatchVersion(ctx, client, d.Id())
 	if err != nil {
-		return fmt.Errorf("error updating patch version: %s", err)
+		return fmt.Errorf("error upgrading patch version: %s", err)
 	}
 
 	log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", d.Id())
 	timeout := d.Timeout(schema.TimeoutUpdate)
 	err = waitForMKSClusterV1ActiveState(ctx, client, d.Id(), timeout)
 	if err != nil {
-		return errUpdatingObject(objectCluster, d.Id(), err)
+		return fmt.Errorf("error waiting for the patch version upgrade: %s", err)
 	}
 
 	return nil
