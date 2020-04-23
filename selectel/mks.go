@@ -8,14 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
 	"github.com/selectel/mks-go/pkg/v1/kubeversion"
-	"github.com/selectel/mks-go/pkg/v1/node"
-	"github.com/selectel/mks-go/pkg/v1/nodegroup"
 )
 
 const (
@@ -47,45 +44,6 @@ func getMKSClusterV1Endpoint(region string) (endpoint string) {
 	}
 
 	return
-}
-
-func hashMKSClusterNodegroupsV1(v interface{}) int {
-	m := v.(map[string]interface{})
-	return hashcode.String(fmt.Sprintf("%s-", m["name"].(string)))
-}
-
-func expandMKSClusterNodegroupsV1CreateOpts(v interface{}) *nodegroup.CreateOpts {
-	m := v.(map[string]interface{})
-	opts := nodegroup.CreateOpts{}
-	if _, ok := m["count"]; ok {
-		opts.Count = m["count"].(int)
-	}
-	if _, ok := m["flavor_id"]; ok {
-		opts.FlavorID = m["flavor_id"].(string)
-	}
-	if _, ok := m["cpus"]; ok {
-		opts.CPUs = m["cpus"].(int)
-	}
-	if _, ok := m["ram_mb"]; ok {
-		opts.RAMMB = m["ram_mb"].(int)
-	}
-	if _, ok := m["volume_gb"]; ok {
-		opts.VolumeGB = m["volume_gb"].(int)
-	}
-	if _, ok := m["volume_type"]; ok {
-		opts.VolumeType = m["volume_type"].(string)
-	}
-	if _, ok := m["keypair_name"]; ok {
-		opts.KeypairName = m["keypair_name"].(string)
-	}
-	if _, ok := m["affinity_policy"]; ok {
-		opts.AffinityPolicy = m["affinity_policy"].(string)
-	}
-	if _, ok := m["availability_zone"]; ok {
-		opts.AvailabilityZone = m["availability_zone"].(string)
-	}
-
-	return &opts
 }
 
 func waitForMKSClusterV1ActiveState(
@@ -129,40 +87,6 @@ func mksClusterV1StateRefreshFunc(
 
 		return c, string(c.Status), nil
 	}
-}
-
-func flattenMKSClusterNodegroupsV1(d *schema.ResourceData, views []*nodegroup.View) []interface{} {
-	nodegroups := d.Get("nodegroups").(*schema.Set).List()
-	for i, v := range nodegroups {
-		m := v.(map[string]interface{})
-		if _, ok := m["id"]; ok {
-			for _, view := range views {
-				if m["id"] == view.ID {
-					m["flavor_id"] = view.FlavorID
-					m["volume_gb"] = view.VolumeGB
-					m["volume_type"] = view.VolumeType
-					m["local_volume"] = view.LocalVolume
-					m["availability_zone"] = view.AvailabilityZone
-					m["nodes"] = flattenMKSClusterNodesV1(view.Nodes)
-				}
-				nodegroups[i] = m
-			}
-		}
-	}
-
-	return nodegroups
-}
-
-func flattenMKSClusterNodesV1(views []*node.View) []map[string]interface{} {
-	nodes := make([]map[string]interface{}, len(views))
-	for i, view := range views {
-		nodes[i] = make(map[string]interface{})
-		nodes[i]["id"] = view.ID
-		nodes[i]["hostname"] = view.Hostname
-		nodes[i]["ip"] = view.IP
-	}
-
-	return nodes
 }
 
 func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData, client *v1.ServiceClient) error {

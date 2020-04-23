@@ -6,18 +6,17 @@ import (
 )
 
 const (
-	objectFloatingIP        = "floating IP"
-	objectKeypair           = "keypair"
-	objectLicense           = "license"
-	objectProject           = "project"
-	objectProjectQuotas     = "quotas for project"
-	objectRole              = "role"
-	objectSubnet            = "subnet"
-	objectToken             = "token"
-	objectUser              = "user"
-	objectVRRPSubnet        = "VRRP subnet"
-	objectCluster           = "cluster"
-	objectClusterNodegroups = "nodegroups of cluster"
+	objectFloatingIP    = "floating IP"
+	objectKeypair       = "keypair"
+	objectLicense       = "license"
+	objectProject       = "project"
+	objectProjectQuotas = "quotas for project"
+	objectRole          = "role"
+	objectSubnet        = "subnet"
+	objectToken         = "token"
+	objectUser          = "user"
+	objectVRRPSubnet    = "VRRP subnet"
+	objectCluster       = "cluster"
 )
 
 // Provider returns the Selectel terraform provider.
