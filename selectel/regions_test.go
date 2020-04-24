@@ -20,3 +20,28 @@ func TestExpandVPCV2Regions(t *testing.T) {
 
 	assert.ElementsMatch(t, expected, actual)
 }
+
+func TestValidateRegionOk(t *testing.T) {
+	validRegions := []string{
+		ru1Region,
+		ru2Region,
+		ru3Region,
+		ru7Region,
+		ru8Region,
+	}
+
+	for _, region := range validRegions {
+		err := validateRegion(region)
+		assert.NoError(t, err)
+	}
+}
+
+func TestValidateRegionErr(t *testing.T) {
+	region := "unknown region"
+
+	expected := "region is invalid: unknown region"
+	actual := validateRegion(region)
+
+	assert.Error(t, actual)
+	assert.EqualError(t, actual, expected)
+}

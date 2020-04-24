@@ -35,6 +35,18 @@ func Provider() terraform.ResourceProvider {
 				DefaultFunc: schema.EnvDefaultFunc("SEL_ENDPOINT", nil),
 				Description: "Base endpoint to work with the Selectel API.",
 			},
+			"project_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("SEL_PROJECT_ID", nil),
+				Description: "VPC project ID to import resources that need the project scope auth token.",
+			},
+			"region": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("SEL_REGION", nil),
+				Description: "VPC Region to import resources associated with the specific region.",
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"selectel_vpc_floatingip_v2":         resourceVPCFloatingIPV2(),
@@ -58,8 +70,15 @@ func configureProvider(d *schema.ResourceData) (interface{}, error) {
 		Token:    d.Get("token").(string),
 		Endpoint: d.Get("endpoint").(string),
 	}
+	if v, ok := d.GetOk("project_id"); ok {
+		config.ProjectID = v.(string)
+	}
+	if v, ok := d.GetOk("region"); ok {
+		config.Region = v.(string)
+	}
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
+
 	return &config, nil
 }

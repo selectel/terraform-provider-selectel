@@ -16,12 +16,6 @@ import (
 )
 
 const (
-	ru1Region = "ru-1"
-	ru2Region = "ru-2"
-	ru3Region = "ru-3"
-	ru7Region = "ru-7"
-	ru8Region = "ru-8"
-
 	ru1MKSClusterV1Endpoint = "https://ru-1.mks.selcloud.ru/v1"
 	ru2MKSClusterV1Endpoint = "https://ru-2.mks.selcloud.ru/v1"
 	ru3MKSClusterV1Endpoint = "https://ru-3.mks.selcloud.ru/v1"

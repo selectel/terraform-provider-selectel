@@ -38,6 +38,14 @@ The following arguments are supported:
   is used for tests environment. If omitted, the provider will use the official
   Selectel VPC endpoint automatically.
 
+* `project_id` - (Optional) The Selectel VPC project. Used only to import
+  resources that need an auth token in the project scope. If omitted,
+  the `SEL_PROJECT_ID` environment variable is used.
+
+* `region` - (Optional) The Selectel VPC region. Used only to import resources
+  associated with the specific region. If omitted, the `SEL_REGION` environment
+  variable is used.
+
 ## Additional Logging
 
 To enable debug logging, set the `TF_LOG` environment variable to `DEBUG`:
