@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -20,11 +21,13 @@ import (
 
 func resourceMKSClusterV1() *schema.Resource {
 	return &schema.Resource{
-		Create:   resourceMKSClusterV1Create,
-		Read:     resourceMKSClusterV1Read,
-		Update:   resourceMKSClusterV1Update,
-		Delete:   resourceMKSClusterV1Delete,
-		Importer: nil,
+		Create: resourceMKSClusterV1Create,
+		Read:   resourceMKSClusterV1Read,
+		Update: resourceMKSClusterV1Update,
+		Delete: resourceMKSClusterV1Delete,
+		Importer: &schema.ResourceImporter{
+			State: resourceMKSClusterV1ImportState,
+		},
 		CustomizeDiff: customdiff.All(
 			customdiff.ComputedIf(
 				"maintenance_window_end",
@@ -317,4 +320,19 @@ func resourceMKSClusterV1Delete(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	return nil
+}
+
+func resourceMKSClusterV1ImportState(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	config := meta.(*Config)
+	if config.ProjectID == "" {
+		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")
+	}
+	if config.Region == "" {
+		return nil, errors.New("SEL_REGION must be set for the resource import")
+	}
+
+	d.Set("project_id", config.ProjectID)
+	d.Set("region", config.Region)
+
+	return []*schema.ResourceData{d}, nil
 }
