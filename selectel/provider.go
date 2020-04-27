@@ -45,7 +45,7 @@ func Provider() terraform.ResourceProvider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SEL_REGION", nil),
-				Description: "VPC Region to import resources associated with the specific region.",
+				Description: "VPC region to import resources associated with the specific region.",
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
