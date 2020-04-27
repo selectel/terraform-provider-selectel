@@ -11,8 +11,10 @@ import (
 
 // Config contains all available configuration options.
 type Config struct {
-	Token    string
-	Endpoint string
+	Token     string
+	Endpoint  string
+	ProjectID string
+	Region    string
 }
 
 // Validate performs config validation.
@@ -22,6 +24,11 @@ func (c *Config) Validate() error {
 	}
 	if c.Endpoint == "" {
 		c.Endpoint = strings.Join([]string{resell.Endpoint, v2.APIVersion}, "/")
+	}
+	if c.Region != "" {
+		if err := validateRegion(c.Region); err != nil {
+			return err
+		}
 	}
 	return nil
 }
