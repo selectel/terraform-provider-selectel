@@ -3,6 +3,7 @@ package selectel
 import (
 	"testing"
 
+	"github.com/selectel/mks-go/pkg/v1/node"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -207,4 +208,63 @@ func TestGetLatestKubeVersionPatchVersionInvalid(t *testing.T) {
 			t.Errorf("Expected empty kube version, but got: %s", actual)
 		}
 	}
+}
+
+func TestMKSNodegroupV1ParseID(t *testing.T) {
+	id := "5803b490-2d6b-418a-8645-eacda0f003c5/63ed5342-b22c-4c7a-9d41-c1fe4a142c13"
+
+	expectedClusterID := "5803b490-2d6b-418a-8645-eacda0f003c5"
+	expectedNodegroupID := "63ed5342-b22c-4c7a-9d41-c1fe4a142c13"
+
+	actualClusterID, actualNodegroupID, err := mksNodegroupV1ParseID(id)
+
+	assert.NoError(t, err)
+	assert.Equal(t, expectedClusterID, actualClusterID)
+	assert.Equal(t, expectedNodegroupID, actualNodegroupID)
+}
+
+func TestMKSNodegroupV1ParseIDErr(t *testing.T) {
+	invalidIDs := []string{
+		"63ed5342-b22c-4c7a-9d41-c1fe4a142c13",
+		"63ed5342-b22c-4c7a-9d41-c1fe4a142c13/",
+		"/63ed5342-b22c-4c7a-9d41-c1fe4a142c13",
+		"uuid1/uuid2/uuid3",
+		"",
+	}
+
+	for _, id := range invalidIDs {
+		_, _, err := mksNodegroupV1ParseID(id)
+		assert.EqualError(t, err, "got error parsing nodegroup ID: "+id)
+	}
+}
+
+func TestFlattenMKSNodegroupV1Nodes(t *testing.T) {
+	views := []*node.View{
+		{
+			ID:       "94838b31-9ae0-4a23-88ad-256e4f13d345",
+			IP:       "198.51.100.101",
+			Hostname: "first-node",
+		},
+		{
+			ID:       "ab0128c4-4ba3-4522-85bc-df26eb73f54d",
+			IP:       "198.51.100.102",
+			Hostname: "second-node",
+		},
+	}
+
+	expected := []map[string]interface{}{
+		{
+			"id":       "94838b31-9ae0-4a23-88ad-256e4f13d345",
+			"ip":       "198.51.100.101",
+			"hostname": "first-node",
+		},
+		{
+			"id":       "ab0128c4-4ba3-4522-85bc-df26eb73f54d",
+			"ip":       "198.51.100.102",
+			"hostname": "second-node",
+		},
+	}
+	actual := flattenMKSNodegroupV1Nodes(views)
+
+	assert.Equal(t, expected, actual)
 }
