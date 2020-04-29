@@ -1,15 +1,15 @@
-## 3.2.0 (Unreleased)
+## 3.2.0 (April 29, 2020)
 
 FEATURES:
 
-* __New Resource:__ `selectel_mks_cluster_v1` [GH-79]
-* __New Resource:__ `selectel_mks_nodegroup_v1` [GH-80]
+* __New Resource:__ `selectel_mks_cluster_v1` ([#79](https://github.com/terraform-providers/terraform-provider-selectel/issues/79))
+* __New Resource:__ `selectel_mks_nodegroup_v1` ([#80](https://github.com/terraform-providers/terraform-provider-selectel/issues/80))
 
 IMPROVEMENTS:
 
-* Updated Go version to `1.14.2` [GH-83]
-* Updated `terraform-plugin-sdk` to `v1.10.0` [GH-83]
-* Updated `golangci-lint` in CI to `v1.25.1` [GH-83]
+* Updated Go version to `1.14.2` ([#83](https://github.com/terraform-providers/terraform-provider-selectel/issues/83))
+* Updated `terraform-plugin-sdk` to `v1.10.0` ([#83](https://github.com/terraform-providers/terraform-provider-selectel/issues/83))
+* Updated `golangci-lint` in CI to `v1.25.1` ([#83](https://github.com/terraform-providers/terraform-provider-selectel/issues/83))
 
 ## 3.1.0 (March 11, 2020)
 
