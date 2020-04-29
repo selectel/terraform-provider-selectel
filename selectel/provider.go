@@ -1,6 +1,7 @@
 package selectel
 
 import (
+	"github.com/hashicorp/terraform-plugin-sdk/helper/mutexkv"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -17,7 +18,11 @@ const (
 	objectUser          = "user"
 	objectVRRPSubnet    = "VRRP subnet"
 	objectCluster       = "cluster"
+	objectNodegroup     = "nodegroup"
 )
+
+// This is a global MutexKV for use within this plugin.
+var selMutexKV = mutexkv.NewMutexKV()
 
 // Provider returns the Selectel terraform provider.
 func Provider() terraform.ResourceProvider {
@@ -60,6 +65,7 @@ func Provider() terraform.ResourceProvider {
 			"selectel_vpc_vrrp_subnet_v2":        resourceVPCVRRPSubnetV2(),
 			"selectel_vpc_crossregion_subnet_v2": resourceVPCCrossRegionSubnetV2(),
 			"selectel_mks_cluster_v1":            resourceMKSClusterV1(),
+			"selectel_mks_nodegroup_v1":          resourceMKSNodegroupV1(),
 		},
 		ConfigureFunc: configureProvider,
 	}

@@ -13,6 +13,7 @@ import (
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
 	"github.com/selectel/mks-go/pkg/v1/kubeversion"
+	"github.com/selectel/mks-go/pkg/v1/node"
 )
 
 const (
@@ -237,4 +238,28 @@ func compareTwoKubeVersionsByPatch(a, b string) (string, error) {
 	}
 
 	return b, nil
+}
+
+func mksNodegroupV1ParseID(id string) (string, string, error) {
+	parts := strings.Split(id, "/")
+	if len(parts) < 2 {
+		return "", "", fmt.Errorf("unable to determine selectel_mks_nodegroup_v1 ID: %s", id)
+	}
+	if parts[0] == "" || parts[1] == "" {
+		return "", "", fmt.Errorf("unable to determine selectel_mks_nodegroup_v1 ID: %s", id)
+	}
+
+	return parts[0], parts[1], nil
+}
+
+func flattenMKSNodegroupV1Nodes(views []*node.View) []map[string]interface{} {
+	nodes := make([]map[string]interface{}, len(views))
+	for i, view := range views {
+		nodes[i] = make(map[string]interface{})
+		nodes[i]["id"] = view.ID
+		nodes[i]["ip"] = view.IP
+		nodes[i]["hostname"] = view.Hostname
+	}
+
+	return nodes
 }
