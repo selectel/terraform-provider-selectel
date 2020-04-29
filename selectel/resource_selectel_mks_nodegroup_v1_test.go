@@ -23,7 +23,7 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	clusterName := acctest.RandomWithPrefix("tf-acc-cl")
-	kubeVersion := "1.15.11"
+	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccSelectelPreCheck(t) },

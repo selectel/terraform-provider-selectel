@@ -11,7 +11,7 @@ func TestAccMKSClusterV1ImportBasic(t *testing.T) {
 	resourceName := "selectel_mks_cluster_v1.cluster_tf_acc_test_1"
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	clusterName := acctest.RandomWithPrefix("tf-acc-cl")
-	kubeVersion := "1.16.8"
+	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccSelectelPreCheck(t) },
