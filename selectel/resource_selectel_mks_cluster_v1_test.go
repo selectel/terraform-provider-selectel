@@ -13,6 +13,7 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
+	"github.com/selectel/mks-go/pkg/v1/kubeversion"
 )
 
 func TestAccMKSClusterV1Basic(t *testing.T) {
@@ -23,7 +24,7 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	clusterName := acctest.RandomWithPrefix("tf-acc-cl")
-	kubeVersion := "1.16.8"
+	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccSelectelPreCheck(t) },
@@ -60,6 +61,74 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccMKSClusterV1GetDefaultKubeVersion(t *testing.T) string {
+	var (
+		kubeVersion string
+		project     projects.Project
+	)
+	projectName := acctest.RandomWithPrefix("tf-acc")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccSelectelPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVPCV2ProjectDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVPCV2ProjectBasic(projectName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccCheckMKSClusterV1DefaultKubeVersion("selectel_vpc_project_v2.project_tf_acc_test_1", &kubeVersion),
+				),
+			},
+		},
+	})
+
+	return kubeVersion
+}
+
+func testAccCheckMKSClusterV1DefaultKubeVersion(n string, kubeVersion *string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return errors.New("no ID is set")
+		}
+
+		config := testAccProvider.Meta().(*Config)
+		resellV2Client := config.resellV2Client()
+		ctx := context.Background()
+
+		tokenOpts := tokens.TokenOpts{
+			ProjectID: rs.Primary.ID,
+		}
+		token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
+		if err != nil {
+			return errCreatingObject(objectToken, err)
+		}
+
+		endpoint := getMKSClusterV1Endpoint(ru3Region)
+		mksClient := v1.NewMKSClientV1(token.ID, endpoint)
+		kubeVersions, _, err := kubeversion.List(ctx, mksClient)
+		if err != nil {
+			return err
+		}
+
+		var defaultVersion string
+		for _, version := range kubeVersions {
+			if version.IsDefault {
+				defaultVersion = version.Version
+			}
+		}
+
+		*kubeVersion = defaultVersion
+
+		return nil
+	}
 }
 
 func testAccCheckMKSClusterV1Exists(n string, mksCluster *cluster.View) resource.TestCheckFunc {
