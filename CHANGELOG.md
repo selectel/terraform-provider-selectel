@@ -1,4 +1,10 @@
 ## 3.2.0 (Unreleased)
+
+FEATURES:
+
+* __New Resource:__ `selectel_mks_cluster_v1` [GH-79]
+* __New Resource:__ `selectel_mks_nodegroup_v1` [GH-80]
+
 ## 3.1.0 (March 11, 2020)
 
 IMPROVEMENTS:
