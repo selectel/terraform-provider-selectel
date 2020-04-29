@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,11 +16,13 @@ import (
 
 func resourceMKSNodegroupV1() *schema.Resource {
 	return &schema.Resource{
-		Create:   resourceMKSNodegroupV1Create,
-		Read:     resourceMKSNodegroupV1Read,
-		Update:   resourceMKSNodegroupV1Update,
-		Delete:   resourceMKSNodegroupV1Delete,
-		Importer: nil,
+		Create: resourceMKSNodegroupV1Create,
+		Read:   resourceMKSNodegroupV1Read,
+		Update: resourceMKSNodegroupV1Update,
+		Delete: resourceMKSNodegroupV1Delete,
+		Importer: &schema.ResourceImporter{
+			State: resourceMKSNodegroupV1ImportState,
+		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(10 * time.Minute),
 			Update: schema.DefaultTimeout(10 * time.Minute),
@@ -346,4 +349,19 @@ func resourceMKSNodegroupV1Delete(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	return nil
+}
+
+func resourceMKSNodegroupV1ImportState(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	config := meta.(*Config)
+	if config.ProjectID == "" {
+		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")
+	}
+	if config.Region == "" {
+		return nil, errors.New("SEL_REGION must be set for the resource import")
+	}
+
+	d.Set("project_id", config.ProjectID)
+	d.Set("region", config.Region)
+
+	return []*schema.ResourceData{d}, nil
 }
