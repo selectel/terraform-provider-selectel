@@ -14,3 +14,5 @@ linters:
     - unparam
     - funlen
     - wsl
+    - testpackage
+    - nestif
