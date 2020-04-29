@@ -5,6 +5,12 @@ FEATURES:
 * __New Resource:__ `selectel_mks_cluster_v1` [GH-79]
 * __New Resource:__ `selectel_mks_nodegroup_v1` [GH-80]
 
+IMPROVEMENTS:
+
+* Updated Go version to `1.14.2` [GH-83]
+* Updated `terraform-plugin-sdk` to `v1.10.0` [GH-83]
+* Updated `golangci-lint` in CI to `v1.25.1` [GH-83]
+
 ## 3.1.0 (March 11, 2020)
 
 IMPROVEMENTS:
