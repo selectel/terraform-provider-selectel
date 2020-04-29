@@ -228,11 +228,13 @@ func TestMKSNodegroupV1ParseIDErr(t *testing.T) {
 		"63ed5342-b22c-4c7a-9d41-c1fe4a142c13",
 		"63ed5342-b22c-4c7a-9d41-c1fe4a142c13/",
 		"/63ed5342-b22c-4c7a-9d41-c1fe4a142c13",
+		"uuid1/uuid2/uuid3",
+		"",
 	}
 
 	for _, id := range invalidIDs {
 		_, _, err := mksNodegroupV1ParseID(id)
-		assert.EqualError(t, err, "unable to determine selectel_mks_nodegroup_v1 ID: "+id)
+		assert.EqualError(t, err, "got error parsing nodegroup ID: "+id)
 	}
 }
 

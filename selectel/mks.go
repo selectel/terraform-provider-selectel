@@ -242,11 +242,11 @@ func compareTwoKubeVersionsByPatch(a, b string) (string, error) {
 
 func mksNodegroupV1ParseID(id string) (string, string, error) {
 	parts := strings.Split(id, "/")
-	if len(parts) < 2 {
-		return "", "", fmt.Errorf("unable to determine selectel_mks_nodegroup_v1 ID: %s", id)
+	if len(parts) != 2 {
+		return "", "", errParseMKSNodegroupV1ID(id)
 	}
 	if parts[0] == "" || parts[1] == "" {
-		return "", "", fmt.Errorf("unable to determine selectel_mks_nodegroup_v1 ID: %s", id)
+		return "", "", errParseMKSNodegroupV1ID(id)
 	}
 
 	return parts[0], parts[1], nil
