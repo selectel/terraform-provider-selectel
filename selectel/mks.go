@@ -197,6 +197,50 @@ func kubeVersionTrimToMinor(kubeVersion string) (string, error) {
 	return strings.Join([]string{majorPart, minorPart}, "."), nil
 }
 
+// kubeVersionToMajor returns given Kubernetes version major part.
+func kubeVersionToMajor(kubeVersion string) (int, error) {
+	// Trim version prefix if needed.
+	kubeVersion = strings.TrimPrefix(kubeVersion, "v")
+
+	kubeVersionParts := strings.Split(kubeVersion, ".")
+	if len(kubeVersionParts) < 3 {
+		return 0, errKubeVersionIsInvalidFmt(kubeVersion, "expected to have major, minor and patch version parts")
+	}
+
+	majorPart := kubeVersionParts[0]
+	major, err := strconv.Atoi(majorPart)
+	if err != nil {
+		return 0, errKubeVersionIsInvalidFmt(kubeVersion, "major part is not an integer number")
+	}
+	if major < 0 {
+		return 0, errKubeVersionIsInvalidFmt(kubeVersion, "major part is a negative number")
+	}
+
+	return major, nil
+}
+
+// kubeVersionToMinor returns given Kubernetes version minor part.
+func kubeVersionToMinor(kubeVersion string) (int, error) {
+	// Trim version prefix if needed.
+	kubeVersion = strings.TrimPrefix(kubeVersion, "v")
+
+	kubeVersionParts := strings.Split(kubeVersion, ".")
+	if len(kubeVersionParts) < 3 {
+		return 0, errKubeVersionIsInvalidFmt(kubeVersion, "expected to have major, minor and patch version parts")
+	}
+
+	minorPart := kubeVersionParts[1]
+	minor, err := strconv.Atoi(minorPart)
+	if err != nil {
+		return 0, errKubeVersionIsInvalidFmt(kubeVersion, "minor part is not an integer number")
+	}
+	if minor < 0 {
+		return 0, errKubeVersionIsInvalidFmt(kubeVersion, "minor part is a negative number")
+	}
+
+	return minor, nil
+}
+
 // kubeVersionToPatch returns given Kubernetes version patch part.
 func kubeVersionToPatch(kubeVersion string) (int, error) {
 	// Trim version prefix if needed.
