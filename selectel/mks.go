@@ -93,11 +93,11 @@ func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData,
 	log.Printf("[DEBUG] desired kube version: %s", desiredVersion)
 
 	// Compare current and desired minor versions.
-	currentMinor, err := kubeVersionToMinor(currentVersion)
+	currentMinor, err := kubeVersionTrimToMinor(currentVersion)
 	if err != nil {
 		return fmt.Errorf("error getting a minor part of the current version %s: %s", currentVersion, err)
 	}
-	desiredMinor, err := kubeVersionToMinor(desiredVersion)
+	desiredMinor, err := kubeVersionTrimToMinor(desiredVersion)
 	if err != nil {
 		return fmt.Errorf("error getting a minor part of the desired version %s: %s", desiredVersion, err)
 	}
@@ -127,7 +127,7 @@ func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData,
 	// Find the latest patch version corresponding to the current minor version.
 	var latestVersion string
 	for _, version := range kubeVersions {
-		minor, err := kubeVersionToMinor(version.Version)
+		minor, err := kubeVersionTrimToMinor(version.Version)
 		if err != nil {
 			return err
 		}
@@ -166,8 +166,8 @@ func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-// kubeVersionToMinor returns given Kubernetes version trimmed to minor.
-func kubeVersionToMinor(kubeVersion string) (string, error) {
+// kubeVersionTrimToMinor returns given Kubernetes version trimmed to minor.
+func kubeVersionTrimToMinor(kubeVersion string) (string, error) {
 	// Trim version prefix if needed.
 	kubeVersion = strings.TrimPrefix(kubeVersion, "v")
 

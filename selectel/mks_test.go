@@ -22,7 +22,7 @@ func TestGetMKSClusterV1Endpoint(t *testing.T) {
 	}
 }
 
-func TestKubeVersionToMinorValid(t *testing.T) {
+func TestKubeVersionTrimToMinorValid(t *testing.T) {
 	tableTests := []struct {
 		kubeVersion,
 		expected string
@@ -58,7 +58,7 @@ func TestKubeVersionToMinorValid(t *testing.T) {
 	}
 
 	for _, test := range tableTests {
-		actual, err := kubeVersionToMinor(test.kubeVersion)
+		actual, err := kubeVersionTrimToMinor(test.kubeVersion)
 		if err != nil {
 			t.Error(err)
 		}
@@ -68,7 +68,7 @@ func TestKubeVersionToMinorValid(t *testing.T) {
 	}
 }
 
-func TestKubeVersionToMinorInvalid(t *testing.T) {
+func TestKubeVersionTrimToMinorInvalid(t *testing.T) {
 	tableTests := []string{
 		"",
 		"va.12.3",
@@ -83,7 +83,7 @@ func TestKubeVersionToMinorInvalid(t *testing.T) {
 	}
 
 	for _, kubeVersion := range tableTests {
-		actual, err := kubeVersionToMinor(kubeVersion)
+		actual, err := kubeVersionTrimToMinor(kubeVersion)
 		if err == nil {
 			t.Error("Expected kube version parsing error but got nil")
 		}
