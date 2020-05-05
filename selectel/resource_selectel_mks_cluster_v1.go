@@ -64,9 +64,10 @@ func resourceMKSClusterV1() *schema.Resource {
 				}, false),
 			},
 			"kube_version": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: false,
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         false,
+				DiffSuppressFunc: mksClusterV1KubeVersionDiffSuppressFunc,
 				StateFunc: func(v interface{}) string {
 					return strings.TrimPrefix(v.(string), "v")
 				},

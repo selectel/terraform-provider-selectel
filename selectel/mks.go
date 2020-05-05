@@ -84,6 +84,64 @@ func mksClusterV1StateRefreshFunc(
 	}
 }
 
+func mksClusterV1KubeVersionDiffSuppressFunc(k, old, new string, d *schema.ResourceData) bool {
+	if d.Id() != "" {
+		currentMajor, err := kubeVersionToMajor(old)
+		if err != nil {
+			return false
+		}
+		desiredMajor, err := kubeVersionToMajor(new)
+		if err != nil {
+			return false
+		}
+
+		// If the desired major version is newer than current, do not suppress diff.
+		if desiredMajor > currentMajor {
+			return false
+		}
+
+		// If the desired major version is less than current, suppress diff.
+		if desiredMajor < currentMajor {
+			return true
+		}
+
+		currentMinor, err := kubeVersionToMinor(old)
+		if err != nil {
+			return false
+		}
+		desiredMinor, err := kubeVersionToMinor(new)
+		if err != nil {
+			return false
+		}
+
+		// If the desired minor version is newer than current, do not suppress diff.
+		if desiredMinor > currentMinor {
+			return false
+		}
+
+		// If the desired minor version is less than current, suppress diff.
+		if desiredMinor < currentMinor {
+			return true
+		}
+
+		currentPatch, err := kubeVersionToPatch(old)
+		if err != nil {
+			return false
+		}
+		desiredPatch, err := kubeVersionToPatch(new)
+		if err != nil {
+			return false
+		}
+
+		// If the desired patch version is less than current, suppress diff.
+		if desiredPatch < currentPatch {
+			return true
+		}
+	}
+
+	return false
+}
+
 func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData, client *v1.ServiceClient) error {
 	o, n := d.GetChange("kube_version")
 	currentVersion := o.(string)
