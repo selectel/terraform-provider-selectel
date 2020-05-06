@@ -84,6 +84,72 @@ func mksClusterV1StateRefreshFunc(
 	}
 }
 
+func mksClusterV1KubeVersionDiffSuppressFunc(k, old, new string, d *schema.ResourceData) bool {
+	if d.Id() == "" {
+		return false
+	}
+
+	currentMajor, err := kubeVersionToMajor(old)
+	if err != nil {
+		log.Printf("[DEBUG] error getting a major part of the current kube version %s: %s", old, err)
+		return false
+	}
+	desiredMajor, err := kubeVersionToMajor(new)
+	if err != nil {
+		log.Printf("[DEBUG] error getting a major part of the desired kube version %s: %s", new, err)
+		return false
+	}
+
+	// If the desired major version is newer than current, do not suppress diff.
+	if desiredMajor > currentMajor {
+		return false
+	}
+
+	// If the desired major version is less than current, suppress diff.
+	if desiredMajor < currentMajor {
+		return true
+	}
+
+	currentMinor, err := kubeVersionToMinor(old)
+	if err != nil {
+		log.Printf("[DEBUG] error getting a minor part of the current kube version %s: %s", old, err)
+		return false
+	}
+	desiredMinor, err := kubeVersionToMinor(new)
+	if err != nil {
+		log.Printf("[DEBUG] error getting a minor part of the desired kube version %s: %s", new, err)
+		return false
+	}
+
+	// If the desired minor version is newer than current, do not suppress diff.
+	if desiredMinor > currentMinor {
+		return false
+	}
+
+	// If the desired minor version is less than current, suppress diff.
+	if desiredMinor < currentMinor {
+		return true
+	}
+
+	currentPatch, err := kubeVersionToPatch(old)
+	if err != nil {
+		log.Printf("[DEBUG] error getting a patch part of the current kube version %s: %s", old, err)
+		return false
+	}
+	desiredPatch, err := kubeVersionToPatch(new)
+	if err != nil {
+		log.Printf("[DEBUG] error getting a patch part of the desired kube version %s: %s", new, err)
+		return false
+	}
+
+	// If the desired patch version is less than current, suppress diff.
+	if desiredPatch < currentPatch {
+		return true
+	}
+
+	return false
+}
+
 func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData, client *v1.ServiceClient) error {
 	o, n := d.GetChange("kube_version")
 	currentVersion := o.(string)
@@ -93,11 +159,11 @@ func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData,
 	log.Printf("[DEBUG] desired kube version: %s", desiredVersion)
 
 	// Compare current and desired minor versions.
-	currentMinor, err := kubeVersionToMinor(currentVersion)
+	currentMinor, err := kubeVersionTrimToMinor(currentVersion)
 	if err != nil {
 		return fmt.Errorf("error getting a minor part of the current version %s: %s", currentVersion, err)
 	}
-	desiredMinor, err := kubeVersionToMinor(desiredVersion)
+	desiredMinor, err := kubeVersionTrimToMinor(desiredVersion)
 	if err != nil {
 		return fmt.Errorf("error getting a minor part of the desired version %s: %s", desiredVersion, err)
 	}
@@ -127,7 +193,7 @@ func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData,
 	// Find the latest patch version corresponding to the current minor version.
 	var latestVersion string
 	for _, version := range kubeVersions {
-		minor, err := kubeVersionToMinor(version.Version)
+		minor, err := kubeVersionTrimToMinor(version.Version)
 		if err != nil {
 			return err
 		}
@@ -166,8 +232,8 @@ func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-// kubeVersionToMinor returns given Kubernetes version trimmed to minor.
-func kubeVersionToMinor(kubeVersion string) (string, error) {
+// kubeVersionTrimToMinor returns given Kubernetes version trimmed to minor.
+func kubeVersionTrimToMinor(kubeVersion string) (string, error) {
 	// Trim version prefix if needed.
 	kubeVersion = strings.TrimPrefix(kubeVersion, "v")
 
@@ -195,6 +261,50 @@ func kubeVersionToMinor(kubeVersion string) (string, error) {
 	}
 
 	return strings.Join([]string{majorPart, minorPart}, "."), nil
+}
+
+// kubeVersionToMajor returns given Kubernetes version major part.
+func kubeVersionToMajor(kubeVersion string) (int, error) {
+	// Trim version prefix if needed.
+	kubeVersion = strings.TrimPrefix(kubeVersion, "v")
+
+	kubeVersionParts := strings.Split(kubeVersion, ".")
+	if len(kubeVersionParts) < 3 {
+		return 0, errKubeVersionIsInvalidFmt(kubeVersion, "expected to have major, minor and patch version parts")
+	}
+
+	majorPart := kubeVersionParts[0]
+	major, err := strconv.Atoi(majorPart)
+	if err != nil {
+		return 0, errKubeVersionIsInvalidFmt(kubeVersion, "major part is not an integer number")
+	}
+	if major < 0 {
+		return 0, errKubeVersionIsInvalidFmt(kubeVersion, "major part is a negative number")
+	}
+
+	return major, nil
+}
+
+// kubeVersionToMinor returns given Kubernetes version minor part.
+func kubeVersionToMinor(kubeVersion string) (int, error) {
+	// Trim version prefix if needed.
+	kubeVersion = strings.TrimPrefix(kubeVersion, "v")
+
+	kubeVersionParts := strings.Split(kubeVersion, ".")
+	if len(kubeVersionParts) < 3 {
+		return 0, errKubeVersionIsInvalidFmt(kubeVersion, "expected to have major, minor and patch version parts")
+	}
+
+	minorPart := kubeVersionParts[1]
+	minor, err := strconv.Atoi(minorPart)
+	if err != nil {
+		return 0, errKubeVersionIsInvalidFmt(kubeVersion, "minor part is not an integer number")
+	}
+	if minor < 0 {
+		return 0, errKubeVersionIsInvalidFmt(kubeVersion, "minor part is a negative number")
+	}
+
+	return minor, nil
 }
 
 // kubeVersionToPatch returns given Kubernetes version patch part.

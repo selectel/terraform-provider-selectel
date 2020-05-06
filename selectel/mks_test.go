@@ -22,7 +22,7 @@ func TestGetMKSClusterV1Endpoint(t *testing.T) {
 	}
 }
 
-func TestKubeVersionToMinorValid(t *testing.T) {
+func TestKubeVersionTrimToMinorValid(t *testing.T) {
 	tableTests := []struct {
 		kubeVersion,
 		expected string
@@ -58,7 +58,7 @@ func TestKubeVersionToMinorValid(t *testing.T) {
 	}
 
 	for _, test := range tableTests {
-		actual, err := kubeVersionToMinor(test.kubeVersion)
+		actual, err := kubeVersionTrimToMinor(test.kubeVersion)
 		if err != nil {
 			t.Error(err)
 		}
@@ -68,7 +68,7 @@ func TestKubeVersionToMinorValid(t *testing.T) {
 	}
 }
 
-func TestKubeVersionToMinorInvalid(t *testing.T) {
+func TestKubeVersionTrimToMinorInvalid(t *testing.T) {
 	tableTests := []string{
 		"",
 		"va.12.3",
@@ -83,12 +83,124 @@ func TestKubeVersionToMinorInvalid(t *testing.T) {
 	}
 
 	for _, kubeVersion := range tableTests {
-		actual, err := kubeVersionToMinor(kubeVersion)
+		actual, err := kubeVersionTrimToMinor(kubeVersion)
 		if err == nil {
 			t.Error("Expected kube version parsing error but got nil")
 		}
 		if actual != "" {
 			t.Errorf("Expected empty kube version, but got: %s", actual)
+		}
+	}
+}
+
+func TestKubeVersionToMajorValid(t *testing.T) {
+	tableTests := []struct {
+		kubeVersion string
+		expected    int
+	}{
+		{
+			kubeVersion: "v1.15.3",
+			expected:    1,
+		},
+		{
+			kubeVersion: "v1.16.0",
+			expected:    1,
+		},
+		{
+			kubeVersion: "1.15.2",
+			expected:    1,
+		},
+		{
+			kubeVersion: "2.21.22",
+			expected:    2,
+		},
+	}
+
+	for _, test := range tableTests {
+		actual, err := kubeVersionToMajor(test.kubeVersion)
+		if err != nil {
+			t.Error(err)
+		}
+		if actual != test.expected {
+			t.Errorf("Expected %d kube version, but got: %d", test.expected, actual)
+		}
+	}
+}
+
+func TestKubeVersionToMajorInvalid(t *testing.T) {
+	tableTests := []string{
+		"",
+		"v.12.a3",
+		"v1.a",
+		"abc",
+		"abc.def",
+		"-1.12.13",
+		"-v.15.1",
+	}
+
+	for _, kubeVersion := range tableTests {
+		actual, err := kubeVersionToMajor(kubeVersion)
+		if err == nil {
+			t.Error("Expected kube version parsing error but got nil")
+		}
+		if actual != 0 {
+			t.Errorf("Expected empty kube version, but got: %d", actual)
+		}
+	}
+}
+
+func TestKubeVersionToMinorValid(t *testing.T) {
+	tableTests := []struct {
+		kubeVersion string
+		expected    int
+	}{
+		{
+			kubeVersion: "v1.15.3",
+			expected:    15,
+		},
+		{
+			kubeVersion: "v1.16.0",
+			expected:    16,
+		},
+		{
+			kubeVersion: "1.15.2",
+			expected:    15,
+		},
+		{
+			kubeVersion: "2.21.22",
+			expected:    21,
+		},
+	}
+
+	for _, test := range tableTests {
+		actual, err := kubeVersionToMinor(test.kubeVersion)
+		if err != nil {
+			t.Error(err)
+		}
+		if actual != test.expected {
+			t.Errorf("Expected %d kube version, but got: %d", test.expected, actual)
+		}
+	}
+}
+
+func TestKubeVersionToMinorInvalid(t *testing.T) {
+	tableTests := []string{
+		"",
+		"1.v12.a3",
+		"v1.a",
+		"abc",
+		"abc.def",
+		"1.-13.12",
+		"1.-v.15",
+	}
+
+	for _, kubeVersion := range tableTests {
+		actual, err := kubeVersionToMinor(kubeVersion)
+		if err == nil {
+			t.Error("Expected kube version parsing error but got nil")
+		}
+		if actual != 0 {
+			t.Errorf("Expected empty kube version, but got: %d", actual)
 		}
 	}
 }
