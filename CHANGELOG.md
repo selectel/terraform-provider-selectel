@@ -1,4 +1,9 @@
 ## 3.3.0 (Unreleased)
+
+BUG FIXES:
+
+* Fixed an issue when `selectel_mks_cluster_v1` resource tried to downgrade its `kube_version` in case it was automatically upgraded in the MKS backend [GH-85]  
+
 ## 3.2.0 (April 29, 2020)
 
 FEATURES:
