@@ -19,6 +19,7 @@ const (
 	objectVRRPSubnet    = "VRRP subnet"
 	objectCluster       = "cluster"
 	objectNodegroup     = "nodegroup"
+	objectDomain        = "domain"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -66,6 +67,7 @@ func Provider() terraform.ResourceProvider {
 			"selectel_vpc_crossregion_subnet_v2": resourceVPCCrossRegionSubnetV2(),
 			"selectel_mks_cluster_v1":            resourceMKSClusterV1(),
 			"selectel_mks_nodegroup_v1":          resourceMKSNodegroupV1(),
+			"selectel_domains_domain_v1":         resourceDomainsDomainV1(),
 		},
 		ConfigureFunc: configureProvider,
 	}

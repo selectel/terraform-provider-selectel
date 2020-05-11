@@ -214,6 +214,10 @@ github.com/posener/complete
 github.com/posener/complete/cmd
 github.com/posener/complete/cmd/install
 github.com/posener/complete/match
+# github.com/selectel/domains-go v0.1.0
+## explicit
+github.com/selectel/domains-go/pkg/v1
+github.com/selectel/domains-go/pkg/v1/domain
 # github.com/selectel/go-selvpcclient v1.11.0
 ## explicit
 github.com/selectel/go-selvpcclient/selvpcclient

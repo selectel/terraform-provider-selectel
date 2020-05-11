@@ -177,6 +177,8 @@ github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndr
 github.com/posener/complete v1.2.1 h1:LrvDIY//XNo65Lq84G/akBuMGlawHvGBABv8f/ZN6DI=
 github.com/posener/complete v1.2.1/go.mod h1:6gapUrK/U1TAN7ciCoNRIdVC5sbdBTUh1DKN0g6uH7E=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
+github.com/selectel/domains-go v0.1.0 h1:Je7Q5YfTevGsyRiVMBcXqXJZnffN24JZVAZRPnhK4nk=
+github.com/selectel/domains-go v0.1.0/go.mod h1:aDinK5D/zztY4VhoqQgYaaOnU6hqjBcszUOgAe0kPYs=
 github.com/selectel/go-selvpcclient v1.11.0 h1:M3p6LpTHe3AnQlQ+qIup3XLclztFcX5cSsLDmopK+X8=
 github.com/selectel/go-selvpcclient v1.11.0/go.mod h1:GBDQZFsZNNn/Uv/Y+WT/dDCGqTPzkQakVgD48QzxVZI=
 github.com/selectel/mks-go v0.2.0 h1:DyAbcjM03bO6Jq7J7apX+engY4GVZP1RHMkSfrzHFnc=
