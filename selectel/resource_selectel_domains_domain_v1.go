@@ -24,14 +24,6 @@ func resourceDomainsDomainV1() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-			"create_date": {
-				Type:     schema.TypeInt,
-				Computed: true,
-			},
-			"change_date": {
-				Type:     schema.TypeInt,
-				Computed: true,
-			},
 			"user_id": {
 				Type:     schema.TypeInt,
 				Computed: true,
@@ -82,8 +74,6 @@ func resourceDomainsDomainV1Read(d *schema.ResourceData, meta interface{}) error
 	}
 
 	d.Set("name", domainObj.Name)
-	d.Set("create_date", domainObj.CreateDate)
-	d.Set("change_date", domainObj.ChangeDate)
 	d.Set("user_id", domainObj.UserID)
 
 	return nil

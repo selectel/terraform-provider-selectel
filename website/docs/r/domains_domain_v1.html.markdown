@@ -31,10 +31,6 @@ The following attributes are exported:
 
 * `name` - The name of the domain.
 
-* `create_date` - Unix-timestamp when domain has been created.
-
-* `change_date` - Unix-timestamp when domain has been updated.
-
 * `user_id` - Identifier of the Selectel API user.
 
 ## Import
