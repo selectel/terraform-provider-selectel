@@ -15,7 +15,6 @@ func resourceDomainsDomainV1() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceDomainsDomainV1Create,
 		Read:   resourceDomainsDomainV1Read,
-		Update: resourceDomainsDomainV1Update,
 		Delete: resourceDomainsDomainV1Delete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -89,10 +88,6 @@ func resourceDomainsDomainV1Read(d *schema.ResourceData, meta interface{}) error
 	d.Set("user_id", domainObj.UserID)
 
 	return nil
-}
-
-func resourceDomainsDomainV1Update(d *schema.ResourceData, meta interface{}) error {
-	return resourceDomainsDomainV1Read(d, meta)
 }
 
 func resourceDomainsDomainV1Delete(d *schema.ResourceData, meta interface{}) error {
