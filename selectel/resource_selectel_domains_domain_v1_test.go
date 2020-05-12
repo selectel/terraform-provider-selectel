@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	v1 "github.com/selectel/domains-go/pkg/v1"
 	"github.com/selectel/domains-go/pkg/v1/domain"
 )
 
@@ -58,7 +57,7 @@ func testAccCheckDomainsDomainV1Exists(n string, selectelDomain *domain.View) re
 		config := testAccProvider.Meta().(*Config)
 		ctx := context.Background()
 
-		domainsClientV1 := v1.NewDomainsClientV1(config.Token, domainsEndpoint)
+		domainsClientV1 := config.domainsV1Client()
 
 		domainID, err := strconv.Atoi(rs.Primary.ID)
 		if err != nil {
@@ -78,7 +77,7 @@ func testAccCheckDomainsDomainV1Exists(n string, selectelDomain *domain.View) re
 
 func testAccCheckDomainsV1DomainDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
-	domainsClientV1 := v1.NewDomainsClientV1(config.Token, domainsEndpoint)
+	domainsClientV1 := config.domainsV1Client()
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {

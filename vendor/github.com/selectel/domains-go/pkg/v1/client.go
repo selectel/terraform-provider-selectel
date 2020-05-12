@@ -16,10 +16,13 @@ const (
 	appName = "domains-go"
 
 	// appVersion is a version of the application.
-	appVersion = "0.1.0"
+	appVersion = "0.2.0"
 
 	// userAgent contains a basic user agent that will be used in queries.
 	userAgent = appName + "/" + appVersion
+
+	// defaultEndpoint represents default endpoint for Selectel Domains API v1.
+	defaultEndpoint = "https://api.selectel.ru/domains/v1"
 
 	// defaultHTTPTimeout represents the default timeout (in seconds) for HTTP requests.
 	defaultHTTPTimeout = 120
@@ -68,6 +71,17 @@ func NewDomainsClientV1(token, endpoint string) *ServiceClient {
 		HTTPClient: newHTTPClient(),
 		Token:      token,
 		Endpoint:   endpoint,
+		UserAgent:  userAgent,
+	}
+}
+
+// NewDomainsClientV1WithDefaultEndpoint initializes a new client for the Domains API V1
+// with default endpoint.
+func NewDomainsClientV1WithDefaultEndpoint(token string) *ServiceClient {
+	return &ServiceClient{
+		HTTPClient: newHTTPClient(),
+		Token:      token,
+		Endpoint:   defaultEndpoint,
 		UserAgent:  userAgent,
 	}
 }

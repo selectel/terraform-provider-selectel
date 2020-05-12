@@ -8,11 +8,8 @@ import (
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	v1 "github.com/selectel/domains-go/pkg/v1"
 	"github.com/selectel/domains-go/pkg/v1/domain"
 )
-
-const domainsEndpoint = "https://api.selectel.ru/domains/v1"
 
 func resourceDomainsDomainV1() *schema.Resource {
 	return &schema.Resource{
@@ -48,7 +45,7 @@ func resourceDomainsDomainV1() *schema.Resource {
 func resourceDomainsDomainV1Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	ctx := context.Background()
-	client := v1.NewDomainsClientV1(config.Token, domainsEndpoint)
+	client := config.domainsV1Client()
 
 	createOpts := &domain.CreateOpts{
 		Name: d.Get("name").(string),
@@ -68,7 +65,7 @@ func resourceDomainsDomainV1Create(d *schema.ResourceData, meta interface{}) err
 func resourceDomainsDomainV1Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	ctx := context.Background()
-	client := v1.NewDomainsClientV1(config.Token, domainsEndpoint)
+	client := config.domainsV1Client()
 
 	log.Print(msgGet(objectDomain, d.Id()))
 
@@ -101,7 +98,7 @@ func resourceDomainsDomainV1Update(d *schema.ResourceData, meta interface{}) err
 func resourceDomainsDomainV1Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	ctx := context.Background()
-	client := v1.NewDomainsClientV1(config.Token, domainsEndpoint)
+	client := config.domainsV1Client()
 
 	log.Print(msgDelete(objectDomain, d.Id()))
 
