@@ -61,7 +61,7 @@ func testAccCheckDomainsDomainV1Exists(n string, selectelDomain *domain.View) re
 
 		domainID, err := strconv.Atoi(rs.Primary.ID)
 		if err != nil {
-			return fmt.Errorf("failed to parse domain ID: %w", err)
+			return errParseDomainsDomainV1ID(rs.Primary.ID)
 		}
 
 		foundDomain, _, err := domain.GetByID(ctx, domainsClientV1, domainID)
@@ -87,7 +87,7 @@ func testAccCheckDomainsV1DomainDestroy(s *terraform.State) error {
 
 		domainID, err := strconv.Atoi(rs.Primary.ID)
 		if err != nil {
-			return fmt.Errorf("failed to parse domain ID: %w", err)
+			return errParseDomainsDomainV1ID(rs.Primary.ID)
 		}
 
 		_, _, err = domain.GetByID(ctx, domainsClientV1, domainID)

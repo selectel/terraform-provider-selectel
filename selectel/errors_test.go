@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -148,6 +149,16 @@ func TestErrResourceDeprecated(t *testing.T) {
 	expected := errors.New("some_vpc_object resource has been deprecated")
 
 	actual := errResourceDeprecated(resource)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestErrParseDomainsDomainV1ID(t *testing.T) {
+	domainID := "badid"
+
+	expected := fmt.Errorf("got error parsing domain ID: %s", domainID)
+
+	actual := errParseDomainsDomainV1ID(domainID)
 
 	assert.Equal(t, expected, actual)
 }

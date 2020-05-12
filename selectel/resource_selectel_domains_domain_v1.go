@@ -2,7 +2,6 @@ package selectel
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -70,7 +69,7 @@ func resourceDomainsDomainV1Read(d *schema.ResourceData, meta interface{}) error
 
 	domainID, err := strconv.Atoi(d.Id())
 	if err != nil {
-		return fmt.Errorf("failed to parse domain ID: %w", err)
+		return errParseDomainsDomainV1ID(d.Id())
 	}
 
 	domainObj, resp, err := domain.GetByID(ctx, client, domainID)
@@ -99,7 +98,7 @@ func resourceDomainsDomainV1Delete(d *schema.ResourceData, meta interface{}) err
 
 	domainID, err := strconv.Atoi(d.Id())
 	if err != nil {
-		return fmt.Errorf("failed to parse domain ID: %w", err)
+		return errParseDomainsDomainV1ID(d.Id())
 	}
 
 	_, err = domain.Delete(ctx, client, domainID)
