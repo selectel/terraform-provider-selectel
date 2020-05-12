@@ -27,6 +27,19 @@ func resourceDomainsDomainV1() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
+			},
+			"create_date": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+			"change_date": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+			"user_id": {
+				Type:     schema.TypeInt,
+				Computed: true,
 			},
 		},
 	}
