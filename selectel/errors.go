@@ -30,6 +30,10 @@ func errParseMKSNodegroupV1ID(nodegroupID string) error {
 	return fmt.Errorf("got error parsing nodegroup ID: %s", nodegroupID)
 }
 
+func errParseDomainsDomainV1ID(domainID string) error {
+	return fmt.Errorf("got error parsing domain ID: %s", domainID)
+}
+
 func errSearchingProjectRole(projectID string, err error) error {
 	return fmt.Errorf("can't find role for project '%s': %s", projectID, err)
 }
