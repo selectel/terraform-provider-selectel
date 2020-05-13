@@ -42,6 +42,9 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "ram_mb", "1024"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "volume_gb", "10"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "volume_type", "fast.ru-3a"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key0", "label-value0"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key1", "label-value1"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key2", "label-value2"),
 				),
 			},
 			{
@@ -54,6 +57,8 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "ram_mb", "1024"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "volume_gb", "10"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "volume_type", "fast.ru-3a"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key3", "label-value3"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key4", "label-value4"),
 				),
 			},
 		},
@@ -135,6 +140,11 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
   ram_mb            = 1024
   volume_gb         = 10
   volume_type       = "fast.ru-3a"
+  labels = {
+    label-key0 = "label-value0"
+    label-key1 = "label-value1"
+    label-key2 = "label-value2"
+  }
 }`, projectName, clusterName, kubeVersion)
 }
 
@@ -162,5 +172,9 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
   ram_mb            = 1024
   volume_gb         = 10
   volume_type       = "fast.ru-3a"
+  labels = {
+    label-key3 = "label-value3"
+    label-key4 = "label-value4"
+  }
 }`, projectName, clusterName, kubeVersion)
 }
