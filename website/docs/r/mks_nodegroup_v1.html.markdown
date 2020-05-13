@@ -34,6 +34,11 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
   ram_mb            = 2048
   volume_gb         = 20
   volume_type       = "fast.ru-3a"
+  labels            = {
+    "label-key0": "label-value0",
+    "label-key1": "label-value1",
+    "label-key2": "label-value2",
+  }
 }
 ```
 
@@ -82,6 +87,9 @@ The following arguments are supported:
 
 * `flavor_id` (Optional) An OpenStack flavor identifier for all nodes in the nodegroup. It can be omitted in most cases.
   Changing this creates a new nodegroup.
+
+* `labels` (Optional) Represents a map containing a set of Kubernetes labels that will be applied
+  for each node in the group. The keys must be user-defined.
 
 ## Attributes Reference
 
