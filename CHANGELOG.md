@@ -4,6 +4,10 @@ FEATURES:
 
 * __New Resource:__ `selectel_domains_domain_v1` [GH-86]
 
+IMPROVEMENTS:
+
+* Added `labels` argument for `selectel_mks_nodegroup_v1` resource [GH-88]
+
 BUG FIXES:
 
 * Fixed an issue when `selectel_mks_cluster_v1` resource tried to downgrade its `kube_version` in case it was automatically upgraded in the MKS backend [GH-85]  
