@@ -261,6 +261,7 @@ func resourceMKSNodegroupV1Read(d *schema.ResourceData, meta interface{}) error 
 	d.Set("volume_type", mksNodegroup.VolumeType)
 	d.Set("local_volume", mksNodegroup.LocalVolume)
 	d.Set("availability_zone", mksNodegroup.AvailabilityZone)
+	d.Set("nodes_count", len(mksNodegroup.Nodes))
 
 	if err := d.Set("labels", mksNodegroup.Labels); err != nil {
 		log.Print(errSettingComplexAttr("labels", err))

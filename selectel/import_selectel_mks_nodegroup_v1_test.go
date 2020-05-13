@@ -26,7 +26,7 @@ func TestAccMKSNodegroupV1ImportBasic(t *testing.T) {
 				ResourceName:            resourceName,
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"nodes_count", "cpus", "ram_mb"},
+				ImportStateVerifyIgnore: []string{"cpus", "ram_mb"},
 			},
 		},
 	})
