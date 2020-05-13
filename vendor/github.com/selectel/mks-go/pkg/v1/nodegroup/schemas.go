@@ -37,4 +37,8 @@ type View struct {
 
 	// Nodes contains list of all nodes in the nodegroup.
 	Nodes []*node.View `json:"nodes"`
+
+	// Labels represents an object containing a set of Kubernetes labels that will be applied
+	// for each node in the group. The keys must be user-defined.
+	Labels map[string]string `json:"labels"`
 }

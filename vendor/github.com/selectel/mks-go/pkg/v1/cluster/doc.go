@@ -35,6 +35,11 @@ Example of creating a new cluster
         VolumeType:       "fast.ru-3a",
         KeypairName:      "ssh-key",
         AvailabilityZone: "ru-3a",
+        Labels: map[string]string{
+          "label-key0": "label-value0",
+          "label-key1": "label-value1",
+          "label-key2": "label-value2",
+        },
       },
     },
   }

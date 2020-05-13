@@ -57,6 +57,8 @@ const (
 	defaultExpectContinueTimeout = 1
 )
 
+const errGotHTTPStatusCodeFmt = "mks-go: got the %d status code from the server"
+
 // ServiceClient stores details that are needed to work with Selectel Managed Kubernetes Service API.
 type ServiceClient struct {
 	// HTTPClient represents an initialized HTTP client that will be used to do requests.
@@ -208,7 +210,7 @@ func (result *ResponseResult) extractErr() error {
 	defer result.Body.Close()
 
 	if len(body) == 0 {
-		result.Err = fmt.Errorf("mks-go: got the %d status code from the server", result.StatusCode)
+		result.Err = fmt.Errorf(errGotHTTPStatusCodeFmt, result.StatusCode)
 		return nil
 	}
 	if result.StatusCode == http.StatusNotFound {
@@ -217,10 +219,11 @@ func (result *ResponseResult) extractErr() error {
 		err = json.Unmarshal(body, &result.ErrGeneric)
 	}
 	if err != nil {
-		return err
+		result.Err = fmt.Errorf(errGotHTTPStatusCodeFmt, result.StatusCode)
+		return nil
 	}
 
-	result.Err = fmt.Errorf("mks-go: got the %d status code from the server: %s", result.StatusCode, string(body))
+	result.Err = fmt.Errorf(errGotHTTPStatusCodeFmt+": %s", result.StatusCode, string(body))
 
 	return nil
 }
