@@ -380,3 +380,19 @@ func TestFlattenMKSNodegroupV1Nodes(t *testing.T) {
 
 	assert.Equal(t, expected, actual)
 }
+
+func TestExpandMKSNodegroupV1Labels(t *testing.T) {
+	labels := map[string]interface{}{
+		"label-key0": "label-value0",
+		"label-key1": "label-value1",
+		"label-key2": "label-value2",
+	}
+	expected := map[string]string{
+		"label-key0": "label-value0",
+		"label-key1": "label-value1",
+		"label-key2": "label-value2",
+	}
+	actual := expandMKSNodegroupV1Labels(labels)
+
+	assert.Equal(t, expected, actual)
+}

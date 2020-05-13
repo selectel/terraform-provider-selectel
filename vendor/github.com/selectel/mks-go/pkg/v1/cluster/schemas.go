@@ -18,6 +18,7 @@ const (
 	StatusPendingResize              Status = "PENDING_RESIZE"
 	StatusPendingNodeReinstall       Status = "PENDING_NODE_REINSTALL"
 	StatusPendingUpgradePatchVersion Status = "PENDING_UPGRADE_PATCH_VERSION"
+	StatusPendingUpdateNodegroup     Status = "PENDING_UPDATE_NODEGROUP"
 	StatusMaintenance                Status = "MAINTENANCE"
 	StatusError                      Status = "ERROR"
 	StatusUnknown                    Status = "UNKNOWN"
@@ -118,6 +119,8 @@ func (result *View) UnmarshalJSON(b []byte) error {
 		result.Status = StatusPendingNodeReinstall
 	case StatusPendingUpgradePatchVersion:
 		result.Status = StatusPendingUpgradePatchVersion
+	case StatusPendingUpdateNodegroup:
+		result.Status = StatusPendingUpdateNodegroup
 	case StatusMaintenance:
 		result.Status = StatusMaintenance
 	case StatusError:

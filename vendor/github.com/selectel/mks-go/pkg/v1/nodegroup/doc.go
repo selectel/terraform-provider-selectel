@@ -30,6 +30,11 @@ Example of creating a new cluster nodegroup
     VolumeType:       "fast.ru-3a",
     KeypairName:      "ssh-key",
     AvailabilityZone: "ru-3a",
+    Labels: map[string]string{
+      "label-key0": "label-value0",
+      "label-key1": "label-value1",
+      "label-key2": "label-value2",
+    },
   }
   _, err := nodegroup.Create(ctx, mksClient, clusterID, createOpts)
   if err != nil {
@@ -49,6 +54,20 @@ Example of resizing a single cluster nodegroup
     Desired: 1,
   }
   _, err := nodegroup.Resize(ctx, mksClient, clusterID, nodegroupID, resizeOpts)
+  if err != nil {
+    log.Fatal(err)
+  }
+
+Example of updating nodegroup labels
+
+  updateOpts := &nodegroup.UpdateOpts{
+    Labels: map[string]string{
+      "label-key0": "label-value0",
+      "label-key1": "label-value1",
+      "label-key2": "label-value2",
+    },
+  }
+  _, err := nodegroup.Update(ctx, mksClient, clusterID, nodegroupID, updateOpts)
   if err != nil {
     log.Fatal(err)
   }

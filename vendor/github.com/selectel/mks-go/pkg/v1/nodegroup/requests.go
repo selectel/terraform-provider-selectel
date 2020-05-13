@@ -117,3 +117,27 @@ func Resize(ctx context.Context, client *v1.ServiceClient, clusterID, nodegroupI
 
 	return responseResult, err
 }
+
+// Update requests a update of a cluster nodegroup by its id.
+func Update(ctx context.Context, client *v1.ServiceClient, clusterID, nodegroupID string, opts *UpdateOpts) (*v1.ResponseResult, error) {
+	updateNodegroupOpts := struct {
+		Nodegroup *UpdateOpts `json:"nodegroup"`
+	}{
+		Nodegroup: opts,
+	}
+	requestBody, err := json.Marshal(updateNodegroupOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	url := strings.Join([]string{client.Endpoint, v1.ResourceURLCluster, clusterID, v1.ResourceURLNodegroup, nodegroupID}, "/")
+	responseResult, err := client.DoRequest(ctx, http.MethodPut, url, bytes.NewReader(requestBody))
+	if err != nil {
+		return nil, err
+	}
+	if responseResult.Err != nil {
+		err = responseResult.Err
+	}
+
+	return responseResult, err
+}

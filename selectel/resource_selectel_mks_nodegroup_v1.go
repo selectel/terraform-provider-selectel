@@ -99,6 +99,14 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				Computed: true,
 				ForceNew: true,
 			},
+			"labels": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				ForceNew: false,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"nodes": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -172,6 +180,9 @@ func resourceMKSNodegroupV1Create(d *schema.ResourceData, meta interface{}) erro
 		AffinityPolicy:   d.Get("affinity_policy").(string),
 		AvailabilityZone: d.Get("availability_zone").(string),
 	}
+
+	labels := d.Get("labels").(map[string]interface{})
+	createOpts.Labels = expandMKSNodegroupV1Labels(labels)
 
 	log.Print(msgCreate(objectNodegroup, createOpts))
 	_, err = nodegroup.Create(ctx, mksClient, clusterID, createOpts)
@@ -251,6 +262,10 @@ func resourceMKSNodegroupV1Read(d *schema.ResourceData, meta interface{}) error 
 	d.Set("local_volume", mksNodegroup.LocalVolume)
 	d.Set("availability_zone", mksNodegroup.AvailabilityZone)
 
+	if err := d.Set("labels", mksNodegroup.Labels); err != nil {
+		log.Print(errSettingComplexAttr("labels", err))
+	}
+
 	nodes := flattenMKSNodegroupV1Nodes(mksNodegroup.Nodes)
 	if err := d.Set("nodes", nodes); err != nil {
 		log.Print(errSettingComplexAttr("nodes", err))
@@ -285,6 +300,26 @@ func resourceMKSNodegroupV1Update(d *schema.ResourceData, meta interface{}) erro
 	region := d.Get("region").(string)
 	endpoint := getMKSClusterV1Endpoint(region)
 	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
+
+	if d.HasChange("labels") {
+		labels := d.Get("labels").(map[string]interface{})
+		updateOpts := nodegroup.UpdateOpts{
+			Labels: expandMKSNodegroupV1Labels(labels),
+		}
+
+		log.Print(msgUpdate(objectNodegroup, d.Id(), updateOpts))
+		_, err := nodegroup.Update(ctx, mksClient, clusterID, nodegroupID, &updateOpts)
+		if err != nil {
+			return errUpdatingObject(objectNodegroup, d.Id(), err)
+		}
+
+		log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", clusterID)
+		timeout := d.Timeout(schema.TimeoutUpdate)
+		err = waitForMKSClusterV1ActiveState(ctx, mksClient, clusterID, timeout)
+		if err != nil {
+			return errUpdatingObject(objectNodegroup, d.Id(), err)
+		}
+	}
 
 	if d.HasChange("nodes_count") {
 		resizeOpts := nodegroup.ResizeOpts{

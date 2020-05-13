@@ -373,3 +373,13 @@ func flattenMKSNodegroupV1Nodes(views []*node.View) []map[string]interface{} {
 
 	return nodes
 }
+
+func expandMKSNodegroupV1Labels(labels map[string]interface{}) map[string]string {
+	result := make(map[string]string)
+
+	for k, v := range labels {
+		result[k] = v.(string)
+	}
+
+	return result
+}
