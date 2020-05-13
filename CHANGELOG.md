@@ -10,7 +10,8 @@ IMPROVEMENTS:
 
 BUG FIXES:
 
-* Fixed an issue when `selectel_mks_cluster_v1` resource tried to downgrade its `kube_version` in case it was automatically upgraded in the MKS backend [GH-85]  
+* Fixed an issue when `selectel_mks_cluster_v1` resource tried to downgrade its `kube_version` in case it was automatically upgraded in the MKS backend [GH-85]
+* Fixed an issue when `nodes_count` attribute of `selectel_mks_nodegroup_v1` resource couldn't be imported [GH-89]
 
 ## 3.2.0 (April 29, 2020)
 
