@@ -218,6 +218,7 @@ github.com/posener/complete/match
 ## explicit
 github.com/selectel/domains-go/pkg/v1
 github.com/selectel/domains-go/pkg/v1/domain
+github.com/selectel/domains-go/pkg/v1/record
 # github.com/selectel/go-selvpcclient v1.11.0
 ## explicit
 github.com/selectel/go-selvpcclient/selvpcclient

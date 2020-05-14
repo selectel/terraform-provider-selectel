@@ -1,6 +1,8 @@
 package selectel
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func errParsingPrefixLength(object, id string, err error) string {
 	return fmt.Sprintf("[DEBUG] can't parse prefix length from %s '%s' CIDR: %s", object, id, err)
@@ -32,6 +34,14 @@ func errParseMKSNodegroupV1ID(nodegroupID string) error {
 
 func errParseDomainsDomainV1ID(domainID string) error {
 	return fmt.Errorf("got error parsing domain ID: %s", domainID)
+}
+
+func errParseDomainsRecordV1ID(domainID string) error {
+	return fmt.Errorf("got error parsing record ID: %s", domainID)
+}
+
+func errParseDomainsDomainRecordV1IDsPair(id string) error {
+	return fmt.Errorf("got error parsing domain/record IDs pair: %s", id)
 }
 
 func errSearchingProjectRole(projectID string, err error) error {
