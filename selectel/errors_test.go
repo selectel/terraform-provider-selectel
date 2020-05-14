@@ -162,3 +162,23 @@ func TestErrParseDomainsDomainV1ID(t *testing.T) {
 
 	assert.Equal(t, expected, actual)
 }
+
+func TestErrParseDomainsRecordV1ID(t *testing.T) {
+	recordID := "badid"
+
+	expected := fmt.Errorf("got error parsing record ID: %s", recordID)
+
+	actual := errParseDomainsRecordV1ID(recordID)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestErrParseDomainsDomainRecordV1IDsPair(t *testing.T) {
+	idsPair := "badid/badid"
+
+	expected := fmt.Errorf("got error parsing domain/record IDs pair: %s", idsPair)
+
+	actual := errParseDomainsDomainRecordV1IDsPair(idsPair)
+
+	assert.Equal(t, expected, actual)
+}
