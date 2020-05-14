@@ -3,6 +3,7 @@
 FEATURES:
 
 * __New Resource:__ `selectel_domains_domain_v1` [GH-86]
+* __New Resource:__ `selectel_domains_record_v1` [GH-91]
 
 IMPROVEMENTS:
 
