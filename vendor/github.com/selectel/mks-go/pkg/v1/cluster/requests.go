@@ -171,15 +171,47 @@ func RotateCerts(ctx context.Context, client *v1.ServiceClient, clusterID string
 }
 
 // UpgradePatchVersion requests a Kubernetes patch version upgrade by cluster id.
-func UpgradePatchVersion(ctx context.Context, client *v1.ServiceClient, clusterID string) (*v1.ResponseResult, error) {
+func UpgradePatchVersion(ctx context.Context, client *v1.ServiceClient, clusterID string) (*View, *v1.ResponseResult, error) {
 	url := strings.Join([]string{client.Endpoint, v1.ResourceURLCluster, clusterID, v1.ResourceURLUpgradePatchVersion}, "/")
 	responseResult, err := client.DoRequest(ctx, http.MethodPost, url, nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if responseResult.Err != nil {
-		err = responseResult.Err
+		return nil, responseResult, responseResult.Err
 	}
 
-	return responseResult, err
+	// Extract a cluster from the response body.
+	var result struct {
+		Cluster *View `json:"cluster"`
+	}
+	err = responseResult.ExtractResult(&result)
+	if err != nil {
+		return nil, responseResult, err
+	}
+
+	return result.Cluster, responseResult, nil
+}
+
+// UpgradeMinorVersion requests a Kubernetes minor version upgrade by cluster id.
+func UpgradeMinorVersion(ctx context.Context, client *v1.ServiceClient, clusterID string) (*View, *v1.ResponseResult, error) {
+	url := strings.Join([]string{client.Endpoint, v1.ResourceURLCluster, clusterID, v1.ResourceURLUpgradeMinorVersion}, "/")
+	responseResult, err := client.DoRequest(ctx, http.MethodPost, url, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	if responseResult.Err != nil {
+		return nil, responseResult, responseResult.Err
+	}
+
+	// Extract a cluster from the response body.
+	var result struct {
+		Cluster *View `json:"cluster"`
+	}
+	err = responseResult.ExtractResult(&result)
+	if err != nil {
+		return nil, responseResult, err
+	}
+
+	return result.Cluster, responseResult, nil
 }

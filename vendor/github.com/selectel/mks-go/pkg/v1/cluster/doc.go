@@ -84,9 +84,18 @@ Example of rotating certificates by cluster id
 
 Example of upgrading Kubernetes patch version by cluster id
 
-  _, err := cluster.UpgradePatchVersion(ctx, mksClient, clusterID)
+  mksCluster, _, err := cluster.UpgradePatchVersion(ctx, mksClient, clusterID)
   if err != nil {
     log.Fatal(err)
   }
+  fmt.Printf("%+v\n", mksCluster)
+
+Example of upgrading Kubernetes minor version by cluster id
+
+  mksCluster, _, err := cluster.UpgradeMinorVersion(ctx, mksClient, clusterID)
+  if err != nil {
+    log.Fatal(err)
+  }
+  fmt.Printf("%+v\n", mksCluster)
 */
 package cluster

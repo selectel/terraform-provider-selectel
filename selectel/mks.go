@@ -217,7 +217,7 @@ func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData,
 			currentVersion, desiredVersion, latestVersion)
 	}
 
-	_, err = cluster.UpgradePatchVersion(ctx, client, d.Id())
+	_, _, err = cluster.UpgradePatchVersion(ctx, client, d.Id())
 	if err != nil {
 		return fmt.Errorf("error upgrading patch version: %s", err)
 	}
