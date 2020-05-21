@@ -232,47 +232,12 @@ func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-// kubeVersionTrimToMinor returns given Kubernetes version trimmed to minor.
-func kubeVersionTrimToMinor(kubeVersion string) (string, error) {
-	// Trim version prefix if needed.
-	kubeVersion = strings.TrimPrefix(kubeVersion, "v")
-
-	kubeVersionParts := strings.Split(kubeVersion, ".")
-	if len(kubeVersionParts) < 2 {
-		return "", errKubeVersionIsInvalidFmt(kubeVersion, "expected to have major and minor version parts")
-	}
-
-	majorPart := kubeVersionParts[0]
-	major, err := strconv.Atoi(majorPart)
-	if err != nil {
-		return "", errKubeVersionIsInvalidFmt(kubeVersion, "major part is not an integer number")
-	}
-	if major < 0 {
-		return "", errKubeVersionIsInvalidFmt(kubeVersion, "major part is a negative number")
-	}
-
-	minorPart := kubeVersionParts[1]
-	minor, err := strconv.Atoi(minorPart)
-	if err != nil {
-		return "", errKubeVersionIsInvalidFmt(kubeVersion, "minor part is not an integer number")
-	}
-	if minor < 0 {
-		return "", errKubeVersionIsInvalidFmt(kubeVersion, "minor part is a negative number")
-	}
-
-	return strings.Join([]string{majorPart, minorPart}, "."), nil
-}
-
 // kubeVersionToMajor returns given Kubernetes version major part.
 func kubeVersionToMajor(kubeVersion string) (int, error) {
 	// Trim version prefix if needed.
 	kubeVersion = strings.TrimPrefix(kubeVersion, "v")
 
 	kubeVersionParts := strings.Split(kubeVersion, ".")
-	if len(kubeVersionParts) < 3 {
-		return 0, errKubeVersionIsInvalidFmt(kubeVersion, "expected to have major, minor and patch version parts")
-	}
-
 	majorPart := kubeVersionParts[0]
 	major, err := strconv.Atoi(majorPart)
 	if err != nil {
@@ -291,8 +256,8 @@ func kubeVersionToMinor(kubeVersion string) (int, error) {
 	kubeVersion = strings.TrimPrefix(kubeVersion, "v")
 
 	kubeVersionParts := strings.Split(kubeVersion, ".")
-	if len(kubeVersionParts) < 3 {
-		return 0, errKubeVersionIsInvalidFmt(kubeVersion, "expected to have major, minor and patch version parts")
+	if len(kubeVersionParts) < 2 {
+		return 0, errKubeVersionIsInvalidFmt(kubeVersion, "expected to have major and minor version parts")
 	}
 
 	minorPart := kubeVersionParts[1]
@@ -348,6 +313,39 @@ func compareTwoKubeVersionsByPatch(a, b string) (string, error) {
 	}
 
 	return b, nil
+}
+
+// kubeVersionTrimToMinor returns given Kubernetes version trimmed to minor.
+func kubeVersionTrimToMinor(kubeVersion string) (string, error) {
+	major, err := kubeVersionToMajor(kubeVersion)
+	if err != nil {
+		return "", err
+	}
+
+	minor, err := kubeVersionToMinor(kubeVersion)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Join([]string{strconv.Itoa(major), strconv.Itoa(minor)}, "."), nil
+}
+
+// KubeVersionTrimToMinorIncremented returns given Kubernetes version trimmed to minor incremented by 1.
+func kubeVersionTrimToMinorIncremented(kubeVersion string) (string, error) {
+	major, err := kubeVersionToMajor(kubeVersion)
+	if err != nil {
+		return "", err
+	}
+
+	minor, err := kubeVersionToMinor(kubeVersion)
+	if err != nil {
+		return "", err
+	}
+
+	// Increment minor version.
+	minor++
+
+	return strings.Join([]string{strconv.Itoa(major), strconv.Itoa(minor)}, "."), nil
 }
 
 func mksNodegroupV1ParseID(id string) (string, string, error) {
