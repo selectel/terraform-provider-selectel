@@ -9,19 +9,21 @@ import (
 type Status string
 
 const (
-	StatusActive                     Status = "ACTIVE"
-	StatusPendingCreate              Status = "PENDING_CREATE"
-	StatusPendingUpdate              Status = "PENDING_UPDATE"
-	StatusPendingUpgrade             Status = "PENDING_UPGRADE"
-	StatusPendingRotateCerts         Status = "PENDING_ROTATE_CERTS"
-	StatusPendingDelete              Status = "PENDING_DELETE"
-	StatusPendingResize              Status = "PENDING_RESIZE"
-	StatusPendingNodeReinstall       Status = "PENDING_NODE_REINSTALL"
-	StatusPendingUpgradePatchVersion Status = "PENDING_UPGRADE_PATCH_VERSION"
-	StatusPendingUpdateNodegroup     Status = "PENDING_UPDATE_NODEGROUP"
-	StatusMaintenance                Status = "MAINTENANCE"
-	StatusError                      Status = "ERROR"
-	StatusUnknown                    Status = "UNKNOWN"
+	StatusActive                             Status = "ACTIVE"
+	StatusPendingCreate                      Status = "PENDING_CREATE"
+	StatusPendingUpdate                      Status = "PENDING_UPDATE"
+	StatusPendingUpgrade                     Status = "PENDING_UPGRADE"
+	StatusPendingRotateCerts                 Status = "PENDING_ROTATE_CERTS"
+	StatusPendingDelete                      Status = "PENDING_DELETE"
+	StatusPendingResize                      Status = "PENDING_RESIZE"
+	StatusPendingNodeReinstall               Status = "PENDING_NODE_REINSTALL"
+	StatusPendingUpgradePatchVersion         Status = "PENDING_UPGRADE_PATCH_VERSION"
+	StatusPendingUpgradeMinorVersion         Status = "PENDING_UPGRADE_MINOR_VERSION"
+	StatusPendingUpdateNodegroup             Status = "PENDING_UPDATE_NODEGROUP"
+	StatusPendingUpgradeMastersConfiguration Status = "PENDING_UPGRADE_MASTERS_CONFIGURATION"
+	StatusMaintenance                        Status = "MAINTENANCE"
+	StatusError                              Status = "ERROR"
+	StatusUnknown                            Status = "UNKNOWN"
 )
 
 // View represents an unmarshalled cluster body from an API response.
@@ -119,8 +121,12 @@ func (result *View) UnmarshalJSON(b []byte) error {
 		result.Status = StatusPendingNodeReinstall
 	case StatusPendingUpgradePatchVersion:
 		result.Status = StatusPendingUpgradePatchVersion
+	case StatusPendingUpgradeMinorVersion:
+		result.Status = StatusPendingUpgradeMinorVersion
 	case StatusPendingUpdateNodegroup:
 		result.Status = StatusPendingUpdateNodegroup
+	case StatusPendingUpgradeMastersConfiguration:
+		result.Status = StatusPendingUpgradeMastersConfiguration
 	case StatusMaintenance:
 		result.Status = StatusMaintenance
 	case StatusError:

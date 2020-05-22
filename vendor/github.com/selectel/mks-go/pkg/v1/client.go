@@ -17,6 +17,7 @@ const (
 	ResourceURLKubeconfig          = "kubeconfig"
 	ResourceURLRotateCerts         = "rotate-certs"
 	ResourceURLUpgradePatchVersion = "upgrade-patch-version"
+	ResourceURLUpgradeMinorVersion = "upgrade-minor-version"
 	ResourceURLTask                = "tasks"
 	ResourceURLNodegroup           = "nodegroups"
 	ResourceURLResize              = "resize"

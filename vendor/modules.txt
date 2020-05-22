@@ -235,7 +235,7 @@ github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/subnets
 github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens
 github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/users
 github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/vrrpsubnets
-# github.com/selectel/mks-go v0.3.0
+# github.com/selectel/mks-go v0.4.0
 ## explicit
 github.com/selectel/mks-go/pkg/v1
 github.com/selectel/mks-go/pkg/v1/cluster
