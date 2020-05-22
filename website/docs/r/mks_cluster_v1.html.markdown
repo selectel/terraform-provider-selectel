@@ -39,7 +39,11 @@ The following arguments are supported:
   Changing this creates a new cluster.
 
 * `kube_version` - (Required) The current Kubernetes version of the cluster.
-  Changing this upgrades the patch version of the cluster.
+  Changing this upgrades the current version of the cluster.
+  To upgrade a patch version, the desired version should match the latest available patch version for
+  the current minor release.
+  To upgrade a minor version, the desired version should match the next available minor release with
+  the latest patch version.
 
 * `enable_autorepair` - (Optional) Reflects if worker nodes are allowed to be reinstalled automatically.
   Accepts true or false. Defaults to true.
