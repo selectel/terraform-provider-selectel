@@ -47,6 +47,7 @@ func waitForMKSClusterV1ActiveState(
 		string(cluster.StatusPendingCreate),
 		string(cluster.StatusPendingUpdate),
 		string(cluster.StatusPendingUpgradePatchVersion),
+		string(cluster.StatusPendingUpgradeMinorVersion),
 		string(cluster.StatusPendingResize),
 	}
 	target := []string{
@@ -150,6 +151,37 @@ func mksClusterV1KubeVersionDiffSuppressFunc(k, old, new string, d *schema.Resou
 	return false
 }
 
+func mksClusterV1GetLatestPatchVersions(ctx context.Context, client *v1.ServiceClient) (map[string]string, error) {
+	kubeVersions, _, err := kubeversion.List(ctx, client)
+	if err != nil {
+		return nil, err
+	}
+
+	result := map[string]string{}
+
+	for _, version := range kubeVersions {
+		minor, err := kubeVersionTrimToMinor(version.Version)
+		if err != nil {
+			return nil, err
+		}
+
+		current, ok := result[minor]
+		if !ok {
+			result[minor] = version.Version
+			continue
+		}
+
+		latest, err := compareTwoKubeVersionsByPatch(version.Version, current)
+		if err != nil {
+			return nil, err
+		}
+
+		result[minor] = latest
+	}
+
+	return result, nil
+}
+
 func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData, client *v1.ServiceClient) error {
 	o, n := d.GetChange("kube_version")
 	currentVersion := o.(string)
@@ -157,6 +189,19 @@ func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData,
 
 	log.Printf("[DEBUG] current kube version: %s", currentVersion)
 	log.Printf("[DEBUG] desired kube version: %s", desiredVersion)
+
+	// Compare current and desired major versions.
+	currentMajor, err := kubeVersionToMajor(currentVersion)
+	if err != nil {
+		return fmt.Errorf("error getting a major part of the current version %s: %s", currentVersion, err)
+	}
+	desiredMajor, err := kubeVersionToMajor(desiredVersion)
+	if err != nil {
+		return fmt.Errorf("error getting a major part of the desired version %s: %s", desiredVersion, err)
+	}
+	if desiredMajor != currentMajor {
+		return fmt.Errorf("current version %s can't be upgraded to version %s", currentVersion, desiredVersion)
+	}
 
 	// Compare current and desired minor versions.
 	currentMinor, err := kubeVersionTrimToMinor(currentVersion)
@@ -168,45 +213,62 @@ func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData,
 		return fmt.Errorf("error getting a minor part of the desired version %s: %s", desiredVersion, err)
 	}
 	if desiredMinor != currentMinor {
-		return fmt.Errorf("current minor version %s can't be upgraded to %s", currentMinor, desiredMinor)
+		log.Print("[DEBUG] upgrading minor version")
+
+		// Increment minor version.
+		currentMinorNew, err := kubeVersionTrimToMinorIncremented(currentVersion)
+		if err != nil {
+			return fmt.Errorf("error getting incremented minor part of the current version %s: %s", currentVersion, err)
+		}
+
+		// Get latest patch versions for every minor version.
+		latestPatchVersions, err := mksClusterV1GetLatestPatchVersions(ctx, client)
+		if err != nil {
+			return fmt.Errorf("error getting latest patch versions: %s", err)
+		}
+
+		// Check that we have a Kubernetes version of the current minor version + 1.
+		latestVersion, ok := latestPatchVersions[currentMinorNew]
+		if !ok {
+			return fmt.Errorf("the cluster is already on the latest available minor version: %s", currentMinor)
+		}
+
+		log.Printf("[DEBUG] latest kube version: %s", latestVersion)
+
+		// Compare the latest patch version with the desired version.
+		if desiredVersion != latestVersion {
+			return fmt.Errorf(
+				"current version %s can't be upgraded to version %s, the latest available version is: %s",
+				currentVersion, desiredVersion, latestVersion)
+		}
+
+		_, _, err = cluster.UpgradeMinorVersion(ctx, client, d.Id())
+		if err != nil {
+			return fmt.Errorf("error upgrading minor version: %s", err)
+		}
+
+		log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", d.Id())
+		timeout := d.Timeout(schema.TimeoutUpdate)
+		err = waitForMKSClusterV1ActiveState(ctx, client, d.Id(), timeout)
+		if err != nil {
+			return fmt.Errorf("error waiting for the minor version upgrade: %s", err)
+		}
+
+		return nil
 	}
 
-	// Compare current and desired patch versions.
-	currentPatch, err := kubeVersionToPatch(currentVersion)
-	if err != nil {
-		return fmt.Errorf("error getting a patch part of the current version %s: %s", currentVersion, err)
-	}
-	desiredPatch, err := kubeVersionToPatch(desiredVersion)
-	if err != nil {
-		return fmt.Errorf("error getting a patch part of the desired version %s: %s", desiredVersion, err)
-	}
-	if desiredPatch < currentPatch {
-		return fmt.Errorf("current patch version %s can't be downgraded to %s", currentVersion, desiredVersion)
-	}
+	log.Print("[DEBUG] upgrading patch version")
 
-	// Get all supported Kubernetes versions.
-	kubeVersions, _, err := kubeversion.List(ctx, client)
+	// Get latest patch versions for every minor version.
+	latestPatchVersions, err := mksClusterV1GetLatestPatchVersions(ctx, client)
 	if err != nil {
-		return fmt.Errorf("error getting all supported Kubernetes versions: %s", err)
+		return fmt.Errorf("error getting latest patch versions: %s", err)
 	}
 
 	// Find the latest patch version corresponding to the current minor version.
-	var latestVersion string
-	for _, version := range kubeVersions {
-		minor, err := kubeVersionTrimToMinor(version.Version)
-		if err != nil {
-			return err
-		}
-		if minor == currentMinor {
-			if latestVersion == "" {
-				latestVersion = version.Version
-			} else {
-				latestVersion, err = compareTwoKubeVersionsByPatch(latestVersion, version.Version)
-				if err != nil {
-					return err
-				}
-			}
-		}
+	latestVersion, ok := latestPatchVersions[currentMinor]
+	if !ok {
+		return fmt.Errorf("unable to find the latest patch version for the current minor version %s", currentMinor)
 	}
 
 	log.Printf("[DEBUG] latest kube version: %s", latestVersion)
