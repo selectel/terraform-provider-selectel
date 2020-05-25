@@ -16,3 +16,9 @@ linters:
     - wsl
     - testpackage
     - nestif
+
+issues:
+  exclude-rules:
+    - linters:
+        - staticcheck
+      text: "SA1019:"
