@@ -8,6 +8,9 @@ FEATURES:
 IMPROVEMENTS:
 
 * Added `labels` argument for `selectel_mks_nodegroup_v1` resource [GH-88]
+* Added support to upgrade a minor version of Kubernetes cluster for `selectel_mks_cluster_v1` resource [GH-93]
+* Tuned default timeouts for `selectel_mks_cluster_v1`, `selectel_mks_nodegroup_v1` resources [GH-95]
+* Updated `terraform-plugin-sdk` to `v1.13.0` [GH-96]
 
 BUG FIXES:
 
