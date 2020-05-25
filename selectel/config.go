@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 	domainsV1 "github.com/selectel/domains-go/pkg/v1"
 	"github.com/selectel/go-selvpcclient/selvpcclient"
-
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell"
 	resellV2 "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2"
 )
