@@ -3,6 +3,13 @@ package selectel
 import (
 	"strconv"
 	"strings"
+	"time"
+)
+
+const (
+	domainsV1DefaultRetryWaitMin = time.Second
+	domainsV1DefaultRetryWaitMax = 5 * time.Second
+	domainsV1DefaultRetry        = 5
 )
 
 const (
