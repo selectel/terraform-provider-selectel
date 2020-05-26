@@ -1,22 +1,22 @@
-## 3.3.0 (Unreleased)
+## 3.3.0 (May 26, 2020)
 
 FEATURES:
 
-* __New Resource:__ `selectel_domains_domain_v1` [GH-86]
-* __New Resource:__ `selectel_domains_record_v1` [GH-91]
+* __New Resource:__ `selectel_domains_domain_v1` ([#86](https://github.com/terraform-providers/terraform-provider-selectel/issues/86))
+* __New Resource:__ `selectel_domains_record_v1` ([#91](https://github.com/terraform-providers/terraform-provider-selectel/issues/91))
 
 IMPROVEMENTS:
 
-* Added `labels` argument for `selectel_mks_nodegroup_v1` resource [GH-88]
-* Added support to upgrade a minor version of Kubernetes cluster for `selectel_mks_cluster_v1` resource [GH-93]
-* Tuned default timeouts for `selectel_mks_cluster_v1`, `selectel_mks_nodegroup_v1` resources [GH-95]
-* Added retryable HTTP client to use with Selectel Domains API V1 client to make provider more resilient to 5xx errors [GH-98]
-* Updated `terraform-plugin-sdk` to `v1.13.0` [GH-96]
+* Added `labels` argument for `selectel_mks_nodegroup_v1` resource ([#88](https://github.com/terraform-providers/terraform-provider-selectel/issues/88))
+* Added support to upgrade a minor version of Kubernetes cluster for `selectel_mks_cluster_v1` resource ([#93](https://github.com/terraform-providers/terraform-provider-selectel/issues/93))
+* Tuned default timeouts for `selectel_mks_cluster_v1`, `selectel_mks_nodegroup_v1` resources ([#95](https://github.com/terraform-providers/terraform-provider-selectel/issues/95))
+* Added retryable HTTP client to use with Selectel Domains API V1 client to make provider more resilient to 5xx errors ([#98](https://github.com/terraform-providers/terraform-provider-selectel/issues/98))
+* Updated `terraform-plugin-sdk` to `v1.13.0` ([#96](https://github.com/terraform-providers/terraform-provider-selectel/issues/96))
 
 BUG FIXES:
 
-* Fixed an issue when `selectel_mks_cluster_v1` resource tried to downgrade its `kube_version` in case it was automatically upgraded in the MKS backend [GH-85]
-* Fixed an issue when `nodes_count` attribute of `selectel_mks_nodegroup_v1` resource couldn't be imported [GH-89]
+* Fixed an issue when `selectel_mks_cluster_v1` resource tried to downgrade its `kube_version` in case it was automatically upgraded in the MKS backend ([#85](https://github.com/terraform-providers/terraform-provider-selectel/issues/85))
+* Fixed an issue when `nodes_count` attribute of `selectel_mks_nodegroup_v1` resource couldn't be imported ([#89](https://github.com/terraform-providers/terraform-provider-selectel/issues/89))
 
 ## 3.2.0 (April 29, 2020)
 
