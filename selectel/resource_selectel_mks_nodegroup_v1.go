@@ -209,6 +209,11 @@ func resourceMKSNodegroupV1Create(d *schema.ResourceData, meta interface{}) erro
 			nodegroupID = ng.ID
 		}
 	}
+	if nodegroupID == "" {
+		return errCreatingObject(objectNodegroup,
+			errors.New("unable to find new nodegroup by ID after creating"),
+		)
+	}
 
 	// The ID must be a combination of the cluster and nodegroup ID
 	// since a cluster ID is required to retrieve a nodegroup ID.
