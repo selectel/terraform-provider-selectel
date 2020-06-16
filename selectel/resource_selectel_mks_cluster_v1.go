@@ -46,7 +46,7 @@ func resourceMKSClusterV1() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					return strings.ToLower(old) == strings.ToLower(new)
+					return strings.EqualFold(old, new)
 				},
 			},
 			"project_id": {
