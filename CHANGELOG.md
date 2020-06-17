@@ -1,5 +1,9 @@
 ## 3.4.0 (Unreleased)
 
+IMPROVEMENTS:
+
+* Added a readable error output for `selectel_mks_nodegroup_v1` resource creation failure [GH-100]
+
 BUG FIXES:
 
 * Fixed an issue when `selectel_mks_cluster_v1` resource was recreated on every Terraform run because of upper case usage in the `name` argument [GH-103]
