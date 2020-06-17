@@ -98,7 +98,6 @@ func resourceVPCKeypairV2Read(d *schema.ResourceData, meta interface{}) error {
 			found = true
 			d.Set("name", keypair.Name)
 			d.Set("public_key", keypair.PublicKey)
-			d.Set("regions", keypair.Regions)
 			d.Set("user_id", keypair.UserID)
 		}
 	}
