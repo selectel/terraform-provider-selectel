@@ -1,4 +1,9 @@
 ## 3.4.0 (Unreleased)
+
+BUG FIXES:
+
+* Fixed an issue when `selectel_mks_cluster_v1` resource was recreated on every Terraform run because of upper case usage in the `name` argument [GH-103]
+
 ## 3.3.0 (May 26, 2020)
 
 FEATURES:
