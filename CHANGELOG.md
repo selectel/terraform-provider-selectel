@@ -7,6 +7,7 @@ IMPROVEMENTS:
 BUG FIXES:
 
 * Fixed an issue when `selectel_mks_cluster_v1` resource was recreated on every Terraform run because of upper case usage in the `name` argument [GH-103]
+* Fixed an issue when `selectel_vpc_keypair_v2` resource was recreated on every Terraform run because `regions` arguments was computed from API responses [GH-104]
 
 ## 3.3.0 (May 26, 2020)
 
