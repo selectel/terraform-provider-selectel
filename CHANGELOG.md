@@ -1,11 +1,11 @@
-## 3.3.1 (Unreleased)
+## 3.3.1 (June 25, 2020)
 
 BUG FIXES:
 
-* Fixed an issue when the `selectel_mks_cluster_v1` resource was recreated on every Terraform run because of upper case usage in the `name` argument [GH-103]
-* Fixed an issue when the `selectel_vpc_keypair_v2` resource was recreated on every Terraform run because the `regions` argument was computed from API responses [GH-104]
-* Fixed unreadable error output for `selectel_mks_nodegroup_v1` resource creation failures [GH-100]
-* Fixed an issue when an emtpy value in the `quotas.resource_quotas.region` argument of the `selectel_vpc_project_v2` resource caused Resell V2 API errors [GH-107]
+* Fixed an issue when the `selectel_mks_cluster_v1` resource was recreated on every Terraform run because of upper case usage in the `name` argument ([#103](https://github.com/terraform-providers/terraform-provider-selectel/issues/103))
+* Fixed an issue when the `selectel_vpc_keypair_v2` resource was recreated on every Terraform run because the `regions` argument was computed from API responses ([#104](https://github.com/terraform-providers/terraform-provider-selectel/issues/104))
+* Fixed unreadable error output for `selectel_mks_nodegroup_v1` resource creation failures ([#100](https://github.com/terraform-providers/terraform-provider-selectel/issues/100))
+* Fixed an issue when an emtpy value in the `quotas.resource_quotas.region` argument of the `selectel_vpc_project_v2` resource caused Resell V2 API errors ([#107](https://github.com/terraform-providers/terraform-provider-selectel/issues/107))
 
 ## 3.3.0 (May 26, 2020)
 
