@@ -212,6 +212,9 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
 }
 
 func TestResourceVPCProjectV2QuotasOptsFromSet(t *testing.T) {
+	region := "ru-3"
+	zone := "ru-3a"
+
 	quotaSet := &schema.Set{
 		F: quotasHashSetFunc(),
 	}
@@ -219,8 +222,8 @@ func TestResourceVPCProjectV2QuotasOptsFromSet(t *testing.T) {
 		F: resourceQuotasHashSetFunc(),
 	}
 	resourceQuotas.Add(map[string]interface{}{
-		"region": "ru-3",
-		"zone":   "ru-3a",
+		"region": region,
+		"zone":   zone,
 		"value":  100,
 	})
 	quotaSet.Add(map[string]interface{}{
@@ -234,8 +237,8 @@ func TestResourceVPCProjectV2QuotasOptsFromSet(t *testing.T) {
 			Name: "volume_gigabytes_fast",
 			ResourceQuotasOpts: []quotas.ResourceQuotaOpts{
 				{
-					Region: "ru-3",
-					Zone:   "ru-3a",
+					Region: &region,
+					Zone:   &zone,
 					Value:  &expectedResourceQuotaValue,
 				},
 			},
