@@ -23,9 +23,10 @@ func TestAccVPCV2KeypairImportBasic(t *testing.T) {
 				Config: testAccVPCV2KeypairBasic(userName, userPassword, keypairName, publicKey),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"regions"},
 			},
 		},
 	})
