@@ -20,7 +20,7 @@ import (
 
 const (
 	// AppVersion is a version of the application.
-	AppVersion = "1.11.0"
+	AppVersion = "1.11.1"
 
 	// AppName is a global application name.
 	AppName = "go-selvpcclient"

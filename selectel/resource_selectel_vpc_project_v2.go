@@ -327,8 +327,11 @@ func resourceVPCProjectV2QuotasOptsFromSet(quotaSet *schema.Set) ([]quotas.Quota
 		// Populate every quotas.ResourceQuotaOpts with data from a single
 		// resourceQuotasMap's region zone and value.
 		for j, resourceQuotasEntityRaw := range resourceQuotasEntities.List() {
-			var resourceQuotasEntityRegion, resourceQuotasEntityZone string
-			var resourceQuotasEntityValue int
+			var (
+				resourceQuotasEntityRegion string
+				resourceQuotasEntityZone   string
+				resourceQuotasEntityValue  int
+			)
 			resourceQuotasEntity := resourceQuotasEntityRaw.(map[string]interface{})
 			if region, ok := resourceQuotasEntity["region"]; ok {
 				resourceQuotasEntityRegion = region.(string)
@@ -342,8 +345,8 @@ func resourceVPCProjectV2QuotasOptsFromSet(quotaSet *schema.Set) ([]quotas.Quota
 			// Populate single entity of billing resource data with the region,
 			// zone and value information.
 			resourceQuotasOpts[j] = quotas.ResourceQuotaOpts{
-				Region: resourceQuotasEntityRegion,
-				Zone:   resourceQuotasEntityZone,
+				Region: &resourceQuotasEntityRegion,
+				Zone:   &resourceQuotasEntityZone,
 				Value:  &resourceQuotasEntityValue,
 			}
 		}
