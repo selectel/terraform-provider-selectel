@@ -1,13 +1,11 @@
-## 3.4.0 (Unreleased)
-
-IMPROVEMENTS:
-
-* Added a readable error output for `selectel_mks_nodegroup_v1` resource creation failure [GH-100]
+## 3.3.1 (Unreleased)
 
 BUG FIXES:
 
-* Fixed an issue when `selectel_mks_cluster_v1` resource was recreated on every Terraform run because of upper case usage in the `name` argument [GH-103]
-* Fixed an issue when `selectel_vpc_keypair_v2` resource was recreated on every Terraform run because `regions` arguments was computed from API responses [GH-104]
+* Fixed an issue when the `selectel_mks_cluster_v1` resource was recreated on every Terraform run because of upper case usage in the `name` argument [GH-103]
+* Fixed an issue when the `selectel_vpc_keypair_v2` resource was recreated on every Terraform run because the `regions` argument was computed from API responses [GH-104]
+* Fixed unreadable error output for `selectel_mks_nodegroup_v1` resource creation failures [GH-100]
+* Fixed an issue when an emtpy value in the `quotas.resource_quotas.region` argument of the `selectel_vpc_project_v2` resource caused Resell V2 API errors [GH-107]
 
 ## 3.3.0 (May 26, 2020)
 
