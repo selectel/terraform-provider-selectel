@@ -14,6 +14,7 @@ This provider plugin is maintained by:
 
 * Andrei Ozerov ([@ozerovandrei](https://github.com/ozerovandrei))
 * Sergei Kolyshkin ([@kolsean](https://github.com/kolsean))
+* Daniil Rutskiy ([@dstdfx](https://github.com/dstdfx))
 
 Requirements
 ------------
