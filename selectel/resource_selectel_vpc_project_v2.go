@@ -344,11 +344,13 @@ func resourceVPCProjectV2QuotasOptsFromSet(quotaSet *schema.Set) ([]quotas.Quota
 			}
 			// Populate single entity of billing resource data with the region,
 			// zone and value information.
-			resourceQuotasOpts[j] = quotas.ResourceQuotaOpts{
-				Region: &resourceQuotasEntityRegion,
-				Zone:   &resourceQuotasEntityZone,
-				Value:  &resourceQuotasEntityValue,
+			if resourceQuotasEntityRegion != "" {
+				resourceQuotasOpts[j].Region = &resourceQuotasEntityRegion
 			}
+			if resourceQuotasEntityZone != "" {
+				resourceQuotasOpts[j].Zone = &resourceQuotasEntityZone
+			}
+			resourceQuotasOpts[j].Value = &resourceQuotasEntityValue
 		}
 
 		// Populate single quota options element.
