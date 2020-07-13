@@ -1,4 +1,9 @@
-## 3.4.0 (Unreleased)
+## 3.3.2 (Unreleased)
+
+BUG FIXES:
+
+* Fixed an issue when an emtpy value in the `quotas.resource_quotas.zone` argument of the `selectel_vpc_project_v2` resource caused Resell V2 API errors [GH-111]
+
 ## 3.3.1 (June 25, 2020)
 
 BUG FIXES:
