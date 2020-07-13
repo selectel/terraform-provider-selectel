@@ -1,8 +1,8 @@
-## 3.3.2 (Unreleased)
+## 3.3.2 (July 13, 2020)
 
 BUG FIXES:
 
-* Fixed an issue when an emtpy value in the `quotas.resource_quotas.zone` argument of the `selectel_vpc_project_v2` resource caused Resell V2 API errors [GH-111]
+* Fixed an issue when an emtpy value in the `quotas.resource_quotas.zone` argument of the `selectel_vpc_project_v2` resource caused Resell V2 API errors ([#111](https://github.com/terraform-providers/terraform-provider-selectel/issues/111))
 
 ## 3.3.1 (June 25, 2020)
 
