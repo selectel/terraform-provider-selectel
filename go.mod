@@ -7,6 +7,6 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk v1.13.0
 	github.com/selectel/domains-go v0.2.0
 	github.com/selectel/go-selvpcclient v1.11.1
-	github.com/selectel/mks-go v0.4.0
+	github.com/selectel/mks-go v0.4.1-0.20200717081907-5abb5162d253
 	github.com/stretchr/testify v1.5.1
 )
