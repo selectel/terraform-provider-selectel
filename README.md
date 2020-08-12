@@ -25,17 +25,16 @@ Requirements
 Building The Provider
 ---------------------
 
-Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-selectel`
+Clone the repository
 
 ```sh
-$ mkdir -p $GOPATH/src/github.com/terraform-providers; cd $GOPATH/src/github.com/terraform-providers
-$ git clone git@github.com:terraform-providers/terraform-provider-selectel.git
+$ git clone git@github.com:selectel/terraform-provider-selectel.git
 ```
 
 Enter the provider directory and build the provider
 
 ```sh
-$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-selectel
+$ cd terraform-provider-selectel
 $ make build
 ```
 
