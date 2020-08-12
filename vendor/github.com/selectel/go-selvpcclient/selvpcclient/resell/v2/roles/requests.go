@@ -23,7 +23,7 @@ func List(ctx context.Context, client *selvpcclient.ServiceClient) ([]*Role, *se
 		return nil, responseResult, responseResult.Err
 	}
 
-	//Extract roles from the response body.
+	// Extract roles from the response body.
 	var result struct {
 		Roles []*Role `json:"roles"`
 	}

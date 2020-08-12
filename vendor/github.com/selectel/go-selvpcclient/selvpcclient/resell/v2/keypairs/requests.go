@@ -41,7 +41,7 @@ func Create(ctx context.Context, client *selvpcclient.ServiceClient, createOpts 
 	type nestedCreateOpts struct {
 		Keypair KeypairOpts `json:"keypair"`
 	}
-	var createKeypairOpts = nestedCreateOpts{
+	createKeypairOpts := nestedCreateOpts{
 		Keypair: createOpts,
 	}
 	requestBody, err := json.Marshal(&createKeypairOpts)

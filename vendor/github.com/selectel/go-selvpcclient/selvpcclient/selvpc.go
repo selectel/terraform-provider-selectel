@@ -20,7 +20,7 @@ import (
 
 const (
 	// AppVersion is a version of the application.
-	AppVersion = "1.11.1"
+	AppVersion = "1.12.0"
 
 	// AppName is a global application name.
 	AppName = "go-selvpcclient"
@@ -58,6 +58,11 @@ const (
 	// defaultExpectContinueTimeout represents the default amount of time to
 	// wait for a server's first response headers.
 	defaultExpectContinueTimeout = 1
+)
+
+var (
+	errOptsIsNotStruct = errors.New("provided options is not a structure")
+	errServiceResponse = errors.New("status code from the server")
 )
 
 // NewHTTPClient returns a reference to an initialized configured HTTP client.
@@ -172,9 +177,9 @@ func (client *ServiceClient) DoRequest(ctx context.Context, method, path string,
 	if response.StatusCode >= 400 && response.StatusCode <= 599 {
 		extendedError, err := responseResult.ExtractErr()
 		if err != nil {
-			responseResult.Err = fmt.Errorf("selvpcclient: got the %d status code from the server", response.StatusCode)
+			responseResult.Err = fmt.Errorf("selvpcclient: got the %d %w", response.StatusCode, errServiceResponse)
 		} else {
-			responseResult.Err = fmt.Errorf("selvpcclient: got the %d status code from the server: %s", response.StatusCode, extendedError)
+			responseResult.Err = fmt.Errorf("selvpcclient: got the %d %w: %s", response.StatusCode, errServiceResponse, extendedError)
 		}
 	}
 
@@ -222,7 +227,7 @@ type IPVersion string
 func BuildQueryParameters(opts interface{}) (string, error) {
 	optsValue := reflect.ValueOf(opts)
 	if optsValue.Kind() != reflect.Struct {
-		return "", errors.New("provided options is not a structure")
+		return "", errOptsIsNotStruct
 	}
 	optsType := reflect.TypeOf(opts)
 

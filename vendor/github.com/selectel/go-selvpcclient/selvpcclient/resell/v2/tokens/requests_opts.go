@@ -5,6 +5,6 @@ type TokenOpts struct {
 	// ProjectID can be used to create a project-scoped Identity token.
 	ProjectID string `json:"project_id,omitempty"`
 
-	// DomainName can be used to create a domain-scoped Identity token.
-	DomainName string `json:"domain_name,omitempty"`
+	// AccountName can be used to create a domain-scoped Identity token.
+	AccountName string `json:"account_name,omitempty"`
 }

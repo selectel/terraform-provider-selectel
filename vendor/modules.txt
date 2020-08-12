@@ -222,7 +222,7 @@ github.com/posener/complete/match
 github.com/selectel/domains-go/pkg/v1
 github.com/selectel/domains-go/pkg/v1/domain
 github.com/selectel/domains-go/pkg/v1/record
-# github.com/selectel/go-selvpcclient v1.11.1
+# github.com/selectel/go-selvpcclient v1.12.0
 ## explicit
 github.com/selectel/go-selvpcclient/selvpcclient
 github.com/selectel/go-selvpcclient/selvpcclient/resell
