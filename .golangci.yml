@@ -4,21 +4,59 @@ run:
 
 linters:
   fast: false
-  enable-all: true
-  disable:
-    - gomnd
+  enable:
+    - asciicheck
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - dupl
     - errcheck
-    - gochecknoglobals
-    - gochecknoinits
-    - lll
-    - unparam
-    - funlen
-    - wsl
-    - testpackage
-    - nestif
+    - exhaustive
+    - exportloopref
+    - gci
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - godox
+    - gofmt
+    - gofumpt
+    - goheader
+    - goimports
+    - golint
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - interfacer
+    - maligned
+    - misspell
+    - nakedret
+    - noctx
+    - nolintlint
+    - prealloc
+    - rowserrcheck
+    - scopelint
+    - sqlclosecheck
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unused
+    - varcheck
+    - whitespace
 
 issues:
   exclude-rules:
     - linters:
         - staticcheck
       text: "SA1019:"
+
+    - linters:
+        - errcheck
+      text: "Error return value of `d.Set` is not checked"
