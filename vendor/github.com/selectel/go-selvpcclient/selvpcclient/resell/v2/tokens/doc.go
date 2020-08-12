@@ -15,7 +15,7 @@ Example of creating a project-scoped token
 Example of creating a domain-scoped token
 
   createOpts := tokens.TokenOpts{
-    DomainName: "1122334455",
+    AccountName: "1122334455",
   }
   token, err := tokens.Create(ctx, resellClient, createOpts)
   if err != nil {

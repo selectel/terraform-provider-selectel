@@ -37,8 +37,8 @@ func resourceVPCTokenV2Create(d *schema.ResourceData, meta interface{}) error {
 	ctx := context.Background()
 
 	opts := tokens.TokenOpts{
-		ProjectID:  d.Get("project_id").(string),
-		DomainName: d.Get("account_name").(string),
+		ProjectID:   d.Get("project_id").(string),
+		AccountName: d.Get("account_name").(string),
 	}
 
 	log.Print(msgCreate(objectToken, opts))

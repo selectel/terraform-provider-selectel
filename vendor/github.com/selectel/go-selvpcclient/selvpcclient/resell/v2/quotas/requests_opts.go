@@ -5,6 +5,8 @@ import (
 	"errors"
 )
 
+var errGetEmptyQuotasOpts = errors.New("got empty QuotasOpts")
+
 // QuotaOpts represents quota options for a single resource that can be used in the update request.
 type QuotaOpts struct {
 	// Name is a human-readable name of the resource.
@@ -54,7 +56,7 @@ We need it to marshal structure to a a JSON that the Resell v2 API wants:
 func (opts *UpdateProjectQuotasOpts) MarshalJSON() ([]byte, error) {
 	// Check the opts.
 	if len(opts.QuotasOpts) == 0 {
-		return nil, errors.New("got empty QuotasOpts")
+		return nil, errGetEmptyQuotasOpts
 	}
 
 	// Convert opts's quotas update options slice to a map that has resource names
