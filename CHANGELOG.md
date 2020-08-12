@@ -1,4 +1,11 @@
-## 3.4.0 (Unreleased)
+## 3.3.3 (Unreleased)
+
+IMPROVEMENTS:
+
+* Updated Go version to `1.14.7` [GH-117]
+* Updated `golangci-lint` in CI to `v1.30.0` [GH-118]
+* Updated `go-selvpcclient` in CI to `v1.12.0` [GH-118]
+
 ## 3.3.2 (July 13, 2020)
 
 BUG FIXES:
