@@ -8,3 +8,4 @@
 terraform-provider-selectel
 .idea
 .DS_Store
+dist/
