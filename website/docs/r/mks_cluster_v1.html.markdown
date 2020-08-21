@@ -51,6 +51,7 @@ The following arguments are supported:
 * `enable_patch_version_auto_upgrade` - (Optional) Specifies if Kubernetes patch version of the cluster
   is allowed to be upgraded automatically.
   Accepts true or false. Defaults to true.
+  Should be explicitly set to false in case of zonal cluster.
 
 * `network_id` - (Optional) An associated OpenStack Networking service network ID.
   Changing this creates a new cluster.
@@ -61,6 +62,12 @@ The following arguments are supported:
 * `maintenance_window_start` - (Optional) Represents UTC time in "hh:mm:ss" format of when the cluster
    will start its maintenance tasks.
    Changing this updates maintenance window start time.
+
+* `zonal` - (Optional) Specifies that only a single zonal master will be created.
+    It is needed if highly available control-plane is not required.
+    Accepts true or false. Defaults to false.
+    Argument "enable_patch_version_auto_upgrade" should be explicitly set to false in case of zonal cluster.
+    Changing this creates a new cluster.
 
 ## Attributes Reference
 

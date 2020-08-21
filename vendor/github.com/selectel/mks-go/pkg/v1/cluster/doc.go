@@ -53,6 +53,9 @@ Example of updating an existing cluster
 
   updateOpts := &cluster.UpdateOpts{
     MaintenanceWindowStart: "07:00:00",
+    KubernetesOptions: &cluster.KubernetesOptions{
+        EnablePodSecurityPolicy: false,
+    },
   }
   mksCluster, _, err := cluster.Update(ctx, mksClient, clusterID, updateOpts)
   if err != nil {

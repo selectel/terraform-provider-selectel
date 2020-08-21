@@ -21,6 +21,7 @@ const (
 	StatusPendingUpgradeMinorVersion         Status = "PENDING_UPGRADE_MINOR_VERSION"
 	StatusPendingUpdateNodegroup             Status = "PENDING_UPDATE_NODEGROUP"
 	StatusPendingUpgradeMastersConfiguration Status = "PENDING_UPGRADE_MASTERS_CONFIGURATION"
+	StatusPendingUpgradeClusterConfiguration Status = "PENDING_UPGRADE_CLUSTER_CONFIGURATION"
 	StatusMaintenance                        Status = "MAINTENANCE"
 	StatusError                              Status = "ERROR"
 	StatusUnknown                            Status = "UNKNOWN"
@@ -86,6 +87,14 @@ type View struct {
 	// EnablePatchVersionAutoUpgrade specifies if Kubernetes patch version of the cluster is allowed to be upgraded
 	// automatically.
 	EnablePatchVersionAutoUpgrade bool `json:"enable_patch_version_auto_upgrade"`
+
+	// Zonal specifies that cluster has only a single master and that
+	// control-plane is not in highly available mode.
+	Zonal bool `json:"zonal"`
+
+	// KubernetesOptions represents additional k8s options such as pod security policy,
+	// feature gates and etc.
+	KubernetesOptions *KubernetesOptions `json:"kubernetes_options,omitempty"`
 }
 
 func (result *View) UnmarshalJSON(b []byte) error {
@@ -127,6 +136,8 @@ func (result *View) UnmarshalJSON(b []byte) error {
 		result.Status = StatusPendingUpdateNodegroup
 	case StatusPendingUpgradeMastersConfiguration:
 		result.Status = StatusPendingUpgradeMastersConfiguration
+	case StatusPendingUpgradeClusterConfiguration:
+		result.Status = StatusPendingUpgradeClusterConfiguration
 	case StatusMaintenance:
 		result.Status = StatusMaintenance
 	case StatusError:
@@ -136,4 +147,12 @@ func (result *View) UnmarshalJSON(b []byte) error {
 	}
 
 	return err
+}
+
+// KubernetesOptions represents additional k8s options such as pod security policy,
+// feature gates and etc.
+type KubernetesOptions struct {
+	// EnablePodSecurityPolicy indicates if PodSecurityPolicy admission controller
+	// must be turned on/off.
+	EnablePodSecurityPolicy bool `json:"enable_pod_security_policy"`
 }
