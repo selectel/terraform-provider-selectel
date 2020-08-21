@@ -111,6 +111,12 @@ func resourceMKSClusterV1() *schema.Resource {
 				Computed: true,
 				ForceNew: false,
 			},
+			"zonal": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				ForceNew: true,
+			},
 			"maintenance_window_end": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -149,6 +155,14 @@ func resourceMKSClusterV1Create(d *schema.ResourceData, meta interface{}) error 
 	enableAutorepair := d.Get("enable_autorepair").(bool)
 	enablePatchVersionAutoUpgrade := d.Get("enable_patch_version_auto_upgrade").(bool)
 	enablePodSecurityPolicy := d.Get("enable_pod_security_policy").(bool)
+	zonal := d.Get("zonal").(bool)
+
+	// Check if "enable_patch_version_auto_upgrade" and "zonal" arguments are both not set to true.
+	if enablePatchVersionAutoUpgrade && zonal {
+		return errors.New("\"enable_patch_version_auto_upgrade\" argument should be explicitly " +
+			"set to false in case of zonal cluster")
+	}
+
 	createOpts := &cluster.CreateOpts{
 		Name:                          d.Get("name").(string),
 		NetworkID:                     d.Get("network_id").(string),
@@ -161,6 +175,7 @@ func resourceMKSClusterV1Create(d *schema.ResourceData, meta interface{}) error 
 		KubernetesOptions: &cluster.KubernetesOptions{
 			EnablePodSecurityPolicy: enablePodSecurityPolicy,
 		},
+		Zonal: &zonal,
 	}
 
 	log.Print(msgCreate(objectCluster, createOpts))
@@ -225,6 +240,7 @@ func resourceMKSClusterV1Read(d *schema.ResourceData, meta interface{}) error {
 	d.Set("enable_autorepair", mksCluster.EnableAutorepair)
 	d.Set("enable_patch_version_auto_upgrade", mksCluster.EnablePatchVersionAutoUpgrade)
 	d.Set("enable_pod_security_policy", mksCluster.KubernetesOptions.EnablePodSecurityPolicy)
+	d.Set("zonal", mksCluster.Zonal)
 
 	return nil
 }
