@@ -54,6 +54,7 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "region", "ru-3"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_autorepair", "false"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_patch_version_auto_upgrade", "false"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_pod_security_policy", "false"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_start", "02:00:00"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_end", "04:00:00"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "status", "ACTIVE"),
@@ -208,5 +209,6 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
   maintenance_window_start          = "02:00:00"
   enable_autorepair                 = false
   enable_patch_version_auto_upgrade = false
+  enable_pod_security_policy        = false
 }`, projectName, clusterName, kubeVersion)
 }

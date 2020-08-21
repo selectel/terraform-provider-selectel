@@ -87,6 +87,12 @@ func resourceMKSClusterV1() *schema.Resource {
 				Default:  true,
 				ForceNew: false,
 			},
+			"enable_pod_security_policy": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				ForceNew: false,
+			},
 			"network_id": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -142,6 +148,7 @@ func resourceMKSClusterV1Create(d *schema.ResourceData, meta interface{}) error 
 	// Prepare cluster create options.
 	enableAutorepair := d.Get("enable_autorepair").(bool)
 	enablePatchVersionAutoUpgrade := d.Get("enable_patch_version_auto_upgrade").(bool)
+	enablePodSecurityPolicy := d.Get("enable_pod_security_policy").(bool)
 	createOpts := &cluster.CreateOpts{
 		Name:                          d.Get("name").(string),
 		NetworkID:                     d.Get("network_id").(string),
@@ -151,6 +158,9 @@ func resourceMKSClusterV1Create(d *schema.ResourceData, meta interface{}) error 
 		EnableAutorepair:              &enableAutorepair,
 		EnablePatchVersionAutoUpgrade: &enablePatchVersionAutoUpgrade,
 		Region:                        region,
+		KubernetesOptions: &cluster.KubernetesOptions{
+			EnablePodSecurityPolicy: enablePodSecurityPolicy,
+		},
 	}
 
 	log.Print(msgCreate(objectCluster, createOpts))
@@ -214,6 +224,7 @@ func resourceMKSClusterV1Read(d *schema.ResourceData, meta interface{}) error {
 	d.Set("maintenance_window_end", mksCluster.MaintenanceWindowEnd)
 	d.Set("enable_autorepair", mksCluster.EnableAutorepair)
 	d.Set("enable_patch_version_auto_upgrade", mksCluster.EnablePatchVersionAutoUpgrade)
+	d.Set("enable_pod_security_policy", mksCluster.KubernetesOptions.EnablePodSecurityPolicy)
 
 	return nil
 }
@@ -253,6 +264,12 @@ func resourceMKSClusterV1Update(d *schema.ResourceData, meta interface{}) error 
 	if d.HasChange("enable_patch_version_auto_upgrade") {
 		v := d.Get("enable_patch_version_auto_upgrade").(bool)
 		updateOpts.EnablePatchVersionAutoUpgrade = &v
+	}
+	if d.HasChange("enable_pod_security_policy") {
+		v := d.Get("enable_pod_security_policy").(bool)
+		updateOpts.KubernetesOptions = &cluster.KubernetesOptions{
+			EnablePodSecurityPolicy: v,
+		}
 	}
 
 	if updateOpts != (cluster.UpdateOpts{}) {

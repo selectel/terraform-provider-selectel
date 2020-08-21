@@ -62,6 +62,9 @@ The following arguments are supported:
    will start its maintenance tasks.
    Changing this updates maintenance window start time.
 
+* `enable_pod_security_policy` - (Optional) Specifies if PodSecurityPolicy Kubernetes option has to be turned on/off.
+   Accepts true or false. Default is false.
+
 ## Attributes Reference
 
 The following attributes are exported:
