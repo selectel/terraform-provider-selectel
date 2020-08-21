@@ -5,10 +5,10 @@ on:
       - master
   pull_request:
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 0 * * *'
 
 jobs:
-  accepance-test:
+  acceptance-test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
