@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/domains-go/pkg/v1/domain"
 )
 
@@ -19,9 +19,9 @@ func TestAccDomainsDomainV1Basic(t *testing.T) {
 	testDomainName := fmt.Sprintf("%s.xyz", acctest.RandomWithPrefix("tf-acc"))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelectelPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckDomainsV1DomainDestroy,
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckDomainsV1DomainDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDomainsDomainV1Basic(testDomainName),

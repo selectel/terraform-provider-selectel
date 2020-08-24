@@ -5,15 +5,16 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 )
 
 func resourceVPCTokenV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVPCTokenV2Create,
-		Read:   resourceVPCTokenV2Read,
-		Delete: resourceVPCTokenV2Delete,
+		CreateContext: resourceVPCTokenV2Create,
+		ReadContext:   resourceVPCTokenV2Read,
+		DeleteContext: resourceVPCTokenV2Delete,
 		Schema: map[string]*schema.Schema{
 			"project_id": {
 				Type:          schema.TypeString,
@@ -31,10 +32,9 @@ func resourceVPCTokenV2() *schema.Resource {
 	}
 }
 
-func resourceVPCTokenV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCTokenV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	opts := tokens.TokenOpts{
 		ProjectID:   d.Get("project_id").(string),
@@ -44,24 +44,23 @@ func resourceVPCTokenV2Create(d *schema.ResourceData, meta interface{}) error {
 	log.Print(msgCreate(objectToken, opts))
 	token, _, err := tokens.Create(ctx, resellV2Client, opts)
 	if err != nil {
-		return errCreatingObject(objectToken, err)
+		return diag.FromErr(errCreatingObject(objectToken, err))
 	}
 
 	d.SetId(token.ID)
 
-	return resourceVPCTokenV2Read(d, meta)
+	return resourceVPCTokenV2Read(ctx, d, meta)
 }
 
-func resourceVPCTokenV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCTokenV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// There is no API support for getting a token yet.
 
 	return nil
 }
 
-func resourceVPCTokenV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCTokenV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	log.Print(msgDelete(objectToken, d.Id()))
 	response, err := tokens.Delete(ctx, resellV2Client, d.Id())
@@ -73,7 +72,7 @@ func resourceVPCTokenV2Delete(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 
-		return errDeletingObject(objectToken, d.Id(), err)
+		return diag.FromErr(errDeletingObject(objectToken, d.Id(), err))
 	}
 
 	return nil

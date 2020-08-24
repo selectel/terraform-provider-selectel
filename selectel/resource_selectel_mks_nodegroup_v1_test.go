@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
@@ -26,9 +26,9 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelectelPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVPCV2ProjectDestroy,
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccMKSNodegroupV1Basic(projectName, clusterName, kubeVersion),

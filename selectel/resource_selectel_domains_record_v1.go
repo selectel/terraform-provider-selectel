@@ -7,19 +7,20 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/domains-go/pkg/v1/record"
 )
 
 func resourceDomainsRecordV1() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDomainsRecordV1Create,
-		Read:   resourceDomainsRecordV1Read,
-		Update: resourceDomainsRecordV1Update,
-		Delete: resourceDomainsRecordV1Delete,
+		CreateContext: resourceDomainsRecordV1Create,
+		ReadContext:   resourceDomainsRecordV1Read,
+		UpdateContext: resourceDomainsRecordV1Update,
+		DeleteContext: resourceDomainsRecordV1Delete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain_id": {
@@ -85,13 +86,12 @@ func resourceDomainsRecordV1() *schema.Resource {
 	}
 }
 
-func resourceDomainsRecordV1Create(d *schema.ResourceData, meta interface{}) error {
+func resourceDomainsRecordV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	domainID := d.Get("domain_id").(int)
 	selMutexKV.Lock(strconv.Itoa(domainID))
 	defer selMutexKV.Unlock(strconv.Itoa(domainID))
 
 	config := meta.(*Config)
-	ctx := context.Background()
 	client := config.domainsV1Client()
 
 	createOpts := &record.CreateOpts{
@@ -109,7 +109,7 @@ func resourceDomainsRecordV1Create(d *schema.ResourceData, meta interface{}) err
 	log.Print(msgCreate(objectRecord, createOpts))
 	recordObj, _, err := record.Create(ctx, client, domainID, createOpts)
 	if err != nil {
-		return errCreatingObject(objectRecord, err)
+		return diag.FromErr(errCreatingObject(objectRecord, err))
 	}
 
 	d.SetId(strconv.Itoa(recordObj.ID))
@@ -119,18 +119,17 @@ func resourceDomainsRecordV1Create(d *schema.ResourceData, meta interface{}) err
 	id := fmt.Sprintf("%d/%d", domainID, recordObj.ID)
 	d.SetId(id)
 
-	return resourceDomainsRecordV1Read(d, meta)
+	return resourceDomainsRecordV1Read(ctx, d, meta)
 }
 
-func resourceDomainsRecordV1Read(d *schema.ResourceData, meta interface{}) error {
+func resourceDomainsRecordV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	ctx := context.Background()
 	client := config.domainsV1Client()
 
 	domainID, recordID, err := domainsV1ParseDomainRecordIDsPair(d.Id())
 	if err != nil {
 		d.SetId("")
-		return errGettingObject(objectRecord, d.Id(), err)
+		return diag.FromErr(errGettingObject(objectRecord, d.Id(), err))
 	}
 
 	log.Print(msgGet(objectRecord, d.Id()))
@@ -141,7 +140,7 @@ func resourceDomainsRecordV1Read(d *schema.ResourceData, meta interface{}) error
 			d.SetId("")
 			return nil
 		}
-		return errGettingObject(objectRecord, d.Id(), err)
+		return diag.FromErr(errGettingObject(objectRecord, d.Id(), err))
 	}
 
 	d.Set("name", recordObj.Name)
@@ -157,17 +156,16 @@ func resourceDomainsRecordV1Read(d *schema.ResourceData, meta interface{}) error
 	return nil
 }
 
-func resourceDomainsRecordV1Update(d *schema.ResourceData, meta interface{}) error {
+func resourceDomainsRecordV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	domainID, recordID, err := domainsV1ParseDomainRecordIDsPair(d.Id())
 	if err != nil {
 		d.SetId("")
-		return errGettingObject(objectRecord, d.Id(), err)
+		return diag.FromErr(errGettingObject(objectRecord, d.Id(), err))
 	}
 	selMutexKV.Lock(strconv.Itoa(domainID))
 	defer selMutexKV.Unlock(strconv.Itoa(domainID))
 
 	config := meta.(*Config)
-	ctx := context.Background()
 	client := config.domainsV1Client()
 
 	if d.HasChanges("name", "content", "email", "ttl", "priority", "weight", "port", "target") {
@@ -184,31 +182,30 @@ func resourceDomainsRecordV1Update(d *schema.ResourceData, meta interface{}) err
 		}
 		_, _, err = record.Update(ctx, client, domainID, recordID, updateOpts)
 		if err != nil {
-			return errUpdatingObject(objectRecord, d.Id(), err)
+			return diag.FromErr(errUpdatingObject(objectRecord, d.Id(), err))
 		}
 	}
 
-	return resourceDomainsRecordV1Read(d, meta)
+	return resourceDomainsRecordV1Read(ctx, d, meta)
 }
 
-func resourceDomainsRecordV1Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceDomainsRecordV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	domainID, recordID, err := domainsV1ParseDomainRecordIDsPair(d.Id())
 	if err != nil {
 		d.SetId("")
-		return errGettingObject(objectRecord, d.Id(), err)
+		return diag.FromErr(errGettingObject(objectRecord, d.Id(), err))
 	}
 	selMutexKV.Lock(strconv.Itoa(domainID))
 	defer selMutexKV.Unlock(strconv.Itoa(domainID))
 
 	config := meta.(*Config)
-	ctx := context.Background()
 	client := config.domainsV1Client()
 
 	log.Print(msgDelete(objectRecord, d.Id()))
 
 	_, err = record.Delete(ctx, client, domainID, recordID)
 	if err != nil {
-		return errDeletingObject(objectRecord, d.Id(), err)
+		return diag.FromErr(errDeletingObject(objectRecord, d.Id(), err))
 	}
 
 	return nil

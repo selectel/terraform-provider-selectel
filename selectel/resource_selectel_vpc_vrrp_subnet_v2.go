@@ -6,19 +6,20 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/go-selvpcclient/selvpcclient"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/vrrpsubnets"
 )
 
 func resourceVPCVRRPSubnetV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVPCVRRPSubnetV2Create,
-		Read:   resourceVPCVRRPSubnetV2Read,
-		Delete: resourceVPCVRRPSubnetV2Delete,
+		CreateContext: resourceVPCVRRPSubnetV2Create,
+		ReadContext:   resourceVPCVRRPSubnetV2Read,
+		DeleteContext: resourceVPCVRRPSubnetV2Delete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_id": {
@@ -123,10 +124,9 @@ func resourceVPCVRRPSubnetV2() *schema.Resource {
 	}
 }
 
-func resourceVPCVRRPSubnetV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCVRRPSubnetV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	projectID := d.Get("project_id").(string)
 	opts := vrrpsubnets.VRRPSubnetOpts{
@@ -146,21 +146,20 @@ func resourceVPCVRRPSubnetV2Create(d *schema.ResourceData, meta interface{}) err
 	log.Print(msgCreate(objectVRRPSubnet, opts))
 	vrrpSubnetsResponse, _, err := vrrpsubnets.Create(ctx, resellV2Client, projectID, opts)
 	if err != nil {
-		return errCreatingObject(objectVRRPSubnet, err)
+		return diag.FromErr(errCreatingObject(objectVRRPSubnet, err))
 	}
 	if len(vrrpSubnetsResponse) != 1 {
-		return errReadFromResponse(objectVRRPSubnet)
+		return diag.FromErr(errReadFromResponse(objectVRRPSubnet))
 	}
 
 	d.SetId(strconv.Itoa(vrrpSubnetsResponse[0].ID))
 
-	return resourceVPCVRRPSubnetV2Read(d, meta)
+	return resourceVPCVRRPSubnetV2Read(ctx, d, meta)
 }
 
-func resourceVPCVRRPSubnetV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCVRRPSubnetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	log.Print(msgGet(objectVRRPSubnet, d.Id()))
 	vrrpSubnet, response, err := vrrpsubnets.Get(ctx, resellV2Client, d.Id())
@@ -172,7 +171,7 @@ func resourceVPCVRRPSubnetV2Read(d *schema.ResourceData, meta interface{}) error
 			}
 		}
 
-		return errGettingObject(objectVRRPSubnet, d.Id(), err)
+		return diag.FromErr(errGettingObject(objectVRRPSubnet, d.Id(), err))
 	}
 
 	d.Set("project_id", vrrpSubnet.ProjectID)
@@ -203,10 +202,9 @@ func resourceVPCVRRPSubnetV2Read(d *schema.ResourceData, meta interface{}) error
 	return nil
 }
 
-func resourceVPCVRRPSubnetV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCVRRPSubnetV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	log.Print(msgDelete(objectVRRPSubnet, d.Id()))
 	response, err := vrrpsubnets.Delete(ctx, resellV2Client, d.Id())
@@ -218,7 +216,7 @@ func resourceVPCVRRPSubnetV2Delete(d *schema.ResourceData, meta interface{}) err
 			}
 		}
 
-		return errDeletingObject(objectVRRPSubnet, d.Id(), err)
+		return diag.FromErr(errDeletingObject(objectVRRPSubnet, d.Id(), err))
 	}
 
 	return nil

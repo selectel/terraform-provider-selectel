@@ -3,8 +3,8 @@ package selectel
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccVPCV2RoleImportBasic(t *testing.T) {
@@ -14,9 +14,9 @@ func TestAccVPCV2RoleImportBasic(t *testing.T) {
 	userPassword := acctest.RandString(8)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelectelPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVPCV2RoleDestroy,
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCV2RoleDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVPCV2RoleBasic(projectName, userName, userPassword),

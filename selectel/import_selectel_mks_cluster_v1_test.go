@@ -3,8 +3,8 @@ package selectel
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccMKSClusterV1ImportBasic(t *testing.T) {
@@ -14,9 +14,9 @@ func TestAccMKSClusterV1ImportBasic(t *testing.T) {
 	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelectelPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVPCV2ProjectDestroy,
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccMKSClusterV1Basic(projectName, clusterName, kubeVersion),
@@ -38,9 +38,9 @@ func TestAccMKSClusterV1ImportZonal(t *testing.T) {
 	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelectelPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVPCV2ProjectDestroy,
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccMKSClusterV1Zonal(projectName, clusterName, kubeVersion),

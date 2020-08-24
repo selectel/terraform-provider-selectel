@@ -1,16 +1,19 @@
 package selectel
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceVPCCrossRegionSubnetV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVPCCrossRegionSubnetV2Create,
-		Read:   resourceVPCCrossRegionSubnetV2Read,
-		Delete: resourceVPCCrossRegionSubnetV2Delete,
+		CreateContext: resourceVPCCrossRegionSubnetV2Create,
+		ReadContext:   resourceVPCCrossRegionSubnetV2Read,
+		DeleteContext: resourceVPCCrossRegionSubnetV2Delete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_id": {
@@ -108,14 +111,14 @@ func resourceVPCCrossRegionSubnetV2() *schema.Resource {
 	}
 }
 
-func resourceVPCCrossRegionSubnetV2Create(d *schema.ResourceData, meta interface{}) error {
-	return errResourceDeprecated("selectel_vpc_crossregion_subnet_v2")
+func resourceVPCCrossRegionSubnetV2Create(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return diag.FromErr(errResourceDeprecated("selectel_vpc_crossregion_subnet_v2"))
 }
 
-func resourceVPCCrossRegionSubnetV2Read(d *schema.ResourceData, meta interface{}) error {
-	return errResourceDeprecated("selectel_vpc_crossregion_subnet_v2")
+func resourceVPCCrossRegionSubnetV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return diag.FromErr(errResourceDeprecated("selectel_vpc_crossregion_subnet_v2"))
 }
 
-func resourceVPCCrossRegionSubnetV2Delete(d *schema.ResourceData, meta interface{}) error {
-	return errResourceDeprecated("selectel_vpc_crossregion_subnet_v2")
+func resourceVPCCrossRegionSubnetV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return diag.FromErr(errResourceDeprecated("selectel_vpc_crossregion_subnet_v2"))
 }
