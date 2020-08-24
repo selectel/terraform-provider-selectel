@@ -1,4 +1,11 @@
-## 3.3.3 (Unreleased)
+## 3.4.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* Added `enable_pod_security_policy` argument for the `selectel_mks_cluster_v1` resource [GH-115]
+* Added `zonal` argument for the `selectel_mks_cluster_v1` resource [GH-125]
+
+## 3.3.3 (Aug 20, 2020)
 
 IMPROVEMENTS:
 
