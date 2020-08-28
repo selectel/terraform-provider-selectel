@@ -2,16 +2,17 @@
 
 IMPROVEMENTS:
 
-* Added `enable_pod_security_policy` argument for the `selectel_mks_cluster_v1` resource [GH-115]
-* Added `zonal` argument for the `selectel_mks_cluster_v1` resource [GH-125]
+* Added `enable_pod_security_policy` argument for the `selectel_mks_cluster_v1` resource ([#115](https://github.com/selectel/terraform-provider-selectel/pull/115))
+* Added `zonal` argument for the `selectel_mks_cluster_v1` resource ([#125](https://github.com/selectel/terraform-provider-selectel/pull/125))
+* Upgraded Terraform SDK to `v2.0.1` ([#129](https://github.com/selectel/terraform-provider-selectel/pull/129))
 
 ## 3.3.3 (Aug 20, 2020)
 
 IMPROVEMENTS:
 
-* Updated Go version to `1.14.7` [GH-117]
-* Updated `golangci-lint` in CI to `v1.30.0` [GH-118]
-* Updated `go-selvpcclient` in CI to `v1.12.0` [GH-118]
+* Updated Go version to `1.14.7` ([#117](https://github.com/selectel/terraform-provider-selectel/pull/117))
+* Updated `golangci-lint` in CI to `v1.30.0` ([#118](https://github.com/selectel/terraform-provider-selectel/pull/118))
+* Updated `go-selvpcclient` in CI to `v1.12.0` ([#118](https://github.com/selectel/terraform-provider-selectel/pull/118))
 
 ## 3.3.2 (July 13, 2020)
 
