@@ -10,10 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
@@ -21,17 +22,17 @@ import (
 
 func resourceMKSClusterV1() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceMKSClusterV1Create,
-		Read:   resourceMKSClusterV1Read,
-		Update: resourceMKSClusterV1Update,
-		Delete: resourceMKSClusterV1Delete,
+		CreateContext: resourceMKSClusterV1Create,
+		ReadContext:   resourceMKSClusterV1Read,
+		UpdateContext: resourceMKSClusterV1Update,
+		DeleteContext: resourceMKSClusterV1Delete,
 		Importer: &schema.ResourceImporter{
-			State: resourceMKSClusterV1ImportState,
+			StateContext: resourceMKSClusterV1ImportState,
 		},
 		CustomizeDiff: customdiff.All(
 			customdiff.ComputedIf(
 				"maintenance_window_end",
-				func(d *schema.ResourceDiff, meta interface{}) bool {
+				func(ctx context.Context, d *schema.ResourceDiff, meta interface{}) bool {
 					return d.HasChange("maintenance_window_start")
 				}),
 		),
@@ -133,10 +134,9 @@ func resourceMKSClusterV1() *schema.Resource {
 	}
 }
 
-func resourceMKSClusterV1Create(d *schema.ResourceData, meta interface{}) error {
+func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 	tokenOpts := tokens.TokenOpts{
 		ProjectID: d.Get("project_id").(string),
 	}
@@ -144,7 +144,7 @@ func resourceMKSClusterV1Create(d *schema.ResourceData, meta interface{}) error 
 	log.Print(msgCreate(objectToken, tokenOpts))
 	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
 	if err != nil {
-		return errCreatingObject(objectToken, err)
+		return diag.FromErr(errCreatingObject(objectToken, err))
 	}
 
 	region := d.Get("region").(string)
@@ -159,8 +159,8 @@ func resourceMKSClusterV1Create(d *schema.ResourceData, meta interface{}) error 
 
 	// Check if "enable_patch_version_auto_upgrade" and "zonal" arguments are both not set to true.
 	if enablePatchVersionAutoUpgrade && zonal {
-		return errors.New("\"enable_patch_version_auto_upgrade\" argument should be explicitly " +
-			"set to false in case of zonal cluster")
+		return diag.FromErr(errors.New("\"enable_patch_version_auto_upgrade\" argument should be explicitly " +
+			"set to false in case of zonal cluster"))
 	}
 
 	createOpts := &cluster.CreateOpts{
@@ -181,25 +181,24 @@ func resourceMKSClusterV1Create(d *schema.ResourceData, meta interface{}) error 
 	log.Print(msgCreate(objectCluster, createOpts))
 	newCluster, _, err := cluster.Create(ctx, mksClient, createOpts)
 	if err != nil {
-		return errCreatingObject(objectCluster, err)
+		return diag.FromErr(errCreatingObject(objectCluster, err))
 	}
 
 	log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", newCluster.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
 	err = waitForMKSClusterV1ActiveState(ctx, mksClient, newCluster.ID, timeout)
 	if err != nil {
-		return errCreatingObject(objectCluster, err)
+		return diag.FromErr(errCreatingObject(objectCluster, err))
 	}
 
 	d.SetId(newCluster.ID)
 
-	return resourceMKSClusterV1Read(d, meta)
+	return resourceMKSClusterV1Read(ctx, d, meta)
 }
 
-func resourceMKSClusterV1Read(d *schema.ResourceData, meta interface{}) error {
+func resourceMKSClusterV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 	tokenOpts := tokens.TokenOpts{
 		ProjectID: d.Get("project_id").(string),
 	}
@@ -207,7 +206,7 @@ func resourceMKSClusterV1Read(d *schema.ResourceData, meta interface{}) error {
 	log.Print(msgCreate(objectToken, tokenOpts))
 	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
 	if err != nil {
-		return errCreatingObject(objectToken, err)
+		return diag.FromErr(errCreatingObject(objectToken, err))
 	}
 
 	region := d.Get("region").(string)
@@ -224,7 +223,7 @@ func resourceMKSClusterV1Read(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 
-		return errGettingObject(objectCluster, d.Id(), err)
+		return diag.FromErr(errGettingObject(objectCluster, d.Id(), err))
 	}
 
 	d.Set("name", mksCluster.Name)
@@ -245,10 +244,9 @@ func resourceMKSClusterV1Read(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceMKSClusterV1Update(d *schema.ResourceData, meta interface{}) error {
+func resourceMKSClusterV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 	tokenOpts := tokens.TokenOpts{
 		ProjectID: d.Get("project_id").(string),
 	}
@@ -256,7 +254,7 @@ func resourceMKSClusterV1Update(d *schema.ResourceData, meta interface{}) error 
 	log.Print(msgCreate(objectToken, tokenOpts))
 	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
 	if err != nil {
-		return errCreatingObject(objectToken, err)
+		return diag.FromErr(errCreatingObject(objectToken, err))
 	}
 
 	region := d.Get("region").(string)
@@ -265,7 +263,7 @@ func resourceMKSClusterV1Update(d *schema.ResourceData, meta interface{}) error 
 
 	if d.HasChange("kube_version") {
 		if err := upgradeMKSClusterV1KubeVersion(ctx, d, mksClient); err != nil {
-			return errUpdatingObject(objectCluster, d.Id(), err)
+			return diag.FromErr(errUpdatingObject(objectCluster, d.Id(), err))
 		}
 	}
 
@@ -292,24 +290,23 @@ func resourceMKSClusterV1Update(d *schema.ResourceData, meta interface{}) error 
 		log.Print(msgUpdate(objectCluster, d.Id(), updateOpts))
 		_, _, err := cluster.Update(ctx, mksClient, d.Id(), &updateOpts)
 		if err != nil {
-			return errUpdatingObject(objectCluster, d.Id(), err)
+			return diag.FromErr(errUpdatingObject(objectCluster, d.Id(), err))
 		}
 
 		log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", d.Id())
 		timeout := d.Timeout(schema.TimeoutUpdate)
 		err = waitForMKSClusterV1ActiveState(ctx, mksClient, d.Id(), timeout)
 		if err != nil {
-			return errUpdatingObject(objectCluster, d.Id(), err)
+			return diag.FromErr(errUpdatingObject(objectCluster, d.Id(), err))
 		}
 	}
 
-	return resourceMKSClusterV1Read(d, meta)
+	return resourceMKSClusterV1Read(ctx, d, meta)
 }
 
-func resourceMKSClusterV1Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceMKSClusterV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 	tokenOpts := tokens.TokenOpts{
 		ProjectID: d.Get("project_id").(string),
 	}
@@ -317,7 +314,7 @@ func resourceMKSClusterV1Delete(d *schema.ResourceData, meta interface{}) error 
 	log.Print(msgCreate(objectToken, tokenOpts))
 	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
 	if err != nil {
-		return errCreatingObject(objectToken, err)
+		return diag.FromErr(errCreatingObject(objectToken, err))
 	}
 
 	region := d.Get("region").(string)
@@ -327,7 +324,7 @@ func resourceMKSClusterV1Delete(d *schema.ResourceData, meta interface{}) error 
 	log.Print(msgDelete(objectCluster, d.Id()))
 	_, err = cluster.Delete(ctx, mksClient, d.Id())
 	if err != nil {
-		return errDeletingObject(objectCluster, d.Id(), err)
+		return diag.FromErr(errDeletingObject(objectCluster, d.Id(), err))
 	}
 
 	stateConf := &resource.StateChangeConf{
@@ -351,15 +348,15 @@ func resourceMKSClusterV1Delete(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	log.Printf("[DEBUG] waiting for cluster %s to become deleted", d.Id())
-	_, err = stateConf.WaitForState()
+	_, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return fmt.Errorf("error waiting for the cluster %s to become deleted: %s", d.Id(), err)
+		return diag.FromErr(fmt.Errorf("error waiting for the cluster %s to become deleted: %s", d.Id(), err))
 	}
 
 	return nil
 }
 
-func resourceMKSClusterV1ImportState(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceMKSClusterV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")

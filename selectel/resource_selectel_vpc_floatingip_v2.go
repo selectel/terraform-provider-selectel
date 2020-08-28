@@ -5,17 +5,18 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/floatingips"
 )
 
 func resourceVPCFloatingIPV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVPCFloatingIPV2Create,
-		Read:   resourceVPCFloatingIPV2Read,
-		Delete: resourceVPCFloatingIPV2Delete,
+		CreateContext: resourceVPCFloatingIPV2Create,
+		ReadContext:   resourceVPCFloatingIPV2Read,
+		DeleteContext: resourceVPCFloatingIPV2Delete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_id": {
@@ -69,10 +70,9 @@ func resourceVPCFloatingIPV2() *schema.Resource {
 	}
 }
 
-func resourceVPCFloatingIPV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCFloatingIPV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	projectID := d.Get("project_id").(string)
 	opts := floatingips.FloatingIPOpts{
@@ -87,21 +87,20 @@ func resourceVPCFloatingIPV2Create(d *schema.ResourceData, meta interface{}) err
 	log.Print(msgCreate(objectFloatingIP, opts))
 	floatingIPs, _, err := floatingips.Create(ctx, resellV2Client, projectID, opts)
 	if err != nil {
-		return errCreatingObject(objectFloatingIP, err)
+		return diag.FromErr(errCreatingObject(objectFloatingIP, err))
 	}
 	if len(floatingIPs) != 1 {
-		return errReadFromResponse(objectFloatingIP)
+		return diag.FromErr(errReadFromResponse(objectFloatingIP))
 	}
 
 	d.SetId(floatingIPs[0].ID)
 
-	return resourceVPCFloatingIPV2Read(d, meta)
+	return resourceVPCFloatingIPV2Read(ctx, d, meta)
 }
 
-func resourceVPCFloatingIPV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCFloatingIPV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	log.Print(msgGet(objectFloatingIP, d.Id()))
 	floatingIP, response, err := floatingips.Get(ctx, resellV2Client, d.Id())
@@ -113,7 +112,7 @@ func resourceVPCFloatingIPV2Read(d *schema.ResourceData, meta interface{}) error
 			}
 		}
 
-		return errGettingObject(objectFloatingIP, d.Id(), err)
+		return diag.FromErr(errGettingObject(objectFloatingIP, d.Id(), err))
 	}
 
 	d.Set("fixed_ip_address", floatingIP.FixedIPAddress)
@@ -131,10 +130,9 @@ func resourceVPCFloatingIPV2Read(d *schema.ResourceData, meta interface{}) error
 	return nil
 }
 
-func resourceVPCFloatingIPV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCFloatingIPV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	log.Print(msgDelete(objectFloatingIP, d.Id()))
 	response, err := floatingips.Delete(ctx, resellV2Client, d.Id())
@@ -146,7 +144,7 @@ func resourceVPCFloatingIPV2Delete(d *schema.ResourceData, meta interface{}) err
 			}
 		}
 
-		return errDeletingObject(objectFloatingIP, d.Id(), err)
+		return diag.FromErr(errDeletingObject(objectFloatingIP, d.Id(), err))
 	}
 
 	return nil

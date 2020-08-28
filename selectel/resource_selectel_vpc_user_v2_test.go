@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/users"
 )
 
@@ -20,9 +20,9 @@ func TestAccVPCV2UserBasic(t *testing.T) {
 	userPasswordUpdated := acctest.RandString(12)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelectelPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVPCV2UserDestroy,
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCV2UserDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVPCV2UserBasic(userName, userPassword),

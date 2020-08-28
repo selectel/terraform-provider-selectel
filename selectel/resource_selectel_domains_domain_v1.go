@@ -6,17 +6,18 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/domains-go/pkg/v1/domain"
 )
 
 func resourceDomainsDomainV1() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDomainsDomainV1Create,
-		Read:   resourceDomainsDomainV1Read,
-		Delete: resourceDomainsDomainV1Delete,
+		CreateContext: resourceDomainsDomainV1Create,
+		ReadContext:   resourceDomainsDomainV1Read,
+		DeleteContext: resourceDomainsDomainV1Delete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -32,9 +33,8 @@ func resourceDomainsDomainV1() *schema.Resource {
 	}
 }
 
-func resourceDomainsDomainV1Create(d *schema.ResourceData, meta interface{}) error {
+func resourceDomainsDomainV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	ctx := context.Background()
 	client := config.domainsV1Client()
 
 	createOpts := &domain.CreateOpts{
@@ -44,24 +44,23 @@ func resourceDomainsDomainV1Create(d *schema.ResourceData, meta interface{}) err
 	log.Print(msgCreate(objectDomain, createOpts))
 	domainObj, _, err := domain.Create(ctx, client, createOpts)
 	if err != nil {
-		return errCreatingObject(objectDomain, err)
+		return diag.FromErr(errCreatingObject(objectDomain, err))
 	}
 
 	d.SetId(strconv.Itoa(domainObj.ID))
 
-	return resourceDomainsDomainV1Read(d, meta)
+	return resourceDomainsDomainV1Read(ctx, d, meta)
 }
 
-func resourceDomainsDomainV1Read(d *schema.ResourceData, meta interface{}) error {
+func resourceDomainsDomainV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	ctx := context.Background()
 	client := config.domainsV1Client()
 
 	log.Print(msgGet(objectDomain, d.Id()))
 
 	domainID, err := strconv.Atoi(d.Id())
 	if err != nil {
-		return errParseDomainsDomainV1ID(d.Id())
+		return diag.FromErr(errParseDomainsDomainV1ID(d.Id()))
 	}
 
 	domainObj, resp, err := domain.GetByID(ctx, client, domainID)
@@ -70,7 +69,7 @@ func resourceDomainsDomainV1Read(d *schema.ResourceData, meta interface{}) error
 			d.SetId("")
 			return nil
 		}
-		return errGettingObject(objectDomain, d.Id(), err)
+		return diag.FromErr(errGettingObject(objectDomain, d.Id(), err))
 	}
 
 	d.Set("name", domainObj.Name)
@@ -79,21 +78,20 @@ func resourceDomainsDomainV1Read(d *schema.ResourceData, meta interface{}) error
 	return nil
 }
 
-func resourceDomainsDomainV1Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceDomainsDomainV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	ctx := context.Background()
 	client := config.domainsV1Client()
 
 	log.Print(msgDelete(objectDomain, d.Id()))
 
 	domainID, err := strconv.Atoi(d.Id())
 	if err != nil {
-		return errParseDomainsDomainV1ID(d.Id())
+		return diag.FromErr(errParseDomainsDomainV1ID(d.Id()))
 	}
 
 	_, err = domain.Delete(ctx, client, domainID)
 	if err != nil {
-		return errDeletingObject(objectDomain, d.Id(), err)
+		return diag.FromErr(errDeletingObject(objectDomain, d.Id(), err))
 	}
 
 	return nil

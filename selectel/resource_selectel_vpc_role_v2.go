@@ -7,17 +7,18 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/roles"
 )
 
 func resourceVPCRoleV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVPCRoleV2Create,
-		Read:   resourceVPCRoleV2Read,
-		Delete: resourceVPCRoleV2Delete,
+		CreateContext: resourceVPCRoleV2Create,
+		ReadContext:   resourceVPCRoleV2Read,
+		DeleteContext: resourceVPCRoleV2Delete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_id": {
@@ -34,10 +35,9 @@ func resourceVPCRoleV2() *schema.Resource {
 	}
 }
 
-func resourceVPCRoleV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCRoleV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	opts := roles.RoleOpt{
 		ProjectID: d.Get("project_id").(string),
@@ -47,7 +47,7 @@ func resourceVPCRoleV2Create(d *schema.ResourceData, meta interface{}) error {
 	log.Print(msgCreate(objectRole, opts))
 	role, _, err := roles.Create(ctx, resellV2Client, opts)
 	if err != nil {
-		return errCreatingObject(objectRole, err)
+		return diag.FromErr(errCreatingObject(objectRole, err))
 	}
 
 	d.SetId(resourceVPCRoleV2BuildID(role.ProjectID, role.UserID))
@@ -55,19 +55,18 @@ func resourceVPCRoleV2Create(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceVPCRoleV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCRoleV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	log.Print(msgGet(objectRole, d.Id()))
 	projectID, userID, err := resourceVPCRoleV2ParseID(d.Id())
 	if err != nil {
-		return errParseID(objectRole, d.Id())
+		return diag.FromErr(errParseID(objectRole, d.Id()))
 	}
 	projectRoles, _, err := roles.ListProject(ctx, resellV2Client, projectID)
 	if err != nil {
-		return errSearchingProjectRole(projectID, err)
+		return diag.FromErr(errSearchingProjectRole(projectID, err))
 	}
 
 	found := false
@@ -86,14 +85,13 @@ func resourceVPCRoleV2Read(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceVPCRoleV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCRoleV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	projectID, userID, err := resourceVPCRoleV2ParseID(d.Id())
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	opts := roles.RoleOpt{
@@ -111,7 +109,7 @@ func resourceVPCRoleV2Delete(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 
-		return errDeletingObject(objectRole, d.Id(), err)
+		return diag.FromErr(errDeletingObject(objectRole, d.Id(), err))
 	}
 
 	return nil

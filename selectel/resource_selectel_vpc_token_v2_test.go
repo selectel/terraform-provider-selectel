@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
 )
 
@@ -16,8 +16,8 @@ func TestAccVPCV2TokenBasic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccSelectelPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVPCV2TokenBasic(projectName),
@@ -38,8 +38,8 @@ func TestAccVPCV2TokenAccount(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccSelectelPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVPCV2TokenAccount(accountName),

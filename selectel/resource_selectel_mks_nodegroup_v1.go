@@ -8,7 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/nodegroup"
@@ -16,12 +17,12 @@ import (
 
 func resourceMKSNodegroupV1() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceMKSNodegroupV1Create,
-		Read:   resourceMKSNodegroupV1Read,
-		Update: resourceMKSNodegroupV1Update,
-		Delete: resourceMKSNodegroupV1Delete,
+		CreateContext: resourceMKSNodegroupV1Create,
+		ReadContext:   resourceMKSNodegroupV1Read,
+		UpdateContext: resourceMKSNodegroupV1Update,
+		DeleteContext: resourceMKSNodegroupV1Delete,
 		Importer: &schema.ResourceImporter{
-			State: resourceMKSNodegroupV1ImportState,
+			StateContext: resourceMKSNodegroupV1ImportState,
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(60 * time.Minute),
@@ -131,14 +132,13 @@ func resourceMKSNodegroupV1() *schema.Resource {
 	}
 }
 
-func resourceMKSNodegroupV1Create(d *schema.ResourceData, meta interface{}) error {
+func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID := d.Get("cluster_id").(string)
 	selMutexKV.Lock(clusterID)
 	defer selMutexKV.Unlock(clusterID)
 
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 	tokenOpts := tokens.TokenOpts{
 		ProjectID: d.Get("project_id").(string),
 	}
@@ -146,7 +146,7 @@ func resourceMKSNodegroupV1Create(d *schema.ResourceData, meta interface{}) erro
 	log.Print(msgCreate(objectToken, tokenOpts))
 	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
 	if err != nil {
-		return errCreatingObject(objectToken, err)
+		return diag.FromErr(errCreatingObject(objectToken, err))
 	}
 
 	region := d.Get("region").(string)
@@ -156,7 +156,7 @@ func resourceMKSNodegroupV1Create(d *schema.ResourceData, meta interface{}) erro
 	// Get a list of all nodegroups in the cluster.
 	allNodegroups, _, err := nodegroup.List(ctx, mksClient, clusterID)
 	if err != nil {
-		return errGettingObject("all nodegroups in the cluster", clusterID, err)
+		return diag.FromErr(errGettingObject("all nodegroups in the cluster", clusterID, err))
 	}
 
 	// Prepare a map with known nodegroup IDs.
@@ -187,20 +187,20 @@ func resourceMKSNodegroupV1Create(d *schema.ResourceData, meta interface{}) erro
 	log.Print(msgCreate(objectNodegroup, createOpts))
 	_, err = nodegroup.Create(ctx, mksClient, clusterID, createOpts)
 	if err != nil {
-		return errCreatingObject(objectNodegroup, err)
+		return diag.FromErr(errCreatingObject(objectNodegroup, err))
 	}
 
 	log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", clusterID)
 	timeout := d.Timeout(schema.TimeoutCreate)
 	err = waitForMKSClusterV1ActiveState(ctx, mksClient, clusterID, timeout)
 	if err != nil {
-		return errCreatingObject(objectNodegroup, err)
+		return diag.FromErr(errCreatingObject(objectNodegroup, err))
 	}
 
 	// Get a list of all nodegroups in the cluster and find a new nodegroup.
 	allNodegroups, _, err = nodegroup.List(ctx, mksClient, clusterID)
 	if err != nil {
-		return errGettingObject("all nodegroups in the cluster", clusterID, err)
+		return diag.FromErr(errGettingObject("all nodegroups in the cluster", clusterID, err))
 	}
 
 	var nodegroupID string
@@ -210,9 +210,9 @@ func resourceMKSNodegroupV1Create(d *schema.ResourceData, meta interface{}) erro
 		}
 	}
 	if nodegroupID == "" {
-		return errCreatingObject(objectNodegroup,
+		return diag.FromErr(errCreatingObject(objectNodegroup,
 			errors.New("unable to find new nodegroup by ID after creating"),
-		)
+		))
 	}
 
 	// The ID must be a combination of the cluster and nodegroup ID
@@ -220,19 +220,18 @@ func resourceMKSNodegroupV1Create(d *schema.ResourceData, meta interface{}) erro
 	id := fmt.Sprintf("%s/%s", clusterID, nodegroupID)
 	d.SetId(id)
 
-	return resourceMKSNodegroupV1Read(d, meta)
+	return resourceMKSNodegroupV1Read(ctx, d, meta)
 }
 
-func resourceMKSNodegroupV1Read(d *schema.ResourceData, meta interface{}) error {
+func resourceMKSNodegroupV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID, nodegroupID, err := mksNodegroupV1ParseID(d.Id())
 	if err != nil {
 		d.SetId("")
-		return errGettingObject(objectNodegroup, d.Id(), err)
+		return diag.FromErr(errGettingObject(objectNodegroup, d.Id(), err))
 	}
 
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 	tokenOpts := tokens.TokenOpts{
 		ProjectID: d.Get("project_id").(string),
 	}
@@ -240,7 +239,7 @@ func resourceMKSNodegroupV1Read(d *schema.ResourceData, meta interface{}) error 
 	log.Print(msgCreate(objectToken, tokenOpts))
 	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
 	if err != nil {
-		return errCreatingObject(objectToken, err)
+		return diag.FromErr(errCreatingObject(objectToken, err))
 	}
 
 	region := d.Get("region").(string)
@@ -257,7 +256,7 @@ func resourceMKSNodegroupV1Read(d *schema.ResourceData, meta interface{}) error 
 			}
 		}
 
-		return errGettingObject(objectNodegroup, d.Id(), err)
+		return diag.FromErr(errGettingObject(objectNodegroup, d.Id(), err))
 	}
 
 	d.Set("cluster_id", mksNodegroup.ClusterID)
@@ -280,11 +279,11 @@ func resourceMKSNodegroupV1Read(d *schema.ResourceData, meta interface{}) error 
 	return nil
 }
 
-func resourceMKSNodegroupV1Update(d *schema.ResourceData, meta interface{}) error {
+func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID, nodegroupID, err := mksNodegroupV1ParseID(d.Id())
 	if err != nil {
 		d.SetId("")
-		return errUpdatingObject(objectNodegroup, d.Id(), err)
+		return diag.FromErr(errUpdatingObject(objectNodegroup, d.Id(), err))
 	}
 
 	selMutexKV.Lock(clusterID)
@@ -292,7 +291,6 @@ func resourceMKSNodegroupV1Update(d *schema.ResourceData, meta interface{}) erro
 
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 	tokenOpts := tokens.TokenOpts{
 		ProjectID: d.Get("project_id").(string),
 	}
@@ -300,7 +298,7 @@ func resourceMKSNodegroupV1Update(d *schema.ResourceData, meta interface{}) erro
 	log.Print(msgCreate(objectToken, tokenOpts))
 	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
 	if err != nil {
-		return errCreatingObject(objectToken, err)
+		return diag.FromErr(errCreatingObject(objectToken, err))
 	}
 
 	region := d.Get("region").(string)
@@ -316,14 +314,14 @@ func resourceMKSNodegroupV1Update(d *schema.ResourceData, meta interface{}) erro
 		log.Print(msgUpdate(objectNodegroup, d.Id(), updateOpts))
 		_, err := nodegroup.Update(ctx, mksClient, clusterID, nodegroupID, &updateOpts)
 		if err != nil {
-			return errUpdatingObject(objectNodegroup, d.Id(), err)
+			return diag.FromErr(errUpdatingObject(objectNodegroup, d.Id(), err))
 		}
 
 		log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", clusterID)
 		timeout := d.Timeout(schema.TimeoutUpdate)
 		err = waitForMKSClusterV1ActiveState(ctx, mksClient, clusterID, timeout)
 		if err != nil {
-			return errUpdatingObject(objectNodegroup, d.Id(), err)
+			return diag.FromErr(errUpdatingObject(objectNodegroup, d.Id(), err))
 		}
 	}
 
@@ -335,25 +333,25 @@ func resourceMKSNodegroupV1Update(d *schema.ResourceData, meta interface{}) erro
 		log.Print(msgUpdate(objectNodegroup, d.Id(), resizeOpts))
 		_, err = nodegroup.Resize(ctx, mksClient, clusterID, nodegroupID, &resizeOpts)
 		if err != nil {
-			return errUpdatingObject(objectNodegroup, d.Id(), err)
+			return diag.FromErr(errUpdatingObject(objectNodegroup, d.Id(), err))
 		}
 
 		log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", clusterID)
 		timeout := d.Timeout(schema.TimeoutUpdate)
 		err = waitForMKSClusterV1ActiveState(ctx, mksClient, clusterID, timeout)
 		if err != nil {
-			return errUpdatingObject(objectNodegroup, d.Id(), err)
+			return diag.FromErr(errUpdatingObject(objectNodegroup, d.Id(), err))
 		}
 	}
 
-	return resourceMKSNodegroupV1Read(d, meta)
+	return resourceMKSNodegroupV1Read(ctx, d, meta)
 }
 
-func resourceMKSNodegroupV1Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceMKSNodegroupV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID, nodegroupID, err := mksNodegroupV1ParseID(d.Id())
 	if err != nil {
 		d.SetId("")
-		return errDeletingObject(objectNodegroup, d.Id(), err)
+		return diag.FromErr(errDeletingObject(objectNodegroup, d.Id(), err))
 	}
 
 	selMutexKV.Lock(clusterID)
@@ -361,7 +359,6 @@ func resourceMKSNodegroupV1Delete(d *schema.ResourceData, meta interface{}) erro
 
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 	tokenOpts := tokens.TokenOpts{
 		ProjectID: d.Get("project_id").(string),
 	}
@@ -369,7 +366,7 @@ func resourceMKSNodegroupV1Delete(d *schema.ResourceData, meta interface{}) erro
 	log.Print(msgCreate(objectToken, tokenOpts))
 	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
 	if err != nil {
-		return errCreatingObject(objectToken, err)
+		return diag.FromErr(errCreatingObject(objectToken, err))
 	}
 
 	region := d.Get("region").(string)
@@ -379,20 +376,20 @@ func resourceMKSNodegroupV1Delete(d *schema.ResourceData, meta interface{}) erro
 	log.Print(msgDelete(objectNodegroup, d.Id()))
 	_, err = nodegroup.Delete(ctx, mksClient, clusterID, nodegroupID)
 	if err != nil {
-		return errDeletingObject(objectNodegroup, d.Id(), err)
+		return diag.FromErr(errDeletingObject(objectNodegroup, d.Id(), err))
 	}
 
 	log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", clusterID)
 	timeout := d.Timeout(schema.TimeoutDelete)
 	err = waitForMKSClusterV1ActiveState(ctx, mksClient, clusterID, timeout)
 	if err != nil {
-		return errDeletingObject(objectNodegroup, d.Id(), err)
+		return diag.FromErr(errDeletingObject(objectNodegroup, d.Id(), err))
 	}
 
 	return nil
 }
 
-func resourceMKSNodegroupV1ImportState(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceMKSNodegroupV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")

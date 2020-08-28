@@ -7,17 +7,18 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/keypairs"
 )
 
 func resourceVPCKeypairV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVPCKeypairV2Create,
-		Read:   resourceVPCKeypairV2Read,
-		Delete: resourceVPCKeypairV2Delete,
+		CreateContext: resourceVPCKeypairV2Create,
+		ReadContext:   resourceVPCKeypairV2Read,
+		DeleteContext: resourceVPCKeypairV2Delete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -45,10 +46,9 @@ func resourceVPCKeypairV2() *schema.Resource {
 	}
 }
 
-func resourceVPCKeypairV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCKeypairV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	opts := keypairs.KeypairOpts{
 		Name:      d.Get("name").(string),
@@ -60,13 +60,13 @@ func resourceVPCKeypairV2Create(d *schema.ResourceData, meta interface{}) error 
 	log.Print(msgCreate(objectKeypair, opts))
 	newKeypairs, _, err := keypairs.Create(ctx, resellV2Client, opts)
 	if err != nil {
-		return errCreatingObject(objectKeypair, err)
+		return diag.FromErr(errCreatingObject(objectKeypair, err))
 	}
 
 	// There can be several keypairs if user specified more than one region.
 	// All those keypairs will have the same name and user ID attributes.
 	if len(newKeypairs) == 0 {
-		return errReadFromResponse(objectKeypair)
+		return diag.FromErr(errReadFromResponse(objectKeypair))
 	}
 	// Retrieve same attributes to build ID of the resource.
 	userID := newKeypairs[0].UserID
@@ -74,22 +74,21 @@ func resourceVPCKeypairV2Create(d *schema.ResourceData, meta interface{}) error 
 
 	d.SetId(resourceVPCKeypairV2BuildID(userID, keypairName))
 
-	return resourceVPCKeypairV2Read(d, meta)
+	return resourceVPCKeypairV2Read(ctx, d, meta)
 }
 
-func resourceVPCKeypairV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCKeypairV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	log.Print(msgGet(objectKeypair, d.Id()))
 	userID, keypairName, err := resourceVPCKeypairV2ParseID(d.Id())
 	if err != nil {
-		return errParseID(objectKeypair, d.Id())
+		return diag.FromErr(errParseID(objectKeypair, d.Id()))
 	}
 	existingKeypairs, _, err := keypairs.List(ctx, resellV2Client)
 	if err != nil {
-		return errSearchingKeypair(keypairName, err)
+		return diag.FromErr(errSearchingKeypair(keypairName, err))
 	}
 
 	found := false
@@ -109,14 +108,13 @@ func resourceVPCKeypairV2Read(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceVPCKeypairV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCKeypairV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	userID, keypairName, err := resourceVPCKeypairV2ParseID(d.Id())
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Print(msgDelete(objectKeypair, d.Id()))
@@ -129,7 +127,7 @@ func resourceVPCKeypairV2Delete(d *schema.ResourceData, meta interface{}) error 
 			}
 		}
 
-		return errDeletingObject(objectKeypair, d.Id(), err)
+		return diag.FromErr(errDeletingObject(objectKeypair, d.Id(), err))
 	}
 
 	return nil

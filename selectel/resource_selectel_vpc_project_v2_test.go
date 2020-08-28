@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
 	"github.com/stretchr/testify/assert"
@@ -22,9 +22,9 @@ func TestAccVPCV2ProjectBasic(t *testing.T) {
 	projectCustomURL := acctest.RandomWithPrefix("tf-acc-url") + ".selvpc.ru"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelectelPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVPCV2ProjectDestroy,
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVPCV2ProjectBasic(projectName),
@@ -79,9 +79,9 @@ func TestAccVPCV2ProjectAutoQuotas(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelectelPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVPCV2ProjectDestroy,
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVPCV2ProjectAutoQuotas(projectName),

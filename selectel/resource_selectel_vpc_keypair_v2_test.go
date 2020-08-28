@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/keypairs"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/users"
 	"github.com/stretchr/testify/assert"
@@ -25,9 +25,9 @@ func TestAccVPCV2KeypairBasic(t *testing.T) {
 	userPassword := acctest.RandString(8)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccSelectelPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVPCV2KeypairDestroy,
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCV2KeypairDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVPCV2KeypairBasic(userName, userPassword, keypairName, publicKey),

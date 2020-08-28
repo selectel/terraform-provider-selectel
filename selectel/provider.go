@@ -1,9 +1,11 @@
 package selectel
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/mutexkv"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/mutexkv"
 )
 
 const (
@@ -27,7 +29,7 @@ const (
 var selMutexKV = mutexkv.NewMutexKV()
 
 // Provider returns the Selectel terraform provider.
-func Provider() terraform.ResourceProvider {
+func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"token": {
@@ -71,11 +73,11 @@ func Provider() terraform.ResourceProvider {
 			"selectel_domains_domain_v1":         resourceDomainsDomainV1(),
 			"selectel_domains_record_v1":         resourceDomainsRecordV1(),
 		},
-		ConfigureFunc: configureProvider,
+		ConfigureContextFunc: configureProvider,
 	}
 }
 
-func configureProvider(d *schema.ResourceData) (interface{}, error) {
+func configureProvider(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	config := Config{
 		Token:    d.Get("token").(string),
 		Endpoint: d.Get("endpoint").(string),
@@ -87,7 +89,7 @@ func configureProvider(d *schema.ResourceData) (interface{}, error) {
 		config.Region = v.(string)
 	}
 	if err := config.Validate(); err != nil {
-		return nil, err
+		return nil, diag.FromErr(err)
 	}
 
 	return &config, nil

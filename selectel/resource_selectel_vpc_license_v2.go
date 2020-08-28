@@ -6,17 +6,18 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/licenses"
 )
 
 func resourceVPCLicenseV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVPCLicenseV2Create,
-		Read:   resourceVPCLicenseV2Read,
-		Delete: resourceVPCLicenseV2Delete,
+		CreateContext: resourceVPCLicenseV2Create,
+		ReadContext:   resourceVPCLicenseV2Read,
+		DeleteContext: resourceVPCLicenseV2Delete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_id": {
@@ -75,10 +76,9 @@ func resourceVPCLicenseV2() *schema.Resource {
 	}
 }
 
-func resourceVPCLicenseV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCLicenseV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	projectID := d.Get("project_id").(string)
 	region := d.Get("region").(string)
@@ -96,22 +96,21 @@ func resourceVPCLicenseV2Create(d *schema.ResourceData, meta interface{}) error 
 	log.Print(msgCreate(objectLicense, opts))
 	newLicenses, _, err := licenses.Create(ctx, resellV2Client, projectID, opts)
 	if err != nil {
-		return errCreatingObject(objectLicense, err)
+		return diag.FromErr(errCreatingObject(objectLicense, err))
 	}
 
 	if len(newLicenses) != 1 {
-		return errReadFromResponse(objectLicense)
+		return diag.FromErr(errReadFromResponse(objectLicense))
 	}
 
 	d.SetId(strconv.Itoa(newLicenses[0].ID))
 
-	return resourceVPCLicenseV2Read(d, meta)
+	return resourceVPCLicenseV2Read(ctx, d, meta)
 }
 
-func resourceVPCLicenseV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCLicenseV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	log.Print(msgGet(objectLicense, d.Id()))
 	license, response, err := licenses.Get(ctx, resellV2Client, d.Id())
@@ -123,7 +122,7 @@ func resourceVPCLicenseV2Read(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 
-		return errGettingObject(objectLicense, d.Id(), err)
+		return diag.FromErr(errGettingObject(objectLicense, d.Id(), err))
 	}
 
 	d.Set("project_id", license.ProjectID)
@@ -141,10 +140,9 @@ func resourceVPCLicenseV2Read(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceVPCLicenseV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCLicenseV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
 	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
 	log.Print(msgDelete(objectLicense, d.Id()))
 	response, err := licenses.Delete(ctx, resellV2Client, d.Id())
@@ -156,7 +154,7 @@ func resourceVPCLicenseV2Delete(d *schema.ResourceData, meta interface{}) error 
 			}
 		}
 
-		return errDeletingObject(objectLicense, d.Id(), err)
+		return diag.FromErr(errDeletingObject(objectLicense, d.Id(), err))
 	}
 
 	return nil
