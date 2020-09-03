@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/selectel/mks-go/pkg/v1/node"
+	"github.com/selectel/mks-go/pkg/v1/nodegroup"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -443,6 +444,47 @@ func TestFlattenMKSNodegroupV1Nodes(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestFlattenMKSNodegroupV1Taints(t *testing.T) {
+	views := []nodegroup.Taint{
+		{
+			Key:    "test-key-0",
+			Value:  "test-value-0",
+			Effect: nodegroup.NoScheduleEffect,
+		},
+		{
+			Key:    "test-key-1",
+			Value:  "test-value-1",
+			Effect: nodegroup.NoExecuteEffect,
+		},
+		{
+			Key:    "test-key-2",
+			Value:  "test-value-2",
+			Effect: nodegroup.PreferNoScheduleEffect,
+		},
+	}
+
+	expected := []interface{}{
+		map[string]interface{}{
+			"key":    "test-key-0",
+			"value":  "test-value-0",
+			"effect": "NoSchedule",
+		},
+		map[string]interface{}{
+			"key":    "test-key-1",
+			"value":  "test-value-1",
+			"effect": "NoExecute",
+		},
+		map[string]interface{}{
+			"key":    "test-key-2",
+			"value":  "test-value-2",
+			"effect": "PreferNoSchedule",
+		},
+	}
+	actual := flattenMKSNodegroupV1Taints(views)
+
+	assert.Equal(t, expected, actual)
+}
+
 func TestExpandMKSNodegroupV1Labels(t *testing.T) {
 	labels := map[string]interface{}{
 		"label-key0": "label-value0",
@@ -455,6 +497,47 @@ func TestExpandMKSNodegroupV1Labels(t *testing.T) {
 		"label-key2": "label-value2",
 	}
 	actual := expandMKSNodegroupV1Labels(labels)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestExpandMKSNodegroupV1Taints(t *testing.T) {
+	taints := []interface{}{
+		map[string]interface{}{
+			"key":    "test-key-0",
+			"value":  "test-value-0",
+			"effect": "NoSchedule",
+		},
+		map[string]interface{}{
+			"key":    "test-key-1",
+			"value":  "test-value-1",
+			"effect": "NoExecute",
+		},
+		map[string]interface{}{
+			"key":    "test-key-2",
+			"value":  "test-value-2",
+			"effect": "PreferNoSchedule",
+		},
+	}
+
+	expected := []nodegroup.Taint{
+		{
+			Key:    "test-key-0",
+			Value:  "test-value-0",
+			Effect: nodegroup.NoScheduleEffect,
+		},
+		{
+			Key:    "test-key-1",
+			Value:  "test-value-1",
+			Effect: nodegroup.NoExecuteEffect,
+		},
+		{
+			Key:    "test-key-2",
+			Value:  "test-value-2",
+			Effect: nodegroup.PreferNoScheduleEffect,
+		},
+	}
+	actual := expandMKSNodegroupV1Taints(taints)
 
 	assert.Equal(t, expected, actual)
 }

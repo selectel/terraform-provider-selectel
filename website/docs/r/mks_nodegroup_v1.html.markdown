@@ -39,6 +39,21 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
     "label-key1": "label-value1",
     "label-key2": "label-value2",
   }
+  taints {
+    key = "test-key-0"
+    value = "test-value-0"
+    effect = "NoSchedule"
+  }
+  taints {
+    key = "test-key-1"
+    value = "test-value-1"
+    effect = "NoExecute"
+  }
+  taints {
+    key = "test-key-2"
+    value = "test-value-2"
+    effect = "PreferNoSchedule"
+  }
 }
 ```
 
@@ -90,6 +105,9 @@ The following arguments are supported:
 
 * `labels` (Optional) Represents a map containing a set of Kubernetes labels that will be applied
   for each node in the group. The keys must be user-defined.
+
+* `taints` (Optional) Represents a list of Kubernetes taints that will be applied for each node in the group.
+  Changing this creates a new nodegroup.
 
 ## Attributes Reference
 

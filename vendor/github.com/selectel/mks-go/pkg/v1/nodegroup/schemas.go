@@ -41,4 +41,28 @@ type View struct {
 	// Labels represents an object containing a set of Kubernetes labels that will be applied
 	// for each node in the group. The keys must be user-defined.
 	Labels map[string]string `json:"labels"`
+
+	// Taints represents a list of nodegroup taints.
+	Taints []Taint `json:"taints"`
+}
+
+// TaintEffect represents an effect of the node's taint.
+type TaintEffect string
+
+const (
+	NoScheduleEffect       TaintEffect = "NoSchedule"
+	NoExecuteEffect        TaintEffect = "NoExecute"
+	PreferNoScheduleEffect TaintEffect = "PreferNoSchedule"
+)
+
+// Taint represents k8s node's taint.
+type Taint struct {
+	// Key is the key of the taint.
+	Key string `json:"key"`
+
+	// Value is the value of the taint.
+	Value string `json:"value"`
+
+	// Effect is the effect of the taint.
+	Effect TaintEffect `json:"effect"`
 }

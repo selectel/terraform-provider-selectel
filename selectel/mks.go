@@ -14,6 +14,7 @@ import (
 	"github.com/selectel/mks-go/pkg/v1/cluster"
 	"github.com/selectel/mks-go/pkg/v1/kubeversion"
 	"github.com/selectel/mks-go/pkg/v1/node"
+	"github.com/selectel/mks-go/pkg/v1/nodegroup"
 )
 
 const (
@@ -432,6 +433,42 @@ func flattenMKSNodegroupV1Nodes(views []*node.View) []map[string]interface{} {
 	}
 
 	return nodes
+}
+
+func flattenMKSNodegroupV1Taints(views []nodegroup.Taint) []interface{} {
+	taints := make([]interface{}, len(views))
+	for i, view := range views {
+		taints[i] = map[string]interface{}{
+			"key":    view.Key,
+			"value":  view.Value,
+			"effect": string(view.Effect),
+		}
+	}
+
+	return taints
+}
+
+func expandMKSNodegroupV1Taints(taints []interface{}) []nodegroup.Taint {
+	result := make([]nodegroup.Taint, len(taints))
+	for i := range taints {
+		taint := nodegroup.Taint{}
+		obj := taints[i].(map[string]interface{})
+		taint.Key = obj["key"].(string)
+		taint.Value = obj["value"].(string)
+
+		switch obj["effect"].(string) {
+		case string(nodegroup.NoScheduleEffect):
+			taint.Effect = nodegroup.NoScheduleEffect
+		case string(nodegroup.NoExecuteEffect):
+			taint.Effect = nodegroup.NoExecuteEffect
+		case string(nodegroup.PreferNoScheduleEffect):
+			taint.Effect = nodegroup.PreferNoScheduleEffect
+		}
+
+		result[i] = taint
+	}
+
+	return result
 }
 
 func expandMKSNodegroupV1Labels(labels map[string]interface{}) map[string]string {

@@ -40,6 +40,9 @@ type CreateOpts struct {
 	// Labels represents an object containing a set of Kubernetes labels that will be applied
 	// for each node in the group. The keys must be user-defined.
 	Labels map[string]string `json:"labels"`
+
+	// Taints represents a list of nodegroup taints.
+	Taints []Taint `json:"taints"`
 }
 
 // ResizeOpts represents options for the nodegroup Resize request.
