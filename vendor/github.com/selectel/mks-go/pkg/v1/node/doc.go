@@ -16,5 +16,12 @@ Example of reinstalling a single node of a cluster nodegroup by its id
   if err != nil {
     log.Fatal(err)
   }
+
+Example of deleting a single node of a cluster nodegroup by its id
+
+  _, err := node.Delete(ctx, mksClient, clusterID, nodegroupID, nodeID)
+  if err != nil {
+    log.Fatal(err)
+  }
 */
 package node

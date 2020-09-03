@@ -245,6 +245,8 @@ github.com/selectel/mks-go v0.5.0 h1:BqEi/XxvmNpE14gBwmLx4ArvvuU1YSBvD0opzolh9pw
 github.com/selectel/mks-go v0.5.0/go.mod h1:OrlLnGes+HK7HNxUab/8Rll5iT0XQQnx4+dW1Ysph2o=
 github.com/selectel/mks-go v0.5.1-0.20200901133315-e90912ba57c3 h1:eMMMSHDwe/arK+Wy9ll4JXHVOBxSt1m7XzoUgy1EeL8=
 github.com/selectel/mks-go v0.5.1-0.20200901133315-e90912ba57c3/go.mod h1:OrlLnGes+HK7HNxUab/8Rll5iT0XQQnx4+dW1Ysph2o=
+github.com/selectel/mks-go v0.6.0 h1:5ZlqvwlVrjrrbNygsiFfUGZTyTPzPGGo8aYJkbtrYV0=
+github.com/selectel/mks-go v0.6.0/go.mod h1:OrlLnGes+HK7HNxUab/8Rll5iT0XQQnx4+dW1Ysph2o=
 github.com/sergi/go-diff v1.0.0 h1:Kpca3qRNrduNnOQeazBd0ysaKrUJiIuISHxogkT9RPQ=
 github.com/sergi/go-diff v1.0.0/go.mod h1:0CfEIISq7TuYL3j771MWULgwwjU+GofnZX9QAmXWZgo=
 github.com/spf13/pflag v1.0.2/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnInEg4=

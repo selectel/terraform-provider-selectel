@@ -43,6 +43,16 @@ type CreateOpts struct {
 
 	// Taints represents a list of nodegroup taints.
 	Taints []Taint `json:"taints"`
+
+	// EnableAutoscale reflects if the nodegroup is allowed to be scaled automatically.
+	// Disabled by default.
+	EnableAutoscale *bool `json:"enable_autoscale,omitempty"`
+
+	// AutoscaleMinNodes represents minimum possible number of worker nodes in the nodegroup.
+	AutoscaleMinNodes *int `json:"autoscale_min_nodes,omitempty"`
+
+	// AutoscaleMaxNodes represents maximum possible number of worker nodes in the nodegroup.
+	AutoscaleMaxNodes *int `json:"autoscale_max_nodes,omitempty"`
 }
 
 // ResizeOpts represents options for the nodegroup Resize request.
@@ -56,4 +66,13 @@ type UpdateOpts struct {
 	// Labels represents an object containing a set of Kubernetes labels that will be applied
 	// for each node in the group. The keys must be user-defined.
 	Labels map[string]string `json:"labels"`
+
+	// EnableAutoscale reflects if the nodegroup is allowed to be scaled automatically.
+	EnableAutoscale *bool `json:"enable_autoscale,omitempty"`
+
+	// AutoscaleMinNodes represents minimum possible number of worker nodes in the nodegroup.
+	AutoscaleMinNodes *int `json:"autoscale_min_nodes,omitempty"`
+
+	// AutoscaleMaxNodes represents maximum possible number of worker nodes in the nodegroup.
+	AutoscaleMaxNodes *int `json:"autoscale_max_nodes,omitempty"`
 }
