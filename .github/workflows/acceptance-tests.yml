@@ -29,6 +29,6 @@ jobs:
         env:
           GO_FLAGS: -mod=vendor
           GO111MODULE: on
-          TF_LOG: debug
+          TF_LOG: TRACE
           SEL_TOKEN: ${{ secrets.SEL_TOKEN }}
 
