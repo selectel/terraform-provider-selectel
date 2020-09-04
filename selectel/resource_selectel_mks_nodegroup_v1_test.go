@@ -45,6 +45,17 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key0", "label-value0"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key1", "label-value1"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key2", "label-value2"),
+
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.#", "3"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.0.key", "test-key-0"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.0.value", "test-value-0"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.0.effect", "NoSchedule"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.1.key", "test-key-1"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.1.value", "test-value-1"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.1.effect", "NoExecute"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.2.key", "test-key-2"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.2.value", "test-value-2"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.2.effect", "PreferNoSchedule"),
 				),
 			},
 			{
@@ -59,6 +70,16 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "volume_type", "fast.ru-3a"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key3", "label-value3"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key4", "label-value4"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.#", "3"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.0.key", "test-key-0"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.0.value", "test-value-0"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.0.effect", "NoSchedule"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.1.key", "test-key-1"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.1.value", "test-value-1"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.1.effect", "NoExecute"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.2.key", "test-key-2"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.2.value", "test-value-2"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.2.effect", "PreferNoSchedule"),
 				),
 			},
 		},
@@ -145,6 +166,21 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
     label-key1 = "label-value1"
     label-key2 = "label-value2"
   }
+  taints {
+    key = "test-key-0"
+    value = "test-value-0"
+    effect = "NoSchedule"
+  }
+  taints {
+    key = "test-key-1"
+    value = "test-value-1"
+    effect = "NoExecute"
+  }
+  taints {
+    key = "test-key-2"
+    value = "test-value-2"
+    effect = "PreferNoSchedule"
+  }
 }`, projectName, clusterName, kubeVersion)
 }
 
@@ -175,6 +211,21 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
   labels = {
     label-key3 = "label-value3"
     label-key4 = "label-value4"
+  }
+  taints {
+    key = "test-key-0"
+    value = "test-value-0"
+    effect = "NoSchedule"
+  }
+  taints {
+    key = "test-key-1"
+    value = "test-value-1"
+    effect = "NoExecute"
+  }
+  taints {
+    key = "test-key-2"
+    value = "test-value-2"
+    effect = "PreferNoSchedule"
   }
 }`, projectName, clusterName, kubeVersion)
 }

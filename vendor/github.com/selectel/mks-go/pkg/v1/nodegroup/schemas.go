@@ -6,6 +6,7 @@ import (
 	"github.com/selectel/mks-go/pkg/v1/node"
 )
 
+// nolint:maligned
 // View represents an unmarshalled nodegroup body from an API response.
 type View struct {
 	// ID is the identifier of the nodegroup.
@@ -41,4 +42,37 @@ type View struct {
 	// Labels represents an object containing a set of Kubernetes labels that will be applied
 	// for each node in the group. The keys must be user-defined.
 	Labels map[string]string `json:"labels"`
+
+	// Taints represents a list of nodegroup taints.
+	Taints []Taint `json:"taints"`
+
+	// EnableAutoscale reflects if the nodegroup is allowed to be scaled automatically.
+	EnableAutoscale bool `json:"enable_autoscale"`
+
+	// AutoscaleMinNodes represents minimum possible number of worker nodes in the nodegroup.
+	AutoscaleMinNodes int `json:"autoscale_min_nodes"`
+
+	// AutoscaleMaxNodes represents maximum possible number of worker nodes in the nodegroup.
+	AutoscaleMaxNodes int `json:"autoscale_max_nodes"`
+}
+
+// TaintEffect represents an effect of the node's taint.
+type TaintEffect string
+
+const (
+	NoScheduleEffect       TaintEffect = "NoSchedule"
+	NoExecuteEffect        TaintEffect = "NoExecute"
+	PreferNoScheduleEffect TaintEffect = "PreferNoSchedule"
+)
+
+// Taint represents k8s node's taint.
+type Taint struct {
+	// Key is the key of the taint.
+	Key string `json:"key"`
+
+	// Value is the value of the taint.
+	Value string `json:"value"`
+
+	// Effect is the effect of the taint.
+	Effect TaintEffect `json:"effect"`
 }

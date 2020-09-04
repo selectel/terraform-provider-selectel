@@ -35,6 +35,13 @@ Example of creating a new cluster nodegroup
       "label-key1": "label-value1",
       "label-key2": "label-value2",
     },
+    Taints: []nodegroup.Taint{
+      {
+        Key:    "test-key-0",
+        Value:  "test-value-0",
+        Effect: nodegroup.NoScheduleEffect,
+      },
+    },
   }
   _, err := nodegroup.Create(ctx, mksClient, clusterID, createOpts)
   if err != nil {

@@ -44,3 +44,17 @@ func Reinstall(ctx context.Context, client *v1.ServiceClient, clusterID, nodegro
 
 	return responseResult, err
 }
+
+// Delete deletes a node of a cluster nodegroup by its id.
+func Delete(ctx context.Context, client *v1.ServiceClient, clusterID, nodegroupID, nodeID string) (*v1.ResponseResult, error) {
+	url := strings.Join([]string{client.Endpoint, v1.ResourceURLCluster, clusterID, v1.ResourceURLNodegroup, nodegroupID, nodeID}, "/")
+	responseResult, err := client.DoRequest(ctx, http.MethodDelete, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	if responseResult.Err != nil {
+		err = responseResult.Err
+	}
+
+	return responseResult, err
+}

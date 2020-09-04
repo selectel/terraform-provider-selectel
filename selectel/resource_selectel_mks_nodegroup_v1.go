@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/nodegroup"
@@ -104,8 +105,31 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: false,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
+			},
+			"taints": {
+				Type:     schema.TypeList,
+				Optional: true,
+				ForceNew: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"value": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"effect": {
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								string(nodegroup.NoScheduleEffect),
+								string(nodegroup.NoExecuteEffect),
+								string(nodegroup.PreferNoScheduleEffect),
+							}, false),
+						},
+					},
 				},
 			},
 			"nodes": {
@@ -183,6 +207,9 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 
 	labels := d.Get("labels").(map[string]interface{})
 	createOpts.Labels = expandMKSNodegroupV1Labels(labels)
+
+	taints := d.Get("taints").([]interface{})
+	createOpts.Taints = expandMKSNodegroupV1Taints(taints)
 
 	log.Print(msgCreate(objectNodegroup, createOpts))
 	_, err = nodegroup.Create(ctx, mksClient, clusterID, createOpts)
@@ -274,6 +301,11 @@ func resourceMKSNodegroupV1Read(ctx context.Context, d *schema.ResourceData, met
 	nodes := flattenMKSNodegroupV1Nodes(mksNodegroup.Nodes)
 	if err := d.Set("nodes", nodes); err != nil {
 		log.Print(errSettingComplexAttr("nodes", err))
+	}
+
+	taints := flattenMKSNodegroupV1Taints(mksNodegroup.Taints)
+	if err := d.Set("taints", taints); err != nil {
+		log.Println(errSettingComplexAttr("taints", err))
 	}
 
 	return nil

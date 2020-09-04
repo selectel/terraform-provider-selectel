@@ -21,4 +21,7 @@ type View struct {
 
 	// NodegroupID contains nodegroup identifier.
 	NodegroupID string `json:"nodegroup_id"`
+
+	// OSServerID contains OpenStack server identifier.
+	OSServerID string `json:"os_server_id"`
 }
