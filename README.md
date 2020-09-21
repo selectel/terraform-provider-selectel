@@ -48,15 +48,12 @@ Also there are lots of examples in the [selectel/terraform-examples](https://git
 Developing the Provider
 ---------------------------
 
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.12+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
+If you wish to work on the provider, you'll first need [Go](https://golang.org) installed on your machine (version 1.14+ is *required*).
 
-To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
+To compile the provider, run `make build`. This will build the provider and put the provider binary in the current directory.
 
 ```sh
 $ make build
-...
-$ $GOPATH/bin/terraform-provider-$PROVIDER_NAME
-...
 ```
 
 In order to test the provider, you can simply run `make test`.
