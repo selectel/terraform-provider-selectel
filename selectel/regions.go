@@ -3,8 +3,8 @@ package selectel
 import (
 	"fmt"
 
+	"github.com/gophercloud/utils/terraform/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/hashcode"
 )
 
 const (

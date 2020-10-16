@@ -3,6 +3,7 @@ module github.com/terraform-providers/terraform-provider-selectel
 go 1.14
 
 require (
+	github.com/gophercloud/utils v0.0.0-20201016024308-5fc12d2a573d
 	github.com/hashicorp/go-retryablehttp v0.6.6
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.0.1
 	github.com/selectel/domains-go v0.2.0

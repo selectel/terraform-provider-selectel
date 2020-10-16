@@ -9,14 +9,14 @@ import (
 // serialize changes across arbitrary collaborators that share knowledge of the
 // keys they must serialize on.
 //
-// This implementation is copied from v1 Terraform SDK since it was removed
-// from v2 SDK.
+// The initial use case is to let aws_security_group_rule resources serialize
+// their access to individual security groups based on SG ID.
 type MutexKV struct {
 	lock  sync.Mutex
 	store map[string]*sync.Mutex
 }
 
-// Lock the mutex for the given key. Caller is responsible for calling Unlock
+// Locks the mutex for the given key. Caller is responsible for calling Unlock
 // for the same key.
 func (m *MutexKV) Lock(key string) {
 	log.Printf("[DEBUG] Locking %q", key)
@@ -40,7 +40,6 @@ func (m *MutexKV) get(key string) *sync.Mutex {
 		mutex = &sync.Mutex{}
 		m.store[key] = mutex
 	}
-
 	return mutex
 }
 

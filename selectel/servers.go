@@ -3,8 +3,8 @@ package selectel
 import (
 	"fmt"
 
+	"github.com/gophercloud/utils/terraform/hashcode"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/servers"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/hashcode"
 )
 
 // serversMapsFromStructs converts the provided license.Servers to

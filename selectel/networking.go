@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gophercloud/utils/terraform/hashcode"
 	"github.com/selectel/go-selvpcclient/selvpcclient"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/subnets"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/hashcode"
 )
 
 func getPrefixLengthFromCIDR(cidr string) (int, error) {

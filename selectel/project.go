@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/gophercloud/utils/terraform/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/hashcode"
 )
 
 // resourceVPCProjectV2QuotasOptsFromSet converts the provided quotaSet to
