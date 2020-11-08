@@ -15,6 +15,7 @@ func TestGetMKSClusterV1Endpoint(t *testing.T) {
 		ru3Region: ru3MKSClusterV1Endpoint,
 		ru7Region: ru7MKSClusterV1Endpoint,
 		ru8Region: ru8MKSClusterV1Endpoint,
+		ru9Region: ru9MKSClusterV1Endpoint,
 	}
 
 	for region, expected := range expectedEndpoints {
