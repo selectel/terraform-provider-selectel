@@ -237,14 +237,10 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
-github.com/selectel/domains-go v0.2.0 h1:UBm6tc45sXsziqG7MirfHxaoMf3yYpFb2vx3GygU4kI=
-github.com/selectel/domains-go v0.2.0/go.mod h1:aDinK5D/zztY4VhoqQgYaaOnU6hqjBcszUOgAe0kPYs=
+github.com/selectel/domains-go v0.3.0 h1:0shjqQmpkWc6eM1SwgKqbTTNiT5G2BOEnvS7JvuF96g=
+github.com/selectel/domains-go v0.3.0/go.mod h1:AhXhwyMSTkpEWFiBLUvzFP76W+WN+ZblwmjLJLt7y58=
 github.com/selectel/go-selvpcclient v1.12.0 h1:LsT074HOVF1dWYapsAWjaaJDQhmDPpcsVjSwQ1r1fj0=
 github.com/selectel/go-selvpcclient v1.12.0/go.mod h1:HNteVXevZMjUCRR6lImTsGZZSTeKu89S/qbEDWDqmgc=
-github.com/selectel/mks-go v0.5.0 h1:BqEi/XxvmNpE14gBwmLx4ArvvuU1YSBvD0opzolh9pw=
-github.com/selectel/mks-go v0.5.0/go.mod h1:OrlLnGes+HK7HNxUab/8Rll5iT0XQQnx4+dW1Ysph2o=
-github.com/selectel/mks-go v0.5.1-0.20200901133315-e90912ba57c3 h1:eMMMSHDwe/arK+Wy9ll4JXHVOBxSt1m7XzoUgy1EeL8=
-github.com/selectel/mks-go v0.5.1-0.20200901133315-e90912ba57c3/go.mod h1:OrlLnGes+HK7HNxUab/8Rll5iT0XQQnx4+dW1Ysph2o=
 github.com/selectel/mks-go v0.6.0 h1:5ZlqvwlVrjrrbNygsiFfUGZTyTPzPGGo8aYJkbtrYV0=
 github.com/selectel/mks-go v0.6.0/go.mod h1:OrlLnGes+HK7HNxUab/8Rll5iT0XQQnx4+dW1Ysph2o=
 github.com/sergi/go-diff v1.0.0 h1:Kpca3qRNrduNnOQeazBd0ysaKrUJiIuISHxogkT9RPQ=

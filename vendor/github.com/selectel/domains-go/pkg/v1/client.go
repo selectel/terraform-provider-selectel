@@ -16,7 +16,7 @@ const (
 	appName = "domains-go"
 
 	// appVersion is a version of the application.
-	appVersion = "0.2.0"
+	appVersion = "0.3.0"
 
 	// userAgent contains a basic user agent that will be used in queries.
 	userAgent = appName + "/" + appVersion
@@ -226,7 +226,8 @@ func (result *ResponseResult) extractErr() error {
 		err = json.Unmarshal(body, &result.ErrGeneric)
 	}
 	if err != nil {
-		result.Err = fmt.Errorf("domains-go: got invalid response from the server")
+		result.Err = fmt.Errorf("domains-go: got invalid response from the server, status code %d",
+			result.StatusCode)
 		return nil
 	}
 
