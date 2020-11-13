@@ -57,6 +57,9 @@ func Provider() *schema.Provider {
 				Description: "VPC region to import resources associated with the specific region.",
 			},
 		},
+		DataSourcesMap: map[string]*schema.Resource{
+			"selectel_domains_domain_v1": dataSourceDomainsDomainV1(),
+		},
 		ResourcesMap: map[string]*schema.Resource{
 			"selectel_vpc_floatingip_v2":         resourceVPCFloatingIPV2(),
 			"selectel_vpc_keypair_v2":            resourceVPCKeypairV2(),
