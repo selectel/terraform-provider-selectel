@@ -1,3 +1,14 @@
+## 3.5.0 (Unreleased)
+
+FEATURES:
+
+* __New Data Source:__ `selectel_domains_domain_v1` ([#128](https://github.com/selectel/terraform-provider-selectel/issues/128))
+
+IMPROVEMENTS:
+
+* Allowed using `ru-9` region as `region` argument for the `selectel_mks_cluster_v1` resource ([#141](https://github.com/selectel/terraform-provider-selectel/pull/141))
+* Added `taints` argument for the `selectel_mks_nodegroup_v1` resource ([#130](https://github.com/selectel/terraform-provider-selectel/issues/130))
+
 ## 3.4.0 (Aug 28, 2020)
 
 IMPROVEMENTS:
