@@ -6,8 +6,9 @@ FEATURES:
 
 IMPROVEMENTS:
 
-* Allowed using `ru-9` region as `region` argument for the `selectel_mks_cluster_v1` resource ([#141](https://github.com/selectel/terraform-provider-selectel/pull/141))
 * Added `taints` argument for the `selectel_mks_nodegroup_v1` resource ([#130](https://github.com/selectel/terraform-provider-selectel/issues/130))
+* Allowed using `ru-9` region as `region` argument for the `selectel_mks_cluster_v1` resource ([#141](https://github.com/selectel/terraform-provider-selectel/pull/141))
+* Updated `domains-go` dependency to `v0.3.0` ([#142](https://github.com/selectel/terraform-provider-selectel/pull/142))
 
 ## 3.4.0 (Aug 28, 2020)
 
