@@ -12,3 +12,8 @@ require (
 	github.com/selectel/mks-go v0.6.0
 	github.com/stretchr/testify v1.7.0
 )
+
+// TODO: remove replace
+replace (
+	github.com/selectel/mks-go => /home/ppv/mks-opensource/mks-go
+)

@@ -131,6 +131,23 @@ func resourceMKSClusterV1() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"feature_gates": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				ForceNew: false,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"admission_controllers": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				ForceNew: false,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Set: schema.HashString,
+			},
 		},
 	}
 }
@@ -164,6 +181,16 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 			"set to false in case of zonal cluster"))
 	}
 
+	featureGates, err := getSetAsStrings(d, featureGatesKey)
+	if err != nil {
+		return diag.FromErr(errCreatingObject(objectCluster, err))
+	}
+
+	admissionControllers, err := getSetAsStrings(d, admissionControllersKey)
+	if err != nil {
+		return diag.FromErr(errCreatingObject(objectCluster, err))
+	}
+
 	createOpts := &cluster.CreateOpts{
 		Name:                          d.Get("name").(string),
 		NetworkID:                     d.Get("network_id").(string),
@@ -175,6 +202,8 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 		Region:                        region,
 		KubernetesOptions: &cluster.KubernetesOptions{
 			EnablePodSecurityPolicy: enablePodSecurityPolicy,
+			FeatureGates:            featureGates,
+			AdmissionControllers:    admissionControllers,
 		},
 		Zonal: &zonal,
 	}
@@ -240,6 +269,8 @@ func resourceMKSClusterV1Read(ctx context.Context, d *schema.ResourceData, meta 
 	d.Set("enable_autorepair", mksCluster.EnableAutorepair)
 	d.Set("enable_patch_version_auto_upgrade", mksCluster.EnablePatchVersionAutoUpgrade)
 	d.Set("enable_pod_security_policy", mksCluster.KubernetesOptions.EnablePodSecurityPolicy)
+	d.Set("feature_gates", mksCluster.KubernetesOptions.FeatureGates)
+	d.Set("admission_controllers", mksCluster.KubernetesOptions.AdmissionControllers)
 	d.Set("zonal", mksCluster.Zonal)
 
 	return nil
@@ -280,12 +311,27 @@ func resourceMKSClusterV1Update(ctx context.Context, d *schema.ResourceData, met
 		v := d.Get("enable_patch_version_auto_upgrade").(bool)
 		updateOpts.EnablePatchVersionAutoUpgrade = &v
 	}
+
+	kubeOptions := new(cluster.KubernetesOptions)
 	if d.HasChange("enable_pod_security_policy") {
 		v := d.Get("enable_pod_security_policy").(bool)
-		updateOpts.KubernetesOptions = &cluster.KubernetesOptions{
-			EnablePodSecurityPolicy: v,
-		}
+		kubeOptions.EnablePodSecurityPolicy = v
 	}
+	if d.HasChange(featureGatesKey) {
+		v, err := getSetAsStrings(d, featureGatesKey)
+		if err != nil {
+			return diag.FromErr(errCreatingObject(objectCluster, err))
+		}
+		kubeOptions.FeatureGates = v
+	}
+	if d.HasChange(admissionControllersKey) {
+		v, err := getSetAsStrings(d, admissionControllersKey)
+		if err != nil {
+			return diag.FromErr(errCreatingObject(objectCluster, err))
+		}
+		kubeOptions.AdmissionControllers = v
+	}
+	updateOpts.KubernetesOptions = kubeOptions
 
 	if updateOpts != (cluster.UpdateOpts{}) {
 		log.Print(msgUpdate(objectCluster, d.Id(), updateOpts))

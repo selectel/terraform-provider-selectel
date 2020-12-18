@@ -232,6 +232,8 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
   project_id               = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region                   = "ru-3"
   maintenance_window_start = "%s"
+  feature_gates						= ["BoundServiceAccountTokenVolume"]
+  admission_controllers				= ["NamespaceLifecycle"]
 }`, projectName, clusterName, kubeVersion, maintenanceWindowStart)
 }
 
@@ -251,6 +253,12 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
   enable_autorepair                 = false
   enable_patch_version_auto_upgrade = false
   enable_pod_security_policy        = false
+  feature_gates						= [
+		"BoundServiceAccountTokenVolume",
+	]
+  admission_controllers				= [
+		"NamespaceLifecycle",
+	]
 }`, projectName, clusterName, kubeVersion, maintenanceWindowStart)
 }
 

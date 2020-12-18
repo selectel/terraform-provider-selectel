@@ -43,6 +43,11 @@ BUG FIXES:
 
 * Fixed an issue with failing MKS acceptance tests when cluster maintenance could start during the tests ([#146](https://github.com/selectel/terraform-provider-selectel/issues/146))
 
+## 3.6.0 (Unreleased)
+FEATURES:
+
+* __Added `feature_gates` and `admission_controllers` to cluster kubernetes options__ (#)[]
+
 ## 3.5.0 (Nov 19, 2020)
 
 FEATURES:
