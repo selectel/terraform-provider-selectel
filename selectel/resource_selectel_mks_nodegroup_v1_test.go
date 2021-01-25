@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -24,6 +25,7 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	clusterName := acctest.RandomWithPrefix("tf-acc-cl")
 	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
+	maintenanceWindowStart := testAccMKSClusterV1GetMaintenanceWindowStart(12 * time.Hour)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -31,7 +33,7 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMKSNodegroupV1Basic(projectName, clusterName, kubeVersion),
+				Config: testAccMKSNodegroupV1Basic(projectName, clusterName, kubeVersion, maintenanceWindowStart),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccCheckMKSNodegroupV1Exists("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", &mksNodegroup),
@@ -59,7 +61,7 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMKSNodegroupV1Update(projectName, clusterName, kubeVersion),
+				Config: testAccMKSNodegroupV1Update(projectName, clusterName, kubeVersion, maintenanceWindowStart),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "availability_zone", "ru-3a"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "nodes_count", "2"),
@@ -137,7 +139,7 @@ func testAccCheckMKSNodegroupV1Exists(n string, mksNodegroup *nodegroup.View) re
 	}
 }
 
-func testAccMKSNodegroupV1Basic(projectName, clusterName, kubeVersion string) string {
+func testAccMKSNodegroupV1Basic(projectName, clusterName, kubeVersion, maintenanceWindowStart string) string {
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
@@ -145,10 +147,11 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
 }
 
 resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
-  name         = "%s"
-  kube_version = "%s"
-  project_id   = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
-  region       = "ru-3"
+  name                     = "%s"
+  kube_version             = "%s"
+  project_id               = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region                   = "ru-3"
+  maintenance_window_start = "%s"
 }
 
 resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
@@ -181,10 +184,10 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
     value = "test-value-2"
     effect = "PreferNoSchedule"
   }
-}`, projectName, clusterName, kubeVersion)
+}`, projectName, clusterName, kubeVersion, maintenanceWindowStart)
 }
 
-func testAccMKSNodegroupV1Update(projectName, clusterName, kubeVersion string) string {
+func testAccMKSNodegroupV1Update(projectName, clusterName, kubeVersion, maintenanceWindowStart string) string {
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
@@ -192,10 +195,11 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
 }
 
 resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
-  name         = "%s"
-  kube_version = "%s"
-  project_id   = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
-  region       = "ru-3"
+  name                     = "%s"
+  kube_version             = "%s"
+  project_id               = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region                   = "ru-3"
+  maintenance_window_start = "%s"
 }
 
 resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
@@ -227,5 +231,5 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
     value = "test-value-2"
     effect = "PreferNoSchedule"
   }
-}`, projectName, clusterName, kubeVersion)
+}`, projectName, clusterName, kubeVersion, maintenanceWindowStart)
 }
