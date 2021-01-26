@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,6 +13,7 @@ func TestAccMKSNodegroupV1ImportBasic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	clusterName := acctest.RandomWithPrefix("tf-acc-cl")
 	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
+	maintenanceWindowStart := testAccMKSClusterV1GetMaintenanceWindowStart(12 * time.Hour)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -19,7 +21,7 @@ func TestAccMKSNodegroupV1ImportBasic(t *testing.T) {
 		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMKSNodegroupV1Basic(projectName, clusterName, kubeVersion),
+				Config: testAccMKSNodegroupV1Basic(projectName, clusterName, kubeVersion, maintenanceWindowStart),
 				Check:  testAccCheckSelectelImportEnv(resourceName),
 			},
 			{
