@@ -1,5 +1,9 @@
 ## 3.6.0 (Unreleased)
 
+IMPROVEMENTS:
+
+* Updated Go version to `1.15` ([#148](https://github.com/selectel/terraform-provider-selectel/pull/148))
+
 BUG FIXES:
 
 * Fixed an issue with failing MKS acceptance tests when cluster maintenance could start during the tests ([#146](https://github.com/selectel/terraform-provider-selectel/issues/146))
