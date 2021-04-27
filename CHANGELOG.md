@@ -3,6 +3,7 @@
 IMPROVEMENTS:
 
 * Updated Go version to `1.15` ([#148](https://github.com/selectel/terraform-provider-selectel/pull/148))
+* Updated Terraform SDK to `v2.6.1` ([#149](https://github.com/selectel/terraform-provider-selectel/pull/149))
 
 BUG FIXES:
 
