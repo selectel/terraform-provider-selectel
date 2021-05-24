@@ -80,6 +80,10 @@ func errKubeVersionIsInvalidFmt(kubeVersion string, errMsg string) error {
 	return fmt.Errorf("kube version %s is invalid: %s", kubeVersion, errMsg)
 }
 
+func errGettingObjects(object string, err error) error {
+	return fmt.Errorf("error getting %s: %s", object, err)
+}
+
 func errParseDatastoreV1Flavor(err error) error {
 	return fmt.Errorf("got error parsing flavor: %s", err)
 }

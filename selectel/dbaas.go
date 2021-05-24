@@ -2,7 +2,11 @@ package selectel
 
 import (
 	"context"
+	"crypto/md5"
+	"fmt"
 	"log"
+	"sort"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -58,4 +62,17 @@ func getDBaaSClient(ctx context.Context, d *schema.ResourceData, meta interface{
 		return nil, diag.FromErr(err)
 	}
 	return client, nil
+}
+
+func stringChecksum(s string) string {
+	h := md5.New() // #nosec
+	h.Write([]byte(s))
+	bs := h.Sum(nil)
+
+	return fmt.Sprintf("%x", bs)
+}
+
+func stringListChecksum(s []string) string {
+	sort.Strings(s)
+	return stringChecksum(strings.Join(s, ""))
 }
