@@ -32,9 +32,9 @@ func TestAccDBaaSDatastoreTypesV1Basic(t *testing.T) {
 				Config: testAccDBaaSDatastoreTypesV1Basic(projectName, datastoreTypeEngine, datastoreTypeVersion),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccDBaaSDatastoreTypesV1Exists("data.selectel_dbaas_datastore_types_v1.datastore_type_tf_acc_test_1", &dbaasDatastoreTypes),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_datastore_types_v1.datastore_type_tf_acc_test_1", "datastore_types.0.engine", datastoreTypeEngine),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_datastore_types_v1.datastore_type_tf_acc_test_1", "datastore_types.0.version", datastoreTypeVersion),
+					testAccDBaaSDatastoreTypesV1Exists("data.selectel_dbaas_datastore_type_v1.datastore_type_tf_acc_test_1", &dbaasDatastoreTypes),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_datastore_type_v1.datastore_type_tf_acc_test_1", "datastore_types.0.engine", datastoreTypeEngine),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_datastore_type_v1.datastore_type_tf_acc_test_1", "datastore_types.0.version", datastoreTypeVersion),
 				),
 			},
 		},
@@ -90,7 +90,7 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   auto_quotas = true
 }
 
-data "selectel_dbaas_datastore_types_v1" "datastore_type_tf_acc_test_1" {
+data "selectel_dbaas_datastore_type_v1" "datastore_type_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
   filter {

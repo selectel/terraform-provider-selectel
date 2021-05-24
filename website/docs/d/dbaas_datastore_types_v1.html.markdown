@@ -1,7 +1,7 @@
 ---
 layout: "selectel"
-page_title: "Selectel: selectel_dbaas_datastore_types_v1"
-sidebar_current: "docs-selectel-datasource-dbaas-datastore-types-v1"
+page_title: "Selectel: selectel_dbaas_datastore_type_v1"
+sidebar_current: "docs-selectel-datasource-dbaas-datastore-type-v1"
 description: |-
   Get information on Selectel DBaaS datastore types.
 ---
@@ -17,7 +17,7 @@ resource "selectel_vpc_project_v2" "project_1" {
   auto_quotas = true
 }
 
-data "selectel_dbaas_datastore_types_v1" "dt" {
+data "selectel_dbaas_datastore_type_v1" "dt" {
   project_id   = "${selectel_vpc_project_v2.project_1.id}"
   region       = "ru-3"
   filter       = {

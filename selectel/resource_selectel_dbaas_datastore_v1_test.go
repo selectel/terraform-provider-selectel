@@ -111,7 +111,7 @@ resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
   region     = "ru-3"
 }
 
-data "selectel_dbaas_datastore_types_v1" "dt" {
+data "selectel_dbaas_datastore_type_v1" "dt" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
   filter {
@@ -124,7 +124,7 @@ resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
   name = "%s"
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
-  type_id = "${data.selectel_dbaas_datastore_types_v1.dt.datastore_types[0].id}"
+  type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
   subnet_id = "${selectel_vpc_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
   node_count = "%d"
   flavor {
