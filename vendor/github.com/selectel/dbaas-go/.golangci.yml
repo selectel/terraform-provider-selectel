@@ -1,0 +1,67 @@
+linters:
+  presets:
+  - bugs
+  - comment
+  - complexity
+  - error
+  - format
+  - metalinter
+  - performance
+  - sql
+  - unused
+  enable:
+  - gomoddirectives
+  - asciicheck
+  - dogsled
+  - dupl
+  - forcetypeassert
+  - gochecknoglobals
+  - gochecknoinits
+  - goconst
+  - godox
+  - goprintffuncname
+  - gosimple
+  - ifshort
+  - lll
+  - makezero
+  - nakedret
+  - nolintlint
+  - predeclared
+  - stylecheck
+  - thelper
+  - tparallel
+  - unconvert
+  - whitespace
+  - wastedassign
+  - tparallel
+  disable:
+  - scopelint
+  - funlen
+  - maligned
+linters-settings:
+  dogsled:
+    max-blank-identifiers: 3
+  errorlint:
+    errorf: true
+  godot:
+    scope: declarations
+  goimports:
+    local-prefixes: github.com/selectel/dbaas-go
+  gomoddirectives:
+    replace-local: true
+    retract-allow-no-explanation: false
+  govet:
+    enable:
+    - fieldalignment
+  lll:
+    tab-width: 4
+  nolintlint:
+    allow-leading-space: false
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+  - path: _test\.go
+    linters:
+    - goerr113
+    - forcetypeassert

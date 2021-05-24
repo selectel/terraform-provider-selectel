@@ -23,6 +23,7 @@ const (
 	objectNodegroup     = "nodegroup"
 	objectDomain        = "domain"
 	objectRecord        = "record"
+	objectDatastore     = "datastore"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -75,6 +76,7 @@ func Provider() *schema.Provider {
 			"selectel_mks_nodegroup_v1":          resourceMKSNodegroupV1(),
 			"selectel_domains_domain_v1":         resourceDomainsDomainV1(),
 			"selectel_domains_record_v1":         resourceDomainsRecordV1(),
+			"selectel_dbaas_datastore_v1":        resourceDBaaSDatastoreV1(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}

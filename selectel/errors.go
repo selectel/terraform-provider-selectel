@@ -79,3 +79,23 @@ func errResourceDeprecated(resource string) error {
 func errKubeVersionIsInvalidFmt(kubeVersion string, errMsg string) error {
 	return fmt.Errorf("kube version %s is invalid: %s", kubeVersion, errMsg)
 }
+
+func errParseDatastoreV1Flavor(err error) error {
+	return fmt.Errorf("got error parsing flavor: %s", err)
+}
+
+func errParseDatastoreV1Pooler(err error) error {
+	return fmt.Errorf("got error parsing pooler opts: %s", err)
+}
+
+func errParseDatastoreV1Firewall(err error) error {
+	return fmt.Errorf("got error parsing firewall opts: %s", err)
+}
+
+func errParseDatastoreV1Resize(err error) error {
+	return fmt.Errorf("got error parsing resize opts: %s", err)
+}
+
+func errParseDatastoreV1Restore(err error) error {
+	return fmt.Errorf("got error parsing restore opts: %s", err)
+}

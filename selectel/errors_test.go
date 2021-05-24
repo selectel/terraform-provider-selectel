@@ -182,3 +182,53 @@ func TestErrParseDomainsDomainRecordV1IDsPair(t *testing.T) {
 
 	assert.Equal(t, expected, actual)
 }
+
+func TestErrParseDatastoreV1Flavor(t *testing.T) {
+	err := errors.New(testErrString)
+
+	expected := errors.New("got error parsing flavor: got 503")
+
+	actual := errParseDatastoreV1Flavor(err)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestErrParseDatastoreV1Pooler(t *testing.T) {
+	err := errors.New(testErrString)
+
+	expected := errors.New("got error parsing pooler opts: got 503")
+
+	actual := errParseDatastoreV1Pooler(err)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestErrParseDatastoreV1Firewall(t *testing.T) {
+	err := errors.New(testErrString)
+
+	expected := errors.New("got error parsing firewall opts: got 503")
+
+	actual := errParseDatastoreV1Firewall(err)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestErrParseDatastoreV1Resize(t *testing.T) {
+	err := errors.New(testErrString)
+
+	expected := errors.New("got error parsing resize opts: got 503")
+
+	actual := errParseDatastoreV1Resize(err)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestErrParseDatastoreV1Restore(t *testing.T) {
+	err := errors.New(testErrString)
+
+	expected := errors.New("got error parsing restore opts: got 503")
+
+	actual := errParseDatastoreV1Restore(err)
+
+	assert.Equal(t, expected, actual)
+}
