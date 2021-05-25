@@ -102,7 +102,11 @@ func dataSourceDBaaSDatastoreTypeV1Read(ctx context.Context, d *schema.ResourceD
 	if err := d.Set("datastore_types", datastoreTypesFlatten); err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(stringListChecksum(datastoreTypeIDs))
+	checksum, err := stringListChecksum(datastoreTypeIDs)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(checksum)
 
 	return nil
 }

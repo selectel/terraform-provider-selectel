@@ -64,15 +64,22 @@ func getDBaaSClient(ctx context.Context, d *schema.ResourceData, meta interface{
 	return client, nil
 }
 
-func stringChecksum(s string) string {
+func stringChecksum(s string) (string, error) {
 	h := md5.New() // #nosec
-	h.Write([]byte(s))
+	_, err := h.Write([]byte(s))
+	if err != nil {
+		return "", err
+	}
 	bs := h.Sum(nil)
 
-	return fmt.Sprintf("%x", bs)
+	return fmt.Sprintf("%x", bs), nil
 }
 
-func stringListChecksum(s []string) string {
+func stringListChecksum(s []string) (string, error) {
 	sort.Strings(s)
-	return stringChecksum(strings.Join(s, ""))
+	checksum, err := stringChecksum(strings.Join(s, ""))
+	if err != nil {
+		return "", err
+	}
+	return checksum, nil
 }
