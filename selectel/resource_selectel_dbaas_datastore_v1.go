@@ -337,25 +337,17 @@ func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData,
 		nodeCount := d.Get("node_count").(int)
 		resizeOpts.NodeCount = nodeCount
 
-		flavorID, flavorIDOk := d.GetOk("flavor_id")
-		flavorRaw, flavorOk := d.GetOk("flavor")
+		flavorID := d.Get("flavor_id")
+		flavorRaw := d.Get("flavor")
 
-		if flavorIDOk == flavorOk {
-			return diag.FromErr(errors.New("either 'flavor' or 'flavor_id' must be provided"))
+		flavorSet := flavorRaw.(*schema.Set)
+		flavor, _ := resourceDBaaSDatastoreV1FlavorFromSet(flavorSet)
+		if err != nil {
+			diag.FromErr(errParseDatastoreV1Resize(err))
 		}
 
-		if flavorOk {
-			flavorSet := flavorRaw.(*schema.Set)
-			flavor, _ := resourceDBaaSDatastoreV1FlavorFromSet(flavorSet)
-			if err != nil {
-				diag.FromErr(errParseDatastoreV1Resize(err))
-			}
-
-			resizeOpts.Flavor = flavor
-		}
-		if flavorIDOk {
-			resizeOpts.FlavorID = flavorID.(string)
-		}
+		resizeOpts.Flavor = flavor
+		resizeOpts.FlavorID = flavorID.(string)
 
 		log.Print(msgUpdate(objectDatastore, d.Id(), resizeOpts))
 		_, err := dbaasClient.ResizeDatastore(ctx, d.Id(), resizeOpts)
