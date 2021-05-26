@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/dbaas-go"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 )
 
 func TestAccDBaaSDatastoreV1Basic(t *testing.T) {
@@ -60,30 +59,13 @@ func testAccCheckDBaaSDatastoreV1Exists(n string, dbaasDatastore *dbaas.Datastor
 			return errors.New("no ID is set")
 		}
 
-		var projectID, endpoint string
-		if id, ok := rs.Primary.Attributes["project_id"]; ok {
-			projectID = id
-		}
-		if region, ok := rs.Primary.Attributes["region"]; ok {
-			endpoint = getDBaaSV1Endpoint(region)
-		}
-
-		config := testAccProvider.Meta().(*Config)
-		resellV2Client := config.resellV2Client()
 		ctx := context.Background()
 
-		tokenOpts := tokens.TokenOpts{
-			ProjectID: projectID,
-		}
-		token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-		if err != nil {
-			return errCreatingObject(objectToken, err)
-		}
-
-		dbaasClient, err := dbaas.NewDBAASClient(token.ID, endpoint)
+		dbaasClient, err := baseTestAccCheckDBaaSV1EntityExists(ctx, rs, testAccProvider)
 		if err != nil {
 			return err
 		}
+
 		datastore, err := dbaasClient.Datastore(ctx, rs.Primary.ID)
 		if err != nil {
 			return err

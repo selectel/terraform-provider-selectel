@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/dbaas-go"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 )
@@ -82,4 +83,32 @@ func stringListChecksum(s []string) (string, error) {
 		return "", err
 	}
 	return checksum, nil
+}
+
+func baseTestAccCheckDBaaSV1EntityExists(ctx context.Context, rs *terraform.ResourceState, testAccProvider *schema.Provider) (*dbaas.API, error) {
+	var projectID, endpoint string
+	if id, ok := rs.Primary.Attributes["project_id"]; ok {
+		projectID = id
+	}
+	if region, ok := rs.Primary.Attributes["region"]; ok {
+		endpoint = getDBaaSV1Endpoint(region)
+	}
+
+	config := testAccProvider.Meta().(*Config)
+	resellV2Client := config.resellV2Client()
+
+	tokenOpts := tokens.TokenOpts{
+		ProjectID: projectID,
+	}
+	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
+	if err != nil {
+		return nil, errCreatingObject(objectToken, err)
+	}
+
+	dbaasClient, err := dbaas.NewDBAASClient(token.ID, endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	return dbaasClient, nil
 }

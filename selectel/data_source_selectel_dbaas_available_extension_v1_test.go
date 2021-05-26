@@ -12,35 +12,33 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
 )
 
-func TestAccDBaaSDatastoreTypesV1Basic(t *testing.T) {
+func TestAccDBaaSAvailableExtensionsV1Basic(t *testing.T) {
 	var (
-		dbaasDatastoreTypes []dbaas.DatastoreType
-		project             projects.Project
+		dbaasAvailableExtensions []dbaas.AvailableExtension
+		project                  projects.Project
 	)
 
+	const availableExtensionName = "hstore"
+
 	projectName := acctest.RandomWithPrefix("tf-acc")
-	datastoreTypeEngine := "postgresql"
-	datastoreTypeVersion := "12"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDBaaSDatastoreTypesV1Basic(projectName, datastoreTypeEngine, datastoreTypeVersion),
+				Config: testAccDBaaSAvailableExtensionsV1Basic(projectName, availableExtensionName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccDBaaSDatastoreTypesV1Exists("data.selectel_dbaas_datastore_type_v1.datastore_type_tf_acc_test_1", &dbaasDatastoreTypes),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_datastore_type_v1.datastore_type_tf_acc_test_1", "datastore_types.0.engine", datastoreTypeEngine),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_datastore_type_v1.datastore_type_tf_acc_test_1", "datastore_types.0.version", datastoreTypeVersion),
+					testAccDBaaSAvailableExtensionsV1Exists("data.selectel_dbaas_available_extension_v1.available_extension_tf_acc_test_1", &dbaasAvailableExtensions),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_available_extension_v1.available_extension_tf_acc_test_1", "available_extensions.0.name", availableExtensionName),
 				),
 			},
 		},
 	})
 }
 
-func testAccDBaaSDatastoreTypesV1Exists(n string, dbaasDatastoreTypes *[]dbaas.DatastoreType) resource.TestCheckFunc {
+func testAccDBaaSAvailableExtensionsV1Exists(n string, dbaasAvailableExtensions *[]dbaas.AvailableExtension) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -54,31 +52,30 @@ func testAccDBaaSDatastoreTypesV1Exists(n string, dbaasDatastoreTypes *[]dbaas.D
 			return err
 		}
 
-		datastoreTypes, err := dbaasClient.DatastoreTypes(ctx)
+		availableExtensions, err := dbaasClient.AvailableExtensions(ctx)
 		if err != nil {
 			return err
 		}
 
-		*dbaasDatastoreTypes = datastoreTypes
+		*dbaasAvailableExtensions = availableExtensions
 
 		return nil
 	}
 }
 
-func testAccDBaaSDatastoreTypesV1Basic(projectName, engine, version string) string {
+func testAccDBaaSAvailableExtensionsV1Basic(projectName, name string) string {
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
   auto_quotas = true
 }
 
-data "selectel_dbaas_datastore_type_v1" "datastore_type_tf_acc_test_1" {
+data "selectel_dbaas_available_extension_v1" "available_extension_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
   filter {
-    engine = "%s"
-    version = "%s"
+    name = "%s"
   }
 }
-`, projectName, engine, version)
+`, projectName, name)
 }
