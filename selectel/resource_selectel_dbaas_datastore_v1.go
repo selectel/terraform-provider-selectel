@@ -271,11 +271,13 @@ func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData,
 		return diagErr
 	}
 
-	var updateOpts dbaas.DatastoreUpdateOpts
-	var poolerOpts dbaas.DatastorePoolerOpts
-	var firewallOpts dbaas.DatastoreFirewallOpts
-	var resizeOpts dbaas.DatastoreResizeOpts
-	var err error
+	var (
+		updateOpts   dbaas.DatastoreUpdateOpts
+		poolerOpts   dbaas.DatastorePoolerOpts
+		firewallOpts dbaas.DatastoreFirewallOpts
+		resizeOpts   dbaas.DatastoreResizeOpts
+		err          error
+	)
 
 	if d.HasChange("name") {
 		updateOpts.Name = d.Get("name").(string)
@@ -341,16 +343,16 @@ func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData,
 		flavorRaw := d.Get("flavor")
 
 		flavorSet := flavorRaw.(*schema.Set)
-		flavor, _ := resourceDBaaSDatastoreV1FlavorFromSet(flavorSet)
+		flavor, err := resourceDBaaSDatastoreV1FlavorFromSet(flavorSet)
 		if err != nil {
-			diag.FromErr(errParseDatastoreV1Resize(err))
+			return diag.FromErr(errParseDatastoreV1Resize(err))
 		}
 
 		resizeOpts.Flavor = flavor
 		resizeOpts.FlavorID = flavorID.(string)
 
 		log.Print(msgUpdate(objectDatastore, d.Id(), resizeOpts))
-		_, err := dbaasClient.ResizeDatastore(ctx, d.Id(), resizeOpts)
+		_, err = dbaasClient.ResizeDatastore(ctx, d.Id(), resizeOpts)
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectDatastore, d.Id(), err))
 		}

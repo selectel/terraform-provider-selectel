@@ -183,6 +183,17 @@ func TestErrParseDomainsDomainRecordV1IDsPair(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestErrGettingObjects(t *testing.T) {
+	object := "datastore-types"
+	err := errors.New(testErrString)
+
+	expected := errors.New("error getting datastore-types: got 503")
+
+	actual := errGettingObjects(object, err)
+
+	assert.Equal(t, expected, actual)
+}
+
 func TestErrParseDatastoreV1Flavor(t *testing.T) {
 	err := errors.New(testErrString)
 
