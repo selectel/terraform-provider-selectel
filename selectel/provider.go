@@ -9,20 +9,22 @@ import (
 )
 
 const (
-	objectFloatingIP    = "floating IP"
-	objectKeypair       = "keypair"
-	objectLicense       = "license"
-	objectProject       = "project"
-	objectProjectQuotas = "quotas for project"
-	objectRole          = "role"
-	objectSubnet        = "subnet"
-	objectToken         = "token"
-	objectUser          = "user"
-	objectVRRPSubnet    = "VRRP subnet"
-	objectCluster       = "cluster"
-	objectNodegroup     = "nodegroup"
-	objectDomain        = "domain"
-	objectRecord        = "record"
+	objectFloatingIP     = "floating IP"
+	objectKeypair        = "keypair"
+	objectLicense        = "license"
+	objectProject        = "project"
+	objectProjectQuotas  = "quotas for project"
+	objectRole           = "role"
+	objectSubnet         = "subnet"
+	objectToken          = "token"
+	objectUser           = "user"
+	objectVRRPSubnet     = "VRRP subnet"
+	objectCluster        = "cluster"
+	objectNodegroup      = "nodegroup"
+	objectDomain         = "domain"
+	objectRecord         = "record"
+	objectDatastore      = "datastore"
+	objectDatastoreTypes = "datastore-types"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -58,7 +60,8 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"selectel_domains_domain_v1": dataSourceDomainsDomainV1(),
+			"selectel_domains_domain_v1":       dataSourceDomainsDomainV1(),
+			"selectel_dbaas_datastore_type_v1": dataSourceDBaaSDatastoreTypeV1(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"selectel_vpc_floatingip_v2":         resourceVPCFloatingIPV2(),
@@ -75,6 +78,7 @@ func Provider() *schema.Provider {
 			"selectel_mks_nodegroup_v1":          resourceMKSNodegroupV1(),
 			"selectel_domains_domain_v1":         resourceDomainsDomainV1(),
 			"selectel_domains_record_v1":         resourceDomainsRecordV1(),
+			"selectel_dbaas_datastore_v1":        resourceDBaaSDatastoreV1(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}
