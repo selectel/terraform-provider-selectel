@@ -26,6 +26,7 @@ const (
 	objectDatastore           = "datastore"
 	objectDatastoreTypes      = "datastore-types"
 	objectAvailableExtensions = "available-extensions"
+	objectFlavors             = "flavors"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -64,6 +65,7 @@ func Provider() *schema.Provider {
 			"selectel_domains_domain_v1":            dataSourceDomainsDomainV1(),
 			"selectel_dbaas_datastore_type_v1":      dataSourceDBaaSDatastoreTypeV1(),
 			"selectel_dbaas_available_extension_v1": dataSourceDBaaSAvailableExtensionV1(),
+			"selectel_dbaas_flavor_v1":              dataSourceDBaaSFlavorV1(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"selectel_vpc_floatingip_v2":         resourceVPCFloatingIPV2(),
