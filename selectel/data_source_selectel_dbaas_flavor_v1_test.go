@@ -1,0 +1,80 @@
+package selectel
+
+import (
+	"context"
+	"fmt"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/selectel/dbaas-go"
+	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
+)
+
+func TestAccDBaaSFlavorsV1Basic(t *testing.T) {
+	var (
+		dbaasFlavors []dbaas.FlavorResponse
+		project      projects.Project
+	)
+
+	projectName := acctest.RandomWithPrefix("tf-acc")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDBaaSFlavorsV1Basic(projectName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccDBaaSFlavorsV1Exists("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", &dbaasFlavors),
+					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", "flavors.0.id"),
+					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", "flavors.0.name"),
+					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", "flavors.0.vcpus"),
+					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", "flavors.0.ram"),
+					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", "flavors.0.disk"),
+				),
+			},
+		},
+	})
+}
+
+func testAccDBaaSFlavorsV1Exists(n string, dbaasFlavors *[]dbaas.FlavorResponse) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+
+		ctx := context.Background()
+
+		dbaasClient, err := baseTestAccCheckDBaaSV1EntityExists(ctx, rs, testAccProvider)
+		if err != nil {
+			return err
+		}
+
+		flavors, err := dbaasClient.Flavors(ctx)
+		if err != nil {
+			return err
+		}
+
+		*dbaasFlavors = flavors
+
+		return nil
+	}
+}
+
+func testAccDBaaSFlavorsV1Basic(projectName string) string {
+	return fmt.Sprintf(`
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
+  name        = "%s"
+  auto_quotas = true
+}
+
+data "selectel_dbaas_flavor_v1" "flavor_tf_acc_test_1" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region     = "ru-3"
+}
+`, projectName)
+}
