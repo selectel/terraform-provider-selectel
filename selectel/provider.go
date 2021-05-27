@@ -83,6 +83,7 @@ func Provider() *schema.Provider {
 			"selectel_domains_domain_v1":         resourceDomainsDomainV1(),
 			"selectel_domains_record_v1":         resourceDomainsRecordV1(),
 			"selectel_dbaas_datastore_v1":        resourceDBaaSDatastoreV1(),
+			"selectel_dbaas_user_v1":             resourceDBaaSUserV1(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}

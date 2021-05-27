@@ -256,10 +256,14 @@ func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, m
 	d.Set("type_id", datastore.TypeID)
 	d.Set("node_count", datastore.NodeCount)
 	d.Set("enabled", datastore.Enabled)
+	d.Set("flavor_id", datastore.FlavorID)
 
-	flavor := resourceDBaaSDatastoreV1FlavorToSet(datastore.Flavor)
-	if err := d.Set("flavor", flavor); err != nil {
-		log.Print(errSettingComplexAttr("flavor", err))
+	_, flavorIDOk := d.GetOk("flavor_id")
+	if !flavorIDOk {
+		flavor := resourceDBaaSDatastoreV1FlavorToSet(datastore.Flavor)
+		if err := d.Set("flavor", flavor); err != nil {
+			log.Print(errSettingComplexAttr("flavor", err))
+		}
 	}
 
 	return nil
