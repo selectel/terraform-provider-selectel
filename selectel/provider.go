@@ -24,6 +24,7 @@ const (
 	objectDomain              = "domain"
 	objectRecord              = "record"
 	objectDatastore           = "datastore"
+	objectDatabase            = "database"
 	objectDatastoreTypes      = "datastore-types"
 	objectAvailableExtensions = "available-extensions"
 	objectFlavors             = "flavors"
@@ -84,6 +85,7 @@ func Provider() *schema.Provider {
 			"selectel_domains_record_v1":         resourceDomainsRecordV1(),
 			"selectel_dbaas_datastore_v1":        resourceDBaaSDatastoreV1(),
 			"selectel_dbaas_user_v1":             resourceDBaaSUserV1(),
+			"selectel_dbaas_database_v1":         resourceDBaaSDatabaseV1(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}
