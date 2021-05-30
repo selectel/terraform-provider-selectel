@@ -1,5 +1,14 @@
 ## 3.6.0 (Unreleased)
 
+FEATURES:
+
+* __New Resource:__ `selectel_dbaas_datastore_v1` ([#150](https://github.com/selectel/terraform-provider-selectel/issues/150))
+* __New Resource:__ `selectel_dbaas_user_v1` ([#150](https://github.com/selectel/terraform-provider-selectel/issues/150))
+* __New Resource:__ `selectel_dbaas_database_v1` ([#150](https://github.com/selectel/terraform-provider-selectel/issues/150))
+* __New Data Source:__ `selectel_dbaas_datastore_type_v1` ([#150](https://github.com/selectel/terraform-provider-selectel/issues/150))
+* __New Data Source:__ `selectel_dbaas_available_extension_v1` ([#150](https://github.com/selectel/terraform-provider-selectel/issues/150))
+* __New Data Source:__ `selectel_dbaas_flavor_v1` ([#150](https://github.com/selectel/terraform-provider-selectel/issues/150))
+
 IMPROVEMENTS:
 
 * Updated Go version to `1.15` ([#148](https://github.com/selectel/terraform-provider-selectel/pull/148))
