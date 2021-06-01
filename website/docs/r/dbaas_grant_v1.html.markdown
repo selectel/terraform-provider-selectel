@@ -47,9 +47,6 @@ resource "selectel_dbaas_datastore_v1" "datastore_1" {
     mode = "transaction"
     size = 50
   }
-  firewall {
-      ips = [ "127.0.0.1", "127.0.0.2" ]
-  }
 }
 
 resource "selectel_dbaas_user_v1" "user_1" {
