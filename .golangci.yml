@@ -51,6 +51,10 @@ linters:
     - varcheck
     - whitespace
 
+linters-settings:
+  dupl:
+    threshold: 200
+
 issues:
   exclude-rules:
     - linters:
