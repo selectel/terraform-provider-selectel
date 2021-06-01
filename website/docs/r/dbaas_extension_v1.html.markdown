@@ -1,14 +1,14 @@
 ---
 layout: "selectel"
-page_title: "Selectel: selectel_dbaas_grant_v1"
-sidebar_current: "docs-selectel-resource-dbaas-grant-v1"
+page_title: "Selectel: selectel_dbaas_extension_v1"
+sidebar_current: "docs-selectel-resource-dbaas-extension-v1"
 description: |-
-  Manages a V1 grant resource within Selectel Managed Databases Service.
+  Manages a V1 extension resource within Selectel Managed Databases Service.
 ---
 
-# selectel\_dbaas\_grant\_v1
+# selectel\_dbaas\_extension\_v1
 
-Manages a V1 grant resource within Selectel Managed Databases Service.
+Manages a V1 extension resource within Selectel Managed Databases Service. Can be installed only for PostgreSQL datastores.
 
 ## Example usage
 
@@ -67,12 +67,20 @@ resource "selectel_dbaas_database_v1" "database_1" {
   lc_collate   = "ru_RU.utf8"
 }
 
-resource "selectel_dbaas_grant_v1" "grant_1" {
+data "selectel_dbaas_available_extension_v1" "ae" {
   project_id   = "${selectel_vpc_project_v2.project_1.id}"
   region       = "ru-3"
-  datastore_id = "${selectel_dbaas_datastore_v1.datastore_1.id}"
-  database_id  = "${selectel_dbaas_database_v1.database_1.id}"
-  user_id      = "${selectel_dbaas_user_v1.user_1.id}"
+  filter {
+    name = "hstore"
+  }
+}
+
+resource "selectel_dbaas_extension_v1" "extension_1" {
+  project_id                  = "${selectel_vpc_project_v2.project_1.id}"
+  region                      = "ru-3"
+  datastore_id                = "${selectel_dbaas_datastore_v1.datastore_1.id}"
+  database_id                 = "${selectel_dbaas_database_v1.database_1.id}"
+  available_extension_id      = data.selectel_dbaas_available_extension_v1.ae.available_extensions[0].id
 }
 ```
 
@@ -81,30 +89,30 @@ resource "selectel_dbaas_grant_v1" "grant_1" {
 The following arguments are supported:
 
 * `project_id` - (Required) An associated Selectel VPC project.
-  Changing this creates a new grant.
+  Changing this creates a new extension.
 
 * `region` - (Required) A Selectel VPC region of where the database is located.
-  Changing this creates a new grant.
+  Changing this creates a new extension.
 
 * `datastore_id` - (Required) An associated datastore.
-  Changing this creates a new grant.
+  Changing this creates a new extension.
 
 * `database_id` - (Required) An associated database.
-  Changing this creates a new grant.
+  Changing this creates a new extension.
 
-* `user_id` - (Required) An associated user.
-  Changing this creates a new grant.
+* `available_extension_id` - (Required) An associated available extension.
+  Changing this creates a new extension.
 
 ## Attributes Reference
 
 The following attributes are exported:
 
-* `status` - Shows the current status of the grant.
+* `status` - Shows the current status of the extension.
 
 ## Import
 
-Grant can be imported using the `id`, e.g.
+Extension can be imported using the `id`, e.g.
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID SEL_REGION=SELECTEL_VPC_REGION terraform import selectel_dbaas_grant_v1.grant_1 b311ce58-2658-46b5-b733-7a0f418703f2
+$ env SEL_TOKEN=SELECTEL_API_TOKEN SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID SEL_REGION=SELECTEL_VPC_REGION terraform import selectel_dbaas_extension_v1.extension_1 b311ce58-2658-46b5-b733-7a0f418703f2
 ```

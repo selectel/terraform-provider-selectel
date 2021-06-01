@@ -16,13 +16,13 @@ import (
 	"github.com/selectel/dbaas-go"
 )
 
-func resourceDBaaSGrantV1() *schema.Resource {
+func resourceDBaaSExtensionV1() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceDBaaSGrantV1Create,
-		ReadContext:   resourceDBaaSGrantV1Read,
-		DeleteContext: resourceDBaaSGrantV1Delete,
+		CreateContext: resourceDBaaSExtensionV1Create,
+		ReadContext:   resourceDBaaSExtensionV1Read,
+		DeleteContext: resourceDBaaSExtensionV1Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceDBaaSGrantV1ImportState,
+			StateContext: resourceDBaaSExtensionV1ImportState,
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(60 * time.Minute),
@@ -48,17 +48,17 @@ func resourceDBaaSGrantV1() *schema.Resource {
 					ru9Region,
 				}, false),
 			},
+			"available_extension_id": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
 			"datastore_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 			"database_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"user_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
@@ -71,112 +71,106 @@ func resourceDBaaSGrantV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSGrantV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSExtensionV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	datastoreID := d.Get("datastore_id").(string)
 
 	selMutexKV.Lock(datastoreID)
 	defer selMutexKV.Unlock(datastoreID)
 
 	databaseID := d.Get("database_id").(string)
+
 	selMutexKV.Lock(databaseID)
 	defer selMutexKV.Unlock(databaseID)
 
-	userID := d.Get("user_id").(string)
-	selMutexKV.Lock(userID)
-	defer selMutexKV.Unlock(userID)
-
 	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
 
-	grantCreateOpts := dbaas.GrantCreateOpts{
-		DatastoreID: datastoreID,
-		DatabaseID:  databaseID,
-		UserID:      userID,
+	extensionCreateOpts := dbaas.ExtensionCreateOpts{
+		AvailableExtensionID: d.Get("available_extension_id").(string),
+		DatastoreID:          datastoreID,
+		DatabaseID:           databaseID,
 	}
 
-	log.Print(msgCreate(objectGrant, grantCreateOpts))
-	grant, err := dbaasClient.CreateGrant(ctx, grantCreateOpts)
+	log.Print(msgCreate(objectExtension, extensionCreateOpts))
+	extension, err := dbaasClient.CreateExtension(ctx, extensionCreateOpts)
 	if err != nil {
-		return diag.FromErr(errCreatingObject(objectGrant, err))
+		return diag.FromErr(errCreatingObject(objectExtension, err))
 	}
 
-	log.Printf("[DEBUG] waiting for grant %s to become 'ACTIVE'", grant.ID)
+	log.Printf("[DEBUG] waiting for extension %s to become 'ACTIVE'", extension.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForDBaaSGrantV1ActiveState(ctx, dbaasClient, grant.ID, timeout)
+	err = waitForDBaaSExtensionV1ActiveState(ctx, dbaasClient, extension.ID, timeout)
 	if err != nil {
-		return diag.FromErr(errCreatingObject(objectGrant, err))
+		return diag.FromErr(errCreatingObject(objectExtension, err))
 	}
 
-	d.SetId(grant.ID)
+	d.SetId(extension.ID)
 
-	return resourceDBaaSGrantV1Read(ctx, d, meta)
+	return resourceDBaaSExtensionV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSGrantV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSExtensionV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
 
-	log.Print(msgGet(objectGrant, d.Id()))
-	grant, err := dbaasClient.Grant(ctx, d.Id())
+	log.Print(msgGet(objectExtension, d.Id()))
+	extension, err := dbaasClient.Extension(ctx, d.Id())
 	if err != nil {
-		return diag.FromErr(errGettingObject(objectGrant, d.Id(), err))
+		return diag.FromErr(errGettingObject(objectExtension, d.Id(), err))
 	}
-	d.Set("user_id", grant.UserID)
-	d.Set("database_id", grant.DatabaseID)
-	d.Set("datastore_id", grant.DatastoreID)
-	d.Set("status", grant.Status)
+
+	d.Set("available_extension_id", extension.AvailableExtensionID)
+	d.Set("datastore_id", extension.DatastoreID)
+	d.Set("database_id", extension.DatabaseID)
 
 	return nil
 }
 
-func resourceDBaaSGrantV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSExtensionV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	datastoreID := d.Get("datastore_id").(string)
 
 	selMutexKV.Lock(datastoreID)
 	defer selMutexKV.Unlock(datastoreID)
 
 	databaseID := d.Get("database_id").(string)
+
 	selMutexKV.Lock(databaseID)
 	defer selMutexKV.Unlock(databaseID)
-
-	userID := d.Get("user_id").(string)
-	selMutexKV.Lock(userID)
-	defer selMutexKV.Unlock(userID)
 
 	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
 
-	log.Print(msgDelete(objectGrant, d.Id()))
-	err := dbaasClient.DeleteGrant(ctx, d.Id())
+	log.Print(msgDelete(objectExtension, d.Id()))
+	err := dbaasClient.DeleteExtension(ctx, d.Id())
 	if err != nil {
-		return diag.FromErr(errDeletingObject(objectGrant, d.Id(), err))
+		return diag.FromErr(errGettingObject(objectExtension, d.Id(), err))
 	}
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{strconv.Itoa(http.StatusOK)},
 		Target:     []string{strconv.Itoa(http.StatusNotFound)},
-		Refresh:    dbaasGrantV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
+		Refresh:    dbaasExtensionV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      10 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
 
-	log.Printf("[DEBUG] waiting for grant %s to become deleted", d.Id())
+	log.Printf("[DEBUG] waiting for extension %s to become deleted", d.Id())
 	_, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error waiting for the grant %s to become deleted: %s", d.Id(), err))
+		return diag.FromErr(fmt.Errorf("error waiting for the extension %s to become deleted: %s", d.Id(), err))
 	}
 
 	return nil
 }
 
-func resourceDBaaSGrantV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSExtensionV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")
@@ -191,8 +185,8 @@ func resourceDBaaSGrantV1ImportState(_ context.Context, d *schema.ResourceData, 
 	return []*schema.ResourceData{d}, nil
 }
 
-func waitForDBaaSGrantV1ActiveState(
-	ctx context.Context, client *dbaas.API, grantID string, timeout time.Duration) error {
+func waitForDBaaSExtensionV1ActiveState(
+	ctx context.Context, client *dbaas.API, extensionID string, timeout time.Duration) error {
 	pending := []string{
 		string(dbaas.StatusPendingCreate),
 		string(dbaas.StatusPendingUpdate),
@@ -204,7 +198,7 @@ func waitForDBaaSGrantV1ActiveState(
 	stateConf := &resource.StateChangeConf{
 		Pending:    pending,
 		Target:     target,
-		Refresh:    dbaasGrantV1StateRefreshFunc(ctx, client, grantID),
+		Refresh:    dbaasExtensionV1StateRefreshFunc(ctx, client, extensionID),
 		Timeout:    timeout,
 		Delay:      10 * time.Second,
 		MinTimeout: 3 * time.Second,
@@ -213,16 +207,16 @@ func waitForDBaaSGrantV1ActiveState(
 	_, err := stateConf.WaitForState()
 	if err != nil {
 		return fmt.Errorf(
-			"error waiting for the grant %s to become 'ACTIVE': %s",
-			grantID, err)
+			"error waiting for the extension %s to become 'ACTIVE': %s",
+			extensionID, err)
 	}
 
 	return nil
 }
 
-func dbaasGrantV1StateRefreshFunc(ctx context.Context, client *dbaas.API, grantID string) resource.StateRefreshFunc {
+func dbaasExtensionV1StateRefreshFunc(ctx context.Context, client *dbaas.API, extensionID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		d, err := client.Grant(ctx, grantID)
+		d, err := client.Extension(ctx, extensionID)
 		if err != nil {
 			return nil, "", err
 		}
@@ -231,9 +225,9 @@ func dbaasGrantV1StateRefreshFunc(ctx context.Context, client *dbaas.API, grantI
 	}
 }
 
-func dbaasGrantV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, grantID string) resource.StateRefreshFunc {
+func dbaasExtensionV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, extensionID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		d, err := client.Grant(ctx, grantID)
+		d, err := client.Extension(ctx, extensionID)
 		if err != nil {
 			var dbaasError *dbaas.DBaaSAPIError
 			if errors.As(err, &dbaasError) {

@@ -26,6 +26,7 @@ const (
 	objectDatastore           = "datastore"
 	objectDatabase            = "database"
 	objectGrant               = "grant"
+	objectExtension           = "extension"
 	objectDatastoreTypes      = "datastore-types"
 	objectAvailableExtensions = "available-extensions"
 	objectFlavors             = "flavors"
@@ -88,6 +89,7 @@ func Provider() *schema.Provider {
 			"selectel_dbaas_user_v1":             resourceDBaaSUserV1(),
 			"selectel_dbaas_database_v1":         resourceDBaaSDatabaseV1(),
 			"selectel_dbaas_grant_v1":            resourceDBaaSGrantV1(),
+			"selectel_dbaas_extension_v1":        resourceDBaaSExtensionV1(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}

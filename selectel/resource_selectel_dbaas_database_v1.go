@@ -103,7 +103,7 @@ func resourceDBaaSDatabaseV1Create(ctx context.Context, d *schema.ResourceData, 
 		LcCtype:     d.Get("lc_ctype").(string),
 	}
 
-	log.Print(msgGet(objectDatabase, d.Id()))
+	log.Print(msgCreate(objectDatabase, databaseCreateOpts))
 	database, err := dbaasClient.CreateDatabase(ctx, databaseCreateOpts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectDatabase, err))
