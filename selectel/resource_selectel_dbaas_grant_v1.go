@@ -30,7 +30,6 @@ func resourceDBaaSGrantV1() *schema.Resource {
 			Delete: schema.DefaultTimeout(60 * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
-
 			"project_id": {
 				Type:     schema.TypeString,
 				Required: true,
