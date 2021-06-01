@@ -96,7 +96,7 @@ func resourceDBaaSGrantV1Create(ctx context.Context, d *schema.ResourceData, met
 		UserID:      userID,
 	}
 
-	log.Print(msgGet(objectGrant, d.Id()))
+	log.Print(msgCreate(objectGrant, grantCreateOpts))
 	grant, err := dbaasClient.CreateGrant(ctx, grantCreateOpts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectGrant, err))

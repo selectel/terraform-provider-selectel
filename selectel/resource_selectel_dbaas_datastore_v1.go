@@ -220,7 +220,7 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 		datastoreCreateOpts.FlavorID = flavorID.(string)
 	}
 
-	log.Print(msgGet(objectDatastore, d.Id()))
+	log.Print(msgCreate(objectDatastore, datastoreCreateOpts))
 	datastore, err := dbaasClient.CreateDatastore(ctx, datastoreCreateOpts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectDatastore, err))

@@ -89,7 +89,7 @@ func resourceDBaaSUserV1Create(ctx context.Context, d *schema.ResourceData, meta
 		Password:    d.Get("password").(string),
 	}
 
-	log.Print(msgGet(objectUser, d.Id()))
+	log.Print(msgCreate(objectUser, userCreateOpts))
 	user, err := dbaasClient.CreateUser(ctx, userCreateOpts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectUser, err))

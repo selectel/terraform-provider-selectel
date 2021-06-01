@@ -93,7 +93,7 @@ func resourceDBaaSExtensionV1Create(ctx context.Context, d *schema.ResourceData,
 		DatabaseID:           databaseID,
 	}
 
-	log.Print(objectExtension, d.Id())
+	log.Print(msgCreate(objectExtension, extensionCreateOpts))
 	extension, err := dbaasClient.CreateExtension(ctx, extensionCreateOpts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectExtension, err))
