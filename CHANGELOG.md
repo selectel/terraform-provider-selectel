@@ -1,4 +1,4 @@
-## 3.6.0 (Unreleased)
+## 3.6.0 (June 03, 2021)
 
 FEATURES:
 
