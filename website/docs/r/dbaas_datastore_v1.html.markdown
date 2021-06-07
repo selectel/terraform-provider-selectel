@@ -104,6 +104,8 @@ The following attributes are exported:
 
 * `status` - Shows the current status of the datastore.
 
+* `connections` - Shows DNS connection strings for the datastore.
+
 ## Import
 
 Datastore can be imported using the `id`, e.g.

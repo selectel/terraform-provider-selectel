@@ -31,6 +31,14 @@ The folowing arguments are supported
 
 * `region` - (Required) A Selectel VPC region.
 
+* `filter` - (Optional) One or more values used to look up flavors.
+
+**filter**
+
+- `vcpus` - (Optional) vCPU of the flavor to lookup.
+- `ram` - (Optional) RAM of the flavor to lookup.
+- `disk` - (Optional) Disk of the flavor to lookup.
+
 ## Attributes Reference
 
 The following attributes are exported:
