@@ -9,6 +9,12 @@ import (
 	"github.com/selectel/dbaas-go"
 )
 
+type flavorSearchFilter struct {
+	vcpus int
+	ram   int
+	disk  int
+}
+
 func dataSourceDBaaSFlavorV1() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceDBaaSFlavorV1Read,
@@ -61,6 +67,26 @@ func dataSourceDBaaSFlavorV1() *schema.Resource {
 					},
 				},
 			},
+			"filter": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"vcpus": {
+							Type:     schema.TypeInt,
+							Optional: true,
+						},
+						"ram": {
+							Type:     schema.TypeInt,
+							Optional: true,
+						},
+						"disk": {
+							Type:     schema.TypeInt,
+							Optional: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -81,6 +107,15 @@ func dataSourceDBaaSFlavorV1Read(ctx context.Context, d *schema.ResourceData, me
 		flavorIDs = append(flavorIDs, flavor.ID)
 	}
 
+	filter, err := expandFlavorSearchFilter(d.Get("filter").(*schema.Set))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	flavors = filterFlavorByVcpus(flavors, filter.vcpus)
+	flavors = filterFlavorByRAM(flavors, filter.ram)
+	flavors = filterFlavorByDisk(flavors, filter.disk)
+
 	flavorsFlatten := flattenDBaaSFlavors(flavors)
 	if err := d.Set("flavors", flavorsFlatten); err != nil {
 		return diag.FromErr(err)
@@ -92,6 +127,77 @@ func dataSourceDBaaSFlavorV1Read(ctx context.Context, d *schema.ResourceData, me
 	d.SetId(checksum)
 
 	return nil
+}
+
+func expandFlavorSearchFilter(filterSet *schema.Set) (flavorSearchFilter, error) {
+	filter := flavorSearchFilter{}
+	if filterSet.Len() == 0 {
+		return filter, nil
+	}
+
+	resourceFilterMap := filterSet.List()[0].(map[string]interface{})
+
+	vcpus, ok := resourceFilterMap["vcpus"]
+	if ok {
+		filter.vcpus = vcpus.(int)
+	}
+
+	ram, ok := resourceFilterMap["ram"]
+	if ok {
+		filter.ram = ram.(int)
+	}
+
+	disk, ok := resourceFilterMap["disk"]
+	if ok {
+		filter.disk = disk.(int)
+	}
+
+	return filter, nil
+}
+
+func filterFlavorByVcpus(flavors []dbaas.FlavorResponse, vcpus int) []dbaas.FlavorResponse {
+	if vcpus == 0 {
+		return flavors
+	}
+
+	var filteredFlavors []dbaas.FlavorResponse
+	for _, f := range flavors {
+		if f.Vcpus == vcpus {
+			filteredFlavors = append(filteredFlavors, f)
+		}
+	}
+
+	return filteredFlavors
+}
+
+func filterFlavorByRAM(flavors []dbaas.FlavorResponse, ram int) []dbaas.FlavorResponse {
+	if ram == 0 {
+		return flavors
+	}
+
+	var filteredFlavors []dbaas.FlavorResponse
+	for _, f := range flavors {
+		if f.RAM == ram {
+			filteredFlavors = append(filteredFlavors, f)
+		}
+	}
+
+	return filteredFlavors
+}
+
+func filterFlavorByDisk(flavors []dbaas.FlavorResponse, disk int) []dbaas.FlavorResponse {
+	if disk == 0 {
+		return flavors
+	}
+
+	var filteredFlavors []dbaas.FlavorResponse
+	for _, f := range flavors {
+		if f.Disk == disk {
+			filteredFlavors = append(filteredFlavors, f)
+		}
+	}
+
+	return filteredFlavors
 }
 
 func flattenDBaaSFlavors(flavors []dbaas.FlavorResponse) []interface{} {
