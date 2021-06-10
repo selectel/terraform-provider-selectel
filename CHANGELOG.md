@@ -1,3 +1,10 @@
+## 3.6.1 (June 08, 2021)
+
+IMPROVEMENTS:
+
+* Add `filter` argument for the `selectel_dbaas_flavor_v1` data source ([#150](https://github.com/selectel/terraform-provider-selectel/issues/150))
+* Add `connections` attribute for the `selectel_dbaas_datastore_v1` resource ([#150](https://github.com/selectel/terraform-provider-selectel/issues/150))
+
 ## 3.6.0 (June 03, 2021)
 
 FEATURES:
