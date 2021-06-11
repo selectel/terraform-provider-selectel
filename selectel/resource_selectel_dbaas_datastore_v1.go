@@ -84,15 +84,10 @@ func resourceDBaaSDatastoreV1() *schema.Resource {
 				Computed: true,
 			},
 			"connections": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeMap,
 				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"master": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"flavor": {
@@ -278,8 +273,9 @@ func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, m
 		}
 	}
 
-	connection := resourceDBaaSDatastoreV1ConnectionToSet(datastore.Connection)
-	if err := d.Set("connections", connection); err != nil {
+	connectonMap := make(map[string]string)
+	connectonMap["master"] = datastore.Connection.Master
+	if err := d.Set("connections", connectonMap); err != nil {
 		log.Print(errSettingComplexAttr("connections", err))
 	}
 
@@ -541,26 +537,6 @@ func flavorSchema() *schema.Resource {
 
 func flavorHashSetFunc() schema.SchemaSetFunc {
 	return schema.HashResource(flavorSchema())
-}
-
-func resourceDBaaSDatastoreV1ConnectionToSet(connection dbaas.Connection) *schema.Set {
-	connectionSet := &schema.Set{
-		F: connectionHashSetFunc(),
-	}
-
-	connectionSet.Add(map[string]interface{}{
-		"master": connection.Master,
-	})
-
-	return connectionSet
-}
-
-func connectionSchema() *schema.Resource {
-	return resourceDBaaSDatastoreV1().Schema["connections"].Elem.(*schema.Resource)
-}
-
-func connectionHashSetFunc() schema.SchemaSetFunc {
-	return schema.HashResource(connectionSchema())
 }
 
 func resourceDBaaSDatastoreV1PoolerFromSet(poolerSet *schema.Set) (*dbaas.Pooler, error) {
