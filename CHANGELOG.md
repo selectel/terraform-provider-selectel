@@ -1,3 +1,9 @@
+## 3.6.2 (June 11, 2021)
+
+IMPROVEMENTS:
+
+* Change `connection` attribute type from TypeSet to TypeMap for the `selectel_dbaas_datastore_v1` resource ([#159](https://github.com/selectel/terraform-provider-selectel/pull/159))
+
 ## 3.6.1 (June 08, 2021)
 
 IMPROVEMENTS:
