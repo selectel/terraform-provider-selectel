@@ -20,7 +20,7 @@ resource "selectel_vpc_project_v2" "project_1" {
 data "selectel_dbaas_available_extension_v1" "ae" {
   project_id   = "${selectel_vpc_project_v2.project_1.id}"
   region       = "ru-3"
-  filter       = {
+  filter {
     name  = "hstore"
   }
 }
