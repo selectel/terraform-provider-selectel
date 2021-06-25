@@ -108,6 +108,7 @@ github.com/hashicorp/go-multierror
 github.com/hashicorp/go-plugin
 github.com/hashicorp/go-plugin/internal/plugin
 # github.com/hashicorp/go-retryablehttp v0.6.6
+## explicit
 github.com/hashicorp/go-retryablehttp
 # github.com/hashicorp/go-safetemp v1.0.0
 github.com/hashicorp/go-safetemp
@@ -126,6 +127,7 @@ github.com/hashicorp/terraform-exec/internal/version
 github.com/hashicorp/terraform-exec/tfexec
 github.com/hashicorp/terraform-exec/tfinstall
 # github.com/hashicorp/terraform-json v0.12.0
+## explicit
 github.com/hashicorp/terraform-json
 # github.com/hashicorp/terraform-plugin-go v0.3.0
 github.com/hashicorp/terraform-plugin-go/tfprotov5
@@ -135,6 +137,7 @@ github.com/hashicorp/terraform-plugin-go/tfprotov5/internal/toproto
 github.com/hashicorp/terraform-plugin-go/tfprotov5/server
 github.com/hashicorp/terraform-plugin-go/tftypes
 # github.com/hashicorp/terraform-plugin-sdk/v2 v2.6.1
+## explicit
 github.com/hashicorp/terraform-plugin-sdk/v2/diag
 github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest
 github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff
@@ -189,12 +192,15 @@ github.com/oklog/run
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
 # github.com/selectel/dbaas-go v0.1.1
+## explicit
 github.com/selectel/dbaas-go
 # github.com/selectel/domains-go v0.3.0
+## explicit
 github.com/selectel/domains-go/pkg/v1
 github.com/selectel/domains-go/pkg/v1/domain
 github.com/selectel/domains-go/pkg/v1/record
 # github.com/selectel/go-selvpcclient v1.12.0
+## explicit
 github.com/selectel/go-selvpcclient/selvpcclient
 github.com/selectel/go-selvpcclient/selvpcclient/resell
 github.com/selectel/go-selvpcclient/selvpcclient/resell/v2
@@ -210,12 +216,14 @@ github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens
 github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/users
 github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/vrrpsubnets
 # github.com/selectel/mks-go v0.6.0
+## explicit
 github.com/selectel/mks-go/pkg/v1
 github.com/selectel/mks-go/pkg/v1/cluster
 github.com/selectel/mks-go/pkg/v1/kubeversion
 github.com/selectel/mks-go/pkg/v1/node
 github.com/selectel/mks-go/pkg/v1/nodegroup
 # github.com/stretchr/testify v1.7.0
+## explicit
 github.com/stretchr/testify/assert
 # github.com/ulikunitz/xz v0.5.8
 github.com/ulikunitz/xz
