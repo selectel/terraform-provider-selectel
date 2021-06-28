@@ -47,7 +47,7 @@ resource "selectel_dbaas_datastore_v1" "datastore_1" {
     mode = "transaction"
     size = 50
   }
-  config {
+  config = {
     xmloption = "content"
     work_mem = 512
     session_replication_role = "replica"
