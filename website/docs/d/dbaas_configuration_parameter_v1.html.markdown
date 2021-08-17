@@ -27,12 +27,12 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
 }
 
 data "selectel_dbaas_configuration_parameter_v1" "config" {
-    project_id   = "${selectel_vpc_project_v2.project_1.id}"
-    region       = "ru-3"
-    filter {
-        datastore_type_id = data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id
-        name = "work_mem"
-    }
+  project_id   = "${selectel_vpc_project_v2.project_1.id}"
+  region       = "ru-3"
+  filter {
+    datastore_type_id = data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id
+    name = "work_mem"
+  }
 }
 ```
 

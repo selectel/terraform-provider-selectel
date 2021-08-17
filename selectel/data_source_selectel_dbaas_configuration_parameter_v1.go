@@ -198,30 +198,30 @@ func filterConfigurationParametersByName(configurationParameters []dbaas.Configu
 	return filteredConfigurationParameters
 }
 
-func flattenDBaaSConfigurationParameters(configyrationParameters []dbaas.ConfigurationParameter) []interface{} {
-	configyrationParametersList := make([]interface{}, len(configyrationParameters))
-	for i, param := range configyrationParameters {
-		configyrationParametersMap := make(map[string]interface{})
-		configyrationParametersMap["id"] = param.ID
-		configyrationParametersMap["datastore_type_id"] = param.DatastoreTypeID
-		configyrationParametersMap["name"] = param.Name
-		configyrationParametersMap["type"] = param.Type
-		configyrationParametersMap["unit"] = param.Unit
-		configyrationParametersMap["min"] = convertFieldToStringByType(param.Min)
-		configyrationParametersMap["max"] = convertFieldToStringByType(param.Max)
-		configyrationParametersMap["default_value"] = convertFieldToStringByType(param.DefaultValue)
+func flattenDBaaSConfigurationParameters(configurationParameters []dbaas.ConfigurationParameter) []interface{} {
+	configurationParametersList := make([]interface{}, len(configurationParameters))
+	for i, param := range configurationParameters {
+		configurationParametersMap := make(map[string]interface{})
+		configurationParametersMap["id"] = param.ID
+		configurationParametersMap["datastore_type_id"] = param.DatastoreTypeID
+		configurationParametersMap["name"] = param.Name
+		configurationParametersMap["type"] = param.Type
+		configurationParametersMap["unit"] = param.Unit
+		configurationParametersMap["min"] = convertFieldToStringByType(param.Min)
+		configurationParametersMap["max"] = convertFieldToStringByType(param.Max)
+		configurationParametersMap["default_value"] = convertFieldToStringByType(param.DefaultValue)
 		choicesList := make([]string, len(param.Choices))
 		for i, choice := range param.Choices {
 			choicesList[i] = convertFieldToStringByType(choice)
 		}
-		configyrationParametersMap["choices"] = choicesList
-		configyrationParametersMap["is_restart_required"] = param.IsRestartRequired
-		configyrationParametersMap["is_changeable"] = param.IsChangeable
+		configurationParametersMap["choices"] = choicesList
+		configurationParametersMap["is_restart_required"] = param.IsRestartRequired
+		configurationParametersMap["is_changeable"] = param.IsChangeable
 
-		configyrationParametersList[i] = configyrationParametersMap
+		configurationParametersList[i] = configurationParametersMap
 	}
 
-	return configyrationParametersList
+	return configurationParametersList
 }
 
 func convertFieldToStringByType(field interface{}) string {

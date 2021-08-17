@@ -33,35 +33,35 @@ func TestAccDBaaSConfigurationParametersV1Basic(t *testing.T) {
 				Config: testAccDBaaSConfigurationParametersV1Basic(projectName, datastoreTypeEngine, datastoreTypeVersion, parameterName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccDBaaSConfigurationParametersV1Exists("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", &dbaasConfigurationParameters),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.name", parameterName),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.type", "int"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.unit", "kB"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.min", "64"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.max", "2147483647"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.default_value", "32768"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.choices.#", "0"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.is_restart_required", "false"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.is_changeable", "true"),
+					testAccDBaaSConfigurationParametersV1Exists("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", &dbaasConfigurationParameters),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.name", parameterName),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.type", "int"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.unit", "kB"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.min", "64"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.max", "2147483647"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.default_value", "32768"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.choices.#", "0"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.is_restart_required", "false"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.is_changeable", "true"),
 				),
 			},
 			{
 				Config: testAccDBaaSConfigurationParametersV1Basic(projectName, datastoreTypeEngine, datastoreTypeVersion, parameterNameWithChoices),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccDBaaSConfigurationParametersV1Exists("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", &dbaasConfigurationParameters),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.name", parameterNameWithChoices),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.type", "str"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.unit", ""),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.min", ""),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.max", ""),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.default_value", "origin"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.choices.#", "3"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.choices.0", "origin"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.choices.1", "replica"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.choices.2", "local"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.is_restart_required", "false"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.is_changeable", "true"),
+					testAccDBaaSConfigurationParametersV1Exists("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", &dbaasConfigurationParameters),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.name", parameterNameWithChoices),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.type", "str"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.unit", ""),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.min", ""),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.max", ""),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.default_value", "origin"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.choices.#", "3"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.choices.0", "origin"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.choices.1", "replica"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.choices.2", "local"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.is_restart_required", "false"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.is_changeable", "true"),
 				),
 			},
 		},
@@ -109,7 +109,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   }
 }
 
-data "selectel_dbaas_configuration_parameters_v1" "configuration_param_tf_acc_test_1" {
+data "selectel_dbaas_configuration_parameter_v1" "configuration_param_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
   filter {
@@ -119,7 +119,7 @@ data "selectel_dbaas_configuration_parameters_v1" "configuration_param_tf_acc_te
 }
 
 output "config" {
-  value = data.selectel_dbaas_configuration_parameters_v1.configuration_param_tf_acc_test_1.configuration_parameters[0]
+  value = data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1.configuration_parameters[0]
 }
 `, projectName, engine, version, name)
 }
