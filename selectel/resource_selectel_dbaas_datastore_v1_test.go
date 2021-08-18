@@ -214,8 +214,8 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
   filter {
-	engine = "postgresql"
-	version = "12"
+    engine = "postgresql"
+    version = "12"
   }
 }
 
@@ -232,10 +232,10 @@ resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
     disk = 32
   }
   config = {
-	xmloption = "content"
-	work_mem = 128
-	vacuum_cost_delay = 25
-	transform_null_equals = true
+    xmloption = "content"
+    work_mem = 128
+    vacuum_cost_delay = 25
+    transform_null_equals = true
   }
 }`, projectName, datastoreName, nodeCount)
 }
@@ -256,8 +256,8 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
   filter {
-	engine = "postgresql"
-	version = "12"
+    engine = "postgresql"
+    version = "12"
   }
 }
 
@@ -274,10 +274,10 @@ resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
     disk = 32
   }
   config = {
-	xmloption = "content"
-	work_mem = 128
-	vacuum_cost_delay = 25
-	transform_null_equals = true
+    xmloption = "content"
+    work_mem = 128
+    vacuum_cost_delay = 25
+    transform_null_equals = true
   }
 }`, projectName, datastoreName, nodeCount)
 }
@@ -298,8 +298,8 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
   filter {
-	engine = "postgresql"
-	version = "12"
+    engine = "postgresql"
+    version = "12"
   }
 }
 
@@ -316,14 +316,14 @@ resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
     disk = 32
   }
   config = {
-	xmloption = "content"
-	work_mem = 128
-	vacuum_cost_delay = 25
-	transform_null_equals = true
+    xmloption = "content"
+    work_mem = 128
+    vacuum_cost_delay = 25
+    transform_null_equals = true
   }
   pooler {
-	mode = "session"
-	size = 50
+    mode = "session"
+    size = 50
   }
 }`, projectName, datastoreName, nodeCount)
 }
@@ -344,8 +344,8 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
   filter {
-	engine = "postgresql"
-	version = "12"
+    engine = "postgresql"
+    version = "12"
   }
 }
 
@@ -362,17 +362,17 @@ resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
     disk = 32
   }
   config = {
-	xmloption = "content"
-	work_mem = 128
-	vacuum_cost_delay = 25
-	transform_null_equals = true
+    xmloption = "content"
+    work_mem = 128
+    vacuum_cost_delay = 25
+    transform_null_equals = true
   }
   pooler {
-	mode = "session"
-	size = 50
+    mode = "session"
+    size = 50
   }
   firewall {
-	ips = [ "127.0.0.1", "127.0.0.2" ]
+    ips = [ "127.0.0.1", "127.0.0.2" ]
   }
 }`, projectName, datastoreName, nodeCount)
 }
@@ -393,8 +393,8 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
   filter {
-	engine = "postgresql"
-	version = "12"
+    engine = "postgresql"
+    version = "12"
   }
 }
 
@@ -411,17 +411,17 @@ resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
     disk = 32
   }
   config = {
-	xmloption = "content"
-	work_mem = 128
-	vacuum_cost_delay = 25
-	transform_null_equals = true
+    xmloption = "content"
+    work_mem = 128
+    vacuum_cost_delay = 25
+    transform_null_equals = true
   }
   pooler {
-	mode = "session"
-	size = 50
+    mode = "session"
+    size = 50
   }
   firewall {
-	ips = [ "127.0.0.1", "127.0.0.2" ]
+    ips = [ "127.0.0.1", "127.0.0.2" ]
   }
 }`, projectName, datastoreName, nodeCount)
 }
@@ -442,8 +442,8 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
   filter {
-	engine = "postgresql"
-	version = "12"
+    engine = "postgresql"
+    version = "12"
   }
 }
 
@@ -460,16 +460,16 @@ resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
     disk = 32
   }
   config = {
-	xmloption = "content"
-	work_mem = 256
-	vacuum_cost_delay = 20
+    xmloption = "content"
+    work_mem = 256
+    vacuum_cost_delay = 20
   }
   pooler {
-	mode = "session"
-	size = 50
+    mode = "session"
+    size = 50
   }
   firewall {
-	ips = [ "127.0.0.1", "127.0.0.2" ]
+    ips = [ "127.0.0.1", "127.0.0.2" ]
   }
 }`, projectName, datastoreName, nodeCount)
 }
