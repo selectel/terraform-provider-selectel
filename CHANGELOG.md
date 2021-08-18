@@ -1,3 +1,9 @@
+## 3.7.0 (Unreleased)
+
+IMPROVEMENTS:
+* Fixed docs for DBaaS data sources ([#160](https://github.com/selectel/terraform-provider-selectel/pull/160))
+* Updated Go version to `1.16` ([#164](https://github.com/selectel/terraform-provider-selectel/pull/164))
+
 ## 3.6.2 (June 11, 2021)
 
 IMPROVEMENTS:
