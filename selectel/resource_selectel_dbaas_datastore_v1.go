@@ -295,6 +295,14 @@ func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, m
 		log.Print(errSettingComplexAttr("connections", err))
 	}
 
+	configMap := make(map[string]string)
+	for key, value := range datastore.Config {
+		configMap[key] = convertFieldToStringByType(value)
+	}
+	if err := d.Set("config", configMap); err != nil {
+		log.Print(errSettingComplexAttr("config", err))
+	}
+
 	return nil
 }
 

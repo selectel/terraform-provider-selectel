@@ -2,7 +2,6 @@ package selectel
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -222,21 +221,4 @@ func flattenDBaaSConfigurationParameters(configurationParameters []dbaas.Configu
 	}
 
 	return configurationParametersList
-}
-
-func convertFieldToStringByType(field interface{}) string {
-	switch fieldValue := field.(type) {
-	case int:
-		return strconv.Itoa(fieldValue)
-	case float64:
-		return strconv.FormatFloat(fieldValue, 'f', -1, 64)
-	case float32:
-		return strconv.FormatFloat(float64(fieldValue), 'f', -1, 32)
-	case string:
-		return fieldValue
-	case bool:
-		return strconv.FormatBool(fieldValue)
-	default:
-		return ""
-	}
 }
