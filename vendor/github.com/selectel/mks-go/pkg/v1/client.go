@@ -85,6 +85,20 @@ func NewMKSClientV1(tokenID, endpoint string) *ServiceClient {
 	}
 }
 
+// NewMKSClientV1WithCustomHTTP initializes a new MKS client for the V1 API using custom HTTP client.
+// If custom HTTP client is nil - default HTTP client will be used.
+func NewMKSClientV1WithCustomHTTP(customHTTPClient *http.Client, tokenID, endpoint string) *ServiceClient {
+	if customHTTPClient == nil {
+		customHTTPClient = newHTTPClient()
+	}
+	return &ServiceClient{
+		HTTPClient: customHTTPClient,
+		TokenID:    tokenID,
+		Endpoint:   endpoint,
+		UserAgent:  userAgent,
+	}
+}
+
 // newHTTPClient returns a reference to an initialized and configured HTTP client.
 func newHTTPClient() *http.Client {
 	return &http.Client{
