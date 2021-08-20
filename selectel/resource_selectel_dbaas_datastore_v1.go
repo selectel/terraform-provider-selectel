@@ -178,6 +178,7 @@ func resourceDBaaSDatastoreV1() *schema.Resource {
 			"config": {
 				Type:     schema.TypeMap,
 				Optional: true,
+				Computed: true,
 				ForceNew: false,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
