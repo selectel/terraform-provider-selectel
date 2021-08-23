@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -25,6 +26,8 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	clusterName := acctest.RandomWithPrefix("tf-acc-cl")
 	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
+	maintenanceWindowStart := testAccMKSClusterV1GetMaintenanceWindowStart(12 * time.Hour)
+	maintenanceWindowStartUpdated := testAccMKSClusterV1GetMaintenanceWindowStart(14 * time.Hour)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -32,7 +35,7 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMKSClusterV1Basic(projectName, clusterName, kubeVersion),
+				Config: testAccMKSClusterV1Basic(projectName, clusterName, kubeVersion, maintenanceWindowStart),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccCheckMKSClusterV1Exists("selectel_mks_cluster_v1.cluster_tf_acc_test_1", &mksCluster),
@@ -41,13 +44,12 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "region", "ru-3"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_autorepair", "true"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_patch_version_auto_upgrade", "true"),
-					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_start", "01:00:00"),
-					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_end", "03:00:00"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_start", maintenanceWindowStart),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "status", "ACTIVE"),
 				),
 			},
 			{
-				Config: testAccMKSClusterV1Update(projectName, clusterName, kubeVersion),
+				Config: testAccMKSClusterV1Update(projectName, clusterName, kubeVersion, maintenanceWindowStartUpdated),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "name", clusterName),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "kube_version", kubeVersion),
@@ -55,8 +57,7 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_autorepair", "false"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_patch_version_auto_upgrade", "false"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_pod_security_policy", "false"),
-					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_start", "02:00:00"),
-					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_end", "04:00:00"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_start", maintenanceWindowStartUpdated),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "status", "ACTIVE"),
 				),
 			},
@@ -73,6 +74,7 @@ func TestAccMKSClusterV1Zonal(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	clusterName := acctest.RandomWithPrefix("tf-acc-cl")
 	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
+	maintenanceWindowStart := testAccMKSClusterV1GetMaintenanceWindowStart(12 * time.Hour)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -80,7 +82,7 @@ func TestAccMKSClusterV1Zonal(t *testing.T) {
 		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMKSClusterV1Zonal(projectName, clusterName, kubeVersion),
+				Config: testAccMKSClusterV1Zonal(projectName, clusterName, kubeVersion, maintenanceWindowStart),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccCheckMKSClusterV1Exists("selectel_mks_cluster_v1.cluster_tf_acc_test_1", &mksCluster),
@@ -90,13 +92,16 @@ func TestAccMKSClusterV1Zonal(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_autorepair", "true"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_patch_version_auto_upgrade", "false"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "zonal", "true"),
-					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_start", "01:00:00"),
-					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_end", "03:00:00"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_start", maintenanceWindowStart),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "status", "ACTIVE"),
 				),
 			},
 		},
 	})
+}
+
+func testAccMKSClusterV1GetMaintenanceWindowStart(delay time.Duration) string {
+	return time.Now().UTC().Add(delay).Format("15:04:00")
 }
 
 func testAccMKSClusterV1GetDefaultKubeVersion(t *testing.T) string {
@@ -214,57 +219,58 @@ func testAccCheckMKSClusterV1Exists(n string, mksCluster *cluster.View) resource
 	}
 }
 
-func testAccMKSClusterV1Basic(projectName, clusterName, kubeVersion string) string {
+func testAccMKSClusterV1Basic(projectName, clusterName, kubeVersion, maintenanceWindowStart string) string {
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
   auto_quotas = true
 }
-
 resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
-  name         = "%s"
-  kube_version = "%s"
-  project_id   = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
-  region       = "ru-3"
-  feature_gates                     = ["BoundServiceAccountTokenVolume"]
-  admission_controllers             = ["NamespaceLifecycle"]
-}`, projectName, clusterName, kubeVersion)
+  name                     = "%s"
+  kube_version             = "%s"
+  project_id               = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region                   = "ru-3"
+  maintenance_window_start = "%s"
+}`, projectName, clusterName, kubeVersion, maintenanceWindowStart)
 }
 
-func testAccMKSClusterV1Update(projectName, clusterName, kubeVersion string) string {
+func testAccMKSClusterV1Update(projectName, clusterName, kubeVersion, maintenanceWindowStart string) string {
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
   auto_quotas = true
 }
-
 resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
   name         = "%s"
   kube_version = "%s"
   project_id                        = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region                            = "ru-3"
-  maintenance_window_start          = "02:00:00"
+  maintenance_window_start          = "%s"
   enable_autorepair                 = false
   enable_patch_version_auto_upgrade = false
   enable_pod_security_policy        = false
-  feature_gates                     = ["BoundServiceAccountTokenVolume"]
-  admission_controllers             = ["NamespaceLifecycle"]
-}`, projectName, clusterName, kubeVersion)
+  feature_gates						= [
+		"TTLAfterFinished",
+	]
+  admission_controllers				= [
+		"NamespaceLifecycle",
+	]
+}`, projectName, clusterName, kubeVersion, maintenanceWindowStart)
 }
 
-func testAccMKSClusterV1Zonal(projectName, clusterName, kubeVersion string) string {
+func testAccMKSClusterV1Zonal(projectName, clusterName, kubeVersion, maintenanceWindowStart string) string {
 	return fmt.Sprintf(`
  resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
    name        = "%s"
    auto_quotas = true
  }
-
  resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
    name                              = "%s"
    kube_version                      = "%s"
    project_id                        = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
    region                            = "ru-3"
+   maintenance_window_start          = "%s"
    enable_patch_version_auto_upgrade = false
    zonal                             = true
- }`, projectName, clusterName, kubeVersion)
+ }`, projectName, clusterName, kubeVersion, maintenanceWindowStart)
 }

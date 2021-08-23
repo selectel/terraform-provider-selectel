@@ -18,7 +18,7 @@ func getSetAsStrings(d *schema.ResourceData, key string) ([]string, error) {
 
 	set, ok := val.(*schema.Set)
 	if !ok {
-		return nil, fmt.Errorf("\"%s\" is not 'Set' at schema", key)
+		return nil, fmt.Errorf("%q is not 'Set' at schema", key)
 	}
 
 	list := set.List()
@@ -26,7 +26,7 @@ func getSetAsStrings(d *schema.ResourceData, key string) ([]string, error) {
 	for _, item := range list {
 		val, ok := item.(string)
 		if !ok {
-			return nil, fmt.Errorf("\"%s\" item '%v' is not a string", key, item)
+			return nil, fmt.Errorf("%q item '%v' is not a string", key, item)
 		}
 		result = append(result, val)
 	}
