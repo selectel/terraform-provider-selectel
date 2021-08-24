@@ -178,6 +178,7 @@ func resourceDBaaSDatastoreV1() *schema.Resource {
 			"config": {
 				Type:     schema.TypeMap,
 				Optional: true,
+				Computed: true,
 				ForceNew: false,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -293,6 +294,14 @@ func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, m
 	connectonMap["master"] = datastore.Connection.Master
 	if err := d.Set("connections", connectonMap); err != nil {
 		log.Print(errSettingComplexAttr("connections", err))
+	}
+
+	configMap := make(map[string]string)
+	for key, value := range datastore.Config {
+		configMap[key] = convertFieldToStringByType(value)
+	}
+	if err := d.Set("config", configMap); err != nil {
+		log.Print(errSettingComplexAttr("config", err))
 	}
 
 	return nil

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -111,4 +112,21 @@ func baseTestAccCheckDBaaSV1EntityExists(ctx context.Context, rs *terraform.Reso
 	}
 
 	return dbaasClient, nil
+}
+
+func convertFieldToStringByType(field interface{}) string {
+	switch fieldValue := field.(type) {
+	case int:
+		return strconv.Itoa(fieldValue)
+	case float64:
+		return strconv.FormatFloat(fieldValue, 'f', -1, 64)
+	case float32:
+		return strconv.FormatFloat(float64(fieldValue), 'f', -1, 32)
+	case string:
+		return fieldValue
+	case bool:
+		return strconv.FormatBool(fieldValue)
+	default:
+		return ""
+	}
 }
