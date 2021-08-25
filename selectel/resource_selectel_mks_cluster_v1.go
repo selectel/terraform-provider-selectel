@@ -138,6 +138,7 @@ func resourceMKSClusterV1() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+				Set: schema.HashString,
 			},
 			"admission_controllers": {
 				Type:     schema.TypeSet,
@@ -269,8 +270,6 @@ func resourceMKSClusterV1Read(ctx context.Context, d *schema.ResourceData, meta 
 	d.Set("enable_autorepair", mksCluster.EnableAutorepair)
 	d.Set("enable_patch_version_auto_upgrade", mksCluster.EnablePatchVersionAutoUpgrade)
 	d.Set("enable_pod_security_policy", mksCluster.KubernetesOptions.EnablePodSecurityPolicy)
-	d.Set("feature_gates", mksCluster.KubernetesOptions.FeatureGates)
-	d.Set("admission_controllers", mksCluster.KubernetesOptions.AdmissionControllers)
 	d.Set("zonal", mksCluster.Zonal)
 
 	return nil

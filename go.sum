@@ -298,6 +298,8 @@ github.com/selectel/go-selvpcclient v1.12.0 h1:LsT074HOVF1dWYapsAWjaaJDQhmDPpcsV
 github.com/selectel/go-selvpcclient v1.12.0/go.mod h1:HNteVXevZMjUCRR6lImTsGZZSTeKu89S/qbEDWDqmgc=
 github.com/selectel/mks-go v0.7.0 h1:kL0RsY9jfHAO2ggSnMsLzHLikfQ1h2hHvaubTwM5h7I=
 github.com/selectel/mks-go v0.7.0/go.mod h1:OrlLnGes+HK7HNxUab/8Rll5iT0XQQnx4+dW1Ysph2o=
+github.com/selectel/mks-go v0.8.0 h1:tZJ248zZmJEGYZaygqLzboTFml0qxKkRjEAPzVAN0Ro=
+github.com/selectel/mks-go v0.8.0/go.mod h1:OrlLnGes+HK7HNxUab/8Rll5iT0XQQnx4+dW1Ysph2o=
 github.com/sergi/go-diff v1.0.0/go.mod h1:0CfEIISq7TuYL3j771MWULgwwjU+GofnZX9QAmXWZgo=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
 github.com/sergi/go-diff v1.2.0 h1:XU+rvMAioB0UC3q1MFrIQy4Vo5/4VsRDQQXHsEya6xQ=

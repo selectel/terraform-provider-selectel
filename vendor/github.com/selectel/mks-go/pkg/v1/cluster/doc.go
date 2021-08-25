@@ -63,7 +63,7 @@ Example of updating an existing cluster
     KubernetesOptions: &cluster.KubernetesOptions{
       EnablePodSecurityPolicy: false,
       FeatureGates: []string{
-        "BoundServiceAccountTokenVolume",
+        "TTLAfterFinished",
       },
       AdmissionControllers: []string{
           "NamespaceLifecycle",
