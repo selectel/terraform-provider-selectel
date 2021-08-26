@@ -1,8 +1,12 @@
 ## 3.7.0 (Unreleased)
 
+FEATURES:
+* __New Data Source:__ `selectel_dbaas_configuration_parameter_v1` ([#162](https://github.com/selectel/terraform-provider-selectel/issues/162))
+
 IMPROVEMENTS:
 * Fixed docs for DBaaS data sources ([#160](https://github.com/selectel/terraform-provider-selectel/pull/160))
 * Updated Go version to `1.16` ([#164](https://github.com/selectel/terraform-provider-selectel/pull/164))
+* Added `config` argument for the `selectel_dbaas_datastore_v1` resource ([#162](https://github.com/selectel/terraform-provider-selectel/issues/162))
 
 ## 3.6.2 (June 11, 2021)
 
