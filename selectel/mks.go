@@ -476,6 +476,28 @@ func flattenFeatureGatesFromSlice(kubeVersion string, featureGates []string) []i
 	return availableFeatureGates
 }
 
+func flattenAdmissionControllers(views []*kubeoptions.View) []interface{} {
+	availableAdmissionControllers := make([]interface{}, len(views))
+	for i, fg := range views {
+		availableAdmissionControllers[i] = map[string]interface{}{
+			"kube_version_minor": fg.KubeVersion,
+			"names":              strings.Join(fg.Names, ","),
+		}
+	}
+
+	return availableAdmissionControllers
+}
+
+func flattenAdmissionControllersFromSlice(kubeVersion string, admissionControllers []string) []interface{} {
+	availableAdmissionControllers := make([]interface{}, 1)
+	availableAdmissionControllers[0] = map[string]interface{}{
+		"kube_version_minor": kubeVersion,
+		"names":              strings.Join(admissionControllers, ","),
+	}
+
+	return availableAdmissionControllers
+}
+
 func expandMKSNodegroupV1Taints(taints []interface{}) []nodegroup.Taint {
 	result := make([]nodegroup.Taint, len(taints))
 	for i := range taints {
