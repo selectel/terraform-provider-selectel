@@ -3,7 +3,6 @@ package selectel
 import (
 	"context"
 	"fmt"
-	"github.com/selectel/mks-go/pkg/v1/kubeoptions"
 	"log"
 	"strconv"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
+	"github.com/selectel/mks-go/pkg/v1/kubeoptions"
 	"github.com/selectel/mks-go/pkg/v1/kubeversion"
 	"github.com/selectel/mks-go/pkg/v1/node"
 	"github.com/selectel/mks-go/pkg/v1/nodegroup"
