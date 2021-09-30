@@ -75,6 +75,7 @@ The following arguments are supported:
 
 * `nodes_count` (Required) Count of worker nodes in the nodegroup.
   Changing this resizes the nodegroup according to the new nodes count.
+  As long as `enable_autoscale` is set to true, changing this will not affect the size of the nodegroup.
 
 * `keypair_name` (Optional) Name of the SSH key that will be added to all nodes.
   Changing this creates a new nodegroup.
@@ -108,6 +109,14 @@ The following arguments are supported:
 
 * `taints` (Optional) Represents a list of Kubernetes taints that will be applied for each node in the group.
   Changing this creates a new nodegroup.
+
+* `enable_autoscale` (Optional) Specifies if a nodegroup autoscaling option has to be turned on/off.
+  Accepts true or false. Default is false.
+  `autoscale_min_nodes` and `autoscale_max_nodes` must be specified.
+
+* `autoscale_min_nodes` (Optional) Represents a minimum possible number of worker nodes in the nodegroup.
+
+* `autoscale_max_nodes` (Optional) Represents a maximum possible number of worker nodes in the nodegroup.
 
 ## Attributes Reference
 

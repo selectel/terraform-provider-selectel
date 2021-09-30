@@ -55,6 +55,9 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 				ForceNew: false,
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					return d.Id() != "" && d.Get("enable_autoscale").(bool)
+				},
 			},
 			"keypair_name": {
 				Type:     schema.TypeString,
@@ -132,6 +135,24 @@ func resourceMKSNodegroupV1() *schema.Resource {
 					},
 				},
 			},
+			"enable_autoscale": {
+				Type:         schema.TypeBool,
+				Optional:     true,
+				Computed:     true,
+				RequiredWith: []string{"autoscale_min_nodes", "autoscale_max_nodes"},
+			},
+			"autoscale_min_nodes": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				RequiredWith: []string{"enable_autoscale", "autoscale_max_nodes"},
+			},
+			"autoscale_max_nodes": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				RequiredWith: []string{"enable_autoscale", "autoscale_min_nodes"},
+			},
 			"nodes": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -203,6 +224,20 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 		KeypairName:      d.Get("keypair_name").(string),
 		AffinityPolicy:   d.Get("affinity_policy").(string),
 		AvailabilityZone: d.Get("availability_zone").(string),
+	}
+
+	// Check nodegroup autoscaling options.
+	if v, ok := d.GetOk("enable_autoscale"); ok {
+		enableAutoscale := v.(bool)
+		createOpts.EnableAutoscale = &enableAutoscale
+	}
+	if v, ok := d.GetOk("autoscale_min_nodes"); ok {
+		autoscaleMinNodes := v.(int)
+		createOpts.AutoscaleMinNodes = &autoscaleMinNodes
+	}
+	if v, ok := d.GetOk("autoscale_max_nodes"); ok {
+		autoscaleMaxNodes := v.(int)
+		createOpts.AutoscaleMaxNodes = &autoscaleMaxNodes
 	}
 
 	labels := d.Get("labels").(map[string]interface{})
@@ -293,6 +328,9 @@ func resourceMKSNodegroupV1Read(ctx context.Context, d *schema.ResourceData, met
 	d.Set("local_volume", mksNodegroup.LocalVolume)
 	d.Set("availability_zone", mksNodegroup.AvailabilityZone)
 	d.Set("nodes_count", len(mksNodegroup.Nodes))
+	d.Set("enable_autoscale", mksNodegroup.EnableAutoscale)
+	d.Set("autoscale_min_nodes", mksNodegroup.AutoscaleMinNodes)
+	d.Set("autoscale_max_nodes", mksNodegroup.AutoscaleMaxNodes)
 
 	if err := d.Set("labels", mksNodegroup.Labels); err != nil {
 		log.Print(errSettingComplexAttr("labels", err))
@@ -337,12 +375,28 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 	endpoint := getMKSClusterV1Endpoint(region)
 	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
 
+	var (
+		updateOpts nodegroup.UpdateOpts
+		hasChanged bool
+	)
+
 	if d.HasChange("labels") {
 		labels := d.Get("labels").(map[string]interface{})
-		updateOpts := nodegroup.UpdateOpts{
-			Labels: expandMKSNodegroupV1Labels(labels),
-		}
+		updateOpts.Labels = expandMKSNodegroupV1Labels(labels)
+		hasChanged = true
+	}
 
+	if d.HasChanges("enable_autoscale", "autoscale_min_nodes", "autoscale_max_nodes") {
+		enableAutoscale := d.Get("enable_autoscale").(bool)
+		autoscaleMinNodes := d.Get("autoscale_min_nodes").(int)
+		autoscaleMaxNodes := d.Get("autoscale_max_nodes").(int)
+		updateOpts.EnableAutoscale = &enableAutoscale
+		updateOpts.AutoscaleMinNodes = &autoscaleMinNodes
+		updateOpts.AutoscaleMaxNodes = &autoscaleMaxNodes
+		hasChanged = true
+	}
+
+	if hasChanged {
 		log.Print(msgUpdate(objectNodegroup, d.Id(), updateOpts))
 		_, err := nodegroup.Update(ctx, mksClient, clusterID, nodegroupID, &updateOpts)
 		if err != nil {

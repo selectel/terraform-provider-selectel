@@ -1,6 +1,7 @@
 *.tf
 *.tfstate
 *.tfstate.backup
+*.tfstate.lock.info
 *.log
 *.json
 *.yaml
