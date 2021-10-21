@@ -43,6 +43,7 @@ The folowing arguments are supported
 - `vcpus` - (Optional) vCPU of the flavor to lookup.
 - `ram` - (Optional) RAM of the flavor to lookup.
 - `disk` - (Optional) Disk of the flavor to lookup.
+- `datastore_type_id` - (Optional) Datastore type ID of the flavor to lookup.
 
 ## Attributes Reference
 
@@ -58,3 +59,4 @@ The following attributes are exported:
 - `vcpus` - CPU count for the flavor.
 - `ram` - RAM count for the flavor.
 - `disk` - Disk size for the flavor.
+- `datastore_type_ids` - List of datastore types that support this flavor.

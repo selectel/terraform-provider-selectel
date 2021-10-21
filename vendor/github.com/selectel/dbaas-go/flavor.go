@@ -9,12 +9,13 @@ import (
 
 // FlavorResponse is the API response for the flavors.
 type FlavorResponse struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Vcpus       int    `json:"vcpus"`
-	RAM         int    `json:"ram"`
-	Disk        int    `json:"disk"`
+	ID               string   `json:"id"`
+	Name             string   `json:"name"`
+	Description      string   `json:"description"`
+	DatastoreTypeIDs []string `json:"datastore_type_ids"`
+	Vcpus            int      `json:"vcpus"`
+	RAM              int      `json:"ram"`
+	Disk             int      `json:"disk"`
 }
 
 // Flavors returns all flavors.

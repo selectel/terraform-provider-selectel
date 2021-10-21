@@ -165,6 +165,61 @@ func TestAccDBaaSDatastoreV1Basic(t *testing.T) {
 	})
 }
 
+func TestAccDBaaSDatastoreV1RedisBasic(t *testing.T) {
+	var (
+		dbaasDatastore dbaas.Datastore
+		project        projects.Project
+	)
+
+	projectName := acctest.RandomWithPrefix("tf-acc")
+	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
+	nodeCount := 1
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDBaaSDatastoreV1RedisBasic(projectName, datastoreName, nodeCount),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccCheckDBaaSDatastoreV1Exists("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", &dbaasDatastore),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "name", datastoreName),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "region", "ru-3"),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(1)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(2048)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(20)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.maxmemory-policy", "volatile-lru"),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
+					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
+				),
+			},
+			{
+				Config: testAccDBaaSDatastoreV1UpdateRedisConfig(projectName, datastoreName, nodeCount),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccCheckDBaaSDatastoreV1Exists("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", &dbaasDatastore),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "name", datastoreName),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "region", "ru-3"),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(1)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(2048)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(20)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.maxmemory-policy", "noeviction"),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
+					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckDBaaSDatastoreV1Exists(n string, dbaasDatastore *dbaas.Datastore) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -471,5 +526,99 @@ resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
   firewall {
     ips = [ "127.0.0.1", "127.0.0.2" ]
   }
+}`, projectName, datastoreName, nodeCount)
+}
+
+func testAccDBaaSDatastoreV1RedisBasic(projectName, datastoreName string, nodeCount int) string {
+	return fmt.Sprintf(`
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
+  name        = "%s"
+  auto_quotas = true
+}
+
+resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region     = "ru-3"
+}
+
+data "selectel_dbaas_datastore_type_v1" "dt" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region = "ru-3"
+  filter {
+    engine = "redis"
+    version = "6"
+  }
+}
+
+data "selectel_dbaas_flavor_v1" "flavor" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region     = "ru-3"
+  filter {
+    datastore_type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
+  }
+}
+
+resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
+  name = "%s"
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region = "ru-3"
+  type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
+  subnet_id = "${selectel_vpc_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
+  node_count = "%d"
+  flavor_id = "${data.selectel_dbaas_flavor_v1.flavor.flavors[0].id}"
+  config = {
+    maxmemory-policy = "volatile-lru"
+  }
+  firewall {
+    ips = [ "127.0.0.1", "127.0.0.2" ]
+  }
+  redis_password = "quie7Hoh7ohTo[i0bae3Leeb4mai7ca6"
+}`, projectName, datastoreName, nodeCount)
+}
+
+func testAccDBaaSDatastoreV1UpdateRedisConfig(projectName, datastoreName string, nodeCount int) string {
+	return fmt.Sprintf(`
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
+  name        = "%s"
+  auto_quotas = true
+}
+
+resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region     = "ru-3"
+}
+
+data "selectel_dbaas_datastore_type_v1" "dt" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region = "ru-3"
+  filter {
+    engine = "redis"
+    version = "6"
+  }
+}
+
+data "selectel_dbaas_flavor_v1" "flavor" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region     = "ru-3"
+  filter {
+    datastore_type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
+  }
+}
+
+resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
+  name = "%s"
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region = "ru-3"
+  type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
+  subnet_id = "${selectel_vpc_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
+  node_count = "%d"
+  flavor_id = "${data.selectel_dbaas_flavor_v1.flavor.flavors[0].id}"
+  config = {
+    maxmemory-policy = "noeviction"
+  }
+  firewall {
+    ips = [ "127.0.0.1", "127.0.0.2" ]
+  }
+  redis_password = "quie7Hoh7ohTo[i0bae3Leeb4mai7ca6"
 }`, projectName, datastoreName, nodeCount)
 }

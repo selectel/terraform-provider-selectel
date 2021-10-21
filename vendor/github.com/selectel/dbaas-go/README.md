@@ -21,6 +21,7 @@ You can use this library to work with the following objects of the Selectel Mana
 * extension
 * available extension
 * configuration parameter
+* prometheus metrics tokens
 
 ## Getting started
 
