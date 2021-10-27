@@ -1,13 +1,15 @@
-## 3.7.0 (Unreleased)
+## 3.7.0 (Oct 1, 2021)
 
 FEATURES:
-* __Added `feature_gates` and `admission_controllers` to cluster kubernetes options__ (#)[]
+* __New Resource:__ `selectel_dbaas_prometheus_metric_token_v1` ([#170](https://github.com/terraform-providers/terraform-provider-selectel/issues/170))
 * __New Data Source:__ `selectel_dbaas_configuration_parameter_v1` ([#162](https://github.com/selectel/terraform-provider-selectel/issues/162))
+* __New Data Source:__ `selectel_dbaas_prometheus_metric_token_v1` ([#170](https://github.com/selectel/terraform-provider-selectel/issues/170))
 
 IMPROVEMENTS:
 * Fixed docs for DBaaS data sources ([#160](https://github.com/selectel/terraform-provider-selectel/pull/160))
 * Updated Go version to `1.16` ([#164](https://github.com/selectel/terraform-provider-selectel/pull/164))
 * Added `config` argument for the `selectel_dbaas_datastore_v1` resource ([#162](https://github.com/selectel/terraform-provider-selectel/issues/162))
+* Added autoscaling support for the `selectel_mks_nodegroup_v1` resource ([#165](https://github.com/selectel/terraform-provider-selectel/issues/165))
 
 ## 3.6.2 (June 11, 2021)
 

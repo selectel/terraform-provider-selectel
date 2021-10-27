@@ -38,16 +38,18 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccCheckMKSNodegroupV1Exists("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", &mksNodegroup),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "availability_zone", "ru-3a"),
-					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "nodes_count", "1"),
-					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "nodes.#", "1"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "nodes_count", "2"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "nodes.#", "2"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "cpus", "1"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "ram_mb", "1024"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "volume_gb", "10"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "volume_type", "fast.ru-3a"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "enable_autoscale", "true"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "autoscale_min_nodes", "2"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "autoscale_max_nodes", "3"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key0", "label-value0"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key1", "label-value1"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key2", "label-value2"),
-
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.#", "3"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.0.key", "test-key-0"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.0.value", "test-value-0"),
@@ -64,12 +66,15 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 				Config: testAccMKSNodegroupV1Update(projectName, clusterName, kubeVersion, maintenanceWindowStart),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "availability_zone", "ru-3a"),
-					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "nodes_count", "2"),
-					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "nodes.#", "2"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "nodes_count", "3"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "nodes.#", "3"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "cpus", "1"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "ram_mb", "1024"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "volume_gb", "10"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "volume_type", "fast.ru-3a"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "enable_autoscale", "false"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "autoscale_min_nodes", "1"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "autoscale_max_nodes", "4"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key3", "label-value3"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key4", "label-value4"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.#", "3"),
@@ -155,15 +160,18 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
 }
 
 resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
-  cluster_id        = "${selectel_mks_cluster_v1.cluster_tf_acc_test_1.id}"
-  project_id        = "${selectel_mks_cluster_v1.cluster_tf_acc_test_1.project_id}"
-  region            = "${selectel_mks_cluster_v1.cluster_tf_acc_test_1.region}"
-  availability_zone = "ru-3a"
-  nodes_count       = 1
-  cpus              = 1
-  ram_mb            = 1024
-  volume_gb         = 10
-  volume_type       = "fast.ru-3a"
+  cluster_id          = "${selectel_mks_cluster_v1.cluster_tf_acc_test_1.id}"
+  project_id          = "${selectel_mks_cluster_v1.cluster_tf_acc_test_1.project_id}"
+  region              = "${selectel_mks_cluster_v1.cluster_tf_acc_test_1.region}"
+  availability_zone   = "ru-3a"
+  nodes_count         = 2
+  cpus                = 1
+  ram_mb              = 1024
+  volume_gb           = 10
+  volume_type         = "fast.ru-3a"
+  enable_autoscale    = true
+  autoscale_min_nodes = 2
+  autoscale_max_nodes = 3
   labels = {
     label-key0 = "label-value0"
     label-key1 = "label-value1"
@@ -203,15 +211,18 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
 }
 
 resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
-  cluster_id        = "${selectel_mks_cluster_v1.cluster_tf_acc_test_1.id}"
-  project_id        = "${selectel_mks_cluster_v1.cluster_tf_acc_test_1.project_id}"
-  region            = "${selectel_mks_cluster_v1.cluster_tf_acc_test_1.region}"
-  availability_zone = "ru-3a"
-  nodes_count       = 2
-  cpus              = 1
-  ram_mb            = 1024
-  volume_gb         = 10
-  volume_type       = "fast.ru-3a"
+  cluster_id          = "${selectel_mks_cluster_v1.cluster_tf_acc_test_1.id}"
+  project_id          = "${selectel_mks_cluster_v1.cluster_tf_acc_test_1.project_id}"
+  region              = "${selectel_mks_cluster_v1.cluster_tf_acc_test_1.region}"
+  availability_zone   = "ru-3a"
+  nodes_count         = 3
+  cpus                = 1
+  ram_mb              = 1024
+  volume_gb           = 10
+  volume_type         = "fast.ru-3a"
+  enable_autoscale    = false
+  autoscale_min_nodes = 1
+  autoscale_max_nodes = 4
   labels = {
     label-key3 = "label-value3"
     label-key4 = "label-value4"

@@ -31,6 +31,7 @@ const (
 	objectAvailableExtensions           = "available-extensions"
 	objectFlavors                       = "flavors"
 	objectConfigurationParameters       = "configuration-parameters"
+	objectPrometheusMetricToken         = "prometheus-metric-token"
 	objectAvailableFeatureGates         = "feature-gates"
 	objectAvailableAdmissionControllers = "admission-controllers"
 )
@@ -75,27 +76,29 @@ func Provider() *schema.Provider {
 			"selectel_dbaas_configuration_parameter_v1":       dataSourceDBaaSConfigurationParameterV1(),
 			"selectel_mks_available_feature_gates_v1":         dataSourceFeatureGateTypeV1(),
 			"selectel_mks_available_admission_controllers_v1": dataSourceAdmissionControllersTypeV1(),
+			"selectel_dbaas_prometheus_metric_token_v1": dataSourceDBaaSPrometheusMetricTokenV1(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"selectel_vpc_floatingip_v2":         resourceVPCFloatingIPV2(),
-			"selectel_vpc_keypair_v2":            resourceVPCKeypairV2(),
-			"selectel_vpc_license_v2":            resourceVPCLicenseV2(),
-			"selectel_vpc_project_v2":            resourceVPCProjectV2(),
-			"selectel_vpc_role_v2":               resourceVPCRoleV2(),
-			"selectel_vpc_subnet_v2":             resourceVPCSubnetV2(),
-			"selectel_vpc_token_v2":              resourceVPCTokenV2(),
-			"selectel_vpc_user_v2":               resourceVPCUserV2(),
-			"selectel_vpc_vrrp_subnet_v2":        resourceVPCVRRPSubnetV2(),
-			"selectel_vpc_crossregion_subnet_v2": resourceVPCCrossRegionSubnetV2(),
-			"selectel_mks_cluster_v1":            resourceMKSClusterV1(),
-			"selectel_mks_nodegroup_v1":          resourceMKSNodegroupV1(),
-			"selectel_domains_domain_v1":         resourceDomainsDomainV1(),
-			"selectel_domains_record_v1":         resourceDomainsRecordV1(),
-			"selectel_dbaas_datastore_v1":        resourceDBaaSDatastoreV1(),
-			"selectel_dbaas_user_v1":             resourceDBaaSUserV1(),
-			"selectel_dbaas_database_v1":         resourceDBaaSDatabaseV1(),
-			"selectel_dbaas_grant_v1":            resourceDBaaSGrantV1(),
-			"selectel_dbaas_extension_v1":        resourceDBaaSExtensionV1(),
+			"selectel_vpc_floatingip_v2":                resourceVPCFloatingIPV2(),
+			"selectel_vpc_keypair_v2":                   resourceVPCKeypairV2(),
+			"selectel_vpc_license_v2":                   resourceVPCLicenseV2(),
+			"selectel_vpc_project_v2":                   resourceVPCProjectV2(),
+			"selectel_vpc_role_v2":                      resourceVPCRoleV2(),
+			"selectel_vpc_subnet_v2":                    resourceVPCSubnetV2(),
+			"selectel_vpc_token_v2":                     resourceVPCTokenV2(),
+			"selectel_vpc_user_v2":                      resourceVPCUserV2(),
+			"selectel_vpc_vrrp_subnet_v2":               resourceVPCVRRPSubnetV2(),
+			"selectel_vpc_crossregion_subnet_v2":        resourceVPCCrossRegionSubnetV2(),
+			"selectel_mks_cluster_v1":                   resourceMKSClusterV1(),
+			"selectel_mks_nodegroup_v1":                 resourceMKSNodegroupV1(),
+			"selectel_domains_domain_v1":                resourceDomainsDomainV1(),
+			"selectel_domains_record_v1":                resourceDomainsRecordV1(),
+			"selectel_dbaas_datastore_v1":               resourceDBaaSDatastoreV1(),
+			"selectel_dbaas_user_v1":                    resourceDBaaSUserV1(),
+			"selectel_dbaas_database_v1":                resourceDBaaSDatabaseV1(),
+			"selectel_dbaas_grant_v1":                   resourceDBaaSGrantV1(),
+			"selectel_dbaas_extension_v1":               resourceDBaaSExtensionV1(),
+			"selectel_dbaas_prometheus_metric_token_v1": resourceDBaaSPrometheusMetricTokenV1(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}
