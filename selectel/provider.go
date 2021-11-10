@@ -76,7 +76,7 @@ func Provider() *schema.Provider {
 			"selectel_dbaas_configuration_parameter_v1":       dataSourceDBaaSConfigurationParameterV1(),
 			"selectel_mks_available_feature_gates_v1":         dataSourceFeatureGateTypeV1(),
 			"selectel_mks_available_admission_controllers_v1": dataSourceAdmissionControllersTypeV1(),
-			"selectel_dbaas_prometheus_metric_token_v1": dataSourceDBaaSPrometheusMetricTokenV1(),
+			"selectel_dbaas_prometheus_metric_token_v1":       dataSourceDBaaSPrometheusMetricTokenV1(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"selectel_vpc_floatingip_v2":                resourceVPCFloatingIPV2(),

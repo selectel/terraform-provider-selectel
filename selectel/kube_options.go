@@ -23,13 +23,13 @@ func getSetAsStrings(d *schema.ResourceData, key string) ([]string, error) {
 	}
 
 	list := set.List()
-	var result []string
-	for _, item := range list {
+	result := make([]string, len(list))
+	for i, item := range list {
 		val, ok := item.(string)
 		if !ok {
 			return nil, fmt.Errorf("%q item '%v' is not a string", key, item)
 		}
-		result = append(result, val)
+		result[i] = val
 	}
 	return result, nil
 }

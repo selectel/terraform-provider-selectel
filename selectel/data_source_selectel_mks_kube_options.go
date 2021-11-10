@@ -10,10 +10,6 @@ import (
 	"github.com/selectel/mks-go/pkg/v1/kubeoptions"
 )
 
-type availableKubeOptionsSearchFilter struct {
-	kubeVersion string
-}
-
 func dataSourceFeatureGateTypeV1() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceFeatureGateTypeV1Read,

@@ -17,11 +17,10 @@ import (
 // ReattachConfig holds the information Terraform needs to be able to attach
 // itself to a provider process, so it can drive the process.
 type ReattachConfig struct {
-	Protocol        string
-	ProtocolVersion int
-	Pid             int
-	Test            bool
-	Addr            ReattachConfigAddr
+	Protocol string
+	Pid      int
+	Test     bool
+	Addr     ReattachConfigAddr
 }
 
 // ReattachConfigAddr is a JSON-encoding friendly version of net.Addr.
@@ -57,10 +56,9 @@ func DebugServe(ctx context.Context, opts *ServeOpts) (ReattachConfig, <-chan st
 	}
 
 	return ReattachConfig{
-		Protocol:        string(config.Protocol),
-		ProtocolVersion: config.ProtocolVersion,
-		Pid:             config.Pid,
-		Test:            config.Test,
+		Protocol: string(config.Protocol),
+		Pid:      config.Pid,
+		Test:     config.Test,
 		Addr: ReattachConfigAddr{
 			Network: config.Addr.Network(),
 			String:  config.Addr.String(),

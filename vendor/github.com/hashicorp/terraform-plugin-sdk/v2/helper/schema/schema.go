@@ -1439,7 +1439,7 @@ func (m schemaMap) validate(
 		if err != nil {
 			return append(diags, diag.Diagnostic{
 				Severity:      diag.Error,
-				Summary:       "Failed to determine default value",
+				Summary:       "Loading Default",
 				Detail:        err.Error(),
 				AttributePath: path,
 			})
@@ -1453,7 +1453,7 @@ func (m schemaMap) validate(
 	if err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity:      diag.Error,
-			Summary:       "Invalid combination of arguments",
+			Summary:       "ExactlyOne",
 			Detail:        err.Error(),
 			AttributePath: path,
 		})
@@ -1463,7 +1463,7 @@ func (m schemaMap) validate(
 	if err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity:      diag.Error,
-			Summary:       "Missing required argument",
+			Summary:       "AtLeastOne",
 			Detail:        err.Error(),
 			AttributePath: path,
 		})
@@ -1485,8 +1485,8 @@ func (m schemaMap) validate(
 		// This is a computed-only field
 		return append(diags, diag.Diagnostic{
 			Severity:      diag.Error,
-			Summary:       "Value for unconfigurable attribute",
-			Detail:        fmt.Sprintf("Can't configure a value for %q: its value will be decided automatically based on the result of applying this configuration.", k),
+			Summary:       "Computed attributes cannot be set",
+			Detail:        fmt.Sprintf("Computed attributes cannot be set, but a value was set for %q.", k),
 			AttributePath: path,
 		})
 	}
@@ -1495,7 +1495,7 @@ func (m schemaMap) validate(
 	if err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity:      diag.Error,
-			Summary:       "Missing required argument",
+			Summary:       "RequiredWith",
 			Detail:        err.Error(),
 			AttributePath: path,
 		})
@@ -1510,7 +1510,7 @@ func (m schemaMap) validate(
 		if schema.Deprecated != "" {
 			return append(diags, diag.Diagnostic{
 				Severity:      diag.Warning,
-				Summary:       "Argument is deprecated",
+				Summary:       "Attribute is deprecated",
 				Detail:        schema.Deprecated,
 				AttributePath: path,
 			})
@@ -1522,7 +1522,7 @@ func (m schemaMap) validate(
 	if err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity:      diag.Error,
-			Summary:       "Conflicting configuration arguments",
+			Summary:       "ConflictsWith",
 			Detail:        err.Error(),
 			AttributePath: path,
 		})
@@ -1699,7 +1699,7 @@ func (m schemaMap) validateList(
 	if rawV.Kind() != reflect.Slice {
 		return append(diags, diag.Diagnostic{
 			Severity:      diag.Error,
-			Summary:       "Attribute must be a list",
+			Summary:       "Attribute should be a list",
 			AttributePath: path,
 		})
 	}
@@ -1717,8 +1717,8 @@ func (m schemaMap) validateList(
 	if schema.MaxItems > 0 && rawV.Len() > schema.MaxItems {
 		return append(diags, diag.Diagnostic{
 			Severity:      diag.Error,
-			Summary:       "Too many list items",
-			Detail:        fmt.Sprintf("Attribute supports %d item maximum, but config has %d declared.", schema.MaxItems, rawV.Len()),
+			Summary:       "List longer than MaxItems",
+			Detail:        fmt.Sprintf("Attribute supports %d item maximum, config has %d declared", schema.MaxItems, rawV.Len()),
 			AttributePath: path,
 		})
 	}
@@ -1726,8 +1726,8 @@ func (m schemaMap) validateList(
 	if schema.MinItems > 0 && rawV.Len() < schema.MinItems {
 		return append(diags, diag.Diagnostic{
 			Severity:      diag.Error,
-			Summary:       "Not enough list items",
-			Detail:        fmt.Sprintf("Attribute requires %d item minimum, but config has only %d declared.", schema.MinItems, rawV.Len()),
+			Summary:       "List shorter than MinItems",
+			Detail:        fmt.Sprintf("Attribute supports %d item minimum, config has %d declared", schema.MinItems, rawV.Len()),
 			AttributePath: path,
 		})
 	}
@@ -1794,7 +1794,7 @@ func (m schemaMap) validateMap(
 		if reifiedOk && raw == reified && !c.IsComputed(k) {
 			return append(diags, diag.Diagnostic{
 				Severity:      diag.Error,
-				Summary:       "Attribute must be a map",
+				Summary:       "Attribute should be a map",
 				AttributePath: path,
 			})
 		}
@@ -1805,7 +1805,7 @@ func (m schemaMap) validateMap(
 	default:
 		return append(diags, diag.Diagnostic{
 			Severity:      diag.Error,
-			Summary:       "Attribute must be a map",
+			Summary:       "Attribute should be a map",
 			AttributePath: path,
 		})
 	}
@@ -1832,7 +1832,7 @@ func (m schemaMap) validateMap(
 		if v.Kind() != reflect.Map {
 			return append(diags, diag.Diagnostic{
 				Severity:      diag.Error,
-				Summary:       "Attribute must be a map",
+				Summary:       "Attribute should be a map",
 				AttributePath: path,
 			})
 		}
@@ -2111,7 +2111,7 @@ func (m schemaMap) validateType(
 	if schema.Deprecated != "" {
 		diags = append(diags, diag.Diagnostic{
 			Severity:      diag.Warning,
-			Summary:       "Argument is deprecated",
+			Summary:       "Deprecated Attribute",
 			Detail:        schema.Deprecated,
 			AttributePath: path,
 		})

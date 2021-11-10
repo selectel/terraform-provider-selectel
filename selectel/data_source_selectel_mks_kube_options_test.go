@@ -17,9 +17,7 @@ const (
 )
 
 func TestAccMKSAvailableFeatureGatesV1Basic(t *testing.T) {
-	var (
-		project projects.Project
-	)
+	var project projects.Project
 
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	kubeVersion := "1.17.3"
@@ -42,9 +40,7 @@ func TestAccMKSAvailableFeatureGatesV1Basic(t *testing.T) {
 }
 
 func TestAccMKSAvailableFeatureGatesV1NoFilter(t *testing.T) {
-	var (
-		project projects.Project
-	)
+	var project projects.Project
 
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
@@ -65,9 +61,7 @@ func TestAccMKSAvailableFeatureGatesV1NoFilter(t *testing.T) {
 }
 
 func TestAccMKSAvailableAdmissionControllersV1Basic(t *testing.T) {
-	var (
-		project projects.Project
-	)
+	var project projects.Project
 
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	kubeVersion := "1.17.3"
@@ -90,9 +84,7 @@ func TestAccMKSAvailableAdmissionControllersV1Basic(t *testing.T) {
 }
 
 func TestAccMKSAvailableAdmissionControllersV1NoFilter(t *testing.T) {
-	var (
-		project projects.Project
-	)
+	var project projects.Project
 
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
@@ -130,6 +122,7 @@ func testFeatureGatesIsNotEmpty(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
+
 func testFeatureGatesNoFilter(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -175,6 +168,7 @@ func testAdmissionControllersIsNotEmpty(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
+
 func testAdmissionControllersNoFilter(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
