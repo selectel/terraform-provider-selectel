@@ -34,6 +34,20 @@ func TestAccDBaaSFlavorsV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", "flavors.0.vcpus"),
 					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", "flavors.0.ram"),
 					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", "flavors.0.disk"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", "flavors.0.datastore_type_ids.#", "8"),
+				),
+			},
+			{
+				Config: testAccDBaaSFlavorsV1RedisFlavor(projectName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccDBaaSFlavorsV1Exists("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", &dbaasFlavors),
+					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", "flavors.0.id"),
+					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", "flavors.0.name"),
+					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", "flavors.0.vcpus"),
+					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", "flavors.0.ram"),
+					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", "flavors.0.disk"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_flavor_v1.flavor_tf_acc_test_1", "flavors.0.datastore_type_ids.#", "1"),
 				),
 			},
 		},
@@ -75,6 +89,31 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
 data "selectel_dbaas_flavor_v1" "flavor_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
+}
+`, projectName)
+}
+
+func testAccDBaaSFlavorsV1RedisFlavor(projectName string) string {
+	return fmt.Sprintf(`
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
+  name        = "%s"
+  auto_quotas = true
+}
+
+data "selectel_dbaas_datastore_type_v1" "dt" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region     = "ru-3"
+  filter {
+    engine = "redis"
+  }
+}
+
+data "selectel_dbaas_flavor_v1" "flavor_tf_acc_test_1" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region     = "ru-3"
+  filter {
+    datastore_type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
+  }
 }
 `, projectName)
 }

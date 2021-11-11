@@ -10,9 +10,10 @@ import (
 )
 
 type flavorSearchFilter struct {
-	vcpus int
-	ram   int
-	disk  int
+	vcpus           int
+	ram             int
+	disk            int
+	datastoreTypeID string
 }
 
 func dataSourceDBaaSFlavorV1() *schema.Resource {
@@ -64,6 +65,13 @@ func dataSourceDBaaSFlavorV1() *schema.Resource {
 							Type:     schema.TypeInt,
 							Computed: true,
 						},
+						"datastore_type_ids": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
 					},
 				},
 			},
@@ -82,6 +90,10 @@ func dataSourceDBaaSFlavorV1() *schema.Resource {
 						},
 						"disk": {
 							Type:     schema.TypeInt,
+							Optional: true,
+						},
+						"datastore_type_id": {
+							Type:     schema.TypeString,
 							Optional: true,
 						},
 					},
@@ -115,6 +127,7 @@ func dataSourceDBaaSFlavorV1Read(ctx context.Context, d *schema.ResourceData, me
 	flavors = filterFlavorByVcpus(flavors, filter.vcpus)
 	flavors = filterFlavorByRAM(flavors, filter.ram)
 	flavors = filterFlavorByDisk(flavors, filter.disk)
+	flavors = filterFlavorByDatastoreTypeID(flavors, filter.datastoreTypeID)
 
 	flavorsFlatten := flattenDBaaSFlavors(flavors)
 	if err := d.Set("flavors", flavorsFlatten); err != nil {
@@ -150,6 +163,11 @@ func expandFlavorSearchFilter(filterSet *schema.Set) (flavorSearchFilter, error)
 	disk, ok := resourceFilterMap["disk"]
 	if ok {
 		filter.disk = disk.(int)
+	}
+
+	datastoreTypeID, ok := resourceFilterMap["datastore_type_id"]
+	if ok {
+		filter.datastoreTypeID = datastoreTypeID.(string)
 	}
 
 	return filter, nil
@@ -200,6 +218,23 @@ func filterFlavorByDisk(flavors []dbaas.FlavorResponse, disk int) []dbaas.Flavor
 	return filteredFlavors
 }
 
+func filterFlavorByDatastoreTypeID(flavors []dbaas.FlavorResponse, datastoreTypeID string) []dbaas.FlavorResponse {
+	if datastoreTypeID == "" {
+		return flavors
+	}
+
+	var filteredFlavors []dbaas.FlavorResponse
+	for _, f := range flavors {
+		for _, flavorDatastoreTypeID := range f.DatastoreTypeIDs {
+			if flavorDatastoreTypeID == datastoreTypeID {
+				filteredFlavors = append(filteredFlavors, f)
+			}
+		}
+	}
+
+	return filteredFlavors
+}
+
 func flattenDBaaSFlavors(flavors []dbaas.FlavorResponse) []interface{} {
 	flavorsList := make([]interface{}, len(flavors))
 	for i, flavor := range flavors {
@@ -210,6 +245,7 @@ func flattenDBaaSFlavors(flavors []dbaas.FlavorResponse) []interface{} {
 		flavorMap["vcpus"] = flavor.Vcpus
 		flavorMap["ram"] = flavor.RAM
 		flavorMap["disk"] = flavor.Disk
+		flavorMap["datastore_type_ids"] = flavor.DatastoreTypeIDs
 
 		flavorsList[i] = flavorMap
 	}

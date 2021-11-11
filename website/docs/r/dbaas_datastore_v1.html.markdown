@@ -91,6 +91,8 @@ The following arguments are supported:
 
 * `config` - (Optional) Configuration parameters for the datastore.
 
+* `redis_password` - (Optional) Password for the Redis datastore (only for Redis datastores)
+
 **flavor**
 
 - `vcpus` - (Required) CPU count for the flavor.

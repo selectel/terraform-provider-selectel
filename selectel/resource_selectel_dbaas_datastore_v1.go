@@ -67,6 +67,7 @@ func resourceDBaaSDatastoreV1() *schema.Resource {
 			"flavor_id": {
 				Type:          schema.TypeString,
 				Optional:      true,
+				Computed:      true,
 				ForceNew:      false,
 				ConflictsWith: []string{"flavor"},
 			},
@@ -93,6 +94,7 @@ func resourceDBaaSDatastoreV1() *schema.Resource {
 			"flavor": {
 				Type:          schema.TypeSet,
 				Optional:      true,
+				Computed:      true,
 				ForceNew:      false,
 				ConflictsWith: []string{"flavor_id"},
 				Elem: &schema.Resource{
@@ -184,6 +186,11 @@ func resourceDBaaSDatastoreV1() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"redis_password": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: false,
+			},
 		},
 	}
 }
@@ -244,6 +251,11 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 		datastoreCreateOpts.FlavorID = flavorID.(string)
 	}
 
+	redisPassword, redisPasswordOk := d.GetOk("redis_password")
+	if redisPasswordOk {
+		datastoreCreateOpts.RedisPassword = redisPassword.(string)
+	}
+
 	log.Print(msgCreate(objectDatastore, datastoreCreateOpts))
 	datastore, err := dbaasClient.CreateDatastore(ctx, datastoreCreateOpts)
 	if err != nil {
@@ -282,12 +294,9 @@ func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, m
 	d.Set("enabled", datastore.Enabled)
 	d.Set("flavor_id", datastore.FlavorID)
 
-	_, flavorIDOk := d.GetOk("flavor_id")
-	if !flavorIDOk {
-		flavor := resourceDBaaSDatastoreV1FlavorToSet(datastore.Flavor)
-		if err := d.Set("flavor", flavor); err != nil {
-			log.Print(errSettingComplexAttr("flavor", err))
-		}
+	flavor := resourceDBaaSDatastoreV1FlavorToSet(datastore.Flavor)
+	if err := d.Set("flavor", flavor); err != nil {
+		log.Print(errSettingComplexAttr("flavor", err))
 	}
 
 	connectonMap := make(map[string]string)
@@ -339,6 +348,12 @@ func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData,
 	}
 	if d.HasChange("config") {
 		err := updateDatastoreConfig(ctx, d, dbaasClient)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("redis_password") {
+		err := updateDatastorePassword(ctx, d, dbaasClient)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -703,6 +718,27 @@ func updateDatastoreConfig(ctx context.Context, d *schema.ResourceData, client *
 
 	log.Print(msgUpdate(objectDatastore, d.Id(), configOpts))
 	_, err = client.ConfigDatastore(ctx, d.Id(), configOpts)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func updateDatastorePassword(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	passwordOpts := dbaas.DatastorePasswordOpts{
+		RedisPassword: d.Get("redis_password").(string),
+	}
+
+	log.Print(msgUpdate(objectDatastore, d.Id(), passwordOpts))
+	_, err := client.PasswordDatastore(ctx, d.Id(), passwordOpts)
 	if err != nil {
 		return errUpdatingObject(objectDatastore, d.Id(), err)
 	}

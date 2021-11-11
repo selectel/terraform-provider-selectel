@@ -67,15 +67,16 @@ type Datastore struct {
 
 // DatastoreCreateOpts represents options for the datastore Create request.
 type DatastoreCreateOpts struct {
-	Flavor    *Flavor                `json:"flavor,omitempty"`
-	Restore   *Restore               `json:"restore,omitempty"`
-	Pooler    *Pooler                `json:"pooler,omitempty"`
-	Config    map[string]interface{} `json:"config,omitempty"`
-	Name      string                 `json:"name"`
-	TypeID    string                 `json:"type_id"`
-	SubnetID  string                 `json:"subnet_id"`
-	FlavorID  string                 `json:"flavor_id,omitempty"`
-	NodeCount int                    `json:"node_count"`
+	Flavor        *Flavor                `json:"flavor,omitempty"`
+	Restore       *Restore               `json:"restore,omitempty"`
+	Pooler        *Pooler                `json:"pooler,omitempty"`
+	Config        map[string]interface{} `json:"config,omitempty"`
+	Name          string                 `json:"name"`
+	TypeID        string                 `json:"type_id"`
+	SubnetID      string                 `json:"subnet_id"`
+	FlavorID      string                 `json:"flavor_id,omitempty"`
+	RedisPassword string                 `json:"redis_password,omitempty"`
+	NodeCount     int                    `json:"node_count"`
 }
 
 // DatastoreUpdateOpts represents options for the datastore Update request.
@@ -96,13 +97,19 @@ type DatastorePoolerOpts struct {
 	Size int    `json:"size,omitempty"`
 }
 
-// DatastoreFirewallOpts represents options for the datastore's firewall rules Ureate request.
+// DatastoreFirewallOpts represents options for the datastore's firewall rules Update request.
 type DatastoreFirewallOpts struct {
 	IPs []string `json:"ips"`
 }
 
+// DatastoreConfigOpts represents options for the datastore's configuration parameters Update request.
 type DatastoreConfigOpts struct {
 	Config map[string]interface{} `json:"config"`
+}
+
+// DatastorePasswordOpts represents options for the Redis datastore's password Update request.
+type DatastorePasswordOpts struct {
+	RedisPassword string `json:"redis_password"`
 }
 
 // DatastoreQueryParams represents available query parameters for datastore.
@@ -317,10 +324,39 @@ func (api *API) FirewallDatastore(ctx context.Context, datastoreID string, opts 
 	return result.Datastore, nil
 }
 
-// ConfigDatastore updates firewall rules of an existing datastore.
+// ConfigDatastore updates configuration parameters rules of an existing datastore.
 func (api *API) ConfigDatastore(ctx context.Context, datastoreID string, opts DatastoreConfigOpts) (Datastore, error) { //nolint
 	uri := fmt.Sprintf("/datastores/%s/config", datastoreID)
 	requestBody, err := json.Marshal(opts)
+	if err != nil {
+		return Datastore{}, fmt.Errorf("Error marshalling params to JSON, %w", err)
+	}
+
+	resp, err := api.makeRequest(ctx, http.MethodPut, uri, requestBody)
+	if err != nil {
+		return Datastore{}, err
+	}
+
+	var result struct {
+		Datastore Datastore `json:"datastore"`
+	}
+	err = json.Unmarshal(resp, &result)
+	if err != nil {
+		return Datastore{}, fmt.Errorf("Error during Unmarshal, %w", err)
+	}
+
+	return result.Datastore, nil
+}
+
+// PasswordDatastore updates password of an existing Redis datastore.
+func (api *API) PasswordDatastore(ctx context.Context, datastoreID string, opts DatastorePasswordOpts) (Datastore, error) { //nolint
+	uri := fmt.Sprintf("/datastores/%s/password", datastoreID)
+	passwordDatastoreOpts := struct {
+		Datastore DatastorePasswordOpts `json:"password"`
+	}{
+		Datastore: opts,
+	}
+	requestBody, err := json.Marshal(passwordDatastoreOpts)
 	if err != nil {
 		return Datastore{}, fmt.Errorf("Error marshalling params to JSON, %w", err)
 	}
