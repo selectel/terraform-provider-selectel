@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -28,6 +29,8 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
 	maintenanceWindowStart := testAccMKSClusterV1GetMaintenanceWindowStart(12 * time.Hour)
 	maintenanceWindowStartUpdated := testAccMKSClusterV1GetMaintenanceWindowStart(14 * time.Hour)
+	featureGates := []string{"TTLAfterFinished"}
+	admissionControllers := []string{"NamespaceLifecycle"}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -49,7 +52,7 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccMKSClusterV1Update(projectName, clusterName, kubeVersion, maintenanceWindowStartUpdated),
+				Config: testAccMKSClusterV1Update(projectName, clusterName, kubeVersion, maintenanceWindowStartUpdated, featureGates, admissionControllers),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "name", clusterName),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "kube_version", kubeVersion),
@@ -234,7 +237,10 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
 }`, projectName, clusterName, kubeVersion, maintenanceWindowStart)
 }
 
-func testAccMKSClusterV1Update(projectName, clusterName, kubeVersion, maintenanceWindowStart string) string {
+func testAccMKSClusterV1Update(projectName, clusterName, kubeVersion, maintenanceWindowStart string, featureGates, admissionControllers []string) string {
+	flatFeaturegGates := strings.Join(featureGates, ",")
+	flatAdmissionControllers := strings.Join(admissionControllers, ",")
+
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
@@ -249,13 +255,9 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
   enable_autorepair                 = false
   enable_patch_version_auto_upgrade = false
   enable_pod_security_policy        = false
-  feature_gates						= [
-		"TTLAfterFinished",
-	]
-  admission_controllers				= [
-		"NamespaceLifecycle",
-	]
-}`, projectName, clusterName, kubeVersion, maintenanceWindowStart)
+  feature_gates                     = [%s]
+  admission_controllers             = [%s]
+}`, projectName, clusterName, kubeVersion, maintenanceWindowStart, flatFeaturegGates, flatAdmissionControllers)
 }
 
 func testAccMKSClusterV1Zonal(projectName, clusterName, kubeVersion, maintenanceWindowStart string) string {

@@ -10,9 +10,9 @@ import (
 	"github.com/selectel/mks-go/pkg/v1/kubeoptions"
 )
 
-func dataSourceFeatureGateTypeV1() *schema.Resource {
+func dataSourceMKSFeatureGatesV1() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceFeatureGateTypeV1Read,
+		ReadContext: dataSourceMKSFeatureGateTypeV1Read,
 		Schema: map[string]*schema.Schema{
 			"project_id": {
 				Type:     schema.TypeString,
@@ -35,24 +35,24 @@ func dataSourceFeatureGateTypeV1() *schema.Resource {
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"kube_version_minor": {
+						"kube_version": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 						},
 					},
 				},
 			},
-			"available_feature_gates": {
-				Type:     schema.TypeList,
+			"feature_gates": {
+				Type:     schema.TypeSet,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"kube_version_minor": {
+						"kube_version": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
 						"names": {
-							Type:     schema.TypeString,
+							Type:     schema.TypeSet,
 							Computed: true,
 						},
 					},
@@ -62,28 +62,30 @@ func dataSourceFeatureGateTypeV1() *schema.Resource {
 	}
 }
 
-func dataSourceFeatureGateTypeV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceMKSFeatureGateTypeV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	mksClient, diagErr := getMKSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
 
 	featureGates, _, err := kubeoptions.ListFeatureGates(ctx, mksClient)
-	if diagErr != nil {
-		return diag.FromErr(errGettingObjects(objectAvailableFeatureGates, err))
+	if err != nil {
+		return diag.FromErr(errGettingObjects(objectFeatureGates, err))
 	}
 
 	filterSet := d.Get("filter").(*schema.Set)
 	if filterSet.Len() == 0 {
-		return setAllAvailableFeatureGates(d, featureGates)
+		d.SetId("mks_feature_gates")
+		flatFG := flattenFeatureGates(featureGates)
+		if err := d.Set("feature_gates", flatFG); err != nil {
+			return diag.FromErr(err)
+		}
+
+		return nil
 	}
 
 	filterMap := filterSet.List()[0].(map[string]interface{})
-	kubeVersionVal, ok := filterMap["kube_version_minor"]
-	if !ok {
-		return diag.Errorf("kube_version_minor is not set: %v", kubeVersionVal)
-	}
-	kubeVersion := kubeVersionVal.(string)
+	kubeVersion := filterMap["kube_version"].(string)
 
 	if kubeVersion == "" {
 		return diag.Errorf("kubernetes version is not set")
@@ -98,21 +100,16 @@ func dataSourceFeatureGateTypeV1Read(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	d.SetId(kubeVersion)
-	flatFG := flattenFeatureGatesFromSlice(kubeVersion, availableFeatureGates)
-	if err := d.Set("available_feature_gates", flatFG); err != nil {
+	flatFG := flattenFeatureGatesFromSlice(kubeMinorVersion, availableFeatureGates)
+	if err := d.Set("feature_gates", flatFG); err != nil {
 		return diag.FromErr(err)
 	}
 
-	return nil
-}
-
-func setAllAvailableFeatureGates(d *schema.ResourceData, availableFeatureGates []*kubeoptions.View) diag.Diagnostics {
-	d.SetId("mks_available_feature_gates")
-	flatFG := flattenFeatureGates(availableFeatureGates)
-	if err := d.Set("available_feature_gates", flatFG); err != nil {
+	checksum, err := stringListChecksum(availableFeatureGates)
+	if err != nil {
 		return diag.FromErr(err)
 	}
+	d.SetId(checksum)
 
 	return nil
 }
@@ -131,9 +128,9 @@ func filterKubeOptionsByKubeVersion(options []*kubeoptions.View, version string)
 	return nil, fmt.Errorf("available kubernetes options for kubernetes version %q is not found", version)
 }
 
-func dataSourceAdmissionControllersTypeV1() *schema.Resource {
+func dataSourceMKSAdmissionControllersV1() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceAdmissionControllersTypeV1Read,
+		ReadContext: dataSourceMKSAdmissionControllersV1Read,
 		Schema: map[string]*schema.Schema{
 			"project_id": {
 				Type:     schema.TypeString,
@@ -156,24 +153,24 @@ func dataSourceAdmissionControllersTypeV1() *schema.Resource {
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"kube_version_minor": {
+						"kube_version": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 						},
 					},
 				},
 			},
-			"available_admission_controllers": {
-				Type:     schema.TypeList,
+			"admission_controllers": {
+				Type:     schema.TypeSet,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"kube_version_minor": {
+						"kube_version": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
 						"names": {
-							Type:     schema.TypeString,
+							Type:     schema.TypeSet,
 							Computed: true,
 						},
 					},
@@ -183,28 +180,24 @@ func dataSourceAdmissionControllersTypeV1() *schema.Resource {
 	}
 }
 
-func dataSourceAdmissionControllersTypeV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceMKSAdmissionControllersV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	mksClient, diagErr := getMKSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
 
 	admissionControllers, _, err := kubeoptions.ListAdmissionControllers(ctx, mksClient)
-	if diagErr != nil {
-		return diag.FromErr(errGettingObjects(objectAvailableAdmissionControllers, err))
+	if err != nil {
+		return diag.FromErr(errGettingObjects(objectAdmissionControllers, err))
 	}
 
 	filterSet := d.Get("filter").(*schema.Set)
 	if filterSet.Len() == 0 {
-		return setAllAvailableAdmissionControllers(d, admissionControllers)
+		return setAllAdmissionControllers(d, admissionControllers)
 	}
 
 	filterMap := filterSet.List()[0].(map[string]interface{})
-	kubeVersionVal, ok := filterMap["kube_version_minor"]
-	if !ok {
-		return diag.Errorf("kube_version_minor is not set: %v", kubeVersionVal)
-	}
-	kubeVersion := kubeVersionVal.(string)
+	kubeVersion := filterMap["kube_version"].(string)
 
 	if kubeVersion == "" {
 		return diag.Errorf("kubernetes version is not set")
@@ -219,19 +212,24 @@ func dataSourceAdmissionControllersTypeV1Read(ctx context.Context, d *schema.Res
 		return diag.FromErr(err)
 	}
 
-	d.SetId(kubeVersion)
-	flatFG := flattenAdmissionControllersFromSlice(kubeVersion, availableAdmissionControllers)
-	if err := d.Set("available_admission_controllers", flatFG); err != nil {
+	flatFG := flattenAdmissionControllersFromSlice(kubeMinorVersion, availableAdmissionControllers)
+	if err := d.Set("admission_controllers", flatFG); err != nil {
 		return diag.FromErr(err)
 	}
+
+	checksum, err := stringListChecksum(availableAdmissionControllers)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(checksum)
 
 	return nil
 }
 
-func setAllAvailableAdmissionControllers(d *schema.ResourceData, availableAdmissionControllers []*kubeoptions.View) diag.Diagnostics {
-	d.SetId("mks_available_admission_controllers")
+func setAllAdmissionControllers(d *schema.ResourceData, availableAdmissionControllers []*kubeoptions.View) diag.Diagnostics {
+	d.SetId("mks_admission_controllers")
 	flatFG := flattenAdmissionControllers(availableAdmissionControllers)
-	if err := d.Set("available_admission_controllers", flatFG); err != nil {
+	if err := d.Set("admission_controllers", flatFG); err != nil {
 		return diag.FromErr(err)
 	}
 

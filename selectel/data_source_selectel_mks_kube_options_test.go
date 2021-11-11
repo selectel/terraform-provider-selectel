@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	dataSourceFeatureGates         = "selectel_mks_available_feature_gates_v1"
-	dataSourceAdmissionControllers = "selectel_mks_available_admission_controllers_v1"
+	dataSourceFeatureGates         = "selectel_mks_feature_gates_v1"
+	dataSourceAdmissionControllers = "selectel_mks_admission_controllers_v1"
 )
 
 func TestAccMKSAvailableFeatureGatesV1Basic(t *testing.T) {
@@ -207,7 +207,7 @@ data "%s" "dt" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
   filter {
-    kube_version_minor = "%s"
+    kube_version = "%s"
   }
 }
 `, projectName, dataSource, kubeVersion)

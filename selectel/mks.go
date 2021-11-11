@@ -55,6 +55,7 @@ func waitForMKSClusterV1ActiveState(
 		string(cluster.StatusPendingUpdate),
 		string(cluster.StatusPendingUpgradePatchVersion),
 		string(cluster.StatusPendingUpgradeMinorVersion),
+		string(cluster.StatusPendingUpgradeClusterConfiguration),
 		string(cluster.StatusPendingResize),
 	}
 	target := []string{

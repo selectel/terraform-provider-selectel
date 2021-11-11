@@ -9,31 +9,31 @@ import (
 )
 
 const (
-	objectFloatingIP                    = "floating IP"
-	objectKeypair                       = "keypair"
-	objectLicense                       = "license"
-	objectProject                       = "project"
-	objectProjectQuotas                 = "quotas for project"
-	objectRole                          = "role"
-	objectSubnet                        = "subnet"
-	objectToken                         = "token"
-	objectUser                          = "user"
-	objectVRRPSubnet                    = "VRRP subnet"
-	objectCluster                       = "cluster"
-	objectNodegroup                     = "nodegroup"
-	objectDomain                        = "domain"
-	objectRecord                        = "record"
-	objectDatastore                     = "datastore"
-	objectDatabase                      = "database"
-	objectGrant                         = "grant"
-	objectExtension                     = "extension"
-	objectDatastoreTypes                = "datastore-types"
-	objectAvailableExtensions           = "available-extensions"
-	objectFlavors                       = "flavors"
-	objectConfigurationParameters       = "configuration-parameters"
-	objectPrometheusMetricToken         = "prometheus-metric-token"
-	objectAvailableFeatureGates         = "feature-gates"
-	objectAvailableAdmissionControllers = "admission-controllers"
+	objectFloatingIP              = "floating IP"
+	objectKeypair                 = "keypair"
+	objectLicense                 = "license"
+	objectProject                 = "project"
+	objectProjectQuotas           = "quotas for project"
+	objectRole                    = "role"
+	objectSubnet                  = "subnet"
+	objectToken                   = "token"
+	objectUser                    = "user"
+	objectVRRPSubnet              = "VRRP subnet"
+	objectCluster                 = "cluster"
+	objectNodegroup               = "nodegroup"
+	objectDomain                  = "domain"
+	objectRecord                  = "record"
+	objectDatastore               = "datastore"
+	objectDatabase                = "database"
+	objectGrant                   = "grant"
+	objectExtension               = "extension"
+	objectDatastoreTypes          = "datastore-types"
+	objectAvailableExtensions     = "available-extensions"
+	objectFlavors                 = "flavors"
+	objectConfigurationParameters = "configuration-parameters"
+	objectPrometheusMetricToken   = "prometheus-metric-token"
+	objectFeatureGates            = "feature-gates"
+	objectAdmissionControllers    = "admission-controllers"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -69,14 +69,14 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"selectel_domains_domain_v1":                      dataSourceDomainsDomainV1(),
-			"selectel_dbaas_datastore_type_v1":                dataSourceDBaaSDatastoreTypeV1(),
-			"selectel_dbaas_available_extension_v1":           dataSourceDBaaSAvailableExtensionV1(),
-			"selectel_dbaas_flavor_v1":                        dataSourceDBaaSFlavorV1(),
-			"selectel_dbaas_configuration_parameter_v1":       dataSourceDBaaSConfigurationParameterV1(),
-			"selectel_mks_available_feature_gates_v1":         dataSourceFeatureGateTypeV1(),
-			"selectel_mks_available_admission_controllers_v1": dataSourceAdmissionControllersTypeV1(),
-			"selectel_dbaas_prometheus_metric_token_v1":       dataSourceDBaaSPrometheusMetricTokenV1(),
+			"selectel_domains_domain_v1":                dataSourceDomainsDomainV1(),
+			"selectel_dbaas_datastore_type_v1":          dataSourceDBaaSDatastoreTypeV1(),
+			"selectel_dbaas_available_extension_v1":     dataSourceDBaaSAvailableExtensionV1(),
+			"selectel_dbaas_flavor_v1":                  dataSourceDBaaSFlavorV1(),
+			"selectel_dbaas_configuration_parameter_v1": dataSourceDBaaSConfigurationParameterV1(),
+			"selectel_dbaas_prometheus_metric_token_v1": dataSourceDBaaSPrometheusMetricTokenV1(),
+			"selectel_mks_feature_gates_v1":             dataSourceMKSFeatureGatesV1(),
+			"selectel_mks_admission_controllers_v1":     dataSourceMKSAdmissionControllersV1(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"selectel_vpc_floatingip_v2":                resourceVPCFloatingIPV2(),
