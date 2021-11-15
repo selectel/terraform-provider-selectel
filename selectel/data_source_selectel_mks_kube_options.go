@@ -12,7 +12,7 @@ import (
 
 func dataSourceMKSFeatureGatesV1() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceMKSFeatureGateTypeV1Read,
+		ReadContext: dataSourceMKSFeatureGateV1Read,
 		Schema: map[string]*schema.Schema{
 			"project_id": {
 				Type:     schema.TypeString,
@@ -47,13 +47,16 @@ func dataSourceMKSFeatureGatesV1() *schema.Resource {
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"kube_version": {
+						"kube_version_minor": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
 						"names": {
 							Type:     schema.TypeSet,
 							Computed: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
 						},
 					},
 				},
@@ -62,7 +65,7 @@ func dataSourceMKSFeatureGatesV1() *schema.Resource {
 	}
 }
 
-func dataSourceMKSFeatureGateTypeV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceMKSFeatureGateV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	mksClient, diagErr := getMKSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -75,11 +78,16 @@ func dataSourceMKSFeatureGateTypeV1Read(ctx context.Context, d *schema.ResourceD
 
 	filterSet := d.Get("filter").(*schema.Set)
 	if filterSet.Len() == 0 {
-		d.SetId("mks_feature_gates")
 		flatFG := flattenFeatureGates(featureGates)
 		if err := d.Set("feature_gates", flatFG); err != nil {
 			return diag.FromErr(err)
 		}
+
+		checksum, err := interfaceListChecksum(flatFG)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		d.SetId(checksum)
 
 		return nil
 	}
@@ -165,13 +173,16 @@ func dataSourceMKSAdmissionControllersV1() *schema.Resource {
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"kube_version": {
+						"kube_version_minor": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
 						"names": {
 							Type:     schema.TypeSet,
 							Computed: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
 						},
 					},
 				},
@@ -193,7 +204,16 @@ func dataSourceMKSAdmissionControllersV1Read(ctx context.Context, d *schema.Reso
 
 	filterSet := d.Get("filter").(*schema.Set)
 	if filterSet.Len() == 0 {
-		return setAllAdmissionControllers(d, admissionControllers)
+		flatAC := flattenAdmissionControllers(admissionControllers)
+		if err := d.Set("admission_controllers", flatAC); err != nil {
+			return diag.FromErr(err)
+		}
+
+		checksum, err := interfaceListChecksum(flatAC)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		d.SetId(checksum)
 	}
 
 	filterMap := filterSet.List()[0].(map[string]interface{})
@@ -222,16 +242,6 @@ func dataSourceMKSAdmissionControllersV1Read(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 	d.SetId(checksum)
-
-	return nil
-}
-
-func setAllAdmissionControllers(d *schema.ResourceData, availableAdmissionControllers []*kubeoptions.View) diag.Diagnostics {
-	d.SetId("mks_admission_controllers")
-	flatFG := flattenAdmissionControllers(availableAdmissionControllers)
-	if err := d.Set("admission_controllers", flatFG); err != nil {
-		return diag.FromErr(err)
-	}
 
 	return nil
 }

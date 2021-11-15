@@ -460,7 +460,7 @@ func flattenFeatureGates(views []*kubeoptions.View) []interface{} {
 	for i, fg := range views {
 		availableFeatureGates[i] = map[string]interface{}{
 			"kube_version_minor": fg.KubeVersion,
-			"names":              strings.Join(fg.Names, ","),
+			"names":              fg.Names,
 		}
 	}
 
@@ -471,7 +471,7 @@ func flattenFeatureGatesFromSlice(kubeVersion string, featureGates []string) []i
 	availableFeatureGates := make([]interface{}, 1)
 	availableFeatureGates[0] = map[string]interface{}{
 		"kube_version_minor": kubeVersion,
-		"names":              strings.Join(featureGates, ","),
+		"names":              featureGates,
 	}
 
 	return availableFeatureGates
@@ -549,4 +549,13 @@ func getMKSClient(ctx context.Context, d *schema.ResourceData, meta interface{})
 	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
 
 	return mksClient, nil
+}
+
+func interfaceListChecksum(items []interface{}) (string, error) {
+	flatItems := make([]string, len(items))
+	for i, item := range items {
+		flatItems[i] = fmt.Sprintf("%v", item)
+	}
+
+	return stringChecksum(strings.Join(flatItems, ""))
 }

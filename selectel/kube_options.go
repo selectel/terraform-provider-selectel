@@ -31,5 +31,6 @@ func getSetAsStrings(d *schema.ResourceData, key string) ([]string, error) {
 		}
 		result[i] = val
 	}
+
 	return result, nil
 }

@@ -20,7 +20,11 @@ func TestAccMKSAvailableFeatureGatesV1Basic(t *testing.T) {
 	var project projects.Project
 
 	projectName := acctest.RandomWithPrefix("tf-acc")
-	kubeVersion := "1.17.3"
+	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
+	kubeVersionMinor, err := kubeVersionTrimToMinor(kubeVersion)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -31,7 +35,7 @@ func TestAccMKSAvailableFeatureGatesV1Basic(t *testing.T) {
 				Config: testKubeOptionsV1BasicConfig(projectName, dataSourceFeatureGates, kubeVersion),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					resource.TestCheckResourceAttr("data."+dataSourceFeatureGates+".dt", "available_feature_gates.0.kube_version_minor", kubeVersion),
+					resource.TestCheckResourceAttr("data."+dataSourceFeatureGates+".dt", "feature_gates.0.kube_version_minor", kubeVersionMinor),
 					testFeatureGatesIsNotEmpty("data."+dataSourceFeatureGates+".dt"),
 				),
 			},
@@ -75,7 +79,7 @@ func TestAccMKSAvailableAdmissionControllersV1Basic(t *testing.T) {
 				Config: testKubeOptionsV1BasicConfig(projectName, dataSourceAdmissionControllers, kubeVersion),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					resource.TestCheckResourceAttr("data."+dataSourceAdmissionControllers+".dt", "available_admission_controllers.0.kube_version_minor", kubeVersion),
+					resource.TestCheckResourceAttr("data."+dataSourceAdmissionControllers+".dt", "admission_controllers.0.kube_version_minor", kubeVersion),
 					testAdmissionControllersIsNotEmpty("data."+dataSourceAdmissionControllers+".dt"),
 				),
 			},
@@ -111,12 +115,12 @@ func testFeatureGatesIsNotEmpty(n string) resource.TestCheckFunc {
 			return fmt.Errorf("not found: %s", n)
 		}
 
-		availableFeatureGates, ok := rs.Primary.Attributes["available_feature_gates.0.names"]
+		availableFeatureGates, ok := rs.Primary.Attributes["feature_gates.0.names"]
 		if !ok {
-			return fmt.Errorf("attribute 'available_feature_gates' is not found")
+			return fmt.Errorf("attribute 'feature_gates' is not found")
 		}
 		if availableFeatureGates == "" {
-			return fmt.Errorf("names is not set at 'available_feature_gates'")
+			return fmt.Errorf("names is not set at 'feature_gates'")
 		}
 
 		return nil
@@ -130,20 +134,20 @@ func testFeatureGatesNoFilter(n string) resource.TestCheckFunc {
 			return fmt.Errorf("not found: %s", n)
 		}
 
-		availableFeatureGates, ok := rs.Primary.Attributes["available_feature_gates.0.names"]
+		availableFeatureGates, ok := rs.Primary.Attributes["feature_gates.0.names"]
 		if !ok {
-			return fmt.Errorf("attribute 'available_feature_gates' is not found")
+			return fmt.Errorf("attribute 'feature_gates' is not found")
 		}
 		if availableFeatureGates == "" {
-			return fmt.Errorf("names is not set at 'available_feature_gates'")
+			return fmt.Errorf("names is not set at 'feature_gates'")
 		}
 
-		fgLen, err := strconv.Atoi(rs.Primary.Attributes["available_feature_gates.#"])
+		fgLen, err := strconv.Atoi(rs.Primary.Attributes["feature_gates.#"])
 		if err != nil {
-			return fmt.Errorf("failed to get len of 'available_feature_gates': %w", err)
+			return fmt.Errorf("failed to get len of 'feature_gates': %w", err)
 		}
 		if fgLen <= 1 {
-			return fmt.Errorf("received only one or less item in 'available_feature_gates'")
+			return fmt.Errorf("received only one or less item in 'feature_gates'")
 		}
 
 		return nil
@@ -157,12 +161,12 @@ func testAdmissionControllersIsNotEmpty(n string) resource.TestCheckFunc {
 			return fmt.Errorf("not found: %s", n)
 		}
 
-		availableAdmissionControllers, ok := rs.Primary.Attributes["available_admission_controllers.0.names"]
+		availableAdmissionControllers, ok := rs.Primary.Attributes["admission_controllers.0.names"]
 		if !ok {
-			return fmt.Errorf("attribute 'available_admission_controllers' is not found")
+			return fmt.Errorf("attribute 'admission_controllers' is not found")
 		}
 		if availableAdmissionControllers == "" {
-			return fmt.Errorf("names is not set at 'available_admission_controllers'")
+			return fmt.Errorf("names is not set at 'admission_controllers'")
 		}
 
 		return nil
@@ -176,20 +180,20 @@ func testAdmissionControllersNoFilter(n string) resource.TestCheckFunc {
 			return fmt.Errorf("not found: %s", n)
 		}
 
-		availableAdmissionControllers, ok := rs.Primary.Attributes["available_admission_controllers.0.names"]
+		availableAdmissionControllers, ok := rs.Primary.Attributes["admission_controllers.0.names"]
 		if !ok {
-			return fmt.Errorf("attribute 'available_admission_controllers' is not found")
+			return fmt.Errorf("attribute 'admission_controllers' is not found")
 		}
 		if availableAdmissionControllers == "" {
-			return fmt.Errorf("names is not set at 'available_admission_controllers'")
+			return fmt.Errorf("names is not set at 'admission_controllers'")
 		}
 
-		fgLen, err := strconv.Atoi(rs.Primary.Attributes["available_admission_controllers.#"])
+		fgLen, err := strconv.Atoi(rs.Primary.Attributes["admission_controllers.#"])
 		if err != nil {
-			return fmt.Errorf("failed to get len of 'available_admission_controllers': %w", err)
+			return fmt.Errorf("failed to get len of 'admission_controllers': %w", err)
 		}
 		if fgLen <= 1 {
-			return fmt.Errorf("received only one or less item in 'available_admission_controllers'")
+			return fmt.Errorf("received only one or less item in 'admission_controllers'")
 		}
 
 		return nil
