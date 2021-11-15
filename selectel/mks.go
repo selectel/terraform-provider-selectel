@@ -479,10 +479,10 @@ func flattenFeatureGatesFromSlice(kubeVersion string, featureGates []string) []i
 
 func flattenAdmissionControllers(views []*kubeoptions.View) []interface{} {
 	availableAdmissionControllers := make([]interface{}, len(views))
-	for i, fg := range views {
+	for i, ac := range views {
 		availableAdmissionControllers[i] = map[string]interface{}{
-			"kube_version_minor": fg.KubeVersion,
-			"names":              strings.Join(fg.Names, ","),
+			"kube_version_minor": ac.KubeVersion,
+			"names":              ac.Names,
 		}
 	}
 
@@ -493,7 +493,7 @@ func flattenAdmissionControllersFromSlice(kubeVersion string, admissionControlle
 	availableAdmissionControllers := make([]interface{}, 1)
 	availableAdmissionControllers[0] = map[string]interface{}{
 		"kube_version_minor": kubeVersion,
-		"names":              strings.Join(admissionControllers, ","),
+		"names":              admissionControllers,
 	}
 
 	return availableAdmissionControllers

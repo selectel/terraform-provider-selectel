@@ -57,6 +57,7 @@ func dataSourceMKSFeatureGatesV1() *schema.Resource {
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
+							Set: schema.HashString,
 						},
 					},
 				},
@@ -183,6 +184,7 @@ func dataSourceMKSAdmissionControllersV1() *schema.Resource {
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
+							Set: schema.HashString,
 						},
 					},
 				},
@@ -214,6 +216,8 @@ func dataSourceMKSAdmissionControllersV1Read(ctx context.Context, d *schema.Reso
 			return diag.FromErr(err)
 		}
 		d.SetId(checksum)
+
+		return nil
 	}
 
 	filterMap := filterSet.List()[0].(map[string]interface{})
