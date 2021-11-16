@@ -21,6 +21,7 @@ const (
 	objectVRRPSubnet              = "VRRP subnet"
 	objectCluster                 = "cluster"
 	objectNodegroup               = "nodegroup"
+	objectKubeConfig              = "kubeconfig"
 	objectDomain                  = "domain"
 	objectRecord                  = "record"
 	objectDatastore               = "datastore"
@@ -73,6 +74,7 @@ func Provider() *schema.Provider {
 			"selectel_dbaas_flavor_v1":                  dataSourceDBaaSFlavorV1(),
 			"selectel_dbaas_configuration_parameter_v1": dataSourceDBaaSConfigurationParameterV1(),
 			"selectel_dbaas_prometheus_metric_token_v1": dataSourceDBaaSPrometheusMetricTokenV1(),
+			"selectel_mks_cluster_kubeconfig_v1":        dataSourceMksClusterKubeconfigV1(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"selectel_vpc_floatingip_v2":                resourceVPCFloatingIPV2(),
