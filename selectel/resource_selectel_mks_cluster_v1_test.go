@@ -62,6 +62,8 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_pod_security_policy", "false"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_start", maintenanceWindowStartUpdated),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "status", "ACTIVE"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "feature_gates.0", "TTLAfterFinished"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "admission_controllers.0", "NamespaceLifecycle"),
 				),
 			},
 		},
@@ -238,8 +240,8 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
 }
 
 func testAccMKSClusterV1Update(projectName, clusterName, kubeVersion, maintenanceWindowStart string, featureGates, admissionControllers []string) string {
-	flatFeaturegGates := strings.Join(featureGates, ",")
-	flatAdmissionControllers := strings.Join(admissionControllers, ",")
+	flatFeaturegGates := flatStringsListWithQuotes(featureGates)
+	flatAdmissionControllers := flatStringsListWithQuotes(admissionControllers)
 
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
@@ -275,4 +277,15 @@ func testAccMKSClusterV1Zonal(projectName, clusterName, kubeVersion, maintenance
    enable_patch_version_auto_upgrade = false
    zonal                             = true
  }`, projectName, clusterName, kubeVersion, maintenanceWindowStart)
+}
+
+func flatStringsListWithQuotes(list []string) string {
+	var builder strings.Builder
+	for _, item := range list {
+		builder.WriteString(`"`)
+		builder.WriteString(item)
+		builder.WriteString(`",`)
+	}
+
+	return builder.String()
 }
