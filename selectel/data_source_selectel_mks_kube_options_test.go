@@ -35,7 +35,7 @@ func TestAccMKSAvailableFeatureGatesV1Basic(t *testing.T) {
 				Config: testKubeOptionsV1BasicConfig(projectName, dataSourceFeatureGates, kubeVersion),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					resource.TestCheckResourceAttr("data."+dataSourceFeatureGates+".dt", "feature_gates.0.kube_version_minor", kubeVersionMinor),
+					resource.TestCheckResourceAttr("data."+dataSourceFeatureGates+".dt", "feature_gates.0.kube_version", kubeVersionMinor),
 					testFeatureGatesIsNotEmpty("data."+dataSourceFeatureGates+".dt"),
 				),
 			},
@@ -83,7 +83,7 @@ func TestAccMKSAvailableAdmissionControllersV1Basic(t *testing.T) {
 				Config: testKubeOptionsV1BasicConfig(projectName, dataSourceAdmissionControllers, kubeVersion),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					resource.TestCheckResourceAttr("data."+dataSourceAdmissionControllers+".dt", "admission_controllers.0.kube_version_minor", kubeVersionMinor),
+					resource.TestCheckResourceAttr("data."+dataSourceAdmissionControllers+".dt", "admission_controllers.0.kube_version", kubeVersionMinor),
 					testAdmissionControllersIsNotEmpty("data."+dataSourceAdmissionControllers+".dt"),
 				),
 			},
@@ -120,7 +120,6 @@ func testFeatureGatesIsNotEmpty(n string) resource.TestCheckFunc {
 		}
 
 		availableFeatureGates, ok := rs.Primary.Attributes["feature_gates.#"]
-		//availableFeatureGates, ok := rs.Primary.Attributes["feature_gates.0.names.0"]
 		if !ok {
 			return fmt.Errorf("attribute 'feature_gates' is not found")
 		}

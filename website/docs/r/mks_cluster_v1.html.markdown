@@ -74,7 +74,7 @@ The following arguments are supported:
 
 * `feature_gates` - (Optional) Represents a set of feature gate names to be enabled in a Kubernetes cluster.
 
-* `admission_controllers` - (Optional) Represents a set of feature gate names to be enabled in a Kubernetes cluster.
+* `admission_controllers` - (Optional) Represents a set of admission controllers names to be enabled in a Kubernetes cluster.
 
 ## Attributes Reference
 
