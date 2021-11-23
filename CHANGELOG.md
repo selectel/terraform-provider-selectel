@@ -1,3 +1,9 @@
+## 3.8.0 (Unreleased)
+
+IMPROVEMENTS:
+* Added `redis_password` argument for the `selectel_dbaas_datastore_v1` resource ([#173](https://github.com/selectel/terraform-provider-selectel/issues/173))
+* Added `datastore_type_ids` attribute for the `selectel_dbaas_flavor_v1` data source ([#173](https://github.com/selectel/terraform-provider-selectel/issues/173))
+
 ## 3.7.0 (Oct 1, 2021)
 
 FEATURES:
