@@ -48,5 +48,5 @@ The following attributes are exported:
 
 **feature_gates**
 
-- `kube_version_minor` - Kubernetes version.
+- `kube_version` - Kubernetes version.
 - `names` - Names of the feature gates available for the specified version.

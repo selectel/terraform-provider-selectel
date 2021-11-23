@@ -145,6 +145,9 @@ func testAccMKSClusterV1GetDefaultKubeVersion(t *testing.T) string {
 func testAccCheckMKSClusterV1DefaultKubeVersion(n string, kubeVersion *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		mksClient, err := newTestMKSClient(n, s)
+		if err != nil {
+			return err
+		}
 		ctx := context.Background()
 
 		defaultVersion, err := getDefaultKubeVersion(ctx, mksClient)
@@ -306,6 +309,9 @@ func testDefaultFeatureGates(t *testing.T) []string {
 func testAccCheckMKSClusterV1DefaultKubeVersionFeatureGates(n string, featureGates *[]string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		mksClient, err := newTestMKSClient(n, s)
+		if err != nil {
+			return err
+		}
 		ctx := context.Background()
 
 		defaultVersion, err := getDefaultKubeVersion(ctx, mksClient)
@@ -358,6 +364,9 @@ func testDefaultAdmissionControllers(t *testing.T) []string {
 func testAccCheckMKSClusterV1DefaultKubeVersionAdmissionControllers(n string, admissionControllers *[]string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		mksClient, err := newTestMKSClient(n, s)
+		if err != nil {
+			return err
+		}
 		ctx := context.Background()
 
 		defaultVersion, err := getDefaultKubeVersion(ctx, mksClient)

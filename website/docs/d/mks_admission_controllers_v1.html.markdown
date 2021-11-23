@@ -48,5 +48,5 @@ The following attributes are exported:
 
 **admission_controllers**
 
-- `kube_version_minor` - Kubernetes version.
+- `kube_version` - Kubernetes version.
 - `names` - Names of the admission controllers available for the specified version.
