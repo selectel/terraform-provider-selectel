@@ -32,11 +32,11 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 	maintenanceWindowStartUpdated := testAccMKSClusterV1GetMaintenanceWindowStart(14 * time.Hour)
 
 	defaultFeatureGates := testDefaultFeatureGates(t)
-	defaultAdmissionContollers := testDefaultAdmissionControllers(t)
+	defaultAdmissionControllers := testDefaultAdmissionControllers(t)
 	featureGates := defaultFeatureGates[:1]
 	featureGatesUpdate := defaultFeatureGates[1:2]
-	admissionControllers := defaultAdmissionContollers[:1]
-	admissionControllersUpdate := defaultAdmissionContollers[1:2]
+	admissionControllers := defaultAdmissionControllers[:1]
+	admissionControllersUpdate := defaultAdmissionControllers[1:2]
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -56,11 +56,11 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_start", maintenanceWindowStart),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "status", "ACTIVE"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "feature_gates.0", defaultFeatureGates[0]),
-					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "admission_controllers.0", defaultAdmissionContollers[0]),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "admission_controllers.0", defaultAdmissionControllers[0]),
 				),
 			},
 			{
-				Config: testAccMKSClusterV1Update(projectName, clusterName, kubeVersion, maintenanceWindowStartUpdated, featureGatesUpdate, admissionControllersUpdate),
+				Config: testAccMKSClusterV1UpdateWithKubeOptions(projectName, clusterName, kubeVersion, maintenanceWindowStartUpdated, featureGatesUpdate, admissionControllersUpdate),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "name", clusterName),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "kube_version", kubeVersion),
@@ -71,7 +71,7 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_start", maintenanceWindowStartUpdated),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "status", "ACTIVE"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "feature_gates.0", defaultFeatureGates[1]),
-					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "admission_controllers.0", defaultAdmissionContollers[1]),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "admission_controllers.0", defaultAdmissionControllers[1]),
 				),
 			},
 		},
@@ -144,7 +144,15 @@ func testAccMKSClusterV1GetDefaultKubeVersion(t *testing.T) string {
 
 func testAccCheckMKSClusterV1DefaultKubeVersion(n string, kubeVersion *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		mksClient, err := newTestMKSClient(n, s)
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+		if rs.Primary.ID == "" {
+			return errors.New("no ID is set")
+		}
+
+		mksClient, err := newTestMKSClient(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -224,7 +232,7 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
 }
 
 func testAccMKSClusterV1BasicWithKubeOptions(projectName, clusterName, kubeVersion, maintenanceWindowStart string, featureGates, admissionControllers []string) string {
-	flatFeaturegGates := flatStringsListWithQuotes(featureGates)
+	flatFeatureGates := flatStringsListWithQuotes(featureGates)
 	flatAdmissionControllers := flatStringsListWithQuotes(admissionControllers)
 
 	return fmt.Sprintf(`
@@ -240,11 +248,11 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
   maintenance_window_start = "%s"
   feature_gates            = [%s]
   admission_controllers    = [%s]
-}`, projectName, clusterName, kubeVersion, maintenanceWindowStart, flatFeaturegGates, flatAdmissionControllers)
+}`, projectName, clusterName, kubeVersion, maintenanceWindowStart, flatFeatureGates, flatAdmissionControllers)
 }
 
-func testAccMKSClusterV1Update(projectName, clusterName, kubeVersion, maintenanceWindowStart string, featureGates, admissionControllers []string) string {
-	flatFeaturegGates := flatStringsListWithQuotes(featureGates)
+func testAccMKSClusterV1UpdateWithKubeOptions(projectName, clusterName, kubeVersion, maintenanceWindowStart string, featureGates, admissionControllers []string) string {
+	flatFeatureGates := flatStringsListWithQuotes(featureGates)
 	flatAdmissionControllers := flatStringsListWithQuotes(admissionControllers)
 
 	return fmt.Sprintf(`
@@ -263,7 +271,7 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
   enable_pod_security_policy        = false
   feature_gates                     = [%s]
   admission_controllers             = [%s]
-}`, projectName, clusterName, kubeVersion, maintenanceWindowStart, flatFeaturegGates, flatAdmissionControllers)
+}`, projectName, clusterName, kubeVersion, maintenanceWindowStart, flatFeatureGates, flatAdmissionControllers)
 }
 
 func testAccMKSClusterV1Zonal(projectName, clusterName, kubeVersion, maintenanceWindowStart string) string {
@@ -308,7 +316,15 @@ func testDefaultFeatureGates(t *testing.T) []string {
 
 func testAccCheckMKSClusterV1DefaultKubeVersionFeatureGates(n string, featureGates *[]string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		mksClient, err := newTestMKSClient(n, s)
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+		if rs.Primary.ID == "" {
+			return errors.New("no ID is set")
+		}
+
+		mksClient, err := newTestMKSClient(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -363,7 +379,15 @@ func testDefaultAdmissionControllers(t *testing.T) []string {
 
 func testAccCheckMKSClusterV1DefaultKubeVersionAdmissionControllers(n string, admissionControllers *[]string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		mksClient, err := newTestMKSClient(n, s)
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+		if rs.Primary.ID == "" {
+			return errors.New("no ID is set")
+		}
+
+		mksClient, err := newTestMKSClient(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -393,22 +417,13 @@ func testAccCheckMKSClusterV1DefaultKubeVersionAdmissionControllers(n string, ad
 	}
 }
 
-func newTestMKSClient(n string, s *terraform.State) (*v1.ServiceClient, error) {
-	rs, ok := s.RootModule().Resources[n]
-	if !ok {
-		return nil, fmt.Errorf("not found: %s", n)
-	}
-
-	if rs.Primary.ID == "" {
-		return nil, errors.New("no ID is set")
-	}
-
+func newTestMKSClient(projectID string) (*v1.ServiceClient, error) {
 	config := testAccProvider.Meta().(*Config)
 	resellV2Client := config.resellV2Client()
 	ctx := context.Background()
 
 	tokenOpts := tokens.TokenOpts{
-		ProjectID: rs.Primary.ID,
+		ProjectID: projectID,
 	}
 	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
 	if err != nil {
