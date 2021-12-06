@@ -21,9 +21,9 @@ func TestAccDBaaSGrantV1Basic(t *testing.T) {
 
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
-	userName := acctest.RandomWithPrefix("tf-acc-user")
+	userName := RandomWithPrefix("tf_acc_user")
 	userPassword := acctest.RandomWithPrefix("tf-acc-pass")
-	databaseName := acctest.RandomWithPrefix("tf-acc-db")
+	databaseName := RandomWithPrefix("tf_acc_db")
 	nodeCount := 1
 
 	resource.Test(t, resource.TestCase{

@@ -11,9 +11,9 @@ func TestAccDBaaSExtensionV1ImportBasic(t *testing.T) {
 	resourceName := "selectel_dbaas_extension_v1.extension_tf_acc_test_1"
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
-	userName := acctest.RandomWithPrefix("tf-acc-user")
+	userName := RandomWithPrefix("tf_acc_user")
 	userPassword := acctest.RandomWithPrefix("tf-acc-pass")
-	databaseName := acctest.RandomWithPrefix("tf-acc-db")
+	databaseName := RandomWithPrefix("tf_acc_db")
 	extensionName := "hstore"
 	nodeCount := 1
 

@@ -21,7 +21,7 @@ func TestAccDBaaSUserV1Basic(t *testing.T) {
 
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
-	userName := acctest.RandomWithPrefix("tf-acc-user")
+	userName := RandomWithPrefix("tf_acc_user")
 	userPassword := acctest.RandomWithPrefix("tf-acc-pass")
 	nodeCount := 1
 
