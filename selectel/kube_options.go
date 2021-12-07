@@ -2,7 +2,6 @@ package selectel
 
 import (
 	"fmt"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -14,7 +13,7 @@ const (
 func getSetAsStrings(d *schema.ResourceData, key string) ([]string, error) {
 	val, ok := d.GetOk(key)
 	if !ok {
-		return nil, nil
+		return []string{}, nil
 	}
 
 	set, ok := val.(*schema.Set)
