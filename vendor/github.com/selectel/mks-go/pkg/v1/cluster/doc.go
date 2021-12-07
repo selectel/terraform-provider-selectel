@@ -61,7 +61,13 @@ Example of updating an existing cluster
   updateOpts := &cluster.UpdateOpts{
     MaintenanceWindowStart: "07:00:00",
     KubernetesOptions: &cluster.KubernetesOptions{
-        EnablePodSecurityPolicy: false,
+      EnablePodSecurityPolicy: false,
+      FeatureGates: []string{
+        "TTLAfterFinished",
+      },
+      AdmissionControllers: []string{
+          "NamespaceLifecycle",
+      },
     },
   }
   mksCluster, _, err := cluster.Update(ctx, mksClient, clusterID, updateOpts)
@@ -84,6 +90,18 @@ Example of getting a kubeconfig referenced by cluster id
     log.Fatal(err)
   }
   fmt.Print(string(kubeconfig))
+
+Example of getting fields from Kubeconfig referenced by cluster id
+
+  parsedKubeconfig, _, err := cluster.GetParsedKubeconfig(ctx, mksClient, clusterID)
+  if err != nil {
+    log.Fatal(err)
+  }
+  fmt.Println("Server IP:", string(parsedKubeconfig.Server))
+  fmt.Println("Cluster CA:", string(parsedKubeconfig.ClusterCA))
+  fmt.Println("Client cert:", string(parsedKubeconfig.ClientCert))
+  fmt.Println("Client key:", string(parsedKubeconfig.ClientKey))
+  fmt.Println("Raw kubeconfig:", string(parsedKubeconfig.KubeconfigRaw))
 
 Example of rotating certificates by cluster id
 

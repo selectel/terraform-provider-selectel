@@ -12,16 +12,18 @@ import (
 )
 
 const (
-	ResourceURLCluster             = "clusters"
-	ResourceURLKubeversion         = "kubeversions"
-	ResourceURLKubeconfig          = "kubeconfig"
-	ResourceURLRotateCerts         = "rotate-certs"
-	ResourceURLUpgradePatchVersion = "upgrade-patch-version"
-	ResourceURLUpgradeMinorVersion = "upgrade-minor-version"
-	ResourceURLTask                = "tasks"
-	ResourceURLNodegroup           = "nodegroups"
-	ResourceURLResize              = "resize"
-	ResourceURLReinstall           = "reinstall"
+	ResourceURLCluster              = "clusters"
+	ResourceURLKubeversion          = "kubeversions"
+	ResourceURLKubeconfig           = "kubeconfig"
+	ResourceURLRotateCerts          = "rotate-certs"
+	ResourceURLUpgradePatchVersion  = "upgrade-patch-version"
+	ResourceURLUpgradeMinorVersion  = "upgrade-minor-version"
+	ResourceURLTask                 = "tasks"
+	ResourceURLNodegroup            = "nodegroups"
+	ResourceURLResize               = "resize"
+	ResourceURLReinstall            = "reinstall"
+	ResourceURLFeatureGates         = "feature-gates"
+	ResourceURLAdmissionControllers = "admission-controllers"
 )
 
 const (
@@ -79,6 +81,21 @@ type ServiceClient struct {
 func NewMKSClientV1(tokenID, endpoint string) *ServiceClient {
 	return &ServiceClient{
 		HTTPClient: newHTTPClient(),
+		TokenID:    tokenID,
+		Endpoint:   endpoint,
+		UserAgent:  userAgent,
+	}
+}
+
+// NewMKSClientV1WithCustomHTTP initializes a new MKS client for the V1 API using custom HTTP client.
+// If custom HTTP client is nil - default HTTP client will be used.
+func NewMKSClientV1WithCustomHTTP(customHTTPClient *http.Client, tokenID, endpoint string) *ServiceClient {
+	if customHTTPClient == nil {
+		customHTTPClient = newHTTPClient()
+	}
+
+	return &ServiceClient{
+		HTTPClient: customHTTPClient,
 		TokenID:    tokenID,
 		Endpoint:   endpoint,
 		UserAgent:  userAgent,
@@ -212,15 +229,17 @@ func (result *ResponseResult) extractErr() error {
 
 	if len(body) == 0 {
 		result.Err = fmt.Errorf(errGotHTTPStatusCodeFmt, result.StatusCode)
+
 		return nil
 	}
 	if result.StatusCode == http.StatusNotFound {
-		err = json.Unmarshal(body, &result.ErrNotFound)
+		_ = json.Unmarshal(body, &result.ErrNotFound)
 	} else {
-		err = json.Unmarshal(body, &result.ErrGeneric)
+		_ = json.Unmarshal(body, &result.ErrGeneric)
 	}
-	if err != nil {
+	if result.ErrNotFound == nil && result.ErrGeneric == nil {
 		result.Err = fmt.Errorf(errGotHTTPStatusCodeFmt, result.StatusCode)
+
 		return nil
 	}
 
