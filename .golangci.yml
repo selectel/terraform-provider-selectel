@@ -53,7 +53,7 @@ linters:
 
 linters-settings:
   dupl:
-    threshold: 200
+    threshold: 300
 
 issues:
   exclude-rules:
