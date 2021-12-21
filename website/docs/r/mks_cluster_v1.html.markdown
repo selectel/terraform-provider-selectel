@@ -72,6 +72,10 @@ The following arguments are supported:
     Argument "enable_patch_version_auto_upgrade" should be explicitly set to false in case of zonal cluster.
     Changing this creates a new cluster.
 
+* `feature_gates` - (Optional) Represents a set of feature gate names to be enabled in a Kubernetes cluster.
+
+* `admission_controllers` - (Optional) Represents a set of admission controllers names to be enabled in a Kubernetes cluster.
+
 ## Attributes Reference
 
 The following attributes are exported:

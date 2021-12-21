@@ -33,6 +33,8 @@ const (
 	objectFlavors                 = "flavors"
 	objectConfigurationParameters = "configuration-parameters"
 	objectPrometheusMetricToken   = "prometheus-metric-token"
+	objectFeatureGates            = "feature-gates"
+	objectAdmissionControllers    = "admission-controllers"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -75,6 +77,8 @@ func Provider() *schema.Provider {
 			"selectel_dbaas_configuration_parameter_v1": dataSourceDBaaSConfigurationParameterV1(),
 			"selectel_dbaas_prometheus_metric_token_v1": dataSourceDBaaSPrometheusMetricTokenV1(),
 			"selectel_mks_kubeconfig_v1":                dataSourceMKSKubeconfigV1(),
+			"selectel_mks_feature_gates_v1":             dataSourceMKSFeatureGatesV1(),
+			"selectel_mks_admission_controllers_v1":     dataSourceMKSAdmissionControllersV1(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"selectel_vpc_floatingip_v2":                resourceVPCFloatingIPV2(),

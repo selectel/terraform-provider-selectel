@@ -35,7 +35,6 @@ func TestAccDomainsRecordV1Basic(t *testing.T) {
 	testRecordNameMX := fmt.Sprintf("mx.%s", testDomainName)
 	testRecordNameSRV := fmt.Sprintf("srv.%s", testDomainName)
 
-	//nolint
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
 		ProviderFactories: testAccProviders,
