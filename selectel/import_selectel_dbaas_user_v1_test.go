@@ -11,7 +11,7 @@ func TestAccDBaaSUserV1ImportBasic(t *testing.T) {
 	resourceName := "selectel_dbaas_user_v1.user_tf_acc_test_1"
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
-	userName := acctest.RandomWithPrefix("tf-acc-user")
+	userName := RandomWithPrefix("tf_acc_user")
 	userPassword := acctest.RandomWithPrefix("tf-acc-pass")
 	nodeCount := 1
 
