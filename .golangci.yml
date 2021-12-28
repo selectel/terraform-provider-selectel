@@ -68,3 +68,7 @@ issues:
     - linters:
         - gosec
       text: "G501:"
+
+    - linters:
+        - gosec
+      text: "G404:"

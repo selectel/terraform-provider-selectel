@@ -5,9 +5,11 @@ import (
 	"crypto/md5"
 	"fmt"
 	"log"
+	"math/rand"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -129,4 +131,8 @@ func convertFieldToStringByType(field interface{}) string {
 	default:
 		return ""
 	}
+}
+
+func RandomWithPrefix(name string) string {
+	return fmt.Sprintf("%s_%d", name, rand.New(rand.NewSource(time.Now().UnixNano())).Int())
 }
