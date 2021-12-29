@@ -20,6 +20,7 @@ const (
 	objectUser                    = "user"
 	objectVRRPSubnet              = "VRRP subnet"
 	objectCluster                 = "cluster"
+	objectKubeConfig              = "kubeconfig"
 	objectNodegroup               = "nodegroup"
 	objectDomain                  = "domain"
 	objectRecord                  = "record"
@@ -75,6 +76,7 @@ func Provider() *schema.Provider {
 			"selectel_dbaas_flavor_v1":                  dataSourceDBaaSFlavorV1(),
 			"selectel_dbaas_configuration_parameter_v1": dataSourceDBaaSConfigurationParameterV1(),
 			"selectel_dbaas_prometheus_metric_token_v1": dataSourceDBaaSPrometheusMetricTokenV1(),
+			"selectel_mks_kubeconfig_v1":                dataSourceMKSKubeconfigV1(),
 			"selectel_mks_feature_gates_v1":             dataSourceMKSFeatureGatesV1(),
 			"selectel_mks_admission_controllers_v1":     dataSourceMKSAdmissionControllersV1(),
 		},

@@ -27,6 +27,36 @@ const (
 	StatusUnknown                            Status = "UNKNOWN"
 )
 
+func getSupportedStatuses() []Status {
+	return []Status{
+		StatusActive,
+		StatusPendingCreate,
+		StatusPendingUpdate,
+		StatusPendingUpgrade,
+		StatusPendingRotateCerts,
+		StatusPendingDelete,
+		StatusPendingResize,
+		StatusPendingNodeReinstall,
+		StatusPendingUpgradePatchVersion,
+		StatusPendingUpgradeMinorVersion,
+		StatusPendingUpdateNodegroup,
+		StatusPendingUpgradeMastersConfiguration,
+		StatusPendingUpgradeClusterConfiguration,
+		StatusMaintenance,
+		StatusError,
+	}
+}
+
+func isStatusSupported(s Status) bool {
+	for _, v := range getSupportedStatuses() {
+		if s == v {
+			return true
+		}
+	}
+
+	return false
+}
+
 // View represents an unmarshalled cluster body from an API response.
 type View struct {
 	// ID is the identifier of the cluster.
@@ -103,50 +133,20 @@ func (result *View) UnmarshalJSON(b []byte) error {
 		tmp
 		Status Status `json:"status"`
 	}
-	err := json.Unmarshal(b, &s)
-	if err != nil {
+	if err := json.Unmarshal(b, &s); err != nil {
 		return err
 	}
 
 	*result = View(s.tmp)
 
 	// Check cluster status.
-	switch s.Status {
-	case StatusActive:
-		result.Status = StatusActive
-	case StatusPendingCreate:
-		result.Status = StatusPendingCreate
-	case StatusPendingUpdate:
-		result.Status = StatusPendingUpdate
-	case StatusPendingUpgrade:
-		result.Status = StatusPendingUpgrade
-	case StatusPendingRotateCerts:
-		result.Status = StatusPendingRotateCerts
-	case StatusPendingDelete:
-		result.Status = StatusPendingDelete
-	case StatusPendingResize:
-		result.Status = StatusPendingResize
-	case StatusPendingNodeReinstall:
-		result.Status = StatusPendingNodeReinstall
-	case StatusPendingUpgradePatchVersion:
-		result.Status = StatusPendingUpgradePatchVersion
-	case StatusPendingUpgradeMinorVersion:
-		result.Status = StatusPendingUpgradeMinorVersion
-	case StatusPendingUpdateNodegroup:
-		result.Status = StatusPendingUpdateNodegroup
-	case StatusPendingUpgradeMastersConfiguration:
-		result.Status = StatusPendingUpgradeMastersConfiguration
-	case StatusPendingUpgradeClusterConfiguration:
-		result.Status = StatusPendingUpgradeClusterConfiguration
-	case StatusMaintenance:
-		result.Status = StatusMaintenance
-	case StatusError:
-		result.Status = StatusError
-	default:
+	if isStatusSupported(s.Status) {
+		result.Status = s.Status
+	} else {
 		result.Status = StatusUnknown
 	}
 
-	return err
+	return nil
 }
 
 // KubernetesOptions represents additional k8s options such as pod security policy,
@@ -161,4 +161,13 @@ type KubernetesOptions struct {
 
 	// AdmissionControllers represents admission controllers that should be enabled.
 	AdmissionControllers []string `json:"admission_controllers"`
+}
+
+// KubeconfigFields is a struct that contains Kubeconfigs parsed fields and raw kubeconfig.
+type KubeconfigFields struct {
+	ClusterCA     string
+	Server        string
+	ClientCert    string
+	ClientKey     string
+	KubeconfigRaw string
 }

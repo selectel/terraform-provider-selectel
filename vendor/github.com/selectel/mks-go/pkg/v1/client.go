@@ -93,6 +93,7 @@ func NewMKSClientV1WithCustomHTTP(customHTTPClient *http.Client, tokenID, endpoi
 	if customHTTPClient == nil {
 		customHTTPClient = newHTTPClient()
 	}
+
 	return &ServiceClient{
 		HTTPClient: customHTTPClient,
 		TokenID:    tokenID,
@@ -228,15 +229,17 @@ func (result *ResponseResult) extractErr() error {
 
 	if len(body) == 0 {
 		result.Err = fmt.Errorf(errGotHTTPStatusCodeFmt, result.StatusCode)
+
 		return nil
 	}
 	if result.StatusCode == http.StatusNotFound {
-		err = json.Unmarshal(body, &result.ErrNotFound)
+		_ = json.Unmarshal(body, &result.ErrNotFound)
 	} else {
-		err = json.Unmarshal(body, &result.ErrGeneric)
+		_ = json.Unmarshal(body, &result.ErrGeneric)
 	}
-	if err != nil {
+	if result.ErrNotFound == nil && result.ErrGeneric == nil {
 		result.Err = fmt.Errorf(errGotHTTPStatusCodeFmt, result.StatusCode)
+
 		return nil
 	}
 

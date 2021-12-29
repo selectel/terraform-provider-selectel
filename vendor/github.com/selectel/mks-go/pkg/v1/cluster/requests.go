@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	v1 "github.com/selectel/mks-go/pkg/v1"
@@ -154,6 +156,59 @@ func GetKubeconfig(ctx context.Context, client *v1.ServiceClient, clusterID stri
 	}
 
 	return kubeconfig, responseResult, nil
+}
+
+func getFieldFromKubeconfig(kubeconfig []byte, fieldName string) (string, error) {
+	r := regexp.MustCompile(fmt.Sprintf("%s.*", fieldName))
+	if s := r.FindString(string(kubeconfig)); len(s) != 0 {
+		if subS := strings.Split(s, " "); len(subS) > 1 {
+			return subS[1], nil
+		}
+
+		return "", fmt.Errorf("invalid %s field in the kubeconfig", fieldName)
+	}
+
+	return "", fmt.Errorf("unable to find %s field in kubeconfig", fieldName)
+}
+
+// GetParsedKubeconfig is a small helper function to get KubeconfigFields struct.
+func GetParsedKubeconfig(ctx context.Context, client *v1.ServiceClient, clusterID string) (*KubeconfigFields, *v1.ResponseResult, error) {
+	kubeconfig, responseResult, err := GetKubeconfig(ctx, client, clusterID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if responseResult.Err != nil {
+		return nil, responseResult, responseResult.Err
+	}
+
+	fieldsToParse := []string{
+		"certificate-authority-data",
+		"server",
+		"client-certificate-data",
+		"client-key-data",
+	}
+	parsedKubeconfig := KubeconfigFields{}
+
+	for _, rawName := range fieldsToParse {
+		if s, err := getFieldFromKubeconfig(kubeconfig, rawName); err == nil {
+			switch rawName {
+			case "certificate-authority-data":
+				parsedKubeconfig.ClusterCA = s
+			case "server":
+				parsedKubeconfig.Server = s
+			case "client-certificate-data":
+				parsedKubeconfig.ClientCert = s
+			case "client-key-data":
+				parsedKubeconfig.ClientKey = s
+			}
+		} else {
+			return nil, responseResult, err
+		}
+	}
+
+	parsedKubeconfig.KubeconfigRaw = string(kubeconfig)
+
+	return &parsedKubeconfig, responseResult, nil
 }
 
 // RotateCerts requests a rotation of cluster certificates by cluster id.

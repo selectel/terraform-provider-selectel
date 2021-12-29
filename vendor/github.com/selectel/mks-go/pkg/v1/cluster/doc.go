@@ -91,6 +91,18 @@ Example of getting a kubeconfig referenced by cluster id
   }
   fmt.Print(string(kubeconfig))
 
+Example of getting fields from Kubeconfig referenced by cluster id
+
+  parsedKubeconfig, _, err := cluster.GetParsedKubeconfig(ctx, mksClient, clusterID)
+  if err != nil {
+    log.Fatal(err)
+  }
+  fmt.Println("Server IP:", string(parsedKubeconfig.Server))
+  fmt.Println("Cluster CA:", string(parsedKubeconfig.ClusterCA))
+  fmt.Println("Client cert:", string(parsedKubeconfig.ClientCert))
+  fmt.Println("Client key:", string(parsedKubeconfig.ClientKey))
+  fmt.Println("Raw kubeconfig:", string(parsedKubeconfig.KubeconfigRaw))
+
 Example of rotating certificates by cluster id
 
   _, err := cluster.RotateCerts(ctx, mksClient, clusterID)
