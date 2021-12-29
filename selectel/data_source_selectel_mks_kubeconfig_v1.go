@@ -97,5 +97,6 @@ func dataSourceMKSKubeconfigV1Read(ctx context.Context, d *schema.ResourceData, 
 	d.Set("cluster_ca_cert", parsedKubeconfig.ClusterCA)
 	d.Set("client_cert", parsedKubeconfig.ClientCert)
 	d.Set("client_key", parsedKubeconfig.ClientKey)
+
 	return nil
 }
