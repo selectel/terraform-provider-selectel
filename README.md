@@ -39,6 +39,7 @@ $ make build
 Using the provider
 ----------------------
 
+Getting Started with Terraform at Selectel: [kb.selectel.com](https://kb.selectel.com/docs/selectel-cloud-platform/main-services/instructions/how_to_use_terraform/).
 Documentation is available at: [docs/providers/selectel](https://www.terraform.io/docs/providers/selectel/index.html).  
 You can find examples in this repository: [examples](https://github.com/terraform-providers/terraform-provider-selectel/tree/master/examples).  
 Also there are lots of examples in the [selectel/terraform-examples](https://github.com/selectel/terraform-examples).
