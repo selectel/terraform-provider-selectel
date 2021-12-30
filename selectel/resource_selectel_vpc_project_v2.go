@@ -167,6 +167,7 @@ func resourceVPCProjectV2Read(ctx context.Context, d *schema.ResourceData, meta 
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
 				d.SetId("")
+
 				return nil
 			}
 		}
@@ -261,6 +262,7 @@ func resourceVPCProjectV2Delete(ctx context.Context, d *schema.ResourceData, met
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
 				d.SetId("")
+
 				return nil
 			}
 		}

@@ -108,6 +108,7 @@ func resourceVPCFloatingIPV2Read(ctx context.Context, d *schema.ResourceData, me
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
 				d.SetId("")
+
 				return nil
 			}
 		}
@@ -140,6 +141,7 @@ func resourceVPCFloatingIPV2Delete(ctx context.Context, d *schema.ResourceData, 
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
 				d.SetId("")
+
 				return nil
 			}
 		}

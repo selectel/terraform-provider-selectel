@@ -36,6 +36,7 @@ linters:
     - maligned
     - misspell
     - nakedret
+    - nlreturn
     - noctx
     - nolintlint
     - prealloc

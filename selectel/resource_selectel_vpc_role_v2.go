@@ -105,6 +105,7 @@ func resourceVPCRoleV2Delete(ctx context.Context, d *schema.ResourceData, meta i
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
 				d.SetId("")
+
 				return nil
 			}
 		}

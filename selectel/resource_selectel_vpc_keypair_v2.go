@@ -123,6 +123,7 @@ func resourceVPCKeypairV2Delete(ctx context.Context, d *schema.ResourceData, met
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
 				d.SetId("")
+
 				return nil
 			}
 		}

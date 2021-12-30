@@ -31,6 +31,7 @@ func expandVPCV2Regions(rawRegions *schema.Set) []string {
 // hashRegions is a hash function to use with the "regions" set.
 func hashRegions(v interface{}) int {
 	m := v.(map[string]interface{})
+
 	return hashcode.String(fmt.Sprintf("%s-", m["region"].(string)))
 }
 

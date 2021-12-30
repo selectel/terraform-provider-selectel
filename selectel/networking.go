@@ -57,5 +57,6 @@ func subnetsMapsFromStructs(subnetsStructs []subnets.Subnet) []map[string]interf
 // hashSubnets is a hash function to use with the "subnet" set.
 func hashSubnets(v interface{}) int {
 	m := v.(map[string]interface{})
+
 	return hashcode.String(fmt.Sprintf("%s-", m["network_id"].(string)))
 }

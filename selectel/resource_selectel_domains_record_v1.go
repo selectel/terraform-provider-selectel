@@ -129,6 +129,7 @@ func resourceDomainsRecordV1Read(ctx context.Context, d *schema.ResourceData, me
 	domainID, recordID, err := domainsV1ParseDomainRecordIDsPair(d.Id())
 	if err != nil {
 		d.SetId("")
+
 		return diag.FromErr(errGettingObject(objectRecord, d.Id(), err))
 	}
 
@@ -138,8 +139,10 @@ func resourceDomainsRecordV1Read(ctx context.Context, d *schema.ResourceData, me
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
 			d.SetId("")
+
 			return nil
 		}
+
 		return diag.FromErr(errGettingObject(objectRecord, d.Id(), err))
 	}
 
@@ -160,6 +163,7 @@ func resourceDomainsRecordV1Update(ctx context.Context, d *schema.ResourceData, 
 	domainID, recordID, err := domainsV1ParseDomainRecordIDsPair(d.Id())
 	if err != nil {
 		d.SetId("")
+
 		return diag.FromErr(errGettingObject(objectRecord, d.Id(), err))
 	}
 	selMutexKV.Lock(strconv.Itoa(domainID))
@@ -193,6 +197,7 @@ func resourceDomainsRecordV1Delete(ctx context.Context, d *schema.ResourceData, 
 	domainID, recordID, err := domainsV1ParseDomainRecordIDsPair(d.Id())
 	if err != nil {
 		d.SetId("")
+
 		return diag.FromErr(errGettingObject(objectRecord, d.Id(), err))
 	}
 	selMutexKV.Lock(strconv.Itoa(domainID))

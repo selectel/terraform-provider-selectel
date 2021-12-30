@@ -26,5 +26,6 @@ func serversMapsFromStructs(serverStructs []servers.Server) []map[string]interfa
 // hashServers is a hash function to use with the "servers" set.
 func hashServers(v interface{}) int {
 	m := v.(map[string]interface{})
+
 	return hashcode.String(fmt.Sprintf("%s-", m["id"].(string)))
 }

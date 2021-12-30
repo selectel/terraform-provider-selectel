@@ -32,6 +32,7 @@ func (c *Config) Validate() error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -47,5 +48,6 @@ func (c *Config) domainsV1Client() *domainsV1.ServiceClient {
 	retryClient.RetryWaitMax = domainsV1DefaultRetryWaitMax
 	retryClient.RetryMax = domainsV1DefaultRetry
 	domainsClient.HTTPClient = retryClient.StandardClient()
+
 	return domainsClient
 }

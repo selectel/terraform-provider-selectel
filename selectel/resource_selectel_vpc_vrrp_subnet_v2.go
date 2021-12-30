@@ -167,6 +167,7 @@ func resourceVPCVRRPSubnetV2Read(ctx context.Context, d *schema.ResourceData, me
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
 				d.SetId("")
+
 				return nil
 			}
 		}
@@ -212,6 +213,7 @@ func resourceVPCVRRPSubnetV2Delete(ctx context.Context, d *schema.ResourceData, 
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
 				d.SetId("")
+
 				return nil
 			}
 		}

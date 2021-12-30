@@ -67,8 +67,10 @@ func resourceDomainsDomainV1Read(ctx context.Context, d *schema.ResourceData, me
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
 			d.SetId("")
+
 			return nil
 		}
+
 		return diag.FromErr(errGettingObject(objectDomain, d.Id(), err))
 	}
 

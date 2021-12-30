@@ -174,6 +174,7 @@ func dbaasPrometheusMetricTokenV1DeleteStateRefreshFunc(ctx context.Context, cli
 			if errors.As(err, &dbaasError) {
 				return d, strconv.Itoa(dbaasError.StatusCode()), nil
 			}
+
 			return nil, "", err
 		}
 
