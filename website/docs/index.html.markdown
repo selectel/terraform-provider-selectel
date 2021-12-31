@@ -13,6 +13,8 @@ needs the Selectel API key token to authorize its requests.
 
 Use the navigation to the left to read about the available resources.
 
+[Getting Started with Terraform at Selectel](https://kb.selectel.com/docs/selectel-cloud-platform/main-services/instructions/how_to_use_terraform/).
+
 ## Example Usage
 
 ```hcl
