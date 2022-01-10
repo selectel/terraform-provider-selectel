@@ -44,6 +44,8 @@ func getMKSClusterV1Endpoint(region string) (endpoint string) {
 		endpoint = ru8MKSClusterV1Endpoint
 	case ru9Region:
 		endpoint = ru9MKSClusterV1Endpoint
+	case uz1Region:
+		endpoint = uz1MKSClusterV1Endpoint
 	}
 
 	return
