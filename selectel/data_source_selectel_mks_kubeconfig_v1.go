@@ -36,6 +36,7 @@ func dataSourceMKSKubeconfigV1() *schema.Resource {
 					ru7Region,
 					ru8Region,
 					ru9Region,
+					uz1Region,
 				}, false),
 			},
 			"raw_config": {
