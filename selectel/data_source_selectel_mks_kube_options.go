@@ -28,6 +28,7 @@ func dataSourceMKSFeatureGatesV1() *schema.Resource {
 					ru7Region,
 					ru8Region,
 					ru9Region,
+					uz1Region,
 				}, false),
 			},
 			"filter": {
@@ -155,6 +156,7 @@ func dataSourceMKSAdmissionControllersV1() *schema.Resource {
 					ru7Region,
 					ru8Region,
 					ru9Region,
+					uz1Region,
 				}, false),
 			},
 			"filter": {
