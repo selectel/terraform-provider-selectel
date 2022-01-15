@@ -66,6 +66,7 @@ func resourceMKSClusterV1() *schema.Resource {
 					ru7Region,
 					ru8Region,
 					ru9Region,
+					uz1Region,
 				}, false),
 			},
 			"kube_version": {

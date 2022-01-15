@@ -14,6 +14,7 @@ const (
 	ru7Region = "ru-7"
 	ru8Region = "ru-8"
 	ru9Region = "ru-9"
+	uz1Region = "uz-1"
 )
 
 func expandVPCV2Regions(rawRegions *schema.Set) []string {
@@ -42,6 +43,7 @@ func validateRegion(region string) error {
 		ru7Region: {},
 		ru8Region: {},
 		ru9Region: {},
+		uz1Region: {},
 	}
 
 	_, isValid := valid[region]
