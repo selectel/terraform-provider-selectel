@@ -289,7 +289,6 @@ func resourceMKSNodegroupV1Read(ctx context.Context, d *schema.ResourceData, met
 	clusterID, nodegroupID, err := mksNodegroupV1ParseID(d.Id())
 	if err != nil {
 		d.SetId("")
-
 		return diag.FromErr(errGettingObject(objectNodegroup, d.Id(), err))
 	}
 
@@ -315,7 +314,6 @@ func resourceMKSNodegroupV1Read(ctx context.Context, d *schema.ResourceData, met
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
 				d.SetId("")
-
 				return nil
 			}
 		}
@@ -355,7 +353,6 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 	clusterID, nodegroupID, err := mksNodegroupV1ParseID(d.Id())
 	if err != nil {
 		d.SetId("")
-
 		return diag.FromErr(errUpdatingObject(objectNodegroup, d.Id(), err))
 	}
 
@@ -440,7 +437,6 @@ func resourceMKSNodegroupV1Delete(ctx context.Context, d *schema.ResourceData, m
 	clusterID, nodegroupID, err := mksNodegroupV1ParseID(d.Id())
 	if err != nil {
 		d.SetId("")
-
 		return diag.FromErr(errDeletingObject(objectNodegroup, d.Id(), err))
 	}
 

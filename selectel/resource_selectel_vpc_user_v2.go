@@ -70,7 +70,6 @@ func resourceVPCUserV2Read(ctx context.Context, d *schema.ResourceData, meta int
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
 				d.SetId("")
-
 				return nil
 			}
 		}
@@ -114,7 +113,6 @@ func resourceVPCUserV2Delete(ctx context.Context, d *schema.ResourceData, meta i
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
 				d.SetId("")
-
 				return nil
 			}
 		}

@@ -250,7 +250,6 @@ func resourceMKSClusterV1Read(ctx context.Context, d *schema.ResourceData, meta 
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
 				d.SetId("")
-
 				return nil
 			}
 		}

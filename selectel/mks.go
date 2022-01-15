@@ -182,7 +182,6 @@ func mksClusterV1GetLatestPatchVersions(ctx context.Context, client *v1.ServiceC
 		current, ok := result[minor]
 		if !ok {
 			result[minor] = version.Version
-
 			continue
 		}
 

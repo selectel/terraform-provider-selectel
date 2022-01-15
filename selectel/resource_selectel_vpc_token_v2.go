@@ -68,7 +68,6 @@ func resourceVPCTokenV2Delete(ctx context.Context, d *schema.ResourceData, meta 
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
 				d.SetId("")
-
 				return nil
 			}
 		}
