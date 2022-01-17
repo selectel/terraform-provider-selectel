@@ -257,6 +257,7 @@ func dbaasUserV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, u
 			if errors.As(err, &dbaasError) {
 				return d, strconv.Itoa(dbaasError.StatusCode()), nil
 			}
+
 			return nil, "", err
 		}
 

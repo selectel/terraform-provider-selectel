@@ -65,6 +65,7 @@ func getDBaaSClient(ctx context.Context, d *schema.ResourceData, meta interface{
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}
+
 	return client, nil
 }
 
@@ -85,6 +86,7 @@ func stringListChecksum(s []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return checksum, nil
 }
 

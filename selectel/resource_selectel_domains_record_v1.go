@@ -140,6 +140,7 @@ func resourceDomainsRecordV1Read(ctx context.Context, d *schema.ResourceData, me
 			d.SetId("")
 			return nil
 		}
+
 		return diag.FromErr(errGettingObject(objectRecord, d.Id(), err))
 	}
 

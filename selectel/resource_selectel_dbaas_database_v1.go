@@ -291,6 +291,7 @@ func dbaasDatabaseV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.AP
 			if errors.As(err, &dbaasError) {
 				return d, strconv.Itoa(dbaasError.StatusCode()), nil
 			}
+
 			return nil, "", err
 		}
 
@@ -303,5 +304,6 @@ func dbaasDatabaseV1LocaleDiffSuppressFunc(k, old, new string, d *schema.Resourc
 	if old == "C" && new == "" {
 		return true
 	}
+
 	return false
 }

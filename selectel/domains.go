@@ -49,6 +49,7 @@ func getIntPtrOrNil(v interface{}) *int {
 	if v == nil {
 		return nil
 	}
+
 	return intPtr(v.(int))
 }
 

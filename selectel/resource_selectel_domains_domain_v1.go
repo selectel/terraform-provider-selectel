@@ -69,6 +69,7 @@ func resourceDomainsDomainV1Read(ctx context.Context, d *schema.ResourceData, me
 			d.SetId("")
 			return nil
 		}
+
 		return diag.FromErr(errGettingObject(objectDomain, d.Id(), err))
 	}
 

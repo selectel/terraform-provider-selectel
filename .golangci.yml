@@ -36,6 +36,7 @@ linters:
     - maligned
     - misspell
     - nakedret
+    - nlreturn
     - noctx
     - nolintlint
     - prealloc
@@ -54,6 +55,8 @@ linters:
 linters-settings:
   dupl:
     threshold: 300
+  nlreturn:
+    block-size: 3
 
 issues:
   exclude-rules:

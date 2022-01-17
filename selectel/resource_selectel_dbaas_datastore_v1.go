@@ -456,6 +456,7 @@ func dbaasDatastoreV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.A
 			if errors.As(err, &dbaasError) {
 				return d, strconv.Itoa(dbaasError.StatusCode()), nil
 			}
+
 			return nil, "", err
 		}
 

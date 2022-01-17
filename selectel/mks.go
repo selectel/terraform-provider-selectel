@@ -104,11 +104,13 @@ func mksClusterV1KubeVersionDiffSuppressFunc(k, old, new string, d *schema.Resou
 	currentMajor, err := kubeVersionToMajor(old)
 	if err != nil {
 		log.Printf("[DEBUG] error getting a major part of the current kube version %s: %s", old, err)
+
 		return false
 	}
 	desiredMajor, err := kubeVersionToMajor(new)
 	if err != nil {
 		log.Printf("[DEBUG] error getting a major part of the desired kube version %s: %s", new, err)
+
 		return false
 	}
 
@@ -125,11 +127,13 @@ func mksClusterV1KubeVersionDiffSuppressFunc(k, old, new string, d *schema.Resou
 	currentMinor, err := kubeVersionToMinor(old)
 	if err != nil {
 		log.Printf("[DEBUG] error getting a minor part of the current kube version %s: %s", old, err)
+
 		return false
 	}
 	desiredMinor, err := kubeVersionToMinor(new)
 	if err != nil {
 		log.Printf("[DEBUG] error getting a minor part of the desired kube version %s: %s", new, err)
+
 		return false
 	}
 
@@ -146,11 +150,13 @@ func mksClusterV1KubeVersionDiffSuppressFunc(k, old, new string, d *schema.Resou
 	currentPatch, err := kubeVersionToPatch(old)
 	if err != nil {
 		log.Printf("[DEBUG] error getting a patch part of the current kube version %s: %s", old, err)
+
 		return false
 	}
 	desiredPatch, err := kubeVersionToPatch(new)
 	if err != nil {
 		log.Printf("[DEBUG] error getting a patch part of the desired kube version %s: %s", new, err)
+
 		return false
 	}
 
