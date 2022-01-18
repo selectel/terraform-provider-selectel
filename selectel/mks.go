@@ -568,3 +568,61 @@ func interfaceListChecksum(items []interface{}) (string, error) {
 
 	return stringChecksum(strings.Join(flatItems, ""))
 }
+
+// compareTwoKubeVersionsByMinor parses two Kubernetes versions, compares their minor parts and
+// returns the latest version. It doesn't compare patch versions.
+func compareTwoKubeVersionsByMinor(a, b string) (string, error) {
+	aMinor, err := kubeVersionToMinor(a)
+	if err != nil {
+		return "", fmt.Errorf("unable to compare minor parts of kube versions: %s", err)
+	}
+
+	bMinor, err := kubeVersionToMinor(b)
+	if err != nil {
+		return "", fmt.Errorf("unable to compare minor parts of kube versions: %s", err)
+	}
+
+	if aMinor > bMinor {
+		return a, nil
+	}
+
+	return b, nil
+}
+
+func flattenMKSKubeVersionsV1(views []*kubeversion.View) []string {
+	versions := make([]string, len(views))
+	for i, view := range views {
+		versions[i] = view.Version
+	}
+
+	return versions
+}
+
+func parseMKSKubeVersionsV1Latest(versions []*kubeversion.View) (string, error) {
+	var latestVersion string
+	for _, version := range versions {
+		if latestVersion == "" {
+			latestVersion = version.Version
+		}
+
+		result, err := compareTwoKubeVersionsByMinor(version.Version, latestVersion)
+		if err != nil {
+			return "", err
+		}
+
+		latestVersion = result
+	}
+
+	return latestVersion, nil
+}
+
+func parseMKSKubeVersionsV1Default(versions []*kubeversion.View) string {
+	var defaultVersion string
+	for _, version := range versions {
+		if version.IsDefault {
+			defaultVersion = version.Version
+		}
+	}
+
+	return defaultVersion
+}
