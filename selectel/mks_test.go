@@ -3,6 +3,7 @@ package selectel
 import (
 	"testing"
 
+	"github.com/selectel/mks-go/pkg/v1/kubeversion"
 	"github.com/selectel/mks-go/pkg/v1/node"
 	"github.com/selectel/mks-go/pkg/v1/nodegroup"
 	"github.com/stretchr/testify/assert"
@@ -540,6 +541,131 @@ func TestExpandMKSNodegroupV1Taints(t *testing.T) {
 		},
 	}
 	actual := expandMKSNodegroupV1Taints(taints)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestCompareTwoKubeVersionsByMinorValid(t *testing.T) {
+	tableTests := []struct {
+		a, b, result string
+	}{
+		{
+			a:      "1.22.4",
+			b:      "1.20.13",
+			result: "1.22.4",
+		},
+		{
+			a:      "1.20.13",
+			b:      "1.21.7",
+			result: "1.21.7",
+		},
+		{
+			a:      "1.19",
+			b:      "1.18.4",
+			result: "1.19",
+		},
+	}
+
+	for _, tt := range tableTests {
+		actual, err := compareTwoKubeVersionsByMinor(tt.a, tt.b)
+		if err != nil {
+			t.Error(err)
+		}
+		if actual != tt.result {
+			t.Errorf("Expected %s kube version, but got: %s", tt.result, actual)
+		}
+	}
+}
+
+func TestCompareTwoKubeVersionsByMinorInvalid(t *testing.T) {
+	tableTests := []struct {
+		a, b string
+	}{
+		{
+			a: "",
+			b: "v.12.a3",
+		},
+		{
+			a: "v1.1.1",
+			b: "abc",
+		},
+		{
+			a: "1.-12.-13",
+			b: "v1.15.1",
+		},
+	}
+
+	for _, tt := range tableTests {
+		actual, err := compareTwoKubeVersionsByMinor(tt.a, tt.b)
+		if err == nil {
+			t.Error("Expected kube version parsing error but got nil")
+		}
+		if actual != "" {
+			t.Errorf("Expected empty kube version, but got: %s", actual)
+		}
+	}
+}
+
+func TestFlattenMKSKubeVersionsV1(t *testing.T) {
+	versions := []*kubeversion.View{
+		{
+			Version:   "1.22.4",
+			IsDefault: false,
+		},
+		{
+			Version:   "1.21.7",
+			IsDefault: true,
+		},
+		{
+			Version:   "1.20.13",
+			IsDefault: false,
+		},
+	}
+	expected := []string{"1.22.4", "1.20.13", "1.21.7"}
+	actual := flattenMKSKubeVersionsV1(versions)
+
+	assert.ElementsMatch(t, expected, actual)
+}
+
+func TestParseMKSKubeVersionsV1Latest(t *testing.T) {
+	versions := []*kubeversion.View{
+		{
+			Version:   "1.22.4",
+			IsDefault: false,
+		},
+		{
+			Version:   "1.21.7",
+			IsDefault: true,
+		},
+		{
+			Version:   "1.20.13",
+			IsDefault: false,
+		},
+	}
+	expected := "1.22.4"
+	actual, err := parseMKSKubeVersionsV1Latest(versions)
+
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
+func TestParseMKSKubeVersionsV1Default(t *testing.T) {
+	versions := []*kubeversion.View{
+		{
+			Version:   "1.22.4",
+			IsDefault: false,
+		},
+		{
+			Version:   "1.21.7",
+			IsDefault: true,
+		},
+		{
+			Version:   "1.20.13",
+			IsDefault: false,
+		},
+	}
+	expected := "1.21.7"
+	actual := parseMKSKubeVersionsV1Default(versions)
 
 	assert.Equal(t, expected, actual)
 }
