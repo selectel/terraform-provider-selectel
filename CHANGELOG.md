@@ -1,3 +1,16 @@
+## 3.8.0 (Unreleased)
+
+FEATURES:
+* __New Data Source:__ `selectel_mks_kubeconfig_v1` ([#145](https://github.com/selectel/terraform-provider-selectel/issues/145))
+* __New Data Source:__ `selectel_mks_feature_gates_v1` ([#166](https://github.com/selectel/terraform-provider-selectel/issues/166))
+* __New Data Source:__ `selectel_mks_admission_controllers_v1` ([#166](https://github.com/selectel/terraform-provider-selectel/issues/166))
+* __New Data Source:__ `selectel_mks_kube_versions_v1` ([#183](https://github.com/selectel/terraform-provider-selectel/issues/183))
+
+IMPROVEMENTS:
+* Updated `terraform-plugin-sdk` to `v2.10.1` ([#181](https://github.com/selectel/terraform-provider-selectel/pull/181))
+* Added support for `uz-1` region for the `selectel_mks_cluster_v1` resource ([#182](https://github.com/selectel/terraform-provider-selectel/pull/182))
+* Added useful links to the documentation ([#186](https://github.com/selectel/terraform-provider-selectel/pull/186))
+
 ## 3.7.1 (Nov 26, 2021)
 
 IMPROVEMENTS:
