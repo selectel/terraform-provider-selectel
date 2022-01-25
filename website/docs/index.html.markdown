@@ -11,9 +11,11 @@ description: |-
 The Selectel provider is used to interact with the Selectel resources. The provider
 needs the Selectel API key token to authorize its requests.
 
-Use the navigation to the left to read about the available resources.
+In most cases [OpenStack Terraform provider](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest)
+will have to be used as well — to control resources available via native OpenStack API.
 
-[Getting Started with Terraform at Selectel](https://kb.selectel.com/docs/selectel-cloud-platform/main-services/instructions/how_to_use_terraform/).
+Read our [Getting Started with Terraform at Selectel](https://kb.selectel.com/docs/selectel-cloud-platform/main-services/instructions/how_to_use_terraform/)
+guide to learn more.
 
 ## Example Usage
 
