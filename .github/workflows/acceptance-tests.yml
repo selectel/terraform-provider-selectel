@@ -29,7 +29,6 @@ jobs:
       - name: Run test
         run: make testacc
         env:
-          GO_FLAGS: -mod=vendor
           GO111MODULE: on
           SEL_TOKEN: ${{ secrets.SEL_TOKEN }}
 
