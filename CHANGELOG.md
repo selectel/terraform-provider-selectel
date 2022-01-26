@@ -10,6 +10,7 @@ IMPROVEMENTS:
 * Updated `terraform-plugin-sdk` to `v2.10.1` ([#181](https://github.com/selectel/terraform-provider-selectel/pull/181))
 * Added support for `uz-1` region for the `selectel_mks_cluster_v1` resource ([#182](https://github.com/selectel/terraform-provider-selectel/pull/182))
 * Added useful links to the documentation ([#186](https://github.com/selectel/terraform-provider-selectel/pull/186))
+* Updated Go version to `1.17` ([#187](https://github.com/selectel/terraform-provider-selectel/pull/187))
 
 ## 3.7.1 (Nov 26, 2021)
 
