@@ -18,7 +18,7 @@ Requirements
 ------------
 
 -	[Terraform](https://www.terraform.io/downloads.html) 0.12.x
--	[Go](https://golang.org/doc/install) 1.16 (to build the provider plugin)
+-	[Go](https://golang.org/doc/install) 1.17 (to build the provider plugin)
 
 Building The Provider
 ---------------------
@@ -47,7 +47,7 @@ Also there are lots of examples in the [selectel/terraform-examples](https://git
 Developing the Provider
 ---------------------------
 
-If you wish to work on the provider, you'll first need [Go](https://golang.org) installed on your machine (version 1.16+ is *required*).
+If you wish to work on the provider, you'll first need [Go](https://golang.org) installed on your machine (version 1.17+ is *required*).
 
 To compile the provider, run `make build`. This will build the provider and put the provider binary in the current directory.
 
