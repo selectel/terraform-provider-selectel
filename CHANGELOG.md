@@ -1,4 +1,4 @@
-## 3.8.0 (Unreleased)
+## 3.8.0 (Jan 27, 2022)
 
 FEATURES:
 * __New Data Source:__ `selectel_mks_kubeconfig_v1` ([#145](https://github.com/selectel/terraform-provider-selectel/issues/145))
