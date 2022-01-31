@@ -49,6 +49,7 @@ func TestAccDBaaSDatastoreV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.vacuum_cost_delay", strconv.Itoa(25)),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.transform_null_equals", "true"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
+					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
 				),
 			},
 			{
@@ -69,6 +70,7 @@ func TestAccDBaaSDatastoreV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.vacuum_cost_delay", strconv.Itoa(25)),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.transform_null_equals", "true"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
+					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
 				),
 			},
 			{
@@ -91,6 +93,7 @@ func TestAccDBaaSDatastoreV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "pooler.0.mode", "session"),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "pooler.0.size", strconv.Itoa(50)),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
+					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
 				),
 			},
 			{
@@ -114,6 +117,7 @@ func TestAccDBaaSDatastoreV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.transform_null_equals", "true"),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
+					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
 				),
 			},
 			{
@@ -137,6 +141,7 @@ func TestAccDBaaSDatastoreV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.transform_null_equals", "true"),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
+					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
 				),
 			},
 			{
@@ -159,6 +164,7 @@ func TestAccDBaaSDatastoreV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.vacuum_cost_delay", strconv.Itoa(20)),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
+					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
 				),
 			},
 		},
@@ -196,6 +202,7 @@ func TestAccDBaaSDatastoreV1RedisBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.maxmemory-policy", "volatile-lru"),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
+					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
 				),
 			},
 			{
@@ -214,6 +221,49 @@ func TestAccDBaaSDatastoreV1RedisBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.maxmemory-policy", "noeviction"),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
+					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDBaaSMultiNodeDatastoreV1Basic(t *testing.T) {
+	var (
+		dbaasDatastore dbaas.Datastore
+		project        projects.Project
+	)
+
+	projectName := acctest.RandomWithPrefix("tf-acc")
+	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
+	nodeCount := 3
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDBaaSDatastoreV1Basic(projectName, datastoreName, nodeCount),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccCheckDBaaSDatastoreV1Exists("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", &dbaasDatastore),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "name", datastoreName),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "region", "ru-3"),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(2)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(4096)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(32)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.xmloption", "content"),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.work_mem", strconv.Itoa(128)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.vacuum_cost_delay", strconv.Itoa(25)),
+					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.transform_null_equals", "true"),
+					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
+					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
+					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.replica-1"),
+					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.replica-2"),
 				),
 			},
 		},
