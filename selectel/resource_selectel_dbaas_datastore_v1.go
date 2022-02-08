@@ -299,9 +299,7 @@ func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, m
 		log.Print(errSettingComplexAttr("flavor", err))
 	}
 
-	connectonMap := make(map[string]string)
-	connectonMap["master"] = datastore.Connection.Master
-	if err := d.Set("connections", connectonMap); err != nil {
+	if err := d.Set("connections", datastore.Connection); err != nil {
 		log.Print(errSettingComplexAttr("connections", err))
 	}
 
