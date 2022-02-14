@@ -1,3 +1,8 @@
+## 3.9.0 (Unreleased)
+
+IMPROVEMENTS:
+* Updated `dbaas-go` dependency to `v0.5.0` ([#188](https://github.com/selectel/terraform-provider-selectel/pull/188))
+
 ## 3.8.0 (Jan 27, 2022)
 
 FEATURES:
