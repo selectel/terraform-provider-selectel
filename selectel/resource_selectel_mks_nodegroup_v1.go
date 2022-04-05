@@ -386,6 +386,11 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 		hasChanged = true
 	}
 
+	if d.HasChange("taints") {
+		taints := d.Get("taints").([]interface{})
+		updateOpts.Taints = expandMKSNodegroupV1Taints(taints)
+	}
+
 	if d.HasChanges("enable_autoscale", "autoscale_min_nodes", "autoscale_max_nodes") {
 		enableAutoscale := d.Get("enable_autoscale").(bool)
 		autoscaleMinNodes := d.Get("autoscale_min_nodes").(int)
