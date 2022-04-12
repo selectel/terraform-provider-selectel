@@ -14,7 +14,7 @@ test: fmtcheck
 		xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
 
 testacc: fmtcheck
-	TF_ACC=1 go test $(TEST) $(TESTARGS) -run TestAccMKSNodegroupV1Basic -timeout 360m
+	TF_ACC=1 go test $(TEST) $(TESTARGS) -timeout 360m
 
 fmt:
 	@echo "==> Fixing source code with gofmt..."
