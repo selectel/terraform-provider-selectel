@@ -112,7 +112,7 @@ func resourceMKSNodegroupV1() *schema.Resource {
 			"taints": {
 				Type:     schema.TypeList,
 				Optional: true,
-				ForceNew: true,
+				ForceNew: false,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"key": {
@@ -383,6 +383,12 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 	if d.HasChange("labels") {
 		labels := d.Get("labels").(map[string]interface{})
 		updateOpts.Labels = expandMKSNodegroupV1Labels(labels)
+		hasChanged = true
+	}
+
+	if d.HasChange("taints") {
+		taints := d.Get("taints").([]interface{})
+		updateOpts.Taints = expandMKSNodegroupV1Taints(taints)
 		hasChanged = true
 	}
 
