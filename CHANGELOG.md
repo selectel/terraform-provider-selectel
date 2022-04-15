@@ -1,17 +1,22 @@
-## 3.9.0 (Unreleased)
+## 3.8.1 (Unreleased)
 
 IMPROVEMENTS:
+
+* Added `taints` update support for the `selectel_mks_nodegroup_v1` resource ([#189](https://github.com/selectel/terraform-provider-selectel/issues/189))
 * Updated `dbaas-go` dependency to `v0.5.0` ([#188](https://github.com/selectel/terraform-provider-selectel/pull/188))
+* Updated `golangci-lint` in CI to `v1.44.0` ([#192](https://github.com/selectel/terraform-provider-selectel/pull/192))
 
 ## 3.8.0 (Jan 27, 2022)
 
 FEATURES:
+
 * __New Data Source:__ `selectel_mks_kubeconfig_v1` ([#145](https://github.com/selectel/terraform-provider-selectel/issues/145))
 * __New Data Source:__ `selectel_mks_feature_gates_v1` ([#166](https://github.com/selectel/terraform-provider-selectel/issues/166))
 * __New Data Source:__ `selectel_mks_admission_controllers_v1` ([#166](https://github.com/selectel/terraform-provider-selectel/issues/166))
 * __New Data Source:__ `selectel_mks_kube_versions_v1` ([#183](https://github.com/selectel/terraform-provider-selectel/issues/183))
 
 IMPROVEMENTS:
+
 * Updated `terraform-plugin-sdk` to `v2.10.1` ([#181](https://github.com/selectel/terraform-provider-selectel/pull/181))
 * Added support for `uz-1` region for the `selectel_mks_cluster_v1` resource ([#182](https://github.com/selectel/terraform-provider-selectel/pull/182))
 * Added useful links to the documentation ([#186](https://github.com/selectel/terraform-provider-selectel/pull/186))
@@ -20,17 +25,20 @@ IMPROVEMENTS:
 ## 3.7.1 (Nov 26, 2021)
 
 IMPROVEMENTS:
+
 * Added `redis_password` argument for the `selectel_dbaas_datastore_v1` resource ([#173](https://github.com/selectel/terraform-provider-selectel/issues/173))
 * Added `datastore_type_ids` attribute for the `selectel_dbaas_flavor_v1` data source ([#173](https://github.com/selectel/terraform-provider-selectel/issues/173))
 
 ## 3.7.0 (Oct 1, 2021)
 
 FEATURES:
+
 * __New Resource:__ `selectel_dbaas_prometheus_metric_token_v1` ([#170](https://github.com/terraform-providers/terraform-provider-selectel/issues/170))
 * __New Data Source:__ `selectel_dbaas_configuration_parameter_v1` ([#162](https://github.com/selectel/terraform-provider-selectel/issues/162))
 * __New Data Source:__ `selectel_dbaas_prometheus_metric_token_v1` ([#170](https://github.com/selectel/terraform-provider-selectel/issues/170))
 
 IMPROVEMENTS:
+
 * Fixed docs for DBaaS data sources ([#160](https://github.com/selectel/terraform-provider-selectel/pull/160))
 * Updated Go version to `1.16` ([#164](https://github.com/selectel/terraform-provider-selectel/pull/164))
 * Added `config` argument for the `selectel_dbaas_datastore_v1` resource ([#162](https://github.com/selectel/terraform-provider-selectel/issues/162))
