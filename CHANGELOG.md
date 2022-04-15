@@ -1,4 +1,4 @@
-## 3.8.1 (Unreleased)
+## 3.8.1 (Apr 15, 2022)
 
 IMPROVEMENTS:
 
