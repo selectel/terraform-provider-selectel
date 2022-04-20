@@ -214,7 +214,7 @@ func mksClusterV1GetLatestMinorVersion(ctx context.Context, client *v1.ServiceCl
 		versions[ver] = struct{}{}
 	}
 
-	// find max supported version.
+	// Find max supported version.
 	latestSupported := "1.0"
 	for version := range versions {
 		latestSupported, err = compareTwoKubeVersionsByMinor(latestSupported, version)
@@ -229,6 +229,9 @@ func mksClusterV1GetLatestMinorVersion(ctx context.Context, client *v1.ServiceCl
 // checkVersionIsSupported check that desired k8s version is supported.
 func checkVersionIsSupported(ctx context.Context, client *v1.ServiceClient, desiredMinorVersion string) (isSupported bool, err error) {
 	kubeVersions, _, err := kubeversion.List(ctx, client)
+	if err != nil {
+		return false, err
+	}
 
 	versions := map[string]struct{}{}
 	for _, version := range kubeVersions {
@@ -239,7 +242,7 @@ func checkVersionIsSupported(ctx context.Context, client *v1.ServiceClient, desi
 		versions[ver] = struct{}{}
 	}
 
-	// check that version is supported.
+	// Check that version is supported.
 	if _, ok := versions[desiredMinorVersion]; ok {
 		return true, nil
 	}
