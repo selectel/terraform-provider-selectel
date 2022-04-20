@@ -215,8 +215,8 @@ func mksClusterV1GetLatestMinorVersion(ctx context.Context, client *v1.ServiceCl
 	}
 
 	// find max supported version.
-	var latestSupported = "1.0"
-	for version, _ := range versions {
+	latestSupported := "1.0"
+	for version := range versions {
 		latestSupported, err = compareTwoKubeVersionsByMinor(latestSupported, version)
 		if err != nil {
 			return "", err
