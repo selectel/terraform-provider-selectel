@@ -199,10 +199,58 @@ func mksClusterV1GetLatestPatchVersions(ctx context.Context, client *v1.ServiceC
 	return result, nil
 }
 
+func mksClusterV1GetLatestMinorVersion(ctx context.Context, client *v1.ServiceClient) (string, error) {
+	kubeVersions, _, err := kubeversion.List(ctx, client)
+	if err != nil {
+		return "", err
+	}
+
+	versions := map[string]struct{}{}
+	for _, version := range kubeVersions {
+		ver, err := kubeVersionTrimToMinor(version.Version)
+		if err != nil {
+			return "", fmt.Errorf("can't get major version")
+		}
+		versions[ver] = struct{}{}
+	}
+
+	// find max supported version.
+	var latestSupported = "1.0"
+	for version, _ := range versions {
+		latestSupported, err = compareTwoKubeVersionsByMinor(latestSupported, version)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return latestSupported, nil
+}
+
+// checkVersionIsSupported check that desired k8s version is supported.
+func checkVersionIsSupported(ctx context.Context, client *v1.ServiceClient, desiredMinorVersion string) (isSupported bool, err error) {
+	kubeVersions, _, err := kubeversion.List(ctx, client)
+
+	versions := map[string]struct{}{}
+	for _, version := range kubeVersions {
+		ver, err := kubeVersionTrimToMinor(version.Version)
+		if err != nil {
+			return false, fmt.Errorf("can't get minor version")
+		}
+		versions[ver] = struct{}{}
+	}
+
+	// check that version is supported.
+	if _, ok := versions[desiredMinorVersion]; ok {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData, client *v1.ServiceClient) error {
-	o, n := d.GetChange("kube_version")
-	currentVersion := o.(string)
-	desiredVersion := n.(string)
+	oldVersion, newVersion := d.GetChange("kube_version")
+	currentVersion := oldVersion.(string)
+	desiredVersion := newVersion.(string)
 
 	log.Printf("[DEBUG] current kube version: %s", currentVersion)
 	log.Printf("[DEBUG] desired kube version: %s", desiredVersion)
@@ -238,25 +286,28 @@ func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData,
 			return fmt.Errorf("error getting incremented minor part of the current version %s: %s", currentVersion, err)
 		}
 
-		// Get latest patch versions for every minor version.
-		latestPatchVersions, err := mksClusterV1GetLatestPatchVersions(ctx, client)
+		// Check that next minor version is equal to desire version.
+		if currentMinorNew != desiredMinor {
+			return fmt.Errorf("invalid minor version: %s, kubernets versions must be upgraded one-by-one", desiredMinor)
+		}
+
+		// Check that new minor version is supported.
+		isSupported, err := checkVersionIsSupported(ctx, client, desiredVersion)
 		if err != nil {
-			return fmt.Errorf("error getting latest patch versions: %s", err)
+			return fmt.Errorf("can't check support for version: %s", err)
 		}
 
-		// Check that we have a Kubernetes version of the current minor version + 1.
-		latestVersion, ok := latestPatchVersions[currentMinorNew]
-		if !ok {
+		if !isSupported {
+			log.Print("[DEBUG] cluster will be upgrade to unsupported version. Patch version will selected automatically.")
+		}
+
+		latestMinorVersion, err := mksClusterV1GetLatestMinorVersion(ctx, client)
+		if err != nil {
+			return fmt.Errorf("can't find latest minor version: %s", err)
+		}
+
+		if latestMinorVersion == currentMinor {
 			return fmt.Errorf("the cluster is already on the latest available minor version: %s", currentMinor)
-		}
-
-		log.Printf("[DEBUG] latest kube version: %s", latestVersion)
-
-		// Compare the latest patch version with the desired version.
-		if desiredVersion != latestVersion {
-			return fmt.Errorf(
-				"current version %s can't be upgraded to version %s, the latest available version is: %s",
-				currentVersion, desiredVersion, latestVersion)
 		}
 
 		_, _, err = cluster.UpgradeMinorVersion(ctx, client, d.Id())
