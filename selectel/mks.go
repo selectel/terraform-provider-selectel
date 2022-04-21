@@ -227,7 +227,7 @@ func mksClusterV1GetLatestMinorVersion(ctx context.Context, client *v1.ServiceCl
 }
 
 // checkVersionIsSupported check that desired k8s version is supported.
-func checkVersionIsSupported(ctx context.Context, client *v1.ServiceClient, desiredMinorVersion string) (isSupported bool, err error) {
+func checkVersionIsSupported(ctx context.Context, client *v1.ServiceClient, desiredMinorVersion string) (bool, error) {
 	kubeVersions, _, err := kubeversion.List(ctx, client)
 	if err != nil {
 		return false, err
@@ -291,7 +291,7 @@ func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData,
 
 		// Check that next minor version is equal to desire version.
 		if currentMinorNew != desiredMinor {
-			return fmt.Errorf("invalid minor version: %s, kubernets versions must be upgraded one-by-one", desiredMinor)
+			return fmt.Errorf("invalid minor version: %s, kubernets versions must be upgraded one by one", desiredMinor)
 		}
 
 		// Check that new minor version is supported.
