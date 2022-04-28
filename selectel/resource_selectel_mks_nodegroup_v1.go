@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/nodegroup"
@@ -224,6 +225,15 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 		KeypairName:      d.Get("keypair_name").(string),
 		AffinityPolicy:   d.Get("affinity_policy").(string),
 		AvailabilityZone: d.Get("availability_zone").(string),
+	}
+
+	projectQuotas, _, err := quotas.GetProjectQuotas(ctx, resellV2Client, d.Get("project_id").(string))
+	if err != nil {
+		return diag.FromErr(errGettingObject(objectProjectQuotas, d.Get("project_id").(string), err))
+	}
+
+	if err := checkQuotasForNodegroup(projectQuotas, createOpts); err != nil {
+		return diag.FromErr(errCreatingObject(objectNodegroup, err))
 	}
 
 	// Check nodegroup autoscaling options.

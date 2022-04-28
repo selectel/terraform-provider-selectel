@@ -3,6 +3,7 @@ package selectel
 import (
 	"testing"
 
+	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
 	"github.com/selectel/mks-go/pkg/v1/kubeversion"
 	"github.com/selectel/mks-go/pkg/v1/node"
 	"github.com/selectel/mks-go/pkg/v1/nodegroup"
@@ -668,4 +669,599 @@ func TestParseMKSKubeVersionsV1Default(t *testing.T) {
 	actual := parseMKSKubeVersionsV1Default(versions)
 
 	assert.Equal(t, expected, actual)
+}
+
+func TestCheckQuotasForClusterErrRegional(t *testing.T) {
+	testQuotas := []*quotas.Quota{
+		{
+			Name: "mks_cluster_regional",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "",
+					Value:  10,
+					Used:   10,
+				},
+			},
+		},
+	}
+
+	err := checkQuotasForCluster(testQuotas, ru9Region, false)
+
+	assert.Error(t, err)
+	assert.Equal(t, "not enough quota to create regional k8s cluster", err.Error())
+}
+
+func TestCheckQuotasForClusterErrZonal(t *testing.T) {
+	testQuotas := []*quotas.Quota{
+		{
+			Name: "mks_cluster_zonal",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "",
+					Value:  10,
+					Used:   10,
+				},
+			},
+		},
+	}
+
+	err := checkQuotasForCluster(testQuotas, ru9Region, true)
+
+	assert.Error(t, err)
+	assert.Equal(t, "not enough quota to create zonal k8s cluster", err.Error())
+}
+
+func TestCheckQuotasForClusterErrNoRegion(t *testing.T) {
+	testQuotas := []*quotas.Quota{
+		{
+			Name: "mks_cluster_zonal",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru1Region,
+					Zone:   "",
+					Value:  10,
+					Used:   10,
+				},
+			},
+		},
+	}
+
+	err := checkQuotasForCluster(testQuotas, ru9Region, true)
+
+	assert.Error(t, err)
+	assert.Equal(t, "unable to check neither regional nor zonal k8s cluster quota for a given region", err.Error())
+}
+
+func TestCheckQuotasForClusterErrUnableToCheck(t *testing.T) {
+	var testQuotas []*quotas.Quota
+
+	err := checkQuotasForCluster(testQuotas, ru9Region, false)
+
+	assert.Error(t, err)
+	assert.Equal(t, "unable to find neither mks_cluster_zonal nor mks_cluster_zonal quotas", err.Error())
+}
+
+func TestCheckQuotasForClusterOkRegional(t *testing.T) {
+	testQuotas := []*quotas.Quota{
+		{
+			Name: "mks_cluster_regional",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+	}
+
+	assert.NoError(t, checkQuotasForCluster(testQuotas, ru9Region, false))
+}
+
+func TestCheckQuotasForClusterOkZonal(t *testing.T) {
+	testQuotas := []*quotas.Quota{
+		{
+			Name: "mks_cluster_zonal",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+	}
+
+	assert.NoError(t, checkQuotasForCluster(testQuotas, ru9Region, true))
+}
+
+var testQuotasFull = []*quotas.Quota{
+	{
+		Name: "compute_cores",
+		ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+			{
+				Region: ru9Region,
+				Zone:   "ru-9a",
+				Value:  10,
+				Used:   10,
+			},
+		},
+	},
+	{
+		Name: "compute_ram",
+		ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+			{
+				Region: ru9Region,
+				Zone:   "ru-9a",
+				Value:  10,
+				Used:   10,
+			},
+		},
+	},
+	{
+		Name: "volume_gigabytes_fast",
+		ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+			{
+				Region: ru9Region,
+				Zone:   "ru-9a",
+				Value:  10,
+				Used:   10,
+			},
+		},
+	},
+	{
+		Name: "volume_gigabytes_basic",
+		ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+			{
+				Region: ru9Region,
+				Zone:   "ru-9a",
+				Value:  10,
+				Used:   10,
+			},
+		},
+	},
+	{
+		Name: "volume_gigabytes_universal",
+		ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+			{
+				Region: ru9Region,
+				Zone:   "ru-9a",
+				Value:  10,
+				Used:   10,
+			},
+		},
+	},
+	{
+		Name: "volume_gigabytes_local",
+		ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+			{
+				Region: ru9Region,
+				Zone:   "ru-9a",
+				Value:  10,
+				Used:   10,
+			},
+		},
+	},
+}
+
+func TestCheckQuotasForNodegroupErrCPU(t *testing.T) {
+	testNodegroupOpts := nodegroup.CreateOpts{
+		Count:            1,
+		CPUs:             1,
+		RAMMB:            0,
+		VolumeType:       "fast.ru-9a",
+		VolumeGB:         0,
+		AvailabilityZone: "ru-9a",
+	}
+
+	err := checkQuotasForNodegroup(testQuotasFull, &testNodegroupOpts)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not enough CPU quota to create nodegroup")
+}
+
+func TestCheckQuotasForNodegroupErrRAM(t *testing.T) {
+	testNodegroupOpts := nodegroup.CreateOpts{
+		Count:            1,
+		CPUs:             0,
+		RAMMB:            1,
+		VolumeType:       "fast.ru-9a",
+		VolumeGB:         0,
+		AvailabilityZone: "ru-9a",
+	}
+
+	err := checkQuotasForNodegroup(testQuotasFull, &testNodegroupOpts)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not enough RAM quota to create nodegroup")
+}
+
+func TestCheckQuotasForNodegroupErrFastVolume(t *testing.T) {
+	testNodegroupOpts := nodegroup.CreateOpts{
+		Count:            1,
+		CPUs:             0,
+		RAMMB:            0,
+		VolumeType:       "fast.ru-9a",
+		VolumeGB:         1,
+		AvailabilityZone: "ru-9a",
+	}
+
+	err := checkQuotasForNodegroup(testQuotasFull, &testNodegroupOpts)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not enough volume quota to create nodegroup")
+}
+
+func TestCheckQuotasForNodegroupErrBasicVolume(t *testing.T) {
+	testNodegroupOpts := nodegroup.CreateOpts{
+		Count:            1,
+		CPUs:             0,
+		RAMMB:            0,
+		VolumeType:       "basic.ru-9a",
+		VolumeGB:         1,
+		AvailabilityZone: "ru-9a",
+	}
+
+	err := checkQuotasForNodegroup(testQuotasFull, &testNodegroupOpts)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not enough volume quota to create nodegroup")
+}
+
+func TestCheckQuotasForNodegroupErrUniversalVolume(t *testing.T) {
+	testNodegroupOpts := nodegroup.CreateOpts{
+		Count:            1,
+		CPUs:             0,
+		RAMMB:            0,
+		VolumeType:       "universal.ru-9a",
+		VolumeGB:         1,
+		AvailabilityZone: "ru-9a",
+	}
+
+	err := checkQuotasForNodegroup(testQuotasFull, &testNodegroupOpts)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not enough volume quota to create nodegroup")
+}
+
+func TestCheckQuotasForNodegroupErrLocalVolume(t *testing.T) {
+	testNodegroupOpts := nodegroup.CreateOpts{
+		Count:            1,
+		CPUs:             0,
+		RAMMB:            0,
+		LocalVolume:      true,
+		VolumeGB:         1,
+		AvailabilityZone: "ru-9a",
+	}
+
+	err := checkQuotasForNodegroup(testQuotasFull, &testNodegroupOpts)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not enough volume quota to create nodegroup")
+}
+
+func TestCheckQuotasForNodegroupErrUnableToFindCPUQuota(t *testing.T) {
+	testQuotas := []*quotas.Quota{
+		{
+			Name: "volume_gigabytes_universal",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9a",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+		{
+			Name: "compute_ram",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9a",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+	}
+	testNodegroupOpts := nodegroup.CreateOpts{
+		Count:            1,
+		CPUs:             2,
+		RAMMB:            2,
+		VolumeGB:         2,
+		VolumeType:       "universal.ru-9a",
+		AvailabilityZone: "ru-9a",
+	}
+
+	err := checkQuotasForNodegroup(testQuotas, &testNodegroupOpts)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unable to find CPU quota")
+}
+
+func TestCheckQuotasForNodegroupErrUnableToFindRAMQuota(t *testing.T) {
+	testQuotas := []*quotas.Quota{
+		{
+			Name: "volume_gigabytes_universal",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9a",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+		{
+			Name: "compute_cores",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9a",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+	}
+	testNodegroupOpts := nodegroup.CreateOpts{
+		Count:            1,
+		CPUs:             2,
+		RAMMB:            2,
+		VolumeGB:         2,
+		VolumeType:       "universal.ru-9a",
+		AvailabilityZone: "ru-9a",
+	}
+
+	err := checkQuotasForNodegroup(testQuotas, &testNodegroupOpts)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unable to find RAM quota")
+}
+
+func TestCheckQuotasForNodegroupErrUnableToFindVolumeQuota(t *testing.T) {
+	testQuotas := []*quotas.Quota{
+		{
+			Name: "compute_ram",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9a",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+		{
+			Name: "compute_cores",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9a",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+	}
+	testNodegroupOpts := nodegroup.CreateOpts{
+		Count:            1,
+		CPUs:             2,
+		RAMMB:            2,
+		VolumeGB:         2,
+		VolumeType:       "universal.ru-9a",
+		AvailabilityZone: "ru-9a",
+	}
+
+	err := checkQuotasForNodegroup(testQuotas, &testNodegroupOpts)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unable to find volume quota")
+}
+
+func TestCheckQuotasForNodegroupErrUnableToCheckCPUQuota(t *testing.T) {
+	testQuotas := []*quotas.Quota{
+		{
+			Name: "compute_ram",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9b",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+		{
+			Name: "compute_cores",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9a",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+		{
+			Name: "volume_gigabytes_universal",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9b",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+	}
+
+	testNodegroupOpts := nodegroup.CreateOpts{
+		Count:            1,
+		CPUs:             2,
+		RAMMB:            2,
+		VolumeGB:         2,
+		VolumeType:       "universal.ru-9b",
+		AvailabilityZone: "ru-9b",
+	}
+
+	err := checkQuotasForNodegroup(testQuotas, &testNodegroupOpts)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unable to check CPU quota for a nodegroup")
+}
+
+func TestCheckQuotasForNodegroupErrUnableToCheckRAMQuota(t *testing.T) {
+	testQuotas := []*quotas.Quota{
+		{
+			Name: "compute_ram",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9a",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+		{
+			Name: "compute_cores",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9b",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+		{
+			Name: "volume_gigabytes_universal",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9b",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+	}
+	testNodegroupOpts := nodegroup.CreateOpts{
+		Count:            1,
+		CPUs:             2,
+		RAMMB:            2,
+		VolumeGB:         2,
+		VolumeType:       "universal.ru-9b",
+		AvailabilityZone: "ru-9b",
+	}
+
+	err := checkQuotasForNodegroup(testQuotas, &testNodegroupOpts)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unable to check RAM quota for a nodegroup")
+}
+
+func TestCheckQuotasForNodegroupErrUnableToCheckVolumeQuota(t *testing.T) {
+	testQuotas := []*quotas.Quota{
+		{
+			Name: "compute_ram",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9b",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+		{
+			Name: "compute_cores",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9b",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+		{
+			Name: "volume_gigabytes_universal",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9a",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+	}
+	testNodegroupOpts := nodegroup.CreateOpts{
+		Count:            1,
+		CPUs:             2,
+		RAMMB:            2,
+		VolumeGB:         2,
+		VolumeType:       "universal.ru-9b",
+		AvailabilityZone: "ru-9b",
+	}
+
+	err := checkQuotasForNodegroup(testQuotas, &testNodegroupOpts)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unable to check volume quota for a nodegroup")
+}
+
+func TestCheckQuotasForNodegroupOk(t *testing.T) {
+	testQuotas := []*quotas.Quota{
+		{
+			Name: "compute_ram",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9a",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+		{
+			Name: "compute_cores",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9a",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+		{
+			Name: "volume_gigabytes_universal",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9a",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+	}
+	testNodegroupOpts := nodegroup.CreateOpts{
+		Count:            1,
+		CPUs:             2,
+		RAMMB:            2,
+		VolumeGB:         2,
+		VolumeType:       "universal.ru-9a",
+		AvailabilityZone: "ru-9a",
+	}
+
+	assert.NoError(t, checkQuotasForNodegroup(testQuotas, &testNodegroupOpts))
 }
