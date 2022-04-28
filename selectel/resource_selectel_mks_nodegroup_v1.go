@@ -428,6 +428,28 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	if d.HasChange("nodes_count") {
+		oldValue, newValue := d.GetChange("nodes_count")
+		newNodesCount := newValue.(int) - oldValue.(int)
+
+		newNodesRequest := nodegroup.CreateOpts{
+			Count:            newNodesCount,
+			CPUs:             d.Get("cpus").(int),
+			RAMMB:            d.Get("ram_mb").(int),
+			VolumeGB:         d.Get("volume_gb").(int),
+			VolumeType:       d.Get("volume_type").(string),
+			LocalVolume:      d.Get("local_volume").(bool),
+			AvailabilityZone: d.Get("availability_zone").(string),
+		}
+
+		projectQuotas, _, err := quotas.GetProjectQuotas(ctx, resellV2Client, d.Get("project_id").(string))
+		if err != nil {
+			return diag.FromErr(errGettingObject(objectProjectQuotas, d.Get("project_id").(string), err))
+		}
+
+		if err := checkQuotasForNodegroup(projectQuotas, &newNodesRequest); err != nil {
+			return diag.FromErr(errCreatingObject(objectNodegroup, err))
+		}
+
 		resizeOpts := nodegroup.ResizeOpts{
 			Desired: d.Get("nodes_count").(int),
 		}
