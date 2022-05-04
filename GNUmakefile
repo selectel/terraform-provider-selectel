@@ -5,6 +5,9 @@ PKG_NAME=selectel
 
 default: build
 
+golangci-lint:
+	@sh -c "'$(CURDIR)/scripts/golangci_lint_check.sh'"
+
 build: fmtcheck
 	go install
 
