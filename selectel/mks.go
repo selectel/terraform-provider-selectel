@@ -155,6 +155,9 @@ func mksClusterV1KubeVersionDiffSuppressFunc(k, old, new string, d *schema.Resou
 		return false
 	}
 	desiredPatch, err := kubeVersionToPatch(new)
+	if desiredPatch == 0 && desiredMinor == currentMinor {
+		return true
+	}
 	if err != nil {
 		log.Printf("[DEBUG] error getting a patch part of the desired kube version %s: %s", new, err)
 
