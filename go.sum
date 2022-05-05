@@ -282,6 +282,7 @@ github.com/nsf/jsondiff v0.0.0-20200515183724-f29ed568f4ce/go.mod h1:uFMI8w+ref4
 github.com/oklog/run v1.0.0 h1:Ru7dDtJNOyC66gQ5dQmaCa0qIsAUFY3sFpK1Xk8igrw=
 github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQA=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
@@ -289,8 +290,6 @@ github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndr
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/sebdah/goldie v1.0.0/go.mod h1:jXP4hmWywNEwZzhMuv2ccnqTSFpuq8iyQhtQdkkZBH4=
-github.com/selectel/dbaas-go v0.4.0 h1:6fZt4uhbqDf4C/ycRnJVffmgAH73GutTcJumlcXfGJg=
-github.com/selectel/dbaas-go v0.4.0/go.mod h1:H2NC+UrVQzKea92LYyHZj51uuX43sUiAc+iyx/yTCGw=
 github.com/selectel/dbaas-go v0.5.0 h1:bDiRSBGG6x34vAaHhbSkmAgnnpbiyiHZHkzieRVjBIo=
 github.com/selectel/dbaas-go v0.5.0/go.mod h1:H2NC+UrVQzKea92LYyHZj51uuX43sUiAc+iyx/yTCGw=
 github.com/selectel/domains-go v0.3.0 h1:0shjqQmpkWc6eM1SwgKqbTTNiT5G2BOEnvS7JvuF96g=
