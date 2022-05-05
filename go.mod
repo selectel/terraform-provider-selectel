@@ -5,7 +5,6 @@ go 1.17
 require (
 	github.com/hashicorp/go-retryablehttp v0.6.6
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.10.1
-	github.com/pkg/errors v0.9.1
 	github.com/selectel/dbaas-go v0.5.0
 	github.com/selectel/domains-go v0.3.0
 	github.com/selectel/go-selvpcclient v1.12.0

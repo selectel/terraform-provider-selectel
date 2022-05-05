@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -11,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/pkg/errors"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
@@ -155,13 +155,10 @@ func mksClusterV1KubeVersionDiffSuppressFunc(k, old, new string, d *schema.Resou
 		return false
 	}
 	desiredPatch, err := kubeVersionToPatch(new)
-	if desiredPatch == 0 && desiredMinor == currentMinor {
-		return true
-	}
 	if err != nil {
 		log.Printf("[DEBUG] error getting a patch part of the desired kube version %s: %s", new, err)
 
-		return false
+		return true
 	}
 
 	// If the desired patch version is less than current, suppress diff.
