@@ -287,7 +287,7 @@ func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData,
 		}
 
 		if !isSupported {
-			log.Print("[INFO] cluster will be upgrade to unsupported version. Patch version will be selected automatically.")
+			log.Print("[INFO] cluster will be upgrade to unsupported minor version. Patch version will be selected automatically.")
 		}
 
 		_, _, err = cluster.UpgradeMinorVersion(ctx, client, d.Id())
