@@ -108,7 +108,6 @@ The following arguments are supported:
   for each node in the group. The keys must be user-defined.
 
 * `taints` (Optional) Represents a list of Kubernetes taints that will be applied for each node in the group.
-  Changing this creates a new nodegroup.
 
 * `enable_autoscale` (Optional) Specifies if a nodegroup autoscaling option has to be turned on/off.
   Accepts true or false. Default is false.
