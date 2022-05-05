@@ -8,23 +8,20 @@ default: build
 golangci-lint:
 	@sh -c "'$(CURDIR)/scripts/golangci_lint_check.sh'"
 
-build: fmtcheck
-	go install
+build:
+	go build
 
-test: fmtcheck
+test:
 	go test -i $(TEST) || exit 1
 	echo $(TEST) | \
 		xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
 
-testacc: fmtcheck
+testacc:
 	TF_ACC=1 go test $(TEST) $(TESTARGS) -timeout 360m
 
 fmt:
 	@echo "==> Fixing source code with gofmt..."
 	gofmt -w $(GOFMT_FILES)
-
-fmtcheck:
-	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
 
 test-compile:
 	@if [ "$(TEST)" = "./..." ]; then \
@@ -48,4 +45,4 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build test testacc fmt fmtcheck test-compile website website-test
+.PHONY: build test testacc fmt test-compile website website-test
