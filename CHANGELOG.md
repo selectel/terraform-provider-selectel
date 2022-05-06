@@ -1,3 +1,9 @@
+## 3.8.2 (Unreleased)
+
+IMPROVEMENTS:
+
+* Added ability to upgrade unsupported kubernetes versions for the `selectel_mks_cluster_v1` resource ([#193](https://github.com/selectel/terraform-provider-selectel/issues/193))
+
 ## 3.8.1 (Apr 15, 2022)
 
 IMPROVEMENTS:
