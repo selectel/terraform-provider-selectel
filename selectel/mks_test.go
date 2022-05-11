@@ -1218,6 +1218,54 @@ func TestCheckQuotasForNodegroupErrUnableToCheckVolumeQuota(t *testing.T) {
 	assert.Contains(t, err.Error(), "unable to check volume quota for a nodegroup")
 }
 
+func TestCheckQuotasForNodegroupErrInvalidVolumeType(t *testing.T) {
+	testQuotas := []*quotas.Quota{
+		{
+			Name: "compute_ram",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9b",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+		{
+			Name: "compute_cores",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9b",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+		{
+			Name: "volume_gigabytes_universal",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru9Region,
+					Zone:   "ru-9a",
+					Value:  10,
+					Used:   0,
+				},
+			},
+		},
+	}
+	testNodegroupOpts := nodegroup.CreateOpts{
+		VolumeGB:         2,
+		VolumeType:       "invalid.ru-9b",
+		AvailabilityZone: "ru-9b",
+	}
+
+	err := checkQuotasForNodegroup(testQuotas, &testNodegroupOpts)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "expected 'fast.<zone>', 'universal.<zone>' or 'basic.<zone>' volume type, got")
+}
+
 func TestCheckQuotasForNodegroupOk(t *testing.T) {
 	testQuotas := []*quotas.Quota{
 		{

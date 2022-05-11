@@ -697,6 +697,8 @@ func checkQuotasForNodegroup(projectQuotas []*quotas.Quota, nodegroupOpts *nodeg
 			volumeQuota = findQuota(projectQuotas, "volume_gigabytes_universal")
 		case "basic":
 			volumeQuota = findQuota(projectQuotas, "volume_gigabytes_basic")
+		default:
+			return fmt.Errorf("expected 'fast.<zone>', 'universal.<zone>' or 'basic.<zone>' volume type, got: %s", nodegroupOpts.VolumeType)
 		}
 	}
 	if volumeQuota == nil {
