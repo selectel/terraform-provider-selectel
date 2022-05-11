@@ -641,9 +641,10 @@ func findQuota(quotas []*quotas.Quota, resource string) []quotas.ResourceQuotaEn
 }
 
 func checkQuotasForCluster(projectQuotas []*quotas.Quota, region string, zonal bool) error {
-	clusterQuotaChecked := false
-
-	var quota []quotas.ResourceQuotaEntity
+	var (
+		clusterQuotaChecked bool
+		quota               []quotas.ResourceQuotaEntity
+	)
 
 	if zonal {
 		quota = findQuota(projectQuotas, "mks_cluster_zonal")
@@ -675,7 +676,7 @@ func checkQuotasForCluster(projectQuotas []*quotas.Quota, region string, zonal b
 }
 
 func checkQuotasForNodegroup(projectQuotas []*quotas.Quota, nodegroupOpts *nodegroup.CreateOpts) error {
-	cpuQuotaChecked, ramQuotaChecked, diskQuotaChecked := false, false, false
+	var cpuQuotaChecked, ramQuotaChecked, diskQuotaChecked bool
 
 	cpuQuota := findQuota(projectQuotas, "compute_cores")
 	if cpuQuota == nil {
