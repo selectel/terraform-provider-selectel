@@ -681,7 +681,11 @@ func checkQuotasForCluster(projectQuotas []*quotas.Quota, region string, zonal b
 	}
 
 	if quota == nil {
-		return errors.New("unable to find mks_cluster_zonal or mks_cluster_zonal quotas")
+		if zonal {
+			return errors.New("unable to find zonal k8s cluster quotas")
+		}
+
+		return errors.New("unable to find regional k8s cluster quotas")
 	}
 
 	for _, v := range quota {
@@ -697,7 +701,11 @@ func checkQuotasForCluster(projectQuotas []*quotas.Quota, region string, zonal b
 		}
 	}
 	if !clusterQuotaChecked {
-		return errors.New("unable to check regional and zonal k8s cluster quotas for a given region")
+		if zonal {
+			return errors.New("unable to check zonal k8s cluster quotas for a given region")
+		}
+
+		return errors.New("unable to check regional k8s cluster quotas for a given region")
 	}
 
 	return nil

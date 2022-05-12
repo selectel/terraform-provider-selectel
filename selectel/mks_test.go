@@ -713,7 +713,28 @@ func TestCheckQuotasForClusterErrZonal(t *testing.T) {
 	assert.Equal(t, "not enough quota to create zonal k8s cluster", err.Error())
 }
 
-func TestCheckQuotasForClusterErrNoRegion(t *testing.T) {
+func TestCheckQuotasForRegionalClusterErrNoRegion(t *testing.T) {
+	testQuotas := []*quotas.Quota{
+		{
+			Name: "mks_cluster_regional",
+			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+				{
+					Region: ru1Region,
+					Zone:   "",
+					Value:  10,
+					Used:   10,
+				},
+			},
+		},
+	}
+
+	err := checkQuotasForCluster(testQuotas, ru9Region, false)
+
+	assert.Error(t, err)
+	assert.Equal(t, "unable to check regional k8s cluster quotas for a given region", err.Error())
+}
+
+func TestCheckQuotasForZonalClusterErrNoRegion(t *testing.T) {
 	testQuotas := []*quotas.Quota{
 		{
 			Name: "mks_cluster_zonal",
@@ -731,16 +752,25 @@ func TestCheckQuotasForClusterErrNoRegion(t *testing.T) {
 	err := checkQuotasForCluster(testQuotas, ru9Region, true)
 
 	assert.Error(t, err)
-	assert.Equal(t, "unable to check regional and zonal k8s cluster quotas for a given region", err.Error())
+	assert.Equal(t, "unable to check zonal k8s cluster quotas for a given region", err.Error())
 }
 
-func TestCheckQuotasForClusterErrUnableToCheck(t *testing.T) {
+func TestCheckQuotasForRegionalClusterErrUnableToCheck(t *testing.T) {
 	var testQuotas []*quotas.Quota
 
 	err := checkQuotasForCluster(testQuotas, ru9Region, false)
 
 	assert.Error(t, err)
-	assert.Equal(t, "unable to find mks_cluster_zonal or mks_cluster_zonal quotas", err.Error())
+	assert.Equal(t, "unable to find regional k8s cluster quotas", err.Error())
+}
+
+func TestCheckQuotasForZonalClusterErrUnableToCheck(t *testing.T) {
+	var testQuotas []*quotas.Quota
+
+	err := checkQuotasForCluster(testQuotas, ru9Region, true)
+
+	assert.Error(t, err)
+	assert.Equal(t, "unable to find zonal k8s cluster quotas", err.Error())
 }
 
 func TestCheckQuotasForClusterOkRegional(t *testing.T) {
