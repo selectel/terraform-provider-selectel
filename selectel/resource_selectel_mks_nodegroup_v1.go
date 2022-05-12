@@ -447,7 +447,7 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 		}
 
 		if err := checkQuotasForNodegroup(projectQuotas, &newNodesRequest); err != nil {
-			return diag.FromErr(errCreatingObject(objectNodegroup, err))
+			return diag.FromErr(errUpdatingObject(objectNodegroup, d.Id(), err))
 		}
 
 		resizeOpts := nodegroup.ResizeOpts{

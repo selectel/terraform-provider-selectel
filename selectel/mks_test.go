@@ -731,7 +731,7 @@ func TestCheckQuotasForClusterErrNoRegion(t *testing.T) {
 	err := checkQuotasForCluster(testQuotas, ru9Region, true)
 
 	assert.Error(t, err)
-	assert.Equal(t, "unable to check neither regional nor zonal k8s cluster quota for a given region", err.Error())
+	assert.Equal(t, "unable to check regional and zonal k8s cluster quotas for a given region", err.Error())
 }
 
 func TestCheckQuotasForClusterErrUnableToCheck(t *testing.T) {
@@ -740,7 +740,7 @@ func TestCheckQuotasForClusterErrUnableToCheck(t *testing.T) {
 	err := checkQuotasForCluster(testQuotas, ru9Region, false)
 
 	assert.Error(t, err)
-	assert.Equal(t, "unable to find neither mks_cluster_zonal nor mks_cluster_zonal quotas", err.Error())
+	assert.Equal(t, "unable to find mks_cluster_zonal or mks_cluster_zonal quotas", err.Error())
 }
 
 func TestCheckQuotasForClusterOkRegional(t *testing.T) {
@@ -861,7 +861,7 @@ func TestCheckQuotasForNodegroupErrCPU(t *testing.T) {
 	err := checkQuotasForNodegroup(testQuotasFull, &testNodegroupOpts)
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "not enough CPU quota to create nodegroup")
+	assert.Contains(t, err.Error(), "not enough CPU quota to create nodes")
 }
 
 func TestCheckQuotasForNodegroupErrRAM(t *testing.T) {
@@ -877,7 +877,7 @@ func TestCheckQuotasForNodegroupErrRAM(t *testing.T) {
 	err := checkQuotasForNodegroup(testQuotasFull, &testNodegroupOpts)
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "not enough RAM quota to create nodegroup")
+	assert.Contains(t, err.Error(), "not enough RAM quota to create nodes")
 }
 
 func TestCheckQuotasForNodegroupErrFastVolume(t *testing.T) {
@@ -893,7 +893,7 @@ func TestCheckQuotasForNodegroupErrFastVolume(t *testing.T) {
 	err := checkQuotasForNodegroup(testQuotasFull, &testNodegroupOpts)
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "not enough volume quota to create nodegroup")
+	assert.Contains(t, err.Error(), "not enough fast volume quota to create nodes")
 }
 
 func TestCheckQuotasForNodegroupErrBasicVolume(t *testing.T) {
@@ -909,7 +909,7 @@ func TestCheckQuotasForNodegroupErrBasicVolume(t *testing.T) {
 	err := checkQuotasForNodegroup(testQuotasFull, &testNodegroupOpts)
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "not enough volume quota to create nodegroup")
+	assert.Contains(t, err.Error(), "not enough basic volume quota to create nodes")
 }
 
 func TestCheckQuotasForNodegroupErrUniversalVolume(t *testing.T) {
@@ -925,7 +925,7 @@ func TestCheckQuotasForNodegroupErrUniversalVolume(t *testing.T) {
 	err := checkQuotasForNodegroup(testQuotasFull, &testNodegroupOpts)
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "not enough volume quota to create nodegroup")
+	assert.Contains(t, err.Error(), "not enough universal volume quota to create nodes")
 }
 
 func TestCheckQuotasForNodegroupErrLocalVolume(t *testing.T) {
@@ -941,7 +941,7 @@ func TestCheckQuotasForNodegroupErrLocalVolume(t *testing.T) {
 	err := checkQuotasForNodegroup(testQuotasFull, &testNodegroupOpts)
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "not enough volume quota to create nodegroup")
+	assert.Contains(t, err.Error(), "not enough local volume quota to create nodes")
 }
 
 func TestCheckQuotasForNodegroupErrUnableToFindCPUQuota(t *testing.T) {

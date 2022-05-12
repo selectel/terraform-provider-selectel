@@ -653,7 +653,7 @@ func checkQuotasForCluster(projectQuotas []*quotas.Quota, region string, zonal b
 	}
 
 	if quota == nil {
-		return errors.New("unable to find neither mks_cluster_zonal nor mks_cluster_zonal quotas")
+		return errors.New("unable to find mks_cluster_zonal or mks_cluster_zonal quotas")
 	}
 
 	for _, v := range quota {
@@ -669,7 +669,7 @@ func checkQuotasForCluster(projectQuotas []*quotas.Quota, region string, zonal b
 		}
 	}
 	if !clusterQuotaChecked {
-		return errors.New("unable to check neither regional nor zonal k8s cluster quota for a given region")
+		return errors.New("unable to check regional and zonal k8s cluster quotas for a given region")
 	}
 
 	return nil
@@ -687,17 +687,24 @@ func checkQuotasForNodegroup(projectQuotas []*quotas.Quota, nodegroupOpts *nodeg
 		return errors.New("unable to find RAM quota")
 	}
 
-	var volumeQuota []quotas.ResourceQuotaEntity
+	var (
+		volumeQuota []quotas.ResourceQuotaEntity
+		volumeType  string
+	)
 	if nodegroupOpts.LocalVolume {
 		volumeQuota = findQuota(projectQuotas, "volume_gigabytes_local")
+		volumeType = "local"
 	} else {
 		switch strings.Split(nodegroupOpts.VolumeType, ".")[0] {
 		case "fast":
 			volumeQuota = findQuota(projectQuotas, "volume_gigabytes_fast")
+			volumeType = "fast"
 		case "universal":
 			volumeQuota = findQuota(projectQuotas, "volume_gigabytes_universal")
+			volumeType = "universal"
 		case "basic":
 			volumeQuota = findQuota(projectQuotas, "volume_gigabytes_basic")
+			volumeType = "basic"
 		default:
 			return fmt.Errorf("expected 'fast.<zone>', 'universal.<zone>' or 'basic.<zone>' volume type, got: %s", nodegroupOpts.VolumeType)
 		}
@@ -713,7 +720,7 @@ func checkQuotasForNodegroup(projectQuotas []*quotas.Quota, nodegroupOpts *nodeg
 	for _, v := range cpuQuota {
 		if v.Zone == nodegroupOpts.AvailabilityZone {
 			if v.Value-v.Used < requiredCPU {
-				return fmt.Errorf("not enough CPU quota to create nodegroup, free: %d, required: %d", v.Value-v.Used, requiredCPU)
+				return fmt.Errorf("not enough CPU quota to create nodes, free: %d, required: %d", v.Value-v.Used, requiredCPU)
 			}
 			cpuQuotaChecked = true
 		}
@@ -721,7 +728,7 @@ func checkQuotasForNodegroup(projectQuotas []*quotas.Quota, nodegroupOpts *nodeg
 	for _, v := range ramQuota {
 		if v.Zone == nodegroupOpts.AvailabilityZone {
 			if v.Value-v.Used < requiredRAM {
-				return fmt.Errorf("not enough RAM quota to create nodegroup, free: %d, required: %d", v.Value-v.Used, requiredRAM)
+				return fmt.Errorf("not enough RAM quota to create nodes, free: %d, required: %d", v.Value-v.Used, requiredRAM)
 			}
 			ramQuotaChecked = true
 		}
@@ -729,7 +736,7 @@ func checkQuotasForNodegroup(projectQuotas []*quotas.Quota, nodegroupOpts *nodeg
 	for _, v := range volumeQuota {
 		if v.Zone == nodegroupOpts.AvailabilityZone {
 			if v.Value-v.Used < requiredVolume {
-				return fmt.Errorf("not enough volume quota to create nodegroup, free: %d, required: %d", v.Value-v.Used, requiredVolume)
+				return fmt.Errorf("not enough %s volume quota to create nodes, free: %d, required: %d", volumeType, v.Value-v.Used, requiredVolume)
 			}
 			diskQuotaChecked = true
 		}
