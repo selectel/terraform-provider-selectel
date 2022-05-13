@@ -1,3 +1,9 @@
+## 3.8.3 (Unreleased)
+
+IMPROVEMENTS:
+
+* Added quotas check for `selectel_mks_cluster_v1` and `selectel_mks_nodegroup_v1` resources ([#195](https://github.com/selectel/terraform-provider-selectel/pull/195))
+
 ## 3.8.2 (May 6, 2022)
 
 IMPROVEMENTS:
