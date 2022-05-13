@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
@@ -654,4 +655,138 @@ func parseMKSKubeVersionsV1Default(versions []*kubeversion.View) string {
 	}
 
 	return defaultVersion
+}
+
+// findQuota finds and returns quota for specified resource from quotas slice.
+func findQuota(quotas []*quotas.Quota, resource string) []quotas.ResourceQuotaEntity {
+	for _, q := range quotas {
+		if q.Name == resource {
+			return q.ResourceQuotasEntities
+		}
+	}
+
+	return nil
+}
+
+func checkQuotasForCluster(projectQuotas []*quotas.Quota, region string, zonal bool) error {
+	var (
+		clusterQuotaChecked bool
+		quota               []quotas.ResourceQuotaEntity
+	)
+
+	if zonal {
+		quota = findQuota(projectQuotas, "mks_cluster_zonal")
+	} else {
+		quota = findQuota(projectQuotas, "mks_cluster_regional")
+	}
+
+	if quota == nil {
+		if zonal {
+			return errors.New("unable to find zonal k8s cluster quotas")
+		}
+
+		return errors.New("unable to find regional k8s cluster quotas")
+	}
+
+	for _, v := range quota {
+		if v.Region == region {
+			if v.Value-v.Used <= 0 {
+				if zonal {
+					return errors.New("not enough quota to create zonal k8s cluster")
+				}
+
+				return errors.New("not enough quota to create regional k8s cluster")
+			}
+			clusterQuotaChecked = true
+		}
+	}
+	if !clusterQuotaChecked {
+		if zonal {
+			return errors.New("unable to check zonal k8s cluster quotas for a given region")
+		}
+
+		return errors.New("unable to check regional k8s cluster quotas for a given region")
+	}
+
+	return nil
+}
+
+func checkQuotasForNodegroup(projectQuotas []*quotas.Quota, nodegroupOpts *nodegroup.CreateOpts) error {
+	var cpuQuotaChecked, ramQuotaChecked, diskQuotaChecked bool
+
+	cpuQuota := findQuota(projectQuotas, "compute_cores")
+	if cpuQuota == nil {
+		return errors.New("unable to find CPU quota")
+	}
+	ramQuota := findQuota(projectQuotas, "compute_ram")
+	if ramQuota == nil {
+		return errors.New("unable to find RAM quota")
+	}
+
+	var (
+		volumeQuota []quotas.ResourceQuotaEntity
+		volumeType  string
+	)
+	if nodegroupOpts.LocalVolume {
+		volumeQuota = findQuota(projectQuotas, "volume_gigabytes_local")
+		volumeType = "local"
+	} else {
+		switch strings.Split(nodegroupOpts.VolumeType, ".")[0] {
+		case "fast":
+			volumeQuota = findQuota(projectQuotas, "volume_gigabytes_fast")
+			volumeType = "fast"
+		case "universal":
+			volumeQuota = findQuota(projectQuotas, "volume_gigabytes_universal")
+			volumeType = "universal"
+		case "basic":
+			volumeQuota = findQuota(projectQuotas, "volume_gigabytes_basic")
+			volumeType = "basic"
+		default:
+			return fmt.Errorf("expected 'fast.<zone>', 'universal.<zone>' or 'basic.<zone>' volume type, got: %s", nodegroupOpts.VolumeType)
+		}
+	}
+	if volumeQuota == nil {
+		return errors.New("unable to find volume quota")
+	}
+
+	requiredCPU := nodegroupOpts.CPUs * nodegroupOpts.Count
+	requiredRAM := nodegroupOpts.RAMMB * nodegroupOpts.Count
+	requiredVolume := nodegroupOpts.VolumeGB * nodegroupOpts.Count
+
+	for _, v := range cpuQuota {
+		if v.Zone == nodegroupOpts.AvailabilityZone {
+			if v.Value-v.Used < requiredCPU {
+				return fmt.Errorf("not enough CPU quota to create nodes, free: %d, required: %d", v.Value-v.Used, requiredCPU)
+			}
+			cpuQuotaChecked = true
+		}
+	}
+	for _, v := range ramQuota {
+		if v.Zone == nodegroupOpts.AvailabilityZone {
+			if v.Value-v.Used < requiredRAM {
+				return fmt.Errorf("not enough RAM quota to create nodes, free: %d, required: %d", v.Value-v.Used, requiredRAM)
+			}
+			ramQuotaChecked = true
+		}
+	}
+	for _, v := range volumeQuota {
+		if v.Zone == nodegroupOpts.AvailabilityZone {
+			if v.Value-v.Used < requiredVolume {
+				return fmt.Errorf("not enough %s volume quota to create nodes, free: %d, required: %d", volumeType, v.Value-v.Used, requiredVolume)
+			}
+			diskQuotaChecked = true
+		}
+	}
+
+	if !cpuQuotaChecked {
+		return errors.New("unable to check CPU quota for a nodegroup")
+	}
+	if !ramQuotaChecked {
+		return errors.New("unable to check RAM quota for a nodegroup")
+	}
+	if !diskQuotaChecked {
+		return errors.New("unable to check volume quota for a nodegroup")
+	}
+
+	return nil
 }
