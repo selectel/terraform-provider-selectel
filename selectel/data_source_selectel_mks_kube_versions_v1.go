@@ -33,6 +33,7 @@ func dataSourceMKSKubeVersionsV1() *schema.Resource {
 					ru8Region,
 					ru9Region,
 					uz1Region,
+					nl1Region,
 				}, false),
 			},
 			"latest_version": {
