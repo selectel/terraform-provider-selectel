@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
@@ -67,6 +68,7 @@ func resourceMKSClusterV1() *schema.Resource {
 					ru8Region,
 					ru9Region,
 					uz1Region,
+					nl1Region,
 				}, false),
 			},
 			"kube_version": {
@@ -208,6 +210,15 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 			AdmissionControllers:    admissionControllers,
 		},
 		Zonal: &zonal,
+	}
+
+	projectQuotas, _, err := quotas.GetProjectQuotas(ctx, resellV2Client, d.Get("project_id").(string))
+	if err != nil {
+		return diag.FromErr(errGettingObject(objectProjectQuotas, d.Get("project_id").(string), err))
+	}
+
+	if err := checkQuotasForCluster(projectQuotas, region, zonal); err != nil {
+		return diag.FromErr(errCreatingObject(objectCluster, err))
 	}
 
 	log.Print(msgCreate(objectCluster, createOpts))

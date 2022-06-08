@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
@@ -28,6 +30,7 @@ const (
 	ru8MKSClusterV1Endpoint = "https://ru-8.mks.selcloud.ru/v1"
 	ru9MKSClusterV1Endpoint = "https://ru-9.mks.selcloud.ru/v1"
 	uz1MKSClusterV1Endpoint = "https://uz-1.mks.selcloud.ru/v1"
+	nl1MKSClusterV1Endpoint = "https://nl-1.mks.selcloud.ru/v1"
 )
 
 func getMKSClusterV1Endpoint(region string) (endpoint string) {
@@ -46,6 +49,8 @@ func getMKSClusterV1Endpoint(region string) (endpoint string) {
 		endpoint = ru9MKSClusterV1Endpoint
 	case uz1Region:
 		endpoint = uz1MKSClusterV1Endpoint
+	case nl1Region:
+		endpoint = nl1MKSClusterV1Endpoint
 	}
 
 	return
@@ -157,7 +162,7 @@ func mksClusterV1KubeVersionDiffSuppressFunc(k, old, new string, d *schema.Resou
 	if err != nil {
 		log.Printf("[DEBUG] error getting a patch part of the desired kube version %s: %s", new, err)
 
-		return false
+		return true
 	}
 
 	// If the desired patch version is less than current, suppress diff.
@@ -199,13 +204,37 @@ func mksClusterV1GetLatestPatchVersions(ctx context.Context, client *v1.ServiceC
 	return result, nil
 }
 
+// checkVersionIsSupported check that desired k8s version is supported.
+func checkVersionIsSupported(kubeVersions []*kubeversion.View, desiredMinorVersion string) (bool, error) {
+	versions := map[string]struct{}{}
+	for _, version := range kubeVersions {
+		ver, err := kubeVersionTrimToMinor(version.Version)
+		if err != nil {
+			return false, errors.New("can't get minor version")
+		}
+		versions[ver] = struct{}{}
+	}
+
+	// Check that version is supported.
+	if _, ok := versions[desiredMinorVersion]; ok {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData, client *v1.ServiceClient) error {
-	o, n := d.GetChange("kube_version")
-	currentVersion := o.(string)
-	desiredVersion := n.(string)
+	oldVersion, newVersion := d.GetChange("kube_version")
+	currentVersion := oldVersion.(string)
+	desiredVersion := newVersion.(string)
 
 	log.Printf("[DEBUG] current kube version: %s", currentVersion)
 	log.Printf("[DEBUG] desired kube version: %s", desiredVersion)
+
+	kubeVersions, _, err := kubeversion.List(ctx, client)
+	if err != nil {
+		return err
+	}
 
 	// Compare current and desired major versions.
 	currentMajor, err := kubeVersionToMajor(currentVersion)
@@ -232,31 +261,34 @@ func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData,
 	if desiredMinor != currentMinor {
 		log.Print("[DEBUG] upgrading minor version")
 
+		latestMinorVersion, err := parseMKSKubeVersionsV1Latest(kubeVersions)
+		if err != nil {
+			return fmt.Errorf("can't find latest minor version: %s", err)
+		}
+
+		if latestMinorVersion == currentMinor {
+			return fmt.Errorf("the cluster is already on the latest available minor version: %s", currentMinor)
+		}
+
 		// Increment minor version.
 		currentMinorNew, err := kubeVersionTrimToMinorIncremented(currentVersion)
 		if err != nil {
 			return fmt.Errorf("error getting incremented minor part of the current version %s: %s", currentVersion, err)
 		}
 
-		// Get latest patch versions for every minor version.
-		latestPatchVersions, err := mksClusterV1GetLatestPatchVersions(ctx, client)
+		// Check that next minor version is equal to desired version.
+		if currentMinorNew != desiredMinor {
+			return fmt.Errorf("invalid minor version: %s, kubernetes versions must be upgraded one by one", desiredMinor)
+		}
+
+		// Check that new minor version is supported.
+		isSupported, err := checkVersionIsSupported(kubeVersions, desiredVersion)
 		if err != nil {
-			return fmt.Errorf("error getting latest patch versions: %s", err)
+			return fmt.Errorf("can't check support for version: %s", err)
 		}
 
-		// Check that we have a Kubernetes version of the current minor version + 1.
-		latestVersion, ok := latestPatchVersions[currentMinorNew]
-		if !ok {
-			return fmt.Errorf("the cluster is already on the latest available minor version: %s", currentMinor)
-		}
-
-		log.Printf("[DEBUG] latest kube version: %s", latestVersion)
-
-		// Compare the latest patch version with the desired version.
-		if desiredVersion != latestVersion {
-			return fmt.Errorf(
-				"current version %s can't be upgraded to version %s, the latest available version is: %s",
-				currentVersion, desiredVersion, latestVersion)
+		if !isSupported {
+			log.Print("[INFO] cluster will be upgrade to unsupported minor version. Patch version will be selected automatically.")
 		}
 
 		_, _, err = cluster.UpgradeMinorVersion(ctx, client, d.Id())
@@ -276,7 +308,7 @@ func upgradeMKSClusterV1KubeVersion(ctx context.Context, d *schema.ResourceData,
 
 	log.Print("[DEBUG] upgrading patch version")
 
-	// Get latest patch versions for every minor version.
+	// Get the latest patch versions for every minor version.
 	latestPatchVersions, err := mksClusterV1GetLatestPatchVersions(ctx, client)
 	if err != nil {
 		return fmt.Errorf("error getting latest patch versions: %s", err)
@@ -598,6 +630,7 @@ func flattenMKSKubeVersionsV1(views []*kubeversion.View) []string {
 	return versions
 }
 
+// parseMKSKubeVersionsV1Latest finds and returns the latest supported minor version.
 func parseMKSKubeVersionsV1Latest(versions []*kubeversion.View) (string, error) {
 	var latestVersion string
 	for _, version := range versions {
@@ -625,4 +658,138 @@ func parseMKSKubeVersionsV1Default(versions []*kubeversion.View) string {
 	}
 
 	return defaultVersion
+}
+
+// findQuota finds and returns quota for specified resource from quotas slice.
+func findQuota(quotas []*quotas.Quota, resource string) []quotas.ResourceQuotaEntity {
+	for _, q := range quotas {
+		if q.Name == resource {
+			return q.ResourceQuotasEntities
+		}
+	}
+
+	return nil
+}
+
+func checkQuotasForCluster(projectQuotas []*quotas.Quota, region string, zonal bool) error {
+	var (
+		clusterQuotaChecked bool
+		quota               []quotas.ResourceQuotaEntity
+	)
+
+	if zonal {
+		quota = findQuota(projectQuotas, "mks_cluster_zonal")
+	} else {
+		quota = findQuota(projectQuotas, "mks_cluster_regional")
+	}
+
+	if quota == nil {
+		if zonal {
+			return errors.New("unable to find zonal k8s cluster quotas")
+		}
+
+		return errors.New("unable to find regional k8s cluster quotas")
+	}
+
+	for _, v := range quota {
+		if v.Region == region {
+			if v.Value-v.Used <= 0 {
+				if zonal {
+					return errors.New("not enough quota to create zonal k8s cluster")
+				}
+
+				return errors.New("not enough quota to create regional k8s cluster")
+			}
+			clusterQuotaChecked = true
+		}
+	}
+	if !clusterQuotaChecked {
+		if zonal {
+			return errors.New("unable to check zonal k8s cluster quotas for a given region")
+		}
+
+		return errors.New("unable to check regional k8s cluster quotas for a given region")
+	}
+
+	return nil
+}
+
+func checkQuotasForNodegroup(projectQuotas []*quotas.Quota, nodegroupOpts *nodegroup.CreateOpts) error {
+	var cpuQuotaChecked, ramQuotaChecked, diskQuotaChecked bool
+
+	cpuQuota := findQuota(projectQuotas, "compute_cores")
+	if cpuQuota == nil {
+		return errors.New("unable to find CPU quota")
+	}
+	ramQuota := findQuota(projectQuotas, "compute_ram")
+	if ramQuota == nil {
+		return errors.New("unable to find RAM quota")
+	}
+
+	var (
+		volumeQuota []quotas.ResourceQuotaEntity
+		volumeType  string
+	)
+	if nodegroupOpts.LocalVolume {
+		volumeQuota = findQuota(projectQuotas, "volume_gigabytes_local")
+		volumeType = "local"
+	} else {
+		switch strings.Split(nodegroupOpts.VolumeType, ".")[0] {
+		case "fast":
+			volumeQuota = findQuota(projectQuotas, "volume_gigabytes_fast")
+			volumeType = "fast"
+		case "universal":
+			volumeQuota = findQuota(projectQuotas, "volume_gigabytes_universal")
+			volumeType = "universal"
+		case "basic":
+			volumeQuota = findQuota(projectQuotas, "volume_gigabytes_basic")
+			volumeType = "basic"
+		default:
+			return fmt.Errorf("expected 'fast.<zone>', 'universal.<zone>' or 'basic.<zone>' volume type, got: %s", nodegroupOpts.VolumeType)
+		}
+	}
+	if volumeQuota == nil {
+		return errors.New("unable to find volume quota")
+	}
+
+	requiredCPU := nodegroupOpts.CPUs * nodegroupOpts.Count
+	requiredRAM := nodegroupOpts.RAMMB * nodegroupOpts.Count
+	requiredVolume := nodegroupOpts.VolumeGB * nodegroupOpts.Count
+
+	for _, v := range cpuQuota {
+		if v.Zone == nodegroupOpts.AvailabilityZone {
+			if v.Value-v.Used < requiredCPU {
+				return fmt.Errorf("not enough CPU quota to create nodes, free: %d, required: %d", v.Value-v.Used, requiredCPU)
+			}
+			cpuQuotaChecked = true
+		}
+	}
+	for _, v := range ramQuota {
+		if v.Zone == nodegroupOpts.AvailabilityZone {
+			if v.Value-v.Used < requiredRAM {
+				return fmt.Errorf("not enough RAM quota to create nodes, free: %d, required: %d", v.Value-v.Used, requiredRAM)
+			}
+			ramQuotaChecked = true
+		}
+	}
+	for _, v := range volumeQuota {
+		if v.Zone == nodegroupOpts.AvailabilityZone {
+			if v.Value-v.Used < requiredVolume {
+				return fmt.Errorf("not enough %s volume quota to create nodes, free: %d, required: %d", volumeType, v.Value-v.Used, requiredVolume)
+			}
+			diskQuotaChecked = true
+		}
+	}
+
+	if !cpuQuotaChecked {
+		return errors.New("unable to check CPU quota for a nodegroup")
+	}
+	if !ramQuotaChecked {
+		return errors.New("unable to check RAM quota for a nodegroup")
+	}
+	if !diskQuotaChecked {
+		return errors.New("unable to check volume quota for a nodegroup")
+	}
+
+	return nil
 }
