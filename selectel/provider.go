@@ -18,7 +18,6 @@ const (
 	objectSubnet                  = "subnet"
 	objectToken                   = "token"
 	objectUser                    = "user"
-	objectVRRPSubnet              = "VRRP subnet"
 	objectCluster                 = "cluster"
 	objectKubeConfig              = "kubeconfig"
 	objectKubeVersions            = "kube-versions"
