@@ -5,23 +5,23 @@ PKG_NAME=selectel
 
 default: build
 
-build: fmtcheck
-	go install
+golangci-lint:
+	@sh -c "'$(CURDIR)/scripts/golangci_lint_check.sh'"
 
-test: fmtcheck
+build:
+	go build
+
+test:
 	go test -i $(TEST) || exit 1
 	echo $(TEST) | \
 		xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
 
-testacc: fmtcheck
+testacc: golangci-lint
 	TF_ACC=1 go test $(TEST) $(TESTARGS) -timeout 360m
 
 fmt:
 	@echo "==> Fixing source code with gofmt..."
 	gofmt -w $(GOFMT_FILES)
-
-fmtcheck:
-	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
 
 test-compile:
 	@if [ "$(TEST)" = "./..." ]; then \
@@ -45,4 +45,4 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build test testacc fmt fmtcheck test-compile website website-test
+.PHONY: golangci-lint build test testacc fmt test-compile website website-test
