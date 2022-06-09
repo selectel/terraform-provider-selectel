@@ -16,7 +16,7 @@ test:
 	echo $(TEST) | \
 		xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
 
-testacc:
+testacc: golangci-lint
 	TF_ACC=1 go test $(TEST) $(TESTARGS) -timeout 360m
 
 fmt:
@@ -45,4 +45,4 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build test testacc fmt test-compile website website-test
+.PHONY: golangci-lint build test testacc fmt test-compile website website-test
