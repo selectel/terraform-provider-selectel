@@ -5,7 +5,7 @@ Terraform Selectel Provider
 - [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
 - Mailing list: [Google Groups](http://groups.google.com/group/terraform-tool)
 
-<img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/content/source/assets/images/logo-hashicorp.svg" width="600px">
+<img alt="Terraform Selectel Provider" src="https://selectel.ru/blog/wp-content/uploads/2019/03/PR-9299_Terraform_555x278_blog_preview@2x.png" width="600px">
 
 Maintainers
 -----------
