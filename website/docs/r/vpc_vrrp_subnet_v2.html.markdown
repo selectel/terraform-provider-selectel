@@ -8,6 +8,8 @@ description: |-
 
 # selectel\_vpc\_vrrp_subnet_v2
 
+> **WARNING**: this resource has been removed because Selectel VPC Resell V2 API deprecated usage of VRRP subnets.
+
 Manages a V2 VRRP subnet resource within Selectel VPC.
 
 ## Example Usage

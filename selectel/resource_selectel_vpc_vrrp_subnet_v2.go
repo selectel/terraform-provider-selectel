@@ -2,15 +2,11 @@ package selectel
 
 import (
 	"context"
-	"log"
-	"net/http"
-	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/go-selvpcclient/selvpcclient"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/vrrpsubnets"
 )
 
 func resourceVPCVRRPSubnetV2() *schema.Resource {
@@ -124,100 +120,14 @@ func resourceVPCVRRPSubnetV2() *schema.Resource {
 	}
 }
 
-func resourceVPCVRRPSubnetV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-
-	projectID := d.Get("project_id").(string)
-	opts := vrrpsubnets.VRRPSubnetOpts{
-		VRRPSubnets: []vrrpsubnets.VRRPSubnetOpt{
-			{
-				Quantity: 1,
-				Regions: vrrpsubnets.VRRPRegionOpt{
-					Master: d.Get("master_region").(string),
-					Slave:  d.Get("slave_region").(string),
-				},
-				Type:         selvpcclient.IPVersion(d.Get("ip_version").(string)),
-				PrefixLength: d.Get("prefix_length").(int),
-			},
-		},
-	}
-
-	log.Print(msgCreate(objectVRRPSubnet, opts))
-	vrrpSubnetsResponse, _, err := vrrpsubnets.Create(ctx, resellV2Client, projectID, opts)
-	if err != nil {
-		return diag.FromErr(errCreatingObject(objectVRRPSubnet, err))
-	}
-	if len(vrrpSubnetsResponse) != 1 {
-		return diag.FromErr(errReadFromResponse(objectVRRPSubnet))
-	}
-
-	d.SetId(strconv.Itoa(vrrpSubnetsResponse[0].ID))
-
-	return resourceVPCVRRPSubnetV2Read(ctx, d, meta)
+func resourceVPCVRRPSubnetV2Create(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return diag.FromErr(errResourceDeprecated("selectel_vpc_vrrp_subnet_v2"))
 }
 
-func resourceVPCVRRPSubnetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-
-	log.Print(msgGet(objectVRRPSubnet, d.Id()))
-	vrrpSubnet, response, err := vrrpsubnets.Get(ctx, resellV2Client, d.Id())
-	if err != nil {
-		if response != nil {
-			if response.StatusCode == http.StatusNotFound {
-				d.SetId("")
-				return nil
-			}
-		}
-
-		return diag.FromErr(errGettingObject(objectVRRPSubnet, d.Id(), err))
-	}
-
-	d.Set("project_id", vrrpSubnet.ProjectID)
-	d.Set("master_region", vrrpSubnet.MasterRegion)
-	d.Set("slave_region", vrrpSubnet.SlaveRegion)
-	d.Set("cidr", vrrpSubnet.CIDR)
-	d.Set("status", vrrpSubnet.Status)
-
-	prefixLength, err := getPrefixLengthFromCIDR(vrrpSubnet.CIDR)
-	if err != nil {
-		log.Print(errParsingPrefixLength(objectVRRPSubnet, d.Id(), err))
-	} else {
-		d.Set("prefix_length", prefixLength)
-	}
-
-	d.Set("ip_version", getIPVersionFromPrefixLength(prefixLength))
-
-	associatedSubnets := subnetsMapsFromStructs(vrrpSubnet.Subnets)
-	if err := d.Set("subnets", associatedSubnets); err != nil {
-		log.Print(errSettingComplexAttr("subnets", err))
-	}
-
-	associatedServers := serversMapsFromStructs(vrrpSubnet.Servers)
-	if err := d.Set("servers", associatedServers); err != nil {
-		log.Print(errSettingComplexAttr("servers", err))
-	}
-
-	return nil
+func resourceVPCVRRPSubnetV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return diag.FromErr(errResourceDeprecated("selectel_vpc_vrrp_subnet_v2"))
 }
 
-func resourceVPCVRRPSubnetV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-
-	log.Print(msgDelete(objectVRRPSubnet, d.Id()))
-	response, err := vrrpsubnets.Delete(ctx, resellV2Client, d.Id())
-	if err != nil {
-		if response != nil {
-			if response.StatusCode == http.StatusNotFound {
-				d.SetId("")
-				return nil
-			}
-		}
-
-		return diag.FromErr(errDeletingObject(objectVRRPSubnet, d.Id(), err))
-	}
-
-	return nil
+func resourceVPCVRRPSubnetV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return diag.FromErr(errResourceDeprecated("selectel_vpc_vrrp_subnet_v2"))
 }
