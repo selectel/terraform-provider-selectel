@@ -156,7 +156,6 @@ func resourceMKSNodegroupV1() *schema.Resource {
 			},
 			"nodegroup_type": {
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"nodes": {
