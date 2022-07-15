@@ -1,3 +1,13 @@
+## 3.8.5 (Unreleased)
+
+IMPROVEMENTS:
+
+* Added `nodegroup_type` attribute to `selectel_mks_nodegroup_v1` resource ([#202](https://github.com/selectel/terraform-provider-selectel/issues/202))
+
+DEPRECATED:
+
+* Removed `selectel_vpc_vrrp_subnet_v2` resource because it has been deprecated in the Selectel VPC V2 API ([#199](https://github.com/selectel/terraform-provider-selectel/pull/199))
+
 ## 3.8.4 (May 18, 2022)
 
 IMPROVEMENTS:
