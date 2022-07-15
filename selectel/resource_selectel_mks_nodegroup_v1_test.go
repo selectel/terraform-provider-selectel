@@ -88,6 +88,7 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.2.key", "test-key-3"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.2.value", "test-value-3"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.2.effect", "NoSchedule"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "nodegroup_type", "STANDARD"),
 				),
 			},
 		},
@@ -173,7 +174,6 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
   enable_autoscale    = true
   autoscale_min_nodes = 2
   autoscale_max_nodes = 3
-  nodegroup_type = STANDARD
   labels = {
     label-key0 = "label-value0"
     label-key1 = "label-value1"
