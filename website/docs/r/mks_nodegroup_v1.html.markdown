@@ -123,6 +123,8 @@ The following attributes are exported:
 
 * `nodes` - Contains a list of all nodes in the nodegroup.
 
+* `nodegroup_type` - Represents type of nodegroup. It can take values `STANDARD`, `GPU`.
+
 ## Import
 
 Nodegroup can be imported using a combined ID using the following format: ``<cluster_id>/<nodegroup_id>``

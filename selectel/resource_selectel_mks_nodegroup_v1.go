@@ -154,6 +154,10 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				Computed:     true,
 				RequiredWith: []string{"enable_autoscale", "autoscale_min_nodes"},
 			},
+			"nodegroup_type": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"nodes": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -341,6 +345,7 @@ func resourceMKSNodegroupV1Read(ctx context.Context, d *schema.ResourceData, met
 	d.Set("enable_autoscale", mksNodegroup.EnableAutoscale)
 	d.Set("autoscale_min_nodes", mksNodegroup.AutoscaleMinNodes)
 	d.Set("autoscale_max_nodes", mksNodegroup.AutoscaleMaxNodes)
+	d.Set("nodegroup_type", mksNodegroup.NodegroupType)
 
 	if err := d.Set("labels", mksNodegroup.Labels); err != nil {
 		log.Print(errSettingComplexAttr("labels", err))
