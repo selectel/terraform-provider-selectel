@@ -152,6 +152,12 @@ func resourceMKSClusterV1() *schema.Resource {
 				},
 				Set: schema.HashString,
 			},
+			"private_kube_api": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				ForceNew: true,
+			},
 		},
 	}
 }
@@ -178,6 +184,7 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 	enablePatchVersionAutoUpgrade := d.Get("enable_patch_version_auto_upgrade").(bool)
 	enablePodSecurityPolicy := d.Get("enable_pod_security_policy").(bool)
 	zonal := d.Get("zonal").(bool)
+	privateKubeAPI := d.Get("private_kube_api").(bool)
 
 	// Check if "enable_patch_version_auto_upgrade" and "zonal" arguments are both not set to true.
 	if enablePatchVersionAutoUpgrade && zonal {
@@ -209,7 +216,8 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 			FeatureGates:            featureGates,
 			AdmissionControllers:    admissionControllers,
 		},
-		Zonal: &zonal,
+		Zonal:          &zonal,
+		PrivateKubeAPI: &privateKubeAPI,
 	}
 
 	projectQuotas, _, err := quotas.GetProjectQuotas(ctx, resellV2Client, d.Get("project_id").(string))
@@ -283,6 +291,7 @@ func resourceMKSClusterV1Read(ctx context.Context, d *schema.ResourceData, meta 
 	d.Set("enable_patch_version_auto_upgrade", mksCluster.EnablePatchVersionAutoUpgrade)
 	d.Set("enable_pod_security_policy", mksCluster.KubernetesOptions.EnablePodSecurityPolicy)
 	d.Set("zonal", mksCluster.Zonal)
+	d.Set("private_kube_api", mksCluster.PrivateKubeAPI)
 
 	return nil
 }
