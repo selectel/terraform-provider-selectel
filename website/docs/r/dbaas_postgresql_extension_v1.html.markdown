@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_dbaas\_extension\_v1
 
-**WARNING**: This resource is deprecated and is going to be removed soon. You should use extension resource for specific datastore type.
+**WARNING**: This resource is deprecated. You should use extension resource for specific datastore type.
 
 Manages a V1 extension resource within Selectel Managed Databases Service. Can be installed only for PostgreSQL datastores.
 

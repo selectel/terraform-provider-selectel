@@ -96,11 +96,17 @@ func Provider() *schema.Provider {
 			"selectel_mks_nodegroup_v1":                 resourceMKSNodegroupV1(),
 			"selectel_domains_domain_v1":                resourceDomainsDomainV1(),
 			"selectel_domains_record_v1":                resourceDomainsRecordV1(),
-			"selectel_dbaas_datastore_v1":               resourceDBaaSDatastoreV1(),
+			"selectel_dbaas_datastore_v1":               resourceDBaaSDatastoreV1(), // DEPRECATED
+			"selectel_dbaas_postgresql_datastore_v1":    resourceDBaaSPostgreSQLDatastoreV1(),
+			"selectel_dbaas_mysql_datastore_v1":         resourceDBaaSMySQLDatastoreV1(),
+			"selectel_dbaas_redis_datastore_v1":         resourceDBaaSRedisDatastoreV1(),
 			"selectel_dbaas_user_v1":                    resourceDBaaSUserV1(),
-			"selectel_dbaas_database_v1":                resourceDBaaSDatabaseV1(),
+			"selectel_dbaas_database_v1":                resourceDBaaSDatabaseV1(), // DEPRECATED
+			"selectel_dbaas_postgresql_database_v1":     resourceDBaaSPostgreSQLDatabaseV1(),
+			"selectel_dbaas_mysql_database_v1":          resourceDBaaSMySQLDatabaseV1(),
 			"selectel_dbaas_grant_v1":                   resourceDBaaSGrantV1(),
-			"selectel_dbaas_extension_v1":               resourceDBaaSExtensionV1(),
+			"selectel_dbaas_extension_v1":               resourceDBaaSExtensionV1(), // DEPRECATED
+			"selectel_dbaas_postgresql_extension_v1":    resourceDBaaSPostgreSQLExtensionV1(),
 			"selectel_dbaas_prometheus_metric_token_v1": resourceDBaaSPrometheusMetricTokenV1(),
 		},
 		ConfigureContextFunc: configureProvider,

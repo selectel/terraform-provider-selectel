@@ -1,16 +1,14 @@
 ---
 layout: "selectel"
-page_title: "Selectel: selectel_dbaas_datastore_v1"
-sidebar_current: "docs-selectel-resource-dbaas-datastore-v1"
+page_title: "Selectel: selectel_dbaas_mysql_datastore_v1"
+sidebar_current: "docs-selectel-resource-dbaas-mysql-datastore-v1"
 description: |-
-  Manages a V1 datastore resource within Selectel Managed Databases Service.
+  Manages a V1 MySQL datastore resource within Selectel Managed Databases Service.
 ---
 
-# selectel\_dbaas\_datastore\_v1
+# selectel\_dbaas\_mysql\_datastore\_v1
 
-**WARNING**: This resource is deprecated and is going to be removed soon. You should use datastore resource for specific datastore type.
-
-Manages a V1 datastore resource within Selectel Managed Databases Service.
+Manages a V1 MySQL datastore resource within Selectel Managed Databases Service.
 
 ## Example usage
 
@@ -28,12 +26,12 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   project_id   = "${selectel_vpc_project_v2.project_1.id}"
   region       = "ru-3"
   filter {
-    engine  = "postgresql"
-    version = "12"
+    engine  = "mysql"
+    version = "8"
   }
 }
 
-resource "selectel_dbaas_datastore_v1" "datastore_1" {
+resource "selectel_dbaas_mysql_datastore_v1" "datastore_1" {
   name         = "datastore-1"
   project_id   = "${selectel_vpc_project_v2.project_1.id}"
   region       = "ru-3"
@@ -45,16 +43,10 @@ resource "selectel_dbaas_datastore_v1" "datastore_1" {
     ram   = 4096
     disk  = 32
   }
-  pooler {
-    mode = "transaction"
-    size = 50
-  }
   config = {
-    xmloption = "content"
-    work_mem = 512
-    session_replication_role = "replica"
-    vacuum_cost_delay = 25
-    transform_null_equals = false
+    innodb_checksum_algorithm = "strict_innodb"
+    auto_increment_offset = 2
+    autocommit = false
   }
 }
 ```
@@ -84,8 +76,6 @@ The following arguments are supported:
 
 * `flavor` - (Optional) Flavor configuration for the datastore. It's a complex value. See description below.
 
-* `pooler` - (Optional) Pooler configuration for the datastore (only for PostgreSQL datastore). It's a complex value. See description below.
-
 * `firewall` - (Optional) List of the ips to allow access from.
 
 * `restore` - (Optional) Restore parameters for the datastore. It's a complex value. See description below.
@@ -93,18 +83,11 @@ The following arguments are supported:
 
 * `config` - (Optional) Configuration parameters for the datastore.
 
-* `redis_password` - (Optional) Password for the Redis datastore (only for Redis datastores)
-
 **flavor**
 
 - `vcpus` - (Required) CPU count for the flavor.
 - `ram` - (Required) RAM count for the flavor.
 - `disk` - (Required) Disk size for the flavor.
-
-**pooler**
-
-- `mode` - (Required) Mode for the pooler. Valid values: ["session", "transaction", "statement"].
-- `size` - (Required) Size of the pooler.
 
 **restore**
 

@@ -16,14 +16,14 @@ import (
 	"github.com/selectel/dbaas-go"
 )
 
-func resourceDBaaSDatastoreV1() *schema.Resource {
+func resourceDBaaSRedisDatastoreV1() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceDBaaSDatastoreV1Create,
-		ReadContext:   resourceDBaaSDatastoreV1Read,
-		UpdateContext: resourceDBaaSDatastoreV1Update,
-		DeleteContext: resourceDBaaSDatastoreV1Delete,
+		CreateContext: resourceDBaaSRedisDatastoreV1Create,
+		ReadContext:   resourceDBaaSRedisDatastoreV1Read,
+		UpdateContext: resourceDBaaSRedisDatastoreV1Update,
+		DeleteContext: resourceDBaaSRedisDatastoreV1Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceDBaaSDatastoreV1ImportState,
+			StateContext: resourceDBaaSRedisDatastoreV1ImportState,
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(60 * time.Minute),
@@ -65,11 +65,9 @@ func resourceDBaaSDatastoreV1() *schema.Resource {
 				ForceNew: true,
 			},
 			"flavor_id": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Computed:      true,
-				ForceNew:      false,
-				ConflictsWith: []string{"flavor"},
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: false,
 			},
 			"node_count": {
 				Type:     schema.TypeInt,
@@ -92,51 +90,21 @@ func resourceDBaaSDatastoreV1() *schema.Resource {
 				},
 			},
 			"flavor": {
-				Type:          schema.TypeSet,
-				Optional:      true,
-				Computed:      true,
-				ForceNew:      false,
-				ConflictsWith: []string{"flavor_id"},
+				Type:     schema.TypeSet,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"vcpus": {
 							Type:     schema.TypeInt,
-							Required: true,
-							ForceNew: false,
+							Computed: true,
 						},
 						"ram": {
 							Type:     schema.TypeInt,
-							Required: true,
-							ForceNew: false,
+							Computed: true,
 						},
 						"disk": {
 							Type:     schema.TypeInt,
-							Required: true,
-							ForceNew: false,
-						},
-					},
-				},
-			},
-			"pooler": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: false,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"mode": {
-							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: false,
-							ValidateFunc: validation.StringInSlice([]string{
-								"session",
-								"transaction",
-								"statement",
-							}, false),
-						},
-						"size": {
-							Type:     schema.TypeInt,
-							Required: true,
-							ForceNew: false,
+							Computed: true,
 						},
 					},
 				},
@@ -188,30 +156,25 @@ func resourceDBaaSDatastoreV1() *schema.Resource {
 			},
 			"redis_password": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 				ForceNew: false,
 			},
 		},
 	}
 }
 
-func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSRedisDatastoreV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
 
 	flavorID, flavorIDOk := d.GetOk("flavor_id")
-	flavorRaw, flavorOk := d.GetOk("flavor")
 
-	if flavorIDOk == flavorOk {
-		return diag.FromErr(errors.New("either 'flavor' or 'flavor_id' must be provided"))
-	}
-
-	poolerSet := d.Get("pooler").(*schema.Set)
-	pooler, err := resourceDBaaSPostgreSQLDatastoreV1PoolerFromSet(poolerSet)
-	if err != nil {
-		return diag.FromErr(errParseDatastoreV1Pooler(err))
+	typeID := d.Get("type_id").(string)
+	diagErr = validateDatastoreType(ctx, "redis", typeID, dbaasClient)
+	if diagErr != nil {
+		return diagErr
 	}
 
 	restoreSet := d.Get("restore").(*schema.Set)
@@ -229,22 +192,11 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 
 	datastoreCreateOpts := dbaas.DatastoreCreateOpts{
 		Name:      d.Get("name").(string),
-		TypeID:    d.Get("type_id").(string),
+		TypeID:    typeID,
 		SubnetID:  d.Get("subnet_id").(string),
 		NodeCount: d.Get("node_count").(int),
-		Pooler:    pooler,
 		Restore:   restore,
 		Config:    config,
-	}
-
-	if flavorOk {
-		flavorSet := flavorRaw.(*schema.Set)
-		flavor, err := resourceDBaaSDatastoreV1FlavorFromSet(flavorSet)
-		if err != nil {
-			return diag.FromErr(errParseDatastoreV1Flavor(err))
-		}
-
-		datastoreCreateOpts.Flavor = flavor
 	}
 
 	if flavorIDOk {
@@ -271,10 +223,10 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 
 	d.SetId(datastore.ID)
 
-	return resourceDBaaSDatastoreV1Read(ctx, d, meta)
+	return resourceDBaaSRedisDatastoreV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSRedisDatastoreV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -314,7 +266,7 @@ func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSRedisDatastoreV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -326,20 +278,14 @@ func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData,
 			return diag.FromErr(err)
 		}
 	}
-	if d.HasChange("pooler") {
-		err := updatePostgreSQLDatastorePooler(ctx, d, dbaasClient)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
 	if d.HasChange("firewall") {
 		err := updateDatastoreFirewall(ctx, d, dbaasClient)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
-	if d.HasChange("node_count") || d.HasChange("flavor") || d.HasChange("flavor_id") {
-		err := resizeDatastore(ctx, d, dbaasClient)
+	if d.HasChange("node_count") || d.HasChange("flavor_id") {
+		err := resizeRedisDatastore(ctx, d, dbaasClient)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -357,10 +303,10 @@ func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	return resourceDBaaSDatastoreV1Read(ctx, d, meta)
+	return resourceDBaaSRedisDatastoreV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSDatastoreV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSRedisDatastoreV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -390,7 +336,7 @@ func resourceDBaaSDatastoreV1Delete(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceDBaaSDatastoreV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSRedisDatastoreV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")

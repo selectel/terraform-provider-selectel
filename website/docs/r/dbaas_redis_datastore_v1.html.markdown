@@ -1,16 +1,14 @@
 ---
 layout: "selectel"
-page_title: "Selectel: selectel_dbaas_datastore_v1"
-sidebar_current: "docs-selectel-resource-dbaas-datastore-v1"
+page_title: "Selectel: selectel_dbaas_redis_datastore_v1"
+sidebar_current: "docs-selectel-resource-dbaas-redis-datastore-v1"
 description: |-
-  Manages a V1 datastore resource within Selectel Managed Databases Service.
+  Manages a V1 Redis datastore resource within Selectel Managed Databases Service.
 ---
 
-# selectel\_dbaas\_datastore\_v1
+# selectel\_dbaas\_redis\_datastore\_v1
 
-**WARNING**: This resource is deprecated and is going to be removed soon. You should use datastore resource for specific datastore type.
-
-Manages a V1 datastore resource within Selectel Managed Databases Service.
+Manages a V1 Redis datastore resource within Selectel Managed Databases Service.
 
 ## Example usage
 
@@ -28,34 +26,31 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   project_id   = "${selectel_vpc_project_v2.project_1.id}"
   region       = "ru-3"
   filter {
-    engine  = "postgresql"
-    version = "12"
+    engine  = "redis"
+    version = "6"
   }
 }
 
-resource "selectel_dbaas_datastore_v1" "datastore_1" {
+data "selectel_dbaas_flavor_v1" "flavor" {
+    project_id   = "${selectel_vpc_project_v2.project_1.id}"
+    region = "ru-3"
+    filter {
+        datastore_type_id = data.selectel_dbaas_datastore_type_v1.dt_redis.datastore_types[0].id
+    }
+}
+
+resource "selectel_dbaas_redis_datastore_v1" "datastore_1" {
   name         = "datastore-1"
   project_id   = "${selectel_vpc_project_v2.project_1.id}"
   region       = "ru-3"
   type_id      = data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id
   subnet_id    = "${selectel_vpc_subnet_v2.subnet.subnet_id}"
   node_count   = 3
-  flavor {
-    vcpus = 4
-    ram   = 4096
-    disk  = 32
-  }
-  pooler {
-    mode = "transaction"
-    size = 50
-  }
+  flavor_id = data.selectel_dbaas_flavor_v1.flavor.flavors[0].id
   config = {
-    xmloption = "content"
-    work_mem = 512
-    session_replication_role = "replica"
-    vacuum_cost_delay = 25
-    transform_null_equals = false
+    maxmemory-policy = "allkeys-lru"
   }
+  redis_password = "secret"
 }
 ```
 
@@ -80,11 +75,7 @@ The following arguments are supported:
 
 * `node_count` - (Required) Number of nodes to create for the datastore.
 
-* `flavor_id` - (Optional) Flavor identifier for the datastore. It can be omitted in cases when `flavor` is set.
-
-* `flavor` - (Optional) Flavor configuration for the datastore. It's a complex value. See description below.
-
-* `pooler` - (Optional) Pooler configuration for the datastore (only for PostgreSQL datastore). It's a complex value. See description below.
+* `flavor_id` - (Required) Flavor identifier for the datastore.
 
 * `firewall` - (Optional) List of the ips to allow access from.
 
@@ -93,18 +84,7 @@ The following arguments are supported:
 
 * `config` - (Optional) Configuration parameters for the datastore.
 
-* `redis_password` - (Optional) Password for the Redis datastore (only for Redis datastores)
-
-**flavor**
-
-- `vcpus` - (Required) CPU count for the flavor.
-- `ram` - (Required) RAM count for the flavor.
-- `disk` - (Required) Disk size for the flavor.
-
-**pooler**
-
-- `mode` - (Required) Mode for the pooler. Valid values: ["session", "transaction", "statement"].
-- `size` - (Required) Size of the pooler.
+* `redis_password` - (Required) Password for the Redis datastore
 
 **restore**
 

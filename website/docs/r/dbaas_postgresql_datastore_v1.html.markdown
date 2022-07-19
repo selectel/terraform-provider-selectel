@@ -1,16 +1,14 @@
 ---
 layout: "selectel"
-page_title: "Selectel: selectel_dbaas_datastore_v1"
-sidebar_current: "docs-selectel-resource-dbaas-datastore-v1"
+page_title: "Selectel: selectel_dbaas_postgresql_datastore_v1"
+sidebar_current: "docs-selectel-resource-dbaas-postgresql-datastore-v1"
 description: |-
-  Manages a V1 datastore resource within Selectel Managed Databases Service.
+  Manages a V1 PostgreSQL datastore resource within Selectel Managed Databases Service.
 ---
 
-# selectel\_dbaas\_datastore\_v1
+# selectel\_dbaas\_postgresql\_datastore\_v1
 
-**WARNING**: This resource is deprecated and is going to be removed soon. You should use datastore resource for specific datastore type.
-
-Manages a V1 datastore resource within Selectel Managed Databases Service.
+Manages a V1 PostgreSQL datastore resource within Selectel Managed Databases Service.
 
 ## Example usage
 
@@ -33,7 +31,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   }
 }
 
-resource "selectel_dbaas_datastore_v1" "datastore_1" {
+resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
   name         = "datastore-1"
   project_id   = "${selectel_vpc_project_v2.project_1.id}"
   region       = "ru-3"
@@ -92,8 +90,6 @@ The following arguments are supported:
   Changing this creates a new datastore.
 
 * `config` - (Optional) Configuration parameters for the datastore.
-
-* `redis_password` - (Optional) Password for the Redis datastore (only for Redis datastores)
 
 **flavor**
 

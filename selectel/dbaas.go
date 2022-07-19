@@ -3,6 +3,7 @@ package selectel
 import (
 	"context"
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/dbaas-go"
@@ -137,4 +139,435 @@ func convertFieldToStringByType(field interface{}) string {
 
 func RandomWithPrefix(name string) string {
 	return fmt.Sprintf("%s_%d", name, rand.New(rand.NewSource(time.Now().UnixNano())).Int())
+}
+
+func flavorSchema() *schema.Resource {
+	return resourceDBaaSDatastoreV1().Schema["flavor"].Elem.(*schema.Resource)
+}
+
+func flavorHashSetFunc() schema.SchemaSetFunc {
+	return schema.HashResource(flavorSchema())
+}
+
+func convertFieldFromStringToType(fieldValue string) interface{} {
+	if val, err := strconv.Atoi(fieldValue); err == nil {
+		return val
+	} else if val, err := strconv.ParseFloat(fieldValue, 64); err == nil {
+		return val
+	} else if val, err := strconv.ParseFloat(fieldValue, 32); err == nil {
+		return val
+	} else if val, err := strconv.ParseBool(fieldValue); err == nil {
+		return val
+	} else {
+		return fieldValue
+	}
+}
+
+func waitForDBaaSDatastoreV1ActiveState(
+	ctx context.Context, client *dbaas.API, datastoreID string, timeout time.Duration) error {
+	pending := []string{
+		string(dbaas.StatusPendingCreate),
+		string(dbaas.StatusPendingUpdate),
+		string(dbaas.StatusResizing),
+	}
+	target := []string{
+		string(dbaas.StatusActive),
+	}
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    pending,
+		Target:     target,
+		Refresh:    dbaasDatastoreV1StateRefreshFunc(ctx, client, datastoreID),
+		Timeout:    timeout,
+		Delay:      10 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+
+	_, err := stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf(
+			"error waiting for the datastore %s to become 'ACTIVE': %s",
+			datastoreID, err)
+	}
+
+	return nil
+}
+
+func dbaasDatastoreV1StateRefreshFunc(ctx context.Context, client *dbaas.API, datastoreID string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		d, err := client.Datastore(ctx, datastoreID)
+		if err != nil {
+			return nil, "", err
+		}
+
+		return d, string(d.Status), nil
+	}
+}
+
+func dbaasDatastoreV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, datastoreID string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		d, err := client.Datastore(ctx, datastoreID)
+		if err != nil {
+			var dbaasError *dbaas.DBaaSAPIError
+			if errors.As(err, &dbaasError) {
+				return d, strconv.Itoa(dbaasError.StatusCode()), nil
+			}
+
+			return nil, "", err
+		}
+
+		return d, strconv.Itoa(200), err
+	}
+}
+
+func resourceDBaaSDatastoreV1FlavorFromSet(flavorSet *schema.Set) (*dbaas.Flavor, error) {
+	if flavorSet.Len() == 0 {
+		return nil, nil
+	}
+	var resourceVcpusRaw, resourceRAMRaw, resourceDiskRaw interface{}
+	var ok bool
+
+	resourceFlavorMap := flavorSet.List()[0].(map[string]interface{})
+	if resourceVcpusRaw, ok = resourceFlavorMap["vcpus"]; !ok {
+		return &dbaas.Flavor{}, errors.New("flavor.vcpus value isn't provided")
+	}
+	if resourceRAMRaw, ok = resourceFlavorMap["ram"]; !ok {
+		return &dbaas.Flavor{}, errors.New("flavor.ram value isn't provided")
+	}
+	if resourceDiskRaw, ok = resourceFlavorMap["disk"]; !ok {
+		return &dbaas.Flavor{}, errors.New("flavor.disk value isn't provided")
+	}
+
+	resourceVcpus := resourceVcpusRaw.(int)
+	resourceRAM := resourceRAMRaw.(int)
+	resourceDisk := resourceDiskRaw.(int)
+
+	flavor := &dbaas.Flavor{
+		Vcpus: resourceVcpus,
+		RAM:   resourceRAM,
+		Disk:  resourceDisk,
+	}
+
+	return flavor, nil
+}
+
+func resourceDBaaSDatastoreV1FlavorToSet(flavor dbaas.Flavor) *schema.Set {
+	flavorSet := &schema.Set{
+		F: flavorHashSetFunc(),
+	}
+
+	flavorSet.Add(map[string]interface{}{
+		"vcpus": flavor.Vcpus,
+		"ram":   flavor.RAM,
+		"disk":  flavor.Disk,
+	})
+
+	return flavorSet
+}
+
+func resourceDBaaSDatastoreV1FirewallOptsFromSet(firewallSet *schema.Set) (dbaas.DatastoreFirewallOpts, error) {
+	if firewallSet.Len() == 0 {
+		return dbaas.DatastoreFirewallOpts{IPs: []string{}}, nil
+	}
+
+	var resourceIPsRaw interface{}
+	var ok bool
+
+	resourceFirewallRaw := firewallSet.List()[0].(map[string]interface{})
+	if resourceIPsRaw, ok = resourceFirewallRaw["ips"]; !ok {
+		return dbaas.DatastoreFirewallOpts{}, errors.New("firewall.ips value isn't provided")
+	}
+	resourceIPRaw := resourceIPsRaw.([]interface{})
+	var firewall dbaas.DatastoreFirewallOpts
+	for _, ip := range resourceIPRaw {
+		firewall.IPs = append(firewall.IPs, ip.(string))
+	}
+
+	return firewall, nil
+}
+
+func resourceDBaaSDatastoreV1RestoreOptsFromSet(restoreSet *schema.Set) (*dbaas.Restore, error) {
+	if restoreSet.Len() == 0 {
+		return nil, nil
+	}
+	var resourceDatastoreIDRaw, resourceTargetTimeRaw interface{}
+	var ok bool
+
+	resourceRestoreMap := restoreSet.List()[0].(map[string]interface{})
+	if resourceDatastoreIDRaw, ok = resourceRestoreMap["datastore_id"]; !ok {
+		return &dbaas.Restore{}, errors.New("restore.datastore_id value isn't provided")
+	}
+	if resourceTargetTimeRaw, ok = resourceRestoreMap["target_time"]; !ok {
+		return &dbaas.Restore{}, errors.New("restore.target_time value isn't provided")
+	}
+
+	resourceDatastoreID := resourceDatastoreIDRaw.(string)
+	resourceTargetTime := resourceTargetTimeRaw.(string)
+
+	restore := &dbaas.Restore{
+		DatastoreID: resourceDatastoreID,
+		TargetTime:  resourceTargetTime,
+	}
+
+	return restore, nil
+}
+
+func updateDatastoreName(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	var updateOpts dbaas.DatastoreUpdateOpts
+	updateOpts.Name = d.Get("name").(string)
+
+	log.Print(msgUpdate(objectDatastore, d.Id(), updateOpts))
+	_, err := client.UpdateDatastore(ctx, d.Id(), updateOpts)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func updateDatastoreFirewall(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	firewallSet := d.Get("firewall").(*schema.Set)
+	firewallOpts, err := resourceDBaaSDatastoreV1FirewallOptsFromSet(firewallSet)
+	if err != nil {
+		return errParseDatastoreV1Firewall(err)
+	}
+
+	log.Print(msgUpdate(objectDatastore, d.Id(), firewallOpts))
+	_, err = client.FirewallDatastore(ctx, d.Id(), firewallOpts)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func updateDatastoreConfig(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	var configOpts dbaas.DatastoreConfigOpts
+	datastore, err := client.Datastore(ctx, d.Id())
+	if err != nil {
+		return err
+	}
+	configMap := d.Get("config").(map[string]interface{})
+	config := make(map[string]interface{})
+	for paramName, paramValue := range configMap {
+		paramValueStr := paramValue.(string)
+		config[paramName] = convertFieldFromStringToType(paramValueStr)
+	}
+
+	for param := range datastore.Config {
+		if _, ok := config[param]; !ok {
+			config[param] = nil
+		}
+	}
+
+	configOpts.Config = config
+
+	log.Print(msgUpdate(objectDatastore, d.Id(), configOpts))
+	_, err = client.ConfigDatastore(ctx, d.Id(), configOpts)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func resizeDatastore(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	var resizeOpts dbaas.DatastoreResizeOpts
+	nodeCount := d.Get("node_count").(int)
+	resizeOpts.NodeCount = nodeCount
+
+	flavorID := d.Get("flavor_id")
+	flavorRaw := d.Get("flavor")
+
+	flavorSet := flavorRaw.(*schema.Set)
+	flavor, err := resourceDBaaSDatastoreV1FlavorFromSet(flavorSet)
+	if err != nil {
+		return errParseDatastoreV1Resize(err)
+	}
+
+	typeID := d.Get("type_id").(string)
+	datastoreType, err := client.DatastoreType(ctx, typeID)
+	if err != nil {
+		return errors.New("Couldnt get datastore type with id" + typeID)
+	}
+	if datastoreType.Engine == "redis" {
+		resizeOpts.Flavor = nil
+		resizeOpts.FlavorID = flavorID.(string)
+	} else {
+		resizeOpts.Flavor = flavor
+		resizeOpts.FlavorID = flavorID.(string)
+	}
+
+	log.Print(msgUpdate(objectDatastore, d.Id(), resizeOpts))
+	_, err = client.ResizeDatastore(ctx, d.Id(), resizeOpts)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutCreate)
+	err = waitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func validateDatastoreType(ctx context.Context, expectedDatastoreTypeEngine string, typeID string, client *dbaas.API) diag.Diagnostics {
+	datastoreType, err := client.DatastoreType(ctx, typeID)
+	if err != nil {
+		return diag.FromErr(errors.New("Couldnt get datastore type with id" + typeID))
+	}
+	if datastoreType.Engine != expectedDatastoreTypeEngine {
+		return diag.FromErr(errors.New("Provided datastore type must have a " + expectedDatastoreTypeEngine + " engine, not " + datastoreType.Engine))
+	}
+
+	return nil
+}
+
+func waitForDBaaSDatabaseV1ActiveState(
+	ctx context.Context, client *dbaas.API, databaseID string, timeout time.Duration) error {
+	pending := []string{
+		string(dbaas.StatusPendingCreate),
+		string(dbaas.StatusPendingUpdate),
+	}
+	target := []string{
+		string(dbaas.StatusActive),
+	}
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    pending,
+		Target:     target,
+		Refresh:    dbaasDatabaseV1StateRefreshFunc(ctx, client, databaseID),
+		Timeout:    timeout,
+		Delay:      10 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+
+	_, err := stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf(
+			"error waiting for the database %s to become 'ACTIVE': %s",
+			databaseID, err)
+	}
+
+	return nil
+}
+
+// Databases
+
+func dbaasDatabaseV1StateRefreshFunc(ctx context.Context, client *dbaas.API, databaseID string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		d, err := client.Database(ctx, databaseID)
+		if err != nil {
+			return nil, "", err
+		}
+
+		return d, string(d.Status), nil
+	}
+}
+
+func dbaasDatabaseV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, datastoreID string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		d, err := client.Database(ctx, datastoreID)
+		if err != nil {
+			var dbaasError *dbaas.DBaaSAPIError
+			if errors.As(err, &dbaasError) {
+				return d, strconv.Itoa(dbaasError.StatusCode()), nil
+			}
+
+			return nil, "", err
+		}
+
+		return d, strconv.Itoa(200), err
+	}
+}
+
+func dbaasDatabaseV1LocaleDiffSuppressFunc(k, old, new string, d *schema.ResourceData) bool {
+	// The default locale value - C is the same as null value, so we need to suppress
+	if old == "C" && new == "" {
+		return true
+	}
+
+	return false
+}
+
+// Users
+
+func waitForDBaaSUserV1ActiveState(
+	ctx context.Context, client *dbaas.API, userID string, timeout time.Duration) error {
+	pending := []string{
+		string(dbaas.StatusPendingCreate),
+		string(dbaas.StatusPendingUpdate),
+	}
+	target := []string{
+		string(dbaas.StatusActive),
+	}
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    pending,
+		Target:     target,
+		Refresh:    dbaasUserV1StateRefreshFunc(ctx, client, userID),
+		Timeout:    timeout,
+		Delay:      10 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+
+	_, err := stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf(
+			"error waiting for the user %s to become 'ACTIVE': %s",
+			userID, err)
+	}
+
+	return nil
+}
+
+func dbaasUserV1StateRefreshFunc(ctx context.Context, client *dbaas.API, userID string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		d, err := client.User(ctx, userID)
+		if err != nil {
+			return nil, "", err
+		}
+
+		return d, string(d.Status), nil
+	}
+}
+
+func dbaasUserV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, userID string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		d, err := client.User(ctx, userID)
+		if err != nil {
+			var dbaasError *dbaas.DBaaSAPIError
+			if errors.As(err, &dbaasError) {
+				return d, strconv.Itoa(dbaasError.StatusCode()), nil
+			}
+
+			return nil, "", err
+		}
+
+		return d, strconv.Itoa(200), err
+	}
 }

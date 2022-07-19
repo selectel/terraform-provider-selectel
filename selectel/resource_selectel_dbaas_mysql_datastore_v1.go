@@ -16,14 +16,14 @@ import (
 	"github.com/selectel/dbaas-go"
 )
 
-func resourceDBaaSDatastoreV1() *schema.Resource {
+func resourceDBaaSMySQLDatastoreV1() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceDBaaSDatastoreV1Create,
-		ReadContext:   resourceDBaaSDatastoreV1Read,
-		UpdateContext: resourceDBaaSDatastoreV1Update,
-		DeleteContext: resourceDBaaSDatastoreV1Delete,
+		CreateContext: resourceDBaaSMySQLDatastoreV1Create,
+		ReadContext:   resourceDBaaSMySQLDatastoreV1Read,
+		UpdateContext: resourceDBaaSMySQLDatastoreV1Update,
+		DeleteContext: resourceDBaaSMySQLDatastoreV1Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceDBaaSDatastoreV1ImportState,
+			StateContext: resourceDBaaSMySQLDatastoreV1ImportState,
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(60 * time.Minute),
@@ -117,30 +117,6 @@ func resourceDBaaSDatastoreV1() *schema.Resource {
 					},
 				},
 			},
-			"pooler": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: false,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"mode": {
-							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: false,
-							ValidateFunc: validation.StringInSlice([]string{
-								"session",
-								"transaction",
-								"statement",
-							}, false),
-						},
-						"size": {
-							Type:     schema.TypeInt,
-							Required: true,
-							ForceNew: false,
-						},
-					},
-				},
-			},
 			"firewall": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -186,16 +162,11 @@ func resourceDBaaSDatastoreV1() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"redis_password": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: false,
-			},
 		},
 	}
 }
 
-func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSMySQLDatastoreV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -208,10 +179,10 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(errors.New("either 'flavor' or 'flavor_id' must be provided"))
 	}
 
-	poolerSet := d.Get("pooler").(*schema.Set)
-	pooler, err := resourceDBaaSPostgreSQLDatastoreV1PoolerFromSet(poolerSet)
-	if err != nil {
-		return diag.FromErr(errParseDatastoreV1Pooler(err))
+	typeID := d.Get("type_id").(string)
+	diagErr = validateDatastoreType(ctx, "mysql", typeID, dbaasClient)
+	if diagErr != nil {
+		return diagErr
 	}
 
 	restoreSet := d.Get("restore").(*schema.Set)
@@ -229,10 +200,9 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 
 	datastoreCreateOpts := dbaas.DatastoreCreateOpts{
 		Name:      d.Get("name").(string),
-		TypeID:    d.Get("type_id").(string),
+		TypeID:    typeID,
 		SubnetID:  d.Get("subnet_id").(string),
 		NodeCount: d.Get("node_count").(int),
-		Pooler:    pooler,
 		Restore:   restore,
 		Config:    config,
 	}
@@ -251,11 +221,6 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 		datastoreCreateOpts.FlavorID = flavorID.(string)
 	}
 
-	redisPassword, redisPasswordOk := d.GetOk("redis_password")
-	if redisPasswordOk {
-		datastoreCreateOpts.RedisPassword = redisPassword.(string)
-	}
-
 	log.Print(msgCreate(objectDatastore, datastoreCreateOpts))
 	datastore, err := dbaasClient.CreateDatastore(ctx, datastoreCreateOpts)
 	if err != nil {
@@ -271,10 +236,10 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 
 	d.SetId(datastore.ID)
 
-	return resourceDBaaSDatastoreV1Read(ctx, d, meta)
+	return resourceDBaaSMySQLDatastoreV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSMySQLDatastoreV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -314,7 +279,7 @@ func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSMySQLDatastoreV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -322,12 +287,6 @@ func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData,
 
 	if d.HasChange("name") {
 		err := updateDatastoreName(ctx, d, dbaasClient)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-	if d.HasChange("pooler") {
-		err := updatePostgreSQLDatastorePooler(ctx, d, dbaasClient)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -350,17 +309,11 @@ func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData,
 			return diag.FromErr(err)
 		}
 	}
-	if d.HasChange("redis_password") {
-		err := updateRedisDatastorePassword(ctx, d, dbaasClient)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
 
-	return resourceDBaaSDatastoreV1Read(ctx, d, meta)
+	return resourceDBaaSMySQLDatastoreV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSDatastoreV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSMySQLDatastoreV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -390,7 +343,7 @@ func resourceDBaaSDatastoreV1Delete(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceDBaaSDatastoreV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSMySQLDatastoreV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")
