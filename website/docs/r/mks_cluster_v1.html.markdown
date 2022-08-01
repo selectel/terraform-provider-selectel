@@ -78,6 +78,7 @@ The following arguments are supported:
 
 * `private_kube_api` - (Optional) Specifies if kube API should be available from the Internet or not.
     When true kube API will be available only in clusters network. Default is false.
+    Changing this creates a new cluster.
 
 ## Attributes Reference
 
