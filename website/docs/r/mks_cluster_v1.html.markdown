@@ -76,6 +76,10 @@ The following arguments are supported:
 
 * `admission_controllers` - (Optional) Represents a set of admission controllers names to be enabled in a Kubernetes cluster.
 
+* `private_kube_api` - (Optional) Specifies if kube API should be available from the Internet or not.
+    When true kube API will be available only in clusters network. Default is false.
+    Changing this creates a new cluster.
+
 ## Attributes Reference
 
 The following attributes are exported:

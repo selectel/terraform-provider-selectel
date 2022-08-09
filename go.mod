@@ -8,7 +8,7 @@ require (
 	github.com/selectel/dbaas-go v0.5.0
 	github.com/selectel/domains-go v0.3.0
 	github.com/selectel/go-selvpcclient v1.12.0
-	github.com/selectel/mks-go v0.11.0
+	github.com/selectel/mks-go v0.12.0
 	github.com/stretchr/testify v1.7.0
 )
 
