@@ -46,22 +46,22 @@ func TestValidateErrRegion(t *testing.T) {
 	assert.EqualError(t, actual, expected)
 }
 
-func TestUseSelectelToken(t *testing.T) {
+func TestIsKeystoneCredentials(t *testing.T) {
 	type test struct {
 		config   *Config
 		expected bool
 	}
 
 	tests := []test{
-		{&Config{}, true},
-		{&Config{Token: "secret"}, true},
-		{&Config{User: "user"}, true},
-		{&Config{Token: "secret", User: "user"}, true},
-		{&Config{User: "user", Password: "password", DomainName: "domain"}, false},
-		{&Config{Token: "secret", User: "user", Password: "password", DomainName: "domain"}, false},
+		{&Config{}, false},
+		{&Config{Token: "secret"}, false},
+		{&Config{User: "user"}, false},
+		{&Config{Token: "secret", User: "user"}, false},
+		{&Config{User: "user", Password: "password", DomainName: "domain"}, true},
+		{&Config{Token: "secret", User: "user", Password: "password", DomainName: "domain"}, true},
 	}
 
 	for _, tc := range tests {
-		assert.Equal(t, tc.expected, tc.config.useSelectelToken())
+		assert.Equal(t, tc.expected, tc.config.isKeystoneCredentials())
 	}
 }
