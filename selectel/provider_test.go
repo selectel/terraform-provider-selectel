@@ -32,8 +32,8 @@ func TestProvider(t *testing.T) {
 }
 
 func testAccSelectelPreCheck(t *testing.T) {
-	if v := os.Getenv("SEL_TOKEN"); v == "" {
-		t.Fatal("SEL_TOKEN must be set for acceptance tests")
+	if os.Getenv("SEL_TOKEN") == "" && (os.Getenv("SEL_USER") == "" || os.Getenv("SEL_PASSWORD") == "" || os.Getenv("SEL_DOMAIN_NAME") == "") {
+		t.Fatal("Selectel token or Keystone credentials must be set for acceptance tests")
 	}
 }
 

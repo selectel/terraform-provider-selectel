@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/mutexkv"
 )
 
@@ -46,9 +47,31 @@ func Provider() *schema.Provider {
 		Schema: map[string]*schema.Schema{
 			"token": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SEL_TOKEN", nil),
 				Description: "Token to authorize with the Selectel API.",
+			},
+			"user": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				RequiredWith: []string{"password", "domain_name"},
+				DefaultFunc:  schema.EnvDefaultFunc("SEL_USER", nil),
+				Description:  "Cloud user.",
+			},
+			"password": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Sensitive:    true,
+				RequiredWith: []string{"user", "domain_name"},
+				DefaultFunc:  schema.EnvDefaultFunc("SEL_PASSWORD", nil),
+				Description:  "Cloud user password.",
+			},
+			"domain_name": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				RequiredWith: []string{"user", "password"},
+				DefaultFunc:  schema.EnvDefaultFunc("SEL_DOMAIN_NAME", nil),
+				Description:  "Cloud domain ID to import resources that need the project scope auth token.",
 			},
 			"endpoint": {
 				Type:        schema.TypeString,
@@ -56,17 +79,31 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("SEL_ENDPOINT", nil),
 				Description: "Base endpoint to work with the Selectel API.",
 			},
+			"auth_url": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("OS_AUTH_URL", nil),
+				Description: "Base endpoint to work with the Keystone API.",
+			},
+			"region": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					ru1Region,
+					ru2Region,
+					ru3Region,
+					ru7Region,
+					ru8Region,
+					ru9Region,
+				}, false),
+				DefaultFunc: schema.EnvDefaultFunc("SEL_REGION", nil),
+				Description: "Cloud region to import resources associated with the specific region.",
+			},
 			"project_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SEL_PROJECT_ID", nil),
-				Description: "VPC project ID to import resources that need the project scope auth token.",
-			},
-			"region": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("SEL_REGION", nil),
-				Description: "VPC region to import resources associated with the specific region.",
+				Description: "Cloud project ID to import resources that need the project scope auth token.",
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -114,12 +151,24 @@ func Provider() *schema.Provider {
 }
 
 func configureProvider(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	config := Config{
-		Token:    d.Get("token").(string),
-		Endpoint: d.Get("endpoint").(string),
+	var config Config
+	if v, ok := d.GetOk("token"); ok {
+		config.Token = v.(string)
 	}
-	if v, ok := d.GetOk("project_id"); ok {
-		config.ProjectID = v.(string)
+	if v, ok := d.GetOk("user"); ok {
+		config.User = v.(string)
+	}
+	if v, ok := d.GetOk("password"); ok {
+		config.Password = v.(string)
+	}
+	if v, ok := d.GetOk("endpoint"); ok {
+		config.Endpoint = v.(string)
+	}
+	if v, ok := d.GetOk("auth_url"); ok {
+		config.OSEndpoint = v.(string)
+	}
+	if v, ok := d.GetOk("domain_name"); ok {
+		config.DomainName = v.(string)
 	}
 	if v, ok := d.GetOk("region"); ok {
 		config.Region = v.(string)

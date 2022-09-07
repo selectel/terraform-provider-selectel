@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
 	"github.com/selectel/mks-go/pkg/v1/kubeoptions"
@@ -167,10 +166,10 @@ func testAccMKSClusterV1GetDefaultKubeVersion(t *testing.T) string {
 		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccVPCV2ProjectBasic(projectName),
+				Config: testAccMKSKubeVersionsV1Basic(projectName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckMKSClusterV1DefaultKubeVersion("selectel_vpc_project_v2.project_tf_acc_test_1", &kubeVersion),
+					testAccCheckMKSClusterV1DefaultKubeVersion("data.selectel_mks_kube_versions_v1.kube_versions_tf_acc_test_1", &kubeVersion),
 				),
 			},
 		},
@@ -189,7 +188,7 @@ func testAccCheckMKSClusterV1DefaultKubeVersion(n string, kubeVersion *string) r
 			return errors.New("no ID is set")
 		}
 
-		mksClient, err := newTestMKSClient(rs.Primary.ID)
+		mksClient, err := newTestMKSClient(rs)
 		if err != nil {
 			return err
 		}
@@ -217,27 +216,19 @@ func testAccCheckMKSClusterV1Exists(n string, mksCluster *cluster.View) resource
 			return errors.New("no ID is set")
 		}
 
-		var projectID, endpoint string
-		if id, ok := rs.Primary.Attributes["project_id"]; ok {
-			projectID = id
-		}
-		if region, ok := rs.Primary.Attributes["region"]; ok {
-			endpoint = getMKSClusterV1Endpoint(region)
-		}
-
-		config := testAccProvider.Meta().(*Config)
-		resellV2Client := config.resellV2Client()
 		ctx := context.Background()
 
-		tokenOpts := tokens.TokenOpts{
-			ProjectID: projectID,
-		}
-		token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-		if err != nil {
-			return errCreatingObject(objectToken, err)
+		r := resourceMKSClusterV1()
+		d := r.TestResourceData()
+
+		d.Set("project_id", rs.Primary.Attributes["project_id"])
+		d.Set("region", rs.Primary.Attributes["region"])
+
+		mksClient, _ := getMKSClient(ctx, d, testAccProvider.Meta())
+		if mksClient == nil {
+			return errors.New("authentication failed")
 		}
 
-		mksClient := v1.NewMKSClientV1(token.ID, endpoint)
 		foundCluster, _, err := cluster.Get(ctx, mksClient, rs.Primary.ID)
 		if err != nil {
 			return err
@@ -348,6 +339,7 @@ func testAccMKSClusterV1PrivateKubeAPI(projectName, clusterName, kubeVersion, ma
 
 func testDefaultFeatureGates(t *testing.T) []string {
 	var project projects.Project
+	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
 	featureGates := make([]string, 0)
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
@@ -357,10 +349,10 @@ func testDefaultFeatureGates(t *testing.T) []string {
 		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccVPCV2ProjectBasic(projectName),
+				Config: testKubeOptionsV1BasicConfig(projectName, dataSourceFeatureGates, kubeVersion),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckMKSClusterV1DefaultKubeVersionFeatureGates("selectel_vpc_project_v2.project_tf_acc_test_1", &featureGates),
+					testAccCheckMKSClusterV1DefaultKubeVersionFeatureGates("data."+dataSourceFeatureGates+".dt", &featureGates),
 				),
 			},
 		},
@@ -379,7 +371,7 @@ func testAccCheckMKSClusterV1DefaultKubeVersionFeatureGates(n string, featureGat
 			return errors.New("no ID is set")
 		}
 
-		mksClient, err := newTestMKSClient(rs.Primary.ID)
+		mksClient, err := newTestMKSClient(rs)
 		if err != nil {
 			return err
 		}
@@ -411,6 +403,7 @@ func testAccCheckMKSClusterV1DefaultKubeVersionFeatureGates(n string, featureGat
 
 func testDefaultAdmissionControllers(t *testing.T) []string {
 	var project projects.Project
+	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
 	admissionContollers := make([]string, 0)
 	projectName := acctest.RandomWithPrefix("tf-acc")
 
@@ -420,10 +413,10 @@ func testDefaultAdmissionControllers(t *testing.T) []string {
 		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccVPCV2ProjectBasic(projectName),
+				Config: testKubeOptionsV1BasicConfig(projectName, dataSourceAdmissionControllers, kubeVersion),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckMKSClusterV1DefaultKubeVersionAdmissionControllers("selectel_vpc_project_v2.project_tf_acc_test_1", &admissionContollers),
+					testAccCheckMKSClusterV1DefaultKubeVersionAdmissionControllers("data."+dataSourceAdmissionControllers+".dt", &admissionContollers),
 				),
 			},
 		},
@@ -442,7 +435,7 @@ func testAccCheckMKSClusterV1DefaultKubeVersionAdmissionControllers(n string, ad
 			return errors.New("no ID is set")
 		}
 
-		mksClient, err := newTestMKSClient(rs.Primary.ID)
+		mksClient, err := newTestMKSClient(rs)
 		if err != nil {
 			return err
 		}
@@ -472,21 +465,28 @@ func testAccCheckMKSClusterV1DefaultKubeVersionAdmissionControllers(n string, ad
 	}
 }
 
-func newTestMKSClient(projectID string) (*v1.ServiceClient, error) {
-	config := testAccProvider.Meta().(*Config)
-	resellV2Client := config.resellV2Client()
+func newTestMKSClient(rs *terraform.ResourceState) (*v1.ServiceClient, error) {
+	var projectID, region string
 	ctx := context.Background()
 
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: projectID,
-	}
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-	if err != nil {
-		return nil, errCreatingObject(objectToken, err)
+	if p, ok := rs.Primary.Attributes["project_id"]; ok {
+		projectID = p
 	}
 
-	endpoint := getMKSClusterV1Endpoint(ru3Region)
-	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
+	if r, ok := rs.Primary.Attributes["region"]; ok {
+		region = r
+	}
+
+	r := resourceMKSClusterV1()
+	d := r.TestResourceData()
+
+	d.Set("project_id", projectID)
+	d.Set("region", region)
+
+	mksClient, _ := getMKSClient(ctx, d, testAccProvider.Meta())
+	if mksClient == nil {
+		return nil, errors.New("authentication failed")
+	}
 
 	return mksClient, nil
 }

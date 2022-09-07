@@ -186,8 +186,7 @@ func resourceDBaaSExtensionV1ImportState(_ context.Context, d *schema.ResourceDa
 	return []*schema.ResourceData{d}, nil
 }
 
-func waitForDBaaSExtensionV1ActiveState(
-	ctx context.Context, client *dbaas.API, extensionID string, timeout time.Duration) error {
+func waitForDBaaSExtensionV1ActiveState(ctx context.Context, client *dbaas.API, extensionID string, timeout time.Duration) error {
 	pending := []string{
 		string(dbaas.StatusPendingCreate),
 		string(dbaas.StatusPendingUpdate),

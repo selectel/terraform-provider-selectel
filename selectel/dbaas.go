@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"sort"
 	"strconv"
@@ -17,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/dbaas-go"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 )
 
 const (
@@ -53,20 +51,14 @@ func getDBaaSV1Endpoint(region string) (endpoint string) {
 
 func getDBaaSClient(ctx context.Context, d *schema.ResourceData, meta interface{}) (*dbaas.API, diag.Diagnostics) {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
-	}
-
-	log.Print(msgCreate(objectToken, tokenOpts))
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
+	region := d.Get("region").(string)
+	projectID := d.Get("project_id").(string)
+	endpoint := getDBaaSV1Endpoint(region)
+	tokenID, err := config.getToken(ctx, projectID, region)
 	if err != nil {
 		return nil, diag.FromErr((errCreatingObject(objectToken, err)))
 	}
-
-	region := d.Get("region").(string)
-	endpoint := getDBaaSV1Endpoint(region)
-	client, err := dbaas.NewDBAASClient(token.ID, endpoint)
+	client, err := dbaas.NewDBAASClient(tokenID, endpoint)
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}
@@ -96,26 +88,20 @@ func stringListChecksum(s []string) (string, error) {
 }
 
 func baseTestAccCheckDBaaSV1EntityExists(ctx context.Context, rs *terraform.ResourceState, testAccProvider *schema.Provider) (*dbaas.API, error) {
-	var projectID, endpoint string
+	var projectID, region, endpoint string
 	if id, ok := rs.Primary.Attributes["project_id"]; ok {
 		projectID = id
 	}
 	if region, ok := rs.Primary.Attributes["region"]; ok {
 		endpoint = getDBaaSV1Endpoint(region)
 	}
-
 	config := testAccProvider.Meta().(*Config)
-	resellV2Client := config.resellV2Client()
-
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: projectID,
-	}
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
+	tokenID, err := config.getToken(ctx, projectID, region)
 	if err != nil {
 		return nil, errCreatingObject(objectToken, err)
 	}
 
-	dbaasClient, err := dbaas.NewDBAASClient(token.ID, endpoint)
+	dbaasClient, err := dbaas.NewDBAASClient(tokenID, endpoint)
 	if err != nil {
 		return nil, err
 	}

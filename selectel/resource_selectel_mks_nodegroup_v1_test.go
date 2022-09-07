@@ -11,8 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
-	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/nodegroup"
 )
 
@@ -110,27 +108,19 @@ func testAccCheckMKSNodegroupV1Exists(n string, mksNodegroup *nodegroup.View) re
 			return fmt.Errorf("error parsing resource id: %s", err)
 		}
 
-		var projectID, endpoint string
-		if id, ok := rs.Primary.Attributes["project_id"]; ok {
-			projectID = id
-		}
-		if region, ok := rs.Primary.Attributes["region"]; ok {
-			endpoint = getMKSClusterV1Endpoint(region)
-		}
-
-		config := testAccProvider.Meta().(*Config)
-		resellV2Client := config.resellV2Client()
 		ctx := context.Background()
 
-		tokenOpts := tokens.TokenOpts{
-			ProjectID: projectID,
-		}
-		token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-		if err != nil {
-			return errCreatingObject(objectToken, err)
+		r := resourceMKSClusterV1()
+		d := r.TestResourceData()
+
+		d.Set("project_id", rs.Primary.Attributes["project_id"])
+		d.Set("region", rs.Primary.Attributes["region"])
+
+		mksClient, _ := getMKSClient(ctx, d, testAccProvider.Meta())
+		if mksClient == nil {
+			return errors.New("authentication failed")
 		}
 
-		mksClient := v1.NewMKSClientV1(token.ID, endpoint)
 		foundNodegroup, _, err := nodegroup.Get(ctx, mksClient, clusterID, nodegroupID)
 		if err != nil {
 			return err

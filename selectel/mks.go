@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
 	"github.com/selectel/mks-go/pkg/v1/kubeoptions"
@@ -56,8 +55,7 @@ func getMKSClusterV1Endpoint(region string) (endpoint string) {
 	return
 }
 
-func waitForMKSClusterV1ActiveState(
-	ctx context.Context, client *v1.ServiceClient, clusterID string, timeout time.Duration) error {
+func waitForMKSClusterV1ActiveState(ctx context.Context, client *v1.ServiceClient, clusterID string, timeout time.Duration) error {
 	pending := []string{
 		string(cluster.StatusPendingCreate),
 		string(cluster.StatusPendingUpdate),
@@ -89,8 +87,7 @@ func waitForMKSClusterV1ActiveState(
 	return nil
 }
 
-func mksClusterV1StateRefreshFunc(
-	ctx context.Context, client *v1.ServiceClient, clusterID string) resource.StateRefreshFunc {
+func mksClusterV1StateRefreshFunc(ctx context.Context, client *v1.ServiceClient, clusterID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		c, _, err := cluster.Get(ctx, client, clusterID)
 		if err != nil {
@@ -575,19 +572,14 @@ func expandMKSNodegroupV1Labels(labels map[string]interface{}) map[string]string
 
 func getMKSClient(ctx context.Context, d *schema.ResourceData, meta interface{}) (*v1.ServiceClient, diag.Diagnostics) {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
-	}
-
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-	if err != nil {
-		return nil, diag.FromErr(errCreatingObject(objectToken, err))
-	}
-
 	region := d.Get("region").(string)
+	projectID := d.Get("project_id").(string)
 	endpoint := getMKSClusterV1Endpoint(region)
-	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
+	tokenID, err := config.getToken(ctx, projectID, region)
+	if err != nil {
+		return nil, diag.FromErr((errCreatingObject(objectToken, err)))
+	}
+	mksClient := v1.NewMKSClientV1(tokenID, endpoint)
 
 	return mksClient, nil
 }
