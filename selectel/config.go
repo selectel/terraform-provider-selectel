@@ -35,7 +35,7 @@ type Config struct {
 
 // Validate performs config validation.
 func (c *Config) Validate() error {
-	if c.Token == "" && !c.isKeystoneCredentials() {
+	if c.Token == "" && !c.hasKeystoneCredentials() {
 		return errors.New("token or credentials with domain name must be specified")
 	}
 	if c.Endpoint == "" {
@@ -60,21 +60,16 @@ func (c *Config) resellV2Client() *selvpcclient.ServiceClient {
 
 // Create Keystone token by Selectel token or Keystone credentials.
 func (c *Config) getToken(ctx context.Context, p string, r string) (string, error) {
-	if !c.isKeystoneCredentials() {
+	if !c.hasKeystoneCredentials() {
 		return c.getTokenBySelectelToken(ctx, p, r)
 	}
 
 	return c.getTokenByCredentials(ctx, p, r)
 }
 
-// useSelectelToken will determine which auth type to use:
-// either the Selectel token or Keystone credentials.
-func (c *Config) isKeystoneCredentials() bool {
-	if c.User == "" || c.Password == "" || c.DomainName == "" {
-		return false
-	}
-
-	return true
+// hasKeystoneCredentials determine Keystone credentials exists.
+func (c *Config) hasKeystoneCredentials() bool {
+	return c.User != "" && c.Password != "" && c.DomainName != ""
 }
 
 // Create Keystone token by Selectel token.

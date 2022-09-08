@@ -62,6 +62,6 @@ func TestIsKeystoneCredentials(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		assert.Equal(t, tc.expected, tc.config.isKeystoneCredentials())
+		assert.Equal(t, tc.expected, tc.config.hasKeystoneCredentials())
 	}
 }
