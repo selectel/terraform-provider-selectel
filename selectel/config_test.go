@@ -46,7 +46,7 @@ func TestValidateErrRegion(t *testing.T) {
 	assert.EqualError(t, actual, expected)
 }
 
-func TestIsKeystoneCredentials(t *testing.T) {
+func TestHasKeystoneCredentials(t *testing.T) {
 	type test struct {
 		config   *Config
 		expected bool
