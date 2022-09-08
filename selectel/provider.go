@@ -55,7 +55,7 @@ func Provider() *schema.Provider {
 				Type:         schema.TypeString,
 				Optional:     true,
 				RequiredWith: []string{"password", "domain_name"},
-				DefaultFunc:  schema.EnvDefaultFunc("SEL_USER", nil),
+				DefaultFunc:  schema.EnvDefaultFunc("OS_USERNAME", nil),
 				Description:  "Cloud user.",
 			},
 			"password": {
@@ -63,27 +63,27 @@ func Provider() *schema.Provider {
 				Optional:     true,
 				Sensitive:    true,
 				RequiredWith: []string{"user", "domain_name"},
-				DefaultFunc:  schema.EnvDefaultFunc("SEL_PASSWORD", nil),
+				DefaultFunc:  schema.EnvDefaultFunc("OS_PASSWORD", nil),
 				Description:  "Cloud user password.",
 			},
 			"domain_name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				RequiredWith: []string{"user", "password"},
-				DefaultFunc:  schema.EnvDefaultFunc("SEL_DOMAIN_NAME", nil),
-				Description:  "Cloud domain ID to import resources that need the project scope auth token.",
-			},
-			"endpoint": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("SEL_ENDPOINT", nil),
-				Description: "Base endpoint to work with the Selectel API.",
+				DefaultFunc:  schema.EnvDefaultFunc("OS_DOMAIN_NAME", nil),
+				Description:  "Cloud domain name.",
 			},
 			"auth_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("OS_AUTH_URL", nil),
 				Description: "Base endpoint to work with the Keystone API.",
+			},
+			"endpoint": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("SEL_ENDPOINT", nil),
+				Description: "Base endpoint to work with the Selectel API.",
 			},
 			"region": {
 				Type:     schema.TypeString,
@@ -165,7 +165,7 @@ func configureProvider(_ context.Context, d *schema.ResourceData) (interface{}, 
 		config.Endpoint = v.(string)
 	}
 	if v, ok := d.GetOk("auth_url"); ok {
-		config.OSEndpoint = v.(string)
+		config.IdentityEndpoint = v.(string)
 	}
 	if v, ok := d.GetOk("domain_name"); ok {
 		config.DomainName = v.(string)

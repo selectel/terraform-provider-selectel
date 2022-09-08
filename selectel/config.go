@@ -18,19 +18,19 @@ import (
 )
 
 const (
-	DefaultOSEndpoint = "https://api.selvpc.ru/identity/v3"
+	DefaultIdentityEndpoint = "https://api.selvpc.ru/identity/v3"
 )
 
 // Config contains all available configuration options.
 type Config struct {
-	Token      string
-	OSEndpoint string
-	Endpoint   string
-	ProjectID  string
-	DomainName string
-	Region     string
-	User       string
-	Password   string
+	Token            string
+	IdentityEndpoint string
+	Endpoint         string
+	ProjectID        string
+	DomainName       string
+	Region           string
+	User             string
+	Password         string
 }
 
 // Validate performs config validation.
@@ -46,8 +46,8 @@ func (c *Config) Validate() error {
 			return err
 		}
 	}
-	if c.OSEndpoint == "" {
-		c.OSEndpoint = DefaultOSEndpoint
+	if c.IdentityEndpoint == "" {
+		c.IdentityEndpoint = DefaultIdentityEndpoint
 	}
 
 	return nil
@@ -92,7 +92,7 @@ func (c *Config) getTokenBySelectelToken(ctx context.Context, p string, r string
 func (c *Config) getTokenByCredentials(ctx context.Context, p string, r string) (string, error) {
 	providerOpts := gophercloud.AuthOptions{
 		AllowReauth:      true,
-		IdentityEndpoint: c.OSEndpoint,
+		IdentityEndpoint: c.IdentityEndpoint,
 		Username:         c.User,
 		Password:         c.Password,
 		DomainName:       c.DomainName,
