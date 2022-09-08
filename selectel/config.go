@@ -82,10 +82,10 @@ func (c *Config) getTokenBySelectelToken(ctx context.Context, p string, r string
 
 	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("create Keystone token by Selectel token: %w", err)
 	}
 
-	return token.ID, err
+	return token.ID, nil
 }
 
 // Create Keystone token by Keystone credentials.
@@ -103,20 +103,14 @@ func (c *Config) getTokenByCredentials(ctx context.Context, p string, r string) 
 
 	newProvider, err := openstack.AuthenticatedClient(providerOpts)
 	if err != nil {
-		fmt.Println(err)
+		return "", fmt.Errorf("keystone auth: %w", err)
+	}
+	tokenID, err := newProvider.GetAuthResult().ExtractTokenID()
+	if err != nil {
+		return "", fmt.Errorf("extract token id: %w", err)
 	}
 
-	var tokenID string
-	if newProvider != nil {
-		tokenID, err = newProvider.GetAuthResult().ExtractTokenID()
-		if err != nil {
-			fmt.Println(err)
-		}
-	} else {
-		return "", errors.New("authentication failed")
-	}
-
-	return tokenID, err
+	return tokenID, nil
 }
 
 // Initialize Selectel domains client.
