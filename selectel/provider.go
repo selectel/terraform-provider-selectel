@@ -5,7 +5,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/mutexkv"
 )
 
@@ -86,16 +85,8 @@ func Provider() *schema.Provider {
 				Description: "Base endpoint to work with the Selectel API.",
 			},
 			"region": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					ru1Region,
-					ru2Region,
-					ru3Region,
-					ru7Region,
-					ru8Region,
-					ru9Region,
-				}, false),
+				Type:        schema.TypeString,
+				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SEL_REGION", nil),
 				Description: "Cloud region to import resources associated with the specific region.",
 			},
