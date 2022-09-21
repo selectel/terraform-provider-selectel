@@ -27,6 +27,7 @@ const (
 	ru7DBaaSV1Endpoint = "https://ru-7.dbaas.selcloud.ru/v1"
 	ru8DBaaSV1Endpoint = "https://ru-8.dbaas.selcloud.ru/v1"
 	ru9DBaaSV1Endpoint = "https://ru-9.dbaas.selcloud.ru/v1"
+	nl1DBaaSV1Endpoint = "https://nl-1.dbaas.selcloud.ru/v1"
 )
 
 func getDBaaSV1Endpoint(region string) (endpoint string) {
@@ -43,6 +44,8 @@ func getDBaaSV1Endpoint(region string) (endpoint string) {
 		endpoint = ru8DBaaSV1Endpoint
 	case ru9Region:
 		endpoint = ru9DBaaSV1Endpoint
+	case nl1Region:
+		endpoint = nl1DBaaSV1Endpoint
 	}
 
 	return
@@ -147,20 +150,6 @@ func flavorSchema() *schema.Resource {
 
 func flavorHashSetFunc() schema.SchemaSetFunc {
 	return schema.HashResource(flavorSchema())
-}
-
-func convertFieldFromStringToType(fieldValue string) interface{} {
-	if val, err := strconv.Atoi(fieldValue); err == nil {
-		return val
-	} else if val, err := strconv.ParseFloat(fieldValue, 64); err == nil {
-		return val
-	} else if val, err := strconv.ParseFloat(fieldValue, 32); err == nil {
-		return val
-	} else if val, err := strconv.ParseBool(fieldValue); err == nil {
-		return val
-	} else {
-		return fieldValue
-	}
 }
 
 func waitForDBaaSDatastoreV1ActiveState(
@@ -361,12 +350,7 @@ func updateDatastoreConfig(ctx context.Context, d *schema.ResourceData, client *
 	if err != nil {
 		return err
 	}
-	configMap := d.Get("config").(map[string]interface{})
-	config := make(map[string]interface{})
-	for paramName, paramValue := range configMap {
-		paramValueStr := paramValue.(string)
-		config[paramName] = convertFieldFromStringToType(paramValueStr)
-	}
+	config := d.Get("config").(map[string]interface{})
 
 	for param := range datastore.Config {
 		if _, ok := config[param]; !ok {

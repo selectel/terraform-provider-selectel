@@ -46,6 +46,7 @@ func resourceDBaaSExtensionV1() *schema.Resource {
 					ru7Region,
 					ru8Region,
 					ru9Region,
+					nl1Region,
 				}, false),
 			},
 			"available_extension_id": {

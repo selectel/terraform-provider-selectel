@@ -52,6 +52,7 @@ func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
 					ru7Region,
 					ru8Region,
 					ru9Region,
+					nl1Region,
 				}, false),
 			},
 			"subnet_id": {
@@ -166,7 +167,7 @@ func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"datastore_id": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 							ForceNew: false,
 						},
 						"target_time": {
@@ -221,13 +222,6 @@ func resourceDBaaSPostgreSQLDatastoreV1Create(ctx context.Context, d *schema.Res
 		return diag.FromErr(errParseDatastoreV1Restore(err))
 	}
 
-	configMap := d.Get("config").(map[string]interface{})
-	config := make(map[string]interface{})
-	for paramName, paramValue := range configMap {
-		paramValueStr := paramValue.(string)
-		config[paramName] = convertFieldFromStringToType(paramValueStr)
-	}
-
 	datastoreCreateOpts := dbaas.DatastoreCreateOpts{
 		Name:      d.Get("name").(string),
 		TypeID:    typeID,
@@ -235,7 +229,7 @@ func resourceDBaaSPostgreSQLDatastoreV1Create(ctx context.Context, d *schema.Res
 		NodeCount: d.Get("node_count").(int),
 		Pooler:    pooler,
 		Restore:   restore,
-		Config:    config,
+		Config:    d.Get("config").(map[string]interface{}),
 	}
 
 	if flavorOk {

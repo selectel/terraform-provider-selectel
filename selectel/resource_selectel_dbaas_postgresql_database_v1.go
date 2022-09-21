@@ -52,6 +52,7 @@ func resourceDBaaSPostgreSQLDatabaseV1() *schema.Resource {
 					ru7Region,
 					ru8Region,
 					ru9Region,
+					nl1Region,
 				}, false),
 			},
 			"datastore_id": {
