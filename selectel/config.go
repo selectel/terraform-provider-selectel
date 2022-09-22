@@ -59,12 +59,12 @@ func (c *Config) resellV2Client() *selvpcclient.ServiceClient {
 }
 
 // Create Keystone token by Selectel token or Keystone credentials.
-func (c *Config) getToken(ctx context.Context, p string, r string) (string, error) {
+func (c *Config) getToken(ctx context.Context, projectID string) (string, error) {
 	if !c.hasKeystoneCredentials() {
-		return c.getTokenBySelectelToken(ctx, p, r)
+		return c.getTokenBySelectelToken(ctx, projectID)
 	}
 
-	return c.getTokenByCredentials(ctx, p, r)
+	return c.getTokenByCredentials(ctx, projectID)
 }
 
 // hasKeystoneCredentials determine Keystone credentials exists.
@@ -73,9 +73,9 @@ func (c *Config) hasKeystoneCredentials() bool {
 }
 
 // Create Keystone token by Selectel token.
-func (c *Config) getTokenBySelectelToken(ctx context.Context, p string, r string) (string, error) {
+func (c *Config) getTokenBySelectelToken(ctx context.Context, projectID string) (string, error) {
 	tokenOpts := tokens.TokenOpts{
-		ProjectID: p,
+		ProjectID: projectID,
 	}
 	resellV2Client := c.resellV2Client()
 	log.Print(msgCreate(objectToken, tokenOpts))
@@ -89,7 +89,7 @@ func (c *Config) getTokenBySelectelToken(ctx context.Context, p string, r string
 }
 
 // Create Keystone token by Keystone credentials.
-func (c *Config) getTokenByCredentials(ctx context.Context, p string, r string) (string, error) {
+func (c *Config) getTokenByCredentials(ctx context.Context, projectID string) (string, error) {
 	providerOpts := gophercloud.AuthOptions{
 		AllowReauth:      true,
 		IdentityEndpoint: c.IdentityEndpoint,
@@ -97,7 +97,7 @@ func (c *Config) getTokenByCredentials(ctx context.Context, p string, r string) 
 		Password:         c.Password,
 		DomainName:       c.DomainName,
 		Scope: &gophercloud.AuthScope{
-			ProjectID: p,
+			ProjectID: projectID,
 		},
 	}
 

@@ -54,7 +54,7 @@ func getDBaaSClient(ctx context.Context, d *schema.ResourceData, meta interface{
 	region := d.Get("region").(string)
 	projectID := d.Get("project_id").(string)
 	endpoint := getDBaaSV1Endpoint(region)
-	tokenID, err := config.getToken(ctx, projectID, region)
+	tokenID, err := config.getToken(ctx, projectID)
 	if err != nil {
 		return nil, diag.FromErr((errCreatingObject(objectToken, err)))
 	}
@@ -88,7 +88,7 @@ func stringListChecksum(s []string) (string, error) {
 }
 
 func baseTestAccCheckDBaaSV1EntityExists(ctx context.Context, rs *terraform.ResourceState, testAccProvider *schema.Provider) (*dbaas.API, error) {
-	var projectID, region, endpoint string
+	var projectID, endpoint string
 	if id, ok := rs.Primary.Attributes["project_id"]; ok {
 		projectID = id
 	}
@@ -96,7 +96,7 @@ func baseTestAccCheckDBaaSV1EntityExists(ctx context.Context, rs *terraform.Reso
 		endpoint = getDBaaSV1Endpoint(region)
 	}
 	config := testAccProvider.Meta().(*Config)
-	tokenID, err := config.getToken(ctx, projectID, region)
+	tokenID, err := config.getToken(ctx, projectID)
 	if err != nil {
 		return nil, errCreatingObject(objectToken, err)
 	}

@@ -164,6 +164,9 @@ func configureProvider(_ context.Context, d *schema.ResourceData) (interface{}, 
 	if v, ok := d.GetOk("region"); ok {
 		config.Region = v.(string)
 	}
+	if v, ok := d.GetOk("project_id"); ok {
+		config.ProjectID = v.(string)
+	}
 	if err := config.Validate(); err != nil {
 		return nil, diag.FromErr(err)
 	}
