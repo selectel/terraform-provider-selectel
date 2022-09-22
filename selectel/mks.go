@@ -577,7 +577,7 @@ func getMKSClient(ctx context.Context, d *schema.ResourceData, meta interface{})
 	endpoint := getMKSClusterV1Endpoint(region)
 	tokenID, err := config.getToken(ctx, projectID)
 	if err != nil {
-		return nil, diag.FromErr((errCreatingObject(objectToken, err)))
+		return nil, diag.FromErr((errGettingObjects(objectToken, err)))
 	}
 	mksClient := v1.NewMKSClientV1(tokenID, endpoint)
 
