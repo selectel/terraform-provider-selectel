@@ -6,7 +6,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.6.6
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.10.1
 	github.com/selectel/dbaas-go v0.7.0
-	github.com/selectel/domains-go v0.3.0
+	github.com/selectel/domains-go v0.4.0
 	github.com/selectel/go-selvpcclient v1.12.0
 	github.com/selectel/mks-go v0.12.0
 	github.com/stretchr/testify v1.7.0
