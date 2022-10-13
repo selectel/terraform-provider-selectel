@@ -21,7 +21,6 @@ IMPROVEMENTS:
 
 * Added `nodegroup_type` attribute to `selectel_mks_nodegroup_v1` resource ([#202](https://github.com/selectel/terraform-provider-selectel/issues/202))
 * Added handling for private kube API clusters to `selectel_mks_cluster_v1` resource ([#204](https://github.com/selectel/terraform-provider-selectel/pull/204))
-* Added support for ALIAS, CAA and SSHFP dns records to `selectel_domains_record_v1` resource ([#210](https://github.com/selectel/terraform-provider-selectel/issues/210))
 
 DEPRECATED:
 
