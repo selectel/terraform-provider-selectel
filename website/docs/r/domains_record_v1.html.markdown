@@ -77,6 +77,33 @@ resource "selectel_domains_record_v1" "srv_record_1" {
   weight = 20
   port = 100
 }
+
+resource "selectel_domains_record_v1" "caa_record_1" {
+  domain_id = selectel_domains_domain_v1.main_domain.id
+  name = format("caa.%s", selectel_domains_domain_v1.main_domain.name)
+  type = "CAA"
+  tag = "issue"
+  flag = 128
+  value = "letsencrypt.com"
+  ttl = 60
+}
+
+resource "selectel_domains_record_v1" "sshfp_record_1" {
+  domain_id = selectel_domains_domain_v1.main_domain.id
+  name = format("%s", selectel_domains_domain_v1.main_domain.name)
+  type = "SSHFP"
+  algorithm = 1
+  fingerprint_type = 1
+  fingerprint = "01AA"
+  ttl = 60
+}
+resource "selectel_domains_record_v1" "alias_record_1" {
+  domain_id = selectel_domains_domain_v1.main_domain.id
+  name = format("subc.%s", selectel_domains_domain_v1.main_domain.name)
+  type = "ALIAS"
+  content = format("%s", selectel_domains_domain_v1.main_domain.name)
+  ttl = 60
+}
 ```
 
 ## Argument Reference
@@ -113,6 +140,24 @@ The following arguments are supported:
 * `target` - (Optional) Represents a canonical hostname of the machine providing the service.
  For SRV records only.
 
+* `tag` - (Optional) Represents the identifier of the property represented by the record.
+ For CAA records only.
+
+* `flag` - (Optional) Represents the critical flag, that has a specific meaning per RFC.
+ For CAA records only.
+
+* `value` - (Optional) Represents a value associated with the tag.
+ For CAA records only.
+
+* `algorithm` - (Optional) Represents the algorithm of the public key.
+ For SSHFP records only.
+
+* `fingerprint_type` - (Optional) Represents an algorithm used to hash the public key.
+ For SSHFP records only.
+
+* `fingerprint` - (Optional) Represents a hexadecimal hash result, as text.
+ For SSHFP records only.
+
 ## Attributes Reference
 
 The following attributes are exported:
@@ -129,6 +174,18 @@ The following attributes are exported:
 * `port` - Represents TCP or UDP port on which the service is to be found.
 
 * `target` - Represents a canonical hostname of the machine providing the service.
+
+* `tag` - Represents the identifier of the property represented by the record.
+
+* `flag` - Represents the critical flag, that has a specific meaning per RFC.
+
+* `value` - Represents a value associated with the tag.
+
+* `algorithm` - Represents th algorithm of the public key.
+
+* `fingerprint_type` - Represents an algorithm used to hash the public key.
+
+* `fingerprint` - Represents a hexadecimal hash result, as text.
 
 ## Import
 
