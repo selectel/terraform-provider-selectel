@@ -197,9 +197,6 @@ func TestAccDBaaSDatastoreV1RedisBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
-					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(1)),
-					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(2048)),
-					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(20)),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.maxmemory-policy", "volatile-lru"),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
@@ -216,9 +213,6 @@ func TestAccDBaaSDatastoreV1RedisBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
-					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(1)),
-					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(2048)),
-					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(20)),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.maxmemory-policy", "noeviction"),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
@@ -235,9 +229,6 @@ func TestAccDBaaSDatastoreV1RedisBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
-					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(1)),
-					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(2048)),
-					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(20)),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.maxmemory-policy", "noeviction"),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
@@ -254,9 +245,6 @@ func TestAccDBaaSDatastoreV1RedisBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(resizeNodeCount)),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
-					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(1)),
-					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(2048)),
-					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(20)),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "config.maxmemory-policy", "noeviction"),
 					resource.TestCheckResourceAttr("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
@@ -795,7 +783,7 @@ data "selectel_dbaas_flavor_v1" "flavor" {
 	type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
 	subnet_id = "${selectel_vpc_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
 	node_count = "%d"
-	flavor_id = "${data.selectel_dbaas_flavor_v1.flavor.flavors[1].id}"
+	flavor_id = "${data.selectel_dbaas_flavor_v1.flavor.flavors[0].id}"
 	config = {
 	  maxmemory-policy = "noeviction"
 	}
