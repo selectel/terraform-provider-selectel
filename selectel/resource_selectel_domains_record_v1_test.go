@@ -447,7 +447,8 @@ func testAccDomainsRecordV1Basic(
 	recordNameSRV,
 	recordNameCAA,
 	recordNameALIAS,
-	recordNameSSHFP string) string {
+	recordNameSSHFP string,
+) string {
 	return fmt.Sprintf(`
 resource "selectel_domains_domain_v1" "domain_tf_acc_test_1" {
   name = "%s"
@@ -565,7 +566,8 @@ func testAccDomainsRecordV1Update(
 	recordNameSRV,
 	recordNameCAA,
 	recordNameALIAS,
-	recordNameSSHFP string) string {
+	recordNameSSHFP string,
+) string {
 	return fmt.Sprintf(`
 resource "selectel_domains_domain_v1" "domain_tf_acc_test_1" {
   name = "%s"
@@ -639,7 +641,7 @@ resource "selectel_domains_record_v1" "record_caa_tf_acc_test_1" {
 	ttl = 120
 	tag = "issuewild"
 	flag = 255
-	value = "letsencrypt2.com"
+	value = "letsencrypt-2.com"
 }
 resource "selectel_domains_record_v1" "record_alias_tf_acc_test_1" {
 	domain_id = selectel_domains_domain_v1.domain_tf_acc_test_1.id
