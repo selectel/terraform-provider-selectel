@@ -20,7 +20,6 @@ func TestAccDBaaSMySQLDatastoreV1Basic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
 	nodeCount := 1
-	resizeNodeCount := 3
 
 	updatedDatastoreName := acctest.RandomWithPrefix("tf-acc-ds-updated")
 
@@ -91,13 +90,13 @@ func TestAccDBaaSMySQLDatastoreV1Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccDBaaSMySQLDatastoreV1Resize(projectName, updatedDatastoreName, resizeNodeCount),
+				Config: testAccDBaaSMySQLDatastoreV1Resize(projectName, updatedDatastoreName, nodeCount),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccCheckDBaaSDatastoreV1Exists("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", &dbaasDatastore),
 					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "name", updatedDatastoreName),
 					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "region", "ru-3"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(resizeNodeCount)),
+					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
 					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
 					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
 					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(2)),
@@ -112,13 +111,13 @@ func TestAccDBaaSMySQLDatastoreV1Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccDBaaSMySQLDatastoreV1UpdateConfig(projectName, updatedDatastoreName, resizeNodeCount),
+				Config: testAccDBaaSMySQLDatastoreV1UpdateConfig(projectName, updatedDatastoreName, nodeCount),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccCheckDBaaSDatastoreV1Exists("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", &dbaasDatastore),
 					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "name", updatedDatastoreName),
 					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "region", "ru-3"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(resizeNodeCount)),
+					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
 					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
 					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
 					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(2)),
