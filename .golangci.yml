@@ -54,7 +54,7 @@ linters:
 
 linters-settings:
   dupl:
-    threshold: 300
+    threshold: 425
   nlreturn:
     block-size: 3
 

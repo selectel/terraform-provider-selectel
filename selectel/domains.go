@@ -21,6 +21,9 @@ const (
 	TypeRecordSOA   string = "SOA"
 	TypeRecordMX    string = "MX"
 	TypeRecordSRV   string = "SRV"
+	TypeRecordCAA   string = "CAA"
+	TypeRecordSSHFP string = "SSHFP"
+	TypeRecordALIAS string = "ALIAS"
 )
 
 func domainsV1ParseDomainRecordIDsPair(id string) (int, int, error) {
