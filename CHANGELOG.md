@@ -1,3 +1,20 @@
+## 3.9.0 (Unreleased)
+
+FEATURES:
+
+* __New Resource:__ `selectel_dbaas_postgresql_datastore_v1` ([#206](https://github.com/selectel/terraform-provider-selectel/pull/206))
+* __New Resource:__ `selectel_dbaas_mysql_datastore_v1` ([#206](https://github.com/selectel/terraform-provider-selectel/pull/206))
+* __New Resource:__ `selectel_dbaas_redis_datastore_v1` ([#206](https://github.com/selectel/terraform-provider-selectel/pull/206))
+* __New Resource:__ `selectel_dbaas_postgresql_database_v1` ([#206](https://github.com/selectel/terraform-provider-selectel/pull/206))
+* __New Resource:__ `selectel_dbaas_mysql_database_v1` ([#206](https://github.com/selectel/terraform-provider-selectel/pull/206))
+* __New Resource:__ `selectel_dbaas_postgresql_extension_v1` ([#206](https://github.com/selectel/terraform-provider-selectel/pull/206))
+
+DEPRECATED:
+
+* `selectel_dbaas_datastore_v1` resource marked as deprecated and is going to be removed ([#206](https://github.com/selectel/terraform-provider-selectel/pull/206))
+* `selectel_dbaas_database_v1` resource marked as deprecated and is going to be removed ([#206](https://github.com/selectel/terraform-provider-selectel/pull/206))
+* `selectel_dbaas_extension_v1` resource marked as deprecated and is going to be removed ([#206](https://github.com/selectel/terraform-provider-selectel/pull/206))
+
 ## 3.8.5 (Oct 14, 2022)
 
 IMPROVEMENTS:
