@@ -9,6 +9,10 @@ FEATURES:
 * __New Resource:__ `selectel_dbaas_mysql_database_v1` ([#206](https://github.com/selectel/terraform-provider-selectel/pull/206))
 * __New Resource:__ `selectel_dbaas_postgresql_extension_v1` ([#206](https://github.com/selectel/terraform-provider-selectel/pull/206))
 
+IMPROVEMENTS:
+
+* Added support for ALIAS, CAA and SSHFP DNS records to `selectel_domains_record_v1` resource ([#210](https://github.com/selectel/terraform-provider-selectel/issues/210))
+
 DEPRECATED:
 
 * `selectel_dbaas_datastore_v1` resource marked as deprecated and is going to be removed ([#206](https://github.com/selectel/terraform-provider-selectel/pull/206))
