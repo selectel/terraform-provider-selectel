@@ -16,13 +16,13 @@ import (
 	"github.com/selectel/dbaas-go"
 )
 
-func resourceDBaaSExtensionV1() *schema.Resource {
+func resourceDBaaSPostgreSQLExtensionV1() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceDBaaSExtensionV1Create,
-		ReadContext:   resourceDBaaSExtensionV1Read,
-		DeleteContext: resourceDBaaSExtensionV1Delete,
+		CreateContext: resourceDBaaSPostgreSQLExtensionV1Create,
+		ReadContext:   resourceDBaaSPostgreSQLExtensionV1Read,
+		DeleteContext: resourceDBaaSPostgreSQLExtensionV1Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceDBaaSExtensionV1ImportState,
+			StateContext: resourceDBaaSPostgreSQLExtensionV1ImportState,
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(60 * time.Minute),
@@ -72,7 +72,7 @@ func resourceDBaaSExtensionV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSExtensionV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLExtensionV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	datastoreID := d.Get("datastore_id").(string)
 
 	selMutexKV.Lock(datastoreID)
@@ -109,10 +109,10 @@ func resourceDBaaSExtensionV1Create(ctx context.Context, d *schema.ResourceData,
 
 	d.SetId(extension.ID)
 
-	return resourceDBaaSExtensionV1Read(ctx, d, meta)
+	return resourceDBaaSPostgreSQLExtensionV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSExtensionV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLExtensionV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -131,7 +131,7 @@ func resourceDBaaSExtensionV1Read(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func resourceDBaaSExtensionV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLExtensionV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	datastoreID := d.Get("datastore_id").(string)
 
 	selMutexKV.Lock(datastoreID)
@@ -171,7 +171,7 @@ func resourceDBaaSExtensionV1Delete(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceDBaaSExtensionV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSPostgreSQLExtensionV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")
@@ -184,60 +184,4 @@ func resourceDBaaSExtensionV1ImportState(_ context.Context, d *schema.ResourceDa
 	d.Set("region", config.Region)
 
 	return []*schema.ResourceData{d}, nil
-}
-
-func waitForDBaaSExtensionV1ActiveState(
-	ctx context.Context, client *dbaas.API, extensionID string, timeout time.Duration) error {
-	pending := []string{
-		string(dbaas.StatusPendingCreate),
-		string(dbaas.StatusPendingUpdate),
-	}
-	target := []string{
-		string(dbaas.StatusActive),
-	}
-
-	stateConf := &resource.StateChangeConf{
-		Pending:    pending,
-		Target:     target,
-		Refresh:    dbaasExtensionV1StateRefreshFunc(ctx, client, extensionID),
-		Timeout:    timeout,
-		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
-	}
-
-	_, err := stateConf.WaitForState()
-	if err != nil {
-		return fmt.Errorf(
-			"error waiting for the extension %s to become 'ACTIVE': %s",
-			extensionID, err)
-	}
-
-	return nil
-}
-
-func dbaasExtensionV1StateRefreshFunc(ctx context.Context, client *dbaas.API, extensionID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.Extension(ctx, extensionID)
-		if err != nil {
-			return nil, "", err
-		}
-
-		return d, string(d.Status), nil
-	}
-}
-
-func dbaasExtensionV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, extensionID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.Extension(ctx, extensionID)
-		if err != nil {
-			var dbaasError *dbaas.DBaaSAPIError
-			if errors.As(err, &dbaasError) {
-				return d, strconv.Itoa(dbaasError.StatusCode()), nil
-			}
-
-			return nil, "", err
-		}
-
-		return d, strconv.Itoa(200), err
-	}
 }

@@ -16,14 +16,14 @@ import (
 	"github.com/selectel/dbaas-go"
 )
 
-func resourceDBaaSDatabaseV1() *schema.Resource {
+func resourceDBaaSPostgreSQLDatabaseV1() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceDBaaSDatabaseV1Create,
-		ReadContext:   resourceDBaaSDatabaseV1Read,
-		UpdateContext: resourceDBaaSDatabaseV1Update,
-		DeleteContext: resourceDBaaSDatabaseV1Delete,
+		CreateContext: resourceDBaaSPostgreSQLDatabaseV1Create,
+		ReadContext:   resourceDBaaSPostgreSQLDatabaseV1Read,
+		UpdateContext: resourceDBaaSPostgreSQLDatabaseV1Update,
+		DeleteContext: resourceDBaaSPostgreSQLDatabaseV1Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceDBaaSDatabaseV1ImportState,
+			StateContext: resourceDBaaSPostgreSQLDatabaseV1ImportState,
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(60 * time.Minute),
@@ -85,7 +85,7 @@ func resourceDBaaSDatabaseV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSDatabaseV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLDatabaseV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	datastoreID := d.Get("datastore_id").(string)
 
 	selMutexKV.Lock(datastoreID)
@@ -119,10 +119,10 @@ func resourceDBaaSDatabaseV1Create(ctx context.Context, d *schema.ResourceData, 
 
 	d.SetId(database.ID)
 
-	return resourceDBaaSDatabaseV1Read(ctx, d, meta)
+	return resourceDBaaSPostgreSQLDatabaseV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSDatabaseV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLDatabaseV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -149,7 +149,7 @@ func resourceDBaaSDatabaseV1Read(ctx context.Context, d *schema.ResourceData, me
 	return nil
 }
 
-func resourceDBaaSDatabaseV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLDatabaseV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	datastoreID := d.Get("datastore_id").(string)
 
 	selMutexKV.Lock(datastoreID)
@@ -184,10 +184,10 @@ func resourceDBaaSDatabaseV1Update(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
-	return resourceDBaaSDatabaseV1Read(ctx, d, meta)
+	return resourceDBaaSPostgreSQLDatabaseV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSDatabaseV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLDatabaseV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	datastoreID := d.Get("datastore_id").(string)
 
 	selMutexKV.Lock(datastoreID)
@@ -229,7 +229,7 @@ func resourceDBaaSDatabaseV1Delete(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceDBaaSDatabaseV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSPostgreSQLDatabaseV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")

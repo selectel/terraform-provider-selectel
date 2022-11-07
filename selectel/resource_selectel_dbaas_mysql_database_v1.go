@@ -16,14 +16,13 @@ import (
 	"github.com/selectel/dbaas-go"
 )
 
-func resourceDBaaSDatabaseV1() *schema.Resource {
+func resourceDBaaSMySQLDatabaseV1() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceDBaaSDatabaseV1Create,
-		ReadContext:   resourceDBaaSDatabaseV1Read,
-		UpdateContext: resourceDBaaSDatabaseV1Update,
-		DeleteContext: resourceDBaaSDatabaseV1Delete,
+		CreateContext: resourceDBaaSMySQLDatabaseV1Create,
+		ReadContext:   resourceDBaaSMySQLDatabaseV1Read,
+		DeleteContext: resourceDBaaSMySQLDatabaseV1Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceDBaaSDatabaseV1ImportState,
+			StateContext: resourceDBaaSMySQLDatabaseV1ImportState,
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(60 * time.Minute),
@@ -60,23 +59,6 @@ func resourceDBaaSDatabaseV1() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-			"owner_id": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: false,
-			},
-			"lc_collate": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				ForceNew:         true,
-				DiffSuppressFunc: dbaasDatabaseV1LocaleDiffSuppressFunc,
-			},
-			"lc_ctype": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				ForceNew:         true,
-				DiffSuppressFunc: dbaasDatabaseV1LocaleDiffSuppressFunc,
-			},
 			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -85,7 +67,7 @@ func resourceDBaaSDatabaseV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSDatabaseV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSMySQLDatabaseV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	datastoreID := d.Get("datastore_id").(string)
 
 	selMutexKV.Lock(datastoreID)
@@ -99,9 +81,6 @@ func resourceDBaaSDatabaseV1Create(ctx context.Context, d *schema.ResourceData, 
 	databaseCreateOpts := dbaas.DatabaseCreateOpts{
 		DatastoreID: datastoreID,
 		Name:        d.Get("name").(string),
-		OwnerID:     d.Get("owner_id").(string),
-		LcCollate:   d.Get("lc_collate").(string),
-		LcCtype:     d.Get("lc_ctype").(string),
 	}
 
 	log.Print(msgCreate(objectDatabase, databaseCreateOpts))
@@ -119,10 +98,10 @@ func resourceDBaaSDatabaseV1Create(ctx context.Context, d *schema.ResourceData, 
 
 	d.SetId(database.ID)
 
-	return resourceDBaaSDatabaseV1Read(ctx, d, meta)
+	return resourceDBaaSMySQLDatabaseV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSDatabaseV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSMySQLDatabaseV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -136,58 +115,11 @@ func resourceDBaaSDatabaseV1Read(ctx context.Context, d *schema.ResourceData, me
 	d.Set("datastore_id", database.DatastoreID)
 	d.Set("name", database.Name)
 	d.Set("status", database.Status)
-	if database.OwnerID != "" {
-		d.Set("owner_id", database.OwnerID)
-	}
-	if database.LcCollate != "" {
-		d.Set("lc_collate", database.LcCollate)
-	}
-	if database.LcCtype != "" {
-		d.Set("lc_ctype", database.LcCtype)
-	}
 
 	return nil
 }
 
-func resourceDBaaSDatabaseV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	datastoreID := d.Get("datastore_id").(string)
-
-	selMutexKV.Lock(datastoreID)
-	defer selMutexKV.Unlock(datastoreID)
-
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
-	if diagErr != nil {
-		return diagErr
-	}
-
-	if d.HasChange("owner_id") {
-		ownerID := d.Get("owner_id").(string)
-
-		selMutexKV.Lock(ownerID)
-		defer selMutexKV.Unlock(ownerID)
-
-		updateOpts := dbaas.DatabaseUpdateOpts{
-			OwnerID: ownerID,
-		}
-
-		log.Print(msgUpdate(objectDatastore, d.Id(), updateOpts))
-		_, err := dbaasClient.UpdateDatabase(ctx, d.Id(), updateOpts)
-		if err != nil {
-			return diag.FromErr(errUpdatingObject(objectDatabase, d.Id(), err))
-		}
-
-		log.Printf("[DEBUG] waiting for database %s to become 'ACTIVE'", d.Id())
-		timeout := d.Timeout(schema.TimeoutCreate)
-		err = waitForDBaaSDatabaseV1ActiveState(ctx, dbaasClient, d.Id(), timeout)
-		if err != nil {
-			return diag.FromErr(errUpdatingObject(objectDatabase, d.Id(), err))
-		}
-	}
-
-	return resourceDBaaSDatabaseV1Read(ctx, d, meta)
-}
-
-func resourceDBaaSDatabaseV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSMySQLDatabaseV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	datastoreID := d.Get("datastore_id").(string)
 
 	selMutexKV.Lock(datastoreID)
@@ -229,7 +161,7 @@ func resourceDBaaSDatabaseV1Delete(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceDBaaSDatabaseV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSMySQLDatabaseV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")

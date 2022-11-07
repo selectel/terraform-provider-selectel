@@ -47,6 +47,7 @@ func resourceDBaaSUserV1() *schema.Resource {
 					ru7Region,
 					ru8Region,
 					ru9Region,
+					nl1Region,
 				}, false),
 			},
 			"name": {
@@ -207,60 +208,4 @@ func resourceDBaaSUserV1ImportState(_ context.Context, d *schema.ResourceData, m
 	d.Set("region", config.Region)
 
 	return []*schema.ResourceData{d}, nil
-}
-
-func waitForDBaaSUserV1ActiveState(
-	ctx context.Context, client *dbaas.API, userID string, timeout time.Duration) error {
-	pending := []string{
-		string(dbaas.StatusPendingCreate),
-		string(dbaas.StatusPendingUpdate),
-	}
-	target := []string{
-		string(dbaas.StatusActive),
-	}
-
-	stateConf := &resource.StateChangeConf{
-		Pending:    pending,
-		Target:     target,
-		Refresh:    dbaasUserV1StateRefreshFunc(ctx, client, userID),
-		Timeout:    timeout,
-		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
-	}
-
-	_, err := stateConf.WaitForState()
-	if err != nil {
-		return fmt.Errorf(
-			"error waiting for the user %s to become 'ACTIVE': %s",
-			userID, err)
-	}
-
-	return nil
-}
-
-func dbaasUserV1StateRefreshFunc(ctx context.Context, client *dbaas.API, userID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.User(ctx, userID)
-		if err != nil {
-			return nil, "", err
-		}
-
-		return d, string(d.Status), nil
-	}
-}
-
-func dbaasUserV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, userID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.User(ctx, userID)
-		if err != nil {
-			var dbaasError *dbaas.DBaaSAPIError
-			if errors.As(err, &dbaasError) {
-				return d, strconv.Itoa(dbaasError.StatusCode()), nil
-			}
-
-			return nil, "", err
-		}
-
-		return d, strconv.Itoa(200), err
-	}
 }

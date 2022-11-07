@@ -1,16 +1,14 @@
 ---
 layout: "selectel"
-page_title: "Selectel: selectel_dbaas_database_v1"
-sidebar_current: "docs-selectel-resource-dbaas-database-v1"
+page_title: "Selectel: selectel_dbaas_mysql_database_v1"
+sidebar_current: "docs-selectel-resource-dbaas-mysql-database-v1"
 description: |-
-  Manages a V1 database resource within Selectel Managed Databases Service.
+  Manages a V1 MySQL database resource within Selectel Managed Databases Service.
 ---
 
-# selectel\_dbaas\_database\_v1
+# selectel\_dbaas\_mysql\_database\_v1
 
-**WARNING**: This resource is deprecated and is going to be removed soon. You should use database resource for specific datastore type.
-
-Manages a V1 database resource within Selectel Managed Databases Service.
+Manages a V1 MySQL database resource within Selectel Managed Databases Service.
 
 ## Example usage
 
@@ -28,12 +26,12 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   project_id   = "${selectel_vpc_project_v2.project_1.id}"
   region       = "ru-3"
   filter {
-    engine  = "postgresql"
-    version = "12"
+    engine  = "mysql"
+    version = "8"
   }
 }
 
-resource "selectel_dbaas_datastore_v1" "datastore_1" {
+resource "selectel_dbaas_mysql_datastore_v1" "datastore_1" {
   name         = "datastore-1"
   project_id   = "${selectel_vpc_project_v2.project_1.id}"
   region       = "ru-3"
@@ -45,28 +43,13 @@ resource "selectel_dbaas_datastore_v1" "datastore_1" {
     ram   = 4096
     disk  = 32
   }
-  pooler {
-    mode = "transaction"
-    size = 50
-  }
 }
 
-resource "selectel_dbaas_user_v1" "user_1" {
+resource "selectel_dbaas_mysql_database_v1" "database_1" {
   project_id   = "${selectel_vpc_project_v2.project_1.id}"
   region       = "ru-3"
-  datastore_id = "${selectel_dbaas_datastore_v1.datastore_1.id}"
-  name         = "user"
-  password     = "secret"
-}
-
-resource "selectel_dbaas_database_v1" "database_1" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  datastore_id = "${selectel_dbaas_datastore_v1.datastore_1.id}"
-  owner_id     = "${selectel_dbaas_user_v1.user_1.id}"
+  datastore_id = "${selectel_dbaas_mysql_datastore_v1.datastore_1.id}"
   name         = "db"
-  lc_ctype     = "ru_RU.utf8"
-  lc_collate   = "ru_RU.utf8"
 }
 ```
 
@@ -85,12 +68,6 @@ The following arguments are supported:
 
 * `datastore_id` - (Required) An associated datastore.
   Changing this creates a new database.
-
-* `owner_id` - (Optional) Owner of the database. Required only for the PostgreSQL datastore. Can be omitted for the MySQL datastore.
-
-* `lc_collate` - (Optional) A lc_collate option for the PostreSQL datastore.
-
-* `lc_ctype` - (Optional) A lc_ctype option for the PostreSQL datastore.
 
 ## Attributes Reference
 

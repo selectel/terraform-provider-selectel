@@ -1,19 +1,16 @@
 package selectel
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/dbaas-go"
 	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
 )
 
-func TestAccDBaaSDatabaseV1Basic(t *testing.T) {
+func TestAccDBaaSPostgreSQLDatabaseV1Basic(t *testing.T) {
 	var (
 		dbaasDatabase dbaas.Database
 		project       projects.Project
@@ -33,72 +30,43 @@ func TestAccDBaaSDatabaseV1Basic(t *testing.T) {
 		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDBaaSDatabaseV1Basic(projectName, datastoreName, userName, userPassword, databaseName, nodeCount),
+				Config: testAccDBaaSPostgreSQLDatabaseV1Basic(projectName, datastoreName, userName, userPassword, databaseName, nodeCount),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckDBaaSDatabaseV1Exists("selectel_dbaas_database_v1.database_tf_acc_test_1", &dbaasDatabase),
-					resource.TestCheckResourceAttr("selectel_dbaas_database_v1.database_tf_acc_test_1", "name", databaseName),
-					resource.TestCheckResourceAttr("selectel_dbaas_database_v1.database_tf_acc_test_1", "lc_collate", "C"),
-					resource.TestCheckResourceAttr("selectel_dbaas_database_v1.database_tf_acc_test_1", "lc_ctype", "C"),
-					resource.TestCheckResourceAttr("selectel_dbaas_database_v1.database_tf_acc_test_1", "status", string(dbaas.StatusActive)),
+					testAccCheckDBaaSDatabaseV1Exists("selectel_dbaas_postgresql_database_v1.database_tf_acc_test_1", &dbaasDatabase),
+					resource.TestCheckResourceAttr("selectel_dbaas_postgresql_database_v1.database_tf_acc_test_1", "name", databaseName),
+					resource.TestCheckResourceAttr("selectel_dbaas_postgresql_database_v1.database_tf_acc_test_1", "lc_collate", "C"),
+					resource.TestCheckResourceAttr("selectel_dbaas_postgresql_database_v1.database_tf_acc_test_1", "lc_ctype", "C"),
+					resource.TestCheckResourceAttr("selectel_dbaas_postgresql_database_v1.database_tf_acc_test_1", "status", string(dbaas.StatusActive)),
 				),
 			},
 			{
-				Config: testAccDBaaSDatabaseV1UpdateLocale(projectName, datastoreName, userName, userPassword, databaseName, nodeCount),
+				Config: testAccDBaaSPostgreSQLDatabaseV1UpdateLocale(projectName, datastoreName, userName, userPassword, databaseName, nodeCount),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckDBaaSDatabaseV1Exists("selectel_dbaas_database_v1.database_tf_acc_test_1", &dbaasDatabase),
-					resource.TestCheckResourceAttr("selectel_dbaas_database_v1.database_tf_acc_test_1", "name", databaseName),
-					resource.TestCheckResourceAttr("selectel_dbaas_database_v1.database_tf_acc_test_1", "lc_collate", "ru_RU.utf8"),
-					resource.TestCheckResourceAttr("selectel_dbaas_database_v1.database_tf_acc_test_1", "lc_ctype", "ru_RU.utf8"),
-					resource.TestCheckResourceAttr("selectel_dbaas_database_v1.database_tf_acc_test_1", "status", string(dbaas.StatusActive)),
+					testAccCheckDBaaSDatabaseV1Exists("selectel_dbaas_postgresql_database_v1.database_tf_acc_test_1", &dbaasDatabase),
+					resource.TestCheckResourceAttr("selectel_dbaas_postgresql_database_v1.database_tf_acc_test_1", "name", databaseName),
+					resource.TestCheckResourceAttr("selectel_dbaas_postgresql_database_v1.database_tf_acc_test_1", "lc_collate", "ru_RU.utf8"),
+					resource.TestCheckResourceAttr("selectel_dbaas_postgresql_database_v1.database_tf_acc_test_1", "lc_ctype", "ru_RU.utf8"),
+					resource.TestCheckResourceAttr("selectel_dbaas_postgresql_database_v1.database_tf_acc_test_1", "status", string(dbaas.StatusActive)),
 				),
 			},
 			{
-				Config: testAccDBaaSDatabaseV1UpdateOwnerID(projectName, datastoreName, userName, userPassword, newUserName, databaseName, nodeCount),
+				Config: testAccDBaaSPostgreSQLDatabaseV1UpdateOwnerID(projectName, datastoreName, userName, userPassword, newUserName, databaseName, nodeCount),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckDBaaSDatabaseV1Exists("selectel_dbaas_database_v1.database_tf_acc_test_1", &dbaasDatabase),
-					resource.TestCheckResourceAttr("selectel_dbaas_database_v1.database_tf_acc_test_1", "name", databaseName),
-					resource.TestCheckResourceAttr("selectel_dbaas_database_v1.database_tf_acc_test_1", "lc_collate", "ru_RU.utf8"),
-					resource.TestCheckResourceAttr("selectel_dbaas_database_v1.database_tf_acc_test_1", "lc_ctype", "ru_RU.utf8"),
-					resource.TestCheckResourceAttr("selectel_dbaas_database_v1.database_tf_acc_test_1", "status", string(dbaas.StatusActive)),
+					testAccCheckDBaaSDatabaseV1Exists("selectel_dbaas_postgresql_database_v1.database_tf_acc_test_1", &dbaasDatabase),
+					resource.TestCheckResourceAttr("selectel_dbaas_postgresql_database_v1.database_tf_acc_test_1", "name", databaseName),
+					resource.TestCheckResourceAttr("selectel_dbaas_postgresql_database_v1.database_tf_acc_test_1", "lc_collate", "ru_RU.utf8"),
+					resource.TestCheckResourceAttr("selectel_dbaas_postgresql_database_v1.database_tf_acc_test_1", "lc_ctype", "ru_RU.utf8"),
+					resource.TestCheckResourceAttr("selectel_dbaas_postgresql_database_v1.database_tf_acc_test_1", "status", string(dbaas.StatusActive)),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckDBaaSDatabaseV1Exists(n string, dbaasDatabase *dbaas.Database) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("not found: %s", n)
-		}
-
-		ctx := context.Background()
-
-		dbaasClient, err := baseTestAccCheckDBaaSV1EntityExists(ctx, rs, testAccProvider)
-		if err != nil {
-			return err
-		}
-
-		database, err := dbaasClient.Database(ctx, rs.Primary.ID)
-		if err != nil {
-			return err
-		}
-
-		if database.ID != rs.Primary.ID {
-			return errors.New("database not found")
-		}
-
-		*dbaasDatabase = database
-
-		return nil
-	}
-}
-
-func testAccDBaaSDatabaseV1Basic(projectName, datastoreName, userName, userPassword, databaseName string, nodeCount int) string {
+func testAccDBaaSPostgreSQLDatabaseV1Basic(projectName, datastoreName, userName, userPassword, databaseName string, nodeCount int) string {
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
@@ -119,7 +87,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   }
 }
 
-resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
+resource "selectel_dbaas_postgresql_datastore_v1" "datastore_tf_acc_test_1" {
   name = "%s"
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
@@ -136,21 +104,21 @@ resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
 resource "selectel_dbaas_user_v1" "user_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
-  datastore_id = "${selectel_dbaas_datastore_v1.datastore_tf_acc_test_1.id}"
+  datastore_id = "${selectel_dbaas_postgresql_datastore_v1.datastore_tf_acc_test_1.id}"
   name = "%s"
   password = "%s"
 }
 
-resource "selectel_dbaas_database_v1" "database_tf_acc_test_1" {
+resource "selectel_dbaas_postgresql_database_v1" "database_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
-  datastore_id = "${selectel_dbaas_datastore_v1.datastore_tf_acc_test_1.id}"
+  datastore_id = "${selectel_dbaas_postgresql_datastore_v1.datastore_tf_acc_test_1.id}"
   name = "%s"
   owner_id = "${selectel_dbaas_user_v1.user_tf_acc_test_1.id}"
 }`, projectName, datastoreName, nodeCount, userName, userPassword, databaseName)
 }
 
-func testAccDBaaSDatabaseV1UpdateLocale(projectName, datastoreName, userName, userPassword, databaseName string, nodeCount int) string {
+func testAccDBaaSPostgreSQLDatabaseV1UpdateLocale(projectName, datastoreName, userName, userPassword, databaseName string, nodeCount int) string {
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
@@ -171,7 +139,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   }
 }
 
-resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
+resource "selectel_dbaas_postgresql_datastore_v1" "datastore_tf_acc_test_1" {
   name = "%s"
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
@@ -188,15 +156,15 @@ resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
 resource "selectel_dbaas_user_v1" "user_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
-  datastore_id = "${selectel_dbaas_datastore_v1.datastore_tf_acc_test_1.id}"
+  datastore_id = "${selectel_dbaas_postgresql_datastore_v1.datastore_tf_acc_test_1.id}"
   name = "%s"
   password = "%s"
 }
 
-resource "selectel_dbaas_database_v1" "database_tf_acc_test_1" {
+resource "selectel_dbaas_postgresql_database_v1" "database_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
-  datastore_id = "${selectel_dbaas_datastore_v1.datastore_tf_acc_test_1.id}"
+  datastore_id = "${selectel_dbaas_postgresql_datastore_v1.datastore_tf_acc_test_1.id}"
   name = "%s"
   owner_id = "${selectel_dbaas_user_v1.user_tf_acc_test_1.id}"
   lc_collate = "ru_RU.utf8"
@@ -204,7 +172,7 @@ resource "selectel_dbaas_database_v1" "database_tf_acc_test_1" {
 }`, projectName, datastoreName, nodeCount, userName, userPassword, databaseName)
 }
 
-func testAccDBaaSDatabaseV1UpdateOwnerID(projectName, datastoreName, userName, userPassword, newUserName, databaseName string, nodeCount int) string {
+func testAccDBaaSPostgreSQLDatabaseV1UpdateOwnerID(projectName, datastoreName, userName, userPassword, newUserName, databaseName string, nodeCount int) string {
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
@@ -225,7 +193,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   }
 }
 
-resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
+resource "selectel_dbaas_postgresql_datastore_v1" "datastore_tf_acc_test_1" {
   name = "%s"
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
@@ -242,7 +210,7 @@ resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
 resource "selectel_dbaas_user_v1" "user_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
-  datastore_id = "${selectel_dbaas_datastore_v1.datastore_tf_acc_test_1.id}"
+  datastore_id = "${selectel_dbaas_postgresql_datastore_v1.datastore_tf_acc_test_1.id}"
   name = "%s"
   password = "%s"
 }
@@ -250,15 +218,15 @@ resource "selectel_dbaas_user_v1" "user_tf_acc_test_1" {
 resource "selectel_dbaas_user_v1" "new_user_tf_acc_test_1" {
 	project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
 	region = "ru-3"
-	datastore_id = "${selectel_dbaas_datastore_v1.datastore_tf_acc_test_1.id}"
+	datastore_id = "${selectel_dbaas_postgresql_datastore_v1.datastore_tf_acc_test_1.id}"
 	name = "%s"
 	password = "%s"
   }
 
-resource "selectel_dbaas_database_v1" "database_tf_acc_test_1" {
+resource "selectel_dbaas_postgresql_database_v1" "database_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
-  datastore_id = "${selectel_dbaas_datastore_v1.datastore_tf_acc_test_1.id}"
+  datastore_id = "${selectel_dbaas_postgresql_datastore_v1.datastore_tf_acc_test_1.id}"
   name = "%s"
   owner_id = "${selectel_dbaas_user_v1.new_user_tf_acc_test_1.id}"
   lc_collate = "ru_RU.utf8"
