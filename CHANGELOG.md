@@ -1,4 +1,4 @@
-## 3.9.0 (Unreleased)
+## 3.9.0 (Nov 17, 2022)
 
 FEATURES:
 
