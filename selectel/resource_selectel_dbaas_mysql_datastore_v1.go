@@ -181,7 +181,7 @@ func resourceDBaaSMySQLDatastoreV1Create(ctx context.Context, d *schema.Resource
 	}
 
 	typeID := d.Get("type_id").(string)
-	diagErr = validateDatastoreType(ctx, []string{"mysql", "mysql_native"}, typeID, dbaasClient)
+	diagErr = validateDatastoreType(ctx, []string{mySQLDatastoreType, mySQLNativeDatastoreType}, typeID, dbaasClient)
 	if diagErr != nil {
 		return diagErr
 	}

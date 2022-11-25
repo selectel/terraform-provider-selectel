@@ -205,7 +205,7 @@ func resourceDBaaSPostgreSQLDatastoreV1Create(ctx context.Context, d *schema.Res
 	}
 
 	typeID := d.Get("type_id").(string)
-	diagErr = validateDatastoreType(ctx, []string{"postgresql"}, typeID, dbaasClient)
+	diagErr = validateDatastoreType(ctx, []string{postgreSQLDatastoreType}, typeID, dbaasClient)
 	if diagErr != nil {
 		return diagErr
 	}

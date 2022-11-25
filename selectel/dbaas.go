@@ -30,6 +30,13 @@ const (
 	uz1DBaaSV1Endpoint = "https://uz-1.dbaas.selcloud.ru/v1"
 )
 
+const (
+	postgreSQLDatastoreType  = "postgresql"
+	mySQLDatastoreType       = "mysql"
+	mySQLNativeDatastoreType = "mysql_native"
+	redisDatastoreType       = "redis"
+)
+
 func getDBaaSV1Endpoint(region string) (endpoint string) {
 	switch region {
 	case ru1Region:
@@ -426,6 +433,7 @@ func containeDatastoreType(expectedTypes []string, datastoreType string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -436,6 +444,7 @@ func buildDatastoreTypeErrorMEssage(expectedDatastoreTypeEngines []string, datas
 	} else {
 		baseMessage = "Provided datastore type must have an engine "
 	}
+
 	return baseMessage + strings.Join(expectedDatastoreTypeEngines, ", ") + " for this resource. But provided type is " + datastoreTypeEngine
 }
 

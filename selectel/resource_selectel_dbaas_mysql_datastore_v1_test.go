@@ -11,6 +11,39 @@ import (
 	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
 )
 
+type Flavor struct {
+	vcpus int
+	ram   int
+	disk  int
+}
+
+type MySQLConfig struct {
+	innodbChecksumAlgorithm string
+	autoIncrementOffset     int
+	autocommit              bool
+}
+
+func getCheckSteps(project projects.Project, dbaasDatastore dbaas.Datastore, datastoreName string, nodeCount, firewallRulesLen int, flavor Flavor, config MySQLConfig) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+		testAccCheckDBaaSDatastoreV1Exists("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", &dbaasDatastore),
+		resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "name", datastoreName),
+		resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "region", "ru-3"),
+		resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
+		resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
+		resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
+		resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(flavor.vcpus)),
+		resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(flavor.ram)),
+		resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(flavor.disk)),
+		resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.innodb_checksum_algorithm", config.innodbChecksumAlgorithm),
+		resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.auto_increment_offset", strconv.Itoa(config.autoIncrementOffset)),
+		resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.autocommit", strconv.FormatBool(config.autocommit)),
+		resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", strconv.Itoa(firewallRulesLen)),
+		resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
+		resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
+	)
+}
+
 func TestAccDBaaSMySQLDatastoreV1Basic(t *testing.T) {
 	var (
 		dbaasDatastore dbaas.Datastore
@@ -20,7 +53,7 @@ func TestAccDBaaSMySQLDatastoreV1Basic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
 	nodeCount := 1
-	datastoreTypeEngine := "mysql"
+	datastoreTypeEngine := mySQLDatastoreType
 
 	updatedDatastoreName := acctest.RandomWithPrefix("tf-acc-ds-updated")
 
@@ -31,106 +64,23 @@ func TestAccDBaaSMySQLDatastoreV1Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDBaaSMySQLDatastoreV1Basic(projectName, datastoreName, datastoreTypeEngine, nodeCount),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckDBaaSDatastoreV1Exists("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", &dbaasDatastore),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "name", datastoreName),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "region", "ru-3"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(4096)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(32)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.innodb_checksum_algorithm", "strict_innodb"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.auto_increment_offset", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.autocommit", "false"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
-				),
+				Check:  getCheckSteps(project, dbaasDatastore, datastoreName, nodeCount, 0, Flavor{2, 4096, 32}, MySQLConfig{"strict_innodb", 2, false}),
 			},
 			{
 				Config: testAccDBaaSMySQLDatastoreV1UpdateName(projectName, updatedDatastoreName, datastoreTypeEngine, nodeCount),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckDBaaSDatastoreV1Exists("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", &dbaasDatastore),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "name", updatedDatastoreName),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "region", "ru-3"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(4096)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(32)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.innodb_checksum_algorithm", "strict_innodb"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.auto_increment_offset", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.autocommit", "false"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
-				),
+				Check:  getCheckSteps(project, dbaasDatastore, updatedDatastoreName, nodeCount, 0, Flavor{2, 4096, 32}, MySQLConfig{"strict_innodb", 2, false}),
 			},
 			{
 				Config: testAccDBaaSMySQLDatastoreV1UpdateFirewall(projectName, updatedDatastoreName, datastoreTypeEngine, nodeCount),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckDBaaSDatastoreV1Exists("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", &dbaasDatastore),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "name", updatedDatastoreName),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "region", "ru-3"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(4096)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(32)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.innodb_checksum_algorithm", "strict_innodb"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.auto_increment_offset", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.autocommit", "false"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
-				),
+				Check:  getCheckSteps(project, dbaasDatastore, updatedDatastoreName, nodeCount, 2, Flavor{2, 4096, 32}, MySQLConfig{"strict_innodb", 2, false}),
 			},
 			{
 				Config: testAccDBaaSMySQLDatastoreV1Resize(projectName, updatedDatastoreName, datastoreTypeEngine, nodeCount),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckDBaaSDatastoreV1Exists("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", &dbaasDatastore),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "name", updatedDatastoreName),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "region", "ru-3"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(8192)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(32)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.innodb_checksum_algorithm", "strict_innodb"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.auto_increment_offset", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.autocommit", "false"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
-				),
+				Check:  getCheckSteps(project, dbaasDatastore, updatedDatastoreName, nodeCount, 2, Flavor{2, 8192, 32}, MySQLConfig{"strict_innodb", 2, false}),
 			},
 			{
 				Config: testAccDBaaSMySQLDatastoreV1UpdateConfig(projectName, updatedDatastoreName, datastoreTypeEngine, nodeCount),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckDBaaSDatastoreV1Exists("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", &dbaasDatastore),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "name", updatedDatastoreName),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "region", "ru-3"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(8192)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(32)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.innodb_checksum_algorithm", "strict_innodb"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.auto_increment_offset", strconv.Itoa(4)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.autocommit", "true"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
-				),
+				Check:  getCheckSteps(project, dbaasDatastore, updatedDatastoreName, nodeCount, 2, Flavor{2, 8192, 32}, MySQLConfig{"strict_innodb", 4, true}),
 			},
 		},
 	})
@@ -145,7 +95,7 @@ func TestAccDBaaSMySQLNativeDatastoreV1Basic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
 	nodeCount := 1
-	datastoreTypeEngine := "mysql_native"
+	datastoreTypeEngine := mySQLNativeDatastoreType
 	resizeNodeCount := 2
 
 	updatedDatastoreName := acctest.RandomWithPrefix("tf-acc-ds-updated")
@@ -157,106 +107,23 @@ func TestAccDBaaSMySQLNativeDatastoreV1Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDBaaSMySQLDatastoreV1Basic(projectName, datastoreName, datastoreTypeEngine, nodeCount),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckDBaaSDatastoreV1Exists("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", &dbaasDatastore),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "name", datastoreName),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "region", "ru-3"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(4096)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(32)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.innodb_checksum_algorithm", "strict_innodb"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.auto_increment_offset", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.autocommit", "false"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
-				),
+				Check:  getCheckSteps(project, dbaasDatastore, datastoreName, nodeCount, 0, Flavor{2, 4096, 32}, MySQLConfig{"strict_innodb", 2, false}),
 			},
 			{
 				Config: testAccDBaaSMySQLDatastoreV1UpdateName(projectName, updatedDatastoreName, datastoreTypeEngine, nodeCount),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckDBaaSDatastoreV1Exists("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", &dbaasDatastore),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "name", updatedDatastoreName),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "region", "ru-3"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(4096)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(32)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.innodb_checksum_algorithm", "strict_innodb"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.auto_increment_offset", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.autocommit", "false"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
-				),
+				Check:  getCheckSteps(project, dbaasDatastore, updatedDatastoreName, nodeCount, 0, Flavor{2, 4096, 32}, MySQLConfig{"strict_innodb", 2, false}),
 			},
 			{
 				Config: testAccDBaaSMySQLDatastoreV1UpdateFirewall(projectName, updatedDatastoreName, datastoreTypeEngine, nodeCount),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckDBaaSDatastoreV1Exists("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", &dbaasDatastore),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "name", updatedDatastoreName),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "region", "ru-3"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(nodeCount)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(4096)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(32)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.innodb_checksum_algorithm", "strict_innodb"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.auto_increment_offset", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.autocommit", "false"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
-				),
+				Check:  getCheckSteps(project, dbaasDatastore, updatedDatastoreName, nodeCount, 2, Flavor{2, 4096, 32}, MySQLConfig{"strict_innodb", 2, false}),
 			},
 			{
 				Config: testAccDBaaSMySQLDatastoreV1Resize(projectName, updatedDatastoreName, datastoreTypeEngine, resizeNodeCount),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckDBaaSDatastoreV1Exists("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", &dbaasDatastore),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "name", updatedDatastoreName),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "region", "ru-3"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(resizeNodeCount)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(8192)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(32)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.innodb_checksum_algorithm", "strict_innodb"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.auto_increment_offset", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.autocommit", "false"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
-				),
+				Check:  getCheckSteps(project, dbaasDatastore, updatedDatastoreName, resizeNodeCount, 2, Flavor{2, 8192, 32}, MySQLConfig{"strict_innodb", 2, false}),
 			},
 			{
 				Config: testAccDBaaSMySQLDatastoreV1UpdateConfig(projectName, updatedDatastoreName, datastoreTypeEngine, resizeNodeCount),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAccCheckDBaaSDatastoreV1Exists("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", &dbaasDatastore),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "name", updatedDatastoreName),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "region", "ru-3"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "node_count", strconv.Itoa(resizeNodeCount)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "enabled", "true"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "status", string(dbaas.StatusActive)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(2)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(8192)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(32)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.innodb_checksum_algorithm", "strict_innodb"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.auto_increment_offset", strconv.Itoa(4)),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "config.autocommit", "true"),
-					resource.TestCheckResourceAttr("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "firewall.0.ips.#", "2"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
-					resource.TestCheckResourceAttrSet("selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
-				),
+				Check:  getCheckSteps(project, dbaasDatastore, updatedDatastoreName, resizeNodeCount, 2, Flavor{2, 8192, 32}, MySQLConfig{"strict_innodb", 4, true}),
 			},
 		},
 	})

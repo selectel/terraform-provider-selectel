@@ -12,7 +12,7 @@ func TestAccDBaaSMySQLDatastoreV1ImportBasic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
 	nodeCount := 1
-	datastoreTypeEngine := "mysql"
+	datastoreTypeEngine := mySQLDatastoreType
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -37,7 +37,7 @@ func TestAccDBaaSMySQLNativeDatastoreV1ImportBasic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
 	nodeCount := 1
-	datastoreTypeEngine := "mysql_native"
+	datastoreTypeEngine := mySQLNativeDatastoreType
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
