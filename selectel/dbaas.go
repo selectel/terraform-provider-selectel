@@ -420,13 +420,32 @@ func resizeDatastore(ctx context.Context, d *schema.ResourceData, client *dbaas.
 	return nil
 }
 
-func validateDatastoreType(ctx context.Context, expectedDatastoreTypeEngine string, typeID string, client *dbaas.API) diag.Diagnostics {
+func containeDatastoreType(expectedTypes []string, datastoreType string) bool {
+	for _, dt := range expectedTypes {
+		if dt == datastoreType {
+			return true
+		}
+	}
+	return false
+}
+
+func buildDatastoreTypeErrorMEssage(expectedDatastoreTypeEngines []string, datastoreTypeEngine string) string {
+	var baseMessage string
+	if len(expectedDatastoreTypeEngines) > 1 {
+		baseMessage = "Provided datastore type must have one of the following engine types: "
+	} else {
+		baseMessage = "Provided datastore type must have an engine "
+	}
+	return baseMessage + strings.Join(expectedDatastoreTypeEngines, ", ") + " for this resource. But provided type is " + datastoreTypeEngine
+}
+
+func validateDatastoreType(ctx context.Context, expectedDatastoreTypeEngines []string, typeID string, client *dbaas.API) diag.Diagnostics {
 	datastoreType, err := client.DatastoreType(ctx, typeID)
 	if err != nil {
 		return diag.FromErr(errors.New("Couldnt get datastore type with id" + typeID))
 	}
-	if datastoreType.Engine != expectedDatastoreTypeEngine {
-		return diag.FromErr(errors.New("Provided datastore type must have a " + expectedDatastoreTypeEngine + " engine, not " + datastoreType.Engine))
+	if !containeDatastoreType(expectedDatastoreTypeEngines, datastoreType.Engine) {
+		return diag.FromErr(errors.New(buildDatastoreTypeErrorMEssage(expectedDatastoreTypeEngines, datastoreType.Engine)))
 	}
 
 	return nil

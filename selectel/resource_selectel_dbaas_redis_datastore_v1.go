@@ -173,7 +173,7 @@ func resourceDBaaSRedisDatastoreV1Create(ctx context.Context, d *schema.Resource
 	flavorID, flavorIDOk := d.GetOk("flavor_id")
 
 	typeID := d.Get("type_id").(string)
-	diagErr = validateDatastoreType(ctx, "redis", typeID, dbaasClient)
+	diagErr = validateDatastoreType(ctx, []string{"redis"}, typeID, dbaasClient)
 	if diagErr != nil {
 		return diagErr
 	}
