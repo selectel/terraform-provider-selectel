@@ -164,8 +164,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/sebdah/goldie v1.0.0/go.mod h1:jXP4hmWywNEwZzhMuv2ccnqTSFpuq8iyQhtQdkkZBH4=
-github.com/selectel/dbaas-go v0.7.0 h1:IBEU7EAPlkQ7wGjtIz9bppthpTZLGn3E6TVX7JWMtWk=
-github.com/selectel/dbaas-go v0.7.0/go.mod h1:8D945oFzpx94v08zIb4s1bRTPCdPoNVnBu4umMYFJrQ=
+github.com/selectel/dbaas-go v0.8.0 h1:9JBfCWTi6g6RGksyNtNwfrc8vQz9evtQ8zjx0wGrPTE=
+github.com/selectel/dbaas-go v0.8.0/go.mod h1:8D945oFzpx94v08zIb4s1bRTPCdPoNVnBu4umMYFJrQ=
 github.com/selectel/domains-go v0.4.0 h1:mVUeJK8oW9XMizft7Vu4OCyvjbzq4+o+zHgzJ2ZxnIY=
 github.com/selectel/domains-go v0.4.0/go.mod h1:AhXhwyMSTkpEWFiBLUvzFP76W+WN+ZblwmjLJLt7y58=
 github.com/selectel/go-selvpcclient/v2 v2.1.1 h1:dW8AEDeDkMCBb94NMCiNq/vK4n+f6kcGKsUuMwBcq+A=

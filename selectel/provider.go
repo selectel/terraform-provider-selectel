@@ -35,6 +35,7 @@ const (
 	objectPrometheusMetricToken   = "prometheus-metric-token"
 	objectFeatureGates            = "feature-gates"
 	objectAdmissionControllers    = "admission-controllers"
+	objectLogicalReplicationSlot  = "logical-replication-slot"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -82,32 +83,33 @@ func Provider() *schema.Provider {
 			"selectel_mks_admission_controllers_v1":     dataSourceMKSAdmissionControllersV1(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"selectel_vpc_floatingip_v2":                resourceVPCFloatingIPV2(),
-			"selectel_vpc_keypair_v2":                   resourceVPCKeypairV2(),
-			"selectel_vpc_license_v2":                   resourceVPCLicenseV2(),
-			"selectel_vpc_project_v2":                   resourceVPCProjectV2(),
-			"selectel_vpc_role_v2":                      resourceVPCRoleV2(),
-			"selectel_vpc_subnet_v2":                    resourceVPCSubnetV2(),
-			"selectel_vpc_token_v2":                     resourceVPCTokenV2(),
-			"selectel_vpc_user_v2":                      resourceVPCUserV2(),
-			"selectel_vpc_vrrp_subnet_v2":               resourceVPCVRRPSubnetV2(),        // DEPRECATED
-			"selectel_vpc_crossregion_subnet_v2":        resourceVPCCrossRegionSubnetV2(), // DEPRECATED
-			"selectel_mks_cluster_v1":                   resourceMKSClusterV1(),
-			"selectel_mks_nodegroup_v1":                 resourceMKSNodegroupV1(),
-			"selectel_domains_domain_v1":                resourceDomainsDomainV1(),
-			"selectel_domains_record_v1":                resourceDomainsRecordV1(),
-			"selectel_dbaas_datastore_v1":               resourceDBaaSDatastoreV1(), // DEPRECATED
-			"selectel_dbaas_postgresql_datastore_v1":    resourceDBaaSPostgreSQLDatastoreV1(),
-			"selectel_dbaas_mysql_datastore_v1":         resourceDBaaSMySQLDatastoreV1(),
-			"selectel_dbaas_redis_datastore_v1":         resourceDBaaSRedisDatastoreV1(),
-			"selectel_dbaas_user_v1":                    resourceDBaaSUserV1(),
-			"selectel_dbaas_database_v1":                resourceDBaaSDatabaseV1(), // DEPRECATED
-			"selectel_dbaas_postgresql_database_v1":     resourceDBaaSPostgreSQLDatabaseV1(),
-			"selectel_dbaas_mysql_database_v1":          resourceDBaaSMySQLDatabaseV1(),
-			"selectel_dbaas_grant_v1":                   resourceDBaaSGrantV1(),
-			"selectel_dbaas_extension_v1":               resourceDBaaSExtensionV1(), // DEPRECATED
-			"selectel_dbaas_postgresql_extension_v1":    resourceDBaaSPostgreSQLExtensionV1(),
-			"selectel_dbaas_prometheus_metric_token_v1": resourceDBaaSPrometheusMetricTokenV1(),
+			"selectel_vpc_floatingip_v2":                            resourceVPCFloatingIPV2(),
+			"selectel_vpc_keypair_v2":                               resourceVPCKeypairV2(),
+			"selectel_vpc_license_v2":                               resourceVPCLicenseV2(),
+			"selectel_vpc_project_v2":                               resourceVPCProjectV2(),
+			"selectel_vpc_role_v2":                                  resourceVPCRoleV2(),
+			"selectel_vpc_subnet_v2":                                resourceVPCSubnetV2(),
+			"selectel_vpc_token_v2":                                 resourceVPCTokenV2(),
+			"selectel_vpc_user_v2":                                  resourceVPCUserV2(),
+			"selectel_vpc_vrrp_subnet_v2":                           resourceVPCVRRPSubnetV2(),        // DEPRECATED
+			"selectel_vpc_crossregion_subnet_v2":                    resourceVPCCrossRegionSubnetV2(), // DEPRECATED
+			"selectel_mks_cluster_v1":                               resourceMKSClusterV1(),
+			"selectel_mks_nodegroup_v1":                             resourceMKSNodegroupV1(),
+			"selectel_domains_domain_v1":                            resourceDomainsDomainV1(),
+			"selectel_domains_record_v1":                            resourceDomainsRecordV1(),
+			"selectel_dbaas_datastore_v1":                           resourceDBaaSDatastoreV1(), // DEPRECATED
+			"selectel_dbaas_postgresql_datastore_v1":                resourceDBaaSPostgreSQLDatastoreV1(),
+			"selectel_dbaas_mysql_datastore_v1":                     resourceDBaaSMySQLDatastoreV1(),
+			"selectel_dbaas_redis_datastore_v1":                     resourceDBaaSRedisDatastoreV1(),
+			"selectel_dbaas_user_v1":                                resourceDBaaSUserV1(),
+			"selectel_dbaas_database_v1":                            resourceDBaaSDatabaseV1(), // DEPRECATED
+			"selectel_dbaas_postgresql_database_v1":                 resourceDBaaSPostgreSQLDatabaseV1(),
+			"selectel_dbaas_mysql_database_v1":                      resourceDBaaSMySQLDatabaseV1(),
+			"selectel_dbaas_grant_v1":                               resourceDBaaSGrantV1(),
+			"selectel_dbaas_extension_v1":                           resourceDBaaSExtensionV1(), // DEPRECATED
+			"selectel_dbaas_postgresql_extension_v1":                resourceDBaaSPostgreSQLExtensionV1(),
+			"selectel_dbaas_prometheus_metric_token_v1":             resourceDBaaSPrometheusMetricTokenV1(),
+			"selectel_dbaas_postgresql_logical_replication_slot_v1": resourceDBaaSPostgreSQLLogicalReplicationSlotV1(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}
