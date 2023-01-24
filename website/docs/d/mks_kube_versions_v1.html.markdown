@@ -14,7 +14,6 @@ Use this data source to get all supported kube versions for a Managed Kubernetes
 
 ```hcl
 resource "selectel_vpc_project_v2" "project_1" {
-  auto_quotas = true
 }
 
 data "selectel_mks_kube_versions_v1" "versions" {

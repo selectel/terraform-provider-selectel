@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/dbaas-go"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
 )
 
 func TestAccDBaaSDatastoreV1Basic(t *testing.T) {
@@ -334,7 +334,6 @@ func testAccDBaaSDatastoreV1Basic(projectName, datastoreName string, nodeCount i
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
@@ -376,7 +375,6 @@ func testAccDBaaSDatastoreV1UpdateName(projectName, datastoreName string, nodeCo
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
@@ -418,7 +416,6 @@ func testAccDBaaSDatastoreV1UpdatePooler(projectName, datastoreName string, node
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
@@ -464,7 +461,6 @@ func testAccDBaaSDatastoreV1UpdateFirewall(projectName, datastoreName string, no
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
@@ -513,7 +509,6 @@ func testAccDBaaSDatastoreV1Resize(projectName, datastoreName string, nodeCount 
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
@@ -562,7 +557,6 @@ func testAccDBaaSDatastoreV1UpdateConfig(projectName, datastoreName string, node
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
@@ -610,7 +604,6 @@ func testAccDBaaSDatastoreV1RedisBasic(projectName, datastoreName string, nodeCo
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
@@ -657,7 +650,6 @@ func testAccDBaaSDatastoreV1UpdateRedisConfig(projectName, datastoreName string,
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
@@ -704,7 +696,6 @@ func testAccDBaaSDatastoreV1UpdateRedisPassword(projectName, datastoreName strin
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
@@ -751,7 +742,6 @@ func testAccDBaaSDatastoreV1RedisResize(projectName, datastoreName string, nodeC
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {

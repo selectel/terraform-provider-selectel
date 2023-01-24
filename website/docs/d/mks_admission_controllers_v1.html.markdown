@@ -14,7 +14,6 @@ Use this data source to get available admission-controllers within Selectel MKS 
 
 ```hcl
 resource "selectel_vpc_project_v2" "project_1" {
-  auto_quotas = true
 }
 
 data "selectel_mks_admission_controllers_v1" "ac" {

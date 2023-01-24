@@ -14,7 +14,6 @@ Use this data source to get all available prometheus metrics tokens within Selec
 
 ```hcl
 resource "selectel_vpc_project_v2" "project_1" {
-  auto_quotas = true
 }
 
 data "selectel_dbaas_prometheus_metric_token_v1" "token" {

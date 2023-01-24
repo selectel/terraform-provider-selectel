@@ -14,7 +14,6 @@ Use this data source to get all available confguration parameters within Selecte
 
 ```hcl
 resource "selectel_vpc_project_v2" "project_1" {
-  auto_quotas = true
 }
 
 data "selectel_dbaas_datastore_type_v1" "dt" {

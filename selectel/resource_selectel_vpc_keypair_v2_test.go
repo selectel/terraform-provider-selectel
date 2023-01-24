@@ -9,8 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/keypairs"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/users"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/keypairs"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/users"
 	"github.com/stretchr/testify/assert"
 )
 

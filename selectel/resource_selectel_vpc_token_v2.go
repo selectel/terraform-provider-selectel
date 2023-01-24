@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
 )
 
 func resourceVPCTokenV2() *schema.Resource {

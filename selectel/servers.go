@@ -3,7 +3,7 @@ package selectel
 import (
 	"fmt"
 
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/servers"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/servers"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/hashcode"
 )
 

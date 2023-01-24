@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/dbaas-go"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
 )
 
 func TestAccDBaaSDatastoreTypesV1Basic(t *testing.T) {
@@ -69,7 +69,6 @@ func testAccDBaaSDatastoreTypesV1Basic(projectName, engine, version string) stri
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 data "selectel_dbaas_datastore_type_v1" "datastore_type_tf_acc_test_1" {

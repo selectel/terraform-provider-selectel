@@ -4,11 +4,16 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager/quotas"
+	v2 "github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
 )
 
 func resourceVPCProjectV2() *schema.Resource {
@@ -45,11 +50,6 @@ func resourceVPCProjectV2() *schema.Resource {
 				ForceNew: false,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"auto_quotas": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				ForceNew: false,
-			},
 			"quotas": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -77,6 +77,16 @@ func resourceVPCProjectV2() *schema.Resource {
 										Type:     schema.TypeString,
 										Optional: true,
 										ForceNew: false,
+										ValidateFunc: validation.StringInSlice([]string{
+											ru1Region,
+											ru2Region,
+											ru3Region,
+											ru7Region,
+											ru8Region,
+											ru9Region,
+											uz1Region,
+											nl1Region,
+										}, false),
 									},
 									"zone": {
 										Type:     schema.TypeString,
@@ -135,16 +145,8 @@ func resourceVPCProjectV2Create(ctx context.Context, d *schema.ResourceData, met
 	resellV2Client := config.resellV2Client()
 
 	var opts projects.CreateOpts
-	quotaSet := d.Get("quotas").(*schema.Set)
-	if quotaSet.Len() != 0 {
-		quotasOpts, err := resourceVPCProjectV2QuotasOptsFromSet(quotaSet)
-		if err != nil {
-			return diag.FromErr(errParseProjectV2Quotas(err))
-		}
-		opts.Quotas = quotasOpts
-	}
+
 	opts.Name = d.Get("name").(string)
-	opts.AutoQuotas = d.Get("auto_quotas").(bool)
 
 	log.Print(msgCreate(objectProject, opts))
 	project, _, err := projects.Create(ctx, resellV2Client, opts)
@@ -202,7 +204,7 @@ func resourceVPCProjectV2Update(ctx context.Context, d *schema.ResourceData, met
 
 	var hasChange, projectChange, quotaChange bool
 	var projectOpts projects.UpdateOpts
-	var projectQuotasOpts quotas.UpdateProjectQuotasOpts
+	var projectQuotasOpts map[string]quotas.UpdateProjectQuotasOpts
 
 	if d.HasChange("name") {
 		hasChange, projectChange = true, true
@@ -226,7 +228,7 @@ func resourceVPCProjectV2Update(ctx context.Context, d *schema.ResourceData, met
 		if err != nil {
 			return diag.FromErr(errParseProjectV2Quotas(err))
 		}
-		projectQuotasOpts.QuotasOpts = quotasOpts
+		projectQuotasOpts = quotasOpts
 	}
 
 	if hasChange {
@@ -241,9 +243,24 @@ func resourceVPCProjectV2Update(ctx context.Context, d *schema.ResourceData, met
 		// Update project quotas if needed.
 		if quotaChange {
 			log.Print(msgUpdate(objectProjectQuotas, d.Id(), projectQuotasOpts))
-			_, _, err := quotas.UpdateProjectQuotas(ctx, resellV2Client, d.Id(), projectQuotasOpts)
+			accountName := strings.Split(config.Token, "_")[1]
+			tokenOpts := tokens.TokenOpts{AccountName: accountName}
+
+			log.Print(msgCreate(objectToken, tokenOpts))
+			token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
 			if err != nil {
-				return diag.FromErr(errUpdatingObject(objectProjectQuotas, d.Id(), err))
+				return diag.FromErr(errCreatingObject(objectToken, err))
+			}
+
+			openstackClient := v2.NewOpenstackClient(token.ID)
+			identityManager := quotamanager.NewIdentityManager(resellV2Client, openstackClient, accountName)
+			quotaManagerClient := config.quotaManagerRegionalClient(identityManager)
+
+			for region, updateQuotas := range projectQuotasOpts {
+				_, _, err := quotas.UpdateProjectQuotas(ctx, quotaManagerClient, d.Id(), region, updateQuotas)
+				if err != nil {
+					return diag.FromErr(errUpdatingObject(objectProjectQuotas, d.Id(), err))
+				}
 			}
 		}
 	}

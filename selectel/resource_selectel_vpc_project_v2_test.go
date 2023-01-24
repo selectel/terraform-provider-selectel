@@ -10,8 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager/quotas"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -68,27 +68,6 @@ func TestAccVPCV2ProjectBasic(t *testing.T) {
 						"selectel_vpc_project_v2.project_tf_acc_test_1", "theme.color", "5D6D7E"),
 					resource.TestCheckResourceAttr(
 						"selectel_vpc_project_v2.project_tf_acc_test_1", "quotas.#", "2"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccVPCV2ProjectAutoQuotas(t *testing.T) {
-	var project projects.Project
-	projectName := acctest.RandomWithPrefix("tf-acc")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
-		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccVPCV2ProjectAutoQuotas(projectName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					resource.TestCheckResourceAttr("selectel_vpc_project_v2.project_tf_acc_test_1", "name", projectName),
-					resource.TestCheckResourceAttrSet("selectel_vpc_project_v2.project_tf_acc_test_1", "all_quotas.#"),
 				),
 			},
 		},
@@ -203,14 +182,6 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
 }`, name)
 }
 
-func testAccVPCV2ProjectAutoQuotas(name string) string {
-	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name        = "%s"
-  auto_quotas = true
-}`, name)
-}
-
 func TestResourceVPCProjectV2QuotasOptsFromSet(t *testing.T) {
 	region := "ru-3"
 	zone := "ru-3a"
@@ -232,14 +203,17 @@ func TestResourceVPCProjectV2QuotasOptsFromSet(t *testing.T) {
 	})
 
 	expectedResourceQuotaValue := 100
-	expectedQuotasOpts := []quotas.QuotaOpts{
-		{
-			Name: "volume_gigabytes_fast",
-			ResourceQuotasOpts: []quotas.ResourceQuotaOpts{
+	expectedQuotasOpts := map[string]quotas.UpdateProjectQuotasOpts{
+		region: {
+			QuotasOpts: []quotas.QuotaOpts{
 				{
-					Region: &region,
-					Zone:   &zone,
-					Value:  &expectedResourceQuotaValue,
+					Name: "volume_gigabytes_fast",
+					ResourceQuotasOpts: []quotas.ResourceQuotaOpts{
+						{
+							Zone:  &zone,
+							Value: &expectedResourceQuotaValue,
+						},
+					},
 				},
 			},
 		},

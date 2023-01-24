@@ -10,8 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/nodegroup"
 )
@@ -150,7 +150,6 @@ func testAccMKSNodegroupV1Basic(projectName, clusterName, kubeVersion, maintenan
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
@@ -201,7 +200,6 @@ func testAccMKSNodegroupV1Update(projectName, clusterName, kubeVersion, maintena
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {

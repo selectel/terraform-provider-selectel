@@ -15,8 +15,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager/quotas"
+	resell "github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
 )
@@ -220,12 +222,17 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 		PrivateKubeAPI: &privateKubeAPI,
 	}
 
-	projectQuotas, _, err := quotas.GetProjectQuotas(ctx, resellV2Client, d.Get("project_id").(string))
+	accountName := strings.Split(config.Token, "_")[1]
+	openstackClient := resell.NewOpenstackClient(token.ID)
+	identityManager := quotamanager.NewIdentityManager(resellV2Client, openstackClient, accountName)
+	quotaManagerClient := config.quotaManagerRegionalClient(identityManager)
+
+	projectQuotas, _, err := quotas.GetProjectQuotas(ctx, quotaManagerClient, d.Get("project_id").(string), region)
 	if err != nil {
 		return diag.FromErr(errGettingObject(objectProjectQuotas, d.Get("project_id").(string), err))
 	}
 
-	if err := checkQuotasForCluster(projectQuotas, region, zonal); err != nil {
+	if err := checkQuotasForCluster(projectQuotas, zonal); err != nil {
 		return diag.FromErr(errCreatingObject(objectCluster, err))
 	}
 

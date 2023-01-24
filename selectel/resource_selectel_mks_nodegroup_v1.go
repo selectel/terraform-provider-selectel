@@ -6,13 +6,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager/quotas"
+	resell "github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/nodegroup"
 )
@@ -231,7 +234,12 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 		AvailabilityZone: d.Get("availability_zone").(string),
 	}
 
-	projectQuotas, _, err := quotas.GetProjectQuotas(ctx, resellV2Client, d.Get("project_id").(string))
+	accountName := strings.Split(config.Token, "_")[1]
+	openstackClient := resell.NewOpenstackClient(token.ID)
+	identityManager := quotamanager.NewIdentityManager(resellV2Client, openstackClient, accountName)
+	quotaManagerClient := config.quotaManagerRegionalClient(identityManager)
+
+	projectQuotas, _, err := quotas.GetProjectQuotas(ctx, quotaManagerClient, d.Get("project_id").(string), region)
 	if err != nil {
 		return diag.FromErr(errGettingObject(objectProjectQuotas, d.Get("project_id").(string), err))
 	}
@@ -446,7 +454,13 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 			AvailabilityZone: d.Get("availability_zone").(string),
 		}
 
-		projectQuotas, _, err := quotas.GetProjectQuotas(ctx, resellV2Client, d.Get("project_id").(string))
+		accountName := strings.Split(config.Token, "_")[1]
+		openstackClient := resell.NewOpenstackClient(token.ID)
+		identityManager := quotamanager.NewIdentityManager(resellV2Client, openstackClient, accountName)
+		quotaManagerClient := config.quotaManagerRegionalClient(identityManager)
+
+		projectQuotas, _, err := quotas.GetProjectQuotas(ctx, quotaManagerClient, d.Get("project_id").(string),
+			region)
 		if err != nil {
 			return diag.FromErr(errGettingObject(objectProjectQuotas, d.Get("project_id").(string), err))
 		}

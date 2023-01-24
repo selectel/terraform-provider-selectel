@@ -6,9 +6,10 @@ import (
 
 	"github.com/hashicorp/go-retryablehttp"
 	domainsV1 "github.com/selectel/domains-go/pkg/v1"
-	"github.com/selectel/go-selvpcclient/selvpcclient"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell"
-	resellV2 "github.com/selectel/go-selvpcclient/selvpcclient/resell/v2"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell"
+	resellV2 "github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2"
 )
 
 // Config contains all available configuration options.
@@ -50,4 +51,10 @@ func (c *Config) domainsV1Client() *domainsV1.ServiceClient {
 	domainsClient.HTTPClient = retryClient.StandardClient()
 
 	return domainsClient
+}
+
+func (c *Config) quotaManagerRegionalClient(
+	identity quotamanager.IdentityManagerInterface,
+) *quotamanager.QuotaRegionalClient {
+	return quotamanager.NewQuotaRegionalClient(selvpcclient.NewHTTPClient(), identity)
 }

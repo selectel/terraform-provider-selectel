@@ -17,7 +17,6 @@ the `X-Auth-Token` value.
 
 ```hcl
 resource "selectel_vpc_project_v2" "project_1" {
-  auto_quotas = true
 }
 
 resource "selectel_vpc_token_v2" "token_tf_acc_test_1" {
