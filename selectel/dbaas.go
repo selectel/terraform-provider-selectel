@@ -28,6 +28,7 @@ const (
 	ru8DBaaSV1Endpoint = "https://ru-8.dbaas.selcloud.ru/v1"
 	ru9DBaaSV1Endpoint = "https://ru-9.dbaas.selcloud.ru/v1"
 	nl1DBaaSV1Endpoint = "https://nl-1.dbaas.selcloud.ru/v1"
+	uz1DBaaSV1Endpoint = "https://uz-1.dbaas.selcloud.ru/v1"
 )
 
 func getDBaaSV1Endpoint(region string) (endpoint string) {
@@ -46,6 +47,8 @@ func getDBaaSV1Endpoint(region string) (endpoint string) {
 		endpoint = ru9DBaaSV1Endpoint
 	case nl1Region:
 		endpoint = nl1DBaaSV1Endpoint
+	case uz1Region:
+		endpoint = uz1DBaaSV1Endpoint
 	}
 
 	return
