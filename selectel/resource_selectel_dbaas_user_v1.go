@@ -48,6 +48,7 @@ func resourceDBaaSUserV1() *schema.Resource {
 					ru8Region,
 					ru9Region,
 					nl1Region,
+					uz1Region,
 				}, false),
 			},
 			"name": {
