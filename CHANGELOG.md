@@ -1,3 +1,9 @@
+## 3.10.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* Added `uz-1` region for DBaaS ([#217](https://github.com/selectel/terraform-provider-selectel/pull/217))
+
 ## 3.9.0 (Nov 17, 2022)
 
 FEATURES:
