@@ -14,7 +14,6 @@ Manages a V1 MySQL database resource within Selectel Managed Databases Service.
 
 ```hcl
 resource "selectel_vpc_project_v2" "project_1" {
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet" {

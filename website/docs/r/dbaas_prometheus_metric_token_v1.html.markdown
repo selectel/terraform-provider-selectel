@@ -14,7 +14,6 @@ Manages a V1 prometheus metrics tokens resource within Selectel Managed Database
 
 ```hcl
 resource "selectel_vpc_project_v2" "project_1" {
-  auto_quotas = true
 }
 
 resource "selectel_dbaas_prometheus_metric_token_v1" "token" {

@@ -9,9 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/roles"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/users"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/roles"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/users"
 )
 
 func TestAccVPCV2RoleBasic(t *testing.T) {
@@ -115,7 +115,6 @@ func testAccVPCV2RoleBasic(projectName, userName, userPassword string) string {
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_user_v2" "user_tf_acc_test_1" {

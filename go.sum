@@ -294,8 +294,8 @@ github.com/selectel/dbaas-go v0.7.0 h1:IBEU7EAPlkQ7wGjtIz9bppthpTZLGn3E6TVX7JWMt
 github.com/selectel/dbaas-go v0.7.0/go.mod h1:8D945oFzpx94v08zIb4s1bRTPCdPoNVnBu4umMYFJrQ=
 github.com/selectel/domains-go v0.4.0 h1:mVUeJK8oW9XMizft7Vu4OCyvjbzq4+o+zHgzJ2ZxnIY=
 github.com/selectel/domains-go v0.4.0/go.mod h1:AhXhwyMSTkpEWFiBLUvzFP76W+WN+ZblwmjLJLt7y58=
-github.com/selectel/go-selvpcclient v1.12.0 h1:LsT074HOVF1dWYapsAWjaaJDQhmDPpcsVjSwQ1r1fj0=
-github.com/selectel/go-selvpcclient v1.12.0/go.mod h1:HNteVXevZMjUCRR6lImTsGZZSTeKu89S/qbEDWDqmgc=
+github.com/selectel/go-selvpcclient/v2 v2.1.0 h1:6CblJtXrL03IbBSgVrX2HU92cfiaPMB7v8kbS1mQN3M=
+github.com/selectel/go-selvpcclient/v2 v2.1.0/go.mod h1:kFPnYYxcgJHybnmYEmZ9S+G0MNe8wBmYhhCkEqYjAuc=
 github.com/selectel/mks-go v0.12.0 h1:nLWHK8BXkhFlXvjFqf7WRrdAfvmrOhQzDSLx7BGa6aM=
 github.com/selectel/mks-go v0.12.0/go.mod h1:FcFqF3WvZIhztyAt1+ZySKf0zWmCEvg9e2gRwxVyQOw=
 github.com/sergi/go-diff v1.0.0/go.mod h1:0CfEIISq7TuYL3j771MWULgwwjU+GofnZX9QAmXWZgo=

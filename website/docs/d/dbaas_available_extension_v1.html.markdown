@@ -14,7 +14,6 @@ Use this data source to get all available extensions within Selectel DBaaS API S
 
 ```hcl
 resource "selectel_vpc_project_v2" "project_1" {
-  auto_quotas = true
 }
 
 data "selectel_dbaas_available_extension_v1" "ae" {

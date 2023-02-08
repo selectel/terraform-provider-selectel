@@ -12,8 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/tokens"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager/quotas"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
 	"github.com/selectel/mks-go/pkg/v1/kubeoptions"
@@ -671,7 +671,7 @@ func findQuota(quotas []*quotas.Quota, resource string) []quotas.ResourceQuotaEn
 	return nil
 }
 
-func checkQuotasForCluster(projectQuotas []*quotas.Quota, region string, zonal bool) error {
+func checkQuotasForCluster(projectQuotas []*quotas.Quota, zonal bool) error {
 	var (
 		clusterQuotaChecked bool
 		quota               []quotas.ResourceQuotaEntity
@@ -692,16 +692,14 @@ func checkQuotasForCluster(projectQuotas []*quotas.Quota, region string, zonal b
 	}
 
 	for _, v := range quota {
-		if v.Region == region {
-			if v.Value-v.Used <= 0 {
-				if zonal {
-					return errors.New("not enough quota to create zonal k8s cluster")
-				}
-
-				return errors.New("not enough quota to create regional k8s cluster")
+		if v.Value-v.Used <= 0 {
+			if zonal {
+				return errors.New("not enough quota to create zonal k8s cluster")
 			}
-			clusterQuotaChecked = true
+
+			return errors.New("not enough quota to create regional k8s cluster")
 		}
+		clusterQuotaChecked = true
 	}
 	if !clusterQuotaChecked {
 		if zonal {

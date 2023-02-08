@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/selectel/dbaas-go"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
 )
 
 func TestAccDBaaSPostgreSQLDatastoreV1Basic(t *testing.T) {
@@ -170,7 +170,6 @@ func testAccDBaaSPostgreSQLDatastoreV1Basic(projectName, datastoreName string, n
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
@@ -212,7 +211,6 @@ func testAccDBaaSPostgreSQLDatastoreV1UpdateName(projectName, datastoreName stri
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
@@ -254,7 +252,6 @@ func testAccDBaaSPostgreSQLDatastoreV1UpdatePooler(projectName, datastoreName st
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
@@ -300,7 +297,6 @@ func testAccDBaaSPostgreSQLDatastoreV1UpdateFirewall(projectName, datastoreName 
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
@@ -346,7 +342,6 @@ func testAccDBaaSPostgreSQLDatastoreV1Resize(projectName, datastoreName string, 
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
@@ -392,7 +387,6 @@ func testAccDBaaSPostgreSQLDatastoreV1UpdateConfig(projectName, datastoreName st
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {

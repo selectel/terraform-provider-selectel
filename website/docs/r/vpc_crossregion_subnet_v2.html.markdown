@@ -16,7 +16,6 @@ Manages a V2 Cross-region subnet resource within VPC Selectel VPC.
 
 ```hcl
 resource "selectel_vpc_project_v2" "project_1" {
-  auto_quotas = true
 }
 
 resource "selectel_vpc_crossregion_subnet_v2" "crossregion_subnet_1" {

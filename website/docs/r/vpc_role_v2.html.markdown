@@ -14,7 +14,6 @@ Manages a V2 role resource within Selectel VPC.
 
 ```hcl
 resource "selectel_vpc_project_v2" "project_1" {
-  auto_quotas = true
 }
 
 resource "selectel_vpc_user_v2" "user_1" {

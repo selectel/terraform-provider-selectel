@@ -3,7 +3,7 @@ package selectel
 import (
 	"testing"
 
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager/quotas"
 	"github.com/selectel/mks-go/pkg/v1/kubeversion"
 	"github.com/selectel/mks-go/pkg/v1/node"
 	"github.com/selectel/mks-go/pkg/v1/nodegroup"
@@ -678,16 +678,15 @@ func TestCheckQuotasForClusterErrRegional(t *testing.T) {
 			Name: "mks_cluster_regional",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "",
-					Value:  10,
-					Used:   10,
+					Zone:  "",
+					Value: 10,
+					Used:  10,
 				},
 			},
 		},
 	}
 
-	err := checkQuotasForCluster(testQuotas, ru9Region, false)
+	err := checkQuotasForCluster(testQuotas, false)
 
 	assert.Error(t, err)
 	assert.Equal(t, "not enough quota to create regional k8s cluster", err.Error())
@@ -699,67 +698,24 @@ func TestCheckQuotasForClusterErrZonal(t *testing.T) {
 			Name: "mks_cluster_zonal",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "",
-					Value:  10,
-					Used:   10,
+					Zone:  "",
+					Value: 10,
+					Used:  10,
 				},
 			},
 		},
 	}
 
-	err := checkQuotasForCluster(testQuotas, ru9Region, true)
+	err := checkQuotasForCluster(testQuotas, true)
 
 	assert.Error(t, err)
 	assert.Equal(t, "not enough quota to create zonal k8s cluster", err.Error())
 }
 
-func TestCheckQuotasForRegionalClusterErrNoRegion(t *testing.T) {
-	testQuotas := []*quotas.Quota{
-		{
-			Name: "mks_cluster_regional",
-			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
-				{
-					Region: ru1Region,
-					Zone:   "",
-					Value:  10,
-					Used:   10,
-				},
-			},
-		},
-	}
-
-	err := checkQuotasForCluster(testQuotas, ru9Region, false)
-
-	assert.Error(t, err)
-	assert.Equal(t, "unable to check regional k8s cluster quotas for a given region", err.Error())
-}
-
-func TestCheckQuotasForZonalClusterErrNoRegion(t *testing.T) {
-	testQuotas := []*quotas.Quota{
-		{
-			Name: "mks_cluster_zonal",
-			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
-				{
-					Region: ru1Region,
-					Zone:   "",
-					Value:  10,
-					Used:   10,
-				},
-			},
-		},
-	}
-
-	err := checkQuotasForCluster(testQuotas, ru9Region, true)
-
-	assert.Error(t, err)
-	assert.Equal(t, "unable to check zonal k8s cluster quotas for a given region", err.Error())
-}
-
 func TestCheckQuotasForRegionalClusterErrUnableToCheck(t *testing.T) {
 	var testQuotas []*quotas.Quota
 
-	err := checkQuotasForCluster(testQuotas, ru9Region, false)
+	err := checkQuotasForCluster(testQuotas, false)
 
 	assert.Error(t, err)
 	assert.Equal(t, "unable to find regional k8s cluster quotas", err.Error())
@@ -768,7 +724,7 @@ func TestCheckQuotasForRegionalClusterErrUnableToCheck(t *testing.T) {
 func TestCheckQuotasForZonalClusterErrUnableToCheck(t *testing.T) {
 	var testQuotas []*quotas.Quota
 
-	err := checkQuotasForCluster(testQuotas, ru9Region, true)
+	err := checkQuotasForCluster(testQuotas, true)
 
 	assert.Error(t, err)
 	assert.Equal(t, "unable to find zonal k8s cluster quotas", err.Error())
@@ -780,16 +736,15 @@ func TestCheckQuotasForClusterOkRegional(t *testing.T) {
 			Name: "mks_cluster_regional",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "",
-					Value:  10,
-					Used:   0,
+					Zone:  "",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
 	}
 
-	assert.NoError(t, checkQuotasForCluster(testQuotas, ru9Region, false))
+	assert.NoError(t, checkQuotasForCluster(testQuotas, false))
 }
 
 func TestCheckQuotasForClusterOkZonal(t *testing.T) {
@@ -798,16 +753,15 @@ func TestCheckQuotasForClusterOkZonal(t *testing.T) {
 			Name: "mks_cluster_zonal",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "",
-					Value:  10,
-					Used:   0,
+					Zone:  "",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
 	}
 
-	assert.NoError(t, checkQuotasForCluster(testQuotas, ru9Region, true))
+	assert.NoError(t, checkQuotasForCluster(testQuotas, true))
 }
 
 var testQuotasFull = []*quotas.Quota{
@@ -815,10 +769,9 @@ var testQuotasFull = []*quotas.Quota{
 		Name: "compute_cores",
 		ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 			{
-				Region: ru9Region,
-				Zone:   "ru-9a",
-				Value:  10,
-				Used:   10,
+				Zone:  "ru-9a",
+				Value: 10,
+				Used:  10,
 			},
 		},
 	},
@@ -826,10 +779,9 @@ var testQuotasFull = []*quotas.Quota{
 		Name: "compute_ram",
 		ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 			{
-				Region: ru9Region,
-				Zone:   "ru-9a",
-				Value:  10,
-				Used:   10,
+				Zone:  "ru-9a",
+				Value: 10,
+				Used:  10,
 			},
 		},
 	},
@@ -837,10 +789,9 @@ var testQuotasFull = []*quotas.Quota{
 		Name: "volume_gigabytes_fast",
 		ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 			{
-				Region: ru9Region,
-				Zone:   "ru-9a",
-				Value:  10,
-				Used:   10,
+				Zone:  "ru-9a",
+				Value: 10,
+				Used:  10,
 			},
 		},
 	},
@@ -848,10 +799,9 @@ var testQuotasFull = []*quotas.Quota{
 		Name: "volume_gigabytes_basic",
 		ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 			{
-				Region: ru9Region,
-				Zone:   "ru-9a",
-				Value:  10,
-				Used:   10,
+				Zone:  "ru-9a",
+				Value: 10,
+				Used:  10,
 			},
 		},
 	},
@@ -859,10 +809,9 @@ var testQuotasFull = []*quotas.Quota{
 		Name: "volume_gigabytes_universal",
 		ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 			{
-				Region: ru9Region,
-				Zone:   "ru-9a",
-				Value:  10,
-				Used:   10,
+				Zone:  "ru-9a",
+				Value: 10,
+				Used:  10,
 			},
 		},
 	},
@@ -870,10 +819,9 @@ var testQuotasFull = []*quotas.Quota{
 		Name: "volume_gigabytes_local",
 		ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 			{
-				Region: ru9Region,
-				Zone:   "ru-9a",
-				Value:  10,
-				Used:   10,
+				Zone:  "ru-9a",
+				Value: 10,
+				Used:  10,
 			},
 		},
 	},
@@ -981,10 +929,9 @@ func TestCheckQuotasForNodegroupErrUnableToFindCPUQuota(t *testing.T) {
 			Name: "volume_gigabytes_universal",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9a",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9a",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -992,10 +939,9 @@ func TestCheckQuotasForNodegroupErrUnableToFindCPUQuota(t *testing.T) {
 			Name: "compute_ram",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9a",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9a",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1021,10 +967,9 @@ func TestCheckQuotasForNodegroupErrUnableToFindRAMQuota(t *testing.T) {
 			Name: "volume_gigabytes_universal",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9a",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9a",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1032,10 +977,9 @@ func TestCheckQuotasForNodegroupErrUnableToFindRAMQuota(t *testing.T) {
 			Name: "compute_cores",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9a",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9a",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1061,10 +1005,9 @@ func TestCheckQuotasForNodegroupErrUnableToFindVolumeQuota(t *testing.T) {
 			Name: "compute_ram",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9a",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9a",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1072,10 +1015,9 @@ func TestCheckQuotasForNodegroupErrUnableToFindVolumeQuota(t *testing.T) {
 			Name: "compute_cores",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9a",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9a",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1101,10 +1043,9 @@ func TestCheckQuotasForNodegroupErrUnableToCheckCPUQuota(t *testing.T) {
 			Name: "compute_ram",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9b",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9b",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1112,10 +1053,9 @@ func TestCheckQuotasForNodegroupErrUnableToCheckCPUQuota(t *testing.T) {
 			Name: "compute_cores",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9a",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9a",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1123,10 +1063,9 @@ func TestCheckQuotasForNodegroupErrUnableToCheckCPUQuota(t *testing.T) {
 			Name: "volume_gigabytes_universal",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9b",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9b",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1153,10 +1092,9 @@ func TestCheckQuotasForNodegroupErrUnableToCheckRAMQuota(t *testing.T) {
 			Name: "compute_ram",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9a",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9a",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1164,10 +1102,9 @@ func TestCheckQuotasForNodegroupErrUnableToCheckRAMQuota(t *testing.T) {
 			Name: "compute_cores",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9b",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9b",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1175,10 +1112,9 @@ func TestCheckQuotasForNodegroupErrUnableToCheckRAMQuota(t *testing.T) {
 			Name: "volume_gigabytes_universal",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9b",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9b",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1204,10 +1140,9 @@ func TestCheckQuotasForNodegroupErrUnableToCheckVolumeQuota(t *testing.T) {
 			Name: "compute_ram",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9b",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9b",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1215,10 +1150,9 @@ func TestCheckQuotasForNodegroupErrUnableToCheckVolumeQuota(t *testing.T) {
 			Name: "compute_cores",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9b",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9b",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1226,10 +1160,9 @@ func TestCheckQuotasForNodegroupErrUnableToCheckVolumeQuota(t *testing.T) {
 			Name: "volume_gigabytes_universal",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9a",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9a",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1255,10 +1188,9 @@ func TestCheckQuotasForNodegroupErrInvalidVolumeType(t *testing.T) {
 			Name: "compute_ram",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9b",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9b",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1266,10 +1198,9 @@ func TestCheckQuotasForNodegroupErrInvalidVolumeType(t *testing.T) {
 			Name: "compute_cores",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9b",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9b",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1277,10 +1208,9 @@ func TestCheckQuotasForNodegroupErrInvalidVolumeType(t *testing.T) {
 			Name: "volume_gigabytes_universal",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9a",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9a",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1303,10 +1233,9 @@ func TestCheckQuotasForNodegroupOk(t *testing.T) {
 			Name: "compute_ram",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9a",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9a",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1314,10 +1243,9 @@ func TestCheckQuotasForNodegroupOk(t *testing.T) {
 			Name: "compute_cores",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9a",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9a",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},
@@ -1325,10 +1253,9 @@ func TestCheckQuotasForNodegroupOk(t *testing.T) {
 			Name: "volume_gigabytes_universal",
 			ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 				{
-					Region: ru9Region,
-					Zone:   "ru-9a",
-					Value:  10,
-					Used:   0,
+					Zone:  "ru-9a",
+					Value: 10,
+					Used:  0,
 				},
 			},
 		},

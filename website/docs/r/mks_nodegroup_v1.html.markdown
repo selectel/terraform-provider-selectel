@@ -14,7 +14,6 @@ Manages a V1 nodegroup resource within Selectel Managed Kubernetes Service.
 
 ```hcl
 resource "selectel_vpc_project_v2" "project_1" {
-  auto_quotas = true
 }
 
 resource "selectel_mks_cluster_v1" "cluster_1" {

@@ -7,25 +7,27 @@ import (
 	"net/url"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/projects"
-	"github.com/selectel/go-selvpcclient/selvpcclient/resell/v2/quotas"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager/quotas"
+	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
+	resellQuotas "github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/quotas"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/hashcode"
 )
 
 // resourceVPCProjectV2QuotasOptsFromSet converts the provided quotaSet to
 // the slice of quotas.QuotaOpts. It then can be used to make requests with
 // quotas data.
-func resourceVPCProjectV2QuotasOptsFromSet(quotaSet *schema.Set) ([]quotas.QuotaOpts, error) {
+func resourceVPCProjectV2QuotasOptsFromSet(
+	quotaSet *schema.Set,
+) (map[string]quotas.UpdateProjectQuotasOpts, error) {
 	quotaSetLen := quotaSet.Len()
 	if quotaSetLen == 0 {
 		return nil, errors.New("got empty quotas")
 	}
 
-	// Pre-allocate memory for quotasOpts slice since we already know it's length.
-	quotasOpts := make([]quotas.QuotaOpts, quotaSetLen)
+	bufferQuotas := map[string]map[string][]quotas.ResourceQuotaOpts{}
 
 	// Iterate over each billing resource quotas map.
-	for i, resourceQuotasData := range quotaSet.List() {
+	for _, resourceQuotasData := range quotaSet.List() {
 		var resourceNameRaw, resourceQuotasRaw interface{}
 		var ok bool
 
@@ -42,11 +44,9 @@ func resourceVPCProjectV2QuotasOptsFromSet(quotaSet *schema.Set) ([]quotas.Quota
 		// in memory as we already know it's length.
 		resourceName := resourceNameRaw.(string)
 		resourceQuotasEntities := resourceQuotasRaw.(*schema.Set)
-		resourceQuotasOpts := make([]quotas.ResourceQuotaOpts, resourceQuotasEntities.Len())
 
-		// Populate every quotas.ResourceQuotaOpts with data from a single
-		// resourceQuotasMap's region zone and value.
-		for j, resourceQuotasEntityRaw := range resourceQuotasEntities.List() {
+		// Populate bufferedMap with data from a single resourceQuotasMap's region zone and value.
+		for _, resourceQuotasEntityRaw := range resourceQuotasEntities.List() {
 			var (
 				resourceQuotasEntityRegion string
 				resourceQuotasEntityZone   string
@@ -64,19 +64,30 @@ func resourceVPCProjectV2QuotasOptsFromSet(quotaSet *schema.Set) ([]quotas.Quota
 			}
 			// Populate single entity of billing resource data with the region,
 			// zone and value information.
-			if resourceQuotasEntityRegion != "" {
-				resourceQuotasOpts[j].Region = &resourceQuotasEntityRegion
+
+			if _, ok := bufferQuotas[resourceQuotasEntityRegion]; !ok {
+				bufferQuotas[resourceQuotasEntityRegion] = map[string][]quotas.ResourceQuotaOpts{}
 			}
-			if resourceQuotasEntityZone != "" {
-				resourceQuotasOpts[j].Zone = &resourceQuotasEntityZone
-			}
-			resourceQuotasOpts[j].Value = &resourceQuotasEntityValue
+
+			bufferQuotas[resourceQuotasEntityRegion][resourceName] = append(
+				bufferQuotas[resourceQuotasEntityRegion][resourceName], quotas.ResourceQuotaOpts{
+					Zone:  &resourceQuotasEntityZone,
+					Value: &resourceQuotasEntityValue,
+				})
+		}
+	}
+
+	quotasOpts := map[string]quotas.UpdateProjectQuotasOpts{}
+	for region, bufferQuotaOpts := range bufferQuotas {
+		if _, ok := quotasOpts[region]; !ok {
+			quotasOpts[region] = quotas.UpdateProjectQuotasOpts{}
 		}
 
-		// Populate single quota options element.
-		quotasOpts[i] = quotas.QuotaOpts{
-			Name:               resourceName,
-			ResourceQuotasOpts: resourceQuotasOpts,
+		for resourceName, resourceQuotasOpts := range bufferQuotaOpts {
+			quotaOpts := quotas.QuotaOpts{Name: resourceName, ResourceQuotasOpts: resourceQuotasOpts}
+			regionalOpts := quotasOpts[region]
+			regionalOpts.QuotasOpts = append(regionalOpts.QuotasOpts, quotaOpts)
+			quotasOpts[region] = regionalOpts
 		}
 	}
 
@@ -85,7 +96,7 @@ func resourceVPCProjectV2QuotasOptsFromSet(quotaSet *schema.Set) ([]quotas.Quota
 
 // resourceVPCProjectV2QuotasToSet converts the provided quotas.Quota slice
 // to a nested complex set structure correspondingly to the resource's schema.
-func resourceVPCProjectV2QuotasToSet(quotasStructures []quotas.Quota) *schema.Set {
+func resourceVPCProjectV2QuotasToSet(quotasStructures []resellQuotas.Quota) *schema.Set {
 	quotaSet := &schema.Set{
 		F: quotasHashSetFunc(),
 	}
