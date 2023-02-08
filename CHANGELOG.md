@@ -1,7 +1,9 @@
-## 3.10.0 (Unreleased)
+## 3.9.1 (Feb 8, 2023)
 
 IMPROVEMENTS:
 
+* Updated quotas usage with new quotas schema for the `selectel_vpc_project_v2` resource ([#216](https://github.com/selectel/terraform-provider-selectel/pull/216))
+* Updated `go-selvpcclient` to `v2.1.0` ([#216](https://github.com/selectel/terraform-provider-selectel/pull/216))
 * Added `uz-1` region for DBaaS ([#217](https://github.com/selectel/terraform-provider-selectel/pull/217))
 
 ## 3.9.0 (Nov 17, 2022)
