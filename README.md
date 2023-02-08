@@ -15,6 +15,7 @@ This provider plugin is maintained by:
 * Sergei Kolyshkin ([@kolsean](https://github.com/kolsean))
 * Nikita Kunets ([@dkder3k](https://github.com/dkder3k))
 * Ilya Kulakov ([@TawR1024](https://github.com/TawR1024))
+* Tatyana Voloshina ([@T-Sh](https://github.com/T-Sh))
 
 Requirements
 ------------
