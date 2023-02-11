@@ -156,7 +156,8 @@ func flavorHashSetFunc() schema.SchemaSetFunc {
 }
 
 func waitForDBaaSDatastoreV1ActiveState(
-	ctx context.Context, client *dbaas.API, datastoreID string, timeout time.Duration) error {
+	ctx context.Context, client *dbaas.API, datastoreID string, timeout time.Duration,
+) error {
 	pending := []string{
 		string(dbaas.StatusPendingCreate),
 		string(dbaas.StatusPendingUpdate),
@@ -435,7 +436,8 @@ func validateDatastoreType(ctx context.Context, expectedDatastoreTypeEngine stri
 }
 
 func waitForDBaaSDatabaseV1ActiveState(
-	ctx context.Context, client *dbaas.API, databaseID string, timeout time.Duration) error {
+	ctx context.Context, client *dbaas.API, databaseID string, timeout time.Duration,
+) error {
 	pending := []string{
 		string(dbaas.StatusPendingCreate),
 		string(dbaas.StatusPendingUpdate),
@@ -504,7 +506,8 @@ func dbaasDatabaseV1LocaleDiffSuppressFunc(k, old, new string, d *schema.Resourc
 // Users
 
 func waitForDBaaSUserV1ActiveState(
-	ctx context.Context, client *dbaas.API, userID string, timeout time.Duration) error {
+	ctx context.Context, client *dbaas.API, userID string, timeout time.Duration,
+) error {
 	pending := []string{
 		string(dbaas.StatusPendingCreate),
 		string(dbaas.StatusPendingUpdate),

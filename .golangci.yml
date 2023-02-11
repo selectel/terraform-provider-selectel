@@ -4,10 +4,10 @@ run:
 
 linters:
   fast: false
+  disable-all: true
   enable:
     - asciicheck
     - bodyclose
-    - deadcode
     - depguard
     - dogsled
     - dupl
@@ -25,15 +25,12 @@ linters:
     - gofumpt
     - goheader
     - goimports
-    - golint
     - gomodguard
     - goprintffuncname
     - gosec
     - gosimple
     - govet
     - ineffassign
-    - interfacer
-    - maligned
     - misspell
     - nakedret
     - nlreturn
@@ -41,15 +38,13 @@ linters:
     - nolintlint
     - prealloc
     - rowserrcheck
-    - scopelint
+    - revive
     - sqlclosecheck
     - staticcheck
-    - structcheck
     - stylecheck
     - typecheck
     - unconvert
     - unused
-    - varcheck
     - whitespace
 
 linters-settings:
