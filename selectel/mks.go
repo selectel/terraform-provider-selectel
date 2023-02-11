@@ -57,7 +57,8 @@ func getMKSClusterV1Endpoint(region string) (endpoint string) {
 }
 
 func waitForMKSClusterV1ActiveState(
-	ctx context.Context, client *v1.ServiceClient, clusterID string, timeout time.Duration) error {
+	ctx context.Context, client *v1.ServiceClient, clusterID string, timeout time.Duration,
+) error {
 	pending := []string{
 		string(cluster.StatusPendingCreate),
 		string(cluster.StatusPendingUpdate),
@@ -90,7 +91,8 @@ func waitForMKSClusterV1ActiveState(
 }
 
 func mksClusterV1StateRefreshFunc(
-	ctx context.Context, client *v1.ServiceClient, clusterID string) resource.StateRefreshFunc {
+	ctx context.Context, client *v1.ServiceClient, clusterID string,
+) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		c, _, err := cluster.Get(ctx, client, clusterID)
 		if err != nil {

@@ -194,7 +194,8 @@ func resourceDBaaSGrantV1ImportState(_ context.Context, d *schema.ResourceData, 
 }
 
 func waitForDBaaSGrantV1ActiveState(
-	ctx context.Context, client *dbaas.API, grantID string, timeout time.Duration) error {
+	ctx context.Context, client *dbaas.API, grantID string, timeout time.Duration,
+) error {
 	pending := []string{
 		string(dbaas.StatusPendingCreate),
 		string(dbaas.StatusPendingUpdate),

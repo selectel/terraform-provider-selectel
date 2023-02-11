@@ -4,6 +4,7 @@ run:
 
 linters:
   fast: false
+  disable-all: true
   enable:
     - asciicheck
     - bodyclose
