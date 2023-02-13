@@ -1,3 +1,11 @@
+## 3.10.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* Updated Go version to `1.20` ([#222](https://github.com/selectel/terraform-provider-selectel/issues/222))
+* Updated `golangci-lint` in CI to `v1.55.1` ([#222](https://github.com/selectel/terraform-provider-selectel/issues/222))
+* Updated `terraform-plugin-sdk` to `v2.24.1` ([#220](https://github.com/selectel/terraform-provider-selectel/issues/220))
+
 ## 3.9.1 (Feb 8, 2023)
 
 IMPROVEMENTS:
