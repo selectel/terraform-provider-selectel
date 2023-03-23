@@ -30,7 +30,6 @@ func TestValidateRegionOk(t *testing.T) {
 		ru8Region,
 		ru9Region,
 		uz1Region,
-		nl1Region,
 	}
 
 	for _, region := range validRegions {
