@@ -30,7 +30,6 @@ const (
 	ru8MKSClusterV1Endpoint = "https://ru-8.mks.selcloud.ru/v1"
 	ru9MKSClusterV1Endpoint = "https://ru-9.mks.selcloud.ru/v1"
 	uz1MKSClusterV1Endpoint = "https://uz-1.mks.selcloud.ru/v1"
-	nl1MKSClusterV1Endpoint = "https://nl-1.mks.selcloud.ru/v1"
 )
 
 func getMKSClusterV1Endpoint(region string) (endpoint string) {
@@ -49,8 +48,6 @@ func getMKSClusterV1Endpoint(region string) (endpoint string) {
 		endpoint = ru9MKSClusterV1Endpoint
 	case uz1Region:
 		endpoint = uz1MKSClusterV1Endpoint
-	case nl1Region:
-		endpoint = nl1MKSClusterV1Endpoint
 	}
 
 	return

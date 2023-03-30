@@ -29,7 +29,6 @@ func dataSourceDBaaSPrometheusMetricTokenV1() *schema.Resource {
 					ru7Region,
 					ru8Region,
 					ru9Region,
-					nl1Region,
 					uz1Region,
 				}, false),
 			},

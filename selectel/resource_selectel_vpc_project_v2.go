@@ -85,7 +85,6 @@ func resourceVPCProjectV2() *schema.Resource {
 											ru8Region,
 											ru9Region,
 											uz1Region,
-											nl1Region,
 										}, false),
 									},
 									"zone": {
