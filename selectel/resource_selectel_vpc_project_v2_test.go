@@ -74,6 +74,23 @@ func TestAccVPCV2ProjectBasic(t *testing.T) {
 	})
 }
 
+func TestAccVPCV2ProjectWithSpecificQuotas(t *testing.T) {
+	projectName := acctest.RandomWithPrefix("tf-acc")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVPCV2ProjectWithSpecificQuotas(projectName),
+				Check: resource.TestCheckResourceAttr(
+					"selectel_vpc_project_v2.project_tf_acc_test_2", "quotas.#", "2"),
+			},
+		},
+	})
+}
+
 func testAccCheckVPCV2ProjectDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
 	resellV2Client := config.resellV2Client()
@@ -127,6 +144,34 @@ func testAccVPCV2ProjectBasic(name string) string {
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name = "%s"
+}`, name)
+}
+
+func testAccVPCV2ProjectWithSpecificQuotas(name string) string {
+	return fmt.Sprintf(`
+resource "selectel_vpc_project_v2" "project_tf_acc_test_2" {
+  name = "%s"
+  quotas {
+    resource_name = "compute_cores"
+    resource_quotas {
+      region = "ru-1"
+      zone = "ru-1b"
+      value = 4
+    }
+    resource_quotas {
+      region = "ru-2"
+      zone = "ru-2b"
+      value = 6
+    }
+  }
+  quotas {
+    resource_name = "volume_gigabytes_basic"
+    resource_quotas {
+      region = "ru-2"
+      zone = "ru-2a"
+      value = 2
+    }
+  }
 }`, name)
 }
 

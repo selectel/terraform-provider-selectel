@@ -147,6 +147,10 @@ func resourceVPCProjectV2Create(ctx context.Context, d *schema.ResourceData, met
 
 	opts.Name = d.Get("name").(string)
 
+	if d.HasChange("quotas") {
+		opts.SkipQuotasInit = true
+	}
+
 	log.Print(msgCreate(objectProject, opts))
 	project, _, err := projects.Create(ctx, resellV2Client, opts)
 	if err != nil {
@@ -154,6 +158,34 @@ func resourceVPCProjectV2Create(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	d.SetId(project.ID)
+
+	if d.HasChange("quotas") {
+		quotaSet := d.Get("quotas").(*schema.Set)
+		projectQuotasOpts, err := resourceVPCProjectV2QuotasOptsFromSet(quotaSet)
+		if err != nil {
+			return diag.FromErr(errParseProjectV2Quotas(err))
+		}
+
+		log.Print(msgUpdate(objectProjectQuotas, d.Id(), projectQuotasOpts))
+		accountName := strings.Split(config.Token, "_")[1]
+		tokenOpts := tokens.TokenOpts{AccountName: accountName}
+
+		token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
+		if err != nil {
+			return diag.FromErr(errCreatingObject(objectToken, err))
+		}
+
+		openstackClient := v2.NewOpenstackClient(token.ID)
+		identityManager := quotamanager.NewIdentityManager(resellV2Client, openstackClient, accountName)
+		quotaManagerClient := config.quotaManagerRegionalClient(identityManager)
+
+		for region, updateQuotas := range projectQuotasOpts {
+			_, _, err := quotas.UpdateProjectQuotas(ctx, quotaManagerClient, d.Id(), region, updateQuotas)
+			if err != nil {
+				return diag.FromErr(errUpdatingObject(objectProjectQuotas, d.Id(), err))
+			}
+		}
+	}
 
 	return resourceVPCProjectV2Read(ctx, d, meta)
 }
