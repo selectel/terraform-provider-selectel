@@ -7,6 +7,10 @@ IMPROVEMENTS:
 * Updated `terraform-plugin-sdk` to `v2.24.1` ([#220](https://github.com/selectel/terraform-provider-selectel/issues/220))
 * Removed `nl-1` region ([#226](https://github.com/selectel/terraform-provider-selectel/pull/226))
 
+BUG FIXES:
+
+* Fixed an issue with failing creation of the `selectel_vpc_project_v2` resource with specified quotas ([#227](https://github.com/selectel/terraform-provider-selectel/pull/227))
+
 ## 3.9.1 (Feb 8, 2023)
 
 IMPROVEMENTS:
