@@ -563,7 +563,8 @@ func dbaasUserV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, u
 // Slots
 
 func waitForDBaaSLogicalReplicationSlotV1ActiveState(
-	ctx context.Context, client *dbaas.API, slotID string, timeout time.Duration) error {
+	ctx context.Context, client *dbaas.API, slotID string, timeout time.Duration,
+) error {
 	pending := []string{
 		string(dbaas.StatusPendingCreate),
 		string(dbaas.StatusPendingUpdate),
