@@ -14,7 +14,6 @@ Manages a V1 PostgreSQL logical replication slot resource within Selectel Manage
 
 ```hcl
 resource "selectel_vpc_project_v2" "project_1" {
-  auto_quotas = true
 }
 
 resource "selectel_vpc_subnet_v2" "subnet" {

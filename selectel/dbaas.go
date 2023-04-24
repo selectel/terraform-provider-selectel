@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -206,7 +207,7 @@ func dbaasDatastoreV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.A
 			return nil, "", err
 		}
 
-		return d, strconv.Itoa(200), err
+		return d, strconv.Itoa(http.StatusOK), err
 	}
 }
 
@@ -487,7 +488,7 @@ func dbaasDatabaseV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.AP
 			return nil, "", err
 		}
 
-		return d, strconv.Itoa(200), err
+		return d, strconv.Itoa(http.StatusOK), err
 	}
 }
 
@@ -555,7 +556,7 @@ func dbaasUserV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, u
 			return nil, "", err
 		}
 
-		return d, strconv.Itoa(200), err
+		return d, strconv.Itoa(http.StatusOK), err
 	}
 }
 
@@ -613,6 +614,6 @@ func dbaasLogicalReplicationSlotV1DeleteStateRefreshFunc(ctx context.Context, cl
 			return nil, "", err
 		}
 
-		return d, strconv.Itoa(200), err
+		return d, strconv.Itoa(http.StatusOK), err
 	}
 }
