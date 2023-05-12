@@ -451,7 +451,7 @@ func buildDatastoreTypeErrorMessage(expectedDatastoreTypeEngines []string, datas
 func validateDatastoreType(ctx context.Context, expectedDatastoreTypeEngines []string, typeID string, client *dbaas.API) diag.Diagnostics {
 	datastoreType, err := client.DatastoreType(ctx, typeID)
 	if err != nil {
-		return diag.FromErr(errors.New("Couldnt get datastore type with id" + typeID))
+		return diag.FromErr(errors.New("Couldnt get datastore type with id " + typeID))
 	}
 	if !containDatastoreType(expectedDatastoreTypeEngines, datastoreType.Engine) {
 		return diag.FromErr(errors.New(buildDatastoreTypeErrorMessage(expectedDatastoreTypeEngines, datastoreType.Engine)))
