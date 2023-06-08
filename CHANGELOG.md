@@ -1,4 +1,4 @@
-## 3.10.0 (Unreleased)
+## 3.10.0 (June 8, 2023)
 
 IMPROVEMENTS:
 
