@@ -12,6 +12,7 @@ func TestAccDBaaSMySQLDatastoreV1ImportBasic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
 	nodeCount := 1
+	datastoreTypeEngine := mySQLDatastoreType
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -19,7 +20,32 @@ func TestAccDBaaSMySQLDatastoreV1ImportBasic(t *testing.T) {
 		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDBaaSMySQLDatastoreV1Basic(projectName, datastoreName, nodeCount),
+				Config: testAccDBaaSMySQLDatastoreV1Basic(projectName, datastoreName, datastoreTypeEngine, nodeCount),
+				Check:  testAccCheckSelectelImportEnv(resourceName),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccDBaaSMySQLNativeDatastoreV1ImportBasic(t *testing.T) {
+	resourceName := "selectel_dbaas_mysql_datastore_v1.datastore_tf_acc_test_1"
+	projectName := acctest.RandomWithPrefix("tf-acc")
+	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
+	nodeCount := 1
+	datastoreTypeEngine := mySQLNativeDatastoreType
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDBaaSMySQLDatastoreV1Basic(projectName, datastoreName, datastoreTypeEngine, nodeCount),
 				Check:  testAccCheckSelectelImportEnv(resourceName),
 			},
 			{
