@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -213,7 +214,7 @@ func dbaasDatastoreV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.A
 			return nil, "", err
 		}
 
-		return d, strconv.Itoa(200), err
+		return d, strconv.Itoa(http.StatusOK), err
 	}
 }
 
@@ -515,7 +516,7 @@ func dbaasDatabaseV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.AP
 			return nil, "", err
 		}
 
-		return d, strconv.Itoa(200), err
+		return d, strconv.Itoa(http.StatusOK), err
 	}
 }
 
@@ -583,6 +584,65 @@ func dbaasUserV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, u
 			return nil, "", err
 		}
 
-		return d, strconv.Itoa(200), err
+		return d, strconv.Itoa(http.StatusOK), err
+	}
+}
+
+// Slots
+
+func waitForDBaaSLogicalReplicationSlotV1ActiveState(
+	ctx context.Context, client *dbaas.API, slotID string, timeout time.Duration,
+) error {
+	pending := []string{
+		string(dbaas.StatusPendingCreate),
+		string(dbaas.StatusPendingUpdate),
+	}
+	target := []string{
+		string(dbaas.StatusActive),
+	}
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    pending,
+		Target:     target,
+		Refresh:    dbaasLogicalReplicationSlotV1StateRefreshFunc(ctx, client, slotID),
+		Timeout:    timeout,
+		Delay:      10 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+
+	_, err := stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf(
+			"error waiting for the slot %s to become 'ACTIVE': %s",
+			slotID, err)
+	}
+
+	return nil
+}
+
+func dbaasLogicalReplicationSlotV1StateRefreshFunc(ctx context.Context, client *dbaas.API, slotID string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		d, err := client.LogicalReplicationSlot(ctx, slotID)
+		if err != nil {
+			return nil, "", err
+		}
+
+		return d, string(d.Status), nil
+	}
+}
+
+func dbaasLogicalReplicationSlotV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, slotID string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		d, err := client.LogicalReplicationSlot(ctx, slotID)
+		if err != nil {
+			var dbaasError *dbaas.DBaaSAPIError
+			if errors.As(err, &dbaasError) {
+				return d, strconv.Itoa(dbaasError.StatusCode()), nil
+			}
+
+			return nil, "", err
+		}
+
+		return d, strconv.Itoa(http.StatusOK), err
 	}
 }
