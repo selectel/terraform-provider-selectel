@@ -1,3 +1,14 @@
+## 3.11.0 (Unreleased)
+
+FEATURES:
+
+* __New Resource:__ `selectel_dbaas_postgresql_logical_replication_slot_v1` ([#214](https://github.com/selectel/terraform-provider-selectel/issues/214))
+
+IMPROVEMENTS:
+
+* Added `mysql_native` datastore type for the `selectel_dbaas_mysql_datastore_v1` resource ([#213](https://github.com/selectel/terraform-provider-selectel/pull/213))
+* Updated `dbaas-go` dependency to `v0.8.0` ([#214](https://github.com/selectel/terraform-provider-selectel/issues/214))
+
 ## 3.10.0 (June 8, 2023)
 
 IMPROVEMENTS:
