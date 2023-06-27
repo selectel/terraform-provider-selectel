@@ -65,3 +65,27 @@ func testAccCheckSelectelImportEnv(resourceName string) resource.TestCheckFunc {
 		return nil
 	}
 }
+
+func testAccCheckSelectelCRaaSImportEnv(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("not found: %s", resourceName)
+		}
+		if rs.Primary.ID == "" {
+			return errors.New("no ID is set")
+		}
+
+		var projectID string
+
+		if v, ok := rs.Primary.Attributes["project_id"]; ok {
+			projectID = v
+		}
+
+		if err := os.Setenv("SEL_PROJECT_ID", projectID); err != nil {
+			return fmt.Errorf("error setting SEL_PROJECT_ID: %s", err)
+		}
+
+		return nil
+	}
+}
