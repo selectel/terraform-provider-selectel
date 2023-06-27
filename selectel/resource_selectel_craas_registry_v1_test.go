@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -11,7 +13,6 @@ import (
 	"github.com/selectel/craas-go/pkg/v1/registry"
 	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
 	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
-	"testing"
 )
 
 func TestAccCRaaSRegistryV1Basic(t *testing.T) {
@@ -39,7 +40,6 @@ func TestAccCRaaSRegistryV1Basic(t *testing.T) {
 			},
 		},
 	})
-
 }
 
 func testAccCheckCRaaSRegistryV1Exists(n string, craasRegistry *registry.Registry) resource.TestCheckFunc {
