@@ -36,6 +36,7 @@ const (
 	objectFeatureGates            = "feature-gates"
 	objectAdmissionControllers    = "admission-controllers"
 	objectLogicalReplicationSlot  = "logical-replication-slot"
+	objectRegistry                = "registry"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -110,6 +111,7 @@ func Provider() *schema.Provider {
 			"selectel_dbaas_postgresql_extension_v1":                resourceDBaaSPostgreSQLExtensionV1(),
 			"selectel_dbaas_prometheus_metric_token_v1":             resourceDBaaSPrometheusMetricTokenV1(),
 			"selectel_dbaas_postgresql_logical_replication_slot_v1": resourceDBaaSPostgreSQLLogicalReplicationSlotV1(),
+			"selectel_craas_registry_v1":                            resourceCRaaSRegistryV1(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}
