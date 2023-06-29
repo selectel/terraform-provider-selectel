@@ -10,7 +10,10 @@ import (
 	"github.com/selectel/craas-go/pkg/v1/registry"
 )
 
-const craasV1Endpoint = "https://cr.selcloud.ru/api/v1"
+const (
+	craasV1Endpoint      = "https://cr.selcloud.ru/api/v1"
+	craasV1TokenUsername = "token"
+)
 
 func waitForCRaaSRegistryV1StableState(
 	ctx context.Context, client *v1.ServiceClient, registryID string, timeout time.Duration,
