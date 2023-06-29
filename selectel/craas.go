@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	craasV1Endpoint      = "https://cr.selcloud.ru/api/v1"
-	craasV1TokenUsername = "token"
+	craasV1Endpoint         = "https://cr.selcloud.ru/api/v1"
+	craasV1RegistryHostName = "cr.selcloud.ru"
+	craasV1TokenUsername    = "token"
 )
 
 func waitForCRaaSRegistryV1StableState(

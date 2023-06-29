@@ -23,6 +23,7 @@ func TestAccCRaaSRegistryV1Basic(t *testing.T) {
 
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	registryName := acctest.RandomWithPrefix("tf-acc-reg")
+	registryEndpoint := fmt.Sprintf("%s/%s", craasV1RegistryHostName, registryName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -36,6 +37,7 @@ func TestAccCRaaSRegistryV1Basic(t *testing.T) {
 					testAccCheckCRaaSRegistryV1Exists("selectel_craas_registry_v1.registry_tf_acc_test_1", &craasRegistry),
 					resource.TestCheckResourceAttr("selectel_craas_registry_v1.registry_tf_acc_test_1", "name", registryName),
 					resource.TestCheckResourceAttr("selectel_craas_registry_v1.registry_tf_acc_test_1", "status", "ACTIVE"),
+					resource.TestCheckResourceAttr("selectel_craas_registry_v1.registry_tf_acc_test_1", "endpoint", registryEndpoint),
 				),
 			},
 		},

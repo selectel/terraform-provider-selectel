@@ -39,6 +39,8 @@ The following attributes are exported:
 
 * `status` - Shows the current status of the registry.
 
+* `endpoint` - Represents the endpoint of the container registry. Ex: `cr.selcloud.ru/my-registry`
+
 ## Import
 
 Registry can be imported using the `id`, e.g.
