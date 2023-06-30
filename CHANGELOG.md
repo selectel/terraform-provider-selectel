@@ -1,8 +1,10 @@
-## 3.11.0 (Unreleased)
+## 3.11.0 (June 30, 2023)
 
 FEATURES:
 
 * __New Resource:__ `selectel_dbaas_postgresql_logical_replication_slot_v1` ([#214](https://github.com/selectel/terraform-provider-selectel/issues/214))
+* __New Resource:__ `selectel_craas_token_v1` ([#218](https://github.com/selectel/terraform-provider-selectel/issues/218))
+* __New Resource:__ `selectel_craas_registry_v1` ([#218](https://github.com/selectel/terraform-provider-selectel/issues/218))
 
 IMPROVEMENTS:
 
