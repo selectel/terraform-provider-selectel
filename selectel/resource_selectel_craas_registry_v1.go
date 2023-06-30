@@ -44,6 +44,10 @@ func resourceCRaaSRegistryV1() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"endpoint": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -112,6 +116,7 @@ func resourceCRaaSRegistryV1Read(ctx context.Context, d *schema.ResourceData, me
 
 	d.Set("name", craasRegistry.Name)
 	d.Set("status", craasRegistry.Status)
+	d.Set("endpoint", fmt.Sprintf("%s/%s", craasV1RegistryHostName, craasRegistry.Name))
 
 	return nil
 }
