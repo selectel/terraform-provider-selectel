@@ -385,6 +385,26 @@ func updateDatastoreConfig(ctx context.Context, d *schema.ResourceData, client *
 	return nil
 }
 
+func updateDatastoreBackups(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	var backupsOpts dbaas.DatastoreBackupsOpts
+	backupsOpts.BackupRetentionDays = d.Get("backup_retention_days").(int)
+
+	log.Print(msgUpdate(objectDatastore, d.Id(), backupsOpts))
+	_, err := client.BackupsDatastore(ctx, d.Id(), backupsOpts)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
 func resizeDatastore(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
 	var resizeOpts dbaas.DatastoreResizeOpts
 	nodeCount := d.Get("node_count").(int)

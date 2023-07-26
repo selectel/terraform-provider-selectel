@@ -85,6 +85,11 @@ func resourceDBaaSDatastoreV1() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"backup_retention_days": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Number of days to retain backups.",
+			},
 			"connections": {
 				Type:     schema.TypeMap,
 				Computed: true,
@@ -250,6 +255,11 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 		datastoreCreateOpts.RedisPassword = redisPassword.(string)
 	}
 
+	backupRetentionDays, ok := d.GetOk("backup_retention_days")
+	if ok {
+		datastoreCreateOpts.BackupRetentionDays = backupRetentionDays.(int)
+	}
+
 	log.Print(msgCreate(objectDatastore, datastoreCreateOpts))
 	datastore, err := dbaasClient.CreateDatastore(ctx, datastoreCreateOpts)
 	if err != nil {
@@ -346,6 +356,12 @@ func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData,
 	}
 	if d.HasChange("redis_password") {
 		err := updateRedisDatastorePassword(ctx, d, dbaasClient)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("backup_retention_days") {
+		err := updateDatastoreBackups(ctx, d, dbaasClient)
 		if err != nil {
 			return diag.FromErr(err)
 		}

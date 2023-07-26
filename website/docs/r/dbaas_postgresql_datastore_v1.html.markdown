@@ -90,6 +90,8 @@ The following arguments are supported:
 
 * `config` - (Optional) Configuration parameters for the datastore.
 
+* `backup_retention_days` - (Optional) Number of days to retain backups.
+
 **flavor**
 
 - `vcpus` - (Required) CPU count for the flavor.
