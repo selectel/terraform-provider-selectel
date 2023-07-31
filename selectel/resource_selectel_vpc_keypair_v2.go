@@ -9,7 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/keypairs"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/keypairs"
 )
 
 func resourceVPCKeypairV2() *schema.Resource {
@@ -48,7 +48,10 @@ func resourceVPCKeypairV2() *schema.Resource {
 
 func resourceVPCKeypairV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for keypairs object: %w", err))
+	}
 
 	opts := keypairs.KeypairOpts{
 		Name:      d.Get("name").(string),
@@ -58,7 +61,7 @@ func resourceVPCKeypairV2Create(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	log.Print(msgCreate(objectKeypair, opts))
-	newKeypairs, _, err := keypairs.Create(ctx, resellV2Client, opts)
+	newKeypairs, _, err := keypairs.Create(selvpcClient, opts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectKeypair, err))
 	}
@@ -77,16 +80,19 @@ func resourceVPCKeypairV2Create(ctx context.Context, d *schema.ResourceData, met
 	return resourceVPCKeypairV2Read(ctx, d, meta)
 }
 
-func resourceVPCKeypairV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCKeypairV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for keypairs object: %w", err))
+	}
 
 	log.Print(msgGet(objectKeypair, d.Id()))
 	userID, keypairName, err := resourceVPCKeypairV2ParseID(d.Id())
 	if err != nil {
 		return diag.FromErr(errParseID(objectKeypair, d.Id()))
 	}
-	existingKeypairs, _, err := keypairs.List(ctx, resellV2Client)
+	existingKeypairs, _, err := keypairs.List(selvpcClient)
 	if err != nil {
 		return diag.FromErr(errSearchingKeypair(keypairName, err))
 	}
@@ -108,9 +114,12 @@ func resourceVPCKeypairV2Read(ctx context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
-func resourceVPCKeypairV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCKeypairV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for keypairs object: %w", err))
+	}
 
 	userID, keypairName, err := resourceVPCKeypairV2ParseID(d.Id())
 	if err != nil {
@@ -118,7 +127,7 @@ func resourceVPCKeypairV2Delete(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	log.Print(msgDelete(objectKeypair, d.Id()))
-	response, err := keypairs.Delete(ctx, resellV2Client, keypairName, userID)
+	response, err := keypairs.Delete(selvpcClient, keypairName, userID)
 	if err != nil {
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {

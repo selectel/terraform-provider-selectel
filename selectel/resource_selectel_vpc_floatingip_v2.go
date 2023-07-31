@@ -2,12 +2,14 @@ package selectel
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/floatingips"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/clients"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/floatingips"
 )
 
 func resourceVPCFloatingIPV2() *schema.Resource {
@@ -16,7 +18,7 @@ func resourceVPCFloatingIPV2() *schema.Resource {
 		ReadContext:   resourceVPCFloatingIPV2Read,
 		DeleteContext: resourceVPCFloatingIPV2Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceVPCFloatingIPV2ImportState,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_id": {
@@ -72,20 +74,29 @@ func resourceVPCFloatingIPV2() *schema.Resource {
 
 func resourceVPCFloatingIPV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-
 	projectID := d.Get("project_id").(string)
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for floatingip: %w", err))
+	}
+
+	region := d.Get("region").(string)
+	err = validateRegion(selvpcClient, clients.ResellServiceType, region)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't validate region: %w", err))
+	}
+
 	opts := floatingips.FloatingIPOpts{
 		FloatingIPs: []floatingips.FloatingIPOpt{
 			{
-				Region:   d.Get("region").(string),
+				Region:   region,
 				Quantity: 1,
 			},
 		},
 	}
 
 	log.Print(msgCreate(objectFloatingIP, opts))
-	floatingIPs, _, err := floatingips.Create(ctx, resellV2Client, projectID, opts)
+	floatingIPs, _, err := floatingips.Create(selvpcClient, projectID, opts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectFloatingIP, err))
 	}
@@ -98,12 +109,16 @@ func resourceVPCFloatingIPV2Create(ctx context.Context, d *schema.ResourceData, 
 	return resourceVPCFloatingIPV2Read(ctx, d, meta)
 }
 
-func resourceVPCFloatingIPV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCFloatingIPV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	projectID := d.Get("project_id").(string)
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for floatingips: %w", err))
+	}
 
 	log.Print(msgGet(objectFloatingIP, d.Id()))
-	floatingIP, response, err := floatingips.Get(ctx, resellV2Client, d.Id())
+	floatingIP, response, err := floatingips.Get(selvpcClient, d.Id())
 	if err != nil {
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
@@ -130,12 +145,16 @@ func resourceVPCFloatingIPV2Read(ctx context.Context, d *schema.ResourceData, me
 	return nil
 }
 
-func resourceVPCFloatingIPV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCFloatingIPV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	projectID := d.Get("project_id").(string)
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for floatingips: %w", err))
+	}
 
 	log.Print(msgDelete(objectFloatingIP, d.Id()))
-	response, err := floatingips.Delete(ctx, resellV2Client, d.Id())
+	response, err := floatingips.Delete(selvpcClient, d.Id())
 	if err != nil {
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
@@ -148,4 +167,15 @@ func resourceVPCFloatingIPV2Delete(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	return nil
+}
+
+func resourceVPCFloatingIPV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	config := meta.(*Config)
+	if config.ProjectID == "" {
+		return nil, fmt.Errorf("SEL_PROJECT_ID must be set for the resource import")
+	}
+
+	d.Set("project_id", config.ProjectID)
+
+	return []*schema.ResourceData{d}, nil
 }

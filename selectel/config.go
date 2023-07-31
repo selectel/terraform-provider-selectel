@@ -1,44 +1,105 @@
 package selectel
 
 import (
-	"errors"
-	"strings"
+	"context"
+	"fmt"
+	"sync"
 
 	"github.com/hashicorp/go-retryablehttp"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	domainsV1 "github.com/selectel/domains-go/pkg/v1"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell"
-	resellV2 "github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient"
+)
+
+var (
+	cfgSingletone *Config
+	once          sync.Once
 )
 
 // Config contains all available configuration options.
 type Config struct {
 	Token     string
-	Endpoint  string
-	ProjectID string
 	Region    string
+	ProjectID string
+
+	Context        context.Context
+	AuthURL        string
+	Username       string
+	Password       string
+	UserDomainName string
+	DomainName     string
+	clientsCache   map[string]*selvpcclient.Client
+	lock           sync.Mutex
 }
 
-// Validate performs config validation.
-func (c *Config) Validate() error {
-	if c.Token == "" {
-		return errors.New("token must be specified")
-	}
-	if c.Endpoint == "" {
-		c.Endpoint = strings.Join([]string{resell.Endpoint, resellV2.APIVersion}, "/")
-	}
-	if c.Region != "" {
-		if err := validateRegion(c.Region); err != nil {
-			return err
+func getConfig(d *schema.ResourceData) (*Config, diag.Diagnostics) {
+	var err error
+
+	once.Do(func() {
+		cfgSingletone = &Config{
+			Username:   d.Get("username").(string),
+			Password:   d.Get("password").(string),
+			DomainName: d.Get("domain_name").(string),
 		}
+		if v, ok := d.GetOk("token"); ok {
+			cfgSingletone.Token = v.(string)
+		}
+		if v, ok := d.GetOk("auth_url"); ok {
+			cfgSingletone.AuthURL = v.(string)
+		}
+		if v, ok := d.GetOk("user_domain_name"); ok {
+			cfgSingletone.UserDomainName = v.(string)
+		}
+		if v, ok := d.GetOk("project_id"); ok {
+			cfgSingletone.ProjectID = v.(string)
+		}
+		if v, ok := d.GetOk("region"); ok {
+			cfgSingletone.Region = v.(string)
+		}
+	})
+	if err != nil {
+		return nil, diag.FromErr(err)
 	}
 
-	return nil
+	return cfgSingletone, nil
 }
 
-func (c *Config) resellV2Client() *selvpcclient.ServiceClient {
-	return resellV2.NewV2ResellClientWithEndpoint(c.Token, c.Endpoint)
+func (c *Config) GetSelVPCClient() (*selvpcclient.Client, error) {
+	return c.GetSelVPCClientWithProjectScope("")
+}
+
+func (c *Config) GetSelVPCClientWithProjectScope(projectID string) (*selvpcclient.Client, error) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	clientsCacheKey := fmt.Sprintf("client_%s", projectID)
+
+	if client, ok := c.clientsCache[clientsCacheKey]; ok {
+		return client, nil
+	}
+
+	opts := &selvpcclient.ClientOptions{
+		DomainName:     c.DomainName,
+		Username:       c.Username,
+		Password:       c.Password,
+		ProjectID:      projectID,
+		AuthURL:        c.AuthURL,
+		UserDomainName: c.UserDomainName,
+	}
+
+	client, err := selvpcclient.NewClient(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if c.clientsCache == nil {
+		c.clientsCache = map[string]*selvpcclient.Client{}
+	}
+
+	c.clientsCache[clientsCacheKey] = client
+
+	return client, nil
 }
 
 func (c *Config) domainsV1Client() *domainsV1.ServiceClient {
@@ -51,10 +112,4 @@ func (c *Config) domainsV1Client() *domainsV1.ServiceClient {
 	domainsClient.HTTPClient = retryClient.StandardClient()
 
 	return domainsClient
-}
-
-func (c *Config) quotaManagerRegionalClient(
-	identity quotamanager.IdentityManagerInterface,
-) *quotamanager.QuotaRegionalClient {
-	return quotamanager.NewQuotaRegionalClient(selvpcclient.NewHTTPClient(), identity)
 }

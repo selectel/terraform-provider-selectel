@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -9,8 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/subnets"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/clients"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/subnets"
 )
 
 func resourceVPCSubnetV2() *schema.Resource {
@@ -19,7 +21,7 @@ func resourceVPCSubnetV2() *schema.Resource {
 		ReadContext:   resourceVPCSubnetV2Read,
 		DeleteContext: resourceVPCSubnetV2Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceVPCSubnetV2ImportState,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_id": {
@@ -92,13 +94,22 @@ func resourceVPCSubnetV2() *schema.Resource {
 
 func resourceVPCSubnetV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-
 	projectID := d.Get("project_id").(string)
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for subnet object: %w", err))
+	}
+
+	region := d.Get("region").(string)
+	err = validateRegion(selvpcClient, clients.ResellServiceType, region)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't validate region: %w", err))
+	}
+
 	opts := subnets.SubnetOpts{
 		Subnets: []subnets.SubnetOpt{
 			{
-				Region:       d.Get("region").(string),
+				Region:       region,
 				Quantity:     1,
 				Type:         selvpcclient.IPVersion(d.Get("ip_version").(string)),
 				PrefixLength: d.Get("prefix_length").(int),
@@ -107,7 +118,7 @@ func resourceVPCSubnetV2Create(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	log.Print(msgCreate(objectSubnet, opts))
-	subnetsResponse, _, err := subnets.Create(ctx, resellV2Client, projectID, opts)
+	subnetsResponse, _, err := subnets.Create(selvpcClient, projectID, opts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectSubnet, err))
 	}
@@ -120,12 +131,16 @@ func resourceVPCSubnetV2Create(ctx context.Context, d *schema.ResourceData, meta
 	return resourceVPCSubnetV2Read(ctx, d, meta)
 }
 
-func resourceVPCSubnetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCSubnetV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	projectID := d.Get("project_id").(string)
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for subnet object: %w", err))
+	}
 
 	log.Print(msgGet(objectSubnet, d.Id()))
-	subnet, response, err := subnets.Get(ctx, resellV2Client, d.Id())
+	subnet, response, err := subnets.Get(selvpcClient, d.Id())
 	if err != nil {
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
@@ -161,12 +176,16 @@ func resourceVPCSubnetV2Read(ctx context.Context, d *schema.ResourceData, meta i
 	return nil
 }
 
-func resourceVPCSubnetV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCSubnetV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	projectID := d.Get("project_id").(string)
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for subnet object: %w", err))
+	}
 
 	log.Print(msgDelete(objectSubnet, d.Id()))
-	response, err := subnets.Delete(ctx, resellV2Client, d.Id())
+	response, err := subnets.Delete(selvpcClient, d.Id())
 	if err != nil {
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
@@ -179,4 +198,15 @@ func resourceVPCSubnetV2Delete(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	return nil
+}
+
+func resourceVPCSubnetV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	config := meta.(*Config)
+	if config.ProjectID == "" {
+		return nil, fmt.Errorf("SEL_PROJECT_ID must be set for the resource import")
+	}
+
+	d.Set("project_id", config.ProjectID)
+
+	return []*schema.ResourceData{d}, nil
 }

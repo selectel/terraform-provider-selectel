@@ -9,10 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	v1 "github.com/selectel/craas-go/pkg"
 	"github.com/selectel/craas-go/pkg/v1/token"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
 )
 
 func TestAccCRaaSTokenV1Basic(t *testing.T) {
@@ -52,29 +50,17 @@ func testAccCheckCRaaSTokenV1Exists(n string, craasToken *token.Token) resource.
 			return errors.New("no ID is set")
 		}
 
-		var projectID string
-		if id, ok := rs.Primary.Attributes["project_id"]; ok {
-			projectID = id
-		}
-
 		var tokenID string
 		if t, ok := rs.Primary.Attributes["token"]; ok {
 			tokenID = t
 		}
 
-		config := testAccProvider.Meta().(*Config)
-		resellV2Client := config.resellV2Client()
 		ctx := context.Background()
-
-		selTokenOpts := tokens.TokenOpts{
-			ProjectID: projectID,
-		}
-		selToken, _, err := tokens.Create(ctx, resellV2Client, selTokenOpts)
+		craasClient, err := newCRaaSTestClient(rs, testAccProvider)
 		if err != nil {
-			return errCreatingObject(objectToken, err)
+			return err
 		}
 
-		craasClient := v1.NewCRaaSClientV1(selToken.ID, craasV1Endpoint)
 		foundToken, _, err := token.Get(ctx, craasClient, tokenID)
 		if err != nil {
 			return err

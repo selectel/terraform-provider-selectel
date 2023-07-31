@@ -6,17 +6,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager/quotas"
-	resell "github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
-	v1 "github.com/selectel/mks-go/pkg/v1"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/quotamanager/quotas"
 	"github.com/selectel/mks-go/pkg/v1/nodegroup"
 )
 
@@ -190,21 +185,24 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 	selMutexKV.Lock(clusterID)
 	defer selMutexKV.Unlock(clusterID)
 
+	mksClient, diagErr := getMKSClient(d, meta)
+	if diagErr != nil {
+		return diagErr
+	}
+
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
-	}
-
-	log.Print(msgCreate(objectToken, tokenOpts))
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-	if err != nil {
-		return diag.FromErr(errCreatingObject(objectToken, err))
-	}
-
+	projectID := d.Get("project_id").(string)
 	region := d.Get("region").(string)
-	endpoint := getMKSClusterV1Endpoint(region)
-	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
+
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get project-scope selvpc for node group object: %w", err))
+	}
+
+	err = validateRegion(selvpcClient, MKS, region)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't validate region: %w", err))
+	}
 
 	// Get a list of all nodegroups in the cluster.
 	allNodegroups, _, err := nodegroup.List(ctx, mksClient, clusterID)
@@ -234,14 +232,9 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 		AvailabilityZone: d.Get("availability_zone").(string),
 	}
 
-	accountName := strings.Split(config.Token, "_")[1]
-	openstackClient := resell.NewOpenstackClient(token.ID)
-	identityManager := quotamanager.NewIdentityManager(resellV2Client, openstackClient, accountName)
-	quotaManagerClient := config.quotaManagerRegionalClient(identityManager)
-
-	projectQuotas, _, err := quotas.GetProjectQuotas(ctx, quotaManagerClient, d.Get("project_id").(string), region)
+	projectQuotas, _, err := quotas.GetProjectQuotas(selvpcClient, projectID, region)
 	if err != nil {
-		return diag.FromErr(errGettingObject(objectProjectQuotas, d.Get("project_id").(string), err))
+		return diag.FromErr(errGettingObject(objectProjectQuotas, projectID, err))
 	}
 
 	if err := checkQuotasForNodegroup(projectQuotas, createOpts); err != nil {
@@ -314,21 +307,10 @@ func resourceMKSNodegroupV1Read(ctx context.Context, d *schema.ResourceData, met
 		return diag.FromErr(errGettingObject(objectNodegroup, d.Id(), err))
 	}
 
-	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
+	mksClient, diagErr := getMKSClient(d, meta)
+	if diagErr != nil {
+		return diagErr
 	}
-
-	log.Print(msgCreate(objectToken, tokenOpts))
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-	if err != nil {
-		return diag.FromErr(errCreatingObject(objectToken, err))
-	}
-
-	region := d.Get("region").(string)
-	endpoint := getMKSClusterV1Endpoint(region)
-	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
 
 	log.Print(msgGet(objectNodegroup, d.Id()))
 	mksNodegroup, response, err := nodegroup.Get(ctx, mksClient, clusterID, nodegroupID)
@@ -382,21 +364,24 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 	selMutexKV.Lock(clusterID)
 	defer selMutexKV.Unlock(clusterID)
 
+	mksClient, diagErr := getMKSClient(d, meta)
+	if diagErr != nil {
+		return diagErr
+	}
+
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
-	}
-
-	log.Print(msgCreate(objectToken, tokenOpts))
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-	if err != nil {
-		return diag.FromErr(errCreatingObject(objectToken, err))
-	}
-
+	projectID := d.Get("project_id").(string)
 	region := d.Get("region").(string)
-	endpoint := getMKSClusterV1Endpoint(region)
-	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
+
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get project-scope selvpc for node group object: %w", err))
+	}
+
+	err = validateRegion(selvpcClient, MKS, region)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't validate region: %w", err))
+	}
 
 	var (
 		updateOpts nodegroup.UpdateOpts
@@ -454,15 +439,9 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 			AvailabilityZone: d.Get("availability_zone").(string),
 		}
 
-		accountName := strings.Split(config.Token, "_")[1]
-		openstackClient := resell.NewOpenstackClient(token.ID)
-		identityManager := quotamanager.NewIdentityManager(resellV2Client, openstackClient, accountName)
-		quotaManagerClient := config.quotaManagerRegionalClient(identityManager)
-
-		projectQuotas, _, err := quotas.GetProjectQuotas(ctx, quotaManagerClient, d.Get("project_id").(string),
-			region)
+		projectQuotas, _, err := quotas.GetProjectQuotas(selvpcClient, projectID, region)
 		if err != nil {
-			return diag.FromErr(errGettingObject(objectProjectQuotas, d.Get("project_id").(string), err))
+			return diag.FromErr(errGettingObject(objectProjectQuotas, projectID, err))
 		}
 
 		if err := checkQuotasForNodegroup(projectQuotas, &newNodesRequest); err != nil {
@@ -500,21 +479,10 @@ func resourceMKSNodegroupV1Delete(ctx context.Context, d *schema.ResourceData, m
 	selMutexKV.Lock(clusterID)
 	defer selMutexKV.Unlock(clusterID)
 
-	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
+	mksClient, diagErr := getMKSClient(d, meta)
+	if diagErr != nil {
+		return diagErr
 	}
-
-	log.Print(msgCreate(objectToken, tokenOpts))
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-	if err != nil {
-		return diag.FromErr(errCreatingObject(objectToken, err))
-	}
-
-	region := d.Get("region").(string)
-	endpoint := getMKSClusterV1Endpoint(region)
-	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
 
 	log.Print(msgDelete(objectNodegroup, d.Id()))
 	_, err = nodegroup.Delete(ctx, mksClient, clusterID, nodegroupID)

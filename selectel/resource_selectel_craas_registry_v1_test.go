@@ -9,11 +9,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	v1 "github.com/selectel/craas-go/pkg"
 	"github.com/selectel/craas-go/pkg/v1/registry"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
 )
+
+const craasV1RegistryHostName = "cr.selcloud.ru"
 
 func TestAccCRaaSRegistryV1Basic(t *testing.T) {
 	var (
@@ -55,24 +55,13 @@ func testAccCheckCRaaSRegistryV1Exists(n string, craasRegistry *registry.Registr
 			return errors.New("no ID is set")
 		}
 
-		var projectID string
-		if id, ok := rs.Primary.Attributes["project_id"]; ok {
-			projectID = id
-		}
-
-		config := testAccProvider.Meta().(*Config)
-		resellV2Client := config.resellV2Client()
 		ctx := context.Background()
 
-		tokenOpts := tokens.TokenOpts{
-			ProjectID: projectID,
-		}
-		token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
+		craasClient, err := newCRaaSTestClient(rs, testAccProvider)
 		if err != nil {
-			return errCreatingObject(objectToken, err)
+			return err
 		}
 
-		craasClient := v1.NewCRaaSClientV1(token.ID, craasV1Endpoint)
 		foundRegistry, _, err := registry.Get(ctx, craasClient, rs.Primary.ID)
 		if err != nil {
 			return err
