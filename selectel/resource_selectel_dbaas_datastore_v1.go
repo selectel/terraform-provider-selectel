@@ -45,15 +45,6 @@ func resourceDBaaSDatastoreV1() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					ru1Region,
-					ru2Region,
-					ru3Region,
-					ru7Region,
-					ru8Region,
-					ru9Region,
-					uz1Region,
-				}, false),
 			},
 			"subnet_id": {
 				Type:     schema.TypeString,
@@ -197,7 +188,7 @@ func resourceDBaaSDatastoreV1() *schema.Resource {
 }
 
 func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -269,7 +260,7 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -309,7 +300,7 @@ func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -355,7 +346,7 @@ func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceDBaaSDatastoreV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}

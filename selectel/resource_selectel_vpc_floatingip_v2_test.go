@@ -1,7 +1,6 @@
 package selectel
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -9,8 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/floatingips"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/floatingips"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
 )
 
 func TestAccVPCV2FloatingIPBasic(t *testing.T) {
@@ -40,15 +39,17 @@ func TestAccVPCV2FloatingIPBasic(t *testing.T) {
 
 func testAccCheckVPCV2FloatingIPDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
-	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return fmt.Errorf("can't get selvpc client for test floatingip object: %w", err)
+	}
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "selectel_vpc_floatingip_v2" {
 			continue
 		}
 
-		_, _, err := floatingips.Get(ctx, resellV2Client, rs.Primary.ID)
+		_, _, err := floatingips.Get(selvpcClient, rs.Primary.ID)
 		if err == nil {
 			return errors.New("floatingip still exists")
 		}
@@ -69,10 +70,12 @@ func testAccCheckVPCV2FloatingIPExists(n string, floatingip *floatingips.Floatin
 		}
 
 		config := testAccProvider.Meta().(*Config)
-		resellV2Client := config.resellV2Client()
-		ctx := context.Background()
+		selvpcClient, err := config.GetSelVPCClient()
+		if err != nil {
+			return fmt.Errorf("can't get selvpc client for test floatingip object: %w", err)
+		}
 
-		foundFloatingIP, _, err := floatingips.Get(ctx, resellV2Client, rs.Primary.ID)
+		foundFloatingIP, _, err := floatingips.Get(selvpcClient, rs.Primary.ID)
 		if err != nil {
 			return err
 		}

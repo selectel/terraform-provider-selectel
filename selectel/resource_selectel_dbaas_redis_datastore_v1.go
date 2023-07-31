@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/dbaas-go"
 )
 
@@ -45,15 +44,6 @@ func resourceDBaaSRedisDatastoreV1() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					ru1Region,
-					ru2Region,
-					ru3Region,
-					ru7Region,
-					ru8Region,
-					ru9Region,
-					uz1Region,
-				}, false),
 			},
 			"subnet_id": {
 				Type:     schema.TypeString,
@@ -165,7 +155,7 @@ func resourceDBaaSRedisDatastoreV1() *schema.Resource {
 }
 
 func resourceDBaaSRedisDatastoreV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -221,7 +211,7 @@ func resourceDBaaSRedisDatastoreV1Create(ctx context.Context, d *schema.Resource
 }
 
 func resourceDBaaSRedisDatastoreV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -261,7 +251,7 @@ func resourceDBaaSRedisDatastoreV1Read(ctx context.Context, d *schema.ResourceDa
 }
 
 func resourceDBaaSRedisDatastoreV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -301,7 +291,7 @@ func resourceDBaaSRedisDatastoreV1Update(ctx context.Context, d *schema.Resource
 }
 
 func resourceDBaaSRedisDatastoreV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}

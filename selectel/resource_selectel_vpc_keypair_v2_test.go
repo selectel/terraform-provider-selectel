@@ -1,7 +1,6 @@
 package selectel
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -9,8 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/keypairs"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/users"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/keypairs"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/users"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,8 +45,10 @@ func TestAccVPCV2KeypairBasic(t *testing.T) {
 
 func testAccCheckVPCV2KeypairDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
-	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return fmt.Errorf("can't get selvpc client for test keypairs: %w", err)
+	}
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "selectel_vpc_keypair_v2" {
@@ -58,7 +59,7 @@ func testAccCheckVPCV2KeypairDestroy(s *terraform.State) error {
 		if err != nil {
 			return err
 		}
-		existingKeypairs, _, err := keypairs.List(ctx, resellV2Client)
+		existingKeypairs, _, err := keypairs.List(selvpcClient)
 		if err != nil {
 			return errSearchingKeypair(keypairName, err)
 		}
@@ -90,14 +91,16 @@ func testAccCheckVPCV2KeypairExists(n string, keypair *keypairs.Keypair) resourc
 		}
 
 		config := testAccProvider.Meta().(*Config)
-		resellV2Client := config.resellV2Client()
-		ctx := context.Background()
+		selvpcClient, err := config.GetSelVPCClient()
+		if err != nil {
+			return fmt.Errorf("can't get selvpc client for test keypairs: %w", err)
+		}
 
 		userID, keypairName, err := resourceVPCKeypairV2ParseID(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
-		existingKeypairs, _, err := keypairs.List(ctx, resellV2Client)
+		existingKeypairs, _, err := keypairs.List(selvpcClient)
 		if err != nil {
 			return errSearchingKeypair(keypairName, err)
 		}

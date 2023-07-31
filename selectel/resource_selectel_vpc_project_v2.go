@@ -2,18 +2,14 @@ package selectel
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager/quotas"
-	v2 "github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/quotamanager/quotas"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
 )
 
 func resourceVPCProjectV2() *schema.Resource {
@@ -77,15 +73,6 @@ func resourceVPCProjectV2() *schema.Resource {
 										Type:     schema.TypeString,
 										Optional: true,
 										ForceNew: false,
-										ValidateFunc: validation.StringInSlice([]string{
-											ru1Region,
-											ru2Region,
-											ru3Region,
-											ru7Region,
-											ru8Region,
-											ru9Region,
-											uz1Region,
-										}, false),
 									},
 									"zone": {
 										Type:     schema.TypeString,
@@ -141,8 +128,11 @@ func resourceVPCProjectV2() *schema.Resource {
 
 func resourceVPCProjectV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
 
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for project object: %w", err))
+	}
 	var opts projects.CreateOpts
 
 	opts.Name = d.Get("name").(string)
@@ -152,7 +142,7 @@ func resourceVPCProjectV2Create(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	log.Print(msgCreate(objectProject, opts))
-	project, _, err := projects.Create(ctx, resellV2Client, opts)
+	project, _, err := projects.Create(selvpcClient, opts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectProject, err))
 	}
@@ -167,20 +157,9 @@ func resourceVPCProjectV2Create(ctx context.Context, d *schema.ResourceData, met
 		}
 
 		log.Print(msgUpdate(objectProjectQuotas, d.Id(), projectQuotasOpts))
-		accountName := strings.Split(config.Token, "_")[1]
-		tokenOpts := tokens.TokenOpts{AccountName: accountName}
-
-		token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-		if err != nil {
-			return diag.FromErr(errCreatingObject(objectToken, err))
-		}
-
-		openstackClient := v2.NewOpenstackClient(token.ID)
-		identityManager := quotamanager.NewIdentityManager(resellV2Client, openstackClient, accountName)
-		quotaManagerClient := config.quotaManagerRegionalClient(identityManager)
 
 		for region, updateQuotas := range projectQuotasOpts {
-			_, _, err := quotas.UpdateProjectQuotas(ctx, quotaManagerClient, d.Id(), region, updateQuotas)
+			_, _, err := quotas.UpdateProjectQuotas(selvpcClient, d.Id(), region, updateQuotas)
 			if err != nil {
 				return diag.FromErr(errUpdatingObject(objectProjectQuotas, d.Id(), err))
 			}
@@ -190,12 +169,15 @@ func resourceVPCProjectV2Create(ctx context.Context, d *schema.ResourceData, met
 	return resourceVPCProjectV2Read(ctx, d, meta)
 }
 
-func resourceVPCProjectV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCProjectV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for project object: %w", err))
+	}
 
 	log.Print(msgGet(objectProject, d.Id()))
-	project, response, err := projects.Get(ctx, resellV2Client, d.Id())
+	project, response, err := projects.Get(selvpcClient, d.Id())
 	if err != nil {
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
@@ -231,8 +213,10 @@ func resourceVPCProjectV2Read(ctx context.Context, d *schema.ResourceData, meta 
 
 func resourceVPCProjectV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for project object: %w", err))
+	}
 	var hasChange, projectChange, quotaChange bool
 	var projectOpts projects.UpdateOpts
 	var projectQuotasOpts map[string]quotas.UpdateProjectQuotasOpts
@@ -266,7 +250,7 @@ func resourceVPCProjectV2Update(ctx context.Context, d *schema.ResourceData, met
 		// Update project options if needed.
 		if projectChange {
 			log.Print(msgUpdate(objectProject, d.Id(), projectOpts))
-			_, _, err := projects.Update(ctx, resellV2Client, d.Id(), projectOpts)
+			_, _, err := projects.Update(selvpcClient, d.Id(), projectOpts)
 			if err != nil {
 				return diag.FromErr(errUpdatingObject(objectProject, d.Id(), err))
 			}
@@ -274,21 +258,9 @@ func resourceVPCProjectV2Update(ctx context.Context, d *schema.ResourceData, met
 		// Update project quotas if needed.
 		if quotaChange {
 			log.Print(msgUpdate(objectProjectQuotas, d.Id(), projectQuotasOpts))
-			accountName := strings.Split(config.Token, "_")[1]
-			tokenOpts := tokens.TokenOpts{AccountName: accountName}
-
-			log.Print(msgCreate(objectToken, tokenOpts))
-			token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-			if err != nil {
-				return diag.FromErr(errCreatingObject(objectToken, err))
-			}
-
-			openstackClient := v2.NewOpenstackClient(token.ID)
-			identityManager := quotamanager.NewIdentityManager(resellV2Client, openstackClient, accountName)
-			quotaManagerClient := config.quotaManagerRegionalClient(identityManager)
 
 			for region, updateQuotas := range projectQuotasOpts {
-				_, _, err := quotas.UpdateProjectQuotas(ctx, quotaManagerClient, d.Id(), region, updateQuotas)
+				_, _, err := quotas.UpdateProjectQuotas(selvpcClient, d.Id(), region, updateQuotas)
 				if err != nil {
 					return diag.FromErr(errUpdatingObject(objectProjectQuotas, d.Id(), err))
 				}
@@ -299,12 +271,15 @@ func resourceVPCProjectV2Update(ctx context.Context, d *schema.ResourceData, met
 	return resourceVPCProjectV2Read(ctx, d, meta)
 }
 
-func resourceVPCProjectV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCProjectV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for project object: %w", err))
+	}
 
 	log.Print(msgDelete(objectProject, d.Id()))
-	response, err := projects.Delete(ctx, resellV2Client, d.Id())
+	response, err := projects.Delete(selvpcClient, d.Id())
 	if err != nil {
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {

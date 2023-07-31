@@ -8,6 +8,10 @@ description: |-
 
 # selectel\_vpc\_token_v2
 
+> **WARNING**: This resource has been removed because it is for keystone tokens and
+> they are automatically invalidated after 24 hours.
+
+
 Manages a V2 token resource within Selectel VPC.
 
 ID of this resource can be used within the OpenStack API Identity service as

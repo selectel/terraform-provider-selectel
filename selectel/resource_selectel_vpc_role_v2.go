@@ -9,7 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/roles"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/roles"
 )
 
 func resourceVPCRoleV2() *schema.Resource {
@@ -35,9 +35,12 @@ func resourceVPCRoleV2() *schema.Resource {
 	}
 }
 
-func resourceVPCRoleV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCRoleV2Create(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for role: %w", err))
+	}
 
 	opts := roles.RoleOpt{
 		ProjectID: d.Get("project_id").(string),
@@ -45,7 +48,7 @@ func resourceVPCRoleV2Create(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	log.Print(msgCreate(objectRole, opts))
-	role, _, err := roles.Create(ctx, resellV2Client, opts)
+	role, _, err := roles.Create(selvpcClient, opts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectRole, err))
 	}
@@ -55,16 +58,19 @@ func resourceVPCRoleV2Create(ctx context.Context, d *schema.ResourceData, meta i
 	return nil
 }
 
-func resourceVPCRoleV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCRoleV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for role: %w", err))
+	}
 
 	log.Print(msgGet(objectRole, d.Id()))
 	projectID, userID, err := resourceVPCRoleV2ParseID(d.Id())
 	if err != nil {
 		return diag.FromErr(errParseID(objectRole, d.Id()))
 	}
-	projectRoles, _, err := roles.ListProject(ctx, resellV2Client, projectID)
+	projectRoles, _, err := roles.ListProject(selvpcClient, projectID)
 	if err != nil {
 		return diag.FromErr(errSearchingProjectRole(projectID, err))
 	}
@@ -85,9 +91,12 @@ func resourceVPCRoleV2Read(ctx context.Context, d *schema.ResourceData, meta int
 	return nil
 }
 
-func resourceVPCRoleV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCRoleV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for role: %w", err))
+	}
 
 	projectID, userID, err := resourceVPCRoleV2ParseID(d.Id())
 	if err != nil {
@@ -100,7 +109,7 @@ func resourceVPCRoleV2Delete(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	log.Print(msgDelete(objectRole, d.Id()))
-	response, err := roles.Delete(ctx, resellV2Client, opts)
+	response, err := roles.Delete(selvpcClient, opts)
 	if err != nil {
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {

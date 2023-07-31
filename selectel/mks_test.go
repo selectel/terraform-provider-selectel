@@ -1,30 +1,45 @@
 package selectel
 
 import (
+	"fmt"
 	"testing"
 
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager/quotas"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/quotamanager/quotas"
+	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/kubeversion"
 	"github.com/selectel/mks-go/pkg/v1/node"
 	"github.com/selectel/mks-go/pkg/v1/nodegroup"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetMKSClusterV1Endpoint(t *testing.T) {
-	expectedEndpoints := map[string]string{
-		ru1Region: ru1MKSClusterV1Endpoint,
-		ru2Region: ru2MKSClusterV1Endpoint,
-		ru3Region: ru3MKSClusterV1Endpoint,
-		ru7Region: ru7MKSClusterV1Endpoint,
-		ru8Region: ru8MKSClusterV1Endpoint,
-		ru9Region: ru9MKSClusterV1Endpoint,
-		uz1Region: uz1MKSClusterV1Endpoint,
+func newTestMKSClient(rs *terraform.ResourceState, testAccProvider *schema.Provider) (*v1.ServiceClient, error) {
+	config := testAccProvider.Meta().(*Config)
+
+	var projectID string
+	var endpoint string
+
+	if id, ok := rs.Primary.Attributes["project_id"]; ok {
+		projectID = id
 	}
 
-	for region, expected := range expectedEndpoints {
-		actual := getMKSClusterV1Endpoint(region)
-		assert.Equal(t, expected, actual)
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return nil, fmt.Errorf("can't get selvpc client for mks acc tests: %w", err)
 	}
+
+	if region, ok := rs.Primary.Attributes["region"]; ok {
+		mksEndpoint, err := selvpcClient.Catalog.GetEndpoint(MKS, region)
+		if err != nil {
+			return nil, fmt.Errorf("can't get endpoint for mks acc tests: %w", err)
+		}
+		endpoint = mksEndpoint.URL
+	}
+
+	mksClient := v1.NewMKSClientV1(selvpcClient.GetXAuthToken(), endpoint)
+
+	return mksClient, nil
 }
 
 func TestKubeVersionToMajorValid(t *testing.T) {

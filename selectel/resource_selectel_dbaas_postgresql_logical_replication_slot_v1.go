@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/dbaas-go"
 )
 
@@ -44,15 +43,6 @@ func resourceDBaaSPostgreSQLLogicalReplicationSlotV1() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					ru1Region,
-					ru2Region,
-					ru3Region,
-					ru7Region,
-					ru8Region,
-					ru9Region,
-					uz1Region,
-				}, false),
 			},
 			"datastore_id": {
 				Type:     schema.TypeString,
@@ -83,7 +73,7 @@ func resourceDBaaSPostgreSQLLogicalReplicationSlotV1Create(ctx context.Context, 
 	selMutexKV.Lock(databaseID)
 	defer selMutexKV.Unlock(databaseID)
 
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -113,7 +103,7 @@ func resourceDBaaSPostgreSQLLogicalReplicationSlotV1Create(ctx context.Context, 
 }
 
 func resourceDBaaSPostgreSQLLogicalReplicationSlotV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -142,7 +132,7 @@ func resourceDBaaSPostgreSQLLogicalReplicationSlotV1Delete(ctx context.Context, 
 	selMutexKV.Lock(databaseID)
 	defer selMutexKV.Unlock(databaseID)
 
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}

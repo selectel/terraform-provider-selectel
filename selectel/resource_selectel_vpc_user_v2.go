@@ -2,12 +2,13 @@ package selectel
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/users"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/users"
 )
 
 func resourceVPCUserV2() *schema.Resource {
@@ -42,7 +43,10 @@ func resourceVPCUserV2() *schema.Resource {
 
 func resourceVPCUserV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for user object: %w", err))
+	}
 
 	opts := users.UserOpts{
 		Name:     d.Get("name").(string),
@@ -50,7 +54,7 @@ func resourceVPCUserV2Create(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	log.Print(msgCreate(objectUser, opts))
-	user, _, err := users.Create(ctx, resellV2Client, opts)
+	user, _, err := users.Create(selvpcClient, opts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectUser, err))
 	}
@@ -60,12 +64,15 @@ func resourceVPCUserV2Create(ctx context.Context, d *schema.ResourceData, meta i
 	return resourceVPCUserV2Read(ctx, d, meta)
 }
 
-func resourceVPCUserV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCUserV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for user object: %w", err))
+	}
 
 	log.Print(msgGet(objectUser, d.Id()))
-	user, response, err := users.Get(ctx, resellV2Client, d.Id())
+	user, response, err := users.Get(selvpcClient, d.Id())
 	if err != nil {
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
@@ -85,7 +92,10 @@ func resourceVPCUserV2Read(ctx context.Context, d *schema.ResourceData, meta int
 
 func resourceVPCUserV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for user object: %w", err))
+	}
 
 	enabled := d.Get("enabled").(bool)
 	opts := users.UserOpts{
@@ -95,7 +105,7 @@ func resourceVPCUserV2Update(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	log.Print(msgUpdate(objectUser, d.Id(), opts))
-	_, _, err := users.Update(ctx, resellV2Client, d.Id(), opts)
+	_, _, err = users.Update(selvpcClient, d.Id(), opts)
 	if err != nil {
 		return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
 	}
@@ -103,12 +113,15 @@ func resourceVPCUserV2Update(ctx context.Context, d *schema.ResourceData, meta i
 	return resourceVPCUserV2Read(ctx, d, meta)
 }
 
-func resourceVPCUserV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCUserV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for user object: %w", err))
+	}
 
 	log.Print(msgDelete(objectUser, d.Id()))
-	response, err := users.Delete(ctx, resellV2Client, d.Id())
+	response, err := users.Delete(selvpcClient, d.Id())
 	if err != nil {
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
