@@ -92,6 +92,8 @@ The following arguments are supported:
 
 * `config` - (Optional) Configuration parameters for the datastore.
 
+* `backup_retention_days` - (Optional) Number of days to retain backups.
+
 * `redis_password` - (Optional) Password for the Redis datastore (only for Redis datastores)
 
 **flavor**
