@@ -8,92 +8,105 @@ description: |-
 
 # selectel\_mks\_cluster\_v1
 
-Manages a V1 cluster resource within Selectel Managed Kubernetes Service.
+Creates and manages a Managed Kubernetes cluster using public API v1. For more information about Managed Kubernetes, see the [official Selectel documentation](https://docs.selectel.ru/cloud/managed-kubernetes/).
 
 ## Example usage
 
-```hcl
-resource "selectel_vpc_project_v2" "project_1" {
-}
+### High availability cluster
 
-resource "selectel_mks_cluster_v1" "cluster_1" {
+```hcl
+resource "selectel_mks_cluster_v1" "ha_cluster" {
   name         = "cluster-1"
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
+  project_id   = selectel_vpc_project_v2.project_1.id
   region       = "ru-3"
-  kube_version = "1.16.8"
+  kube_version = data.selectel_mks_kube_versions_v1.versions.latest_version
+}
+```
+
+### Basic cluster
+
+```hcl
+resource "selectel_mks_cluster_v1" "basic_cluster" {
+  name                              = "cluster-1"
+  project_id                        = selectel_vpc_project_v2.project_1.id
+  region                            = "ru-3"
+  kube_version                      = data.selectel_mks_kube_versions_v1.versions.latest_version
+  zonal                             = true
+  enable_patch_version_auto_upgrade = false
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+* `name` - (Required) Cluster name. Changing this creates a new cluster. The cluster name is included into the names of the cluster entities: node groups, nodes, load balancers, networks, and volumes.
 
-* `name` - (Required) The name of the cluster.
-  Changing this creates a new cluster.
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new cluster. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
-* `project_id` - (Required) An associated Selectel VPC project.
-  Changing this creates a new cluster.
+* `region` - (Required) Pool where the cluster is located, for example, `ru-3`. Changing this creates a new cluster. In a pool, you can create two clusters for a project. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-kubernetes).
 
-* `region` - (Required) A Selectel VPC region of where the cluster is located.
-  Changing this creates a new cluster.
+* `kube_version` - (Required) Kubernetes version of the cluster. Changing this upgrades the cluster version. You can retrieve information about the Kubernetes versions with the  [selectel_mks_kube_versions_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/mks_kube_versions_v1) data source.
+  
+  To upgrade a patch version, the desired version should match the latest available patch version for the current minor release.
+  To upgrade a minor version, the desired version should match the next available minor release with the latest patch version.
 
-* `kube_version` - (Required) The current Kubernetes version of the cluster.
-  Changing this upgrades the current version of the cluster.
-  To upgrade a patch version, the desired version should match the latest available patch version for
-  the current minor release.
-  To upgrade a minor version, the desired version should match the next available minor release with
-  the latest patch version.
+* `zonal` - (Optional) Specifies a cluster type. Changing this creates a new cluster.
+  
+  Boolean flag:
 
-* `enable_autorepair` - (Optional) Reflects if worker nodes are allowed to be reinstalled automatically.
-  Accepts true or false. Defaults to true.
+  * `false` (default) —  for a high availability cluster with three master nodes located on different hosts in one pool segment.
+  * `true` —  for a basic cluster with one master node. Set `enable_patch_version_auto_upgrade` to `false`.
 
-* `enable_patch_version_auto_upgrade` - (Optional) Specifies if Kubernetes patch version of the cluster
-  is allowed to be upgraded automatically.
-  Accepts true or false. Defaults to true.
-  Should be explicitly set to false in case of zonal cluster.
+  Learn more about [Cluster types](https://docs.selectel.ru/cloud/managed-kubernetes/about/about-managed-kubernetes/#типы-кластера).
 
-* `network_id` - (Optional) An associated OpenStack Networking service network ID.
-  Changing this creates a new cluster.
+* `enable_autorepair` - (Optional) Enables or disables node auto-repairing (worker nodes are automatically restarted). Auto-repairing is not available if you have one worker node. After auto-repairing, all data on the boot volumes are deleted. Boolean flag, the default value is `true`. Learn more about [Nodes auto-repairing](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/reinstall-nodes/).
 
-* `subnet_id` - (Optional) associated OpenStack Networking service subnet ID.
-  Changing this creates a new cluster.
+* `enable_patch_version_auto_upgrade` - (Optional) Enables or disables auto-upgrading of the cluster to the latest available Kubernetes patch version during the maintenance window. Boolean flag, the  default value is `true`. Must be set to false for basic clusters (if `zonal` is `true`).  Learn more about [Patch versions auto-upgrading](https://docs.selectel.ru/cloud/managed-kubernetes/clusters/upgrade-version/).
 
-* `maintenance_window_start` - (Optional) Represents UTC time in "hh:mm:ss" format of when the cluster
-   will start its maintenance tasks.
-   Changing this updates maintenance window start time.
+* `network_id` - (Optional) Unique identifier of the associated OpenStack network. Changing this creates a new cluster. Learn more about the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_network_v2) resource in the official OpenStack documentation.
 
-* `enable_pod_security_policy` - (Optional) Specifies if PodSecurityPolicy Kubernetes option has to be turned on/off.
-   Accepts true or false. Default is false.
+* `subnet_id` - (Optional) Unique identifier of the associated OpenStack subnet. Changing this creates a new cluster. Learn more about the [openstack_networking_subnet_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_subnet_v2) resource in the official OpenStack documentation.
 
-* `zonal` - (Optional) Specifies that only a single zonal master will be created.
-    It is needed if highly available control-plane is not required.
-    Accepts true or false. Defaults to false.
-    Argument "enable_patch_version_auto_upgrade" should be explicitly set to false in case of zonal cluster.
-    Changing this creates a new cluster.
+* `maintenance_window_start` - (Optional) Time in UTC when maintenance in the cluster starts. The format is `hh:mm:ss`. Learn more about the [Maintenance window](https://docs.selectel.ru/cloud/managed-kubernetes/clusters/set-up-maintenance-window/).
 
-* `feature_gates` - (Optional) Represents a set of feature gate names to be enabled in a Kubernetes cluster.
+* `feature_gates` - (Optional) Enables or disables feature gates for the cluster. You can retrieve the list of available feature gates with the [selectel_mks_feature_gates_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/mks_feature_gates_v1) data source. Learn more about [Feature gates](https://docs.selectel.ru/cloud/managed-kubernetes/clusters/feature-gates/).
 
-* `admission_controllers` - (Optional) Represents a set of admission controllers names to be enabled in a Kubernetes cluster.
+* `admission_controllers` - (Optional) Enables or disables admission controllers for the cluster. You can retrieve  the list of available admission controllers with the [selectel_mks_admission_controllers_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/mks_admission_controllers_v1) data source. Learn more about [Admission controllers](https://docs.selectel.ru/cloud/managed-kubernetes/clusters/admission-controllers/).
 
-* `private_kube_api` - (Optional) Specifies if kube API should be available from the Internet or not.
-    When true kube API will be available only in clusters network. Default is false.
-    Changing this creates a new cluster.
+* `private_kube_api` - (Optional) Specifies if Kube API is available from the Internet. Changing this creates a new cluster.
+
+  Boolean flag:
+
+  * `false` (default) —  Kube API is available from the Internet;
+  * `true` —  Kube API is available only from the cluster network.
 
 ## Attributes Reference
 
-The following attributes are exported:
+* `maintenance_window_end` - Time in UTC when maintenance in the cluster ends. The format is `hh:mm:ss`. Learn more about the [Maintenance window](https://docs.selectel.ru/cloud/managed-kubernetes/clusters/set-up-maintenance-window/).
 
-* `maintenance_window_end` - Shows UTC time in "hh:mm:ss" format of when the cluster
-   will end its maintenance tasks.
+* `kube_api_ip` - IP address of the Kube API.
 
-* `kube_api_ip` - Shows the IP of the Kubernetes API.
-
-* `status` - Shows the current status of the cluster.
+* `status` - Cluster status.
 
 ## Import
 
-Cluster can be imported using the `id`, e.g.
+You can import a cluster:
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID SEL_REGION=SELECTEL_VPC_REGION terraform import selectel_mks_cluster_v1.cluster_1 b311ce58-2658-46b5-b733-7a0f418703f2
+terraform import selectel_mks_cluster_v1.cluster_name <cluster_id>
 ```
+
+where `<cluster_id>` is a unique identifier of the cluster, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the cluster ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes** ⟶ the cluster page ⟶ copy the ID at the top of the page under the cluster name, near the region and pool.
+
+### Environment Variables
+
+For import, you must set environment variables:
+
+* `SEL_TOKEN=<selectel_api_token>`
+* `SEL_PROJECT_ID=<selectel_project_id>`
+* `SEL_REGION=<selectel_pool>`
+
+where:
+
+* `<selectel_api_token>` — Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶   **API keys**  ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
+* `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶  copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
+* `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases**. The pool is in the **Pool** column.
