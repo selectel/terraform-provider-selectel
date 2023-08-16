@@ -8,34 +8,38 @@ description: |-
 
 # selectel\_mks\_kubeconfig_v1
 
-Use this data source to get kubeconfig and its fields for a Managed Kubernetes cluster.
+Provides a kubeconfig file and its fields for a Managed Kubernetes cluster. For more information about Managed Kubernetes, see the [official Selectel documentation](https://docs.selectel.ru/cloud/managed-kubernetes/).
 
 ## Example Usage
 
+### Output kubeconfig
+
 ```hcl
-resource "selectel_mks_cluster_v1" "cluster_1" {
-  name                              = var.cluster_name
-  project_id                        = var.project_id
-  region                            = var.region
-  kube_version                      = var.kube_version
-  enable_autorepair                 = var.enable_autorepair
-  enable_patch_version_auto_upgrade = var.enable_patch_version_auto_upgrade
-  network_id                        = var.network_id
-  subnet_id                         = var.subnet_id
-  maintenance_window_start          = var.maintenance_window_start
+data "selectel_mks_kubeconfig_v1" "kubeconfig" {
+  cluster_id = selectel_mks_cluster_v1.cluster_1.id
+  project_id = selectel_mks_cluster_v1.cluster_1.project_id
+  region     = selectel_mks_cluster_v1.cluster_1.region
 }
 
+output "kubeconfig" {
+  value = data.selectel_mks_kubeconfig_v1.kubeconfig.raw_config
+}
+```
+
+### Using a Kubernetes provider
+
+```hcl
 data "selectel_mks_kubeconfig_v1" "kubeconfig" {
-  cluster_id  = selectel_mks_cluster_v1.cluster_1.id
-  project_id  = var.project_id
-  region      = var.region
+  cluster_id = selectel_mks_cluster_v1.cluster_1.id
+  project_id = selectel_mks_cluster_v1.cluster_1.project_id
+  region     = selectel_mks_cluster_v1.cluster_1.region
 }
 
 provider "kubernetes" {
-  host                    = data.selectel_mks_kubeconfig_v1.kubeconfig.server
-  client_certificate      = data.selectel_mks_kubeconfig_v1.kubeconfig.cluster_ca_cert
-  client_key              = data.selectel_mks_kubeconfig_v1.kubeconfig.client_key
-  cluster_ca_certificate  = data.selectel_mks_kubeconfig_v1.kubeconfig.client_cert
+  host                   = data.selectel_mks_kubeconfig_v1.kubeconfig.server
+  client_certificate     = data.selectel_mks_kubeconfig_v1.kubeconfig.cluster_ca_cert
+  client_key             = data.selectel_mks_kubeconfig_v1.kubeconfig.client_key
+  cluster_ca_certificate = data.selectel_mks_kubeconfig_v1.kubeconfig.client_cert
 }
 
 output "kubeconfig" {
@@ -45,24 +49,20 @@ output "kubeconfig" {
 
 ## Argument Reference
 
-The following arguments are supported:
+* `cluster_id` - (Required) Unique identifier of the cluster.
 
-* `cluster_id` - (Required) ID of the Managed Kubernetes cluster.
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
-* `project_id` - (Required) Project ID where the cluster is placed.
-
-* `region`     - (Required) Region where the cluster is placed.
+* `region` - (Required) Pool where the cluster is located, for example, `ru-3`. In a pool, you can create two clusters for a project. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-kubernetes).
 
 ## Attributes Reference
 
-The following attributes are exported:
-
 * `raw_config` - Raw content of a kubeconfig file.
 
-* `server` - IP address and port for a kube-API server.
+* `server` - IP address and port for a Kube API server.
 
-* `cluster_ca_cert` - K8s cluster CA certificate.
+* `cluster_ca_cert` - CA certificate of the cluster.
 
 * `client_key` - Client key for authorization.
 
-* `client_cert` - Client cert for authorization.
+* `client_cert` - Client certificate for authorization.

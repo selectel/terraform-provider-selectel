@@ -8,97 +8,98 @@ description: |-
 
 # selectel\_vpc\_project_v2
 
-Manages a V2 project resource within Selectel VPC.
+Creates and manages a Cloud Platform project using public API v2. For more information about Cloud Platform projects, see the [official Selectel documentation](https://docs.selectel.ru/cloud/servers/about/projects/).
 
 ## Example Usage
 
+### Project with quotas
+
 ```hcl
-resource "selectel_vpc_project_v2" "kubernetes_cluster" {
-  name       = "kubernetes_cluster"
-  custom_url = "kubernetes-cluster-123.selvpc.ru"
-  theme = {
-    color = "2753E9"
-  }
+resource "selectel_vpc_project_v2" "project_1" {
+  name = "project1"
   quotas {
     resource_name = "compute_cores"
     resource_quotas {
       region = "ru-3"
-      zone = "ru-3a"
-      value = 12
+      zone   = "ru-3a"
+      value  = 12
     }
   }
   quotas {
     resource_name = "compute_ram"
     resource_quotas {
       region = "ru-3"
-      zone = "ru-3a"
-      value = 20480
+      zone   = "ru-3a"
+      value  = 20480
     }
   }
   quotas {
     resource_name = "volume_gigabytes_fast"
     resource_quotas {
       region = "ru-3"
-      zone = "ru-3a"
-      value = 100
+      zone   = "ru-3a"
+      value  = 100
     }
+  }
+}
+```
+
+### Project with external panel
+
+```hcl
+resource "selectel_vpc_project_v2" "project_1" {
+  name       = "project_1"
+  custom_url = "project-123.selvpc.ru"
+  theme = {
+    color = "2753E9"
   }
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+* `name` - (Required) Project name.
 
-* `name` - (Required) The name of the project.
+* `quotas` - (Optional) Array of quotas for the project. Learn more about [Quotas](https://docs.selectel.ru/cloud/servers/about/quotas/).
 
-* `custom_url` - (Optional) The custom url for the project. Needs to be the
-  3rd-level domain for the `selvpc.ru`. Example: `terraform-project-001.selvpc.ru`.
+  * `resource_name` - (Required) Resource name. To get the name of the resource, use [Selectel Cloud Quota Management API](https://developers.selectel.ru/docs/selectel-cloud-platform/main-services/cloud-quota-management/).
 
-* `theme` - (Optional) An additional theme settings for this project. The structure is
-  described below.
+  * `resource_quotas` - (Required) Array of quotas for the resource.
 
+    * `region` - (Optional) Pool where the resource is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/).
 
-* `quotas` - (Optional) An array of desired quotas for this project. The structure is
-  described below.
+    * `zone` - (Optional) Pool segment where the resource is located, for example, `ru-3a`.  Learn more about available pool segments in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/).
 
-The `theme` block supports:
+    * `value` - (Required) Quota value. The value cannot exceed the project limit. To get the project limit, in the [Control panel](https://my.selectel.ru/vpc/quotas/), go to **Cloud Platform** ⟶ **Quotas**. The project limit for the resource is in the **Quota** column. Learn more about [Project limits](https://docs.selectel.ru/cloud/servers/about/quotas/).
 
-* `color` - (Optional) A background color in hex format.
+* `custom_url` - (Optional) URL of the project in the external panel. The available value is the third-level domain, for example, `123456.selvpc.ru` or `project.example.com`. Learn more [how to set up access to external panel](https://docs.selectel.ru/control-panel-actions/account/external-panel/).
 
-* `logo` - (Optional) An url of the project header logo.
+* `theme` - (Optional) Additional theme settings for the external panel.
 
-The `quotas` block supports:
+  * `color` - (Optional) Fill color of the toolbar in hex format.
 
-* `resource_name` - (Required) A name of the billing resource to set quotas for.
-
-* `resource_quotas` - (Required) An array of desired billing quotas for this particular
-  resource. The structure is described below.
-
-The `resource_quotas` block supports:
-
-* `region` - (Optional) A Selectel VPC region for the resource quota.
-
-* `zone` - (Optional) A Selectel VPC zone for the resource quota.
-
-* `value` - (Required) A value of the resource quota.
+  * `logo` - (Optional) URL of the logo on the toolbar.
 
 ## Attributes Reference
 
-The following attributes are exported:
+* `url` - Project URL. Created automatically and you cannot change it.
 
-* `url` - An url of the Selectel VP project. It is set by the Selectel and can't
-  be changed by the user.
+* `enabled` - Project status. Possible values are `active` and `disabled`.
 
-* `enabled` - Shows if project is active or it was disabled by the Selectel.
-
-* `all_quotas` - Contains all quotas. They can differ from the configurable `quota`
-  argument since the project will have all available resource quotas automatically applied.
+* `all_quotas` - List of quotas. Can differ from the values that are set in the `quotas` block, if all available quotas for the project are automatically applied.
 
 ## Import
 
-Projects can be imported using the `id`, e.g.
+You can import a project:
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selectel_vpc_project_v2.project_1 0a343062504b4d06a0fac375e466db25
+terraform import selectel_vpc_project_v2.project_1 <project_id>
 ```
+
+where `<project_id>` is a unique identifier of the Cloud Platform project, for example, `a07abc12310546f1b9291ab3013a7d75`. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/), go to the **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project.
+
+### Environment Variables
+
+For import, you must set the environment variable `SEL_TOKEN=<selectel_api_token>`,
+
+where `<selectel_api_token>` is a Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶ **API keys** ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).

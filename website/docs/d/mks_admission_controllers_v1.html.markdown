@@ -8,44 +8,30 @@ description: |-
 
 # selectel\_mks\_admission_controllers_v1
 
-Use this data source to get available admission-controllers within Selectel MKS API Service.
+Provides a list of available admission controllers. For more information about admission controllers in Managed Kubernetes, see the [official Selectel documentation](https://docs.selectel.ru/cloud/managed-kubernetes/clusters/admission-controllers/).
 
 ## Example Usage
 
 ```hcl
-resource "selectel_vpc_project_v2" "project_1" {
-}
-
-data "selectel_mks_admission_controllers_v1" "ac" {
-  project_id = "${selectel_vpc_project_v2.project_1.id}"
+data "selectel_mks_admission_controllers_v1" "admission_controllers_1" {
+  project_id = selectel_vpc_project_v2.project_1.id
   region = "ru-3"
-  filter {
-    kube_version = "1.22.2"
-  }
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
-* `project_id` - (Required) An associated Selectel VPC project.
+* `region` - (Required) Pool where the cluster is located, for example, `ru-3`.
 
-* `region` - (Required) A Selectel VPC region.
+* `filter` - (Optional) Values to filter available admission controllers:
 
-* `filter` - (Optional) One or more values used to look up available admission controllers.
-
-**filter**
-
-- `kube_version` - (Optional) Kubernetes version to look up the available admission controllers.
+  * `kube_version` - (Optional) Kubernetes version for which you get available admission controllers.
 
 ## Attributes Reference
 
-The following attributes are exported:
+* `admission_controllers` - List of available admission controllers.
 
-* `admission_controllers` - Contains a list of the found available admission controllers.
-
-**admission_controllers**
-
-- `kube_version` - Kubernetes version.
-- `names` - Names of the admission controllers available for the specified version.
+  * `kube_version` - Kubernetes version.
+  * `names` - Names of the admission controllers available for the specified Kubernetes version.

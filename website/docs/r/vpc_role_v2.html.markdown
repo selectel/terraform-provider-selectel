@@ -8,43 +8,41 @@ description: |-
 
 # selectel\_vpc\_role_v2
 
-Manages a V2 role resource within Selectel VPC.
+Creates and manages a Project Administrator role for service users using public API v2. Selectel products support Identity and Access Management (IAM). For more information about roles, see the [official Selectel documentation](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
+
+The role is assigned to the service user information about whom is retrieved from the [selectel_vpc_user_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_user_v2) resource.
 
 ## Example Usage
 
 ```hcl
-resource "selectel_vpc_project_v2" "project_1" {
-}
-
-resource "selectel_vpc_user_v2" "user_1" {
-  password    = "secret"
-}
-
-resource "selectel_vpc_role_v2" "role_tf_acc_test_1" {
-  project_id = "${selectel_vpc_project_v2.project_1.id}"
-  user_id    = "${selectel_vpc_user_v2.user_1.id}"
+resource "selectel_vpc_role_v2" "role__1" {
+  project_id = selectel_vpc_project_v2.project_1.id
+  user_id    = selectel_vpc_user_v2.user_1.id
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new role. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
-* `project_id` - (Required) An associated Selectel VPC project. Changing this
-  creates a new role.
-
-* `user_id` - (Required) An associated Selectel VPC user. Changing this
-  creates a new role.
-
-## Attributes Reference
-
-There are no additional attributes for this resource.
+* `user_id` - (Required) Unique identifier of the associated service user. Changing this creates a new role. Retrieved from the [selectel_vpc_user_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_user_v2) resource.
 
 ## Import
 
-Roles can be imported by specifying `project_id` and `user_id` arguments,
-separated by a forward slash:
+You can import a role:
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selectel_vpc_role_v2.role_1 <project_id>/<user_id>
+terraform import selectel_vpc_role_v2.role_1 <project_id>/<user_id>
 ```
+
+where:
+
+* `<project_id>` — Unique identifier of the Cloud Platform project, for example, `a07abc12310546f1b9291ab3013a7d75`. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/), go to the **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project.
+
+* `<user_id>` — Unique identifier of the associated service user, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the ID, in the top right corner of the [Control panel](https://my.selectel.ru/), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the ID under the user name.
+
+### Environment Variables
+
+For import, you must set the environment variable `SEL_TOKEN=<selectel_api_token>`,
+
+where `<selectel_api_token>` is a Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶ **API keys** ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).

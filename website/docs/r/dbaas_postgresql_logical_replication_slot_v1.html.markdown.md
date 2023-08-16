@@ -8,102 +8,56 @@ description: |-
 
 # selectel\_dbaas\_postgresql\_logical\_replication\_slot\_v1
 
-Manages a V1 PostgreSQL logical replication slot resource within Selectel Managed Databases Service. Can be installed only for PostgreSQL datastores.
+Creates and manages a logical replication slot for Managed Databases using public API v1. Applicable to PostgreSQL and PostgreSQL TimescaleDB  datastores. For more information about replication slots in Managed Databases, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/replication-slots/) and [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/replication-slots/).
 
 ## Example usage
 
 ```hcl
-resource "selectel_vpc_project_v2" "project_1" {
-}
-
-resource "selectel_vpc_subnet_v2" "subnet" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-}
-
-data "selectel_dbaas_datastore_type_v1" "dt" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  filter {
-    engine  = "postgresql"
-    version = "12"
-  }
-}
-
-resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
-  name         = "datastore-1"
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  type_id      = data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id
-  subnet_id    = "${selectel_vpc_subnet_v2.subnet.subnet_id}"
-  node_count   = 3
-  flavor {
-    vcpus = 4
-    ram   = 4096
-    disk  = 32
-  }
-  pooler {
-    mode = "transaction"
-    size = 50
-  }
-}
-
-resource "selectel_dbaas_user_v1" "user_1" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  datastore_id = "${selectel_dbaas_datastore_v1.datastore_1.id}"
-  name         = "user"
-  password     = "secret"
-}
-
-resource "selectel_dbaas_postgresql_database_v1" "database_1" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  datastore_id = "${selectel_dbaas_datastore_v1.datastore_1.id}"
-  owner_id     = "${selectel_dbaas_user_v1.user_1.id}"
-  name         = "db"
-  lc_ctype     = "ru_RU.utf8"
-  lc_collate   = "ru_RU.utf8"
-}
-
 resource "selectel_dbaas_postgresql_logical_replication_slot_v1" "slot_1" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
+  project_id   = selectel_vpc_project_v2.project_1.id
   region       = "ru-3"
-  datastore_id = "${selectel_dbaas_datastore_v1.datastore_1.id}"
-  database_id  = "${selectel_dbaas_database_v1.database_1.id}"
+  datastore_id = selectel_dbaas_postgresql_datastore_v1.datastore_1.id
+  database_id  = selectel_dbaas_postgresql_database_v1.database_1.id
   name         = "test_slot"
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new replication slot. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
-* `project_id` - (Required) An associated Selectel VPC project.
-  Changing this creates a new extension.
+* `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new replication slot. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#облачные-базы-данных).
 
-* `region` - (Required) A Selectel VPC region of where the database is located.
-  Changing this creates a new extension.
+* `datastore_id` - (Required) Unique identifier of the associated datastore. Changing this creates a new replication slot. Retrieved from the [selectel_dbaas_postgresql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_datastore_v1)
 
-* `datastore_id` - (Required) An associated datastore.
-  Changing this creates a new slot.
+* `database_id` - (Required) Unique identifier of the associated database. Changing this creates a new replication slot. Not applicable to a Redis datastore. Retrieved from the [selectel_dbaas_postgresql_database_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_database_v1) resource.
 
-* `database_id` - (Required) An associated database.tele
-  Changing this creates a new slot.
-
-* `name` - (Required) A name of the slot. Can contain only  lower case letters, numbers and the underscore char.
-  Changing this creates a new slot.
+* `name` - (Required) Slot name. Can contain only lowercase letters, numbers, and an underscore. Changing this creates a new replication slot.
 
 ## Attributes Reference
 
-The following attributes are exported:
-
-* `status` - Shows the current status of the extension.
+* `status` - Status of the replication slot.
 
 ## Import
 
-Extension can be imported using the `id`, e.g.
+You can import a replication slot:
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID SEL_REGION=SELECTEL_VPC_REGION terraform import selectel_dbaas_postgresql_logical_replication_slot_v1.slot_1 b311ce58-2658-46b5-b733-7a0f418703f2
+terraform import selectel_dbaas_postgresql_logical_replication_slot_v1.slot_1 <replication_slot_id>
 ```
+
+where `<replication_slot_id>` is a unique identifier of the replication slot, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the replication slot ID, use [Selectel Cloud Management API](https://developers.selectel.ru/docs/selectel-cloud-platform/dbaas_api/).
+
+### Environment Variables
+
+For import, you must set environment variables:
+
+* `SEL_TOKEN=<selectel_api_token>`
+* `SEL_PROJECT_ID=<selectel_project_id>`
+* `SEL_REGION=<selectel_pool>`
+
+where:
+
+* `<selectel_api_token>` — Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶   **API keys**  ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
+* `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶  copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
+* `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases**. The pool is in the **Pool** column.

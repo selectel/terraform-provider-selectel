@@ -8,13 +8,13 @@ description: |-
 
 # selectel\_vpc\_license_v2
 
-Manages a V2 license resource within Selectel VPC.
+Manages a license for cloud servers using public API v2.
 
 ## Example Usage
 
 ```hcl
 resource "selectel_vpc_license_v2" "license_windows_2016_standard" {
-  project_id = "887e5e35458d4ee38a6ae0543555dec5"
+  project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-2"
   type       = "license_windows_2012_standard"
 }
@@ -22,35 +22,42 @@ resource "selectel_vpc_license_v2" "license_windows_2016_standard" {
 
 ## Argument Reference
 
-The following arguments are supported:
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new license. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
-* `project_id` - (Required) An associated Selectel VPC project. Changing this
-  creates a new license.
+* `region` - (Required) Pool where you can use the license, for example, `ru-3`. The cloud server must be located in the pool. Changing this creates a new license. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/).
 
-* `region` - (Required) A region of where the license resides. Changing this
-  creates a new license.
-
-* `type` - (Required) The type of license. Changing this creates a new license.
+* `type` - (Required) Type of the license. Changing this creates a new license. Available values are `license_windows_2012_standard`, `license_windows_2016_standard`, `license_windows_2019_standard`.
 
 ## Attributes Reference
 
-The following attributes are exported:
+* `status` - License status.
 
-* `status` - Shows if the license is used or not.
+* `servers` - Cloud servers that use the license.
 
-* `servers` - Shows information about servers that use this license. Contains
-  `id`, `name` and `status` fields.
+  * `id` - Unique identifier of the cloud server.
 
-* `network_id` - Represents id of the associated network in the Networking service.
+  * `name` - Name of the cloud server.
 
-* `subnet_id` - Represents id of the associated network in the Networking service.
+  * `status` - Status of the cloud server.
 
-* `port_id` - Represents id of the associated port in the Networking service.
+* `network_id` - Unique identifier of the associated OpenStack network. Learn more about the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_network_v2) resource in the official OpenStack documentation.
+
+* `subnet_id` - Unique identifier of the associated OpenStack subnet. Learn more about the [openstack_networking_subnet_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_subnet_v2) resource in the official OpenStack documentation.
+
+* `port_id` - Unique identifier of the associated OpenStack port. Learn more about the [openstack_networking_port_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_port_v2) resource in the official OpenStack documentation.
 
 ## Import
 
-Licenses can be imported using the `id`, e.g.
+You can import a license:
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selectel_vpc_license_v2.license_1 4123
+terraform import selectel_vpc_license_v2.license_1 <license_id>
 ```
+
+where `<license_id>` is a unique identifier of the license, for example, `4123`. To get the license ID, use [Selectel Cloud Management API](https://developers.selectel.ru/docs/selectel-cloud-platform/main-services/selectel_cloud_management_api/).
+
+### Environment Variables
+
+For import, you must set the environment variable `SEL_TOKEN=<selectel_api_token>`,
+
+where `<selectel_api_token>` is a Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶ **API keys** ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).

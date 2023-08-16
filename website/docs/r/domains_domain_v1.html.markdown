@@ -8,35 +8,38 @@ description: |-
 
 # selectel\_domains\_domain\_v1
 
-Manages a V1 domain resource within Selectel Domains API Service.
+Creates and manages a domain in DNS Hosting using public API v1. For more information about domains, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/domains/).
 
 ## Example usage
 
 ```hcl
 resource "selectel_domains_domain_v1" "domain_1" {
-  name = "test-domain.xyz"
+  name = "example.com"
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
-
-* `name` - (Required) The name of the domain.
-  Changing this creates a new domain name.
+* `name` - (Required) Domain name. Changing this creates a new domain name.
 
 ## Attributes Reference
 
-The following attributes are exported:
+* `name` - Domain name.
 
-* `name` - The name of the domain.
-
-* `user_id` - Identifier of the Selectel API user.
+* `user_id` - Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/).
 
 ## Import
 
-Domain can be imported using the `id`, e.g.
+You can import a domain:
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selectel_domains_domain_v1.domain_1 45623
+terraform import selectel_domains_domain_v1.domain_1 <domain_id>
 ```
+
+where `<domain_id>` is a unique identifier of the domain, for example, `45623`. To get the domain ID, in the [Control panel](https://my.selectel.ru/network/domains/), go to **Networks Services** ⟶ **DNS Hosting** ⟶ the domain page ⟶ copy the domain ID from the address bar.
+
+### Environment Variables
+
+For import, you must set the environment variable `SEL_TOKEN=<selectel_api_token>`,
+
+where `<selectel_api_token>` is a Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶ **API keys** ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
