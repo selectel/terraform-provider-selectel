@@ -8,35 +8,20 @@ description: |-
 
 # selectel\_dbaas\_postgresql\_datastore\_v1
 
-Manages a V1 PostgreSQL datastore resource within Selectel Managed Databases Service.
+Creates and manages a PostgreSQL datastore using public API v1. Applicable to PostgreSQL, PostgreSQL for 1C, and PostgreSQL TimescaleDB datastores. For more information about Managed Databases, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/), and [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/).
 
 ## Example usage
 
+### PostgreSQL and PostgreSQL TimescaleDB
+
 ```hcl
-resource "selectel_vpc_project_v2" "project_1" {
-}
-
-resource "selectel_vpc_subnet_v2" "subnet" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-}
-
-data "selectel_dbaas_datastore_type_v1" "dt" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  filter {
-    engine  = "postgresql"
-    version = "12"
-  }
-}
-
 resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
-  name         = "datastore-1"
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  type_id      = data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id
-  subnet_id    = "${selectel_vpc_subnet_v2.subnet.subnet_id}"
-  node_count   = 3
+  name       = "datastore-1"
+  project_id = selectel_vpc_project_v2.project_1.id
+  region     = "ru-3"
+  type_id    = data.selectel_dbaas_datastore_type_v1.datastore_type_1.datastore_types[0].id
+  subnet_id  = selectel_vpc_subnet_v2.subnet.subnet_id
+  node_count = 3
   flavor {
     vcpus = 4
     ram   = 4096
@@ -46,80 +31,89 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
     mode = "transaction"
     size = 50
   }
-  config = {
-    xmloption = "content"
-    work_mem = 512
-    session_replication_role = "replica"
-    vacuum_cost_delay = 25
-    transform_null_equals = false
+}
+```
+
+### PostgreSQL for 1C
+
+```hcl
+resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
+  name       = "datastore-1"
+  project_id = selectel_vpc_project_v2.project_1.id
+  region     = "ru-3"
+  type_id    = data.selectel_dbaas_datastore_type_v1.datastore_type_1.datastore_types[0].id
+  subnet_id  = selectel_vpc_subnet_v2.subnet.subnet_id
+  node_count = 3
+  flavor {
+    vcpus = 4
+    ram   = 4096
+    disk  = 32
   }
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+* `name` - (Required) Datastore name. Changing this creates a new datastore.
 
-* `name` - (Required) A name of the datastore.
-  Changing this creates a new datastore.
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new datastore. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
-* `project_id` - (Required) An associated Selectel VPC project.
-  Changing this creates a new datastore.
+* `region` - (Required) Pool where the datastore is located, for example, `ru-3`. Changing this creates a new datastore. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#облачные-базы-данных).
 
-* `region` - (Required) A Selectel VPC region of where the datastore is located.
-  Changing this creates a new datastore.
+* `subnet_id` - (Required) Unique identifier of the associated OpenStack network. Changing this creates a new datastore. Learn more about the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_network_v2) resource in the official OpenStack documentation.
+  
+* `type_id` - (Required) Unique identifier of the datastore type. Changing this creates a new datastore. Retrieved from the [selectel_dbaas_datastore_type_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_datastore_type_v1) data source.
 
-* `subnet_id` - (Required) Associated OpenStack Networking service subnet ID.
-  Changing this creates a new datastore.
+* `node_count` - (Required) Number of replicas in the datastore. The available range is from 1 to 6. Learn more about [Replication](https://docs.selectel.ru/cloud/managed-databases/about/about-managed-databases/#отказоустойчивость-и-репликация).
 
-* `type_id` - (Required) The datastore type for the datastore.
-  Changing this creates a new datastore.
+* `flavor_id` - (Optional) Unique identifier of the flavor for the datastore. Can be skipped when `flavor` is set. You can retrieve information about available flavors with the [selectel_dbaas_flavors_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_flavor_v1) data source.
 
-* `node_count` - (Required) Number of nodes to create for the datastore.
+* `flavor` - (Optional) Flavor configuration for the datastore. You can retrieve information about available flavors with the [selectel_dbaas_flavors_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_flavor_v1) data source. Learn more about available configurations for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/configurations/), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/configurations-1c/), and [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/configurations/).
 
-* `flavor_id` - (Optional) Flavor identifier for the datastore. It can be omitted in cases when `flavor` is set.
+  * `vcpus` - (Required) Number of vCPU cores.
+  * `ram` - (Required) Amount of RAM in MB.
+  * `disk` - (Required) Volume size in GB.
 
-* `flavor` - (Optional) Flavor configuration for the datastore. It's a complex value. See description below.
+* `pooler` - (Optional) Configures a connection pooler for the datastore. Applicable to PostgreSQL and PostgreSQL TimescaleDB.
 
-* `pooler` - (Optional) Pooler configuration for the datastore (only for PostgreSQL datastore). It's a complex value. See description below.
+  * `mode` - (Required) Pooling mode. Available values are `session`, `transaction`, and `statement`. The default value is `transaction.` Learn more about pooling modes for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/connection-pooler/#режимы-пулинга) and [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/connection-pooler/#режимы-пулинга).
+  * `size` - (Required) Pool size. The available range is from 1 to 500. The default value is `30`. Learn more about pool size for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/connection-pooler/#размер-пула-pool_size) and [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/connection-pooler/#размер-пула-pool_size).
 
-* `firewall` - (Optional) List of the ips to allow access from.
+* `firewall` - (Optional) List of IP-addresses with access to the datastore.
 
-* `restore` - (Optional) Restore parameters for the datastore. It's a complex value. See description below.
-  Changing this creates a new datastore.
+* `restore` - (Optional) Restores parameters for the datastore. Changing this creates a new datastore.
 
-* `config` - (Optional) Configuration parameters for the datastore.
+  * `datastore_id` - (Optional) Unique identifier of the datastore from which you restore. To get the datastore ID, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases** ⟶ copy the ID under the cluster name.
+  * `target_time` - (Optional) Time within seven previous days when you have the datastore state to restore.
 
-* `backup_retention_days` - (Optional) Number of days to retain backups.
-
-**flavor**
-
-- `vcpus` - (Required) CPU count for the flavor.
-- `ram` - (Required) RAM count for the flavor.
-- `disk` - (Required) Disk size for the flavor.
-
-**pooler**
-
-- `mode` - (Required) Mode for the pooler. Valid values: ["session", "transaction", "statement"].
-- `size` - (Required) Size of the pooler.
-
-**restore**
-
-- `datastore_id` - (Optional) - Datastore ID to restore from.
-- `target_time` - (Optional) - Restore by the target time.
+* `config` - (Optional) Configuration parameters for the datastore. You can retrieve information about available configuration parameters with the [selectel_dbaas_configuration_parameter_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_configuration_parameter_v1) data source.
 
 ## Attributes Reference
 
-The following attributes are exported:
+* `status` - Datastore status.
 
-* `status` - Shows the current status of the datastore.
-
-* `connections` - Shows DNS connection strings for the datastore.
+* `connections` - DNS addresses to connect to the datastore.
 
 ## Import
 
-Datastore can be imported using the `id`, e.g.
+You can import a datastore:
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID SEL_REGION=SELECTEL_VPC_REGION terraform import selectel_dbaas_datastore_v1.datastore_1 b311ce58-2658-46b5-b733-7a0f418703f2
+terraform import selectel_dbaas_mysql_datastore_v1.datastore_1 <datastore_id>
 ```
+
+where `<datastore_id>` is a unique identifier of the datastore, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the datastore ID in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases** ⟶ copy the ID under the cluster name.
+
+### Environment Variables
+
+For import, you must set environment variables:
+
+* `SEL_TOKEN=<selectel_api_token>`
+* `SEL_PROJECT_ID=<selectel_project_id>`
+* `SEL_REGION=<selectel_pool>`
+
+where:
+
+* `<selectel_api_token>` — Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶   **API keys**  ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
+* `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶  copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
+* `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases**. The pool is in the **Pool** column.
