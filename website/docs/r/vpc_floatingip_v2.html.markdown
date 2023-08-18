@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_floatingip_v2"
 sidebar_current: "docs-selectel-resource-vpc-floatingip-v2"
 description: |-
-  Manages a V2 floating IP resource within Selectel VPC.
+  Creates and manages a public IP address for Selectel products using public API v2.
 ---
 
 # selectel\_vpc\_floatingip_v2

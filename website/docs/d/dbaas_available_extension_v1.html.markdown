@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_dbaas_available_extension_v1"
 sidebar_current: "docs-selectel-datasource-dbaas-available-extension-v1"
 description: |-
-  Get information on Selectel DBaaS available extensions.
+  Provides a list of extensions available for Selectel Managed Databases.
 ---
 
 # selectel\_dbaas\_available_extension_v1
@@ -34,6 +34,9 @@ data "selectel_dbaas_available_extension_v1" "available_extension_1" {
 * `available_extensions` - List of the available extensions:
 
   * `id` - Unique identifier of the extension.
+
   * `name` - Extension name.
+
   * `datastore_type_ids` - List of datastore types that support the extension.
+
   * `dependency_ids` - List of extensions that depend on this extension.

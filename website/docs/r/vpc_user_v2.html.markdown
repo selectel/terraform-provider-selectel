@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_user_v2"
 sidebar_current: "docs-selectel-resource-vpc-user-v2"
 description: |-
-  Manages a V2 user resource within Selectel VPC.
+  Creates and manages a service user for Selectel products using public API v2.
 ---
 
 # selectel\_vpc\_user_v2

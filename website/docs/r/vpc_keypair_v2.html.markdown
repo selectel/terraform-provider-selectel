@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_keypair_v2"
 sidebar_current: "docs-selectel-resource-vpc-keypair-v2"
 description: |-
-  Manages a V2 keypair resource within Selectel VPC.
+  Creates and manages a SSH key pair for Selectel products using public API v2.
 ---
 
 # selectel\_vpc\_keypair_v2

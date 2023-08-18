@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_craas_token_v1"
 sidebar_current: "docs-selectel-resource-craas-token-v1"
 description: |-
-Manages a V1 token resource within Selectel Container Registry Service.
+  Creates and manages tokens in Selectel Container Registry using public API v1.
 ---
 
 # selectel\_craas\_token\_v1

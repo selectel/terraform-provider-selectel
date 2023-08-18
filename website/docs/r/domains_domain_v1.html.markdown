@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_domains_domain_v1"
 sidebar_current: "docs-selectel-resource-domains-domain-v1"
 description: |-
-  Manages a V1 domain resource within Selectel Domains API Service.
+  Creates and manages a domain in Selectel DNS Hosting using public API v1.
 ---
 
 # selectel\_domains\_domain\_v1

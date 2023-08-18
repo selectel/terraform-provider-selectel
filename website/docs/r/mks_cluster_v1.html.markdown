@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_mks_cluster_v1"
 sidebar_current: "docs-selectel-resource-mks-cluster-v1"
 description: |-
-  Manages a V1 cluster resource within Selectel Managed Kubernetes Service.
+  Creates and manages a cluster in Selectel Managed Kubernetes using public API v1.
 ---
 
 # selectel\_mks\_cluster\_v1
@@ -47,6 +47,7 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
 * `kube_version` - (Required) Kubernetes version of the cluster. Changing this upgrades the cluster version. You can retrieve information about the Kubernetes versions with the  [selectel_mks_kube_versions_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/mks_kube_versions_v1) data source.
   
   To upgrade a patch version, the desired version should match the latest available patch version for the current minor release.
+  
   To upgrade a minor version, the desired version should match the next available minor release with the latest patch version.
 
 * `zonal` - (Optional) Specifies a cluster type. Changing this creates a new cluster.
@@ -54,6 +55,7 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
   Boolean flag:
 
   * `false` (default) —  for a high availability cluster with three master nodes located on different hosts in one pool segment.
+  
   * `true` —  for a basic cluster with one master node. Set `enable_patch_version_auto_upgrade` to `false`.
 
   Learn more about [Cluster types](https://docs.selectel.ru/cloud/managed-kubernetes/about/about-managed-kubernetes/#типы-кластера).
@@ -77,6 +79,7 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
   Boolean flag:
 
   * `false` (default) —  Kube API is available from the Internet;
+  
   * `true` —  Kube API is available only from the cluster network.
 
 ## Attributes Reference
@@ -102,11 +105,15 @@ where `<cluster_id>` is a unique identifier of the cluster, for example, `b311ce
 For import, you must set environment variables:
 
 * `SEL_TOKEN=<selectel_api_token>`
+
 * `SEL_PROJECT_ID=<selectel_project_id>`
+
 * `SEL_REGION=<selectel_pool>`
 
 where:
 
 * `<selectel_api_token>` — Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶   **API keys**  ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
+
 * `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶  copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
+
 * `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases**. The pool is in the **Pool** column.

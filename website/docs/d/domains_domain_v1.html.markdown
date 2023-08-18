@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_domains_domain_v1"
 sidebar_current: "docs-selectel-datasource-domains-domain-v1"
 description: |-
-  Get information on Selectel Domains domain.
+  Provides an ID of a domain in Selectel DNS Hosting.
 ---
 
 # selectel\_domains\_domain_v1

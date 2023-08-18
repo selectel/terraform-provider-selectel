@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_project_v2"
 sidebar_current: "docs-selectel-resource-vpc-project-v2"
 description: |-
-  Manages a V2 project resource within Selectel VPC.
+  Creates and manages a Selectel Cloud Platform project using public API v2.
 ---
 
 # selectel\_vpc\_project_v2

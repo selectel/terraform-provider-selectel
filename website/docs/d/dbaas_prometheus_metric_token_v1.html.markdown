@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_dbaas_prometheus_metric_token_v1"
 sidebar_current: "docs-selectel-datasource-dbaas-prometheus-metric-token-v1"
 description: |-
-  Get information on Selectel DBaaS prometheus metrics tokens.
+  Provides a list of tokens for Prometheus available in Selectel Managed Databases.
 ---
 
 # selectel\_dbaas\_prometheus_metric_token_v1
@@ -30,8 +30,13 @@ data "selectel_dbaas_prometheus_metric_token_v1" "token_1" {
 * `prometheus_metrics_tokens` -  List of tokens for Prometheus.
 
   * `id` - Unique identifier of the token.
+
   * `created_at` - Time when the token was created.
+
   * `updated_at` - Time when the token was updated.
+
   * `project_id` - Unique identifier of the associated Cloud Platform project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-databases/about/projects/).
+
   * `name` - Token name.
+
   * `value` - Token value.

@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_dbaas_datastore_type_v1"
 sidebar_current: "docs-selectel-datasource-dbaas-datastore-type-v1"
 description: |-
-  Get information on Selectel DBaaS datastore types.
+  Provides a list of available datastore types in Selectel Managed Databases.
 ---
 
 # selectel\_dbaas\_datastore_type_v1
@@ -97,6 +97,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
 * `filter` - (Optional) Values to filter available datastore types:
 
   * `engine` - (Optional) Engine of the datastore type to search. Available values are `postgresql` (for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/)), `mysql` (for [MySQL sync](https://docs.selectel.ru/cloud/managed-databases/mysql-sync/)), `mysql_native` (for [MySQL semi-sync](https://docs.selectel.ru/cloud/managed-databases/mysql-semi-sync/)), and `redis`(for [Redis](https://docs.selectel.ru/cloud/managed-databases/redis/)).
+
   * `version` - (Optional) Version of the datastore type to search. For PostgreSQL for 1C, the versions are in the format `<version_number>-1C`. For PostgreSQL TimescaleDB, the versions are in the format `<version_number>-TimescaleDB`. Learn more about available versions for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/configurations/), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/configurations-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/configurations/), [MySQL semi-sync](https://docs.selectel.ru/cloud/managed-databases/mysql-semi-sync/configurations/), [MySQL sync](https://docs.selectel.ru/cloud/managed-databases/mysql-sync/configurations/), and [Redis](https://docs.selectel.ru/cloud/managed-databases/redis/configurations/).
 
 ## Attributes Reference
@@ -104,5 +105,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
 * `datastore_types` - List of available datastore types.
 
   * `id` - ID of the datastore type.
+
   * `engine` - Engine of the datastore type.
+
   * `version` - Version of the datastore type.

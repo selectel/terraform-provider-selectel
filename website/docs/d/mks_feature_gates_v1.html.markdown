@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_mks_feature_gates_v1"
 sidebar_current: "docs-selectel-datasource-mks-feature-gates-v1"
 description: |-
-  Get information on Selectel MKS available feature gates.
+  Provides a list of feature gates available in Selectel Managed Kubernetes.
 ---
 
 # selectel\_mks\_feature_gates_v1
@@ -34,4 +34,5 @@ data "selectel_mks_feature_gates_v1" "fg" {
 * `feature_gates` - List of available feature gates.
 
   * `kube_version` - Kubernetes version.
+
   * `names` - Names of the feature gates available for the specified version.

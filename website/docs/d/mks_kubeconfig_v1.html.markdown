@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_mks_kubeconfig_v1"
 sidebar_current: "docs-selectel-datasource-mks-kubeconfig-v1"
 description: |-
-  Get kubeconfig for a Selectel Managed Kubernetes cluster.
+  Provides a kubeconfig file and its fields for a Selectel Managed Kubernetes cluster.
 ---
 
 # selectel\_mks\_kubeconfig_v1

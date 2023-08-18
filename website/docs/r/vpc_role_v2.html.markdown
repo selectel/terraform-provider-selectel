@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_role_v2"
 sidebar_current: "docs-selectel-resource-vpc-role-v2"
 description: |-
-  Manages a V2 role resource within Selectel VPC.
+  Creates and manages a Project Administrator role for Selectel service users using public API v2.
 ---
 
 # selectel\_vpc\_role_v2

@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_dbaas_mysql_datastore_v1"
 sidebar_current: "docs-selectel-resource-dbaas-mysql-datastore-v1"
 description: |-
-  Manages a V1 MySQL datastore resource within Selectel Managed Databases Service.
+  Creates and manages a MySQL datastore in Selectel Managed Databases using public API v1.
 ---
 
 # selectel\_dbaas\_mysql\_datastore\_v1
@@ -47,7 +47,9 @@ resource "selectel_dbaas_mysql_datastore_v1" "datastore_1" {
 * `flavor` - (Optional) Flavor configuration for the datastore. You can retrieve information about available flavors with the [selectel_dbaas_flavors_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_flavor_v1) data source. Learn more about available configurations for [MySQL sync](https://docs.selectel.ru/cloud/managed-databases/mysql-sync/configurations/) and [MySQL semi-sync](https://docs.selectel.ru/cloud/managed-databases/mysql-semi-sync/configurations/).
 
   * `vcpus` - (Required) Number of vCPU cores.
+  
   * `ram` - (Required) Amount of RAM in MB.
+  
   * `disk` - (Required) Volume size in GB.
 
 * `firewall` - (Optional) List of IP-addresses with access to the datastore.
@@ -55,6 +57,7 @@ resource "selectel_dbaas_mysql_datastore_v1" "datastore_1" {
 * `restore` - (Optional) Restores parameters for the datastore. Changing this creates a new datastore.
 
   * `datastore_id` - (Optional) Unique identifier of the datastore from which you restore. To get the datastore ID, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases** ⟶ copy the ID under the cluster name.
+  
   * `target_time` - (Optional) Time within seven previous days when you have the datastore state to restore.
 
 * `config` - (Optional) Configuration parameters for the datastore. You can retrieve information about available configuration parameters with the [selectel_dbaas_configuration_parameter_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_configuration_parameter_v1) data source.
@@ -80,11 +83,15 @@ where `<datastore_id>` is a unique identifier of the datastore, for example, `b3
 For import, you must set environment variables:
 
 * `SEL_TOKEN=<selectel_api_token>`
+
 * `SEL_PROJECT_ID=<selectel_project_id>`
+
 * `SEL_REGION=<selectel_pool>`
 
 where:
 
 * `<selectel_api_token>` — Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶   **API keys**  ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
+
 * `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶  copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
+
 * `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases**. The pool is in the **Pool** column.

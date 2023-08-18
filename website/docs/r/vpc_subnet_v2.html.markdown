@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_subnet_v2"
 sidebar_current: "docs-selectel-resource-vpc-subnet-v2"
 description: |-
-  Manages a V2 subnet resource within Selectel VPC.
+  Creates and manages a public subnet for Selectel products using public API v2.
 ---
 
 # selectel\_vpc\_subnet_v2

@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_mks_admission_controllers_v1"
 sidebar_current: "docs-selectel-datasource-mks-admission-controllers-v1"
 description: |-
-  Get information on Selectel MKS available admission controllers.
+  Provides a list of admission controllers available in Selectel Managed Kubernetes.
 ---
 
 # selectel\_mks\_admission_controllers_v1
@@ -34,4 +34,5 @@ data "selectel_mks_admission_controllers_v1" "admission_controllers_1" {
 * `admission_controllers` - List of available admission controllers.
 
   * `kube_version` - Kubernetes version.
+
   * `names` - Names of the admission controllers available for the specified Kubernetes version.

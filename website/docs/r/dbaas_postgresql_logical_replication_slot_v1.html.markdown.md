@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_dbaas_postgresql_logical_replication_slot_v1"
 sidebar_current: "docs-selectel-resource-dbaas-postgresql-logical-replication-slot-v1"
 description: |-
-  Manages a V1 PostgreSQL logical replication slot resource within Selectel Managed Databases Service.
+  Creates and manages a logical replication slot in Selectel Managed Databases using public API v1.
 ---
 
 # selectel\_dbaas\_postgresql\_logical\_replication\_slot\_v1
@@ -53,11 +53,15 @@ where `<replication_slot_id>` is a unique identifier of the replication slot, fo
 For import, you must set environment variables:
 
 * `SEL_TOKEN=<selectel_api_token>`
+
 * `SEL_PROJECT_ID=<selectel_project_id>`
+
 * `SEL_REGION=<selectel_pool>`
 
 where:
 
 * `<selectel_api_token>` — Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶   **API keys**  ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
+
 * `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶  copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
+
 * `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases**. The pool is in the **Pool** column.

@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_license_v2"
 sidebar_current: "docs-selectel-resource-vpc-license-v2"
 description: |-
-  Manages a V2 license resource within Selectel VPC.
+  Manages a license for Selectel cloud servers using public API v2.
 ---
 
 # selectel\_vpc\_license_v2

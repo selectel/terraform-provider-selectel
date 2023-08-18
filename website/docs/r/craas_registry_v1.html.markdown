@@ -3,13 +3,12 @@ layout: "selectel"
 page_title: "Selectel: selectel_craas_registry_v1"
 sidebar_current: "docs-selectel-resource-craas-registry-v1"
 description: |-
-Manages a V1 registry resource within Selectel Container Registry Service.
+  Creates and manages a registry in Selectel Container Registry using public API v1.
 ---
 
 # selectel\_craas\_registry\_v1
 
-Creates and manages  a registry in Container Registry using  public API v1. For more information about Container Registry, see the [official Selectel documentation](https://docs.selectel.ru/cloud/craas/).
-
+Creates and manages a registry in Container Registry using public API v1. For more information about Container Registry, see the [official Selectel documentation](https://docs.selectel.ru/cloud/craas/).
 
 ## Example usage
 
@@ -47,9 +46,11 @@ where `<registry_id>` is a unique identifier of the registry, for example, `9395
 For import, you must set environment variables:
 
 * `SEL_TOKEN=<selectel_api_token>`
+
 * `SEL_PROJECT_ID=<selectel_project_id>`
 
 where:
 
 * `<selectel_api_token>` — Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶   **API keys**  ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
+
 * `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶  copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).

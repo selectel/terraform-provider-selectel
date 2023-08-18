@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_dbaas_flavor_v1"
 sidebar_current: "docs-selectel-datasource-dbaas-flavor-v1"
 description: |-
-  Get information on Selectel DBaaS flavors.
+  Provides a list of flavors available in Selectel Managed Databases.
 ---
 
 # selectel\_dbaas\_flavors_v1
@@ -28,8 +28,11 @@ data "selectel_dbaas_flavor_v1" "flavor" {
 * `filter` - (Optional) Values to filter available flavors:
 
   * `vcpus` - (Optional) Number of vCPU cores.
+
   * `ram` - (Optional) Amount of RAM in MB.
+
   * `disk` - (Optional) Volume size in GB.
+
   * `datastore_type_id` - (Optional)  Unique identifier of the datastore type.
 
 ## Attributes Reference
@@ -37,9 +40,15 @@ data "selectel_dbaas_flavor_v1" "flavor" {
 * `flavors` - List of available flavors.
 
   * `id` - Unique identifier of the flavor.
+
   * `name` - Flavor name.
+
   * `description` - Flavor description.
+
   * `vcpus` - Number of vCPU cores.
+
   * `ram` - Amount of RAM in MB.
+
   * `disk` - Volume size in GB.
+
   * `datastore_type_ids` - List of datastore types that support this flavor.

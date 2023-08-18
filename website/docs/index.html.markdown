@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Provider: Selectel"
 sidebar_current: "docs-selectel-index"
 description: |-
-  The Selectel provider is used to interact with the Selectel resources. The provider needs the Selectel API key token to authorize its requests.
+  Use the Selectel provider to interact with Selectel products.
 ---
 
 # Selectel provider

@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_token_v2"
 sidebar_current: "docs-selectel-resource-vpc-token-v2"
 description: |-
-  Manages a V2 token resource within Selectel VPC.
+  Creates and manages a Selectel Cloud Platform Keystone token using public API v2.
 ---
 
 # selectel\_vpc\_token_v2

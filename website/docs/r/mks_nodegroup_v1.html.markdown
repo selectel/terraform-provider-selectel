@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_mks_nodegroup_v1"
 sidebar_current: "docs-selectel-resource-mks-nodegroup-v1"
 description: |-
-  Manages a V1 nodegroup resource within Selectel Managed Kubernetes Service.
+  Creates and manages a node group in Selectel Managed Kubernetes using public API v1.
 ---
 
 # selectel\_mks\_nodegroup\_v1
@@ -100,6 +100,7 @@ terraform import selectel_mks_nodegroup_v1.nodegroup_1 <cluster_id>/<nodegroup_i
 where:
 
 * `<cluster_id>` — Unique identifier of the cluster, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the cluster ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes** ⟶ the cluster page ⟶ copy the ID at the top of the page under the cluster name, near the region and pool.
+
 * `<nodegroup_id>` — Unique identifier of the node, for example, `63ed5342-b22c-4c7a-9d41-c1fe4a142c13`. To get the cluster ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes**. Click the required cluster ⟶ the required node group. The node group ID is at the top of the page under the node group name, near the region and pool.
 
 ### Environment Variables
@@ -107,11 +108,15 @@ where:
 For import, you must set environment variables:
 
 * `SEL_TOKEN=<selectel_api_token>`
+
 * `SEL_PROJECT_ID=<selectel_project_id>`
+
 * `SEL_REGION=<selectel_pool>`
 
 where:
 
 * `<selectel_api_token>` — Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶   **API keys**  ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
+
 * `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶  copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
+
 * `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases**. The pool is in the **Pool** column.
