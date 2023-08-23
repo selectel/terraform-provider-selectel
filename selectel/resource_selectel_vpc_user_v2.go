@@ -4,7 +4,9 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"unicode"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/users"
@@ -29,6 +31,29 @@ func resourceVPCUserV2() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: false,
+				ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+					password := i.(string)
+					if len(password) < 8 {
+						return diag.Errorf("password must be at least 8 characters long")
+					}
+
+					chrType := 0
+					for _, r := range password {
+						switch {
+						case unicode.IsDigit(r):
+							chrType |= 1
+						case unicode.IsLower(r):
+							chrType |= 2
+						case unicode.IsUpper(r):
+							chrType |= 4
+						}
+					}
+					if chrType != 7 {
+						return diag.Errorf("password must contain at least one digit, one lowercase and one uppercase character")
+					}
+
+					return nil
+				},
 			},
 			"enabled": {
 				Type:     schema.TypeBool,
