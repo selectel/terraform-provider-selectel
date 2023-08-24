@@ -1,3 +1,9 @@
+## 3.11.1 (Unreleased)
+
+IMPROVEMENTS:
+
+* Added backup retention days parameter to DBaaS datastore resources ([#231](https://github.com/selectel/terraform-provider-selectel/pull/231))
+
 ## 3.11.0 (June 30, 2023)
 
 FEATURES:
