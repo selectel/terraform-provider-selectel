@@ -3,69 +3,56 @@ layout: "selectel"
 page_title: "Selectel: selectel_dbaas_configuration_parameter_v1"
 sidebar_current: "docs-selectel-datasource-dbaas-configuration-parameter-v1"
 description: |-
-  Get information on Selectel DBaaS configuration parameters.
+  Provides a list of configuration parameters available for Selectel Managed Databases.
 ---
 
 # selectel\_dbaas\_configuration_parameter_v1
 
-Use this data source to get all available confguration parameters within Selectel DBaaS API Service
+Provides a list of configuration parameters available for Managed Databases. For more information about configuration parameters, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/settings/), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/settings-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/settings/), [MySQL semi-sync](https://docs.selectel.ru/cloud/managed-databases/mysql-semi-sync/settings/), [MySQL sync](https://docs.selectel.ru/cloud/managed-databases/mysql-sync/settings/), and [Redis](https://docs.selectel.ru/cloud/managed-databases/redis/eviction-policy/).
 
 ## Example Usage
 
 ```hcl
-resource "selectel_vpc_project_v2" "project_1" {
-}
-
-data "selectel_dbaas_datastore_type_v1" "dt" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  filter {
-    engine  = "postgresql"
-    version = "12"
-  }
-}
-
-data "selectel_dbaas_configuration_parameter_v1" "config" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  filter {
-    datastore_type_id = data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id
-    name = "work_mem"
-  }
+data "selectel_dbaas_configuration_parameter_v1" "configuration_parameter_1" {
+  project_id = selectel_vpc_project_v2.project_1.id
+  region     = "ru-3"
 }
 ```
 
 ## Argument Reference
 
-The folowing arguments are supported
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
-* `project_id` - (Required) An associated Selectel VPC project.
+* `region` - (Required) Pool where the database is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#облачные-базы-данных).
 
-* `region` - (Required) A Selectel VPC region.
+* `filter` - (Optional) Values to filter available extensions.
+  
+  * `datastore_type_id` - (Optional) Unique identifier of the datastore type for which you get configuration parameters.  You can retrieve information about available datastore types with the [selectel_dbaas_datastore_type_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_datastore_type_v1) data source.
 
-* `filter` - (Optional) One or more values used to look up configuration parameters
-
-**filter**
-
-- `datastore_type_id` - (Optional) Datastore type id to lookup all available parameters for this type.
-- `name` - (Optional) Name of the parameter to lookup.
+  * `name` - (Optional) Name of the configuration parameter to search.
 
 ## Attributes Reference
 
-The following attributes are exported:
+* `configuration_parameters` - List of  available configuration parameters.
 
-* `configuration_parameters` - Contains a list of the found configuration parameters.
+  * `id` - Unique identifier of the configuration parameter.
 
-**configuration_parameters**
+  * `datastore_type_id` - Unique identifier of the datastore type for which the configuration parameter is available.
 
-- `id` - ID of the configuration parameter.
-- `datastore_type_id` - Datastore type id for which the configuration parameter is availabe.
-- `name` - Name of the configuration parameter.
-- `type` - Type of the configuration parameter.
-- `unit` - Unit of the configuration parameter. Might be empty.
-- `min` - Min value of the configuration parameter. Might be empty.
-- `max` - Max value of the configuration parameter. Might be empty.
-- `default_value` - Default value of the configuration parameter. Might be empty.
-- `choices` - Available choices for the configuration parameter. Some parameters have list of available options.
-- `is_restart_required` - Shows if database needs a restart to apply changes of this parameter.
-- `is_changeable` - Shows if parameter can be changed.
+  * `name` - Name of the configuration parameter.
+
+  * `type` - Type of the configuration parameter.
+
+  * `unit` - Unit of the configuration parameter. Might be empty.
+
+  * `min` - Minimum value of the configuration parameter. Might be empty.
+
+  * `max` - Maximum value of the configuration parameter. Might be empty.
+
+  * `default_value` - Default value of the configuration parameter. Might be empty.
+
+  * `choices` - Available choices for the configuration parameter. Some parameters have list of available options.
+
+  * `is_restart_required` - Shows if the database needs a restart to apply changes.
+
+  * `is_changeable` - Shows if the parameter can be changed.

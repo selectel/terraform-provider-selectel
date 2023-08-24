@@ -3,30 +3,20 @@ layout: "selectel"
 page_title: "Selectel: selectel_mks_nodegroup_v1"
 sidebar_current: "docs-selectel-resource-mks-nodegroup-v1"
 description: |-
-  Manages a V1 nodegroup resource within Selectel Managed Kubernetes Service.
+  Creates and manages a node group in Selectel Managed Kubernetes using public API v1.
 ---
 
 # selectel\_mks\_nodegroup\_v1
 
-Manages a V1 nodegroup resource within Selectel Managed Kubernetes Service.
+Creates and manages a Managed Kubernetes node group using public API v1. For more information about node groups, see the [official Selectel documentation](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/).
 
 ## Example usage
 
 ```hcl
-resource "selectel_vpc_project_v2" "project_1" {
-}
-
-resource "selectel_mks_cluster_v1" "cluster_1" {
-  name         = "cluster-1"
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  kube_version = "1.16.8"
-}
-
 resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
-  cluster_id        = "${selectel_mks_cluster_v1.cluster_1.id}"
-  project_id        = "${selectel_mks_cluster_v1.cluster_1.project_id}"
-  region            = "${selectel_mks_cluster_v1.cluster_1.region}"
+  cluster_id        = selectel_mks_cluster_v1.cluster_1.id
+  project_id        = selectel_mks_cluster_v1.cluster_1.project_id
+  region            = selectel_mks_cluster_v1.cluster_1.region
   availability_zone = "ru-3a"
   nodes_count       = 3
   cpus              = 2
@@ -39,18 +29,18 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
     "label-key2": "label-value2",
   }
   taints {
-    key = "test-key-0"
-    value = "test-value-0"
+    key    = "test-key-0"
+    value  = "test-value-0"
     effect = "NoSchedule"
   }
   taints {
-    key = "test-key-1"
-    value = "test-value-1"
+    key    = "test-key-1"
+    value  = "test-value-1"
     effect = "NoExecute"
   }
   taints {
-    key = "test-key-2"
-    value = "test-value-2"
+    key    = "test-key-2"
+    value  = "test-value-2"
     effect = "PreferNoSchedule"
   }
 }
@@ -58,76 +48,75 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 
 ## Argument Reference
 
-The following arguments are supported:
+* `cluster_id` - (Required) Unique identifier of the associated Managed Kubernetes cluster. Changing this creates a new node group. You can create up to eight group nodes in a cluster. Retrieved from the [selectel_mks_cluster_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/mks_cluster_v1) resource.
 
-* `cluster_id` - (Required) An associated MKS cluster.
-  Changing this creates a new nodegroup.
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new node group. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
-* `project_id` - (Required) An associated Selectel VPC project.
-  Changing this creates a new nodegroup.
+* `region` - (Required) Pool where the cluster is located, for example, `ru-3`. Changing this creates a new node group. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-kubernetes).
 
-* `region` - (Required) A Selectel VPC region of where the nodegroup is located.
-  Changing this creates a new nodegroup.
+* `availability_zone` (Required) Pool segment where all nodes of the node group are located. Changing this creates a new node group.  Learn more about available pool segments in the  [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-kubernetes).  
 
-* `availability_zone` (Required) An OpenStack availability zone for all nodes in the nodegroup.
-  Changing this creates a new nodegroup.
+* `nodes_count` (Required) Number of worker nodes in the node group. The maximum number of nodes in a node group is 15. Changing this resizes the node group if `enable_autoscale` is false.
 
-* `nodes_count` (Required) Count of worker nodes in the nodegroup.
-  Changing this resizes the nodegroup according to the new nodes count.
-  As long as `enable_autoscale` is set to true, changing this will not affect the size of the nodegroup.
+* `cpus` (Optional) Number of CPU cores for each node. Can be skipped only when `flavor_id` is set. Changing this creates a new node group. Learn more about [Configurations](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/configurations/).
 
-* `keypair_name` (Optional) Name of the SSH key that will be added to all nodes.
-  Changing this creates a new nodegroup.
+* `ram_mb` (Optional) Amount of RAM in MB for each node. Can be skipped only when `flavor_id` is set. Changing this creates a new node group. Learn more about [Configurations](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/configurations/).
 
-* `affinity_policy` (Optional) An argument to tune nodes affinity policy.
-  Changing this creates a new nodegroup.
+* `volume_gb` (Optional) Volume size in GB for each node. Can be skipped only when flavor_id is set and local_volume is `true`. Changing this creates a new node group.  Learn more about [Configurations](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/configurations/).
 
-* `cpus` (Optional) CPU count for each node. It can be omitted only in cases when `flavor_id` is set.
-  Changing this creates a new nodegroup.
+* `volume_type` (Optional) Type of an OpenStack blockstorage volume for each node. Can be skipped only when `flavor_id` is set and `local_volume` is `true`. Changing this creates a new node group.  Available volume types are `fast`, `basic`, and `universal`. The format is `<volume_type>`.`<availability_zone>`. Learn more about [Network volumes](https://docs.selectel.ru/cloud/servers/volumes/about-network-volumes/).
 
-* `ram_mb` (Optional) RAM count in MB for each node. It can be omitted only in cases when `flavor_id` is set.
-  Changing this creates a new nodegroup.
+* `local_volume` (Optional) Specifies if nodes use a local volume.  Changing this creates a new node group. Boolean flag, the default value is false.
 
-* `volume_gb` (Optional) Volume size in GB for each node. It can be omitted only in cases
-   when `flavor_id` is set and `local_volume` is true.
-   Changing this creates a new nodegroup.
+* `flavor_id` (Optional) Unique identifier of an OpenStack flavor for all nodes in the node group. Changing this creates a new node group. Learn more about [Flavors](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/configurations/#создать-группу-нод-с-фиксированной-конфигурацией-облачного-сервера).
 
-* `volume_type` (Optional) An OpenStack blockstorage volume type for each node. It can be omitted only in cases
-   when `flavor_id` is set and `local_volume` is true.
-   Changing this creates a new nodegroup.
+* `labels` (Optional) List of Kubernetes labels applied to each node in the node group.
 
-* `local_volume` (Optional) Represents if nodes will use local volume.
-  Accepts true or false. Defaults to false.
-  Changing this creates a new nodegroup.
+* `taints` (Optional) List of Kubernetes taints applied to each node in the node group.  Contains a key-value pair and an effect applied for the taint. Available effects are `NoSchedule`, `PreferNoSchedule`, and `NoExecute`. Learn more about [Taints](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/add-taints/).
 
-* `flavor_id` (Optional) An OpenStack flavor identifier for all nodes in the nodegroup. It can be omitted in most cases.
-  Changing this creates a new nodegroup.
+* `keypair_name` (Optional) Name of the SSH key added to all nodes. Changing this creates a new node group.
 
-* `labels` (Optional) Represents a map containing a set of Kubernetes labels that will be applied
-  for each node in the group. The keys must be user-defined.
+* `affinity_policy` (Optional) Specifies affinity policy of the nodes. Changing this creates a new node group. Available values are `soft-anti-affinity` and `soft-affinity`. The default value is `soft-anti-affinity`. For more information about affinity and anti-affinity, see the [official Kubernetes documentation](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity).
 
-* `taints` (Optional) Represents a list of Kubernetes taints that will be applied for each node in the group.
+* `enable_autoscale` (Optional) Enables or disables autoscaling of the node group. Boolean flag, the default value is false. `autoscale_min_nodes` and `autoscale_max_nodes` must be specified. Learn more about [Autoscaling](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/cluster-autoscaler/).
 
-* `enable_autoscale` (Optional) Specifies if a nodegroup autoscaling option has to be turned on/off.
-  Accepts true or false. Default is false.
-  `autoscale_min_nodes` and `autoscale_max_nodes` must be specified.
-
-* `autoscale_min_nodes` (Optional) Represents a minimum possible number of worker nodes in the nodegroup.
-
-* `autoscale_max_nodes` (Optional) Represents a maximum possible number of worker nodes in the nodegroup.
+  * `autoscale_min_nodes` (Optional) Minimum number of worker nodes in the node group.
+  * `autoscale_max_nodes` (Optional) Maximum number of worker nodes in the node group.
 
 ## Attributes Reference
 
-The following attributes are exported:
+* `nodes` - List of nodes in the node group.
 
-* `nodes` - Contains a list of all nodes in the nodegroup.
-
-* `nodegroup_type` - Represents type of nodegroup. It can take values `STANDARD`, `GPU`.
+* `nodegroup_type` - Type of the node group. Available values are `STANDARD` and `GPU`.
 
 ## Import
 
-Nodegroup can be imported using a combined ID using the following format: ``<cluster_id>/<nodegroup_id>``
+You can import a node group:
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID SEL_REGION=SELECTEL_VPC_REGION terraform import selectel_mks_nodegroup_v1.nodegroup_1 b311ce58-2658-46b5-b733-7a0f418703f2/63ed5342-b22c-4c7a-9d41-c1fe4a142c13
+terraform import selectel_mks_nodegroup_v1.nodegroup_1 <cluster_id>/<nodegroup_id>
 ```
+
+where:
+
+* `<cluster_id>` — Unique identifier of the cluster, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the cluster ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes** ⟶ the cluster page ⟶ copy the ID at the top of the page under the cluster name, near the region and pool.
+
+* `<nodegroup_id>` — Unique identifier of the node, for example, `63ed5342-b22c-4c7a-9d41-c1fe4a142c13`. To get the cluster ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes**. Click the required cluster ⟶ the required node group. The node group ID is at the top of the page under the node group name, near the region and pool.
+
+### Environment Variables
+
+For import, you must set environment variables:
+
+* `SEL_TOKEN=<selectel_api_token>`
+
+* `SEL_PROJECT_ID=<selectel_project_id>`
+
+* `SEL_REGION=<selectel_pool>`
+
+where:
+
+* `<selectel_api_token>` — Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶   **API keys**  ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
+
+* `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶  copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
+
+* `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases**. The pool is in the **Pool** column.

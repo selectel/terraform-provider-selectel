@@ -3,69 +3,49 @@ layout: "selectel"
 page_title: "Provider: Selectel"
 sidebar_current: "docs-selectel-index"
 description: |-
-  The Selectel provider is used to interact with the Selectel resources. The provider needs the Selectel API key token to authorize its requests.
+  Use the Selectel provider to interact with Selectel products.
 ---
 
 # Selectel provider
 
-The Selectel provider is used to interact with the Selectel resources. The provider
-needs the Selectel API key token to authorize its requests.
+Use the Selectel Terraform provider to interact with [Selectel products](https://docs.selectel.ru/).
 
-In most cases [OpenStack Terraform provider](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest)
-will have to be used as well — to control resources available via native OpenStack API.
-
-Read our [Getting Started with Terraform at Selectel](https://kb.selectel.com/docs/selectel-cloud-platform/main-services/instructions/how_to_use_terraform/)
-guide to learn more.
+To interact with resources that are available via OpenStack API, you can also use [OpenStack Terraform provider](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest).
 
 ## Example Usage
 
 ```hcl
-# Configure the Selectel Provider
-provider "selectel" {
-  token = "SELECTEL_API_TOKEN_KEY"
+terraform {
+  required_providers {
+    selectel = {
+      source = "selectel/selectel"
+      version = "~> 3.11.0"
+    }
+  }
 }
 
-# Create a project
+# Create a Cloud Platform project
 resource "selectel_vpc_project_v2" "project_1" {
-  # ...
+  ...
 }
 ```
 
-## Configuration Reference
+## Authentication
 
-The following arguments are supported:
+```hcl
+# Configure the Selectel Provider
 
-* `token` - (Required) The Selectel API key token. If omitted, the `SEL_TOKEN`
-  environment variable is used.
-
-* `endpoint` - (Optional) The Selectel VPC endpoint. Needed only if this provider
-  is used for tests environment. If omitted, the provider will use the official
-  Selectel VPC endpoint automatically.
-
-* `project_id` - (Optional) The Selectel VPC project. Used only to import
-  resources that need an auth token in the project scope. If omitted,
-  the `SEL_PROJECT_ID` environment variable is used.
-
-* `region` - (Optional) The Selectel VPC region. Used only to import resources
-  associated with the specific region. If omitted, the `SEL_REGION` environment
-  variable is used.
-
-## Additional Logging
-
-To enable debug logging, set the `TF_LOG` environment variable to `DEBUG`:
-
-```shell
-$ env TF_LOG=DEBUG terraform apply
+provider "selectel" {
+  token = "<selectel_token>"
+}
 ```
 
-## Testing and Development
+## Argument Reference
 
-In order to run the Acceptance Tests for development you need to set
-the `SEL_TOKEN` environment variable:
+* `token` - (Required) Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶ **API keys** ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel). If skipped, use the `SEL_TOKEN` environment variable.
 
-```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN TF_ACC=1 go test -v ./selectel/...
-```
+* `endpoint` - (Optional) Selectel API endpoint. Use only for test environments. If skipped, the provider automatically uses the official Selectel endpoint.
 
-Please create an issue describing a new feature or bug prior creating a pull
-request.
+* `project_id` - (Optional) Unique identifier of the Cloud Platform project. Use only to import resources that are associated with the specific project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/), go to the **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. As an alternative, you can retrieve project ID from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/). If skipped, use the `SEL_PROJECT_ID` environment variable. 
+
+* `region` - (Optional) Pool, for example, `ru-3`. Use only to import resources from the specific pool. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/). If skipped, use the `SEL_REGION` environment variable.

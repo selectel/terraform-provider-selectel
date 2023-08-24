@@ -3,51 +3,58 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_floatingip_v2"
 sidebar_current: "docs-selectel-resource-vpc-floatingip-v2"
 description: |-
-  Manages a V2 floating IP resource within Selectel VPC.
+  Creates and manages a public IP address for Selectel products using public API v2.
 ---
 
 # selectel\_vpc\_floatingip_v2
 
-Manages a V2 floating IP resource within Selectel VPC.
+Creates and manages a public IP address using public API v2. For more information about public IP addresses, see the [official Selectel documentation](https://docs.selectel.ru/cloud/servers/networks/about-networks/).
 
 ## Example Usage
 
 ```hcl
 resource "selectel_vpc_floatingip_v2" "floatingip_1" {
-  project_id = "887e5e35458d4ee38a6ae0543555dec5"
+  project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-1"
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new public IP address. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
-* `project_id` - (Required) An associated Selectel VPC project. Changing this
-  creates a new floating IP.
-
-* `region` - (Required) A region of where the floating IP resides. Changing this
-  creates a new floating IP.
+* `region` - (Required) Pool where the public IP address is located, for example, `ru-3`. Changing this creates a new public IP address. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/).
 
 ## Attributes Reference
 
-The following attributes are exported:
+* `port_id` - Unique identifier of the associated OpenStack port. Learn more about the [openstack_networking_port_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_port_v2) resource in the official OpenStack documentation.
 
-* `port_id` - Contains id of the Networking service port.
+* `floating_ip_address` - Public IP address.
 
-* `floating_ip_address` - Contains floating IP address.
+* `fixed_ip_address` -  Fixed private IP address of the OpenStack port, that is associated with the public IP address. Learn more about the [openstack_networking_port_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_port_v2) resource in the official OpenStack documentation.
 
-* `fixed_ip_address` - Contains internal IP address of the Networking service port.
+* `status` - Status of the public IP address.
 
-* `status` - Shows if the license is used or not.
+* `servers` - Cloud server that use the public IP address.
 
-* `servers` - Shows information about servers that use this floating IP. Contains
-  `id`, `name` and `status` fields.
+  * `id` - Unique identifier of the cloud server.
+
+  * `name` - Name of the cloud server.
+
+  * `status` - Status of the cloud server.
 
 ## Import
 
-Floating IPs can be imported using the `id`, e.g.
+You can import a public IP address:
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selectel_vpc_floatingip_v2.floatingip_1 aa402146-d83e-4c8c-8b74-1f415d4b8253
+terraform import selectel_vpc_floatingip_v2.floatingip_1 <public_ip_id>
 ```
+
+where `<public_ip_id>` is a unique identifier of the public IP address, for example, `0635d78f-57a7-1a23-bf9d-9e10`. To get the public IP address ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Public IP addresses** tab. The ID is under the public IP address. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/cloud/servers/tools/openstack/) command `openstack floating ip list` and copy `ID` field.
+
+### Environment Variables
+
+For import, you must set the environment variable `SEL_TOKEN=<selectel_api_token>`,
+
+where `<selectel_api_token>` is a Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶ **API keys** ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
