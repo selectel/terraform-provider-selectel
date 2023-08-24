@@ -3,32 +3,29 @@ layout: "selectel"
 page_title: "Selectel: selectel_domains_domain_v1"
 sidebar_current: "docs-selectel-datasource-domains-domain-v1"
 description: |-
-  Get information on Selectel Domains domain.
+  Provides an ID of a domain in Selectel DNS Hosting.
 ---
 
 # selectel\_domains\_domain_v1
 
-Use this data source to get the ID of an available domain object within Selectel Domains API Service.
+Provides an ID of a domain in DNS Hosting. For more information about domains in DNS Hosting, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/domains/).
 
 ## Example Usage
 
 ```hcl
 data "selectel_domains_domain_v1" "domain_1" {
-  name = "test-domain.xyz"
+  name = "example.com"
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
-
-* `name` - (Required) The name of the domain.
+* `name` - (Required) Domain name.
 
 ## Attributes Reference
 
-`id` is set to the ID of the found domain. In addition, the following attributes
-are exported:
+* `id` - Unique identifier of the domain.
+  
+* `name` - Domain name.
 
-* `name` - The name of the domain.
-
-* `user_id` - Identifier of the Selectel API user.
+* `user_id` - Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/).

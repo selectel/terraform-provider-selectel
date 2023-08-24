@@ -3,107 +3,86 @@ layout: "selectel"
 page_title: "Selectel: selectel_dbaas_redis_datastore_v1"
 sidebar_current: "docs-selectel-resource-dbaas-redis-datastore-v1"
 description: |-
-  Manages a V1 Redis datastore resource within Selectel Managed Databases Service.
+  Creates and manages a Redis datastore in Selectel Managed Databases using public API v1.
 ---
 
 # selectel\_dbaas\_redis\_datastore\_v1
 
-Manages a V1 Redis datastore resource within Selectel Managed Databases Service.
+Creates and manages a Redis datastore using public API v1. For more information about Managed Databases, see the [official Selectel documentation](https://docs.selectel.ru/cloud/managed-databases/redis/).
 
 ## Example usage
 
 ```hcl
-resource "selectel_vpc_project_v2" "project_1" {
-}
-
-resource "selectel_vpc_subnet_v2" "subnet" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-}
-
-data "selectel_dbaas_datastore_type_v1" "dt" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  filter {
-    engine  = "redis"
-    version = "6"
-  }
-}
-
-data "selectel_dbaas_flavor_v1" "flavor" {
-    project_id   = "${selectel_vpc_project_v2.project_1.id}"
-    region = "ru-3"
-    filter {
-        datastore_type_id = data.selectel_dbaas_datastore_type_v1.dt_redis.datastore_types[0].id
-    }
-}
-
 resource "selectel_dbaas_redis_datastore_v1" "datastore_1" {
-  name         = "datastore-1"
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  type_id      = data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id
-  subnet_id    = "${selectel_vpc_subnet_v2.subnet.subnet_id}"
-  node_count   = 3
-  flavor_id = data.selectel_dbaas_flavor_v1.flavor.flavors[0].id
-  config = {
-    maxmemory-policy = "allkeys-lru"
-  }
+  name           = "datastore-1"
+  project_id     = selectel_vpc_project_v2.project_1.id
+  region         = "ru-3"
+  type_id        = data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id
+  subnet_id      = selectel_vpc_subnet_v2.subnet.subnet_id
+  node_count     = 3
+  flavor_id      = data.selectel_dbaas_flavor_v1.flavor.flavors[0].id
   redis_password = "secret"
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+* `name` - (Required) Datastore name. Changing this creates a new datastore.
 
-* `name` - (Required) A name of the datastore.
-  Changing this creates a new datastore.
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new datastore. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
-* `project_id` - (Required) An associated Selectel VPC project.
-  Changing this creates a new datastore.
+* `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new datastore. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#облачные-базы-данных).
 
-* `region` - (Required) A Selectel VPC region of where the datastore is located.
-  Changing this creates a new datastore.
+* `subnet_id` - (Required) Unique identifier of the associated OpenStack network. Changing this creates a new datastore. Learn more about the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_network_v2) resource in the official OpenStack documentation.
 
-* `subnet_id` - (Required) Associated OpenStack Networking service subnet ID.
-  Changing this creates a new datastore.
+* `type_id` - (Required) Unique identifier of the datastore type. Changing this creates a new datastore. Retrieved from the [selectel_dbaas_datastore_type_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_datastore_type_v1) data source.
 
-* `type_id` - (Required) The datastore type for the datastore.
-  Changing this creates a new datastore.
+* `node_count` - (Required) Number of replicas in the datastore. Available values are `1` and `2`. Learn more about [Replication](https://docs.selectel.ru/cloud/managed-databases/about/about-managed-databases/#отказоустойчивость-и-репликация).
 
-* `node_count` - (Required) Number of nodes to create for the datastore.
+* `flavor_id` - (Required) Unique identifier of the flavor for the datastore. Retrieved from the [selectel_dbaas_flavors_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_flavor_v1) data source.
 
-* `flavor_id` - (Required) Flavor identifier for the datastore.
+* `firewall` - (Optional) List of IP-addresses with access to the datastore
 
-* `firewall` - (Optional) List of the ips to allow access from.
+* `restore` - (Optional) Restores parameters for the datastore. Changing this creates a new datastore.
 
-* `restore` - (Optional) Restore parameters for the datastore. It's a complex value. See description below.
-  Changing this creates a new datastore.
+  * `datastore_id` - (Optional) Unique identifier of the datastore from which you restore. To get the datastore ID, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases** ⟶ copy the ID under the cluster name.
+  
+  * `target_time` - (Optional) Time within seven previous days when you have the datastore state to restore.
 
-* `config` - (Optional) Configuration parameters for the datastore.
+* `config` - (Optional) Configuration parameters for the datastore. You can retrieve information about available configuration parameters with the [selectel_dbaas_configuration_parameter_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_configuration_parameter_v1) data source.
 
-* `backup_retention_days` - (Optional) Number of days to retain backups.
-
-* `redis_password` - (Required) Password for the Redis datastore
-
-**restore**
-
-- `datastore_id` - (Optional) - Datastore ID to restore from.
-- `target_time` - (Optional) - Restore by the target time.
+* `redis_password` - (Required, Sensitive) Datastore password.
 
 ## Attributes Reference
 
-The following attributes are exported:
+* `status` - Datastore status.
 
-* `status` - Shows the current status of the datastore.
-
-* `connections` - Shows DNS connection strings for the datastore.
+* `connections` - DNS addresses to connect to the datastore.
 
 ## Import
 
-Datastore can be imported using the `id`, e.g.
+You can import a datastore:
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID SEL_REGION=SELECTEL_VPC_REGION terraform import selectel_dbaas_datastore_v1.datastore_1 b311ce58-2658-46b5-b733-7a0f418703f2
+terraform import selectel_dbaas_redis_datastore_v1.datastore_1 <datastore_id>
 ```
+
+where `<datastore_id>` is a unique identifier of the datastore, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the datastore ID, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases** ⟶ copy the ID under the cluster name.
+
+### Environment Variables
+
+For import, you must set environment variables:
+
+* `SEL_TOKEN=<selectel_api_token>`
+
+* `SEL_PROJECT_ID=<selectel_project_id>`
+
+* `SEL_REGION=<selectel_pool>`
+
+where:
+
+* `<selectel_api_token>` — Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶   **API keys**  ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
+
+* `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶  copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
+
+* `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases**. The pool is in the **Pool** column.

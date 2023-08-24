@@ -3,49 +3,36 @@ layout: "selectel"
 page_title: "Selectel: selectel_mks_feature_gates_v1"
 sidebar_current: "docs-selectel-datasource-mks-feature-gates-v1"
 description: |-
-  Get information on Selectel MKS available feature gates.
+  Provides a list of feature gates available in Selectel Managed Kubernetes.
 ---
 
 # selectel\_mks\_feature_gates_v1
 
-Use this data source to get available feature-gates within Selectel MKS API Service.
+Provides a list of available feature gates. For more information about feature gates in Managed Kubernetes, see the [official Selectel documentation](https://docs.selectel.ru/cloud/managed-kubernetes/clusters/feature-gates/).
 
 ## Example Usage
 
 ```hcl
-resource "selectel_vpc_project_v2" "project_1" {
-}
-
 data "selectel_mks_feature_gates_v1" "fg" {
-  project_id = "${selectel_vpc_project_v2.project_1.id}"
+  project_id = selectel_vpc_project_v2.project_1.id
   region = "ru-3"
-  filter {
-    kube_version = "1.22.2"
-  }
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
-* `project_id` - (Required) An associated Selectel VPC project.
+* `region` - (Required) Pool where the cluster is located, for example, `ru-3`.
 
-* `region` - (Required) A Selectel VPC region.
+* `filter` - (Optional) Values to filter available feature gates:
 
-* `filter` - (Optional) One or more values used to look up available feature gates.
-
-**filter**
-
-- `kube_version` - (Optional) Kubernetes version to look up the available feature gates.
+  * `kube_version` - (Optional) Kubernetes version for which you get available feature gates.
 
 ## Attributes Reference
 
-The following attributes are exported:
+* `feature_gates` - List of available feature gates.
 
-* `feature_gates` - Contains a list of the found available feature gates.
+  * `kube_version` - Kubernetes version.
 
-**feature_gates**
-
-- `kube_version` - Kubernetes version.
-- `names` - Names of the feature gates available for the specified version.
+  * `names` - Names of the feature gates available for the specified version.

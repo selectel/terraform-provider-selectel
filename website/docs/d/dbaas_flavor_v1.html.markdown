@@ -3,59 +3,52 @@ layout: "selectel"
 page_title: "Selectel: selectel_dbaas_flavor_v1"
 sidebar_current: "docs-selectel-datasource-dbaas-flavor-v1"
 description: |-
-  Get information on Selectel DBaaS flavors.
+  Provides a list of flavors available in Selectel Managed Databases.
 ---
 
 # selectel\_dbaas\_flavors_v1
 
-Use this data source to get all available flavors within Selectel DBaaS API Service
+Provides a list of flavors available in Managed Databases. For more information about available configurations, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/configurations/), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/configurations-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/configurations/), [MySQL semi-sync](https://docs.selectel.ru/cloud/managed-databases/mysql-semi-sync/configurations/), [MySQL sync](https://docs.selectel.ru/cloud/managed-databases/mysql-sync/configurations/), and [Redis](https://docs.selectel.ru/cloud/managed-databases/redis/configurations/).
 
 ## Example Usage
 
 ```hcl
-resource "selectel_vpc_project_v2" "project_1" {
-}
-
 data "selectel_dbaas_flavor_v1" "flavor" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  filter {
-    vcpus = 2
-    ram = 4096
-    disk = 10
-  }
+  project_id = selectel_vpc_project_v2.project_1.id
+  region     = "ru-3"
 }
 ```
 
 ## Argument Reference
 
-The folowing arguments are supported
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
-* `project_id` - (Required) An associated Selectel VPC project.
+* `region` - (Required) Pool where the database is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#облачные-базы-данных).
 
-* `region` - (Required) A Selectel VPC region.
+* `filter` - (Optional) Values to filter available flavors:
 
-* `filter` - (Optional) One or more values used to look up flavors.
+  * `vcpus` - (Optional) Number of vCPU cores.
 
-**filter**
+  * `ram` - (Optional) Amount of RAM in MB.
 
-- `vcpus` - (Optional) vCPU of the flavor to lookup.
-- `ram` - (Optional) RAM of the flavor to lookup.
-- `disk` - (Optional) Disk of the flavor to lookup.
-- `datastore_type_id` - (Optional) Datastore type ID of the flavor to lookup.
+  * `disk` - (Optional) Volume size in GB.
+
+  * `datastore_type_id` - (Optional)  Unique identifier of the datastore type.
 
 ## Attributes Reference
 
-The following attributes are exported:
+* `flavors` - List of available flavors.
 
-* `flavors` - Contains a list of the found flavors.
+  * `id` - Unique identifier of the flavor.
 
-**flavors**
+  * `name` - Flavor name.
 
-- `id` - ID of the flavor.
-- `name` - Name of the flavor.
-- `description` - Description of the flavor.
-- `vcpus` - CPU count for the flavor.
-- `ram` - RAM count for the flavor.
-- `disk` - Disk size for the flavor.
-- `datastore_type_ids` - List of datastore types that support this flavor.
+  * `description` - Flavor description.
+
+  * `vcpus` - Number of vCPU cores.
+
+  * `ram` - Amount of RAM in MB.
+
+  * `disk` - Volume size in GB.
+
+  * `datastore_type_ids` - List of datastore types that support this flavor.
