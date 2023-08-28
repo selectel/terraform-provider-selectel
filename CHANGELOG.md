@@ -3,6 +3,8 @@
 IMPROVEMENTS:
 
 * Added backup retention days parameter to DBaaS datastore resources ([#231](https://github.com/selectel/terraform-provider-selectel/pull/231))
+* Enforced password strength constraint for the `selectel_vpc_user_v2` resource ([#209](https://github.com/selectel/terraform-provider-selectel/pull/209))
+* Updated the provider documentation ([#237](https://github.com/selectel/terraform-provider-selectel/pull/237))
 
 ## 3.11.0 (June 30, 2023)
 
