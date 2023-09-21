@@ -36,7 +36,15 @@ resource "selectel_craas_registry_v1" "registry_1" {
 You can import a registry:
 
 ```shell
+<<<<<<< HEAD
 terraform import selectel_craas_registry_v1.registry_1 <registry_id>
+=======
+$ export OS_DOMAIN_NAME=999999
+$ export OS_USERNAME=example_user
+$ export OS_PASSWORD=example_password
+$ export SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID
+$ terraform import selectel_craas_registry_v1.registry_1 939506d6-7621-4581-b673-eacf3db30f5b
+>>>>>>> ceb748d (Move domains resources to keystone auth)
 ```
 
 where `<registry_id>` is a unique identifier of the registry, for example, `939506d6-7621-4581-b673-eacf3db30f5b`. To get the registry ID, use [Selectel Cloud Management API](https://developers.selectel.ru/docs/selectel-cloud-platform/craas_api/).

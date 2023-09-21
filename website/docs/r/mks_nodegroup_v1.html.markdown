@@ -94,7 +94,13 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 You can import a node group:
 
 ```shell
-terraform import selectel_mks_nodegroup_v1.nodegroup_1 <cluster_id>/<nodegroup_id>
+
+$ export OS_DOMAIN_NAME=999999
+$ export OS_USERNAME=example_user
+$ export OS_PASSWORD=example_password
+$ export SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID
+$ export SEL_REGION=SELECTEL_VPC_REGION
+$ terraform import selectel_mks_nodegroup_v1.nodegroup_1 <cluster_id>/<nodegroup_id>
 ```
 
 where:

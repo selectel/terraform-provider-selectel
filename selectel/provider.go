@@ -47,12 +47,6 @@ var selMutexKV = mutexkv.NewMutexKV()
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"token": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("SEL_TOKEN", nil),
-				Description: "Token to authorize with the Selectel API. You need set it if you want work with DNS objects",
-			},
 			"project_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -87,7 +81,7 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("OS_USER_DOMAIN_NAME", nil),
-				Description: "Used for service accounts in other domain. If you don't know exactly what this field miens then don't use it",
+				Description: "Used for service accounts in other domain. If you don't know exactly what this field means then don't use it",
 			},
 			"password": {
 				Type:        schema.TypeString,

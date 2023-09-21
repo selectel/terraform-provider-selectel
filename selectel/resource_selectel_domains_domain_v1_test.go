@@ -54,17 +54,20 @@ func testAccCheckDomainsDomainV1Exists(n string, selectelDomain *domain.View) re
 			return errors.New("no ID is set")
 		}
 
-		config := testAccProvider.Meta().(*Config)
-		ctx := context.Background()
+		meta := testAccProvider.Meta()
+		client, err := getDomainsClient(meta)
+		if err != nil {
+			return err
+		}
 
-		domainsClientV1 := config.domainsV1Client()
+		ctx := context.Background()
 
 		domainID, err := strconv.Atoi(rs.Primary.ID)
 		if err != nil {
 			return errParseDomainsDomainV1ID(rs.Primary.ID)
 		}
 
-		foundDomain, _, err := domain.GetByID(ctx, domainsClientV1, domainID)
+		foundDomain, _, err := domain.GetByID(ctx, client, domainID)
 		if err != nil {
 			return err
 		}
@@ -76,8 +79,12 @@ func testAccCheckDomainsDomainV1Exists(n string, selectelDomain *domain.View) re
 }
 
 func testAccCheckDomainsV1DomainDestroy(s *terraform.State) error {
-	config := testAccProvider.Meta().(*Config)
-	domainsClientV1 := config.domainsV1Client()
+	meta := testAccProvider.Meta()
+	client, err := getDomainsClient(meta)
+	if err != nil {
+		return err
+	}
+
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
@@ -90,7 +97,7 @@ func testAccCheckDomainsV1DomainDestroy(s *terraform.State) error {
 			return errParseDomainsDomainV1ID(rs.Primary.ID)
 		}
 
-		_, _, err = domain.GetByID(ctx, domainsClientV1, domainID)
+		_, _, err = domain.GetByID(ctx, client, domainID)
 		if err == nil {
 			return errors.New("domain still exists")
 		}

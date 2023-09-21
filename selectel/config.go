@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	domainsV1 "github.com/selectel/domains-go/pkg/v1"
 	"github.com/selectel/go-selvpcclient/v3/selvpcclient"
 )
 
@@ -19,7 +17,6 @@ var (
 
 // Config contains all available configuration options.
 type Config struct {
-	Token     string
 	Region    string
 	ProjectID string
 
@@ -41,9 +38,6 @@ func getConfig(d *schema.ResourceData) (*Config, diag.Diagnostics) {
 			Username:   d.Get("username").(string),
 			Password:   d.Get("password").(string),
 			DomainName: d.Get("domain_name").(string),
-		}
-		if v, ok := d.GetOk("token"); ok {
-			cfgSingletone.Token = v.(string)
 		}
 		if v, ok := d.GetOk("auth_url"); ok {
 			cfgSingletone.AuthURL = v.(string)
@@ -100,16 +94,4 @@ func (c *Config) GetSelVPCClientWithProjectScope(projectID string) (*selvpcclien
 	c.clientsCache[clientsCacheKey] = client
 
 	return client, nil
-}
-
-func (c *Config) domainsV1Client() *domainsV1.ServiceClient {
-	domainsClient := domainsV1.NewDomainsClientV1WithDefaultEndpoint(c.Token)
-	retryClient := retryablehttp.NewClient()
-	retryClient.Logger = nil // Ignore retyablehttp client logs
-	retryClient.RetryWaitMin = domainsV1DefaultRetryWaitMin
-	retryClient.RetryWaitMax = domainsV1DefaultRetryWaitMax
-	retryClient.RetryMax = domainsV1DefaultRetry
-	domainsClient.HTTPClient = retryClient.StandardClient()
-
-	return domainsClient
 }

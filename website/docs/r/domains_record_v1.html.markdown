@@ -205,7 +205,12 @@ resource "selectel_domains_record_v1" "caa_record_1" {
 You can import a domain record:
 
 ```shell
-terraform import selectel_domains_record_v1.record_1 <domain_id>/<record_id>
+$ export OS_DOMAIN_NAME=999999
+$ export OS_USERNAME=example_user
+$ export OS_PASSWORD=example_password
+$ export SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID
+$ export SEL_REGION=SELECTEL_VPC_REGION
+$ terraform import selectel_domains_record_v1.record_1 <domain_id>/<record_id>
 ```
 
 where:

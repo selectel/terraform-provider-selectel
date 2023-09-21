@@ -32,8 +32,16 @@ func TestProvider(t *testing.T) {
 }
 
 func testAccSelectelPreCheck(t *testing.T) {
-	if v := os.Getenv("SEL_TOKEN"); v == "" {
-		t.Fatal("SEL_TOKEN must be set for acceptance tests")
+	if v := os.Getenv("OS_DOMAIN_NAME"); v == "" {
+		t.Fatal("OS_DOMAIN_NAME must be set for acceptance tests")
+	}
+
+	if v := os.Getenv("OS_USERNAME"); v == "" {
+		t.Fatal("OS_USERNAME must be set for acceptance tests")
+	}
+
+	if v := os.Getenv("OS_PASSWORD"); v == "" {
+		t.Fatal("OS_PASSWORD must be set for acceptance tests")
 	}
 }
 

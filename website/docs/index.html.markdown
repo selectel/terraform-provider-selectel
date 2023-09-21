@@ -53,9 +53,6 @@ Reference to OpenStack-like `OS_USER_DOMAIN_NAME` environment variable.
 If omitted, the provider will use default endpoint automatically.
 Reference to OpenStack-like `OS_AUTH_URL` environment variable.
 
-* `token` - (Optional) The Selectel API key token. If omitted, the `SEL_TOKEN`
-  environment variable is used. Now used only for DNS-API.
-
 * `project_id` - (Optional) The Selectel VPC project. Used only to import
   resources that need an auth token in the project scope. If omitted,
   the `SEL_PROJECT_ID` environment variable is used.
@@ -83,6 +80,8 @@ provider "selectel" {
 
 * `region` - (Optional) Pool, for example, `ru-3`. Use only to import resources from the specific pool. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/). If skipped, use the `SEL_REGION` environment variable.
 
+In order to run the Acceptance Tests for development you need to set
+auth credentials environment variables:
 
 ```shell
 $ export OS_DOMAIN_NAME=999999
