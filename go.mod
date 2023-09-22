@@ -9,7 +9,7 @@ require (
 	github.com/selectel/craas-go v0.3.0
 	github.com/selectel/dbaas-go v0.9.0
 	github.com/selectel/domains-go v0.5.0
-	github.com/selectel/go-selvpcclient/v3 v3.0.2
+	github.com/selectel/go-selvpcclient/v3 v3.0.3
 	github.com/selectel/mks-go v0.12.0
 	github.com/stretchr/testify v1.7.2
 )
