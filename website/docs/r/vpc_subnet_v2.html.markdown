@@ -54,7 +54,14 @@ resource "selectel_vpc_subnet_v2" "subnet_1" {
 You can import a public subnet:
 
 ```shell
+<<<<<<< HEAD
 terraform import selectel_vpc_subnet_v2.subnet_1 <public_subnet_id>
+=======
+$ export OS_DOMAIN_NAME=999999
+$ export OS_USERNAME=example_user
+$ export OS_PASSWORD=example_password
+$ terraform import selectel_vpc_subnet_v2.subnet_1 <public_subnet_id>
+>>>>>>> upstream/master
 ```
 
 where `<public_subnet_id>` is a unique identifier of the public subnet, for example, `2060`. To get the public subnet ID, use [Selectel Cloud Management API](https://developers.selectel.ru/docs/selectel-cloud-platform/main-services/selectel_cloud_management_api/).

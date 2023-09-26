@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/mks-go/pkg/v1/kubeoptions"
 )
 
@@ -21,15 +20,6 @@ func dataSourceMKSFeatureGatesV1() *schema.Resource {
 			"region": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					ru1Region,
-					ru2Region,
-					ru3Region,
-					ru7Region,
-					ru8Region,
-					ru9Region,
-					uz1Region,
-				}, false),
 			},
 			"filter": {
 				Type:     schema.TypeSet,
@@ -68,7 +58,7 @@ func dataSourceMKSFeatureGatesV1() *schema.Resource {
 }
 
 func dataSourceMKSFeatureGateV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	mksClient, diagErr := getMKSClient(ctx, d, meta)
+	mksClient, diagErr := getMKSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -149,15 +139,6 @@ func dataSourceMKSAdmissionControllersV1() *schema.Resource {
 			"region": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					ru1Region,
-					ru2Region,
-					ru3Region,
-					ru7Region,
-					ru8Region,
-					ru9Region,
-					uz1Region,
-				}, false),
 			},
 			"filter": {
 				Type:     schema.TypeSet,
@@ -196,7 +177,7 @@ func dataSourceMKSAdmissionControllersV1() *schema.Resource {
 }
 
 func dataSourceMKSAdmissionControllersV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	mksClient, diagErr := getMKSClient(ctx, d, meta)
+	mksClient, diagErr := getMKSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}

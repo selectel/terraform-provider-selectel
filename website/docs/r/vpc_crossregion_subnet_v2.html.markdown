@@ -69,5 +69,8 @@ The following attributes are exported:
 Cross-region subnets can be imported using the `id`, e.g.
 
 ```shell
-$ env SEL_TOKEN=SELECTEL_API_TOKEN terraform import selectel_vpc_crossregion_subnet_v2.crossregion_subnet_1 2060
+$ export OS_DOMAIN_NAME=999999
+$ export OS_USERNAME=example_user
+$ export OS_PASSWORD=example_password
+$ terraform import selectel_vpc_crossregion_subnet_v2.crossregion_subnet_1 2060
 ```

@@ -1,23 +1,41 @@
 package selectel
 
 import (
-	"testing"
+	"context"
+	"fmt"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/selectel/dbaas-go"
 )
 
-func TestGetDBaaSDatastoreV1Endpoint(t *testing.T) {
-	expectedEndpoints := map[string]string{
-		ru1Region: ru1DBaaSV1Endpoint,
-		ru2Region: ru2DBaaSV1Endpoint,
-		ru3Region: ru3DBaaSV1Endpoint,
-		ru7Region: ru7DBaaSV1Endpoint,
-		ru8Region: ru8DBaaSV1Endpoint,
-		ru9Region: ru9DBaaSV1Endpoint,
+func newTestDBaaSClient(_ context.Context, rs *terraform.ResourceState, testAccProvider *schema.Provider) (*dbaas.API, error) {
+	config := testAccProvider.Meta().(*Config)
+
+	var projectID string
+	var endpoint string
+
+	if id, ok := rs.Primary.Attributes["project_id"]; ok {
+		projectID = id
 	}
 
-	for region, expected := range expectedEndpoints {
-		actual := getDBaaSV1Endpoint(region)
-		assert.Equal(t, expected, actual)
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return nil, fmt.Errorf("can't get selvpc client for dbaas acc tests: %w", err)
 	}
+
+	if region, ok := rs.Primary.Attributes["region"]; ok {
+		dbaasEndpoint, err := selvpcClient.Catalog.GetEndpoint(DBaaS, region)
+		if err != nil {
+			return nil, fmt.Errorf("can't get endpoint for dbaas acc tests: %w", err)
+		}
+		endpoint = dbaasEndpoint.URL
+	}
+
+	dbaasClient, err := dbaas.NewDBAASClient(selvpcClient.GetXAuthToken(), endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("can't get dbaas client for dbaas acc tests: %w", err)
+	}
+
+	return dbaasClient, nil
 }

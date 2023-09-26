@@ -11,8 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
 	"github.com/selectel/mks-go/pkg/v1/kubeoptions"
@@ -189,7 +188,7 @@ func testAccCheckMKSClusterV1DefaultKubeVersion(n string, kubeVersion *string) r
 			return errors.New("no ID is set")
 		}
 
-		mksClient, err := newTestMKSClient(rs.Primary.ID)
+		mksClient, err := newTestMKSClientWithParams(rs.Primary.ID, testRu3Region)
 		if err != nil {
 			return err
 		}
@@ -217,27 +216,13 @@ func testAccCheckMKSClusterV1Exists(n string, mksCluster *cluster.View) resource
 			return errors.New("no ID is set")
 		}
 
-		var projectID, endpoint string
-		if id, ok := rs.Primary.Attributes["project_id"]; ok {
-			projectID = id
-		}
-		if region, ok := rs.Primary.Attributes["region"]; ok {
-			endpoint = getMKSClusterV1Endpoint(region)
-		}
-
-		config := testAccProvider.Meta().(*Config)
-		resellV2Client := config.resellV2Client()
 		ctx := context.Background()
 
-		tokenOpts := tokens.TokenOpts{
-			ProjectID: projectID,
-		}
-		token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
+		mksClient, err := newTestMKSClient(rs, testAccProvider)
 		if err != nil {
-			return errCreatingObject(objectToken, err)
+			return err
 		}
 
-		mksClient := v1.NewMKSClientV1(token.ID, endpoint)
 		foundCluster, _, err := cluster.Get(ctx, mksClient, rs.Primary.ID)
 		if err != nil {
 			return err
@@ -374,7 +359,7 @@ func testAccCheckMKSClusterV1DefaultKubeVersionFeatureGates(n string, featureGat
 			return errors.New("no ID is set")
 		}
 
-		mksClient, err := newTestMKSClient(rs.Primary.ID)
+		mksClient, err := newTestMKSClientWithParams(rs.Primary.ID, testRu3Region)
 		if err != nil {
 			return err
 		}
@@ -437,7 +422,7 @@ func testAccCheckMKSClusterV1DefaultKubeVersionAdmissionControllers(n string, ad
 			return errors.New("no ID is set")
 		}
 
-		mksClient, err := newTestMKSClient(rs.Primary.ID)
+		mksClient, err := newTestMKSClientWithParams(rs.Primary.ID, testRu3Region)
 		if err != nil {
 			return err
 		}
@@ -467,21 +452,19 @@ func testAccCheckMKSClusterV1DefaultKubeVersionAdmissionControllers(n string, ad
 	}
 }
 
-func newTestMKSClient(projectID string) (*v1.ServiceClient, error) {
+func newTestMKSClientWithParams(projectID, region string) (*v1.ServiceClient, error) {
 	config := testAccProvider.Meta().(*Config)
-	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
 
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: projectID,
-	}
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
 	if err != nil {
-		return nil, errCreatingObject(objectToken, err)
+		return nil, fmt.Errorf("can't get selvpc client for mks acc tests: %w", err)
+	}
+	endpoint, err := selvpcClient.Catalog.GetEndpoint(MKS, region)
+	if err != nil {
+		return nil, fmt.Errorf("can't get endpoint for mks acc tests: %w", err)
 	}
 
-	endpoint := getMKSClusterV1Endpoint(ru3Region)
-	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
+	mksClient := v1.NewMKSClientV1(selvpcClient.GetXAuthToken(), endpoint.URL)
 
 	return mksClient, nil
 }

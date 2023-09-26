@@ -64,7 +64,16 @@ resource "selectel_dbaas_redis_datastore_v1" "datastore_1" {
 You can import a datastore:
 
 ```shell
+<<<<<<< HEAD
 terraform import selectel_dbaas_redis_datastore_v1.datastore_1 <datastore_id>
+=======
+$ export OS_DOMAIN_NAME=999999
+$ export OS_USERNAME=example_user
+$ export OS_PASSWORD=example_password
+$ export SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID
+$ export SEL_REGION=SELECTEL_VPC_REGION
+$ terraform import selectel_dbaas_redis_datastore_v1.datastore_1 <datastore_id>
+>>>>>>> upstream/master
 ```
 
 where `<datastore_id>` is a unique identifier of the datastore, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the datastore ID, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases** ⟶ copy the ID under the cluster name.
@@ -85,4 +94,8 @@ where:
 
 * `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶  copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
 
+<<<<<<< HEAD
 * `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases**. The pool is in the **Pool** column.
+=======
+* `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases**. The pool is in the **Pool** column.
+>>>>>>> upstream/master

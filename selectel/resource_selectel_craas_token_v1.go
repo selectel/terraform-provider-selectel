@@ -9,9 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	v1 "github.com/selectel/craas-go/pkg"
 	"github.com/selectel/craas-go/pkg/v1/token"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/hashcode"
 )
 
@@ -51,19 +49,11 @@ func resourceCRaaSTokenV1() *schema.Resource {
 }
 
 func resourceCRaaSTokenV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	selTokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
+	craasClient, diagErr := getCRaaSClient(d, meta)
+	if diagErr != nil {
+		return diagErr
 	}
 
-	log.Print(msgCreate(objectToken, selTokenOpts))
-	selToken, _, err := tokens.Create(ctx, resellV2Client, selTokenOpts)
-	if err != nil {
-		return diag.FromErr(errCreatingObject(objectToken, err))
-	}
-
-	craasClient := v1.NewCRaaSClientV1(selToken.ID, craasV1Endpoint)
 	tokenTTL := d.Get("token_ttl").(string)
 	createOpts := &token.CreateOpts{
 		TokenTTL: token.TTL(tokenTTL),
@@ -83,19 +73,10 @@ func resourceCRaaSTokenV1Create(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceCRaaSTokenV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	selTokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
+	craasClient, diagErr := getCRaaSClient(d, meta)
+	if diagErr != nil {
+		return diagErr
 	}
-
-	log.Print(msgCreate(objectToken, selTokenOpts))
-	selToken, _, err := tokens.Create(ctx, resellV2Client, selTokenOpts)
-	if err != nil {
-		return diag.FromErr(errCreatingObject(objectToken, err))
-	}
-
-	craasClient := v1.NewCRaaSClientV1(selToken.ID, craasV1Endpoint)
 
 	log.Print(msgGet(objectRegistryToken, d.Id()))
 	craasToken, response, err := token.Get(ctx, craasClient, d.Get("token").(string))
@@ -117,22 +98,13 @@ func resourceCRaaSTokenV1Read(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceCRaaSTokenV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	selTokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
+	craasClient, diagErr := getCRaaSClient(d, meta)
+	if diagErr != nil {
+		return diagErr
 	}
-
-	log.Print(msgCreate(objectToken, selTokenOpts))
-	selToken, _, err := tokens.Create(ctx, resellV2Client, selTokenOpts)
-	if err != nil {
-		return diag.FromErr(errCreatingObject(objectToken, err))
-	}
-
-	craasClient := v1.NewCRaaSClientV1(selToken.ID, craasV1Endpoint)
 
 	log.Print(msgDelete(objectRegistryToken, d.Id()))
-	_, err = token.Revoke(ctx, craasClient, d.Get("token").(string))
+	_, err := token.Revoke(ctx, craasClient, d.Get("token").(string))
 	if err != nil {
 		return diag.FromErr(errDeletingObject(objectRegistryToken, d.Id(), err))
 	}

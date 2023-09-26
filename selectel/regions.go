@@ -4,17 +4,8 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/hashcode"
-)
-
-const (
-	ru1Region = "ru-1"
-	ru2Region = "ru-2"
-	ru3Region = "ru-3"
-	ru7Region = "ru-7"
-	ru8Region = "ru-8"
-	ru9Region = "ru-9"
-	uz1Region = "uz-1"
 )
 
 func expandVPCV2Regions(rawRegions *schema.Set) []string {
@@ -35,21 +26,20 @@ func hashRegions(v interface{}) int {
 	return hashcode.String(fmt.Sprintf("%s-", m["region"].(string)))
 }
 
-func validateRegion(region string) error {
-	valid := map[string]struct{}{
-		ru1Region: {},
-		ru2Region: {},
-		ru3Region: {},
-		ru7Region: {},
-		ru8Region: {},
-		ru9Region: {},
-		uz1Region: {},
+func validateRegion(selvpcClient *selvpcclient.Client, serviceType string, region string) error {
+	endpoints, err := selvpcClient.Catalog.GetEndpoints(serviceType)
+	if err != nil {
+		return fmt.Errorf("can't get endpoints for %s to validate region: %w", serviceType, err)
 	}
 
-	_, isValid := valid[region]
-	if !isValid {
-		return fmt.Errorf("region is invalid: %s", region)
+	endpointRegions := make([]string, 0)
+
+	for _, endpoint := range endpoints {
+		if endpoint.Region == region {
+			return nil
+		}
+		endpointRegions = append(endpointRegions, endpoint.RegionID)
 	}
 
-	return nil
+	return fmt.Errorf("region value must contain one of the values: %+q", endpointRegions)
 }

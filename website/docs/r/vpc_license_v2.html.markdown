@@ -51,7 +51,14 @@ resource "selectel_vpc_license_v2" "license_windows_2016_standard" {
 You can import a license:
 
 ```shell
+<<<<<<< HEAD
 terraform import selectel_vpc_license_v2.license_1 <license_id>
+=======
+$ export OS_DOMAIN_NAME=999999
+$ export OS_USERNAME=example_user
+$ export OS_PASSWORD=example_password
+$ terraform import selectel_vpc_license_v2.license_1 <license_id>
+>>>>>>> upstream/master
 ```
 
 where `<license_id>` is a unique identifier of the license, for example, `4123`. To get the license ID, use [Selectel Cloud Management API](https://developers.selectel.ru/docs/selectel-cloud-platform/main-services/selectel_cloud_management_api/).

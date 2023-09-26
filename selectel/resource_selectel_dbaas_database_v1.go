@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/dbaas-go"
 )
 
@@ -45,15 +44,6 @@ func resourceDBaaSDatabaseV1() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					ru1Region,
-					ru2Region,
-					ru3Region,
-					ru7Region,
-					ru8Region,
-					ru9Region,
-					uz1Region,
-				}, false),
 			},
 			"datastore_id": {
 				Type:     schema.TypeString,
@@ -91,7 +81,7 @@ func resourceDBaaSDatabaseV1Create(ctx context.Context, d *schema.ResourceData, 
 	selMutexKV.Lock(datastoreID)
 	defer selMutexKV.Unlock(datastoreID)
 
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -123,7 +113,7 @@ func resourceDBaaSDatabaseV1Create(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceDBaaSDatabaseV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -155,7 +145,7 @@ func resourceDBaaSDatabaseV1Update(ctx context.Context, d *schema.ResourceData, 
 	selMutexKV.Lock(datastoreID)
 	defer selMutexKV.Unlock(datastoreID)
 
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -200,7 +190,7 @@ func resourceDBaaSDatabaseV1Delete(ctx context.Context, d *schema.ResourceData, 
 		defer selMutexKV.Unlock(ownerID)
 	}
 
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}

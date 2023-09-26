@@ -2,13 +2,15 @@ package selectel
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/licenses"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/clients"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/licenses"
 )
 
 func resourceVPCLicenseV2() *schema.Resource {
@@ -17,7 +19,7 @@ func resourceVPCLicenseV2() *schema.Resource {
 		ReadContext:   resourceVPCLicenseV2Read,
 		DeleteContext: resourceVPCLicenseV2Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceVPCLicenseV2ImportState,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_id": {
@@ -78,10 +80,18 @@ func resourceVPCLicenseV2() *schema.Resource {
 
 func resourceVPCLicenseV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-
 	projectID := d.Get("project_id").(string)
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for license: %w", err))
+	}
+
 	region := d.Get("region").(string)
+	err = validateRegion(selvpcClient, clients.ResellServiceType, region)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't validate region: %w", err))
+	}
+
 	licenseType := d.Get("type").(string)
 	opts := licenses.LicenseOpts{
 		Licenses: []licenses.LicenseOpt{
@@ -94,7 +104,7 @@ func resourceVPCLicenseV2Create(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	log.Print(msgCreate(objectLicense, opts))
-	newLicenses, _, err := licenses.Create(ctx, resellV2Client, projectID, opts)
+	newLicenses, _, err := licenses.Create(selvpcClient, projectID, opts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectLicense, err))
 	}
@@ -108,12 +118,16 @@ func resourceVPCLicenseV2Create(ctx context.Context, d *schema.ResourceData, met
 	return resourceVPCLicenseV2Read(ctx, d, meta)
 }
 
-func resourceVPCLicenseV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCLicenseV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	projectID := d.Get("project_id").(string)
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for license: %w", err))
+	}
 
 	log.Print(msgGet(objectLicense, d.Id()))
-	license, response, err := licenses.Get(ctx, resellV2Client, d.Id())
+	license, response, err := licenses.Get(selvpcClient, d.Id())
 	if err != nil {
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
@@ -140,12 +154,16 @@ func resourceVPCLicenseV2Read(ctx context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
-func resourceVPCLicenseV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCLicenseV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
+	projectID := d.Get("project_id").(string)
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for license: %w", err))
+	}
 
 	log.Print(msgDelete(objectLicense, d.Id()))
-	response, err := licenses.Delete(ctx, resellV2Client, d.Id())
+	response, err := licenses.Delete(selvpcClient, d.Id())
 	if err != nil {
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
@@ -158,4 +176,15 @@ func resourceVPCLicenseV2Delete(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	return nil
+}
+
+func resourceVPCLicenseV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	config := meta.(*Config)
+	if config.ProjectID == "" {
+		return nil, fmt.Errorf("SEL_PROJECT_ID must be set for the resource import")
+	}
+
+	d.Set("project_id", config.ProjectID)
+
+	return []*schema.ResourceData{d}, nil
 }

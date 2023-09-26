@@ -25,7 +25,9 @@ terraform {
 }
 
 # Create a Cloud Platform project
+# Create a Cloud Platform project
 resource "selectel_vpc_project_v2" "project_1" {
+  ...
   ...
 }
 ```

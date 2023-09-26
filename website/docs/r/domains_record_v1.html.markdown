@@ -205,7 +205,16 @@ resource "selectel_domains_record_v1" "caa_record_1" {
 You can import a domain record:
 
 ```shell
+<<<<<<< HEAD
 terraform import selectel_domains_record_v1.record_1 <domain_id>/<record_id>
+=======
+$ export OS_DOMAIN_NAME=999999
+$ export OS_USERNAME=example_user
+$ export OS_PASSWORD=example_password
+$ export SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID
+$ export SEL_REGION=SELECTEL_VPC_REGION
+$ terraform import selectel_domains_record_v1.record_1 <domain_id>/<record_id>
+>>>>>>> upstream/master
 ```
 
 where:
@@ -218,4 +227,8 @@ where:
 
 For import, you must set the environment variable `SEL_TOKEN=<selectel_api_token>`,
 
+<<<<<<< HEAD
 where `<selectel_api_token>` is a Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶ **API keys** ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
+=======
+where `<selectel_api_token>` is a Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶ **API keys** ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
+>>>>>>> upstream/master

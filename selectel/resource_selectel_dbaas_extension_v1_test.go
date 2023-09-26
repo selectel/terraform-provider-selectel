@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/dbaas-go"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
 )
 
 func TestAccDBaaSExtensionV1Basic(t *testing.T) {
@@ -56,7 +56,7 @@ func testAccCheckDBaaSExtensionV1Exists(n string, dbaasExtension *dbaas.Extensio
 
 		ctx := context.Background()
 
-		dbaasClient, err := baseTestAccCheckDBaaSV1EntityExists(ctx, rs, testAccProvider)
+		dbaasClient, err := newTestDBaaSClient(ctx, rs, testAccProvider)
 		if err != nil {
 			return err
 		}

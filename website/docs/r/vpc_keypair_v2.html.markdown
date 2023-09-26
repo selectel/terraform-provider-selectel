@@ -37,7 +37,14 @@ resource "selectel_vpc_keypair_v2" "keypair_1" {
 You can import a SSH key pair:
 
 ```shell
+<<<<<<< HEAD
 terraform import selectel_vpc_keypair_v2.keypair_1 <user_id>/<keypair_name>
+=======
+$ export OS_DOMAIN_NAME=999999
+$ export OS_USERNAME=example_user
+$ export OS_PASSWORD=example_password
+$ terraform import selectel_vpc_keypair_v2.keypair_1 <user_id>/<keypair_name>
+>>>>>>> upstream/master
 ```
 
 where:

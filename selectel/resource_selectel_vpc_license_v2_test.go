@@ -1,7 +1,6 @@
 package selectel
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -10,8 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/licenses"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/licenses"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
 )
 
 func TestAccVPCV2LicenseBasic(t *testing.T) {
@@ -45,15 +44,17 @@ func TestAccVPCV2LicenseBasic(t *testing.T) {
 
 func testAccCheckVPCV2LicenseDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
-	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return fmt.Errorf("can't get selvpc client for test license object: %w", err)
+	}
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "selectel_vpc_license_v2" {
 			continue
 		}
 
-		_, _, err := licenses.Get(ctx, resellV2Client, rs.Primary.ID)
+		_, _, err := licenses.Get(selvpcClient, rs.Primary.ID)
 		if err == nil {
 			return errors.New("license still exists")
 		}
@@ -74,10 +75,12 @@ func testAccCheckVPCV2LicenseExists(n string, license *licenses.License) resourc
 		}
 
 		config := testAccProvider.Meta().(*Config)
-		resellV2Client := config.resellV2Client()
-		ctx := context.Background()
+		selvpcClient, err := config.GetSelVPCClient()
+		if err != nil {
+			return fmt.Errorf("can't get selvpc client for test license object: %w", err)
+		}
 
-		foundLicense, _, err := licenses.Get(ctx, resellV2Client, rs.Primary.ID)
+		foundLicense, _, err := licenses.Get(selvpcClient, rs.Primary.ID)
 		if err != nil {
 			return err
 		}

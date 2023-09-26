@@ -33,7 +33,14 @@ resource "selectel_domains_domain_v1" "domain_1" {
 You can import a domain:
 
 ```shell
+<<<<<<< HEAD
 terraform import selectel_domains_domain_v1.domain_1 <domain_id>
+=======
+$ export OS_DOMAIN_NAME=999999
+$ export OS_USERNAME=example_user
+$ export OS_PASSWORD=example_password
+$ terraform import selectel_domains_domain_v1.domain_1 <domain_id>
+>>>>>>> upstream/master
 ```
 
 where `<domain_id>` is a unique identifier of the domain, for example, `45623`. To get the domain ID, in the [Control panel](https://my.selectel.ru/network/domains/), go to **Networks Services** ⟶ **DNS Hosting** ⟶ the domain page ⟶ copy the domain ID from the address bar.
@@ -42,4 +49,8 @@ where `<domain_id>` is a unique identifier of the domain, for example, `45623`. 
 
 For import, you must set the environment variable `SEL_TOKEN=<selectel_api_token>`,
 
+<<<<<<< HEAD
 where `<selectel_api_token>` is a Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶ **API keys** ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
+=======
+where `<selectel_api_token>` is a Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶ **API keys** ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
+>>>>>>> upstream/master

@@ -131,8 +131,10 @@ func resourceDomainsRecordV1Create(ctx context.Context, d *schema.ResourceData, 
 	selMutexKV.Lock(strconv.Itoa(domainID))
 	defer selMutexKV.Unlock(strconv.Itoa(domainID))
 
-	config := meta.(*Config)
-	client := config.domainsV1Client()
+	client, err := getDomainsClient(meta)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	createOpts := &record.CreateOpts{
 		Name:            d.Get("name").(string),
@@ -169,8 +171,10 @@ func resourceDomainsRecordV1Create(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceDomainsRecordV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	client := config.domainsV1Client()
+	client, err := getDomainsClient(meta)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	domainID, recordID, err := domainsV1ParseDomainRecordIDsPair(d.Id())
 	if err != nil {
@@ -218,8 +222,10 @@ func resourceDomainsRecordV1Update(ctx context.Context, d *schema.ResourceData, 
 	selMutexKV.Lock(strconv.Itoa(domainID))
 	defer selMutexKV.Unlock(strconv.Itoa(domainID))
 
-	config := meta.(*Config)
-	client := config.domainsV1Client()
+	client, err := getDomainsClient(meta)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	if d.HasChanges("name", "content", "email", "ttl", "priority", "weight", "port", "target", "tag", "flag", "value", "algorithm", "fingerprint_type", "fingerprint") {
 		updateOpts := &record.UpdateOpts{
@@ -257,8 +263,10 @@ func resourceDomainsRecordV1Delete(ctx context.Context, d *schema.ResourceData, 
 	selMutexKV.Lock(strconv.Itoa(domainID))
 	defer selMutexKV.Unlock(strconv.Itoa(domainID))
 
-	config := meta.(*Config)
-	client := config.domainsV1Client()
+	client, err := getDomainsClient(meta)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	log.Print(msgDelete(objectRecord, d.Id()))
 

@@ -47,18 +47,6 @@ var selMutexKV = mutexkv.NewMutexKV()
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"token": {
-				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("SEL_TOKEN", nil),
-				Description: "Token to authorize with the Selectel API.",
-			},
-			"endpoint": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("SEL_ENDPOINT", nil),
-				Description: "Base endpoint to work with the Selectel API.",
-			},
 			"project_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -70,6 +58,36 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SEL_REGION", nil),
 				Description: "VPC region to import resources associated with the specific region.",
+			},
+			"auth_url": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("OS_AUTH_URL", nil),
+				Description: "Base url to work with auth API (Keystone URL). https://api.selvpc.ru/identity/v3/ used by default",
+			},
+			"domain_name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("OS_DOMAIN_NAME", nil),
+				Description: "Your domain name i.e. your account id",
+			},
+			"username": {
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("OS_USERNAME", nil),
+				Description: "Service user username",
+			},
+			"user_domain_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("OS_USER_DOMAIN_NAME", nil),
+				Description: "Used for service accounts in other domain. If you don't know exactly what this field means then don't use it",
+			},
+			"password": {
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("OS_PASSWORD", nil),
+				Description: "Service user password",
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -91,7 +109,7 @@ func Provider() *schema.Provider {
 			"selectel_vpc_project_v2":                               resourceVPCProjectV2(),
 			"selectel_vpc_role_v2":                                  resourceVPCRoleV2(),
 			"selectel_vpc_subnet_v2":                                resourceVPCSubnetV2(),
-			"selectel_vpc_token_v2":                                 resourceVPCTokenV2(),
+			"selectel_vpc_token_v2":                                 resourceVPCTokenV2(), // DEPRECATED
 			"selectel_vpc_user_v2":                                  resourceVPCUserV2(),
 			"selectel_vpc_vrrp_subnet_v2":                           resourceVPCVRRPSubnetV2(),        // DEPRECATED
 			"selectel_vpc_crossregion_subnet_v2":                    resourceVPCCrossRegionSubnetV2(), // DEPRECATED
@@ -120,19 +138,10 @@ func Provider() *schema.Provider {
 }
 
 func configureProvider(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	config := Config{
-		Token:    d.Get("token").(string),
-		Endpoint: d.Get("endpoint").(string),
-	}
-	if v, ok := d.GetOk("project_id"); ok {
-		config.ProjectID = v.(string)
-	}
-	if v, ok := d.GetOk("region"); ok {
-		config.Region = v.(string)
-	}
-	if err := config.Validate(); err != nil {
-		return nil, diag.FromErr(err)
+	config, diagError := getConfig(d)
+	if diagError != nil {
+		return nil, diagError
 	}
 
-	return &config, nil
+	return config, nil
 }
