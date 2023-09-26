@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Provider: Selectel"
 sidebar_current: "docs-selectel-index"
 description: |-
-  Use the Selectel provider to manage with Selectel products.
+  Use the Selectel provider to manage Selectel products.
 ---
 
 # Selectel provider
