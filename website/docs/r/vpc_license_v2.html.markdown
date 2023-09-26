@@ -51,20 +51,20 @@ resource "selectel_vpc_license_v2" "license_windows_2016_standard" {
 You can import a license:
 
 ```shell
-<<<<<<< HEAD
+export OS_DOMAIN_NAME=<account_id>
+export OS_USERNAME=<username>
+export OS_PASSWORD=<password>
 terraform import selectel_vpc_license_v2.license_1 <license_id>
-=======
-$ export OS_DOMAIN_NAME=999999
-$ export OS_USERNAME=example_user
-$ export OS_PASSWORD=example_password
-$ terraform import selectel_vpc_license_v2.license_1 <license_id>
->>>>>>> upstream/master
 ```
 
-where `<license_id>` is a unique identifier of the license, for example, `4123`. To get the license ID, use [Selectel Cloud Management API](https://developers.selectel.ru/docs/selectel-cloud-platform/main-services/selectel_cloud_management_api/).
+where:
 
-### Environment Variables
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/control-panel-actions/account/registration/).
 
-For import, you must set the environment variable `SEL_TOKEN=<selectel_api_token>`,
+* `<username>` — Name of the service user. To get the name, in the top right corner of the [Control panel](https://my.selectel.ru/profile/users_management/users?type=service), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
 
-where `<selectel_api_token>` is a Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶ **API keys** ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
+* `<password>` — Password of the service user.
+
+* `<license_id>` — Unique identifier of the license, for example, `4123`. To get the license ID, use [Selectel Cloud Management API](https://developers.selectel.ru/docs/selectel-cloud-platform/main-services/selectel_cloud_management_api/).
+
+

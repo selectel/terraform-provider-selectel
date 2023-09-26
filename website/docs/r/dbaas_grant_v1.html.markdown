@@ -38,7 +38,7 @@ resource "selectel_dbaas_grant_v1" "grant_1" {
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new privilege for the user. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new privilege for the user. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-databases/about/projects/).
 
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new privilege for the user.
 
@@ -50,25 +50,4 @@ resource "selectel_dbaas_grant_v1" "grant_1" {
 
 ## Attributes Reference
 
-<<<<<<< HEAD
 * `status` - Status of the user privilege.
-=======
-* `status` - Status of the user privilege.
-
-* The following attributes are exported:
-
-* `status` - Shows the current status of the grant.
-
-## Import
-
-Grant can be imported using the `id`, e.g.
-
-```shell
-$ export OS_DOMAIN_NAME=999999
-$ export OS_USERNAME=example_user
-$ export OS_PASSWORD=example_password
-$ export SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID
-$ export SEL_REGION=SELECTEL_VPC_REGION
-$ terraform import selectel_dbaas_grant_v1.grant_1 b311ce58-2658-46b5-b733-7a0f418703f2
-```
->>>>>>> upstream/master
