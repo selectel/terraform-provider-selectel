@@ -1,7 +1,6 @@
 package selectel
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -10,8 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager/quotas"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/quotamanager/quotas"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -93,15 +92,17 @@ func TestAccVPCV2ProjectWithSpecificQuotas(t *testing.T) {
 
 func testAccCheckVPCV2ProjectDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
-	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return fmt.Errorf("can't get selvpc client for test project object: %w", err)
+	}
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "selectel_vpc_project_v2" {
 			continue
 		}
 
-		_, _, err := projects.Get(ctx, resellV2Client, rs.Primary.ID)
+		_, _, err := projects.Get(selvpcClient, rs.Primary.ID)
 		if err == nil {
 			return errors.New("project still exists")
 		}
@@ -122,10 +123,12 @@ func testAccCheckVPCV2ProjectExists(n string, project *projects.Project) resourc
 		}
 
 		config := testAccProvider.Meta().(*Config)
-		resellV2Client := config.resellV2Client()
-		ctx := context.Background()
+		selvpcClient, err := config.GetSelVPCClient()
+		if err != nil {
+			return fmt.Errorf("can't get selvpc client for test project object: %w", err)
+		}
 
-		foundProject, _, err := projects.Get(ctx, resellV2Client, rs.Primary.ID)
+		foundProject, _, err := projects.Get(selvpcClient, rs.Primary.ID)
 		if err != nil {
 			return err
 		}

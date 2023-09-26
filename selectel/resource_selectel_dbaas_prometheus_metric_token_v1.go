@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/dbaas-go"
 )
 
@@ -38,15 +37,6 @@ func resourceDBaaSPrometheusMetricTokenV1() *schema.Resource {
 			"region": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					ru1Region,
-					ru2Region,
-					ru3Region,
-					ru7Region,
-					ru8Region,
-					ru9Region,
-					uz1Region,
-				}, false),
 			},
 			"name": {
 				Type:     schema.TypeString,
@@ -62,7 +52,7 @@ func resourceDBaaSPrometheusMetricTokenV1() *schema.Resource {
 }
 
 func resourceDBaaSPrometheusMetricTokenV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -83,7 +73,7 @@ func resourceDBaaSPrometheusMetricTokenV1Create(ctx context.Context, d *schema.R
 }
 
 func resourceDBaaSPrometheusMetricTokenV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -100,7 +90,7 @@ func resourceDBaaSPrometheusMetricTokenV1Read(ctx context.Context, d *schema.Res
 }
 
 func resourceDBaaSPrometheusMetricTokenV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -123,7 +113,7 @@ func resourceDBaaSPrometheusMetricTokenV1Update(ctx context.Context, d *schema.R
 }
 
 func resourceDBaaSPrometheusMetricTokenV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}

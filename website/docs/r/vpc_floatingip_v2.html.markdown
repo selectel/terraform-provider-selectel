@@ -48,7 +48,10 @@ resource "selectel_vpc_floatingip_v2" "floatingip_1" {
 You can import a public IP address:
 
 ```shell
-terraform import selectel_vpc_floatingip_v2.floatingip_1 <public_ip_id>
+$ export OS_DOMAIN_NAME=999999
+$ export OS_USERNAME=example_user
+$ export OS_PASSWORD=example_password
+$ terraform import selectel_vpc_floatingip_v2.floatingip_1 <public_ip_id>
 ```
 
 where `<public_ip_id>` is a unique identifier of the public IP address, for example, `0635d78f-57a7-1a23-bf9d-9e10`. To get the public IP address ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Public IP addresses** tab. The ID is under the public IP address. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/cloud/servers/tools/openstack/) command `openstack floating ip list` and copy `ID` field.

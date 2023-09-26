@@ -45,15 +45,6 @@ func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					ru1Region,
-					ru2Region,
-					ru3Region,
-					ru7Region,
-					ru8Region,
-					ru9Region,
-					uz1Region,
-				}, false),
 			},
 			"subnet_id": {
 				Type:     schema.TypeString,
@@ -197,7 +188,7 @@ func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
 }
 
 func resourceDBaaSPostgreSQLDatastoreV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -275,7 +266,7 @@ func resourceDBaaSPostgreSQLDatastoreV1Create(ctx context.Context, d *schema.Res
 }
 
 func resourceDBaaSPostgreSQLDatastoreV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -315,7 +306,7 @@ func resourceDBaaSPostgreSQLDatastoreV1Read(ctx context.Context, d *schema.Resou
 }
 
 func resourceDBaaSPostgreSQLDatastoreV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -361,7 +352,7 @@ func resourceDBaaSPostgreSQLDatastoreV1Update(ctx context.Context, d *schema.Res
 }
 
 func resourceDBaaSPostgreSQLDatastoreV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dbaasClient, diagErr := getDBaaSClient(ctx, d, meta)
+	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}

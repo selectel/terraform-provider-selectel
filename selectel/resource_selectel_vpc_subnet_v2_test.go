@@ -1,7 +1,6 @@
 package selectel
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -10,8 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/subnets"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/subnets"
 )
 
 func TestAccVPCV2SubnetBasic(t *testing.T) {
@@ -41,15 +40,17 @@ func TestAccVPCV2SubnetBasic(t *testing.T) {
 
 func testAccCheckVPCV2SubnetDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
-	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return fmt.Errorf("can't get selvpc client for test subnet object: %w", err)
+	}
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "selectel_resell_subnet_v2" {
 			continue
 		}
 
-		_, _, err := subnets.Get(ctx, resellV2Client, rs.Primary.ID)
+		_, _, err := subnets.Get(selvpcClient, rs.Primary.ID)
 		if err == nil {
 			return errors.New("subnet still exists")
 		}
@@ -70,10 +71,12 @@ func testAccCheckVPCV2SubnetExists(n string, subnet *subnets.Subnet) resource.Te
 		}
 
 		config := testAccProvider.Meta().(*Config)
-		resellV2Client := config.resellV2Client()
-		ctx := context.Background()
+		selvpcClient, err := config.GetSelVPCClient()
+		if err != nil {
+			return fmt.Errorf("can't get selvpc client for test subnet object: %w", err)
+		}
 
-		foundSubnet, _, err := subnets.Get(ctx, resellV2Client, rs.Primary.ID)
+		foundSubnet, _, err := subnets.Get(selvpcClient, rs.Primary.ID)
 		if err != nil {
 			return err
 		}

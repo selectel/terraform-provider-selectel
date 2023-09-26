@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/selectel/dbaas-go"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
 )
 
 func TestAccDBaaSPostgreSQLDatabaseV1Basic(t *testing.T) {

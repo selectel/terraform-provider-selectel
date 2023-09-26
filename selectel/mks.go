@@ -12,8 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager/quotas"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/quotamanager/quotas"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
 	"github.com/selectel/mks-go/pkg/v1/kubeoptions"
@@ -21,37 +20,6 @@ import (
 	"github.com/selectel/mks-go/pkg/v1/node"
 	"github.com/selectel/mks-go/pkg/v1/nodegroup"
 )
-
-const (
-	ru1MKSClusterV1Endpoint = "https://ru-1.mks.selcloud.ru/v1"
-	ru2MKSClusterV1Endpoint = "https://ru-2.mks.selcloud.ru/v1"
-	ru3MKSClusterV1Endpoint = "https://ru-3.mks.selcloud.ru/v1"
-	ru7MKSClusterV1Endpoint = "https://ru-7.mks.selcloud.ru/v1"
-	ru8MKSClusterV1Endpoint = "https://ru-8.mks.selcloud.ru/v1"
-	ru9MKSClusterV1Endpoint = "https://ru-9.mks.selcloud.ru/v1"
-	uz1MKSClusterV1Endpoint = "https://uz-1.mks.selcloud.ru/v1"
-)
-
-func getMKSClusterV1Endpoint(region string) (endpoint string) {
-	switch region {
-	case ru1Region:
-		endpoint = ru1MKSClusterV1Endpoint
-	case ru2Region:
-		endpoint = ru2MKSClusterV1Endpoint
-	case ru3Region:
-		endpoint = ru3MKSClusterV1Endpoint
-	case ru7Region:
-		endpoint = ru7MKSClusterV1Endpoint
-	case ru8Region:
-		endpoint = ru8MKSClusterV1Endpoint
-	case ru9Region:
-		endpoint = ru9MKSClusterV1Endpoint
-	case uz1Region:
-		endpoint = uz1MKSClusterV1Endpoint
-	}
-
-	return
-}
 
 func waitForMKSClusterV1ActiveState(
 	ctx context.Context, client *v1.ServiceClient, clusterID string, timeout time.Duration,
@@ -572,21 +540,26 @@ func expandMKSNodegroupV1Labels(labels map[string]interface{}) map[string]string
 	return result
 }
 
-func getMKSClient(ctx context.Context, d *schema.ResourceData, meta interface{}) (*v1.ServiceClient, diag.Diagnostics) {
+func getMKSClient(d *schema.ResourceData, meta interface{}) (*v1.ServiceClient, diag.Diagnostics) {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
-	}
-
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-	if err != nil {
-		return nil, diag.FromErr(errCreatingObject(objectToken, err))
-	}
-
+	projectID := d.Get("project_id").(string)
 	region := d.Get("region").(string)
-	endpoint := getMKSClusterV1Endpoint(region)
-	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
+
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return nil, diag.FromErr(fmt.Errorf("can't get project-scope selvpc client for mks: %w", err))
+	}
+	err = validateRegion(selvpcClient, MKS, region)
+	if err != nil {
+		return nil, diag.FromErr(fmt.Errorf("can't validate region: %w", err))
+	}
+
+	endpoint, err := selvpcClient.Catalog.GetEndpoint(MKS, region)
+	if err != nil {
+		return nil, diag.FromErr(fmt.Errorf("can't get endpoint to init mks client: %w", err))
+	}
+
+	mksClient := v1.NewMKSClientV1(selvpcClient.GetXAuthToken(), endpoint.URL)
 
 	return mksClient, nil
 }

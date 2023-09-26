@@ -1,9 +1,13 @@
 package selectel
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/hashicorp/go-retryablehttp"
+	domainsV1 "github.com/selectel/domains-go/pkg/v1"
 )
 
 const (
@@ -11,6 +15,26 @@ const (
 	domainsV1DefaultRetryWaitMax = 5 * time.Second
 	domainsV1DefaultRetry        = 5
 )
+
+func getDomainsClient(meta interface{}) (*domainsV1.ServiceClient, error) {
+	config := meta.(*Config)
+
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return nil, fmt.Errorf("can't get selvpc client for domains: %w", err)
+	}
+
+	domainsClient := domainsV1.NewDomainsClientV1WithDefaultEndpoint(selvpcClient.GetXAuthToken()).WithOSToken()
+
+	retryClient := retryablehttp.NewClient()
+	retryClient.Logger = nil // Ignore retyablehttp client logs
+	retryClient.RetryWaitMin = domainsV1DefaultRetryWaitMin
+	retryClient.RetryWaitMax = domainsV1DefaultRetryWaitMax
+	retryClient.RetryMax = domainsV1DefaultRetry
+	domainsClient.HTTPClient = retryClient.StandardClient()
+
+	return domainsClient, nil
+}
 
 const (
 	TypeRecordA     string = "A"

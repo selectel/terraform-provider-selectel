@@ -32,7 +32,10 @@ resource "selectel_vpc_role_v2" "role__1" {
 You can import a role:
 
 ```shell
-terraform import selectel_vpc_role_v2.role_1 <project_id>/<user_id>
+$ export OS_DOMAIN_NAME=999999
+$ export OS_USERNAME=example_user
+$ export OS_PASSWORD=example_password
+$ terraform import selectel_vpc_role_v2.role_1 <project_id>/<user_id>
 ```
 
 where:

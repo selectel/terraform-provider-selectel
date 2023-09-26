@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/dbaas-go"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
 )
 
 func TestAccDBaaSDatastoreTypesV1Basic(t *testing.T) {
@@ -49,7 +49,7 @@ func testAccDBaaSDatastoreTypesV1Exists(n string, dbaasDatastoreTypes *[]dbaas.D
 
 		ctx := context.Background()
 
-		dbaasClient, err := baseTestAccCheckDBaaSV1EntityExists(ctx, rs, testAccProvider)
+		dbaasClient, err := newTestDBaaSClient(ctx, rs, testAccProvider)
 		if err != nil {
 			return err
 		}

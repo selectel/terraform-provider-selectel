@@ -1,7 +1,6 @@
 package selectel
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -9,9 +8,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/projects"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/roles"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/users"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/roles"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/users"
 )
 
 func TestAccVPCV2RoleBasic(t *testing.T) {
@@ -45,8 +44,10 @@ func TestAccVPCV2RoleBasic(t *testing.T) {
 
 func testAccCheckVPCV2RoleDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
-	resellV2Client := config.resellV2Client()
-	ctx := context.Background()
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return fmt.Errorf("can't get selvpc client for test role object: %w", err)
+	}
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "selectel_vpc_role_v2" {
@@ -57,7 +58,7 @@ func testAccCheckVPCV2RoleDestroy(s *terraform.State) error {
 		if err != nil {
 			return err
 		}
-		projectRoles, _, err := roles.ListProject(ctx, resellV2Client, projectID)
+		projectRoles, _, err := roles.ListProject(selvpcClient, projectID)
 		if err == nil {
 			if len(projectRoles) > 0 {
 				return fmt.Errorf("there are still some roles in project '%s'", projectID)
@@ -80,14 +81,16 @@ func testAccCheckVPCV2RoleExists(n string, role *roles.Role) resource.TestCheckF
 		}
 
 		config := testAccProvider.Meta().(*Config)
-		resellV2Client := config.resellV2Client()
-		ctx := context.Background()
+		selvpcClient, err := config.GetSelVPCClient()
+		if err != nil {
+			return fmt.Errorf("can't get selvpc client for test role object: %w", err)
+		}
 
 		projectID, userID, err := resourceVPCRoleV2ParseID(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
-		projectRoles, _, err := roles.ListProject(ctx, resellV2Client, projectID)
+		projectRoles, _, err := roles.ListProject(selvpcClient, projectID)
 		if err != nil {
 			return errSearchingProjectRole(projectID, err)
 		}

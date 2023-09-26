@@ -1,16 +1,14 @@
 ---
 layout: "selectel"
-page_title: "Selectel: selectel_dbaas_extension_v1"
-sidebar_current: "docs-selectel-resource-dbaas-extension-v1"
+page_title: "Selectel: selectel_dbaas_postgresql_logical_replication_slot_v1"
+sidebar_current: "docs-selectel-resource-dbaas-postgresql-logical-replication-slot-v1"
 description: |-
-  Manages a V1 extension resource within Selectel Managed Databases Service.
+  Manages a V1 PostgreSQL logical replication slot resource within Selectel Managed Databases Service.
 ---
 
-# selectel\_dbaas\_extension\_v1
+# selectel\_dbaas\_postgresql\_logical\_replication\_slot\_v1
 
-**WARNING**: This resource is deprecated and is going to be removed soon. You should use extension resource for specific datastore type.
-
-Manages a V1 extension resource within Selectel Managed Databases Service. Can be installed only for PostgreSQL datastores.
+Manages a V1 PostgreSQL logical replication slot resource within Selectel Managed Databases Service. Can be installed only for PostgreSQL datastores.
 
 ## Example usage
 
@@ -32,7 +30,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   }
 }
 
-resource "selectel_dbaas_datastore_v1" "datastore_1" {
+resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
   name         = "datastore-1"
   project_id   = "${selectel_vpc_project_v2.project_1.id}"
   region       = "ru-3"
@@ -58,7 +56,7 @@ resource "selectel_dbaas_user_v1" "user_1" {
   password     = "secret"
 }
 
-resource "selectel_dbaas_database_v1" "database_1" {
+resource "selectel_dbaas_postgresql_database_v1" "database_1" {
   project_id   = "${selectel_vpc_project_v2.project_1.id}"
   region       = "ru-3"
   datastore_id = "${selectel_dbaas_datastore_v1.datastore_1.id}"
@@ -68,20 +66,12 @@ resource "selectel_dbaas_database_v1" "database_1" {
   lc_collate   = "ru_RU.utf8"
 }
 
-data "selectel_dbaas_available_extension_v1" "ae" {
+resource "selectel_dbaas_postgresql_logical_replication_slot_v1" "slot_1" {
   project_id   = "${selectel_vpc_project_v2.project_1.id}"
   region       = "ru-3"
-  filter {
-    name = "hstore"
-  }
-}
-
-resource "selectel_dbaas_extension_v1" "extension_1" {
-  project_id                  = "${selectel_vpc_project_v2.project_1.id}"
-  region                      = "ru-3"
-  datastore_id                = "${selectel_dbaas_datastore_v1.datastore_1.id}"
-  database_id                 = "${selectel_dbaas_database_v1.database_1.id}"
-  available_extension_id      = data.selectel_dbaas_available_extension_v1.ae.available_extensions[0].id
+  datastore_id = "${selectel_dbaas_datastore_v1.datastore_1.id}"
+  database_id  = "${selectel_dbaas_database_v1.database_1.id}"
+  name         = "test_slot"
 }
 ```
 
@@ -96,13 +86,13 @@ The following arguments are supported:
   Changing this creates a new extension.
 
 * `datastore_id` - (Required) An associated datastore.
-  Changing this creates a new extension.
+  Changing this creates a new slot.
 
-* `database_id` - (Required) An associated database.
-  Changing this creates a new extension.
+* `database_id` - (Required) An associated database.tele
+  Changing this creates a new slot.
 
-* `available_extension_id` - (Required) An associated available extension.
-  Changing this creates a new extension.
+* `name` - (Required) A name of the slot. Can contain only  lower case letters, numbers and the underscore char.
+  Changing this creates a new slot.
 
 ## Attributes Reference
 
@@ -120,5 +110,5 @@ $ export OS_USERNAME=example_user
 $ export OS_PASSWORD=example_password
 $ export SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID
 $ export SEL_REGION=SELECTEL_VPC_REGION
-$ terraform import selectel_dbaas_extension_v1.extension_1 b311ce58-2658-46b5-b733-7a0f418703f2
+$ terraform import selectel_dbaas_postgresql_logical_replication_slot_v1.slot_1 b311ce58-2658-46b5-b733-7a0f418703f2
 ```

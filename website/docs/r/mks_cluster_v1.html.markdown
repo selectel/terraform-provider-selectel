@@ -95,7 +95,13 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
 You can import a cluster:
 
 ```shell
-terraform import selectel_mks_cluster_v1.cluster_name <cluster_id>
+
+$ export OS_DOMAIN_NAME=999999
+$ export OS_USERNAME=example_user
+$ export OS_PASSWORD=example_password
+$ export SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID
+$ export SEL_REGION=SELECTEL_VPC_REGION
+$ terraform import selectel_mks_cluster_v1.cluster_name <cluster_id>
 ```
 
 where `<cluster_id>` is a unique identifier of the cluster, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the cluster ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes** ⟶ the cluster page ⟶ copy the ID at the top of the page under the cluster name, near the region and pool.

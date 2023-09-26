@@ -29,5 +29,6 @@ jobs:
       - name: Run test
         run: make testacc
         env:
-          SEL_TOKEN: ${{ secrets.SEL_TOKEN }}
-
+          OS_DOMAIN_NAME: ${{ secrets.OS_DOMAIN_NAME }}
+          OS_USERNAME:    ${{ secrets.OS_USERNAME }}
+          OS_PASSWORD:    ${{ secrets.OS_PASSWORD }}

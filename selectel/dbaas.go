@@ -16,19 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/dbaas-go"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
-)
-
-const (
-	ru1DBaaSV1Endpoint = "https://ru-1.dbaas.selcloud.ru/v1"
-	ru2DBaaSV1Endpoint = "https://ru-2.dbaas.selcloud.ru/v1"
-	ru3DBaaSV1Endpoint = "https://ru-3.dbaas.selcloud.ru/v1"
-	ru7DBaaSV1Endpoint = "https://ru-7.dbaas.selcloud.ru/v1"
-	ru8DBaaSV1Endpoint = "https://ru-8.dbaas.selcloud.ru/v1"
-	ru9DBaaSV1Endpoint = "https://ru-9.dbaas.selcloud.ru/v1"
-	uz1DBaaSV1Endpoint = "https://uz-1.dbaas.selcloud.ru/v1"
 )
 
 const (
@@ -38,45 +26,29 @@ const (
 	redisDatastoreType       = "redis"
 )
 
-func getDBaaSV1Endpoint(region string) (endpoint string) {
-	switch region {
-	case ru1Region:
-		endpoint = ru1DBaaSV1Endpoint
-	case ru2Region:
-		endpoint = ru2DBaaSV1Endpoint
-	case ru3Region:
-		endpoint = ru3DBaaSV1Endpoint
-	case ru7Region:
-		endpoint = ru7DBaaSV1Endpoint
-	case ru8Region:
-		endpoint = ru8DBaaSV1Endpoint
-	case ru9Region:
-		endpoint = ru9DBaaSV1Endpoint
-	case uz1Region:
-		endpoint = uz1DBaaSV1Endpoint
-	}
-
-	return
-}
-
-func getDBaaSClient(ctx context.Context, d *schema.ResourceData, meta interface{}) (*dbaas.API, diag.Diagnostics) {
+func getDBaaSClient(d *schema.ResourceData, meta interface{}) (*dbaas.API, diag.Diagnostics) {
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
-	}
-
-	log.Print(msgCreate(objectToken, tokenOpts))
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-	if err != nil {
-		return nil, diag.FromErr((errCreatingObject(objectToken, err)))
-	}
-
+	projectID := d.Get("project_id").(string)
 	region := d.Get("region").(string)
-	endpoint := getDBaaSV1Endpoint(region)
-	client, err := dbaas.NewDBAASClient(token.ID, endpoint)
+
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
 	if err != nil {
-		return nil, diag.FromErr(err)
+		return nil, diag.FromErr(fmt.Errorf("can't get project-scope selvpc client for dbaas: %w", err))
+	}
+
+	err = validateRegion(selvpcClient, DBaaS, region)
+	if err != nil {
+		return nil, diag.FromErr(fmt.Errorf("can't validate region: %w", err))
+	}
+
+	endpoint, err := selvpcClient.Catalog.GetEndpoint(DBaaS, region)
+	if err != nil {
+		return nil, diag.FromErr(fmt.Errorf("can't get endpoint to init dbaas client: %w", err))
+	}
+
+	client, err := dbaas.NewDBAASClient(selvpcClient.GetXAuthToken(), endpoint.URL)
+	if err != nil {
+		return nil, diag.FromErr(fmt.Errorf("can't create dbaas client: %w", err))
 	}
 
 	return client, nil
@@ -101,34 +73,6 @@ func stringListChecksum(s []string) (string, error) {
 	}
 
 	return checksum, nil
-}
-
-func baseTestAccCheckDBaaSV1EntityExists(ctx context.Context, rs *terraform.ResourceState, testAccProvider *schema.Provider) (*dbaas.API, error) {
-	var projectID, endpoint string
-	if id, ok := rs.Primary.Attributes["project_id"]; ok {
-		projectID = id
-	}
-	if region, ok := rs.Primary.Attributes["region"]; ok {
-		endpoint = getDBaaSV1Endpoint(region)
-	}
-
-	config := testAccProvider.Meta().(*Config)
-	resellV2Client := config.resellV2Client()
-
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: projectID,
-	}
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-	if err != nil {
-		return nil, errCreatingObject(objectToken, err)
-	}
-
-	dbaasClient, err := dbaas.NewDBAASClient(token.ID, endpoint)
-	if err != nil {
-		return nil, err
-	}
-
-	return dbaasClient, nil
 }
 
 func convertFieldToStringByType(field interface{}) string {

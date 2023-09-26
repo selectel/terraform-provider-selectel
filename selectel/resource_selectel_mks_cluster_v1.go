@@ -14,12 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/quotamanager/quotas"
-	resell "github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
-	v1 "github.com/selectel/mks-go/pkg/v1"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient/quotamanager/quotas"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
 )
 
@@ -44,6 +39,7 @@ func resourceMKSClusterV1() *schema.Resource {
 			Update: schema.DefaultTimeout(60 * time.Minute),
 			Delete: schema.DefaultTimeout(60 * time.Minute),
 		},
+
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -62,15 +58,6 @@ func resourceMKSClusterV1() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					ru1Region,
-					ru2Region,
-					ru3Region,
-					ru7Region,
-					ru8Region,
-					ru9Region,
-					uz1Region,
-				}, false),
 			},
 			"kube_version": {
 				Type:             schema.TypeString,
@@ -164,21 +151,23 @@ func resourceMKSClusterV1() *schema.Resource {
 }
 
 func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	mksClient, diagErr := getMKSClient(d, meta)
+	if diagErr != nil {
+		return diagErr
+	}
+
 	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
-	}
-
-	log.Print(msgCreate(objectToken, tokenOpts))
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-	if err != nil {
-		return diag.FromErr(errCreatingObject(objectToken, err))
-	}
-
+	projectID := d.Get("project_id").(string)
 	region := d.Get("region").(string)
-	endpoint := getMKSClusterV1Endpoint(region)
-	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
+
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get project-scope selvpc for cluster object: %w", err))
+	}
+	err = validateRegion(selvpcClient, MKS, region)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't validate region: %w", err))
+	}
 
 	// Prepare cluster create options.
 	enableAutorepair := d.Get("enable_autorepair").(bool)
@@ -221,14 +210,9 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 		PrivateKubeAPI: &privateKubeAPI,
 	}
 
-	accountName := strings.Split(config.Token, "_")[1]
-	openstackClient := resell.NewOpenstackClient(token.ID)
-	identityManager := quotamanager.NewIdentityManager(resellV2Client, openstackClient, accountName)
-	quotaManagerClient := config.quotaManagerRegionalClient(identityManager)
-
-	projectQuotas, _, err := quotas.GetProjectQuotas(ctx, quotaManagerClient, d.Get("project_id").(string), region)
+	projectQuotas, _, err := quotas.GetProjectQuotas(selvpcClient, projectID, region)
 	if err != nil {
-		return diag.FromErr(errGettingObject(objectProjectQuotas, d.Get("project_id").(string), err))
+		return diag.FromErr(errGettingObject(objectProjectQuotas, projectID, err))
 	}
 
 	if err := checkQuotasForCluster(projectQuotas, zonal); err != nil {
@@ -254,21 +238,10 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceMKSClusterV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
+	mksClient, diagErr := getMKSClient(d, meta)
+	if diagErr != nil {
+		return diagErr
 	}
-
-	log.Print(msgCreate(objectToken, tokenOpts))
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-	if err != nil {
-		return diag.FromErr(errCreatingObject(objectToken, err))
-	}
-
-	region := d.Get("region").(string)
-	endpoint := getMKSClusterV1Endpoint(region)
-	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
 
 	log.Print(msgGet(objectCluster, d.Id()))
 	mksCluster, response, err := cluster.Get(ctx, mksClient, d.Id())
@@ -303,21 +276,10 @@ func resourceMKSClusterV1Read(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceMKSClusterV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
+	mksClient, diagErr := getMKSClient(d, meta)
+	if diagErr != nil {
+		return diagErr
 	}
-
-	log.Print(msgCreate(objectToken, tokenOpts))
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-	if err != nil {
-		return diag.FromErr(errCreatingObject(objectToken, err))
-	}
-
-	region := d.Get("region").(string)
-	endpoint := getMKSClusterV1Endpoint(region)
-	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
 
 	if d.HasChange("kube_version") {
 		if err := upgradeMKSClusterV1KubeVersion(ctx, d, mksClient); err != nil {
@@ -378,24 +340,13 @@ func resourceMKSClusterV1Update(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceMKSClusterV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
+	mksClient, diagErr := getMKSClient(d, meta)
+	if diagErr != nil {
+		return diagErr
 	}
-
-	log.Print(msgCreate(objectToken, tokenOpts))
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-	if err != nil {
-		return diag.FromErr(errCreatingObject(objectToken, err))
-	}
-
-	region := d.Get("region").(string)
-	endpoint := getMKSClusterV1Endpoint(region)
-	mksClient := v1.NewMKSClientV1(token.ID, endpoint)
 
 	log.Print(msgDelete(objectCluster, d.Id()))
-	_, err = cluster.Delete(ctx, mksClient, d.Id())
+	_, err := cluster.Delete(ctx, mksClient, d.Id())
 	if err != nil {
 		return diag.FromErr(errDeletingObject(objectCluster, d.Id(), err))
 	}

@@ -27,8 +27,10 @@ func dataSourceDomainsDomainV1() *schema.Resource {
 }
 
 func dataSourceDomainsDomainV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	client := config.domainsV1Client()
+	client, err := getDomainsClient(meta)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	domainName := d.Get("name").(string)
 
 	log.Print(msgGet(objectDomain, domainName))

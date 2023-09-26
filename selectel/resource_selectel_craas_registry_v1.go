@@ -12,9 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	v1 "github.com/selectel/craas-go/pkg"
 	"github.com/selectel/craas-go/pkg/v1/registry"
-	"github.com/selectel/go-selvpcclient/v2/selvpcclient/resell/v2/tokens"
 )
 
 func resourceCRaaSRegistryV1() *schema.Resource {
@@ -53,19 +51,11 @@ func resourceCRaaSRegistryV1() *schema.Resource {
 }
 
 func resourceCRaaSRegistryV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
+	craasClient, diagErr := getCRaaSClient(d, meta)
+	if diagErr != nil {
+		return diagErr
 	}
 
-	log.Print(msgCreate(objectToken, tokenOpts))
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-	if err != nil {
-		return diag.FromErr(errCreatingObject(objectToken, err))
-	}
-
-	craasClient := v1.NewCRaaSClientV1(token.ID, craasV1Endpoint)
 	name := d.Get("name").(string)
 
 	log.Print(msgCreate(objectRegistry, name))
@@ -87,19 +77,15 @@ func resourceCRaaSRegistryV1Create(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceCRaaSRegistryV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
+	craasClient, diagErr := getCRaaSClient(d, meta)
+	if diagErr != nil {
+		return diagErr
 	}
 
-	log.Print(msgCreate(objectToken, tokenOpts))
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
+	craasHostName, err := getHostNameForCRaaS(craasClient.Endpoint)
 	if err != nil {
-		return diag.FromErr(errCreatingObject(objectToken, err))
+		return diag.FromErr(err)
 	}
-
-	craasClient := v1.NewCRaaSClientV1(token.ID, craasV1Endpoint)
 
 	log.Print(msgGet(objectRegistry, d.Id()))
 	craasRegistry, response, err := registry.Get(ctx, craasClient, d.Id())
@@ -116,28 +102,19 @@ func resourceCRaaSRegistryV1Read(ctx context.Context, d *schema.ResourceData, me
 
 	d.Set("name", craasRegistry.Name)
 	d.Set("status", craasRegistry.Status)
-	d.Set("endpoint", fmt.Sprintf("%s/%s", craasV1RegistryHostName, craasRegistry.Name))
+	d.Set("endpoint", fmt.Sprintf("%s/%s", craasHostName, craasRegistry.Name))
 
 	return nil
 }
 
 func resourceCRaaSRegistryV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	resellV2Client := config.resellV2Client()
-	tokenOpts := tokens.TokenOpts{
-		ProjectID: d.Get("project_id").(string),
+	craasClient, diagErr := getCRaaSClient(d, meta)
+	if diagErr != nil {
+		return diagErr
 	}
-
-	log.Print(msgCreate(objectToken, tokenOpts))
-	token, _, err := tokens.Create(ctx, resellV2Client, tokenOpts)
-	if err != nil {
-		return diag.FromErr(errCreatingObject(objectToken, err))
-	}
-
-	craasClient := v1.NewCRaaSClientV1(token.ID, craasV1Endpoint)
 
 	log.Print(msgDelete(objectRegistry, d.Id()))
-	_, err = registry.Delete(ctx, craasClient, d.Id())
+	_, err := registry.Delete(ctx, craasClient, d.Id())
 	if err != nil {
 		return diag.FromErr(errDeletingObject(objectRegistry, d.Id(), err))
 	}

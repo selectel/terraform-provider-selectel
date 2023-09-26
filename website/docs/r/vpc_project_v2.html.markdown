@@ -93,7 +93,11 @@ resource "selectel_vpc_project_v2" "project_1" {
 You can import a project:
 
 ```shell
-terraform import selectel_vpc_project_v2.project_1 <project_id>
+
+$ export OS_DOMAIN_NAME=999999
+$ export OS_USERNAME=example_user
+$ export OS_PASSWORD=example_password
+$ terraform import selectel_vpc_project_v2.project_1 <project_id>
 ```
 
 where `<project_id>` is a unique identifier of the Cloud Platform project, for example, `a07abc12310546f1b9291ab3013a7d75`. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/), go to the **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project.
