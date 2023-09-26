@@ -1,3 +1,13 @@
+## 4.0.0 (Unreleased)
+FEATURES:
+
+* Added new authorization method via keystone users instead of x-token
+* Move service discovery to Keystone instead hardcode
+
+IMPROVEMENTS:
+
+* Deprecate `selectel_vpc_token_v2`
+
 ## 3.11.1 (Unreleased)
 
 IMPROVEMENTS:
