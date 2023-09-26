@@ -16,7 +16,7 @@ test:
 	echo $(TEST) | \
 		xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
 
-testacc: golangci-lint
+testacc:
 	TF_ACC=1 go test $(TEST) $(TESTARGS) -timeout 360m
 
 fmt:
