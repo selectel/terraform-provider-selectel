@@ -3,15 +3,14 @@ layout: "selectel"
 page_title: "Provider: Selectel"
 sidebar_current: "docs-selectel-index"
 description: |-
-  The Selectel provider is used to interact with the Selectel resources. The provider requires service user.
+  Use the Selectel provider to manage Selectel products.
 ---
 
 # Selectel provider
 
-The Selectel provider is used to interact with the Selectel resources. The provider
-requires service user that can be created on [users' management](https://my.selectel.ru/profile/users_management/users) page.
+Use the Selectel provider to manage [Selectel products](https://docs.selectel.ru/).
 
-To interact with resources that are available via OpenStack API, you can also use [OpenStack Terraform provider](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest).
+To manage resources available via OpenStack API, use [OpenStack Terraform provider](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest).
 
 ## Example Usage
 
@@ -20,15 +19,9 @@ terraform {
   required_providers {
     selectel = {
       source = "selectel/selectel"
-      version = "~> 3.11.0"
+      version = "~> 4.0.1"
     }
   }
-
-# Configure the Selectel Provider
-provider "selectel" {
-  domain_name = "999999"
-  username = "example_user"
-  password = "example_password"
 }
 
 # Create a Cloud Platform project
@@ -37,56 +30,50 @@ resource "selectel_vpc_project_v2" "project_1" {
 }
 ```
 
-## Authentication
+## Authentication (4.0.0 and later)
 
-The following arguments are supported:
-
-* `username` - (Required) Service user username. Reference to OpenStack-like `OS_USERNAME` environment variable.
-* `password` - (Required) Service user password. Reference to OpenStack-like `OS_PASSWORD` environment variable.
-* `domain_name` - (Required) Your domain name i.e. your account id. Reference to OpenStack-like `OS_DOMAIN_NAME` environment variable.
-
-* `user_domain_name` - (Optional) A specific field for users who were created in a different domain 
-but assigned a role in a different domain. You probably don't need to use this field in public cloud.
-Reference to OpenStack-like `OS_USER_DOMAIN_NAME` environment variable.
-
-* `auth_url` - (Optional) Keystone address to authenticate via user credentials.
-If omitted, the provider will use default endpoint automatically.
-Reference to OpenStack-like `OS_AUTH_URL` environment variable.
-
-* `project_id` - (Optional) The Selectel VPC project. Used only to import
-  resources that need an auth token in the project scope. If omitted,
-  the `SEL_PROJECT_ID` environment variable is used.
-
-* `region` - (Optional) The Selectel VPC region. Used only to import resources
-  associated with the specific region. If omitted, the `SEL_REGION` environment
-  variable is used.
-
-
-## Additional Logging
-To enable debug logging, set the `TF_LOG` environment variable to `DEBUG`:
+```hcl
+# Configure the Selectel provider
 
 provider "selectel" {
-  token = "<selectel_token>"
+  domain_name = "123456"
+  username    = "user"
+  password    = "password"
 }
+```
 
+## Argument Reference (4.0.0 and later)
 
-## Argument Reference
+* `domain_name` - (Required) Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). For import, use the value in the `OS_DOMAIN_NAME` environment variable. Learn more about [Registration](https://docs.selectel.ru/control-panel-actions/account/registration/).
 
-* `token` - (Required) Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶ **API keys** ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel). If skipped, use the `SEL_TOKEN` environment variable.
+* `username` - (Required) Name of the service user. To get the name, in the top right corner of the [Control panel](https://my.selectel.ru/profile/users_management/users?type=service), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. For import, use the value in the `OS_USERNAME` environment variable. Learn more about [Service users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/) and [how to create service user](https://docs.selectel.ru/control-panel-actions/users-and-roles/add-user/#добавить-сервисного-пользователя).
+
+* `password` - (Required, Sensitive) Password of the service user. For import, use the value in the `OS_PASSWORD` environment variable.
+
+* `user_domain_name` - (Optional) Selectel account ID. Use only for users that were created and assigned a role in a different account. Applicable only to public cloud. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). For import, use the value in the `OS_USER_DOMAIN_NAME` environment variable.
+
+* `auth_url`- (Optional) Keystone Identity authentication URL for authentication via user credentials. If skipped, the provider uses the default endpoint. For import, use the value in the `OS_AUTH_URL` environment variable.
+
+* `project_id` - (Optional) Unique identifier of the Cloud Platform project. Use only to import resources that are associated with the specific project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/), go to the **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. As an alternative, you can retrieve project ID from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. If skipped, use the `SEL_PROJECT_ID` environment variable. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
+
+* `region` - (Optional) Pool, for example, `ru-3`. Use only to import resources from the specific pool. If skipped, use the `SEL_REGION` environment variable. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/).
+
+## Authentication (up to 3.11.0)
+
+```hcl
+# Configure the Selectel provider
+
+provider "selectel" {
+  token = "Kfpfdf7fjdv0_123456"
+}
+```
+
+## Argument Reference (up to 3.11.0)
+
+* `token` - (Required) Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶ **API keys** ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
 
 * `endpoint` - (Optional) Selectel API endpoint. Use only for test environments. If skipped, the provider automatically uses the official Selectel endpoint.
 
 * `project_id` - (Optional) Unique identifier of the Cloud Platform project. Use only to import resources that are associated with the specific project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/), go to the **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. As an alternative, you can retrieve project ID from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/). If skipped, use the `SEL_PROJECT_ID` environment variable. 
 
 * `region` - (Optional) Pool, for example, `ru-3`. Use only to import resources from the specific pool. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/). If skipped, use the `SEL_REGION` environment variable.
-
-In order to run the Acceptance Tests for development you need to set
-auth credentials environment variables:
-
-```shell
-$ export OS_DOMAIN_NAME=999999
-$ export OS_USERNAME=example_user
-$ export OS_PASSWORD=example_password
-$ env TF_ACC=1 go test -v ./selectel/...
-```
-

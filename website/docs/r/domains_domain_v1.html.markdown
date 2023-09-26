@@ -33,16 +33,18 @@ resource "selectel_domains_domain_v1" "domain_1" {
 You can import a domain:
 
 ```shell
-$ export OS_DOMAIN_NAME=999999
-$ export OS_USERNAME=example_user
-$ export OS_PASSWORD=example_password
-$ terraform import selectel_domains_domain_v1.domain_1 <domain_id>
+export OS_DOMAIN_NAME=<account_id>
+export OS_USERNAME=<username>
+export OS_PASSWORD=<password>
+terraform import selectel_domains_domain_v1.domain_1 <domain_id>
 ```
 
-where `<domain_id>` is a unique identifier of the domain, for example, `45623`. To get the domain ID, in the [Control panel](https://my.selectel.ru/network/domains/), go to **Networks Services** ⟶ **DNS Hosting** ⟶ the domain page ⟶ copy the domain ID from the address bar.
+where:
 
-### Environment Variables
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/control-panel-actions/account/registration/).
 
-For import, you must set the environment variable `SEL_TOKEN=<selectel_api_token>`,
+* `<username>` — Name of the service user. To get the name, in the top right corner of the [Control panel](https://my.selectel.ru/profile/users_management/users?type=service), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
 
-where `<selectel_api_token>` is a Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶ **API keys** ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
+* `<password>` — Password of the service user.
+
+* `<domain_id>` — Unique identifier of the domain, for example, `45623`. To get the domain ID, in the [Control panel](https://my.selectel.ru/network/domains/), go to **Networks Services** ⟶ **DNS Hosting** ⟶ the domain page ⟶ copy the domain ID from the address bar.

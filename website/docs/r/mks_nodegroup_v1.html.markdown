@@ -50,7 +50,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 
 * `cluster_id` - (Required) Unique identifier of the associated Managed Kubernetes cluster. Changing this creates a new node group. You can create up to eight group nodes in a cluster. Retrieved from the [selectel_mks_cluster_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/mks_cluster_v1) resource.
 
-* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new node group. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new node group. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
 
 * `region` - (Required) Pool where the cluster is located, for example, `ru-3`. Changing this creates a new node group. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-kubernetes).
 
@@ -94,35 +94,26 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 You can import a node group:
 
 ```shell
-
-$ export OS_DOMAIN_NAME=999999
-$ export OS_USERNAME=example_user
-$ export OS_PASSWORD=example_password
-$ export SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID
-$ export SEL_REGION=SELECTEL_VPC_REGION
-$ terraform import selectel_mks_nodegroup_v1.nodegroup_1 <cluster_id>/<nodegroup_id>
+export OS_DOMAIN_NAME=<account_id>
+export OS_USERNAME=<username>
+export OS_PASSWORD=<password>
+export SEL_PROJECT_ID=<selectel_project_id>
+export SEL_REGION=<selectel_pool>
+terraform import selectel_mks_nodegroup_v1.nodegroup_1 <cluster_id>/<nodegroup_id>
 ```
 
 where:
 
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/control-panel-actions/account/registration/).
+
+* `<username>` — Name of the service user. To get the name, in the top right corner of the [Control panel](https://my.selectel.ru/profile/users_management/users?type=service), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
+
+* `<password>` — Password of the service user. 
+
+* `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
+
+* `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes**. The pool is in the **Pool** column.
+
 * `<cluster_id>` — Unique identifier of the cluster, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the cluster ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes** ⟶ the cluster page ⟶ copy the ID at the top of the page under the cluster name, near the region and pool.
 
 * `<nodegroup_id>` — Unique identifier of the node, for example, `63ed5342-b22c-4c7a-9d41-c1fe4a142c13`. To get the cluster ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes**. Click the required cluster ⟶ the required node group. The node group ID is at the top of the page under the node group name, near the region and pool.
-
-### Environment Variables
-
-For import, you must set environment variables:
-
-* `SEL_TOKEN=<selectel_api_token>`
-
-* `SEL_PROJECT_ID=<selectel_project_id>`
-
-* `SEL_REGION=<selectel_pool>`
-
-where:
-
-* `<selectel_api_token>` — Selectel token. To get the token, in the top right corner of the [Control panel](https://my.selectel.ru/profile/apikeys), go to the account menu ⟶ **Profile and Settings** ⟶   **API keys**  ⟶ copy the token. Learn more about [Selectel token](https://developers.selectel.ru/docs/control-panel/authorization/#получить-токен-selectel).
-
-* `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶  copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
-
-* `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases**. The pool is in the **Pool** column.

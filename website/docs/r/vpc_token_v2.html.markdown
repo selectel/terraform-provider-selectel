@@ -9,13 +9,8 @@ description: |-
 # selectel\_vpc\_token_v2
 
 Creates and manages a Cloud Platform Keystone token using public API v2. For more information about Cloud Platform Keystone tokens, see the [official Selectel documentation](https://developers.selectel.ru/docs/control-panel/authorization/#токен-для-облачной-платформы-selectel).
-> **WARNING**: This resource has been removed because it is for keystone tokens and
-> they are automatically invalidated after 24 hours.
 
-Manages a V2 token resource within Selectel VPC.
-
-ID of this resource can be used within the OpenStack API Identity service as
-the `X-Auth-Token` value.
+> **WARNING**: This resource has been removed because it is for keystone tokens and they are automatically invalidated after 24 hours.
 
 ## Example Usage
 

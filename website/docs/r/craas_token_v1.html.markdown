@@ -44,7 +44,7 @@ echo $REGISTRY_TOKEN | docker login cr.selcloud.ru --username $REGISTRY_USERNAME
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new token. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new token. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/craas/about/projects/).
 
 * `token_ttl` - (Optional) Token lifetime. Changing this creates a new token. Available values are `1y` for a year and `12h` for 12 hours. The default value is `1y`.
 
