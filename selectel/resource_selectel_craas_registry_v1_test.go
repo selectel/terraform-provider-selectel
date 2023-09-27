@@ -13,7 +13,7 @@ import (
 	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
 )
 
-const craasV1RegistryHostName = "cr.selcloud.ru"
+const craasV1RegistryHostName = "https://cr.selcloud.ru"
 
 func TestAccCRaaSRegistryV1Basic(t *testing.T) {
 	var (

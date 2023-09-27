@@ -1,12 +1,14 @@
-## 4.0.0 (Unreleased)
+## 4.0.0 (September 27, 2023)
 FEATURES:
 
-* Added new authorization method via keystone users instead of x-token
-* Move service discovery to Keystone instead hardcode
+* Added new authorization method via keystone users instead of x-token ([#236](https://github.com/selectel/terraform-provider-selectel/pull/236))
+* Move service discovery to Keystone instead hardcode ([#236](https://github.com/selectel/terraform-provider-selectel/pull/236))
 
 IMPROVEMENTS:
 
-* Deprecate `selectel_vpc_token_v2`
+* Deprecate `selectel_vpc_token_v2` ([#236](https://github.com/selectel/terraform-provider-selectel/pull/236))
+* Updated the provider documentation with new auth type ([#238](https://github.com/selectel/terraform-provider-selectel/pull/238))
+
 
 ## 3.11.1 (Unreleased)
 
