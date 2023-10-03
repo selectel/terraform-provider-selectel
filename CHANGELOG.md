@@ -1,3 +1,8 @@
+# 4.0.1 (October 3, 2023)
+IMPROVEMENTS:
+
+* Update docs to upgrade to new major v4 version ([#239](https://github.com/selectel/terraform-provider-selectel/pull/239))
+
 ## 4.0.0 (September 27, 2023)
 FEATURES:
 
