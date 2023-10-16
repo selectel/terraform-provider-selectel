@@ -1,124 +1,68 @@
 ---
 layout: "selectel"
-page_title: "Selectel: selectel_dbaas_extension_v1"
-sidebar_current: "docs-selectel-resource-dbaas-extension-v1"
+page_title: "Selectel: selectel_dbaas_postgresql_extension_v1"
+sidebar_current: "docs-selectel-resource-dbaas-postgresql-extension-v1"
 description: |-
-  Manages a V1 extension resource within Selectel Managed Databases Service.
+  Creates and manages a PostgreSQL extension in Selectel Managed Databases Service using public API v1.
 ---
 
 # selectel\_dbaas\_extension\_v1
 
-**WARNING**: This resource is deprecated. You should use extension resource for specific datastore type.
-
 Manages a V1 extension resource within Selectel Managed Databases Service. Can be installed only for PostgreSQL datastores.
+
+Creates and manages a PostgreSQL extension using public API v1. Applicable to PostgreSQL, PostgreSQL for 1C, and PostgreSQL TimescaleDB datastores. For more information about Managed Databases, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/), and [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/).
 
 ## Example usage
 
 ```hcl
-resource "selectel_vpc_project_v2" "project_1" {
-}
-
-resource "selectel_vpc_subnet_v2" "subnet" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-}
-
-data "selectel_dbaas_datastore_type_v1" "dt" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  filter {
-    engine  = "postgresql"
-    version = "12"
-  }
-}
-
-resource "selectel_dbaas_datastore_v1" "datastore_1" {
-  name         = "datastore-1"
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  type_id      = data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id
-  subnet_id    = "${selectel_vpc_subnet_v2.subnet.subnet_id}"
-  node_count   = 3
-  flavor {
-    vcpus = 4
-    ram   = 4096
-    disk  = 32
-  }
-  pooler {
-    mode = "transaction"
-    size = 50
-  }
-}
-
-resource "selectel_dbaas_user_v1" "user_1" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  datastore_id = "${selectel_dbaas_datastore_v1.datastore_1.id}"
-  name         = "user"
-  password     = "secret"
-}
-
-resource "selectel_dbaas_database_v1" "database_1" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  datastore_id = "${selectel_dbaas_datastore_v1.datastore_1.id}"
-  owner_id     = "${selectel_dbaas_user_v1.user_1.id}"
-  name         = "db"
-  lc_ctype     = "ru_RU.utf8"
-  lc_collate   = "ru_RU.utf8"
-}
-
-data "selectel_dbaas_available_extension_v1" "ae" {
-  project_id   = "${selectel_vpc_project_v2.project_1.id}"
-  region       = "ru-3"
-  filter {
-    name = "hstore"
-  }
-}
-
-resource "selectel_dbaas_extension_v1" "extension_1" {
-  project_id                  = "${selectel_vpc_project_v2.project_1.id}"
+resource "selectel_dbaas_postgresql_extension_v1" "extension_1" {
+  project_id                  = selectel_vpc_project_v2.project_1.id
   region                      = "ru-3"
-  datastore_id                = "${selectel_dbaas_datastore_v1.datastore_1.id}"
-  database_id                 = "${selectel_dbaas_database_v1.database_1.id}"
+  datastore_id                = selectel_dbaas_postgresql_datastore_v1.datastore_1.id
+  database_id                 = selectel_dbaas_postgresql_database_v1.database_1.id
   available_extension_id      = data.selectel_dbaas_available_extension_v1.ae.available_extensions[0].id
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new extension. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-databases/about/projects/).
 
-* `project_id` - (Required) An associated Selectel VPC project.
-  Changing this creates a new extension.
+* `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new extension. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#облачные-базы-данных).
 
-* `region` - (Required) A Selectel VPC region of where the database is located.
-  Changing this creates a new extension.
+* `datastore_id` - (Required) Unique identifier of the associated datastore. Changing this creates a new extension. Retrieved from the [selectel_dbaas_postgresql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_datastore_v1)
 
-* `datastore_id` - (Required) An associated datastore.
-  Changing this creates a new extension.
+* `database_id` - (Required) Unique identifier of the associated database. Changing this creates a new extension. Not applicable to a Redis datastore. Retrieved from the [selectel_dbaas_postgresql_database_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_database_v1) resource.
 
-* `database_id` - (Required) An associated database.
-  Changing this creates a new extension.
-
-* `available_extension_id` - (Required) An associated available extension.
-  Changing this creates a new extension.
+* `available_extension_id` - (Required) Unique identifier of the available extension that you want to create. Changing this creates a new extension. Not applicable to a Redis datastore. Retrieved from the [selectel_dbaas_available_extension_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_available_extension_v1) data-source.
 
 ## Attributes Reference
 
-The following attributes are exported:
-
-* `status` - Shows the current status of the extension.
+* `status` - Status of the extension.
 
 ## Import
 
-Extension can be imported using the `id`, e.g.
+You can import an extension:
 
 ```shell
-$ export OS_DOMAIN_NAME=999999
-$ export OS_USERNAME=example_user
-$ export OS_PASSWORD=example_password
-$ export SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID
-$ export SEL_REGION=SELECTEL_VPC_REGION
-$ terraform import selectel_dbaas_extension_v1.extension_1 b311ce58-2658-46b5-b733-7a0f418703f2
+export OS_DOMAIN_NAME=<account_id>
+export OS_USERNAME=<username>
+export OS_PASSWORD=<password>
+export SEL_PROJECT_ID=<selectel_project_id>
+export SEL_REGION=<selectel_pool>
+terraform import selectel_dbaas_postgresql_extension_v1.extension_1 <extension_id>
 ```
+
+where:
+
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/control-panel-actions/account/registration/).
+
+* `<username>` — Name of the service user. To get the name, in the top right corner of the [Control panel](https://my.selectel.ru/profile/users_management/users?type=service), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
+
+* `<password>` — Password of the service user.
+
+* `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶  copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-databases/about/projects/).
+
+* `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases**. The pool is in the **Pool** column.
+  
+* `<extension_id>` — Unique identifier of the extension, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the extension ID, use [Selectel Cloud Management API](https://developers.selectel.ru/docs/selectel-cloud-platform/dbaas_api/).
