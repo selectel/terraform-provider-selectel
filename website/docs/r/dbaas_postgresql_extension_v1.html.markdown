@@ -8,9 +8,9 @@ description: |-
 
 # selectel\_dbaas\_extension\_v1
 
-Manages a V1 extension resource within Selectel Managed Databases Service. Can be installed only for PostgreSQL datastores.
+Creates and manages a PostgreSQL extension in Selectel Managed Databases using public API v1.
 
-Creates and manages a PostgreSQL extension using public API v1. Applicable to PostgreSQL, PostgreSQL for 1C, and PostgreSQL TimescaleDB datastores. For more information about Managed Databases, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/), and [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/).
+Creates and manages a PostgreSQL extension using public API v1. Applicable to PostgreSQL, PostgreSQL for 1C, and PostgreSQL TimescaleDB datastores. For more information about extensions, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/), and [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/).
 
 ## Example usage
 
@@ -32,9 +32,9 @@ resource "selectel_dbaas_postgresql_extension_v1" "extension_1" {
 
 * `datastore_id` - (Required) Unique identifier of the associated datastore. Changing this creates a new extension. Retrieved from the [selectel_dbaas_postgresql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_datastore_v1)
 
-* `database_id` - (Required) Unique identifier of the associated database. Changing this creates a new extension. Not applicable to a Redis datastore. Retrieved from the [selectel_dbaas_postgresql_database_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_database_v1) resource.
+* `database_id` - (Required) Unique identifier of the associated database. Changing this creates a new extension. Retrieved from the [selectel_dbaas_postgresql_database_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_database_v1) resource.
 
-* `available_extension_id` - (Required) Unique identifier of the available extension that you want to create. Changing this creates a new extension. Not applicable to a Redis datastore. Retrieved from the [selectel_dbaas_available_extension_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_available_extension_v1) data-source.
+* `available_extension_id` - (Required) Unique identifier of the available extension that you want to create. Changing this creates a new extension. Retrieved from the [selectel_dbaas_available_extension_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_available_extension_v1) data source.
 
 ## Attributes Reference
 
