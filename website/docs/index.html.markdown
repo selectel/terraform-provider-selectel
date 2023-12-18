@@ -52,7 +52,9 @@ provider "selectel" {
 
 * `user_domain_name` - (Optional) Selectel account ID. Use only for users that were created and assigned a role in a different account. Applicable only to public cloud. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). For import, use the value in the `OS_USER_DOMAIN_NAME` environment variable.
 
-* `auth_url`- (Optional) Keystone Identity authentication URL for authentication via user credentials. If skipped, the provider uses the default endpoint. For import, use the value in the `OS_AUTH_URL` environment variable.
+* `auth_url`- (Optional) Keystone Identity authentication URL for authentication via user credentials. If skipped, the provider uses the default endpoint `https://cloud.api.selcloud.ru/identity/v3/`. For import, use the value in the OS_AUTH_URL environment variable.
+
+* `auth_region` - (Optional) Pool where the endpoint for Keystone API and Resell API is located, for example, ru-3. If skipped, the provider uses the default pool `ru-1`. Does not affect the region parameter in the resources, but it is preferable to use one pool in a manifest. For import, use the value in the OS_REGION_NAME environment variable. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/).
 
 * `project_id` - (Optional) Unique identifier of the Cloud Platform project. Use only to import resources that are associated with the specific project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/), go to the **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. As an alternative, you can retrieve project ID from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. If skipped, use the `SEL_PROJECT_ID` environment variable. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 

@@ -22,6 +22,7 @@ type Config struct {
 
 	Context        context.Context
 	AuthURL        string
+	AuthRegion     string
 	Username       string
 	Password       string
 	UserDomainName string
@@ -31,8 +32,6 @@ type Config struct {
 }
 
 func getConfig(d *schema.ResourceData) (*Config, diag.Diagnostics) {
-	var err error
-
 	once.Do(func() {
 		cfgSingletone = &Config{
 			Username:   d.Get("username").(string),
@@ -41,6 +40,9 @@ func getConfig(d *schema.ResourceData) (*Config, diag.Diagnostics) {
 		}
 		if v, ok := d.GetOk("auth_url"); ok {
 			cfgSingletone.AuthURL = v.(string)
+		}
+		if v, ok := d.GetOk("auth_region"); ok {
+			cfgSingletone.AuthRegion = v.(string)
 		}
 		if v, ok := d.GetOk("user_domain_name"); ok {
 			cfgSingletone.UserDomainName = v.(string)
@@ -52,9 +54,6 @@ func getConfig(d *schema.ResourceData) (*Config, diag.Diagnostics) {
 			cfgSingletone.Region = v.(string)
 		}
 	})
-	if err != nil {
-		return nil, diag.FromErr(err)
-	}
 
 	return cfgSingletone, nil
 }
@@ -79,6 +78,7 @@ func (c *Config) GetSelVPCClientWithProjectScope(projectID string) (*selvpcclien
 		Password:       c.Password,
 		ProjectID:      projectID,
 		AuthURL:        c.AuthURL,
+		AuthRegion:     c.AuthRegion,
 		UserDomainName: c.UserDomainName,
 	}
 
