@@ -65,6 +65,12 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("OS_AUTH_URL", nil),
 				Description: "Base url to work with auth API (Keystone URL). https://api.selvpc.ru/identity/v3/ used by default",
 			},
+			"auth_region": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("OS_REGION_NAME", nil),
+				Description: "Region for Keystone and Resell API URLs, 'ru-1' is used by default.",
+			},
 			"domain_name": {
 				Type:        schema.TypeString,
 				Required:    true,
