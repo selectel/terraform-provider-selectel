@@ -68,7 +68,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 
 * `local_volume` (Optional) Specifies if nodes use a local volume.  Changing this creates a new node group. Boolean flag, the default value is false.
 
-* `flavor_id` (Optional) Unique identifier of an OpenStack flavor for all nodes in the node group. Changing this creates a new node group. Learn more about [Flavors](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/configurations/#создать-группу-нод-с-фиксированной-конфигурацией-облачного-сервера).
+* `flavor_id` (Optional) Unique identifier of an OpenStack flavor for all nodes in the node group. Changing this creates a new node group. Learn more about [Flavors](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/configurations/#create-node-group-with-prebuilt-cloud-server-configuration).
 
 * `labels` (Optional) List of Kubernetes labels applied to each node in the node group.
 
