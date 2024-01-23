@@ -2,15 +2,13 @@ package selectel
 
 import (
 	"context"
-	"errors"
 	"log"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	domainsV2 "github.com/selectel/domains-go/pkg/v2"
 )
-
-var ErrZoneNotFound = errors.New("zone not found")
 
 func resourceDomainsZoneV2() *schema.Resource {
 	return &schema.Resource{
@@ -25,16 +23,10 @@ func resourceDomainsZoneV2() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
-			},
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
 			},
 			"comment": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 			"created_at": {
 				Type:     schema.TypeString,
@@ -56,49 +48,34 @@ func resourceDomainsZoneV2() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"project_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"disabled": {
 				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
+				Computed: true,
 			},
 		},
 	}
 }
 
 func resourceDomainsZoneV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := getDomainsV2Client(d, meta)
+	client, err := getDomainsV2Client(meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	zoneName := d.Get("name").(string)
-	createOpts := domainsV2.Zone{
+	createOpts := &domainsV2.Zone{
 		Name: zoneName,
 	}
 
 	log.Println(msgCreate(objectZone, zoneName))
 
-	zone, err := client.CreateZone(ctx, &createOpts)
+	zone, err := client.CreateZone(ctx, createOpts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectZone, err))
-	}
-	// Update comment after creating
-	// because set comment in creating request not supporting
-	if v, ok := d.GetOk("comment"); ok {
-		comment := v.(string)
-		err = client.UpdateZoneComment(ctx, zone.ID, comment)
-		if err != nil {
-			return diag.FromErr(errUpdatingObject(objectZone, zone.ID, err))
-		}
-	}
-	// Update disabled after creating
-	// because set disabled in creating request not supporting
-	if v, ok := d.GetOk("disabled"); ok {
-		disabled := v.(bool)
-		err = client.UpdateZoneState(ctx, zone.ID, disabled)
-		if err != nil {
-			return diag.FromErr(errUpdatingObject(objectZone, zone.ID, err))
-		}
 	}
 
 	err = setZoneToResourceData(d, zone)
@@ -110,7 +87,7 @@ func resourceDomainsZoneV2Create(ctx context.Context, d *schema.ResourceData, me
 }
 
 func resourceDomainsZoneV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := getDomainsV2Client(d, meta)
+	client, err := getDomainsV2Client(meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -132,19 +109,11 @@ func resourceDomainsZoneV2Read(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceDomainsZoneV2ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	config := meta.(*Config)
-	if config.ProjectID == "" {
-		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")
-	}
-	d.Set("project_id", config.ProjectID)
-
-	client, err := getDomainsV2Client(d, meta)
+	client, err := getDomainsV2Client(meta)
 	if err != nil {
 		return nil, err
 	}
 
-	// use zone name instead of zone id for importing zone.
-	// example: terraform import domains_zone_v2.<resource_name> <zone_name>
 	zoneName := d.Id()
 
 	log.Println(msgImport(objectZone, zoneName))
@@ -163,34 +132,32 @@ func resourceDomainsZoneV2ImportState(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceDomainsZoneV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := getDomainsV2Client(d, meta)
+	zoneID := d.Id()
+
+	client, err := getDomainsV2Client(meta)
 	if err != nil {
-		return diag.FromErr(errUpdatingObject(objectZone, d.Id(), err))
+		return diag.FromErr(errUpdatingObject(objectZone, zoneID, err))
 	}
 
 	if d.HasChange("comment") {
-		comment := ""
-		if v, ok := d.GetOk("comment"); ok {
-			comment = v.(string)
-		}
-		log.Println(msgUpdate(objectZone, d.Id(), comment))
+		comment := d.Get("comment").(string)
 
-		err = client.UpdateZoneComment(ctx, d.Id(), comment)
+		log.Println(msgUpdate(objectZone, zoneID, comment))
+
+		err = client.UpdateZoneComment(ctx, zoneID, comment)
 		if err != nil {
-			return diag.FromErr(errUpdatingObject(objectZone, d.Id(), err))
+			return diag.FromErr(errUpdatingObject(objectZone, zoneID, err))
 		}
 	}
 
 	if d.HasChange("disabled") {
-		disabled := false
-		if v, ok := d.GetOk("disabled"); ok {
-			disabled = v.(bool)
-		}
-		log.Println(msgUpdate(objectZone, d.Id(), disabled))
+		disabled := d.Get("disabled").(bool)
 
-		err = client.UpdateZoneState(ctx, d.Id(), disabled)
+		log.Println(msgUpdate(objectZone, zoneID, disabled))
+
+		err = client.UpdateZoneState(ctx, zoneID, disabled)
 		if err != nil {
-			return diag.FromErr(errUpdatingObject(objectZone, d.Id(), err))
+			return diag.FromErr(errUpdatingObject(objectZone, zoneID, err))
 		}
 	}
 
@@ -198,17 +165,34 @@ func resourceDomainsZoneV2Update(ctx context.Context, d *schema.ResourceData, me
 }
 
 func resourceDomainsZoneV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := getDomainsV2Client(d, meta)
+	client, err := getDomainsV2Client(meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	log.Println(msgDelete(objectZone, d.Id()))
+	zoneID := d.Id()
 
-	err = client.DeleteZone(ctx, d.Id())
+	log.Println(msgDelete(objectZone, zoneID))
+
+	err = client.DeleteZone(ctx, zoneID)
 	if err != nil {
-		return diag.FromErr(errDeletingObject(objectZone, d.Id(), err))
+		return diag.FromErr(errDeletingObject(objectZone, zoneID, err))
 	}
+
+	return nil
+}
+
+func setZoneToResourceData(d *schema.ResourceData, zone *domainsV2.Zone) error {
+	d.SetId(zone.UUID)
+	d.Set("name", zone.Name)
+	d.Set("comment", zone.Comment)
+	d.Set("created_at", zone.CreatedAt.Format(time.RFC3339))
+	d.Set("updated_at", zone.UpdatedAt.Format(time.RFC3339))
+	d.Set("delegation_checked_at", zone.DelegationCheckedAt.Format(time.RFC3339))
+	d.Set("last_check_status", zone.LastCheckStatus)
+	d.Set("last_delegated_at", zone.LastDelegatedAt.Format(time.RFC3339))
+	d.Set("project_id", zone.ProjectID)
+	d.Set("disabled", zone.Disabled)
 
 	return nil
 }

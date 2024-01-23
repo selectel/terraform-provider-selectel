@@ -7,30 +7,30 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
-	"strings"
-	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	domainsV2 "github.com/selectel/domains-go/pkg/v2"
 )
 
 var ErrProjectIDNotSetupForDNSV2 = errors.New("env variable SEL_PROJECT_ID or variable project_id must be set for the dns v2")
 
-func getDomainsV2Client(d *schema.ResourceData, meta interface{}) (domainsV2.DNSClient[domainsV2.Zone, domainsV2.RRSet], error) {
+func getDomainsV2Client(meta interface{}) (domainsV2.DNSClient[domainsV2.Zone, domainsV2.RRSet], error) {
 	config := meta.(*Config)
-	projectID := d.Get("project_id").(string)
-	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if config.ProjectID == "" {
+		return nil, ErrProjectIDNotSetupForDNSV2
+	}
+
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(config.ProjectID)
 	if err != nil {
 		return nil, fmt.Errorf("can't get selvpc client for domains v2: %w", err)
 	}
 
 	httpClient := &http.Client{}
 	userAgent := "terraform-provider-selectel"
-	defaultAPIURL := "https://api.selectel.ru/domains/v2"
+	defaultApiURL := "https://api.selectel.ru/domains/v2"
 	hdrs := http.Header{}
 	hdrs.Add("X-Auth-Token", selvpcClient.GetXAuthToken())
 	hdrs.Add("User-Agent", userAgent)
-	domainsClient := domainsV2.NewClient(defaultAPIURL, httpClient, hdrs)
+	domainsClient := domainsV2.NewClient(defaultApiURL, httpClient, hdrs)
 
 	return domainsClient, nil
 }
@@ -66,8 +66,8 @@ func getZoneByName(ctx context.Context, client domainsV2.DNSClient[domainsV2.Zon
 	return nil, errGettingObject(objectZone, zoneName, ErrZoneNotFound)
 }
 
-func getRRSetByNameAndType(ctx context.Context, client domainsV2.DNSClient[domainsV2.Zone, domainsV2.RRSet], zoneID, rrsetName, rrsetType string) (*domainsV2.RRSet, error) {
-	optsForSearchRRSet := map[string]string{
+func getRrsetByNameAndType(ctx context.Context, client domainsV2.DNSClient[domainsV2.Zone, domainsV2.RRSet], zoneID, rrsetName, rrsetType string) (*domainsV2.RRSet, error) {
+	optsForSearchRrset := map[string]string{
 		"name":        rrsetName,
 		"rrset_types": rrsetType,
 		"limit":       "1000",
@@ -76,82 +76,24 @@ func getRRSetByNameAndType(ctx context.Context, client domainsV2.DNSClient[domai
 
 	r, err := regexp.Compile(fmt.Sprintf("^%s.?", rrsetName))
 	if err != nil {
-		return nil, errGettingObject(objectRRSet, rrsetName, err)
+		return nil, errGettingObject(objectRrset, rrsetName, err)
 	}
 
 	for {
-		rrsets, err := client.ListRRSets(ctx, zoneID, &optsForSearchRRSet)
+		rrsets, err := client.ListRRSets(ctx, zoneID, &optsForSearchRrset)
 		if err != nil {
-			return nil, errGettingObject(objectRRSet, rrsetName, err)
+			return nil, errGettingObject(objectRrset, rrsetName, err)
 		}
 		for _, rrset := range rrsets.GetItems() {
 			if r.MatchString(rrset.Name) && string(rrset.Type) == rrsetType {
 				return rrset, nil
 			}
 		}
-		optsForSearchRRSet["offset"] = strconv.Itoa(rrsets.GetNextOffset())
+		optsForSearchRrset["offset"] = strconv.Itoa(rrsets.GetNextOffset())
 		if rrsets.GetNextOffset() == 0 {
 			break
 		}
 	}
 
-	return nil, errGettingObject(objectRRSet, fmt.Sprintf("Name: %s. Type: %s.", rrsetName, rrsetType), ErrRRSetNotFound)
-}
-
-func setZoneToResourceData(d *schema.ResourceData, zone *domainsV2.Zone) error {
-	d.SetId(zone.ID)
-	d.Set("name", zone.Name)
-	d.Set("comment", zone.Comment)
-	d.Set("created_at", zone.CreatedAt.Format(time.RFC3339))
-	d.Set("updated_at", zone.UpdatedAt.Format(time.RFC3339))
-	d.Set("delegation_checked_at", zone.DelegationCheckedAt.Format(time.RFC3339))
-	d.Set("last_check_status", zone.LastCheckStatus)
-	d.Set("last_delegated_at", zone.LastDelegatedAt.Format(time.RFC3339))
-	d.Set("project_id", strings.ReplaceAll(zone.ProjectID, "-", ""))
-	d.Set("disabled", zone.Disabled)
-
-	return nil
-}
-
-func setRRSetToResourceData(d *schema.ResourceData, rrset *domainsV2.RRSet) error {
-	d.SetId(rrset.ID)
-	d.Set("name", rrset.Name)
-	d.Set("comment", rrset.Comment)
-	d.Set("managed_by", rrset.ManagedBy)
-	d.Set("ttl", rrset.TTL)
-	d.Set("type", rrset.Type)
-	d.Set("zone_id", rrset.ZoneID)
-	d.Set("records", generateSetFromRecords(rrset.Records))
-
-	return nil
-}
-
-// generateSetFromRecords - generate terraform TypeList from records in RRSet.
-func generateSetFromRecords(records []domainsV2.RecordItem) []interface{} {
-	recordsAsList := []interface{}{}
-	for _, record := range records {
-		recordsAsList = append(recordsAsList, map[string]interface{}{
-			"content":  record.Content,
-			"disabled": record.Disabled,
-		})
-	}
-
-	return recordsAsList
-}
-
-// generateRecordsFromSet - generate records for RRSet from terraform TypeList.
-func generateRecordsFromSet(recordsSet *schema.Set) []domainsV2.RecordItem {
-	records := []domainsV2.RecordItem{}
-	for _, recordItem := range recordsSet.List() {
-		record, isOk := recordItem.(map[string]interface{})
-		if !isOk {
-			continue
-		}
-		records = append(records, domainsV2.RecordItem{
-			Content:  record["content"].(string),
-			Disabled: record["disabled"].(bool),
-		})
-	}
-
-	return records
+	return nil, errGettingObject(objectRrset, fmt.Sprintf("Name: %s. Type: %s.", rrsetName, rrsetType), ErrRrsetNotFound)
 }

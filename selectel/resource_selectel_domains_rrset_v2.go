@@ -12,41 +12,31 @@ import (
 	domainsV2 "github.com/selectel/domains-go/pkg/v2"
 )
 
-var ErrRRSetNotFound = errors.New("rrset not found")
-
-func resourceDomainsRRSetV2() *schema.Resource {
+func resourceDomainsRrsetV2() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceDomainsRRSetV2Create,
-		ReadContext:   resourceDomainsRRSetV2Read,
-		UpdateContext: resourceDomainsRRSetV2Update,
-		DeleteContext: resourceDomainsRRSetV2Delete,
+		CreateContext: resourceDomainsRrsetV2Create,
+		ReadContext:   resourceDomainsRrsetV2Read,
+		UpdateContext: resourceDomainsRrsetV2Update,
+		DeleteContext: resourceDomainsRrsetV2Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceDomainsRRSetV2ImportState,
+			StateContext: resourceDomainsRrsetV2ImportState,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"zone_id": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"type": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
-			},
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
 			},
 			"comment": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 			"managed_by": {
 				Type:     schema.TypeString,
@@ -77,10 +67,12 @@ func resourceDomainsRRSetV2() *schema.Resource {
 	}
 }
 
-func resourceDomainsRRSetV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsRrsetV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	zoneID := d.Get("zone_id").(string)
+	selMutexKV.Lock(zoneID)
+	defer selMutexKV.Unlock(zoneID)
 
-	client, err := getDomainsV2Client(d, meta)
+	client, err := getDomainsV2Client(meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -88,12 +80,12 @@ func resourceDomainsRRSetV2Create(ctx context.Context, d *schema.ResourceData, m
 	recordType := domainsV2.RecordType(d.Get("type").(string))
 	recordsSet := d.Get("records").(*schema.Set)
 	records := generateRecordsFromSet(recordsSet)
-	createOpts := domainsV2.RRSet{
-		Name:    d.Get("name").(string),
-		Type:    recordType,
-		TTL:     d.Get("ttl").(int),
-		ZoneID:  zoneID,
-		Records: records,
+	createOpts := &domainsV2.RRSet{
+		Name:     d.Get("name").(string),
+		Type:     recordType,
+		TTL:      d.Get("ttl").(int),
+		ZoneUUID: zoneID,
+		Records:  records,
 	}
 
 	if comment := d.Get("comment"); comment != nil {
@@ -103,57 +95,51 @@ func resourceDomainsRRSetV2Create(ctx context.Context, d *schema.ResourceData, m
 		createOpts.ManagedBy = managedBy.(string)
 	}
 
-	rrset, err := client.CreateRRSet(ctx, zoneID, &createOpts)
+	rrset, err := client.CreateRRSet(ctx, zoneID, createOpts)
 	if err != nil {
-		return diag.FromErr(errCreatingObject(objectRRSet, err))
+		return diag.FromErr(errCreatingObject(objectRrset, err))
 	}
 
-	err = setRRSetToResourceData(d, rrset)
+	err = setRrsetToResourceData(d, rrset)
 	if err != nil {
-		return diag.FromErr(errCreatingObject(objectRRSet, err))
+		return diag.FromErr(errCreatingObject(objectRrset, err))
 	}
 
 	return nil
 }
 
-func resourceDomainsRRSetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := getDomainsV2Client(d, meta)
+func resourceDomainsRrsetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client, err := getDomainsV2Client(meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	rrsetID := d.Id()
 	zoneID := d.Get("zone_id").(string)
-	zoneIDWithRRSetID := fmt.Sprintf("zone_id: %s, rrset_id: %s", zoneID, d.Id())
+	zoneIDWithRrsetID := fmt.Sprintf("zone_id: %s, rrset_id: %s", zoneID, rrsetID)
 
-	log.Print(msgGet(objectRRSet, zoneIDWithRRSetID))
+	log.Print(msgGet(objectRrset, zoneIDWithRrsetID))
 
-	rrset, err := client.GetRRSet(ctx, zoneID, d.Id())
+	rrset, err := client.GetRRSet(ctx, zoneID, rrsetID)
 	if err != nil {
 		d.SetId("")
-		return diag.FromErr(errGettingObject(objectRRSet, zoneIDWithRRSetID, err))
+		return diag.FromErr(errGettingObject(objectRrset, zoneIDWithRrsetID, err))
 	}
 
-	err = setRRSetToResourceData(d, rrset)
+	err = setRrsetToResourceData(d, rrset)
 	if err != nil {
-		return diag.FromErr(errGettingObject(objectRRSet, zoneIDWithRRSetID, err))
+		return diag.FromErr(errGettingObject(objectRrset, zoneIDWithRrsetID, err))
 	}
 
 	return nil
 }
 
-func resourceDomainsRRSetV2ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	config := meta.(*Config)
-	if config.ProjectID == "" {
-		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")
-	}
-	d.Set("project_id", config.ProjectID)
-
-	client, err := getDomainsV2Client(d, meta)
+func resourceDomainsRrsetV2ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	client, err := getDomainsV2Client(meta)
 	if err != nil {
 		return nil, err
 	}
-	// concat zone_name,rrset_name,rrset_type with symbol "/" instead of rrset id for importing rrset.
-	// example: terraform import domains_rrset_v2.<resource_name> <zone_name>/<rrset_name>/<rrset_type>
+
 	parts := strings.Split(d.Id(), "/")
 	if len(parts) != 3 {
 		return nil, errors.New("id must include three parts: zone_name/rrset_name/rrset_type")
@@ -163,19 +149,19 @@ func resourceDomainsRRSetV2ImportState(ctx context.Context, d *schema.ResourceDa
 	rrsetName := parts[1]
 	rrsetType := parts[2]
 
-	log.Print(msgImport(objectRRSet, fmt.Sprintf("%s/%s/%s", zoneName, rrsetName, rrsetType)))
+	log.Print(msgImport(objectRrset, fmt.Sprintf("%s/%s/%s", zoneName, rrsetName, rrsetType)))
 
 	zone, err := getZoneByName(ctx, client, zoneName)
 	if err != nil {
 		return nil, err
 	}
 
-	rrset, err := getRRSetByNameAndType(ctx, client, zone.ID, rrsetName, rrsetType)
+	rrset, err := getRrsetByNameAndType(ctx, client, zone.UUID, rrsetName, rrsetType)
 	if err != nil {
 		return nil, err
 	}
 
-	err = setRRSetToResourceData(d, rrset)
+	err = setRrsetToResourceData(d, rrset)
 	if err != nil {
 		return nil, err
 	}
@@ -183,52 +169,98 @@ func resourceDomainsRRSetV2ImportState(ctx context.Context, d *schema.ResourceDa
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceDomainsRRSetV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsRrsetV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	rrsetID := d.Id()
 	zoneID := d.Get("zone_id").(string)
 
-	client, err := getDomainsV2Client(d, meta)
+	selMutexKV.Lock(zoneID)
+	defer selMutexKV.Unlock(zoneID)
+
+	client, err := getDomainsV2Client(meta)
 	if err != nil {
-		return diag.FromErr(errUpdatingObject(objectRRSet, d.Id(), err))
+		return diag.FromErr(errUpdatingObject(objectRrset, rrsetID, err))
 	}
 
 	if d.HasChanges("ttl", "comment", "records") {
 		recordsSet := d.Get("records").(*schema.Set)
 		records := generateRecordsFromSet(recordsSet)
 
-		updateOpts := domainsV2.RRSet{
+		updateOpts := &domainsV2.RRSet{
 			Name:      d.Get("name").(string),
 			Type:      domainsV2.RecordType(d.Get("type").(string)),
 			TTL:       d.Get("ttl").(int),
-			ZoneID:    zoneID,
+			ZoneUUID:  zoneID,
+			Comment:   d.Get("comment").(string),
 			ManagedBy: d.Get("managed_by").(string),
 			Records:   records,
 		}
-		if comment, ok := d.GetOk("comment"); ok {
-			updateOpts.Comment = comment.(string)
-		}
-		err = client.UpdateRRSet(ctx, zoneID, d.Id(), &updateOpts)
+		err = client.UpdateRRSet(ctx, zoneID, rrsetID, updateOpts)
 		if err != nil {
-			return diag.FromErr(errUpdatingObject(objectRRSet, d.Id(), err))
+			return diag.FromErr(errUpdatingObject(objectRrset, rrsetID, err))
 		}
 	}
 
-	return resourceDomainsRRSetV2Read(ctx, d, meta)
+	return resourceDomainsRrsetV2Read(ctx, d, meta)
 }
 
-func resourceDomainsRRSetV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsRrsetV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	zoneID := d.Get("zone_id").(string)
+	rrsetID := d.Id()
+	selMutexKV.Lock(zoneID)
+	defer selMutexKV.Unlock(zoneID)
 
-	client, err := getDomainsV2Client(d, meta)
+	client, err := getDomainsV2Client(meta)
 	if err != nil {
-		return diag.FromErr(errDeletingObject(objectRRSet, d.Id(), err))
+		return diag.FromErr(errDeletingObject(objectRrset, rrsetID, err))
 	}
 
-	log.Print(msgDelete(objectRRSet, fmt.Sprintf("zone_id: %s, rrset_id: %s", zoneID, d.Id())))
+	log.Print(msgDelete(objectRrset, fmt.Sprintf("zone_id: %s, rrset_id: %s", zoneID, rrsetID)))
 
-	err = client.DeleteRRSet(ctx, zoneID, d.Id())
+	err = client.DeleteRRSet(ctx, zoneID, rrsetID)
 	if err != nil {
-		return diag.FromErr(errDeletingObject(objectRRSet, d.Id(), err))
+		return diag.FromErr(errDeletingObject(objectRrset, rrsetID, err))
 	}
 
 	return nil
+}
+
+func setRrsetToResourceData(d *schema.ResourceData, rrset *domainsV2.RRSet) error {
+	d.SetId(rrset.UUID)
+	d.Set("name", rrset.Name)
+	d.Set("comment", rrset.Comment)
+	d.Set("managed_by", rrset.ManagedBy)
+	d.Set("ttl", rrset.TTL)
+	d.Set("type", rrset.Type)
+	d.Set("zone_id", rrset.ZoneUUID)
+	d.Set("records", generateSetFromRecords(rrset.Records))
+
+	return nil
+}
+
+// generateSetFromRecords - generate terraform TypeList from records in rrset.
+func generateSetFromRecords(records []domainsV2.RecordItem) []interface{} {
+	recordsAsList := []interface{}{}
+	for _, record := range records {
+		recordsAsList = append(recordsAsList, map[string]interface{}{
+			"content":  record.Content,
+			"disabled": record.Disabled,
+		})
+	}
+
+	return recordsAsList
+}
+
+// generateRecordsFromSet - generate records for Rrset from terraform TypeList.
+func generateRecordsFromSet(recordsSet *schema.Set) []domainsV2.RecordItem {
+	records := []domainsV2.RecordItem{}
+	for _, recordItem := range recordsSet.List() {
+		if record, isOk := recordItem.(map[string]interface{}); isOk {
+			records = append(records, domainsV2.RecordItem{
+				Content:  record["content"].(string),
+				Disabled: record["disabled"].(bool),
+			})
+		}
+	}
+
+	return records
 }
