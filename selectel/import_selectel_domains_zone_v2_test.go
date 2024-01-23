@@ -10,17 +10,15 @@ import (
 )
 
 func TestAccDomainsZoneV2ImportBasic(t *testing.T) {
-	resourceName := "zone_tf_acc_test_1"
-	fullResourceName := fmt.Sprintf("selectel_domains_zone_v2.%[1]s", resourceName)
+	fullResourceName := fmt.Sprintf("selectel_domains_zone_v2.%[1]s", resourceZoneName)
 	testZoneName := fmt.Sprintf("%s.xyz.", acctest.RandomWithPrefix("tf-acc"))
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckDomainsV2ZoneDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDomainsZoneV2Basic(resourceName, testZoneName),
+				Config: testAccDomainsZoneV2Basic(resourceZoneName, testZoneName),
 			},
 			{
 				ResourceName:      fullResourceName,
@@ -38,5 +36,6 @@ func getTestZoneIDForImport(s *terraform.State) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("Not found zone: %s", resourceZoneFullName)
 	}
+
 	return resourceZone.Primary.Attributes["name"], nil
 }

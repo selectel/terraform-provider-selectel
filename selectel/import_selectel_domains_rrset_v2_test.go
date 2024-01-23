@@ -16,8 +16,6 @@ func TestAccDomainsRrsetV2ImportBasic(t *testing.T) {
 	testRrsetType := domainsV2.TXT
 	testRrsetTTL := 60
 	testRrrsetContent := fmt.Sprintf("\"%[1]s\"", acctest.RandString(16))
-	resourceZoneName := "zone_tf_acc_test_1"
-	resourceRrsetName := "rrset_tf_acc_test_1"
 	fullResourceName := fmt.Sprintf("selectel_domains_rrset_v2.%[1]s", resourceRrsetName)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },

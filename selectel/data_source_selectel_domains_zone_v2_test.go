@@ -11,9 +11,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+const resourceZoneName = "zone_tf_acc_test_1"
+
 func TestAccDomainsZoneV2DataSourceBasic(t *testing.T) {
 	testZoneName := fmt.Sprintf("%s.ru.", acctest.RandomWithPrefix("tf-acc"))
-	resourceZoneName := "zone_tf_acc_test_1"
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
