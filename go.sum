@@ -107,7 +107,6 @@ github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d/go.mod h1:+NfK9FKe
 github.com/imdario/mergo v0.3.12 h1:b6R2BslTbIEToALKP7LxUvijTsNI9TAe80pLWN2g/HU=
 github.com/imdario/mergo v0.3.12/go.mod h1:jmQim1M+e3UYxmgPu/WyfjB3N3VflVyUjjjwH0dnCYA=
 github.com/jarcoal/httpmock v1.3.1 h1:iUx3whfZWVf3jT01hQTO/Eo5sAYtB2/rqaUuOtpInww=
-github.com/jarcoal/httpmock v1.3.1/go.mod h1:3yb8rc4BI7TCBhFY8ng0gjuLKJNquuDNiPaZjnENuYg=
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 h1:BQSFePA1RWJOlocH6Fxy8MmwDt+yVQYULKfN0RoTN8A=
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99/go.mod h1:1lJo3i6rXxKeerYnT8Nvf0QmHCRC1n8sfWVwXF2Frvo=
 github.com/jessevdk/go-flags v1.5.0/go.mod h1:Fw0T6WPc1dYxT4mKEZRfG5kJhaTDP9pj1c2EWnYs/m4=
@@ -163,8 +162,10 @@ github.com/selectel/domains-go v1.0.2 h1:Si6iGaMnTFJxwiJVI50DOdZnwcxc87kqaWrVQYW
 github.com/selectel/domains-go v1.0.2/go.mod h1:SugRKfq4sTpnOHquslCpzda72wV8u0cMBHx0C0l+bzA=
 github.com/selectel/go-selvpcclient/v3 v3.1.1 h1:C1q2LqqosiapoLpnGITGmysg0YCSQYDo2Gh69CioevM=
 github.com/selectel/go-selvpcclient/v3 v3.1.1/go.mod h1:NM7IXhh1IzqZ88DOw1Qc5Ez3tULLViXo95l5+rKPuyQ=
-github.com/selectel/mks-go v0.14.0 h1:huNq/oTutPc3ezB8HRqlGN9WJubTDETpNKuIVqcZOn0=
-github.com/selectel/mks-go v0.14.0/go.mod h1:VxtV3dzwgOEzZc+9VMQb9DvxfSlej2ZQ8jnT8kqIGgU=
+github.com/selectel/domains-go v1.0.0 h1:F3itzB+wdPAg9j6l+mVJFANC6hyShqBa9VykYfV+row=
+github.com/selectel/domains-go v1.0.0/go.mod h1:SugRKfq4sTpnOHquslCpzda72wV8u0cMBHx0C0l+bzA=
+github.com/selectel/mks-go v0.12.0 h1:nLWHK8BXkhFlXvjFqf7WRrdAfvmrOhQzDSLx7BGa6aM=
+github.com/selectel/mks-go v0.12.0/go.mod h1:FcFqF3WvZIhztyAt1+ZySKf0zWmCEvg9e2gRwxVyQOw=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
 github.com/sergi/go-diff v1.2.0 h1:XU+rvMAioB0UC3q1MFrIQy4Vo5/4VsRDQQXHsEya6xQ=
 github.com/sergi/go-diff v1.2.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
