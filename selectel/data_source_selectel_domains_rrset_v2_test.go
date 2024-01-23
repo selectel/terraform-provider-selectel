@@ -11,14 +11,14 @@ import (
 	domainsV2 "github.com/selectel/domains-go/pkg/v2"
 )
 
+const resourceRrsetName = "rrset_tf_acc_test_1"
+
 func TestAccDomainsRrsetV2DataSourceBasic(t *testing.T) {
 	testZoneName := fmt.Sprintf("%s.ru.", acctest.RandomWithPrefix("tf-acc"))
 	testRrsetName := fmt.Sprintf("%[1]s.%[2]s", acctest.RandomWithPrefix("tf-acc"), testZoneName)
 	testRrsetType := domainsV2.TXT
 	testRrsetTTL := 60
 	testRrrsetContent := fmt.Sprintf("\"%[1]s\"", acctest.RandString(16))
-	resourceZoneName := "zone_tf_acc_test_1"
-	resourceRrsetName := "rrset_tf_acc_test_1"
 	dataSourceRrrsetName := fmt.Sprintf("data.selectel_domains_rrset_v2.%[1]s", resourceRrsetName)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },

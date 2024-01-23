@@ -26,11 +26,11 @@ func getDomainsV2Client(meta interface{}) (domainsV2.DNSClient[domainsV2.Zone, d
 
 	httpClient := &http.Client{}
 	userAgent := "terraform-provider-selectel"
-	defaultApiURL := "https://api.selectel.ru/domains/v2"
+	defaultAPIURL := "https://api.selectel.ru/domains/v2"
 	hdrs := http.Header{}
 	hdrs.Add("X-Auth-Token", selvpcClient.GetXAuthToken())
 	hdrs.Add("User-Agent", userAgent)
-	domainsClient := domainsV2.NewClient(defaultApiURL, httpClient, hdrs)
+	domainsClient := domainsV2.NewClient(defaultAPIURL, httpClient, hdrs)
 
 	return domainsClient, nil
 }
