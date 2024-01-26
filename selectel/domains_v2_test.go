@@ -2,13 +2,42 @@ package selectel
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"strconv"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	domainsV2 "github.com/selectel/domains-go/pkg/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+func getDomainsV2ClientTest(rs *terraform.ResourceState, testAccProvider *schema.Provider) (domainsV2.DNSClient[domainsV2.Zone, domainsV2.RRSet], error) {
+	config := testAccProvider.Meta().(*Config)
+	projectID := config.ProjectID
+	if id, ok := rs.Primary.Attributes["project_id"]; ok {
+		projectID = id
+	}
+	if projectID == "" {
+		return nil, ErrProjectIDNotSetupForDNSV2
+	}
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return nil, fmt.Errorf("can't get selvpc client for domains v2: %w", err)
+	}
+
+	httpClient := &http.Client{}
+	userAgent := "terraform-provider-selectel"
+	defaultApiURL := "https://api.selectel.ru/domains/v2"
+	hdrs := http.Header{}
+	hdrs.Add("X-Auth-Token", selvpcClient.GetXAuthToken())
+	hdrs.Add("User-Agent", userAgent)
+	domainsClient := domainsV2.NewClient(defaultApiURL, httpClient, hdrs)
+
+	return domainsClient, nil
+}
 
 type mockedDNSv2Client struct {
 	mock.Mock
@@ -55,7 +84,7 @@ func TestGetZoneByName_whenNeededZoneInResponseWithOffset(t *testing.T) {
 		NextOffset: nextOffset,
 		Items: []*domainsV2.Zone{
 			{
-				UUID: incorrectIDForSearch,
+				ID:   incorrectIDForSearch,
 				Name: incorrectNameForSearch,
 			},
 		},
@@ -66,7 +95,7 @@ func TestGetZoneByName_whenNeededZoneInResponseWithOffset(t *testing.T) {
 		NextOffset: 0,
 		Items: []*domainsV2.Zone{
 			{
-				UUID: correctIDForSearch,
+				ID:   correctIDForSearch,
 				Name: nameForSearch,
 			},
 		},
@@ -78,7 +107,7 @@ func TestGetZoneByName_whenNeededZoneInResponseWithOffset(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.NotNil(t, zone)
-	assert.Equal(t, correctIDForSearch, zone.UUID)
+	assert.Equal(t, correctIDForSearch, zone.ID)
 	assert.Equal(t, nameForSearch, zone.Name)
 }
 
@@ -109,7 +138,7 @@ func TestGetRrsetByNameAndType_whenNeededRrrsetInResponseWithOffset(t *testing.T
 		NextOffset: nextOffset,
 		Items: []*domainsV2.RRSet{
 			{
-				UUID: incorrectIDForSearch,
+				ID:   incorrectIDForSearch,
 				Name: incorrectNameForSearch,
 				Type: domainsV2.RecordType(rrsetTypeForSearch),
 			},
@@ -121,7 +150,7 @@ func TestGetRrsetByNameAndType_whenNeededRrrsetInResponseWithOffset(t *testing.T
 		NextOffset: 0,
 		Items: []*domainsV2.RRSet{
 			{
-				UUID: correctIDForSearch,
+				ID:   correctIDForSearch,
 				Name: rrsetNameForSearch,
 				Type: domainsV2.RecordType(rrsetTypeForSearch),
 			},
@@ -134,7 +163,26 @@ func TestGetRrsetByNameAndType_whenNeededRrrsetInResponseWithOffset(t *testing.T
 	assert.NoError(t, err)
 
 	assert.NotNil(t, rrset)
-	assert.Equal(t, correctIDForSearch, rrset.UUID)
+	assert.Equal(t, correctIDForSearch, rrset.ID)
 	assert.Equal(t, rrsetNameForSearch, rrset.Name)
 	assert.Equal(t, rrsetTypeForSearch, string(rrset.Type))
+}
+
+func TestGetProjectIDFromResourceOrConfig_getProjectIDFromConfig(t *testing.T) {
+	expectedProjectID := "2673627"
+	resource := &schema.ResourceData{}
+	config := &Config{
+		ProjectID: expectedProjectID,
+	}
+	projectID, err := getProjectIDFromResourceOrConfig(resource, config)
+	assert.Nil(t, err)
+	assert.Equal(t, expectedProjectID, projectID)
+}
+
+func TestGetProjectIDFromResourceOrConfig_getProjectIDError(t *testing.T) {
+	resource := &schema.ResourceData{}
+	config := &Config{}
+	projectID, err := getProjectIDFromResourceOrConfig(resource, config)
+	assert.Empty(t, projectID)
+	assert.Equal(t, ErrProjectIDNotSetupForDNSV2, err)
 }

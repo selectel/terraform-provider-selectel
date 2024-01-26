@@ -8,18 +8,19 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	domainsV2 "github.com/selectel/domains-go/pkg/v2"
 )
 
 var ErrProjectIDNotSetupForDNSV2 = errors.New("env variable SEL_PROJECT_ID or variable project_id must be set for the dns v2")
 
-func getDomainsV2Client(meta interface{}) (domainsV2.DNSClient[domainsV2.Zone, domainsV2.RRSet], error) {
+func getDomainsV2Client(d *schema.ResourceData, meta interface{}) (domainsV2.DNSClient[domainsV2.Zone, domainsV2.RRSet], error) {
 	config := meta.(*Config)
-	if config.ProjectID == "" {
-		return nil, ErrProjectIDNotSetupForDNSV2
+	projectID, err := getProjectIDFromResourceOrConfig(d, config)
+	if err != nil {
+		return nil, fmt.Errorf("can't get projectID for domains v2: %w", err)
 	}
-
-	selvpcClient, err := config.GetSelVPCClientWithProjectScope(config.ProjectID)
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
 	if err != nil {
 		return nil, fmt.Errorf("can't get selvpc client for domains v2: %w", err)
 	}
@@ -33,6 +34,18 @@ func getDomainsV2Client(meta interface{}) (domainsV2.DNSClient[domainsV2.Zone, d
 	domainsClient := domainsV2.NewClient(defaultAPIURL, httpClient, hdrs)
 
 	return domainsClient, nil
+}
+
+func getProjectIDFromResourceOrConfig(d *schema.ResourceData, config *Config) (string, error) {
+	projectID := config.ProjectID
+	if v, ok := d.GetOk("project_id"); ok {
+		projectID = v.(string)
+	}
+	if projectID == "" {
+		return "", ErrProjectIDNotSetupForDNSV2
+	}
+
+	return projectID, nil
 }
 
 func getZoneByName(ctx context.Context, client domainsV2.DNSClient[domainsV2.Zone, domainsV2.RRSet], zoneName string) (*domainsV2.Zone, error) {

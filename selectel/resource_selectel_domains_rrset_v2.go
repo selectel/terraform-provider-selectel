@@ -34,9 +34,13 @@ func resourceDomainsRrsetV2() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"project_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"comment": {
 				Type:     schema.TypeString,
-				Computed: true,
+				Optional: true,
 			},
 			"managed_by": {
 				Type:     schema.TypeString,
@@ -72,7 +76,7 @@ func resourceDomainsRrsetV2Create(ctx context.Context, d *schema.ResourceData, m
 	selMutexKV.Lock(zoneID)
 	defer selMutexKV.Unlock(zoneID)
 
-	client, err := getDomainsV2Client(meta)
+	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -80,12 +84,12 @@ func resourceDomainsRrsetV2Create(ctx context.Context, d *schema.ResourceData, m
 	recordType := domainsV2.RecordType(d.Get("type").(string))
 	recordsSet := d.Get("records").(*schema.Set)
 	records := generateRecordsFromSet(recordsSet)
-	createOpts := &domainsV2.RRSet{
-		Name:     d.Get("name").(string),
-		Type:     recordType,
-		TTL:      d.Get("ttl").(int),
-		ZoneUUID: zoneID,
-		Records:  records,
+	createOpts := domainsV2.RRSet{
+		Name:    d.Get("name").(string),
+		Type:    recordType,
+		TTL:     d.Get("ttl").(int),
+		ZoneID:  zoneID,
+		Records: records,
 	}
 
 	if comment := d.Get("comment"); comment != nil {
@@ -95,7 +99,7 @@ func resourceDomainsRrsetV2Create(ctx context.Context, d *schema.ResourceData, m
 		createOpts.ManagedBy = managedBy.(string)
 	}
 
-	rrset, err := client.CreateRRSet(ctx, zoneID, createOpts)
+	rrset, err := client.CreateRRSet(ctx, zoneID, &createOpts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectRrset, err))
 	}
@@ -109,7 +113,7 @@ func resourceDomainsRrsetV2Create(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceDomainsRrsetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := getDomainsV2Client(meta)
+	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -135,7 +139,7 @@ func resourceDomainsRrsetV2Read(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceDomainsRrsetV2ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client, err := getDomainsV2Client(meta)
+	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +160,7 @@ func resourceDomainsRrsetV2ImportState(ctx context.Context, d *schema.ResourceDa
 		return nil, err
 	}
 
-	rrset, err := getRrsetByNameAndType(ctx, client, zone.UUID, rrsetName, rrsetType)
+	rrset, err := getRrsetByNameAndType(ctx, client, zone.ID, rrsetName, rrsetType)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +180,7 @@ func resourceDomainsRrsetV2Update(ctx context.Context, d *schema.ResourceData, m
 	selMutexKV.Lock(zoneID)
 	defer selMutexKV.Unlock(zoneID)
 
-	client, err := getDomainsV2Client(meta)
+	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
 		return diag.FromErr(errUpdatingObject(objectRrset, rrsetID, err))
 	}
@@ -185,16 +189,18 @@ func resourceDomainsRrsetV2Update(ctx context.Context, d *schema.ResourceData, m
 		recordsSet := d.Get("records").(*schema.Set)
 		records := generateRecordsFromSet(recordsSet)
 
-		updateOpts := &domainsV2.RRSet{
+		updateOpts := domainsV2.RRSet{
 			Name:      d.Get("name").(string),
 			Type:      domainsV2.RecordType(d.Get("type").(string)),
 			TTL:       d.Get("ttl").(int),
-			ZoneUUID:  zoneID,
-			Comment:   d.Get("comment").(string),
+			ZoneID:    zoneID,
 			ManagedBy: d.Get("managed_by").(string),
 			Records:   records,
 		}
-		err = client.UpdateRRSet(ctx, zoneID, rrsetID, updateOpts)
+		if comment, ok := d.GetOk("comment"); ok {
+			updateOpts.Comment = comment.(string)
+		}
+		err = client.UpdateRRSet(ctx, zoneID, rrsetID, &updateOpts)
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectRrset, rrsetID, err))
 		}
@@ -209,7 +215,7 @@ func resourceDomainsRrsetV2Delete(ctx context.Context, d *schema.ResourceData, m
 	selMutexKV.Lock(zoneID)
 	defer selMutexKV.Unlock(zoneID)
 
-	client, err := getDomainsV2Client(meta)
+	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
 		return diag.FromErr(errDeletingObject(objectRrset, rrsetID, err))
 	}
@@ -225,13 +231,13 @@ func resourceDomainsRrsetV2Delete(ctx context.Context, d *schema.ResourceData, m
 }
 
 func setRrsetToResourceData(d *schema.ResourceData, rrset *domainsV2.RRSet) error {
-	d.SetId(rrset.UUID)
+	d.SetId(rrset.ID)
 	d.Set("name", rrset.Name)
 	d.Set("comment", rrset.Comment)
 	d.Set("managed_by", rrset.ManagedBy)
 	d.Set("ttl", rrset.TTL)
 	d.Set("type", rrset.Type)
-	d.Set("zone_id", rrset.ZoneUUID)
+	d.Set("zone_id", rrset.ZoneID)
 	d.Set("records", generateSetFromRecords(rrset.Records))
 
 	return nil

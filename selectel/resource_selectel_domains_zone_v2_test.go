@@ -38,12 +38,6 @@ func testAccDomainsZoneV2Basic(resourceName, zoneName string) string {
 }
 
 func testAccCheckDomainsV2ZoneDestroy(s *terraform.State) error {
-	meta := testAccProvider.Meta()
-	client, err := getDomainsV2Client(meta)
-	if err != nil {
-		return err
-	}
-
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
@@ -52,7 +46,10 @@ func testAccCheckDomainsV2ZoneDestroy(s *terraform.State) error {
 		}
 
 		zoneID := rs.Primary.ID
-
+		client, err := getDomainsV2ClientTest(rs, testAccProvider)
+		if err != nil {
+			return err
+		}
 		_, err = client.GetZone(ctx, zoneID, nil)
 		if err == nil {
 			return errors.New("domain still exists")

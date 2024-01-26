@@ -153,12 +153,12 @@ github.com/selectel/craas-go v0.3.0 h1:tXiw3LNN+ZVV0wZdeBBXX6u8kMuA5PV/5W1uYqV0y
 github.com/selectel/craas-go v0.3.0/go.mod h1:9RAUn9PdMITP4I3GAade6v2hjB2j3lo3J2dDlG5SLYE=
 github.com/selectel/dbaas-go v0.9.0 h1:IAmiyxkRtfLZg1JUdIhcsE5jpdBvsZibPCqyhB+yV30=
 github.com/selectel/dbaas-go v0.9.0/go.mod h1:8D945oFzpx94v08zIb4s1bRTPCdPoNVnBu4umMYFJrQ=
-github.com/selectel/domains-go v0.5.0 h1:RCrWY/9KHVtfdA+X8M+DDzsjILxFChhY70HnJEu1Y2U=
-github.com/selectel/domains-go v0.5.0/go.mod h1:AhXhwyMSTkpEWFiBLUvzFP76W+WN+ZblwmjLJLt7y58=
+github.com/selectel/domains-go v1.0.1 h1:Dau3uVlAXA3iFpeUQq2ld/aOlc8bzwdAXdVPGMwCD7Q=
+github.com/selectel/domains-go v1.0.1/go.mod h1:SugRKfq4sTpnOHquslCpzda72wV8u0cMBHx0C0l+bzA=
+github.com/selectel/domains-go v1.0.2 h1:Si6iGaMnTFJxwiJVI50DOdZnwcxc87kqaWrVQYW0a4U=
+github.com/selectel/domains-go v1.0.2/go.mod h1:SugRKfq4sTpnOHquslCpzda72wV8u0cMBHx0C0l+bzA=
 github.com/selectel/go-selvpcclient/v3 v3.1.1 h1:C1q2LqqosiapoLpnGITGmysg0YCSQYDo2Gh69CioevM=
 github.com/selectel/go-selvpcclient/v3 v3.1.1/go.mod h1:NM7IXhh1IzqZ88DOw1Qc5Ez3tULLViXo95l5+rKPuyQ=
-github.com/selectel/domains-go v1.0.0 h1:F3itzB+wdPAg9j6l+mVJFANC6hyShqBa9VykYfV+row=
-github.com/selectel/domains-go v1.0.0/go.mod h1:SugRKfq4sTpnOHquslCpzda72wV8u0cMBHx0C0l+bzA=
 github.com/selectel/mks-go v0.12.0 h1:nLWHK8BXkhFlXvjFqf7WRrdAfvmrOhQzDSLx7BGa6aM=
 github.com/selectel/mks-go v0.12.0/go.mod h1:FcFqF3WvZIhztyAt1+ZySKf0zWmCEvg9e2gRwxVyQOw=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=

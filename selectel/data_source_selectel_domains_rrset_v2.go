@@ -23,13 +23,17 @@ func dataSourceDomainsRrsetV2() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"type": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
 			"zone_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"type": {
+			"project_id": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 			"comment": {
 				Type:     schema.TypeString,
@@ -64,7 +68,7 @@ func dataSourceDomainsRrsetV2() *schema.Resource {
 }
 
 func dataSourceDomainsRrsetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := getDomainsV2Client(meta)
+	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
