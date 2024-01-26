@@ -25,7 +25,6 @@ func dataSourceDomainsZoneV2() *schema.Resource {
 			"project_id": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
 			},
 			"comment": {
 				Type:     schema.TypeString,
