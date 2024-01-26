@@ -71,12 +71,6 @@ func testAccDomainsRrsetV2Basic(resourceRrsetName, rrsetName, rrsetType, rrsetCo
 }
 
 func testAccCheckDomainsV2RrsetDestroy(s *terraform.State) error {
-	meta := testAccProvider.Meta()
-	client, err := getDomainsV2Client(meta)
-	if err != nil {
-		return err
-	}
-
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
@@ -87,7 +81,10 @@ func testAccCheckDomainsV2RrsetDestroy(s *terraform.State) error {
 
 		zoneID := rs.Primary.Attributes["zone_id"]
 		rrsetID := rs.Primary.ID
-
+		client, err := getDomainsV2ClientTest(rs, testAccProvider)
+		if err != nil {
+			return err
+		}
 		_, err = client.GetRRSet(ctx, zoneID, rrsetID)
 		if err == nil {
 			return errors.New("rrset still exists")

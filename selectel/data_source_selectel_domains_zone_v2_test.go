@@ -42,9 +42,7 @@ func testAccDomainsZoneV2Exists(name string) resource.TestCheckFunc {
 		if zoneID == "" {
 			return errors.New("zone ID not set in tf state")
 		}
-
-		meta := testAccProvider.Meta()
-		client, err := getDomainsV2Client(meta)
+		client, err := getDomainsV2ClientTest(rs, testAccProvider)
 		if err != nil {
 			return err
 		}
