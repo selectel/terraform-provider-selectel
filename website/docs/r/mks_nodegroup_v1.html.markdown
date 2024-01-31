@@ -56,7 +56,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 
 * `availability_zone` (Required) Pool segment where all nodes of the node group are located. Changing this creates a new node group.  Learn more about available pool segments in the  [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-kubernetes).  
 
-* `nodes_count` (Required) Number of worker nodes in the node group. The maximum number of nodes in a node group is 15. Changing this resizes the node group if `enable_autoscale` is false.
+* `nodes_count` (Required) Number of worker nodes in the node group. The maximum number of nodes in a node group is 250. Changing this resizes the node group if `enable_autoscale` is false.
 
 * `cpus` (Optional) Number of CPU cores for each node. Can be skipped only when `flavor_id` is set. Changing this creates a new node group. Learn more about [Configurations](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/configurations/).
 
