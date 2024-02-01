@@ -8,7 +8,9 @@ description: |-
 
 # selectel\_domains\_domain\_v1
 
-Creates and manages a domain in DNS Hosting using public API v1. For more information about domains, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/domains/).
+~> **Note:** This is deprecated resource. Using the `selectel_domains_zone_v2` resource. They utilize different API and created zones live on different authoritative servers. Zone created in v2 API is entirely new zone, and not available via v1 api and vice versa.
+
+Creates and manages a domain in DNS Hosting using public API v1. For more information about domains, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/zones/).
 
 ## Example usage
 

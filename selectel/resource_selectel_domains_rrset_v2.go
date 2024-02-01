@@ -25,18 +25,22 @@ func resourceDomainsRrsetV2() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"zone_id": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"type": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"project_id": {
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 			},
 			"comment": {
 				Type:     schema.TypeString,
@@ -228,45 +232,4 @@ func resourceDomainsRrsetV2Delete(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	return nil
-}
-
-func setRrsetToResourceData(d *schema.ResourceData, rrset *domainsV2.RRSet) error {
-	d.SetId(rrset.ID)
-	d.Set("name", rrset.Name)
-	d.Set("comment", rrset.Comment)
-	d.Set("managed_by", rrset.ManagedBy)
-	d.Set("ttl", rrset.TTL)
-	d.Set("type", rrset.Type)
-	d.Set("zone_id", rrset.ZoneID)
-	d.Set("records", generateSetFromRecords(rrset.Records))
-
-	return nil
-}
-
-// generateSetFromRecords - generate terraform TypeList from records in rrset.
-func generateSetFromRecords(records []domainsV2.RecordItem) []interface{} {
-	recordsAsList := []interface{}{}
-	for _, record := range records {
-		recordsAsList = append(recordsAsList, map[string]interface{}{
-			"content":  record.Content,
-			"disabled": record.Disabled,
-		})
-	}
-
-	return recordsAsList
-}
-
-// generateRecordsFromSet - generate records for Rrset from terraform TypeList.
-func generateRecordsFromSet(recordsSet *schema.Set) []domainsV2.RecordItem {
-	records := []domainsV2.RecordItem{}
-	for _, recordItem := range recordsSet.List() {
-		if record, isOk := recordItem.(map[string]interface{}); isOk {
-			records = append(records, domainsV2.RecordItem{
-				Content:  record["content"].(string),
-				Disabled: record["disabled"].(bool),
-			})
-		}
-	}
-
-	return records
 }
