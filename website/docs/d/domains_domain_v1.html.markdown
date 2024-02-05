@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_domains\_domain_v1
 
-~> **Note:** This is deprecated datasource. Using the `selectel_domains_zone_v2` datasource. They utilize different API and created zones live on different authoritative servers. Zone created in v2 API is entirely new zone, and not available via v1 api and vice versa.
+~> **Note:** This is legacy datasource. Using the `selectel_domains_zone_v2` datasource. They utilize different API and created zones live on different authoritative servers. Zone created in v2 API is entirely new zone, and not available via v1 api and vice versa.
 
 Provides an ID of a domain in DNS Hosting. For more information about domains in DNS Hosting, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/zones/).
 
