@@ -99,7 +99,7 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"selectel_domains_domain_v1":                dataSourceDomainsDomainV1(), // DEPRECATED
+			"selectel_domains_domain_v1":                dataSourceDomainsDomainV1(),
 			"selectel_domains_zone_v2":                  dataSourceDomainsZoneV2(),
 			"selectel_domains_rrset_v2":                 dataSourceDomainsRrsetV2(),
 			"selectel_dbaas_datastore_type_v1":          dataSourceDBaaSDatastoreTypeV1(),
@@ -125,8 +125,8 @@ func Provider() *schema.Provider {
 			"selectel_vpc_crossregion_subnet_v2":                    resourceVPCCrossRegionSubnetV2(), // DEPRECATED
 			"selectel_mks_cluster_v1":                               resourceMKSClusterV1(),
 			"selectel_mks_nodegroup_v1":                             resourceMKSNodegroupV1(),
-			"selectel_domains_domain_v1":                            resourceDomainsDomainV1(), // DEPRECATED
-			"selectel_domains_record_v1":                            resourceDomainsRecordV1(), // DEPRECATED
+			"selectel_domains_domain_v1":                            resourceDomainsDomainV1(),
+			"selectel_domains_record_v1":                            resourceDomainsRecordV1(),
 			"selectel_domains_zone_v2":                              resourceDomainsZoneV2(),
 			"selectel_domains_rrset_v2":                             resourceDomainsRrsetV2(),
 			"selectel_dbaas_datastore_v1":                           resourceDBaaSDatastoreV1(), // DEPRECATED

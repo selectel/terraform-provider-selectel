@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_domains\_record\_v1
 
-~> **Note:** This is deprecated resource. Using the `selectel_domains_rrset_v2` resource. They are not compatible. They utilize different API and created records live on different authoritative servers. Zone created in v2 API is entirely new zone, and not available via v1 api and vice versa.
+~> **Note:** This is legacy resource. Using the `selectel_domains_rrset_v2` resource. They are not compatible. They utilize different API and created records live on different authoritative servers. Zone created in v2 API is entirely new zone, and not available via v1 api and vice versa.
 
 Creates and manages a record in DNS Hosting using public API v1. For more information about records, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/records/).
 
