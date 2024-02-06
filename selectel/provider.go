@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	objectACL                     = "acl"
 	objectFloatingIP              = "floating IP"
 	objectKeypair                 = "keypair"
 	objectLicense                 = "license"
@@ -17,6 +18,7 @@ const (
 	objectRole                    = "role"
 	objectSubnet                  = "subnet"
 	objectToken                   = "token"
+	objectTopic                   = "topic"
 	objectUser                    = "user"
 	objectCluster                 = "cluster"
 	objectKubeConfig              = "kubeconfig"
@@ -142,6 +144,9 @@ func Provider() *schema.Provider {
 			"selectel_dbaas_postgresql_extension_v1":                resourceDBaaSPostgreSQLExtensionV1(),
 			"selectel_dbaas_prometheus_metric_token_v1":             resourceDBaaSPrometheusMetricTokenV1(),
 			"selectel_dbaas_postgresql_logical_replication_slot_v1": resourceDBaaSPostgreSQLLogicalReplicationSlotV1(),
+			"selectel_dbaas_kafka_acl_v1":                           resourceDBaaSKafkaACLV1(),
+			"selectel_dbaas_kafka_datastore_v1":                     resourceDBaaSKafkaDatastoreV1(),
+			"selectel_dbaas_kafka_topic_v1":                         resourceDBaaSKafkaTopicV1(),
 			"selectel_craas_registry_v1":                            resourceCRaaSRegistryV1(),
 			"selectel_craas_token_v1":                               resourceCRaaSTokenV1(),
 		},
