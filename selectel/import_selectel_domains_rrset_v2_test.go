@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -11,7 +12,7 @@ import (
 )
 
 func TestAccDomainsRRSetV2ImportBasic(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("SEL_PROJECT_ID")
 	testZoneName := fmt.Sprintf("%s.xyz.", acctest.RandomWithPrefix("tf-acc"))
 	testRRSetName := fmt.Sprintf("%[1]s.%[2]s", acctest.RandomWithPrefix("tf-acc"), testZoneName)
 	testRRSetType := domainsV2.TXT
@@ -19,17 +20,16 @@ func TestAccDomainsRRSetV2ImportBasic(t *testing.T) {
 	testRRSetContent := fmt.Sprintf("\"%[1]s\"", acctest.RandString(16))
 	fullResourceName := fmt.Sprintf("selectel_domains_rrset_v2.%[1]s", resourceRRSetName)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
+		CheckDestroy:      testAccCheckDomainsV2RRSetDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDomainsRRSetV2WithZoneBasic(
-					projectName,
+				Config: testAccDomainsRRSetV2WithZoneWithoutProjectBasic(
+					projectID,
 					resourceRRSetName, testRRSetName, string(testRRSetType), testRRSetContent, testRRSetTTL,
 					resourceZoneName, testZoneName,
 				),
-				Check: testAccCheckSelectelImportEnv(fullResourceName),
 			},
 			{
 				ImportStateIdFunc: getTestRRSetIDForImport,
@@ -58,4 +58,20 @@ func getTestRRSetIDForImport(s *terraform.State) (string, error) {
 		resourceRRSet.Primary.Attributes["name"],
 		resourceRRSet.Primary.Attributes["type"],
 	), nil
+}
+
+func testAccDomainsRRSetV2WithZoneWithoutProjectBasic(projectID, resourceRRSetName, rrsetName, rrsetType, rrsetContent string, ttl int, resourceZoneName, zoneName string) string {
+	return fmt.Sprintf(`
+	%[8]s
+	resource "selectel_domains_rrset_v2" %[1]q {
+		name = %[2]q
+		project_id = %[7]q
+		type = %[3]q
+		ttl = %[4]d
+		zone_id = selectel_domains_zone_v2.%[6]s.id
+		records {
+			content = %[5]q
+			disabled = false
+		}
+	}`, resourceRRSetName, rrsetName, rrsetType, ttl, rrsetContent, resourceZoneName, projectID, testAccDomainsZoneV2WithoutProjectBasic(projectID, resourceZoneName, zoneName))
 }
