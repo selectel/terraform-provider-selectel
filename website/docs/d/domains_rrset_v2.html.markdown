@@ -3,12 +3,12 @@ layout: "selectel"
 page_title: "Selectel: selectel_domains_rrset_v2"
 sidebar_current: "docs-selectel-datasource-domains-rrset-v2"
 description: |-
-  Provides a rrset info in Selectel DNS Hosting using public API v2.
+  Provides a RRSet info in Selectel DNS Hosting using public API v2.
 ---
 
 # selectel\_domains\_rrset_v2
 
-Provides a rrset info in DNS Hosting. For more information about rrset in DNS Hosting, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/records/).
+Provides a RRSet info in DNS Hosting. For more information about RRSet in DNS Hosting, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/records/).
 
 ## Example Usage
 
@@ -33,29 +33,29 @@ data "selectel_domains_rrset_v2" "rrset_1" {
 
 ## Argument Reference
 
-* `name` - (Required) Rrset name.
+* `name` - (Required) RRSet name.
 
-* `type` - (Required) Rrset type.
+* `type` - (Required) RRSet type.
 
 * `zone_id` - (Required) Zone ID.
 
-* `project_id` - (Optional) Selectel project ID.
+* `project_id` - (Required) Selectel project ID.
 
 ## Attributes Reference
 
-* `name` - Rrset name.
+* `name` - RRSet name.
 
-* `type` - Rrset type.
+* `type` - RRSet type.
 
 * `zone_id` - Zone ID.
 
 * `project_id` - Selectel project ID.
 
-* `ttl` - Rrset TTL.
+* `ttl` - RRSet TTL.
 
-* `comment` - Comment for rrset.
+* `comment` - Comment for RRSet.
 
-* `managed_by` - Rrset owner.
+* `managed_by` - RRSet owner.
 
 * `records` - Set of records:
   

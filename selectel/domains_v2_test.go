@@ -16,11 +16,8 @@ import (
 
 func getDomainsV2ClientTest(rs *terraform.ResourceState, testAccProvider *schema.Provider) (domainsV2.DNSClient[domainsV2.Zone, domainsV2.RRSet], error) {
 	config := testAccProvider.Meta().(*Config)
-	projectID := config.ProjectID
-	if id, ok := rs.Primary.Attributes["project_id"]; ok {
-		projectID = id
-	}
-	if projectID == "" {
+	projectID, ok := rs.Primary.Attributes["project_id"]
+	if !ok {
 		return nil, ErrProjectIDNotSetupForDNSV2
 	}
 	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
@@ -30,11 +27,11 @@ func getDomainsV2ClientTest(rs *terraform.ResourceState, testAccProvider *schema
 
 	httpClient := &http.Client{}
 	userAgent := "terraform-provider-selectel"
-	defaultApiURL := "https://api.selectel.ru/domains/v2"
+	defaultAPIURL := "https://api.selectel.ru/domains/v2"
 	hdrs := http.Header{}
 	hdrs.Add("X-Auth-Token", selvpcClient.GetXAuthToken())
 	hdrs.Add("User-Agent", userAgent)
-	domainsClient := domainsV2.NewClient(defaultApiURL, httpClient, hdrs)
+	domainsClient := domainsV2.NewClient(defaultAPIURL, httpClient, hdrs)
 
 	return domainsClient, nil
 }
@@ -111,7 +108,7 @@ func TestGetZoneByName_whenNeededZoneInResponseWithOffset(t *testing.T) {
 	assert.Equal(t, nameForSearch, zone.Name)
 }
 
-func TestGetRrsetByNameAndType_whenNeededRrrsetInResponseWithOffset(t *testing.T) {
+func TestGetRRSetByNameAndType_whenNeededRRSetInResponseWithOffset(t *testing.T) {
 	rrsetNameForSearch := "test.xyz."
 	rrsetTypeForSearch := "A"
 	correctIDForSearch := "mocked-uuid-2"
@@ -158,7 +155,7 @@ func TestGetRrsetByNameAndType_whenNeededRrrsetInResponseWithOffset(t *testing.T
 	})
 	mDNSClient.On("ListRRSets", ctx, mockedZoneID, opts2).Return(rrsetsWithoutNextOffset, nil)
 
-	rrset, err := getRrsetByNameAndType(ctx, mDNSClient, mockedZoneID, rrsetNameForSearch, rrsetTypeForSearch)
+	rrset, err := getRRSetByNameAndType(ctx, mDNSClient, mockedZoneID, rrsetNameForSearch, rrsetTypeForSearch)
 
 	assert.NoError(t, err)
 
@@ -166,23 +163,4 @@ func TestGetRrsetByNameAndType_whenNeededRrrsetInResponseWithOffset(t *testing.T
 	assert.Equal(t, correctIDForSearch, rrset.ID)
 	assert.Equal(t, rrsetNameForSearch, rrset.Name)
 	assert.Equal(t, rrsetTypeForSearch, string(rrset.Type))
-}
-
-func TestGetProjectIDFromResourceOrConfig_getProjectIDFromConfig(t *testing.T) {
-	expectedProjectID := "2673627"
-	resource := &schema.ResourceData{}
-	config := &Config{
-		ProjectID: expectedProjectID,
-	}
-	projectID, err := getProjectIDFromResourceOrConfig(resource, config)
-	assert.Nil(t, err)
-	assert.Equal(t, expectedProjectID, projectID)
-}
-
-func TestGetProjectIDFromResourceOrConfig_getProjectIDError(t *testing.T) {
-	resource := &schema.ResourceData{}
-	config := &Config{}
-	projectID, err := getProjectIDFromResourceOrConfig(resource, config)
-	assert.Empty(t, projectID)
-	assert.Equal(t, ErrProjectIDNotSetupForDNSV2, err)
 }

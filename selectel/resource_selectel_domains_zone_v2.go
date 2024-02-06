@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -26,8 +27,7 @@ func resourceDomainsZoneV2() *schema.Resource {
 			},
 			"project_id": {
 				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Required: true,
 				ForceNew: true,
 			},
 			"comment": {
@@ -130,6 +130,12 @@ func resourceDomainsZoneV2Read(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceDomainsZoneV2ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	config := meta.(*Config)
+	if config.ProjectID == "" {
+		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")
+	}
+	d.Set("project_id", config.ProjectID)
+
 	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
 		return nil, err

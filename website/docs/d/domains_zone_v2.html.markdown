@@ -31,7 +31,7 @@ data "selectel_domains_zone_v2" "zone_1" {
 
 * `name` - (Required) Zone name.
 
-* `project_id` - (Optional) Selectel project ID.
+* `project_id` - (Required) Selectel project ID.
 
 ## Attributes Reference
   

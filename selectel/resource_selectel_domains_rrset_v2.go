@@ -12,14 +12,14 @@ import (
 	domainsV2 "github.com/selectel/domains-go/pkg/v2"
 )
 
-func resourceDomainsRrsetV2() *schema.Resource {
+func resourceDomainsRRSetV2() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceDomainsRrsetV2Create,
-		ReadContext:   resourceDomainsRrsetV2Read,
-		UpdateContext: resourceDomainsRrsetV2Update,
-		DeleteContext: resourceDomainsRrsetV2Delete,
+		CreateContext: resourceDomainsRRSetV2Create,
+		ReadContext:   resourceDomainsRRSetV2Read,
+		UpdateContext: resourceDomainsRRSetV2Update,
+		DeleteContext: resourceDomainsRRSetV2Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceDomainsRrsetV2ImportState,
+			StateContext: resourceDomainsRRSetV2ImportState,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -39,7 +39,7 @@ func resourceDomainsRrsetV2() *schema.Resource {
 			},
 			"project_id": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 				ForceNew: true,
 			},
 			"comment": {
@@ -75,10 +75,8 @@ func resourceDomainsRrsetV2() *schema.Resource {
 	}
 }
 
-func resourceDomainsRrsetV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsRRSetV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	zoneID := d.Get("zone_id").(string)
-	selMutexKV.Lock(zoneID)
-	defer selMutexKV.Unlock(zoneID)
 
 	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
@@ -105,18 +103,18 @@ func resourceDomainsRrsetV2Create(ctx context.Context, d *schema.ResourceData, m
 
 	rrset, err := client.CreateRRSet(ctx, zoneID, &createOpts)
 	if err != nil {
-		return diag.FromErr(errCreatingObject(objectRrset, err))
+		return diag.FromErr(errCreatingObject(objectRRSet, err))
 	}
 
-	err = setRrsetToResourceData(d, rrset)
+	err = setRRSetToResourceData(d, rrset)
 	if err != nil {
-		return diag.FromErr(errCreatingObject(objectRrset, err))
+		return diag.FromErr(errCreatingObject(objectRRSet, err))
 	}
 
 	return nil
 }
 
-func resourceDomainsRrsetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsRRSetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
@@ -124,25 +122,31 @@ func resourceDomainsRrsetV2Read(ctx context.Context, d *schema.ResourceData, met
 
 	rrsetID := d.Id()
 	zoneID := d.Get("zone_id").(string)
-	zoneIDWithRrsetID := fmt.Sprintf("zone_id: %s, rrset_id: %s", zoneID, rrsetID)
+	zoneIDWithRRSetID := fmt.Sprintf("zone_id: %s, rrset_id: %s", zoneID, rrsetID)
 
-	log.Print(msgGet(objectRrset, zoneIDWithRrsetID))
+	log.Print(msgGet(objectRRSet, zoneIDWithRRSetID))
 
 	rrset, err := client.GetRRSet(ctx, zoneID, rrsetID)
 	if err != nil {
 		d.SetId("")
-		return diag.FromErr(errGettingObject(objectRrset, zoneIDWithRrsetID, err))
+		return diag.FromErr(errGettingObject(objectRRSet, zoneIDWithRRSetID, err))
 	}
 
-	err = setRrsetToResourceData(d, rrset)
+	err = setRRSetToResourceData(d, rrset)
 	if err != nil {
-		return diag.FromErr(errGettingObject(objectRrset, zoneIDWithRrsetID, err))
+		return diag.FromErr(errGettingObject(objectRRSet, zoneIDWithRRSetID, err))
 	}
 
 	return nil
 }
 
-func resourceDomainsRrsetV2ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDomainsRRSetV2ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	config := meta.(*Config)
+	if config.ProjectID == "" {
+		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")
+	}
+	d.Set("project_id", config.ProjectID)
+
 	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
 		return nil, err
@@ -157,19 +161,19 @@ func resourceDomainsRrsetV2ImportState(ctx context.Context, d *schema.ResourceDa
 	rrsetName := parts[1]
 	rrsetType := parts[2]
 
-	log.Print(msgImport(objectRrset, fmt.Sprintf("%s/%s/%s", zoneName, rrsetName, rrsetType)))
+	log.Print(msgImport(objectRRSet, fmt.Sprintf("%s/%s/%s", zoneName, rrsetName, rrsetType)))
 
 	zone, err := getZoneByName(ctx, client, zoneName)
 	if err != nil {
 		return nil, err
 	}
 
-	rrset, err := getRrsetByNameAndType(ctx, client, zone.ID, rrsetName, rrsetType)
+	rrset, err := getRRSetByNameAndType(ctx, client, zone.ID, rrsetName, rrsetType)
 	if err != nil {
 		return nil, err
 	}
 
-	err = setRrsetToResourceData(d, rrset)
+	err = setRRSetToResourceData(d, rrset)
 	if err != nil {
 		return nil, err
 	}
@@ -177,16 +181,13 @@ func resourceDomainsRrsetV2ImportState(ctx context.Context, d *schema.ResourceDa
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceDomainsRrsetV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsRRSetV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	rrsetID := d.Id()
 	zoneID := d.Get("zone_id").(string)
 
-	selMutexKV.Lock(zoneID)
-	defer selMutexKV.Unlock(zoneID)
-
 	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
-		return diag.FromErr(errUpdatingObject(objectRrset, rrsetID, err))
+		return diag.FromErr(errUpdatingObject(objectRRSet, rrsetID, err))
 	}
 
 	if d.HasChanges("ttl", "comment", "records") {
@@ -206,29 +207,27 @@ func resourceDomainsRrsetV2Update(ctx context.Context, d *schema.ResourceData, m
 		}
 		err = client.UpdateRRSet(ctx, zoneID, rrsetID, &updateOpts)
 		if err != nil {
-			return diag.FromErr(errUpdatingObject(objectRrset, rrsetID, err))
+			return diag.FromErr(errUpdatingObject(objectRRSet, rrsetID, err))
 		}
 	}
 
-	return resourceDomainsRrsetV2Read(ctx, d, meta)
+	return resourceDomainsRRSetV2Read(ctx, d, meta)
 }
 
-func resourceDomainsRrsetV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsRRSetV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	zoneID := d.Get("zone_id").(string)
 	rrsetID := d.Id()
-	selMutexKV.Lock(zoneID)
-	defer selMutexKV.Unlock(zoneID)
 
 	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
-		return diag.FromErr(errDeletingObject(objectRrset, rrsetID, err))
+		return diag.FromErr(errDeletingObject(objectRRSet, rrsetID, err))
 	}
 
-	log.Print(msgDelete(objectRrset, fmt.Sprintf("zone_id: %s, rrset_id: %s", zoneID, rrsetID)))
+	log.Print(msgDelete(objectRRSet, fmt.Sprintf("zone_id: %s, rrset_id: %s", zoneID, rrsetID)))
 
 	err = client.DeleteRRSet(ctx, zoneID, rrsetID)
 	if err != nil {
-		return diag.FromErr(errDeletingObject(objectRrset, rrsetID, err))
+		return diag.FromErr(errDeletingObject(objectRRSet, rrsetID, err))
 	}
 
 	return nil

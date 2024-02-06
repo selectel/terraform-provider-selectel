@@ -10,26 +10,29 @@ import (
 	domainsV2 "github.com/selectel/domains-go/pkg/v2"
 )
 
-func TestAccDomainsRrsetV2ImportBasic(t *testing.T) {
+func TestAccDomainsRRSetV2ImportBasic(t *testing.T) {
+	projectName := acctest.RandomWithPrefix("tf-acc")
 	testZoneName := fmt.Sprintf("%s.xyz.", acctest.RandomWithPrefix("tf-acc"))
-	testRrsetName := fmt.Sprintf("%[1]s.%[2]s", acctest.RandomWithPrefix("tf-acc"), testZoneName)
-	testRrsetType := domainsV2.TXT
-	testRrsetTTL := 60
-	testRrrsetContent := fmt.Sprintf("\"%[1]s\"", acctest.RandString(16))
-	fullResourceName := fmt.Sprintf("selectel_domains_rrset_v2.%[1]s", resourceRrsetName)
+	testRRSetName := fmt.Sprintf("%[1]s.%[2]s", acctest.RandomWithPrefix("tf-acc"), testZoneName)
+	testRRSetType := domainsV2.TXT
+	testRRSetTTL := 60
+	testRRSetContent := fmt.Sprintf("\"%[1]s\"", acctest.RandString(16))
+	fullResourceName := fmt.Sprintf("selectel_domains_rrset_v2.%[1]s", resourceRRSetName)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckDomainsV2ZoneDestroy,
+		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDomainsRrsetV2WithZoneBasic(
-					resourceRrsetName, testRrsetName, string(testRrsetType), testRrrsetContent, testRrsetTTL,
+				Config: testAccDomainsRRSetV2WithZoneBasic(
+					projectName,
+					resourceRRSetName, testRRSetName, string(testRRSetType), testRRSetContent, testRRSetTTL,
 					resourceZoneName, testZoneName,
 				),
+				Check: testAccCheckSelectelImportEnv(fullResourceName),
 			},
 			{
-				ImportStateIdFunc: getTestRrsetIDForImport,
+				ImportStateIdFunc: getTestRRSetIDForImport,
 				ResourceName:      fullResourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -38,21 +41,21 @@ func TestAccDomainsRrsetV2ImportBasic(t *testing.T) {
 	})
 }
 
-func getTestRrsetIDForImport(s *terraform.State) (string, error) {
+func getTestRRSetIDForImport(s *terraform.State) (string, error) {
 	resourceZoneFullName := "selectel_domains_zone_v2.zone_tf_acc_test_1"
-	resourceRrsetFullName := "selectel_domains_rrset_v2.rrset_tf_acc_test_1"
+	resourceRRSetFullName := "selectel_domains_rrset_v2.rrset_tf_acc_test_1"
 	resourceZone, ok := s.RootModule().Resources[resourceZoneFullName]
 	if !ok {
 		return "", fmt.Errorf("Not found zone: %s", resourceZoneFullName)
 	}
-	resourceRrset, ok := s.RootModule().Resources[resourceRrsetFullName]
+	resourceRRSet, ok := s.RootModule().Resources[resourceRRSetFullName]
 	if !ok {
-		return "", fmt.Errorf("Not found rrset: %s", resourceRrsetFullName)
+		return "", fmt.Errorf("Not found rrset: %s", resourceRRSetFullName)
 	}
 
 	return fmt.Sprintf("%s/%s/%s",
 		resourceZone.Primary.Attributes["name"],
-		resourceRrset.Primary.Attributes["name"],
-		resourceRrset.Primary.Attributes["type"],
+		resourceRRSet.Primary.Attributes["name"],
+		resourceRRSet.Primary.Attributes["type"],
 	), nil
 }

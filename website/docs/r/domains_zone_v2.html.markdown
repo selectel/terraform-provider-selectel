@@ -31,7 +31,7 @@ resource "selectel_domains_zone_v2" "zone_1" {
 
 * `name` - (Required) Zone name. Changing this creates a new zone name.
 
-* `project_id` - (Optional) Selectel project id. Scope for creating zone.
+* `project_id` - (Required) Selectel project id. Scope for creating zone.
 
 * `comment` - (Optional) Comment for zone.
 
