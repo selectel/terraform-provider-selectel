@@ -45,13 +45,6 @@ func testAccSelectelPreCheck(t *testing.T) {
 	}
 }
 
-func testAccSelectelPreCheckWithProjectID(t *testing.T) {
-	testAccSelectelPreCheck(t)
-	if v := os.Getenv("SEL_PROJECT_ID"); v == "" {
-		t.Fatal("SEL_PROJECT_ID must be set for acceptance tests")
-	}
-}
-
 func testAccCheckSelectelImportEnv(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]

@@ -12,15 +12,16 @@ import (
 )
 
 func TestAccDomainsZoneV2Basic(t *testing.T) {
+	projectName := acctest.RandomWithPrefix("tf-acc")
 	testZoneName := fmt.Sprintf("%s.xyz.", acctest.RandomWithPrefix("tf-acc"))
 	resourceZoneName := "zone_tf_acc_test_1"
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckDomainsV2ZoneDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDomainsZoneV2Basic(resourceZoneName, testZoneName),
+				Config: testAccDomainsZoneV2Basic(projectName, resourceZoneName, testZoneName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccDomainsZoneV2Exists(fmt.Sprintf("selectel_domains_zone_v2.%[1]s", resourceZoneName)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("selectel_domains_zone_v2.%[1]s", resourceZoneName), "name", testZoneName),
@@ -30,11 +31,15 @@ func TestAccDomainsZoneV2Basic(t *testing.T) {
 	})
 }
 
-func testAccDomainsZoneV2Basic(resourceName, zoneName string) string {
+func testAccDomainsZoneV2Basic(projectName, resourceName, zoneName string) string {
 	return fmt.Sprintf(`
-		resource "selectel_domains_zone_v2" %[1]q {
-			name = %[2]q
-		}`, resourceName, zoneName)
+		resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
+			name = %[1]q
+		}
+		resource "selectel_domains_zone_v2" %[2]q {
+			name = %[3]q
+			project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+		}`, projectName, resourceName, zoneName)
 }
 
 func testAccCheckDomainsV2ZoneDestroy(s *terraform.State) error {

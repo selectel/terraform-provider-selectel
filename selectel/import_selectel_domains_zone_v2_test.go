@@ -10,15 +10,17 @@ import (
 )
 
 func TestAccDomainsZoneV2ImportBasic(t *testing.T) {
+	projectName := acctest.RandomWithPrefix("tf-acc")
 	fullResourceName := fmt.Sprintf("selectel_domains_zone_v2.%[1]s", resourceZoneName)
 	testZoneName := fmt.Sprintf("%s.xyz.", acctest.RandomWithPrefix("tf-acc"))
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckDomainsV2ZoneDestroy,
+		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDomainsZoneV2Basic(resourceZoneName, testZoneName),
+				Config: testAccDomainsZoneV2Basic(projectName, resourceZoneName, testZoneName),
+				Check:  testAccCheckSelectelImportEnv(fullResourceName),
 			},
 			{
 				ResourceName:      fullResourceName,

@@ -3,12 +3,12 @@ layout: "selectel"
 page_title: "Selectel: selectel_domains_rrset_v2"
 sidebar_current: "docs-selectel-resource-domains-rrset-v2"
 description: |-
-  Creates and manages a rrset in Selectel DNS Hosting using public API v2.
+  Creates and manages a RRSet in Selectel DNS Hosting using public API v2.
 ---
 
 # selectel\_domains\_rrset\_v2
 
-Creates and manages a rrset in DNS Hosting using public API v2. For more information about rrset, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/records/).
+Creates and manages a RRSet in DNS Hosting using public API v2. For more information about RRSet, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/records/).
 
 ## Example usage
 
@@ -170,11 +170,11 @@ resource "selectel_domains_rrset_v2" "caa_rrset_1" {
 
 * `zone_id` - (Required) Zone ID.
 
-* `name` - (Required) Name of the zone rrset. The name format depends on the rrset type, see the examples above.
+* `name` - (Required) Name of the zone RRSet. The name format depends on the RRSet type, see the examples above.
 
-* `type` - (Required) Type of the rrset.
+* `type` - (Required) Type of the RRSet.
 
-* `ttl` - (Required) Time-to-live for the rrset in seconds. The available range is from 60 to 604800.
+* `ttl` - (Required) Time-to-live for the RRSet in seconds. The available range is from 60 to 604800.
 
 * `records` - (Required) Set of records:
   
@@ -182,19 +182,19 @@ resource "selectel_domains_rrset_v2" "caa_rrset_1" {
 
   * `disabled` - (Optional, default: false) Shows if record available or not.
 
-* `project_id` - (Optional) Selectel project ID.
+* `project_id` - (Required) Selectel project ID.
 
-* `comment` - (Optional) Comment for rrset.
+* `comment` - (Optional) Comment for RRSet.
 
 ## Attributes Reference
 
 * `zone_id` - Zone ID.
 
-* `name` - Name of the rrset.
+* `name` - Name of the RRSet.
 
-* `type` - Type of the rrset.
+* `type` - Type of the RRSet.
 
-* `ttl` - Time-to-live for the rrset in seconds.
+* `ttl` - Time-to-live for the RRSet in seconds.
 
 * `records` - Set of records:
   
@@ -204,13 +204,13 @@ resource "selectel_domains_rrset_v2" "caa_rrset_1" {
 
 * `project_id` - Selectel project ID.
 
-* `comment` - Comment for rrset.
+* `comment` - Comment for RRSet.
 
-* `managed_by` - Rrset owner.
+* `managed_by` - RRSet owner.
 
 ## Import
 
-You can import a rrset:
+You can import a RRSet:
 
 ```shell
 export OS_DOMAIN_NAME=<account_id>
@@ -232,6 +232,6 @@ where:
 
 * `<zone_name>` — Zone name.
 
-* `<rrset_name>` — Rrset name.
+* `<rrset_name>` — RRSet name.
 
-* `<rrset_type>` — Type of rrset.
+* `<rrset_type>` — Type of RRSet.

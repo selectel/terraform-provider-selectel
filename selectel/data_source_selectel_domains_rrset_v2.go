@@ -11,13 +11,13 @@ import (
 )
 
 var (
-	ErrRrsetNotFound       = errors.New("rrset not found")
-	ErrFoundMultipleRRsets = errors.New("found multiple rrsets")
+	ErrRRSetNotFound       = errors.New("rrset not found")
+	ErrFoundMultipleRRSets = errors.New("found multiple rrsets")
 )
 
-func dataSourceDomainsRrsetV2() *schema.Resource {
+func dataSourceDomainsRRSetV2() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceDomainsRrsetV2Read,
+		ReadContext: dataSourceDomainsRRSetV2Read,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -33,7 +33,7 @@ func dataSourceDomainsRrsetV2() *schema.Resource {
 			},
 			"project_id": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 			},
 			"comment": {
 				Type:     schema.TypeString,
@@ -67,7 +67,7 @@ func dataSourceDomainsRrsetV2() *schema.Resource {
 	}
 }
 
-func dataSourceDomainsRrsetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceDomainsRRSetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
@@ -77,15 +77,15 @@ func dataSourceDomainsRrsetV2Read(ctx context.Context, d *schema.ResourceData, m
 	zoneID := d.Get("zone_id").(string)
 	rrsetType := d.Get("type").(string)
 
-	zoneIDWithRrsetNameAndType := fmt.Sprintf("zone_id: %s, rrset_name: %s, rrset_type: %s", zoneID, rrsetName, rrsetType)
-	log.Println(msgGet(objectRrset, zoneIDWithRrsetNameAndType))
+	zoneIDWithRRSetNameAndType := fmt.Sprintf("zone_id: %s, rrset_name: %s, rrset_type: %s", zoneID, rrsetName, rrsetType)
+	log.Println(msgGet(objectRRSet, zoneIDWithRRSetNameAndType))
 
-	rrset, err := getRrsetByNameAndType(ctx, client, zoneID, rrsetName, rrsetType)
+	rrset, err := getRRSetByNameAndType(ctx, client, zoneID, rrsetName, rrsetType)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	err = setRrsetToResourceData(d, rrset)
+	err = setRRSetToResourceData(d, rrset)
 	if err != nil {
 		return diag.FromErr(err)
 	}
