@@ -15,14 +15,6 @@ Creates and manages a zone in DNS Hosting using public API v2. For more informat
 ```hcl
 resource "selectel_domains_zone_v2" "zone_1" {
   name = "example.com."
-}
-```
-
-With specific project id.
-
-```hcl
-resource "selectel_domains_zone_v2" "zone_1" {
-  name = "example.com."
   project_id = "project_id"
 }
 ```
