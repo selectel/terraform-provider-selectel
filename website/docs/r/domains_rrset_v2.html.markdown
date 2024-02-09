@@ -20,6 +20,7 @@ resource "selectel_domains_rrset_v2" "a_rrset_1" {
   name    = "a.example.com."
   type    = "A"
   ttl     = 60
+  ptoject_id = "project_id"
   records {
     content  = "127.0.0.1"
   }
@@ -39,6 +40,7 @@ resource "selectel_domains_rrset_v2" "aaaa_rrset_1" {
   name      = "aaaa.example.com."
   type      = "AAAA"
   ttl       = 60
+  ptoject_id = "project_id"
   records {
     content = "2400:cb00:2049:1::a29f:1804"
   }  
@@ -54,6 +56,7 @@ resource "selectel_domains_rrset_v2" "txt_rrset_1" {
   name      = "txt.example.com."
   type      = "TXT"
   ttl       = 60
+  ptoject_id = "project_id"
   records {
     content   = "\"hello, world!\""
   } 
@@ -68,6 +71,7 @@ resource "selectel_domains_rrset_v2" "cname_rrset_1" {
   name      = "cname.example.com."
   type      = "CNAME"
   ttl       = 60
+  ptoject_id = "project_id"
   records {
     content = "origin.com."
   }
@@ -82,6 +86,7 @@ resource "selectel_domains_rrset_v2" "ns_rrset_1" {
   name      = "example.com."
   type      = "NS"
   ttl       = 86400
+  ptoject_id = "project_id"
   records {
     content = "ns5.selectel.org"
   }
@@ -98,6 +103,7 @@ resource "selectel_domains_rrset_v2" "mx_rrset_1" {
   name      = "mx.example.com."
   type      = "MX"
   ttl       = 60
+  ptoject_id = "project_id"
   records {
     content = "10 mail.example.org."
   }
@@ -114,6 +120,7 @@ resource "selectel_domains_rrset_v2" "srv_rrset_1" {
   name      = "_sip._tcp.example.com."
   type      = "SRV"
   ttl       = 120
+  ptoject_id = "project_id"
   records {
     content = "10 20 30 mail.example.org."
   }
@@ -130,6 +137,7 @@ resource "selectel_domains_rrset_v2" "sshfp_rrset_1" {
   name       = "sshfp.example.com."
   type       = "SSHFP"
   ttl         = 60
+  ptoject_id = "project_id"
   records {
     content  = "1 1 7491973e5f8b39d5327cd4e08bc81b05f7710b49"
   }
@@ -144,6 +152,7 @@ resource "selectel_domains_rrset_v2" "alias_rrset_1" {
   name      = "example1.com."
   type      = "ALIAS"
   ttl       = 60
+  ptoject_id = "project_id"
   records {
     content = "example2.com."
   }
@@ -160,6 +169,7 @@ resource "selectel_domains_rrset_v2" "caa_rrset_1" {
   name      = "example.com."
   type      = "CAA"
   ttl       = 60
+  ptoject_id = "project_id"
   records {
     content = "128 issue \"letsencrypt.com.\""
   }

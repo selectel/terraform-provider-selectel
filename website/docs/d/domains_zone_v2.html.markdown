@@ -15,14 +15,6 @@ Provides a zone info in DNS Hosting (API v2). For more information about zones i
 ```hcl
 data "selectel_domains_zone_v2" "zone_1" {
   name = "example.com."
-}
-```
-
-With specific project id.
-
-```hcl
-data "selectel_domains_zone_v2" "zone_1" {
-  name = "example.com."
   project_id = "project_id"
 }
 ```

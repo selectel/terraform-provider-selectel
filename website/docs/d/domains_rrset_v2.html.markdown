@@ -17,16 +17,6 @@ data "selectel_domains_rrset_v2" "rrset_1" {
   name = "example.com."
   type = "A"
   zone_id = "zone_id"
-}
-```
-
-With specific project id.
-
-```hcl
-data "selectel_domains_rrset_v2" "rrset_1" {
-  name = "example.com."
-  type = "A"
-  zone_id = "zone_id"
   ptoject_id = "project_id"
 }
 ```
