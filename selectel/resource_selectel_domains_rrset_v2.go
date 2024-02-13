@@ -120,13 +120,12 @@ func resourceDomainsRRSetV2Read(ctx context.Context, d *schema.ResourceData, met
 		return diag.FromErr(err)
 	}
 
-	rrsetID := d.Id()
 	zoneID := d.Get("zone_id").(string)
-	zoneIDWithRRSetID := fmt.Sprintf("zone_id: %s, rrset_id: %s", zoneID, rrsetID)
+	zoneIDWithRRSetID := fmt.Sprintf("zone_id: %s, rrset_id: %s", zoneID, d.Id())
 
 	log.Print(msgGet(objectRRSet, zoneIDWithRRSetID))
 
-	rrset, err := client.GetRRSet(ctx, zoneID, rrsetID)
+	rrset, err := client.GetRRSet(ctx, zoneID, d.Id())
 	if err != nil {
 		d.SetId("")
 		return diag.FromErr(errGettingObject(objectRRSet, zoneIDWithRRSetID, err))
@@ -151,7 +150,8 @@ func resourceDomainsRRSetV2ImportState(ctx context.Context, d *schema.ResourceDa
 	if err != nil {
 		return nil, err
 	}
-
+	// concat zone_name,rrset_name,rrset_type with symbol "/" instead of rrset id for importing rrset.
+	// example: terraform import domains_rrset_v2.<resource_name> <zone_name>/<rrset_name>/<rrset_type>
 	parts := strings.Split(d.Id(), "/")
 	if len(parts) != 3 {
 		return nil, errors.New("id must include three parts: zone_name/rrset_name/rrset_type")
@@ -182,12 +182,11 @@ func resourceDomainsRRSetV2ImportState(ctx context.Context, d *schema.ResourceDa
 }
 
 func resourceDomainsRRSetV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	rrsetID := d.Id()
 	zoneID := d.Get("zone_id").(string)
 
 	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
-		return diag.FromErr(errUpdatingObject(objectRRSet, rrsetID, err))
+		return diag.FromErr(errUpdatingObject(objectRRSet, d.Id(), err))
 	}
 
 	if d.HasChanges("ttl", "comment", "records") {
@@ -205,9 +204,9 @@ func resourceDomainsRRSetV2Update(ctx context.Context, d *schema.ResourceData, m
 		if comment, ok := d.GetOk("comment"); ok {
 			updateOpts.Comment = comment.(string)
 		}
-		err = client.UpdateRRSet(ctx, zoneID, rrsetID, &updateOpts)
+		err = client.UpdateRRSet(ctx, zoneID, d.Id(), &updateOpts)
 		if err != nil {
-			return diag.FromErr(errUpdatingObject(objectRRSet, rrsetID, err))
+			return diag.FromErr(errUpdatingObject(objectRRSet, d.Id(), err))
 		}
 	}
 
@@ -216,18 +215,17 @@ func resourceDomainsRRSetV2Update(ctx context.Context, d *schema.ResourceData, m
 
 func resourceDomainsRRSetV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	zoneID := d.Get("zone_id").(string)
-	rrsetID := d.Id()
 
 	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
-		return diag.FromErr(errDeletingObject(objectRRSet, rrsetID, err))
+		return diag.FromErr(errDeletingObject(objectRRSet, d.Id(), err))
 	}
 
-	log.Print(msgDelete(objectRRSet, fmt.Sprintf("zone_id: %s, rrset_id: %s", zoneID, rrsetID)))
+	log.Print(msgDelete(objectRRSet, fmt.Sprintf("zone_id: %s, rrset_id: %s", zoneID, d.Id())))
 
-	err = client.DeleteRRSet(ctx, zoneID, rrsetID)
+	err = client.DeleteRRSet(ctx, zoneID, d.Id())
 	if err != nil {
-		return diag.FromErr(errDeletingObject(objectRRSet, rrsetID, err))
+		return diag.FromErr(errDeletingObject(objectRRSet, d.Id(), err))
 	}
 
 	return nil

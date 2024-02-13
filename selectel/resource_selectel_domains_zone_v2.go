@@ -141,6 +141,8 @@ func resourceDomainsZoneV2ImportState(ctx context.Context, d *schema.ResourceDat
 		return nil, err
 	}
 
+	// use zone name instead of zone id for importing zone.
+	// example: terraform import domains_zone_v2.<resource_name> <zone_name>
 	zoneName := d.Id()
 
 	log.Println(msgImport(objectZone, zoneName))
@@ -159,11 +161,9 @@ func resourceDomainsZoneV2ImportState(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceDomainsZoneV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	zoneID := d.Id()
-
 	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
-		return diag.FromErr(errUpdatingObject(objectZone, zoneID, err))
+		return diag.FromErr(errUpdatingObject(objectZone, d.Id(), err))
 	}
 
 	if d.HasChange("comment") {
@@ -171,11 +171,11 @@ func resourceDomainsZoneV2Update(ctx context.Context, d *schema.ResourceData, me
 		if v, ok := d.GetOk("comment"); ok {
 			comment = v.(string)
 		}
-		log.Println(msgUpdate(objectZone, zoneID, comment))
+		log.Println(msgUpdate(objectZone, d.Id(), comment))
 
-		err = client.UpdateZoneComment(ctx, zoneID, comment)
+		err = client.UpdateZoneComment(ctx, d.Id(), comment)
 		if err != nil {
-			return diag.FromErr(errUpdatingObject(objectZone, zoneID, err))
+			return diag.FromErr(errUpdatingObject(objectZone, d.Id(), err))
 		}
 	}
 
@@ -184,11 +184,11 @@ func resourceDomainsZoneV2Update(ctx context.Context, d *schema.ResourceData, me
 		if v, ok := d.GetOk("disabled"); ok {
 			disabled = v.(bool)
 		}
-		log.Println(msgUpdate(objectZone, zoneID, disabled))
+		log.Println(msgUpdate(objectZone, d.Id(), disabled))
 
-		err = client.UpdateZoneState(ctx, zoneID, disabled)
+		err = client.UpdateZoneState(ctx, d.Id(), disabled)
 		if err != nil {
-			return diag.FromErr(errUpdatingObject(objectZone, zoneID, err))
+			return diag.FromErr(errUpdatingObject(objectZone, d.Id(), err))
 		}
 	}
 
@@ -201,13 +201,11 @@ func resourceDomainsZoneV2Delete(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(err)
 	}
 
-	zoneID := d.Id()
+	log.Println(msgDelete(objectZone, d.Id()))
 
-	log.Println(msgDelete(objectZone, zoneID))
-
-	err = client.DeleteZone(ctx, zoneID)
+	err = client.DeleteZone(ctx, d.Id())
 	if err != nil {
-		return diag.FromErr(errDeletingObject(objectZone, zoneID, err))
+		return diag.FromErr(errDeletingObject(objectZone, d.Id(), err))
 	}
 
 	return nil
