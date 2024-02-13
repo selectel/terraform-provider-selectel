@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_dbaas\_grant\_v1
 
-Grants privileges to the users in Managed Databases using public API v1. Not applicable to Redis. Learn more about Managed Databases in the [official Selectel documentation](https://docs.selectel.ru/cloud/managed-databases/).
+Grants privileges to the users in Managed Databases using public API v1. Not applicable to Redis and Kafka. Learn more about Managed Databases in the [official Selectel documentation](https://docs.selectel.ru/cloud/managed-databases/).
 
 ## Example usage
 

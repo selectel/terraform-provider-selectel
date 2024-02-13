@@ -28,7 +28,7 @@ resource "selectel_dbaas_kafka_topic_v1" "topic_1" {
 
 * `partitions` - (Required) Number of partitions in a topic. The available range is from 1 to 4 000. You cannot increase the number of partitions in the existing topic. Learn more about [Partitions](https://docs.selectel.ru/cloud/managed-databases/kafka/manage-topics/#partitions)
 
-* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new user. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-databases/about/projects/).
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new topic. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-databases/about/projects/).
 
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new topic. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-databases).
 
@@ -63,4 +63,4 @@ where:
 
 * `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases**. The pool is in the **Pool** column.
 
-* `<user_id>` — Unique identifier of the user, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the user ID in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases** ⟶ the cluster page ⟶ the **Users** tab. The user ID is under the user name.
+* `<topic_id>` — Unique identifier of the topic, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the topic ID in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases** ⟶ the cluster page ⟶ the **Topics** tab. The topic ID is under the topic name.
