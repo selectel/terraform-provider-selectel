@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/dbaas-go"
+	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dbaas"
 )
 
 func resourceDBaaSPostgreSQLDatabaseV1() *schema.Resource {
@@ -53,7 +54,6 @@ func resourceDBaaSPostgreSQLDatabaseV1() *schema.Resource {
 			"owner_id": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: false,
 			},
 			"lc_collate": {
 				Type:             schema.TypeString,
@@ -76,18 +76,13 @@ func resourceDBaaSPostgreSQLDatabaseV1() *schema.Resource {
 }
 
 func resourceDBaaSPostgreSQLDatabaseV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	datastoreID := d.Get("datastore_id").(string)
-
-	selMutexKV.Lock(datastoreID)
-	defer selMutexKV.Unlock(datastoreID)
-
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
 
 	databaseCreateOpts := dbaas.DatabaseCreateOpts{
-		DatastoreID: datastoreID,
+		DatastoreID: d.Get("datastore_id").(string),
 		Name:        d.Get("name").(string),
 		OwnerID:     d.Get("owner_id").(string),
 		LcCollate:   d.Get("lc_collate").(string),
@@ -102,7 +97,7 @@ func resourceDBaaSPostgreSQLDatabaseV1Create(ctx context.Context, d *schema.Reso
 
 	log.Printf("[DEBUG] waiting for database %s to become 'ACTIVE'", database.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForDBaaSDatabaseV1ActiveState(ctx, dbaasClient, database.ID, timeout)
+	err = waiters.WaitForDBaaSDatabaseV1ActiveState(ctx, dbaasClient, database.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectDatabase, err))
 	}
@@ -140,24 +135,14 @@ func resourceDBaaSPostgreSQLDatabaseV1Read(ctx context.Context, d *schema.Resour
 }
 
 func resourceDBaaSPostgreSQLDatabaseV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	datastoreID := d.Get("datastore_id").(string)
-
-	selMutexKV.Lock(datastoreID)
-	defer selMutexKV.Unlock(datastoreID)
-
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
 
 	if d.HasChange("owner_id") {
-		ownerID := d.Get("owner_id").(string)
-
-		selMutexKV.Lock(ownerID)
-		defer selMutexKV.Unlock(ownerID)
-
 		updateOpts := dbaas.DatabaseUpdateOpts{
-			OwnerID: ownerID,
+			OwnerID: d.Get("owner_id").(string),
 		}
 
 		log.Print(msgUpdate(objectDatastore, d.Id(), updateOpts))
@@ -168,7 +153,7 @@ func resourceDBaaSPostgreSQLDatabaseV1Update(ctx context.Context, d *schema.Reso
 
 		log.Printf("[DEBUG] waiting for database %s to become 'ACTIVE'", d.Id())
 		timeout := d.Timeout(schema.TimeoutCreate)
-		err = waitForDBaaSDatabaseV1ActiveState(ctx, dbaasClient, d.Id(), timeout)
+		err = waiters.WaitForDBaaSDatabaseV1ActiveState(ctx, dbaasClient, d.Id(), timeout)
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectDatabase, d.Id(), err))
 		}
@@ -178,18 +163,6 @@ func resourceDBaaSPostgreSQLDatabaseV1Update(ctx context.Context, d *schema.Reso
 }
 
 func resourceDBaaSPostgreSQLDatabaseV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	datastoreID := d.Get("datastore_id").(string)
-
-	selMutexKV.Lock(datastoreID)
-	defer selMutexKV.Unlock(datastoreID)
-
-	ownerIDRaw, ownerIDOk := d.GetOk("owner_id")
-	if ownerIDOk {
-		ownerID := ownerIDRaw.(string)
-		selMutexKV.Lock(ownerID)
-		defer selMutexKV.Unlock(ownerID)
-	}
-
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -204,10 +177,10 @@ func resourceDBaaSPostgreSQLDatabaseV1Delete(ctx context.Context, d *schema.Reso
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{strconv.Itoa(http.StatusOK)},
 		Target:     []string{strconv.Itoa(http.StatusNotFound)},
-		Refresh:    dbaasDatabaseV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
+		Refresh:    waiters.DBaaSDatabaseV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
+		MinTimeout: 15 * time.Second,
 	}
 
 	log.Printf("[DEBUG] waiting for database %s to become deleted", d.Id())

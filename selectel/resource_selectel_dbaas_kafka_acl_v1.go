@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/dbaas-go"
+	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dbaas"
 )
 
 func resourceDBaaSKafkaACLV1() *schema.Resource {
@@ -105,7 +106,7 @@ func resourceDBaaSACLV1Create(ctx context.Context, d *schema.ResourceData, meta 
 
 	log.Printf("[DEBUG] waiting for acl %s to become 'ACTIVE'", acl.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForDBaaSACLV1ActiveState(ctx, dbaasClient, acl.ID, timeout)
+	err = waiters.WaitForDBaaSACLV1ActiveState(ctx, dbaasClient, acl.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectACL, err))
 	}
@@ -145,11 +146,9 @@ func resourceDBaaSACLV1Update(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	if d.HasChange("allow_read") || d.HasChange("allow_write") {
-		allowRead := d.Get("allow_read").(bool)
-		allowWrite := d.Get("allow_write").(bool)
 		updateOpts := dbaas.ACLUpdateOpts{
-			AllowRead:  allowRead,
-			AllowWrite: allowWrite,
+			AllowRead:  d.Get("allow_read").(bool),
+			AllowWrite: d.Get("allow_write").(bool),
 		}
 
 		log.Print(msgUpdate(objectACL, d.Id(), updateOpts))
@@ -160,7 +159,7 @@ func resourceDBaaSACLV1Update(ctx context.Context, d *schema.ResourceData, meta 
 
 		log.Printf("[DEBUG] waiting for acl %s to become 'ACTIVE'", d.Id())
 		timeout := d.Timeout(schema.TimeoutCreate)
-		err = waitForDBaaSACLV1ActiveState(ctx, dbaasClient, d.Id(), timeout)
+		err = waiters.WaitForDBaaSACLV1ActiveState(ctx, dbaasClient, d.Id(), timeout)
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectACL, d.Id(), err))
 		}
@@ -184,7 +183,7 @@ func resourceDBaaSACLV1Delete(ctx context.Context, d *schema.ResourceData, meta 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{strconv.Itoa(http.StatusOK)},
 		Target:     []string{strconv.Itoa(http.StatusNotFound)},
-		Refresh:    dbaasACLV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
+		Refresh:    waiters.DBaaSACLV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      10 * time.Second,
 		MinTimeout: 20 * time.Second,

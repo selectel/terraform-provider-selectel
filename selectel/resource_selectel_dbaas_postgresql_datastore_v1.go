@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/dbaas-go"
+	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dbaas"
 )
 
 func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
@@ -34,7 +35,6 @@ func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: false,
 			},
 			"project_id": {
 				Type:     schema.TypeString,
@@ -66,7 +66,6 @@ func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
 			"node_count": {
 				Type:     schema.TypeInt,
 				Required: true,
-				ForceNew: false,
 			},
 			"enabled": {
 				Type:     schema.TypeBool,
@@ -99,17 +98,14 @@ func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
 						"vcpus": {
 							Type:     schema.TypeInt,
 							Required: true,
-							ForceNew: false,
 						},
 						"ram": {
 							Type:     schema.TypeInt,
 							Required: true,
-							ForceNew: false,
 						},
 						"disk": {
 							Type:     schema.TypeInt,
 							Required: true,
-							ForceNew: false,
 						},
 					},
 				},
@@ -117,13 +113,11 @@ func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
 			"pooler": {
 				Type:     schema.TypeSet,
 				Optional: true,
-				ForceNew: false,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"mode": {
 							Type:     schema.TypeString,
 							Required: true,
-							ForceNew: false,
 							ValidateFunc: validation.StringInSlice([]string{
 								"session",
 								"transaction",
@@ -133,7 +127,6 @@ func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
 						"size": {
 							Type:     schema.TypeInt,
 							Required: true,
-							ForceNew: false,
 						},
 					},
 				},
@@ -141,13 +134,11 @@ func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
 			"firewall": {
 				Type:     schema.TypeSet,
 				Optional: true,
-				ForceNew: false,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"ips": {
 							Type:     schema.TypeList,
 							Required: true,
-							ForceNew: false,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -164,12 +155,10 @@ func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
 						"datastore_id": {
 							Type:     schema.TypeString,
 							Required: true,
-							ForceNew: false,
 						},
 						"target_time": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ForceNew: false,
 						},
 					},
 				},
@@ -178,7 +167,6 @@ func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				ForceNew: false,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -255,7 +243,7 @@ func resourceDBaaSPostgreSQLDatastoreV1Create(ctx context.Context, d *schema.Res
 
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", datastore.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForDBaaSDatastoreV1ActiveState(ctx, dbaasClient, datastore.ID, timeout)
+	err = waiters.WaitForDBaaSDatastoreV1ActiveState(ctx, dbaasClient, datastore.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectDatastore, err))
 	}
@@ -366,10 +354,10 @@ func resourceDBaaSPostgreSQLDatastoreV1Delete(ctx context.Context, d *schema.Res
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{strconv.Itoa(http.StatusOK)},
 		Target:     []string{strconv.Itoa(http.StatusNotFound)},
-		Refresh:    dbaasDatastoreV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
+		Refresh:    waiters.DBaaSDatastoreV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
+		MinTimeout: 20 * time.Second,
 	}
 
 	log.Printf("[DEBUG] waiting for datastore %s to become deleted", d.Id())
