@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/dbaas-go"
+	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dbaas"
 )
 
 func resourceDBaaSKafkaDatastoreV1() *schema.Resource {
@@ -193,7 +194,7 @@ func resourceDBaaSKafkaDatastoreV1Create(ctx context.Context, d *schema.Resource
 
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", datastore.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForDBaaSDatastoreV1ActiveState(ctx, dbaasClient, datastore.ID, timeout)
+	err = waiters.WaitForDBaaSDatastoreV1ActiveState(ctx, dbaasClient, datastore.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectDatastore, err))
 	}
@@ -297,7 +298,7 @@ func resourceDBaaSKafkaDatastoreV1Delete(ctx context.Context, d *schema.Resource
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{strconv.Itoa(http.StatusOK)},
 		Target:     []string{strconv.Itoa(http.StatusNotFound)},
-		Refresh:    dbaasDatastoreV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
+		Refresh:    waiters.DBaaSDatastoreV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      10 * time.Second,
 		MinTimeout: 15 * time.Second,

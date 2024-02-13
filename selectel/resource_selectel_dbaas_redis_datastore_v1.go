@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/dbaas-go"
+	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dbaas"
 )
 
 func resourceDBaaSRedisDatastoreV1() *schema.Resource {
@@ -37,7 +38,6 @@ func resourceDBaaSRedisDatastoreV1() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: false,
 			},
 			"project_id": {
 				Type:     schema.TypeString,
@@ -62,12 +62,10 @@ func resourceDBaaSRedisDatastoreV1() *schema.Resource {
 			"flavor_id": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: false,
 			},
 			"node_count": {
 				Type:     schema.TypeInt,
 				Required: true,
-				ForceNew: false,
 			},
 			"enabled": {
 				Type:     schema.TypeBool,
@@ -129,13 +127,11 @@ func resourceDBaaSRedisDatastoreV1() *schema.Resource {
 			"firewall": {
 				Type:     schema.TypeSet,
 				Optional: true,
-				ForceNew: false,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"ips": {
 							Type:     schema.TypeList,
 							Required: true,
-							ForceNew: false,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -152,12 +148,10 @@ func resourceDBaaSRedisDatastoreV1() *schema.Resource {
 						"datastore_id": {
 							Type:     schema.TypeString,
 							Required: true,
-							ForceNew: false,
 						},
 						"target_time": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ForceNew: false,
 						},
 					},
 				},
@@ -166,7 +160,6 @@ func resourceDBaaSRedisDatastoreV1() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				ForceNew: false,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -174,7 +167,6 @@ func resourceDBaaSRedisDatastoreV1() *schema.Resource {
 			"redis_password": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: false,
 			},
 			"instances": {
 				Type:     schema.TypeList,
@@ -254,7 +246,7 @@ func resourceDBaaSRedisDatastoreV1Create(ctx context.Context, d *schema.Resource
 
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", datastore.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForDBaaSDatastoreV1ActiveState(ctx, dbaasClient, datastore.ID, timeout)
+	err = waiters.WaitForDBaaSDatastoreV1ActiveState(ctx, dbaasClient, datastore.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectDatastore, err))
 	}
@@ -377,10 +369,10 @@ func resourceDBaaSRedisDatastoreV1Delete(ctx context.Context, d *schema.Resource
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{strconv.Itoa(http.StatusOK)},
 		Target:     []string{strconv.Itoa(http.StatusNotFound)},
-		Refresh:    dbaasDatastoreV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
+		Refresh:    waiters.DBaaSDatastoreV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
+		MinTimeout: 15 * time.Second,
 	}
 
 	log.Printf("[DEBUG] waiting for datastore %s to become deleted", d.Id())

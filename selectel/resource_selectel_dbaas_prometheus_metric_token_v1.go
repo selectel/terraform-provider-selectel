@@ -41,7 +41,6 @@ func resourceDBaaSPrometheusMetricTokenV1() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: false,
 			},
 			"value": {
 				Type:     schema.TypeString,
@@ -96,10 +95,8 @@ func resourceDBaaSPrometheusMetricTokenV1Update(ctx context.Context, d *schema.R
 	}
 
 	if d.HasChange("name") {
-		name := d.Get("name").(string)
-
 		updateOpts := dbaas.PrometheusMetricTokenUpdateOpts{
-			Name: name,
+			Name: d.Get("name").(string),
 		}
 
 		log.Print(msgUpdate(objectPrometheusMetricToken, d.Id(), updateOpts))
@@ -130,7 +127,7 @@ func resourceDBaaSPrometheusMetricTokenV1Delete(ctx context.Context, d *schema.R
 		Refresh:    dbaasPrometheusMetricTokenV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
+		MinTimeout: 10 * time.Second,
 	}
 
 	log.Printf("[DEBUG] waiting for token %s to become deleted", d.Id())

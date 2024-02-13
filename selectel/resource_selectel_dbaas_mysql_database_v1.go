@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/dbaas-go"
+	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dbaas"
 )
 
 func resourceDBaaSMySQLDatabaseV1() *schema.Resource {
@@ -58,18 +59,13 @@ func resourceDBaaSMySQLDatabaseV1() *schema.Resource {
 }
 
 func resourceDBaaSMySQLDatabaseV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	datastoreID := d.Get("datastore_id").(string)
-
-	selMutexKV.Lock(datastoreID)
-	defer selMutexKV.Unlock(datastoreID)
-
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
 
 	databaseCreateOpts := dbaas.DatabaseCreateOpts{
-		DatastoreID: datastoreID,
+		DatastoreID: d.Get("datastore_id").(string),
 		Name:        d.Get("name").(string),
 	}
 
@@ -81,7 +77,7 @@ func resourceDBaaSMySQLDatabaseV1Create(ctx context.Context, d *schema.ResourceD
 
 	log.Printf("[DEBUG] waiting for database %s to become 'ACTIVE'", database.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForDBaaSDatabaseV1ActiveState(ctx, dbaasClient, database.ID, timeout)
+	err = waiters.WaitForDBaaSDatabaseV1ActiveState(ctx, dbaasClient, database.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectDatabase, err))
 	}
@@ -110,18 +106,6 @@ func resourceDBaaSMySQLDatabaseV1Read(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceDBaaSMySQLDatabaseV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	datastoreID := d.Get("datastore_id").(string)
-
-	selMutexKV.Lock(datastoreID)
-	defer selMutexKV.Unlock(datastoreID)
-
-	ownerIDRaw, ownerIDOk := d.GetOk("owner_id")
-	if ownerIDOk {
-		ownerID := ownerIDRaw.(string)
-		selMutexKV.Lock(ownerID)
-		defer selMutexKV.Unlock(ownerID)
-	}
-
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -136,10 +120,10 @@ func resourceDBaaSMySQLDatabaseV1Delete(ctx context.Context, d *schema.ResourceD
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{strconv.Itoa(http.StatusOK)},
 		Target:     []string{strconv.Itoa(http.StatusNotFound)},
-		Refresh:    dbaasDatabaseV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
+		Refresh:    waiters.DBaaSDatabaseV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
+		MinTimeout: 15 * time.Second,
 	}
 
 	log.Printf("[DEBUG] waiting for database %s to become deleted", d.Id())

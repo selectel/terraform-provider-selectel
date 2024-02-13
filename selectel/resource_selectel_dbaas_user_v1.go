@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/dbaas-go"
+	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dbaas"
 )
 
 func resourceDBaaSUserV1() *schema.Resource {
@@ -48,7 +49,6 @@ func resourceDBaaSUserV1() *schema.Resource {
 			"password": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: false,
 			},
 			"status": {
 				Type:     schema.TypeString,
@@ -64,18 +64,13 @@ func resourceDBaaSUserV1() *schema.Resource {
 }
 
 func resourceDBaaSUserV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	datastoreID := d.Get("datastore_id").(string)
-
-	selMutexKV.Lock(datastoreID)
-	defer selMutexKV.Unlock(datastoreID)
-
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
 
 	userCreateOpts := dbaas.UserCreateOpts{
-		DatastoreID: datastoreID,
+		DatastoreID: d.Get("datastore_id").(string),
 		Name:        d.Get("name").(string),
 		Password:    d.Get("password").(string),
 	}
@@ -88,7 +83,7 @@ func resourceDBaaSUserV1Create(ctx context.Context, d *schema.ResourceData, meta
 
 	log.Printf("[DEBUG] waiting for user %s to become 'ACTIVE'", user.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForDBaaSUserV1ActiveState(ctx, dbaasClient, user.ID, timeout)
+	err = waiters.WaitForDBaaSUserV1ActiveState(ctx, dbaasClient, user.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectUser, err))
 	}
@@ -117,20 +112,14 @@ func resourceDBaaSUserV1Read(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func resourceDBaaSUserV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	datastoreID := d.Get("datastore_id").(string)
-
-	selMutexKV.Lock(datastoreID)
-	defer selMutexKV.Unlock(datastoreID)
-
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
 
 	if d.HasChange("password") {
-		password := d.Get("password").(string)
 		updateOpts := dbaas.UserUpdateOpts{
-			Password: password,
+			Password: d.Get("password").(string),
 		}
 
 		log.Print(msgUpdate(objectUser, d.Id(), updateOpts))
@@ -141,7 +130,7 @@ func resourceDBaaSUserV1Update(ctx context.Context, d *schema.ResourceData, meta
 
 		log.Printf("[DEBUG] waiting for user %s to become 'ACTIVE'", d.Id())
 		timeout := d.Timeout(schema.TimeoutCreate)
-		err = waitForDBaaSUserV1ActiveState(ctx, dbaasClient, d.Id(), timeout)
+		err = waiters.WaitForDBaaSUserV1ActiveState(ctx, dbaasClient, d.Id(), timeout)
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
 		}
@@ -151,11 +140,6 @@ func resourceDBaaSUserV1Update(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceDBaaSUserV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	datastoreID := d.Get("datastore_id").(string)
-
-	selMutexKV.Lock(datastoreID)
-	defer selMutexKV.Unlock(datastoreID)
-
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -170,10 +154,10 @@ func resourceDBaaSUserV1Delete(ctx context.Context, d *schema.ResourceData, meta
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{strconv.Itoa(http.StatusOK)},
 		Target:     []string{strconv.Itoa(http.StatusNotFound)},
-		Refresh:    dbaasUserV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
+		Refresh:    waiters.DBaaSUserV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
+		MinTimeout: 15 * time.Second,
 	}
 
 	log.Printf("[DEBUG] waiting for user %s to become deleted", d.Id())
