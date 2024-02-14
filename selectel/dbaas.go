@@ -366,14 +366,3 @@ func validateDatastoreType(ctx context.Context, expectedDatastoreTypeEngines []s
 
 	return nil
 }
-
-// Databases
-
-func dbaasDatabaseV1LocaleDiffSuppressFunc(k, old, new string, d *schema.ResourceData) bool {
-	// The default locale value - C is the same as null value, so we need to suppress
-	if old == "C" && new == "" {
-		return true
-	}
-
-	return false
-}
