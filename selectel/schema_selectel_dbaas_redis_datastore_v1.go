@@ -37,5 +37,6 @@ func resourceDBaaSRedisDatastoreV1Schema() map[string]*schema.Schema {
 		Type:     schema.TypeString,
 		Required: true,
 	}
+
 	return datastoreSchema
 }

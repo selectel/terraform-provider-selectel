@@ -12,5 +12,6 @@ func resourceDBaaSMySQLDatastoreV1Schema() map[string]*schema.Schema {
 	for _, field := range invalidMySQLFields {
 		delete(datastoreSchema, field)
 	}
+
 	return datastoreSchema
 }

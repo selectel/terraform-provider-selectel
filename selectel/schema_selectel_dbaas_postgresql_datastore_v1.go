@@ -13,5 +13,6 @@ func resourceDBaaSPostgreSQLDatastoreV1Schema() map[string]*schema.Schema {
 	for _, field := range invalidPostgreSQLFields {
 		delete(datastoreSchema, field)
 	}
+
 	return datastoreSchema
 }

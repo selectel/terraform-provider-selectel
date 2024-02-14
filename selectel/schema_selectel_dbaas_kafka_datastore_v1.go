@@ -14,5 +14,6 @@ func resourceDBaaSKafkaDatastoreV1Schema() map[string]*schema.Schema {
 	for _, field := range invalidKafkaFields {
 		delete(datastoreSchema, field)
 	}
+
 	return datastoreSchema
 }
