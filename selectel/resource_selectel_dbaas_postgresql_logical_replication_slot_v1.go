@@ -29,37 +29,7 @@ func resourceDBaaSPostgreSQLLogicalReplicationSlotV1() *schema.Resource {
 			Update: schema.DefaultTimeout(60 * time.Minute),
 			Delete: schema.DefaultTimeout(60 * time.Minute),
 		},
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"datastore_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"database_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-		},
+		Schema: resourceDBaaSPostgreSQLLogicalReplicationSlotV1Schema(),
 	}
 }
 

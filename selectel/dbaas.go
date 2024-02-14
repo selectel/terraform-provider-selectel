@@ -447,15 +447,6 @@ func getDatastoreReplicasInstancesIDsWithoutFloatings(datastore dbaas.Datastore)
 	return replicasIDs
 }
 
-func dbaasDatabaseV1LocaleDiffSuppressFunc(_, old, new string, _ *schema.ResourceData) bool {
-	// The default locale value - C is the same as null value, so we need to suppress
-	if old == "C" && new == "" {
-		return true
-	}
-
-	return false
-}
-
 // Floating IPs
 
 func refreshDatastoreInstancesOutputsDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {

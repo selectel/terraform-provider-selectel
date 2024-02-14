@@ -29,24 +29,7 @@ func resourceDBaaSPrometheusMetricTokenV1() *schema.Resource {
 			Update: schema.DefaultTimeout(60 * time.Minute),
 			Delete: schema.DefaultTimeout(60 * time.Minute),
 		},
-		Schema: map[string]*schema.Schema{
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"value": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-		},
+		Schema: resourceDBaaSPostgreSQLPrometheusMetricTokenV1Schema(),
 	}
 }
 
