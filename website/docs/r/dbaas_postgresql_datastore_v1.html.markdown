@@ -64,7 +64,7 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
   
 * `type_id` - (Required) Unique identifier of the datastore type. Changing this creates a new datastore. Retrieved from the [selectel_dbaas_datastore_type_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_datastore_type_v1) data source.
 
-* `node_count` - (Required) Number of replicas in the datastore. The available range is from 1 to 6. Learn more about [Replication](https://docs.selectel.ru/cloud/managed-databases/about/about-managed-databases/#отказоустойчивость-и-репликация).
+* `node_count` - (Required) Number of nodes in the datastore. The available range is from 1 to 6. Learn more about [Replication](https://docs.selectel.ru/cloud/managed-databases/about/about-managed-databases/#отказоустойчивость-и-репликация).
 
 * `flavor_id` - (Optional) Unique identifier of the flavor for the datastore. Can be skipped when `flavor` is set. You can retrieve information about available flavors with the [selectel_dbaas_flavor_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_flavor_v1) data source.
 
@@ -110,7 +110,7 @@ export SEL_PROJECT_ID=<selectel_project_id>
 export SEL_REGION=<selectel_pool>
 terraform import selectel_dbaas_mysql_datastore_v1.datastore_1 <datastore_id>
 ```
- 
+
 where:
 
 * `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/control-panel-actions/account/registration/).
