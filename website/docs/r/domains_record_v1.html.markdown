@@ -8,9 +8,10 @@ description: |-
 
 # selectel\_domains\_record\_v1
 
-~> **Note:** This is legacy resource. Using the `selectel_domains_rrset_v2` resource. They are not compatible. They utilize different API and created records live on different authoritative servers. Zone created in v2 API is entirely new zone, and not available via v1 api and vice versa.
+**WARNING**: This resource is applicable to DNS Hosting (legacy). We do not support and develop DNS Hosting (legacy), but domains and records created in DNS Hosting (legacy) continue to work until further notice. We recommend to transfer your data to DNS Hosting (actual). For more infomation about DNS Hosting (actual), see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/about-dns/).
+To create records in DNS Hosting (actual) use the [selectel_domains_rrset_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/selectel_domains_rrset_v2) resource.
 
-Creates and manages a record in DNS Hosting using public API v1. For more information about records, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/records/).
+Creates and manages a record in DNS Hosting (legacy) using public API v1. For more information about records, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/records/).
 
 ## Example usage
 
@@ -19,7 +20,7 @@ Creates and manages a record in DNS Hosting using public API v1. For more inform
 ```hcl
 resource "selectel_domains_record_v1" "a_record_1" {
   domain_id = selectel_domains_domain_v1.domain_1.id
-  name      = "a.example.com"
+  name      = "example.com"
   type      = "A"
   content   = "127.0.0.1"
   ttl       = 60
@@ -31,7 +32,7 @@ resource "selectel_domains_record_v1" "a_record_1" {
 ```hcl
 resource "selectel_domains_record_v1" "aaaa_record_1" {
   domain_id = selectel_domains_domain_v1.domain_1.id
-  name      = "aaaa.example.com"
+  name      = "example.com"
   type      = "AAAA"
   content   = "2400:cb00:2049:1::a29f:1804"
   ttl       = 60
@@ -43,7 +44,7 @@ resource "selectel_domains_record_v1" "aaaa_record_1" {
 ```hcl
 resource "selectel_domains_record_v1" "txt_record_1" {
   domain_id = selectel_domains_domain_v1.domain_1.id
-  name      = "txt.example.com"
+  name      = "example.com"
   type      = "TXT"
   content   = "hello, world!"
   ttl       = 60
@@ -55,7 +56,7 @@ resource "selectel_domains_record_v1" "txt_record_1" {
 ```hcl
 resource "selectel_domains_record_v1" "cname_record_1" {
   domain_id = selectel_domains_domain_v1.domain_1.id
-  name      = "cname.example.com"
+  name      = "example.com"
   type      = "CNAME"
   content   = "origin.com"
   ttl       = 60
@@ -79,7 +80,7 @@ resource "selectel_domains_record_v1" "ns_record_1" {
 ```hcl
 resource "selectel_domains_record_v1" "mx_record_1" {
   domain_id = selectel_domains_domain_v1.domain_1.id
-  name      = "mx.example.com"
+  name      = "example.com"
   type      = "MX"
   content   = "mail.example.org"
   ttl       = 60
@@ -92,12 +93,12 @@ resource "selectel_domains_record_v1" "mx_record_1" {
 ```hcl
 resource "selectel_domains_record_v1" "srv_record_1" {
   domain_id = selectel_domains_domain_v1.domain_1.id
-  name      = "srv.example.com"
+  name      = "example.com"
   type      = "SRV"
   ttl       = 120
   priority  = 10
   weight    = 20
-  target    = "backupbox.example.com"
+  target    = "example.com"
   port      = 100
 }
 ```
