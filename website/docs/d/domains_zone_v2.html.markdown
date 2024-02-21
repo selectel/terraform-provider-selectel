@@ -3,19 +3,19 @@ layout: "selectel"
 page_title: "Selectel: selectel_domains_zone_v2"
 sidebar_current: "docs-selectel-datasource-domains-zone-v2"
 description: |-
-  Provides a zone info in Selectel DNS Hosting using public API v2.
+  Provides information about a zone in Selectel DNS Hosting (actual).
 ---
 
 # selectel\_domains\_zone_v2
 
-Provides a zone info in DNS Hosting (API v2). For more information about zones in DNS Hosting, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/zones/).
+Provides information about a zone in Selectel DNS Hosting (actual). For more information about zones, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/zones/).
 
 ## Example Usage
 
 ```hcl
 data "selectel_domains_zone_v2" "zone_1" {
-  name = "example.com."
-  project_id = "project_id"
+  name       = "example.com."
+  project_id = selectel_vpc_project_v2.project_1.id
 }
 ```
 
@@ -23,24 +23,20 @@ data "selectel_domains_zone_v2" "zone_1" {
 
 * `name` - (Required) Zone name.
 
-* `project_id` - (Required) Selectel project ID.
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
 ## Attributes Reference
-  
-* `name` - Zone name.
 
-* `project_id` - Selectel project id.
+* `comment` - Comment for the zone.
 
-* `comment` - Comment for zone.
+* `created_at` - Time when the zone was created in RFC 3339 timestamp format.
 
-* `created_at` - Timestamp when zone was created.
+* `updated_at` - Time when the zone was updated in RFC 3339 timestamp format.
 
-* `updated_at` - Timestamp when zone was updated.
+* `delegation_checked_at` - Time when DNS Hosting checked if the zone was delegated to Selectel NS servers in RFC 3339 timestamp format.
 
-* `delegation_checked_at` - Timestamp of last delegation status check.
+* `last_check_status` - Zone status retrieved during the last delegation check.
 
-* `last_check_status` - Shows if zone delegated to selectel NS servers or not.
+* `last_delegated_at` - Equals to the `delegation_check_at` argument value when the `last_check_status` is `true`.
 
-* `last_delegated_at` - Timestamp of last delegation status check when zone was delegated to selectel NS server.
-
-* `disabled` - Shows if zone available or not.
+* `disabled` - Shows if the zone is enabled or disabled.

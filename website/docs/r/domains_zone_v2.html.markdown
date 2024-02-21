@@ -3,53 +3,43 @@ layout: "selectel"
 page_title: "Selectel: selectel_domains_zone_v2"
 sidebar_current: "docs-selectel-resource-domains-zone-v2"
 description: |-
-  Creates and manages a zone in Selectel DNS Hosting using public API v2.
+  Creates and manages a zone in Selectel DNS Hosting (actual) using public API v2.
 ---
 
 # selectel\_domains\_zone\_v2
 
-Creates and manages a zone in DNS Hosting using public API v2. For more information about zones, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/zones/).
+Creates and manages a zone in DNS Hosting (actual) using public API v2. For more information about zones, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/zones/).
 
 ## Example usage
 
 ```hcl
 resource "selectel_domains_zone_v2" "zone_1" {
-  name = "example.com."
-  project_id = "project_id"
+  name       = "example.com."
+  project_id = selectel_vpc_project_v2.project_1.id
 }
 ```
 
 ## Argument Reference
 
-* `name` - (Required) Zone name. Changing this creates a new zone name.
+* `name` - (Required) Zone name. Changing this creates a new zone.
 
-* `project_id` - (Required) Selectel project id. Scope for creating zone.
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
-* `comment` - (Optional) Comment for zone.
+* `comment` - (Optional) Comment to add to the zone.
 
-* `disabled` - (Optional) Set zone available or not.
+* `disabled` - (Optional) Enables or disables the zone. Boolean flag, the default value is false.
 
 ## Attributes Reference
 
-* `id` - Unique identifier of the zone.
+* `created_at` - Time when the zone was created in RFC 3339 timestamp format.
 
-* `name` - Zone name.
+* `updated_at` - Time when the zone was updated in RFC 3339 timestamp format.
 
-* `project_id` - Selectel project id.
+* `delegation_checked_at` - Time when DNS Hosting checked if the zone was delegated to Selectel NS servers in RFC 3339 timestamp format.
 
-* `comment` - Comment for zone.
+* `last_check_status` - Zone status retrieved during the last delegation check.
 
-* `created_at` - Timestamp when zone was created.
-
-* `updated_at` - Timestamp when zone was updated.
-
-* `delegation_checked_at` - Timestamp of last delegation status check.
-
-* `last_check_status` - Shows if zone delegated to selectel NS servers or not.
-
-* `last_delegated_at` - Timestamp of last delegation status check when zone was delegated to selectel NS server.
-
-* `disabled` - Shows if zone available or not.
+* `last_delegated_at` - Equals to the `delegation_check_at` argument value when the `last_check_status` is `true`.
 
 ## Import
 
@@ -59,7 +49,7 @@ You can import a zone:
 export OS_DOMAIN_NAME=<account_id>
 export OS_USERNAME=<username>
 export OS_PASSWORD=<password>
-export SEL_PROJECT_ID=<project_id>
+export SEL_PROJECT_ID=<selectel_project_id>
 terraform import selectel_domains_zone_v2.zone_1 <zone_name>
 ```
 
@@ -71,6 +61,6 @@ where:
 
 * `<password>` — Password of the service user.
 
-* `<project_id>` — Selectel project ID.
+* `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶ copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/craas/about/projects/).
 
-* `<zone_name>` — Zone name.
+* `<zone_name>` — Zone name, for example, example.com. To get the name, in the [Control panel](https://my.selectel.ru/dns/), go to **DNS**. The zone name is in the **Zone** column.

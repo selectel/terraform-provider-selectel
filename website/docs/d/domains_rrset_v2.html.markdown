@@ -3,21 +3,21 @@ layout: "selectel"
 page_title: "Selectel: selectel_domains_rrset_v2"
 sidebar_current: "docs-selectel-datasource-domains-rrset-v2"
 description: |-
-  Provides a RRSet info in Selectel DNS Hosting using public API v2.
+  Provides information about an RRSet in Selectel DNS Hosting (actual).
 ---
 
 # selectel\_domains\_rrset_v2
 
-Provides a RRSet info in DNS Hosting. For more information about RRSet in DNS Hosting, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/records/).
+Provides information about an RRSet in DNS Hosting (actual). For more information about RRSets, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/records/).
 
 ## Example Usage
 
 ```hcl
 data "selectel_domains_rrset_v2" "rrset_1" {
-  name = "example.com."
-  type = "A"
-  zone_id = "zone_id"
-  ptoject_id = "project_id"
+  name       = "example.com."
+  type       = "A"
+  zone_id    = selectel_domains_zone_v2.zone_1.id
+  project_id = selectel_vpc_project_v2.project_1.id
 }
 ```
 
@@ -25,30 +25,22 @@ data "selectel_domains_rrset_v2" "rrset_1" {
 
 * `name` - (Required) RRSet name.
 
-* `type` - (Required) RRSet type.
+* `type` - (Required) RRSet type. Available types are `A`, `AAAA`, `TXT`, `CNAME`, `NS`, `MX`, `SRV`, `SSHFP`, `ALIAS`, `CAA`.
 
-* `zone_id` - (Required) Zone ID.
+* `zone_id` - (Required) (Required) Unique identifier of the zone. Retrieved from the [selectel_domains_zone_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/domains_zone_v2) resource.
 
-* `project_id` - (Required) Selectel project ID.
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
 ## Attributes Reference
 
-* `name` - RRSet name.
+* `ttl` - RRSet time-to-live in seconds.
 
-* `type` - RRSet type.
-
-* `zone_id` - Zone ID.
-
-* `project_id` - Selectel project ID.
-
-* `ttl` - RRSet TTL.
-
-* `comment` - Comment for RRSet.
+* `comment` - Comment for the RRSet.
 
 * `managed_by` - RRSet owner.
 
-* `records` - Set of records:
+* `records` - List of records in the RRSet.
   
-  * `content` - Value for record.
+  * `content` - Record value.
 
-  * `disabled` - Shows if record available or not.
+  * `disabled` - Shows if the record is enabled or disabled.
