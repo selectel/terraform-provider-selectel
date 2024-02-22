@@ -160,7 +160,7 @@ resource "selectel_domains_rrset_v2" "caa_rrset_1" {
 
 * `zone_id` - (Required) Unique identifier of the zone. Changing this creates a new RRSet. Retrieved from the [selectel_domains_zone_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/domains_zone_v2) resource.
 
-* `name` - (Required) RRSet name. Changing this creates a new RRSet. The value must be the same as the zone name. If `type` is `SRV`, the name must also include service and protocol, see the [example usage for SRV RRSet](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/domains_rrset_v2#srv-rrset). Changing this creates a new RRSet.
+* `name` - (Required) RRSet name. Changing this creates a new RRSet. The value must be the same as the zone name. If `type` is `SRV`, the name must also include service and protocol, see the [example usage for SRV RRSet](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/domains_rrset_v2#srv-rrset).
 
 * `type` - (Required) RRSet type. Changing this creates a new RRSet. Available types are `A`, `AAAA`, `TXT`, `CNAME`, `MX`, `SRV`, `SSHFP`, `ALIAS`, `CAA`.
 
@@ -217,8 +217,8 @@ where:
 
 * `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶ copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/craas/about/projects/).
 
-* `<zone_name>` — Zone name, for example, example.com. To get the name, in the [Control panel](https://my.selectel.ru/dns/), go to **DNS**. The zone name is in the **Zone** column.
+* `<zone_name>` — Zone name, for example, `example.com.`. To get the name, in the [Control panel](https://my.selectel.ru/dns/), go to **DNS**. The zone name is in the **Zone** column.
 
-* `<rrset_name>` — RRSet name, for example, example.com.. To get the name, in the [Control panel](https://my.selectel.ru/dns/), go to **DNS** → the zone page. The RRSet name is in the **Group name** column.
+* `<rrset_name>` — RRSet name, for example, `example.com.`. To get the name, in the [Control panel](https://my.selectel.ru/dns/), go to **DNS** → the zone page. The RRSet name is in the **Group name** column.
 
 * `<rrset_type>` — RRSet type. To get the type, in the [Control panel](https://my.selectel.ru/dns/), go to **DNS** → the zone page. The RRSet type is in the **Type** column.
