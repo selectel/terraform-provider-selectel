@@ -29,11 +29,11 @@ data "selectel_domains_zone_v2" "zone_1" {
 
 * `comment` - Comment for the zone.
 
-* `created_at` - Time when the zone was created in RFC 3339 timestamp format.
+* `created_at` - Time when the zone was created in the RFC 3339 timestamp format.
 
-* `updated_at` - Time when the zone was updated in RFC 3339 timestamp format.
+* `updated_at` - Time when the zone was updated in the RFC 3339 timestamp format.
 
-* `delegation_checked_at` - Time when DNS Hosting checked if the zone was delegated to Selectel NS servers in RFC 3339 timestamp format.
+* `delegation_checked_at` - Time when DNS Hosting checked if the zone was delegated to Selectel NS servers in the RFC 3339 timestamp format.
 
 * `last_check_status` - Zone status retrieved during the last delegation check.
 
