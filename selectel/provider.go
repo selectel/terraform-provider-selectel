@@ -20,6 +20,8 @@ const (
 	objectToken                   = "token"
 	objectTopic                   = "topic"
 	objectUser                    = "user"
+	objectServiceUser             = "service user"
+	objectEC2Credentials          = "ec2 credentials"
 	objectCluster                 = "cluster"
 	objectKubeConfig              = "kubeconfig"
 	objectKubeVersions            = "kube-versions"
@@ -119,6 +121,9 @@ func Provider() *schema.Provider {
 			"selectel_vpc_subnet_v2":                                resourceVPCSubnetV2(),
 			"selectel_vpc_token_v2":                                 resourceVPCTokenV2(), // DEPRECATED
 			"selectel_vpc_user_v2":                                  resourceVPCUserV2(),
+			"selectel_iam_serviceuser_v1":                           resourceIAMServiceUserV1(),
+			"selectel_iam_user_v1":                                  resourceIAMUserV1(),
+			"selectel_iam_ec2_v1":                                   resourceIAMEC2V1(),
 			"selectel_vpc_vrrp_subnet_v2":                           resourceVPCVRRPSubnetV2(),        // DEPRECATED
 			"selectel_vpc_crossregion_subnet_v2":                    resourceVPCCrossRegionSubnetV2(), // DEPRECATED
 			"selectel_mks_cluster_v1":                               resourceMKSClusterV1(),

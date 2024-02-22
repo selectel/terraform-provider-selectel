@@ -1,6 +1,8 @@
 module github.com/terraform-providers/terraform-provider-selectel
 
-go 1.20
+go 1.21
+
+toolchain go1.21.4
 
 require (
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
@@ -10,8 +12,9 @@ require (
 	github.com/selectel/dbaas-go v0.10.0
 	github.com/selectel/domains-go v0.5.0
 	github.com/selectel/go-selvpcclient/v3 v3.1.1
+	github.com/selectel/iam-go v0.1.1
 	github.com/selectel/mks-go v0.12.0
-	github.com/stretchr/testify v1.7.2
+	github.com/stretchr/testify v1.8.4
 )
 
 require (
