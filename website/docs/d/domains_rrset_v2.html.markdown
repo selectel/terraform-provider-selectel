@@ -27,7 +27,7 @@ data "selectel_domains_rrset_v2" "rrset_1" {
 
 * `type` - (Required) RRSet type. Available types are `A`, `AAAA`, `TXT`, `CNAME`, `NS`, `MX`, `SRV`, `SSHFP`, `ALIAS`, `CAA`.
 
-* `zone_id` - (Required) (Required) Unique identifier of the zone. Retrieved from the [selectel_domains_zone_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/domains_zone_v2) resource.
+* `zone_id` - (Required) Unique identifier of the zone. Retrieved from the [selectel_domains_zone_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/domains_zone_v2) resource.
 
 * `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
