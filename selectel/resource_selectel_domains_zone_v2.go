@@ -10,6 +10,8 @@ import (
 	domainsV2 "github.com/selectel/domains-go/pkg/v2"
 )
 
+var ErrZoneNotFound = errors.New("zone not found")
+
 func resourceDomainsZoneV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceDomainsZoneV2Create,

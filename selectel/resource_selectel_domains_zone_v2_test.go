@@ -11,6 +11,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+const resourceZoneName = "zone_tf_acc_test_1"
+
 func TestAccDomainsZoneV2Basic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	testZoneName := fmt.Sprintf("%s.xyz.", acctest.RandomWithPrefix("tf-acc"))
@@ -62,4 +64,29 @@ func testAccCheckDomainsV2ZoneDestroy(s *terraform.State) error {
 	}
 
 	return nil
+}
+
+func testAccDomainsZoneV2Exists(name string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[name]
+		if !ok {
+			return fmt.Errorf("can't find zone: %s", name)
+		}
+
+		zoneID := rs.Primary.ID
+		if zoneID == "" {
+			return errors.New("zone ID not set in tf state")
+		}
+		client, err := getDomainsV2ClientTest(rs, testAccProvider)
+		if err != nil {
+			return err
+		}
+		ctx := context.Background()
+		_, err = client.GetZone(ctx, zoneID, nil)
+		if err != nil {
+			return errors.New("zone in api not found")
+		}
+
+		return nil
+	}
 }

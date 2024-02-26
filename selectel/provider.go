@@ -102,8 +102,6 @@ func Provider() *schema.Provider {
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"selectel_domains_domain_v1":                dataSourceDomainsDomainV1(),
-			"selectel_domains_zone_v2":                  dataSourceDomainsZoneV2(),
-			"selectel_domains_rrset_v2":                 dataSourceDomainsRRSetV2(),
 			"selectel_dbaas_datastore_type_v1":          dataSourceDBaaSDatastoreTypeV1(),
 			"selectel_dbaas_available_extension_v1":     dataSourceDBaaSAvailableExtensionV1(),
 			"selectel_dbaas_flavor_v1":                  dataSourceDBaaSFlavorV1(),

@@ -12,6 +12,8 @@ import (
 	domainsV2 "github.com/selectel/domains-go/pkg/v2"
 )
 
+var ErrRRSetNotFound = errors.New("rrset not found")
+
 func resourceDomainsRRSetV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceDomainsRRSetV2Create,

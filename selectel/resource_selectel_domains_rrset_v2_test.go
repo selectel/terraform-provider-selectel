@@ -13,6 +13,8 @@ import (
 	domainsV2 "github.com/selectel/domains-go/pkg/v2"
 )
 
+const resourceRRSetName = "rrset_tf_acc_test_1"
+
 func TestAccDomainsRRSetV2Basic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	testZoneName := fmt.Sprintf("%s.ru.", acctest.RandomWithPrefix("tf-acc"))
@@ -58,21 +60,6 @@ func testAccDomainsRRSetV2WithZoneBasic(projectName, resourceRRSetName, rrsetNam
 	}`, resourceRRSetName, rrsetName, rrsetType, ttl, rrsetContent, resourceZoneName, testAccDomainsZoneV2Basic(projectName, resourceZoneName, zoneName))
 }
 
-func testAccDomainsRRSetV2Basic(resourceRRSetName, rrsetName, rrsetType, rrsetContent string, ttl int, resourceZoneName string) string {
-	return fmt.Sprintf(`
-	resource "selectel_domains_rrset_v2" %[1]q {
-		name = %[2]q
-		type = %[3]q
-		ttl = %[4]d
-		zone_id = selectel_domains_zone_v2.%[5]s.id
-		project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
-		records {
-			content = %[6]q
-			disabled = false
-		}
-	}`, resourceRRSetName, rrsetName, rrsetType, ttl, resourceZoneName, rrsetContent)
-}
-
 func testAccCheckDomainsV2RRSetDestroy(s *terraform.State) error {
 	ctx := context.Background()
 
@@ -95,4 +82,19 @@ func testAccCheckDomainsV2RRSetDestroy(s *terraform.State) error {
 	}
 
 	return nil
+}
+
+func testAccDomainsRRSetV2ID(name string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[name]
+		if !ok {
+			return fmt.Errorf("can't find rrset: %s", name)
+		}
+
+		if rs.Primary.ID == "" {
+			return errors.New("rrset data source ID not set")
+		}
+
+		return nil
+	}
 }
