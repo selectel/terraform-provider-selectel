@@ -215,7 +215,7 @@ where:
 
 * `<password>` — Password of the service user.
 
-* `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶ copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/craas/about/projects/).
+* `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶ copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
 * `<zone_name>` — Zone name, for example, `example.com.`. To get the name, in the [Control panel](https://my.selectel.ru/dns/), go to **DNS**. The zone name is in the **Zone** column.
 
