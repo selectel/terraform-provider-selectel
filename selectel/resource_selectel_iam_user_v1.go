@@ -13,6 +13,7 @@ import (
 
 func resourceIAMUserV1() *schema.Resource {
 	return &schema.Resource{
+		Description:   "Represents a User in IAM API",
 		CreateContext: resourceIAMUserV1Create,
 		ReadContext:   resourceIAMUserV1Read,
 		UpdateContext: resourceIAMUserV1Update,
@@ -22,18 +23,21 @@ func resourceIAMUserV1() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"auth_type": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Authentication type of the User. Can be 'local' or 'federative'.",
 			},
 			"email": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Email of the User.",
 			},
 			"federation": {
-				Type:     schema.TypeSet,
-				Optional: true,
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Federation data of the User. Can be set only if 'auth_type' is 'federative'.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
@@ -50,9 +54,10 @@ func resourceIAMUserV1() *schema.Resource {
 				},
 			},
 			"role": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: false,
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "List of roles of the User.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"role_name": {

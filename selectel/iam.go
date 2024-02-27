@@ -96,9 +96,9 @@ func getIAMUserFederationFromSet(federationSet *schema.Set) (*users.Federation, 
 	return federation, nil
 }
 
-func containsServiceUsersRole(s []serviceusers.Role, e serviceusers.Role) bool {
-	for _, a := range s {
-		if a == e {
+func containsServiceUsersRole(roles []serviceusers.Role, neededRole serviceusers.Role) bool {
+	for _, role := range roles {
+		if role == neededRole {
 			return true
 		}
 	}
@@ -106,9 +106,9 @@ func containsServiceUsersRole(s []serviceusers.Role, e serviceusers.Role) bool {
 	return false
 }
 
-func containsUsersRole(s []users.Role, e users.Role) bool {
-	for _, a := range s {
-		if a == e {
+func containsUsersRole(roles []users.Role, neededRole users.Role) bool {
+	for _, role := range roles {
+		if role == neededRole {
 			return true
 		}
 	}

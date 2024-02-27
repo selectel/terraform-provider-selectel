@@ -13,6 +13,7 @@ import (
 
 func resourceIAMServiceUserV1() *schema.Resource {
 	return &schema.Resource{
+		Description:   "Represents a Service User in IAM API",
 		CreateContext: resourceIAMServiceUserV1Create,
 		ReadContext:   resourceIAMServiceUserV1Read,
 		UpdateContext: resourceIAMServiceUserV1Update,
@@ -22,26 +23,30 @@ func resourceIAMServiceUserV1() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"enabled": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
-				ForceNew: false,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				ForceNew:    false,
+				Description: "Indicates whether the Service User is enabled. True by default.",
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: false,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    false,
+				Description: "Name of the Service User.",
 			},
 			"password": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: false,
-				Sensitive: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    false,
+				Sensitive:   true,
+				Description: "Password of the Service User.",
 			},
 			"role": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: false,
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "List of roles of the Service User.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"role_name": {

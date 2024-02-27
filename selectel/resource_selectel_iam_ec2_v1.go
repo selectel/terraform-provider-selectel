@@ -13,6 +13,7 @@ import (
 
 func resourceIAMEC2V1() *schema.Resource {
 	return &schema.Resource{
+		Description:   "Represents a EC2 Credentials in IAM API",
 		CreateContext: resourceIAMEC2V1Create,
 		ReadContext:   resourceIAMEC2V1Read,
 		DeleteContext: resourceIAMEC2V1Delete,
@@ -21,28 +22,33 @@ func resourceIAMEC2V1() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"user_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Service User ID to assign EC2 Credentials to.",
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Name of the EC2 Credentials.",
 			},
 			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Project ID to associate EC2 Credentials with.",
 			},
 			"access_key": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Access Key of the EC2 Credentials.",
 			},
 			"secret_key": {
-				Type:     schema.TypeString,
-				Computed: true,
-				Sensitive: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Sensitive:   true,
+				Description: "Secret Key of the EC2 Credentials.",
 			},
 		},
 	}
