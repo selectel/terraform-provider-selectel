@@ -1,15 +1,13 @@
 module github.com/terraform-providers/terraform-provider-selectel
 
-go 1.21
-
-toolchain go1.21.4
+go 1.20
 
 require (
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/go-retryablehttp v0.6.6
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.1
 	github.com/selectel/craas-go v0.3.0
-	github.com/selectel/dbaas-go v0.10.0
+	github.com/selectel/dbaas-go v0.9.0
 	github.com/selectel/domains-go v0.5.0
 	github.com/selectel/go-selvpcclient/v3 v3.1.1
 	github.com/selectel/iam-go v0.1.1
