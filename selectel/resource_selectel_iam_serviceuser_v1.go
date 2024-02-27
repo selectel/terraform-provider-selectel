@@ -36,6 +36,7 @@ func resourceIAMServiceUserV1() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: false,
+				Sensitive: true,
 			},
 			"role": {
 				Type:     schema.TypeList,
