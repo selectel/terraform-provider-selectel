@@ -1,4 +1,22 @@
-# 4.0.1 (October 3, 2023)
+## 4.1.0 (February 26, 2024)
+FEATURES:
+* Added entities for work with DNS v2 API ([#249](https://github.com/selectel/terraform-provider-selectel/pull/249))
+
+IMPROVEMENTS:
+* Fix extensions for kafka resource docs ([#250](https://github.com/selectel/terraform-provider-selectel/pull/250))
+
+## 4.0.3 (February 6, 2024)
+FEATURES:
+* Add kafka support ([#248](https://github.com/selectel/terraform-provider-selectel/pull/248))
+
+## 4.0.2 (December 21, 2023)
+IMPROVEMENTS:
+
+* Add auth_region optional parameter ([#244](https://github.com/selectel/terraform-provider-selectel/pull/244))
+* Bump google.golang.org/grpc from 1.53.0 to 1.56.3 by @dependabot in ([#242](https://github.com/selectel/terraform-provider-selectel/pull/242))
+* Bump golang.org/x/net from 0.7.0 to 0.17.0 by @dependabot in ([#240](https://github.com/selectel/terraform-provider-selectel/pull/240))
+
+## 4.0.1 (October 3, 2023)
 IMPROVEMENTS:
 
 * Update docs to upgrade to new major v4 version ([#239](https://github.com/selectel/terraform-provider-selectel/pull/239))
@@ -13,12 +31,6 @@ IMPROVEMENTS:
 
 * Deprecate `selectel_vpc_token_v2` ([#236](https://github.com/selectel/terraform-provider-selectel/pull/236))
 * Updated the provider documentation with new auth type ([#238](https://github.com/selectel/terraform-provider-selectel/pull/238))
-
-
-## 3.11.1 (Unreleased)
-
-IMPROVEMENTS:
-
 * Added backup retention days parameter to DBaaS datastore resources ([#231](https://github.com/selectel/terraform-provider-selectel/pull/231))
 * Enforced password strength constraint for the `selectel_vpc_user_v2` resource ([#209](https://github.com/selectel/terraform-provider-selectel/pull/209))
 * Updated the provider documentation ([#237](https://github.com/selectel/terraform-provider-selectel/pull/237))

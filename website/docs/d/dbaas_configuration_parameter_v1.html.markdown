@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_dbaas\_configuration_parameter_v1
 
-Provides a list of configuration parameters available for Managed Databases. For more information about configuration parameters, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/settings/), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/settings-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/settings/), [MySQL semi-sync](https://docs.selectel.ru/cloud/managed-databases/mysql-semi-sync/settings/), [MySQL sync](https://docs.selectel.ru/cloud/managed-databases/mysql-sync/settings/), and [Redis](https://docs.selectel.ru/cloud/managed-databases/redis/eviction-policy/).
+Provides a list of configuration parameters available for Managed Databases. For more information about configuration parameters, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/settings/), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/settings-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/settings/), [MySQL semi-sync](https://docs.selectel.ru/cloud/managed-databases/mysql-semi-sync/settings/), [MySQL sync](https://docs.selectel.ru/cloud/managed-databases/mysql-sync/settings/), [Redis](https://docs.selectel.ru/cloud/managed-databases/redis/eviction-policy/), and [Kafka](https://docs.selectel.ru/cloud/managed-databases/kafka/settings/).
 
 ## Example Usage
 

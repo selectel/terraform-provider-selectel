@@ -52,7 +52,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
 ## Example Usage for MySQL semi-sync
 
 ```hcl
-data "selectel_dbaas_datastore_type_v1" "dt" {
+data "selectel_dbaas_datastore_type_v1" "datastore_type_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-3"
   filter {
@@ -65,7 +65,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
 ## Example Usage for MySQL sync
 
 ```hcl
-data "selectel_dbaas_datastore_type_v1" "dt" {
+data "selectel_dbaas_datastore_type_v1" "datastore_type_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-3"
   filter {
@@ -78,12 +78,25 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
 ## Example Usage for Redis
 
 ```hcl
-data "selectel_dbaas_datastore_type_v1" "dt" {
+data "selectel_dbaas_datastore_type_v1" "datastore_type_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-3"
   filter {
     engine  = "redis"
     version = "6"
+  }
+}
+```
+
+## Example Usage for Kafka
+
+```hcl
+data "selectel_dbaas_datastore_type_v1" "datastore_type_1" {
+  project_id = selectel_vpc_project_v2.project_1.id
+  region     = "ru-3"
+  filter {
+    engine  = "kafka"
+    version = "3.5"
   }
 }
 ```

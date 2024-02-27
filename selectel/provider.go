@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	objectACL                     = "acl"
 	objectFloatingIP              = "floating IP"
 	objectKeypair                 = "keypair"
 	objectLicense                 = "license"
@@ -17,6 +18,7 @@ const (
 	objectRole                    = "role"
 	objectSubnet                  = "subnet"
 	objectToken                   = "token"
+	objectTopic                   = "topic"
 	objectUser                    = "user"
 	objectCluster                 = "cluster"
 	objectKubeConfig              = "kubeconfig"
@@ -24,6 +26,8 @@ const (
 	objectNodegroup               = "nodegroup"
 	objectDomain                  = "domain"
 	objectRecord                  = "record"
+	objectZone                    = "zone"
+	objectRRSet                   = "rrset"
 	objectDatastore               = "datastore"
 	objectDatabase                = "database"
 	objectGrant                   = "grant"
@@ -123,6 +127,8 @@ func Provider() *schema.Provider {
 			"selectel_mks_nodegroup_v1":                             resourceMKSNodegroupV1(),
 			"selectel_domains_domain_v1":                            resourceDomainsDomainV1(),
 			"selectel_domains_record_v1":                            resourceDomainsRecordV1(),
+			"selectel_domains_zone_v2":                              resourceDomainsZoneV2(),
+			"selectel_domains_rrset_v2":                             resourceDomainsRRSetV2(),
 			"selectel_dbaas_datastore_v1":                           resourceDBaaSDatastoreV1(), // DEPRECATED
 			"selectel_dbaas_postgresql_datastore_v1":                resourceDBaaSPostgreSQLDatastoreV1(),
 			"selectel_dbaas_mysql_datastore_v1":                     resourceDBaaSMySQLDatastoreV1(),
@@ -136,6 +142,9 @@ func Provider() *schema.Provider {
 			"selectel_dbaas_postgresql_extension_v1":                resourceDBaaSPostgreSQLExtensionV1(),
 			"selectel_dbaas_prometheus_metric_token_v1":             resourceDBaaSPrometheusMetricTokenV1(),
 			"selectel_dbaas_postgresql_logical_replication_slot_v1": resourceDBaaSPostgreSQLLogicalReplicationSlotV1(),
+			"selectel_dbaas_kafka_acl_v1":                           resourceDBaaSKafkaACLV1(),
+			"selectel_dbaas_kafka_datastore_v1":                     resourceDBaaSKafkaDatastoreV1(),
+			"selectel_dbaas_kafka_topic_v1":                         resourceDBaaSKafkaTopicV1(),
 			"selectel_craas_registry_v1":                            resourceCRaaSRegistryV1(),
 			"selectel_craas_token_v1":                               resourceCRaaSTokenV1(),
 		},

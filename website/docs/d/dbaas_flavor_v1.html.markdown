@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_dbaas\_flavors_v1
 
-Provides a list of flavors available in Managed Databases. For more information about available configurations, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/configurations/), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/configurations-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/configurations/), [MySQL semi-sync](https://docs.selectel.ru/cloud/managed-databases/mysql-semi-sync/configurations/), [MySQL sync](https://docs.selectel.ru/cloud/managed-databases/mysql-sync/configurations/), and [Redis](https://docs.selectel.ru/cloud/managed-databases/redis/configurations/).
+Provides a list of flavors available in Managed Databases. For more information about available configurations, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/configurations/), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/configurations-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/configurations/), [MySQL semi-sync](https://docs.selectel.ru/cloud/managed-databases/mysql-semi-sync/configurations/), [MySQL sync](https://docs.selectel.ru/cloud/managed-databases/mysql-sync/configurations/), [Redis](https://docs.selectel.ru/cloud/managed-databases/redis/configurations/), and [Kafka](https://docs.selectel.ru/cloud/managed-databases/kafka/configurations/).
 
 ## Example Usage
 
