@@ -2,16 +2,69 @@ package selectel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-var invalidPostgreSQLFields = []string{
-	"redis_password",
-}
-
 func resourceDBaaSPostgreSQLDatastoreV1Schema() map[string]*schema.Schema {
-	datastoreSchema := resourceDBaaSDatastoreV1Schema()
-	for _, field := range invalidPostgreSQLFields {
-		delete(datastoreSchema, field)
+	datastoreSchema := resourceDBaaSDatastoreV1BaseSchema()
+	datastoreSchema["backup_retention_days"] = &schema.Schema{
+		Type:        schema.TypeInt,
+		Optional:    true,
+		Description: "Number of days to retain backups.",
+	}
+	datastoreSchema["pooler"] = &schema.Schema{
+		Type:     schema.TypeSet,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"mode": {
+					Type:     schema.TypeString,
+					Required: true,
+					ValidateFunc: validation.StringInSlice([]string{
+						"session",
+						"transaction",
+						"statement",
+					}, false),
+				},
+				"size": {
+					Type:     schema.TypeInt,
+					Required: true,
+				},
+			},
+		},
+	}
+	datastoreSchema["restore"] = &schema.Schema{
+		Type:     schema.TypeSet,
+		Optional: true,
+		ForceNew: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"datastore_id": {
+					Type:     schema.TypeString,
+					Optional: true,
+				},
+				"target_time": {
+					Type:     schema.TypeString,
+					Optional: true,
+				},
+			},
+		},
+	}
+	datastoreSchema["floating_ips"] = &schema.Schema{
+		Type:     schema.TypeSet,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"master": {
+					Type:     schema.TypeInt,
+					Required: true,
+				},
+				"replica": {
+					Type:     schema.TypeInt,
+					Required: true,
+				},
+			},
+		},
 	}
 
 	return datastoreSchema

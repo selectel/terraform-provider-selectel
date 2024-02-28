@@ -195,9 +195,9 @@ func filterConfigurationParametersByName(configurationParameters []dbaas.Configu
 	return filteredConfigurationParameters
 }
 
-func convertListParametersTypes(parameter []interface{}) []string {
-	parameterList := make([]string, len(parameter))
-	for i, value := range parameter {
+func convertListParametersTypes(parameters []interface{}) []string {
+	parameterList := make([]string, len(parameters))
+	for i, value := range parameters {
 		parameterList[i] = convertFieldToStringByType(value)
 	}
 

@@ -20,8 +20,9 @@ func resourceDBaaSUserV1Schema() map[string]*schema.Schema {
 			ForceNew: true,
 		},
 		"password": {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:      schema.TypeString,
+			Required:  true,
+			Sensitive: true,
 		},
 		"status": {
 			Type:     schema.TypeString,

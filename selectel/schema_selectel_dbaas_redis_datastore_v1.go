@@ -2,16 +2,29 @@ package selectel
 
 import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-var invalidRedisFields = []string{
-	"flavor",
-	"flavor_id",
-	"pooler",
-}
-
 func resourceDBaaSRedisDatastoreV1Schema() map[string]*schema.Schema {
-	datastoreSchema := resourceDBaaSDatastoreV1Schema()
-	for _, field := range invalidRedisFields {
-		delete(datastoreSchema, field)
+	datastoreSchema := resourceDBaaSDatastoreV1BaseSchema()
+	datastoreSchema["backup_retention_days"] = &schema.Schema{
+		Type:        schema.TypeInt,
+		Optional:    true,
+		Description: "Number of days to retain backups.",
+	}
+	datastoreSchema["restore"] = &schema.Schema{
+		Type:     schema.TypeSet,
+		Optional: true,
+		ForceNew: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"datastore_id": {
+					Type:     schema.TypeString,
+					Optional: true,
+				},
+				"target_time": {
+					Type:     schema.TypeString,
+					Optional: true,
+				},
+			},
+		},
 	}
 	datastoreSchema["flavor"] = &schema.Schema{
 		Type:     schema.TypeSet,
@@ -36,6 +49,27 @@ func resourceDBaaSRedisDatastoreV1Schema() map[string]*schema.Schema {
 	datastoreSchema["flavor_id"] = &schema.Schema{
 		Type:     schema.TypeString,
 		Required: true,
+	}
+	datastoreSchema["redis_password"] = &schema.Schema{
+		Type:      schema.TypeString,
+		Optional:  true,
+		Sensitive: true,
+	}
+	datastoreSchema["floating_ips"] = &schema.Schema{
+		Type:     schema.TypeSet,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"master": {
+					Type:     schema.TypeInt,
+					Required: true,
+				},
+				"replica": {
+					Type:     schema.TypeInt,
+					Required: true,
+				},
+			},
+		},
 	}
 
 	return datastoreSchema
