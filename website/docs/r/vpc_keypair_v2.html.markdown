@@ -26,7 +26,7 @@ resource "selectel_vpc_keypair_v2" "keypair_1" {
 
 * `name` - (Required) Name of the SSH key pair. Changing this creates a new key pair.
 
-* `public_key` - (Required) Pregenerated OpenSSH-formatted public key. Changing this creates a new key pair. Learn more [how to create SSH key pair](https://docs.selectel.ru/cloud/servers/manage/create-and-place-ssh-key/#создать-ssh-ключи).
+* `public_key` - (Required) Pregenerated OpenSSH-formatted public key. Changing this creates a new key pair. Learn more [how to create SSH key pair](https://docs.selectel.ru/cloud/servers/manage/create-and-place-ssh-key/#create-ssh-keys).
 
 * `user_id` - (Required) Unique identifier of the associated service user. Changing this creates a new key pair. Retrieved from the [selectel_vpc_user_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_user_v2) resource.
 
