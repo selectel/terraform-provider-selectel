@@ -12,6 +12,10 @@ import (
 	"github.com/selectel/iam-go/service/users"
 )
 
+const (
+	unknownFieldValue = "UNKNOWN"
+)
+
 func getIAMClient(meta interface{}) (*iam.Client, diag.Diagnostics) {
 	config := meta.(*Config)
 
@@ -32,56 +36,17 @@ func getIAMClient(meta interface{}) (*iam.Client, diag.Diagnostics) {
 	return iamClient, nil
 }
 
-func getIAMServiceUserRolesFromList(roles []interface{}) []serviceusers.Role {
-	if len(roles) == 0 {
-		return nil
-	}
-	result := make([]serviceusers.Role, len(roles))
-	for i := range roles {
-		role := serviceusers.Role{}
-		obj := roles[i].(map[string]interface{})
-		role.RoleName = serviceusers.RoleName(strings.ToLower(obj["role_name"].(string)))
-		role.Scope = serviceusers.Scope(strings.ToLower(obj["scope"].(string)))
-		if v, ok := obj["project_id"]; ok {
-			role.ProjectID = v.(string)
-		}
-		result[i] = role
-	}
-
-	return result
-}
-
-func getIAMUserRolesFromList(roles []interface{}) []users.Role {
-	if len(roles) == 0 {
-		return nil
-	}
-	result := make([]users.Role, len(roles))
-	for i := range roles {
-		role := users.Role{}
-		obj := roles[i].(map[string]interface{})
-		role.RoleName = users.RoleName(strings.ToLower(obj["role_name"].(string)))
-		role.Scope = users.Scope(strings.ToLower(obj["scope"].(string)))
-		if v, ok := obj["project_id"]; ok {
-			role.ProjectID = v.(string)
-		}
-		result[i] = role
-	}
-
-	return result
-}
-
-func getIAMUserFederationFromSet(federationSet *schema.Set) (*users.Federation, error) {
-	if federationSet.Len() == 0 {
+func getIAMUserFederationFromMap(federationMap map[string]interface{}) (*users.Federation, error) {
+	if len(federationMap) == 0 {
 		return nil, nil
 	}
 	var idRaw, externalIDRaw interface{}
 	var ok bool
 
-	resourceFederationMap := federationSet.List()[0].(map[string]interface{})
-	if idRaw, ok = resourceFederationMap["id"]; !ok {
+	if idRaw, ok = federationMap["id"]; !ok {
 		return nil, errors.New("federation.id value isn't provided")
 	}
-	if externalIDRaw, ok = resourceFederationMap["external_id"]; !ok {
+	if externalIDRaw, ok = federationMap["external_id"]; !ok {
 		return nil, errors.New("federation.external_id value isn't provided")
 	}
 
@@ -96,24 +61,80 @@ func getIAMUserFederationFromSet(federationSet *schema.Set) (*users.Federation, 
 	return federation, nil
 }
 
-func containsServiceUsersRole(roles []serviceusers.Role, neededRole serviceusers.Role) bool {
-	for _, role := range roles {
-		if role == neededRole {
-			return true
+func getIAMUserRolesFromSet(rolesSet *schema.Set) ([]users.Role, error) {
+	if rolesSet.Len() == 0 {
+		return nil, nil
+	}
+	var roleNameRaw, scopeRaw, projectIDRaw interface{}
+	var ok bool
+
+	rolesList := rolesSet.List()
+
+	roles := make([]users.Role, len(rolesList))
+
+	for i := range rolesList {
+		var roleName, scope, projectID string
+		resourceRoleMap := rolesList[i].(map[string]interface{})
+
+		if roleNameRaw, ok = resourceRoleMap["role_name"]; !ok {
+			return nil, errors.New("role_name value isn't provided")
+		}
+		if scopeRaw, ok = resourceRoleMap["scope"]; !ok {
+			return nil, errors.New("scope value isn't provided")
+		}
+		if projectIDRaw, ok = resourceRoleMap["project_id"]; ok {
+			projectID = projectIDRaw.(string)
+		}
+
+		roleName = roleNameRaw.(string)
+		scope = scopeRaw.(string)
+
+		roles[i] = users.Role{
+			RoleName:  users.RoleName(strings.ToLower(roleName)),
+			Scope:     users.Scope(strings.ToLower(scope)),
+			ProjectID: projectID,
 		}
 	}
 
-	return false
+	return roles, nil
 }
 
-func containsUsersRole(roles []users.Role, neededRole users.Role) bool {
-	for _, role := range roles {
-		if role == neededRole {
-			return true
+func getIAMServiceUserRolesFromSet(rolesSet *schema.Set) ([]serviceusers.Role, error) {
+	if rolesSet.Len() == 0 {
+		return nil, nil
+	}
+	var roleNameRaw, scopeRaw, projectIDRaw interface{}
+	var ok bool
+
+	rolesList := rolesSet.List()
+
+	roles := make([]serviceusers.Role, len(rolesList))
+
+	for i := range rolesList {
+		var roleName, scope, projectID string
+		resourceRoleMap := rolesList[i].(map[string]interface{})
+
+		if roleNameRaw, ok = resourceRoleMap["role_name"]; !ok {
+			return nil, errors.New("role_name value isn't provided")
+		}
+		if scopeRaw, ok = resourceRoleMap["scope"]; !ok {
+			return nil, errors.New("scope value isn't provided")
+		}
+		if projectIDRaw, ok = resourceRoleMap["project_id"]; ok {
+			projectID = projectIDRaw.(string)
+		}
+
+		roleName = roleNameRaw.(string)
+		scope = scopeRaw.(string)
+
+		roles[i] = serviceusers.Role{
+			RoleName:  serviceusers.RoleName(strings.ToLower(roleName)),
+			Scope:     serviceusers.Scope(strings.ToLower(scope)),
+			ProjectID: projectID,
 		}
 	}
 
-	return false
+	return roles, nil
 }
 
 func flattenIAMServiceUserRoles(roles []serviceusers.Role) []interface{} {
@@ -142,15 +163,13 @@ func flattenIAMUserRoles(roles []users.Role) []interface{} {
 	return result
 }
 
-func flattenIAMUserFederation(federation *users.Federation) []interface{} {
+func flattenIAMUserFederation(federation *users.Federation) map[string]interface{} {
 	if federation == nil {
 		return nil
 	}
 
-	return []interface{}{
-		map[string]interface{}{
-			"id":          federation.ID,
-			"external_id": federation.ExternalID,
-		},
+	return map[string]interface{}{
+		"id":          federation.ID,
+		"external_id": federation.ExternalID,
 	}
 }

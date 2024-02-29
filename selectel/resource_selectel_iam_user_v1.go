@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -24,9 +25,10 @@ func resourceIAMUserV1() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"auth_type": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
+				Default:     "local",
 				ForceNew:    true,
-				Description: "Authentication type of the User. Can be 'local' or 'federative'.",
+				Description: "Authentication type of the User. Can be 'local' or 'federated'.",
 			},
 			"email": {
 				Type:        schema.TypeString,
@@ -35,29 +37,18 @@ func resourceIAMUserV1() *schema.Resource {
 				Description: "Email of the User.",
 			},
 			"federation": {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeMap,
 				Optional:    true,
-				Description: "Federation data of the User. Can be set only if 'auth_type' is 'federative'.",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: false,
-						},
-						"external_id": {
-							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: false,
-						},
-					},
+				Description: "Federation data of the User. Can be set only if 'auth_type' is 'federated'.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"role": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				ForceNew:    false,
-				Description: "List of roles of the User.",
+				Description: "Role block of the User.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"role_name": {
@@ -92,8 +83,11 @@ func resourceIAMUserV1Create(ctx context.Context, d *schema.ResourceData, meta i
 		return diagErr
 	}
 
-	roles := getIAMUserRolesFromList(d.Get("role").([]interface{}))
-	federation, err := getIAMUserFederationFromSet(d.Get("federation").(*schema.Set))
+	roles, err := getIAMUserRolesFromSet(d.Get("role").(*schema.Set))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	federation, err := getIAMUserFederationFromMap(d.Get("federation").(map[string]interface{}))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -132,7 +126,7 @@ func resourceIAMUserV1Read(ctx context.Context, d *schema.ResourceData, meta int
 	d.Set("keystone_id", user.KeystoneID)
 	d.Set("auth_type", user.AuthType)
 	if _, ok := d.GetOk("email"); !ok {
-		d.Set("email", "UNKNOWN")
+		d.Set("email", unknownFieldValue)
 	}
 	if user.Federation != nil {
 		d.Set("federation", flattenIAMUserFederation(user.Federation))
@@ -148,27 +142,28 @@ func resourceIAMUserV1Update(ctx context.Context, d *schema.ResourceData, meta i
 		return diagErr
 	}
 
-	if d.HasChange("email") || d.HasChange("auth_type") {
-		resourceIAMUserV1Delete(ctx, d, meta)
-		resourceIAMUserV1Create(ctx, d, meta)
-	}
-
 	if d.HasChange("role") {
 		oldState, newState := d.GetChange("role")
-		newRoles := getIAMUserRolesFromList(newState.([]interface{}))
-		oldRoles := getIAMUserRolesFromList(oldState.([]interface{}))
+		newRoles, err := getIAMUserRolesFromSet(newState.(*schema.Set))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		oldRoles, err := getIAMUserRolesFromSet(oldState.(*schema.Set))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		rolesToUnassign := make([]users.Role, 0)
 		rolesToAssign := make([]users.Role, 0)
 
 		for _, oldRole := range oldRoles {
-			if !containsUsersRole(newRoles, oldRole) {
+			if !slices.Contains(newRoles, oldRole) {
 				rolesToUnassign = append(rolesToUnassign, oldRole)
 			}
 		}
 
 		for _, newRole := range newRoles {
-			if !containsUsersRole(oldRoles, newRole) {
+			if !slices.Contains(oldRoles, newRole) {
 				rolesToAssign = append(rolesToAssign, newRole)
 			}
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -39,14 +40,13 @@ func resourceIAMServiceUserV1() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    false,
-				Sensitive:   true,
 				Description: "Password of the Service User.",
 			},
 			"role": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				ForceNew:    false,
-				Description: "List of roles of the Service User.",
+				Description: "Role block of the Service User.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"role_name": {
@@ -77,7 +77,10 @@ func resourceIAMServiceUserV1Create(ctx context.Context, d *schema.ResourceData,
 		return diagErr
 	}
 
-	roles := getIAMServiceUserRolesFromList(d.Get("role").([]interface{}))
+	roles, err := getIAMServiceUserRolesFromSet(d.Get("role").(*schema.Set))
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	user, err := iamClient.ServiceUsers.Create(ctx, serviceusers.CreateRequest{
 		Enabled:  d.Get("enabled").(bool),
@@ -114,7 +117,7 @@ func resourceIAMServiceUserV1Read(ctx context.Context, d *schema.ResourceData, m
 	d.Set("enabled", user.Enabled)
 	d.Set("role", flattenIAMServiceUserRoles(user.Roles))
 	if _, ok := d.GetOk("password"); !ok {
-		d.Set("password", "UNKNOWN")
+		d.Set("password", unknownFieldValue)
 	}
 
 	return nil
@@ -127,7 +130,7 @@ func resourceIAMServiceUserV1Update(ctx context.Context, d *schema.ResourceData,
 	}
 
 	var password string
-	if d.Get("password") == "UNKNOWN" {
+	if d.Get("password") == unknownFieldValue {
 		password = ""
 	} else {
 		password = d.Get("password").(string)
@@ -141,20 +144,26 @@ func resourceIAMServiceUserV1Update(ctx context.Context, d *schema.ResourceData,
 
 	if d.HasChange("role") {
 		oldState, newState := d.GetChange("role")
-		newRoles := getIAMServiceUserRolesFromList(newState.([]interface{}))
-		oldRoles := getIAMServiceUserRolesFromList(oldState.([]interface{}))
+		newRoles, err := getIAMServiceUserRolesFromSet(newState.(*schema.Set))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		oldRoles, err := getIAMServiceUserRolesFromSet(oldState.(*schema.Set))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		rolesToUnassign := make([]serviceusers.Role, 0)
 		rolesToAssign := make([]serviceusers.Role, 0)
 
 		for _, oldRole := range oldRoles {
-			if !containsServiceUsersRole(newRoles, oldRole) {
+			if !slices.Contains(newRoles, oldRole) {
 				rolesToUnassign = append(rolesToUnassign, oldRole)
 			}
 		}
 
 		for _, newRole := range newRoles {
-			if !containsServiceUsersRole(oldRoles, newRole) {
+			if !slices.Contains(oldRoles, newRole) {
 				rolesToAssign = append(rolesToAssign, newRole)
 			}
 		}

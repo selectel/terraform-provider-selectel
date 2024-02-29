@@ -13,7 +13,7 @@ import (
 
 func resourceIAMEC2V1() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Represents a EC2 Credentials in IAM API",
+		Description:   "Represents a EC2 Credentials in IAM API. Access Key is used as a resource ID.",
 		CreateContext: resourceIAMEC2V1Create,
 		ReadContext:   resourceIAMEC2V1Read,
 		DeleteContext: resourceIAMEC2V1Delete,
@@ -39,15 +39,9 @@ func resourceIAMEC2V1() *schema.Resource {
 				ForceNew:    true,
 				Description: "Project ID to associate EC2 Credentials with.",
 			},
-			"access_key": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Access Key of the EC2 Credentials.",
-			},
 			"secret_key": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Sensitive:   true,
 				Description: "Secret Key of the EC2 Credentials.",
 			},
 		},
@@ -69,6 +63,8 @@ func resourceIAMEC2V1Create(ctx context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectEC2Credentials, err))
 	}
+	log.Print(msgCreate(objectEC2Credentials, credential))
+
 	d.SetId(credential.AccessKey)
 	d.Set("secret_key", credential.SecretKey)
 
@@ -82,7 +78,10 @@ func resourceIAMEC2V1Read(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	log.Print(msgGet(objectEC2Credentials, d.Id()))
-	credentials, _ := iamClient.EC2.List(ctx, d.Get("user_id").(string))
+	credentials, err := iamClient.EC2.List(ctx, d.Get("user_id").(string))
+	if err != nil {
+		return diag.FromErr(errGettingObject(objectEC2Credentials, d.Id(), err))
+	}
 
 	var credential ec2.Credential
 	for _, c := range credentials {
@@ -91,7 +90,8 @@ func resourceIAMEC2V1Read(ctx context.Context, d *schema.ResourceData, meta inte
 			break
 		}
 	}
-	d.Set("access_key", credential.AccessKey)
+	d.Set("name", credential.Name)
+	d.Set("project_id", credential.ProjectID)
 
 	return nil
 }

@@ -30,7 +30,6 @@ func TestAccIAMV1EC2Basic(t *testing.T) {
 					testAccCheckIAMV1EC2Exists("selectel_iam_ec2_v1.ec2_tf_acc_test_1", &ec2),
 					resource.TestCheckResourceAttrSet("selectel_iam_ec2_v1.ec2_tf_acc_test_1", "user_id"),
 					resource.TestCheckResourceAttrSet("selectel_iam_ec2_v1.ec2_tf_acc_test_1", "project_id"),
-					resource.TestCheckResourceAttrSet("selectel_iam_ec2_v1.ec2_tf_acc_test_1", "access_key"),
 					resource.TestCheckResourceAttrSet("selectel_iam_ec2_v1.ec2_tf_acc_test_1", "secret_key"),
 					resource.TestCheckResourceAttr("selectel_iam_ec2_v1.ec2_tf_acc_test_1", "name", ec2Name),
 				),

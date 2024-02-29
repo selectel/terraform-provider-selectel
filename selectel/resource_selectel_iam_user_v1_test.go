@@ -36,6 +36,32 @@ func TestAccIAMV1UserBasic(t *testing.T) {
 	})
 }
 
+func TestAccIAMV1UserWithFederation(t *testing.T) {
+	var user users.User
+	userEmail := acctest.RandomWithPrefix("tf-acc") + "@example.com"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckIAMV1UserDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccIAMV1UserWithFederation(userEmail),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIAMV1UserExists("selectel_iam_user_v1.user_tf_acc_test_1", &user),
+					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "id"),
+					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "email"),
+					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "auth_type", "local"),
+					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "federation.id", "1"),
+					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "federation.external_id", "1"),
+					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.role_name", "member"),
+					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope", "account"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccIAMV1UserUpdateRoles(t *testing.T) {
 	var user users.User
 	userEmail := acctest.RandomWithPrefix("tf-acc") + "@example.com"
@@ -51,9 +77,9 @@ func TestAccIAMV1UserUpdateRoles(t *testing.T) {
 					testAccCheckIAMV1UserExists("selectel_iam_user_v1.user_tf_acc_test_1", &user),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "id"),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "email"),
+					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.role_name"),
+					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope"),
 					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "auth_type", "local"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.role_name", "member"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope", "account"),
 				),
 			},
 			{
@@ -62,11 +88,11 @@ func TestAccIAMV1UserUpdateRoles(t *testing.T) {
 					testAccCheckIAMV1UserExists("selectel_iam_user_v1.user_tf_acc_test_1", &user),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "id"),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "email"),
+					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.role_name"),
+					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope"),
+					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.1.role_name"),
+					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.1.scope"),
 					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "auth_type", "local"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.role_name", "member"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope", "account"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.1.role_name", "billing"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.1.scope", "account"),
 				),
 			},
 			{
@@ -75,11 +101,11 @@ func TestAccIAMV1UserUpdateRoles(t *testing.T) {
 					testAccCheckIAMV1UserExists("selectel_iam_user_v1.user_tf_acc_test_1", &user),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "id"),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "email"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "auth_type", "local"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.role_name", "member"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope", "account"),
+					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.role_name"),
+					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope"),
 					resource.TestCheckNoResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.1.role_name"),
 					resource.TestCheckNoResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.1.scope"),
+					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "auth_type", "local"),
 				),
 			},
 		},
@@ -138,6 +164,22 @@ func testAccIAMV1UserBasic(userEmail string) string {
 resource "selectel_iam_user_v1" "user_tf_acc_test_1" {
 	auth_type = "local"
 	email = "%s"
+	role {
+	  	role_name = "member"
+	  	scope = "account"
+	}
+}`, userEmail)
+}
+
+func testAccIAMV1UserWithFederation(userEmail string) string {
+	return fmt.Sprintf(`
+resource "selectel_iam_user_v1" "user_tf_acc_test_1" {
+	auth_type = "local"
+	email = "%s"
+	federation = {
+		id = "1"
+		external_id = "1"
+	}
 	role {
 	  	role_name = "member"
 	  	scope = "account"
