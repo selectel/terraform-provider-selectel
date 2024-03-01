@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/iam-go/iamerrors"
+	"github.com/selectel/iam-go/service/roles"
 	"github.com/selectel/iam-go/service/users"
 )
 
@@ -40,6 +41,7 @@ func resourceIAMUserV1() *schema.Resource {
 				Type:        schema.TypeMap,
 				Optional:    true,
 				Description: "Federation data of the User. Can be set only if 'auth_type' is 'federated'.",
+				ForceNew:    true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -83,15 +85,23 @@ func resourceIAMUserV1Create(ctx context.Context, d *schema.ResourceData, meta i
 		return diagErr
 	}
 
-	roles, err := getIAMUserRolesFromSet(d.Get("role").(*schema.Set))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	federation, err := getIAMUserFederationFromMap(d.Get("federation").(map[string]interface{}))
+	roles, err := convertIAMRoles(d.Get("role").(*schema.Set))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	federation, err := convertIAMUserFederation(d.Get("federation").(map[string]interface{}))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	authType := d.Get("auth_type").(string)
+	if authType != "local" && authType != "federated" {
+		return diag.Errorf("auth_type can be only 'local' or 'federated'")
+	}
+	if authType == "local" && federation != nil {
+		return diag.Errorf("federation can be set only if auth_type is 'federated'")
+	}
 	user, err := iamClient.Users.Create(ctx, users.CreateRequest{
 		AuthType:   users.AuthType(d.Get("auth_type").(string)),
 		Email:      d.Get("email").(string),
@@ -126,12 +136,12 @@ func resourceIAMUserV1Read(ctx context.Context, d *schema.ResourceData, meta int
 	d.Set("keystone_id", user.KeystoneID)
 	d.Set("auth_type", user.AuthType)
 	if _, ok := d.GetOk("email"); !ok {
-		d.Set("email", unknownFieldValue)
+		d.Set("email", importFailedIAMFieldValue)
 	}
 	if user.Federation != nil {
 		d.Set("federation", flattenIAMUserFederation(user.Federation))
 	}
-	d.Set("role", flattenIAMUserRoles(user.Roles))
+	d.Set("role", flattenIAMRoles(user.Roles))
 
 	return nil
 }
@@ -144,17 +154,17 @@ func resourceIAMUserV1Update(ctx context.Context, d *schema.ResourceData, meta i
 
 	if d.HasChange("role") {
 		oldState, newState := d.GetChange("role")
-		newRoles, err := getIAMUserRolesFromSet(newState.(*schema.Set))
+		newRoles, err := convertIAMRoles(newState.(*schema.Set))
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		oldRoles, err := getIAMUserRolesFromSet(oldState.(*schema.Set))
+		oldRoles, err := convertIAMRoles(oldState.(*schema.Set))
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		rolesToUnassign := make([]users.Role, 0)
-		rolesToAssign := make([]users.Role, 0)
+		rolesToUnassign := make([]roles.Role, 0)
+		rolesToAssign := make([]roles.Role, 0)
 
 		for _, oldRole := range oldRoles {
 			if !slices.Contains(newRoles, oldRole) {
@@ -193,12 +203,7 @@ func resourceIAMUserV1Delete(ctx context.Context, d *schema.ResourceData, meta i
 
 	log.Print(msgDelete(objectUser, d.Id()))
 	err := iamClient.Users.Delete(ctx, d.Id())
-	if err != nil {
-		if errors.Is(err, iamerrors.ErrUserNotFound) {
-			d.SetId("")
-			return nil
-		}
-
+	if err != nil && !errors.Is(err, iamerrors.ErrUserNotFound) {
 		return diag.FromErr(errDeletingObject(objectUser, d.Id(), err))
 	}
 

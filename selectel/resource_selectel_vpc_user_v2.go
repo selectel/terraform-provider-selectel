@@ -26,7 +26,7 @@ func resourceVPCUserV2() *schema.Resource {
 			},
 			"password": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 				ForceNew: false,
 				ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
 					password := i.(string)

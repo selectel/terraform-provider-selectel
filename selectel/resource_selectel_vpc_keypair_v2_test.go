@@ -31,7 +31,7 @@ func TestAccVPCV2KeypairBasic(t *testing.T) {
 			{
 				Config: testAccVPCV2KeypairBasic(userName, userPassword, keypairName, publicKey),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckIAMV1ServiceUserExists("selectel_vpc_user_v2.user_tf_acc_test_1", &user),
+					testAccCheckIAMV1ServiceUserExists("selectel_iam_serviceuser_v1.user_tf_acc_test_1", &user),
 					testAccCheckVPCV2KeypairExists("selectel_vpc_keypair_v2.keypair_tf_acc_test_1", &keypair),
 					resource.TestCheckResourceAttr("selectel_vpc_keypair_v2.keypair_tf_acc_test_1", "name", keypairName),
 					resource.TestCheckResourceAttr("selectel_vpc_keypair_v2.keypair_tf_acc_test_1", "public_key", publicKey),
@@ -139,7 +139,7 @@ resource "selectel_vpc_keypair_v2" "keypair_tf_acc_test_1" {
   name       = "%s"
   public_key = "%s"
   regions    = ["ru-1", "ru-3"]
-  user_id    = "${selectel_vpc_user_v2.user_tf_acc_test_1.id}"
+  user_id    = "${selectel_iam_serviceuser_v1.user_tf_acc_test_1.id}"
 }`, userName, userPassword, keypairName, publicKey)
 }
 

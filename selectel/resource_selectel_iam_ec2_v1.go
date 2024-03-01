@@ -42,6 +42,7 @@ func resourceIAMEC2V1() *schema.Resource {
 			"secret_key": {
 				Type:        schema.TypeString,
 				Computed:    true,
+				Sensitive:   true,
 				Description: "Secret Key of the EC2 Credentials.",
 			},
 		},

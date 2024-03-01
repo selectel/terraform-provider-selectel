@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/iam-go/iamerrors"
+	"github.com/selectel/iam-go/service/roles"
 	"github.com/selectel/iam-go/service/serviceusers"
 )
 
@@ -40,6 +41,7 @@ func resourceIAMServiceUserV1() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    false,
+				Sensitive:   true,
 				Description: "Password of the Service User.",
 			},
 			"role": {
@@ -77,7 +79,7 @@ func resourceIAMServiceUserV1Create(ctx context.Context, d *schema.ResourceData,
 		return diagErr
 	}
 
-	roles, err := getIAMServiceUserRolesFromSet(d.Get("role").(*schema.Set))
+	roles, err := convertIAMRoles(d.Get("role").(*schema.Set))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -115,9 +117,9 @@ func resourceIAMServiceUserV1Read(ctx context.Context, d *schema.ResourceData, m
 
 	d.Set("name", user.Name)
 	d.Set("enabled", user.Enabled)
-	d.Set("role", flattenIAMServiceUserRoles(user.Roles))
+	d.Set("role", flattenIAMRoles(user.Roles))
 	if _, ok := d.GetOk("password"); !ok {
-		d.Set("password", unknownFieldValue)
+		d.Set("password", importFailedIAMFieldValue)
 	}
 
 	return nil
@@ -129,11 +131,9 @@ func resourceIAMServiceUserV1Update(ctx context.Context, d *schema.ResourceData,
 		return diagErr
 	}
 
-	var password string
-	if d.Get("password") == unknownFieldValue {
+	password := d.Get("password").(string)
+	if password == "UNKNOWN" {
 		password = ""
-	} else {
-		password = d.Get("password").(string)
 	}
 
 	_, err := iamClient.ServiceUsers.Update(ctx, d.Id(), serviceusers.UpdateRequest{
@@ -141,20 +141,23 @@ func resourceIAMServiceUserV1Update(ctx context.Context, d *schema.ResourceData,
 		Name:     d.Get("name").(string),
 		Password: password,
 	})
+	if err != nil {
+		return diag.FromErr(errUpdatingObject(objectServiceUser, d.Id(), err))
+	}
 
 	if d.HasChange("role") {
 		oldState, newState := d.GetChange("role")
-		newRoles, err := getIAMServiceUserRolesFromSet(newState.(*schema.Set))
+		newRoles, err := convertIAMRoles(newState.(*schema.Set))
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		oldRoles, err := getIAMServiceUserRolesFromSet(oldState.(*schema.Set))
+		oldRoles, err := convertIAMRoles(oldState.(*schema.Set))
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		rolesToUnassign := make([]serviceusers.Role, 0)
-		rolesToAssign := make([]serviceusers.Role, 0)
+		rolesToUnassign := make([]roles.Role, 0)
+		rolesToAssign := make([]roles.Role, 0)
 
 		for _, oldRole := range oldRoles {
 			if !slices.Contains(newRoles, oldRole) {
@@ -181,9 +184,6 @@ func resourceIAMServiceUserV1Update(ctx context.Context, d *schema.ResourceData,
 			}
 		}
 	}
-	if err != nil {
-		return diag.FromErr(errUpdatingObject(objectServiceUser, d.Id(), err))
-	}
 
 	return resourceIAMServiceUserV1Read(ctx, d, meta)
 }
@@ -196,12 +196,7 @@ func resourceIAMServiceUserV1Delete(ctx context.Context, d *schema.ResourceData,
 
 	log.Print(msgDelete(objectServiceUser, d.Id()))
 	err := iamClient.ServiceUsers.Delete(ctx, d.Id())
-	if err != nil {
-		if errors.Is(err, iamerrors.ErrUserNotFound) {
-			d.SetId("")
-			return nil
-		}
-
+	if err != nil && !errors.Is(err, iamerrors.ErrUserNotFound) {
 		return diag.FromErr(errDeletingObject(objectServiceUser, d.Id(), err))
 	}
 

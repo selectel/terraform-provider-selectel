@@ -51,7 +51,7 @@ func TestAccIAMV1UserWithFederation(t *testing.T) {
 					testAccCheckIAMV1UserExists("selectel_iam_user_v1.user_tf_acc_test_1", &user),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "id"),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "email"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "auth_type", "local"),
+					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "auth_type", "federated"),
 					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "federation.id", "1"),
 					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "federation.external_id", "1"),
 					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.role_name", "member"),
@@ -174,8 +174,8 @@ resource "selectel_iam_user_v1" "user_tf_acc_test_1" {
 func testAccIAMV1UserWithFederation(userEmail string) string {
 	return fmt.Sprintf(`
 resource "selectel_iam_user_v1" "user_tf_acc_test_1" {
-	auth_type = "local"
 	email = "%s"
+	auth_type = "federated"
 	federation = {
 		id = "1"
 		external_id = "1"
