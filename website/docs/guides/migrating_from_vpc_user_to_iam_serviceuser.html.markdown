@@ -45,11 +45,16 @@ To migrate from a deprecated resources _selectel_vpc_user_v2_ and _selectel_vpc_
     Successfully removed 1 resource instance(s).
     ```
 
-    All necessary roles that the service user has will be later put in .tfstate during import.
+    All necessary roles that the service user has will be later put in .tfstate during the import.
 
 2. Update the configuration files (_.tf_ files)
     
-    At the same time, we need to add manualy the roles that our service user has.
+    Change the name of your resource from _selectel_vpc_user_v2_ to _selectel_iam_serviceuser_v1_. 
+
+    At the same time, you need to add manualy the roles that your service user has to the _selectel_iam_serviceuser_v1_.
+    
+    
+    The _selectel_vpc_role_v2_ resource can be removed.
 
     For example, if the _selectel_vpc_user_v2_ has only _Project Administrator_ role (i. e. _selectel_vpc_role_v2_), then the resulting resource should look like this:
 
@@ -66,7 +71,7 @@ To migrate from a deprecated resources _selectel_vpc_user_v2_ and _selectel_vpc_
     }
     ```
 
-    You can add multiple roles. For example, if the _selectel_vpc_user_v2_ has, let's say, _Project Administrator_ and _IAM Administrator_, then the resulting resource should look like this:
+    You can add multiple roles. For example, if the _selectel_vpc_user_v2_ is, let's say, _Project Administrator_ and _IAM Administrator_, then the resulting resource should look like this:
 
     ```hcl
     resource "selectel_iam_serviceuser_v1" "service_user" {

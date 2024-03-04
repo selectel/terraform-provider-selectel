@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_iam\_user\_v1
 
-Creates and manages a user using public API v1. Selectel products support Identity and Access Management (IAM). For more information about roles, see the [official Selectel documentation](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
+Creates and manages a user using public API v1. Selectel products support Identity and Access Management (IAM). For more information about users, see the [official Selectel documentation](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
 
 ## Example Usage
 
@@ -24,11 +24,11 @@ resource "selectel_iam_user_v1" "user_1" {
 
 ## Argument Reference
 
-* `email` - (Required) Email of user, to which authentication instructions will be sent. Changing this deletes and creates completely new user.
+* `email` - (Required) Email, to which authentication instructions will be sent. Changing this creates a new user.
 
-* `auth_type` - (Optional) Authentication type of this user. Can be any of: [`local`, `federated`].
+* `auth_type` - (Optional) Authentication type of this user. Available values are `local` and `federated`. The default value is `local`. Changing this creates a new user.
 
-* `federation` - (Optional) Block, which provides an information about the federation, if `auth_type` is set to `federated`.
+* `federation` - (Optional) Federation info. `auth_type` must be set to `federated`.
 
     * `id` - (Required) Federation id.
 
@@ -36,11 +36,11 @@ resource "selectel_iam_user_v1" "user_1" {
 
 * `role` - (Optional) Block, which manages roles for the service user. There can be several blocks for assigning several roles.
 
-    * `role_name` - (Required) Role name. Available values are: [`iam_admin`, `member`, `reader`, `billing`].
+    * `role_name` - (Required) Role name. Available values are: `iam_admin`, `member`, `reader`, `billing`.
 
-    * `scope` - (Required) Scope of the applied role. Available values are: [`project`, `account`].
+    * `scope` - (Required) Scope of the applied role. Available values are: `project`, and `account`.
 
-    * `project_id` - (Optional) Project id, to which this role will be applied, if `scope` is set to `project`.
+    * `project_id` - (Optional) Project id, to which this role will be applied. `scope` must be set to `project`. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource.
 
 ## Attributes Reference
 
@@ -50,7 +50,7 @@ resource "selectel_iam_user_v1" "user_1" {
 
 ## Import
 
-You can import a гser:
+You can import a user:
 
 ```shell
 export OS_DOMAIN_NAME=<account_id>
