@@ -208,6 +208,20 @@ func resourceDBaaSDatastoreV1FlavorToSet(flavor dbaas.Flavor) *schema.Set {
 	return flavorSet
 }
 
+func resourceDBaaSDatastoreV1InstancesToList(instances []dbaas.Instances) []interface{} {
+	flattenedInstances := make([]interface{}, len(instances))
+
+	for i, instance := range instances {
+		flattenedInstance := map[string]interface{}{
+			"role":        instance.Role,
+			"floating_ip": instance.FloatingIP,
+		}
+		flattenedInstances[i] = flattenedInstance
+	}
+
+	return flattenedInstances
+}
+
 func resourceDBaaSDatastoreV1FirewallOptsFromSet(firewallSet *schema.Set) (dbaas.DatastoreFirewallOpts, error) {
 	if firewallSet.Len() == 0 {
 		return dbaas.DatastoreFirewallOpts{IPs: []string{}}, nil
@@ -253,6 +267,32 @@ func resourceDBaaSDatastoreV1RestoreOptsFromSet(restoreSet *schema.Set) (*dbaas.
 	}
 
 	return restore, nil
+}
+
+func resourceDBaaSDatastoreV1FloatingIPsOptsFromSet(floatingIPsSet *schema.Set) (*dbaas.FloatingIPs, error) {
+	if floatingIPsSet.Len() == 0 {
+		return nil, nil
+	}
+	var resourceMasterFloatingIPsRaw, resourceReplicasFloatingIPsRaw interface{}
+	var ok bool
+
+	resourceFloatingIPMap := floatingIPsSet.List()[0].(map[string]interface{})
+	if resourceMasterFloatingIPsRaw, ok = resourceFloatingIPMap["master"]; !ok {
+		return &dbaas.FloatingIPs{}, errors.New("number of master floating IPs is not provided")
+	}
+	if resourceReplicasFloatingIPsRaw, ok = resourceFloatingIPMap["replica"]; !ok {
+		return &dbaas.FloatingIPs{}, errors.New("number of replicas floating IPs is not provided")
+	}
+
+	resourceMasterFloatingIPs := resourceMasterFloatingIPsRaw.(int)
+	resourceReplicasFloatingIPs := resourceReplicasFloatingIPsRaw.(int)
+
+	floatingIPsSchema := &dbaas.FloatingIPs{
+		Master:  resourceMasterFloatingIPs,
+		Replica: resourceReplicasFloatingIPs,
+	}
+
+	return floatingIPsSchema, nil
 }
 
 func updateDatastoreName(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
