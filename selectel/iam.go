@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	importFailedIAMFieldValue = "IMPORT_FAILED"
+	importIAMFieldValueFailed = "IMPORT_FAILED"
 )
 
 func getIAMClient(meta interface{}) (*iam.Client, diag.Diagnostics) {
@@ -36,7 +36,7 @@ func getIAMClient(meta interface{}) (*iam.Client, diag.Diagnostics) {
 	return iamClient, nil
 }
 
-func convertIAMUserFederation(federationMap map[string]interface{}) (*users.Federation, error) {
+func convertIAMMapToUserFederation(federationMap map[string]interface{}) (*users.Federation, error) {
 	if len(federationMap) == 0 {
 		return nil, nil
 	}
@@ -61,7 +61,7 @@ func convertIAMUserFederation(federationMap map[string]interface{}) (*users.Fede
 	return federation, nil
 }
 
-func convertIAMRoles(rolesSet *schema.Set) ([]roles.Role, error) {
+func convertIAMSetToRoles(rolesSet *schema.Set) ([]roles.Role, error) {
 	rolesList := rolesSet.List()
 
 	output := make([]roles.Role, len(rolesList))
@@ -95,7 +95,7 @@ func convertIAMRoles(rolesSet *schema.Set) ([]roles.Role, error) {
 	return output, nil
 }
 
-func flattenIAMRoles(roles []roles.Role) []interface{} {
+func convertIAMRolesToSet(roles []roles.Role) []interface{} {
 	result := make([]interface{}, 0)
 	for _, role := range roles {
 		result = append(result, map[string]interface{}{

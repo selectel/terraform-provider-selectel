@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/iam-go/iamerrors"
 	"github.com/selectel/iam-go/service/roles"
 	"github.com/selectel/iam-go/service/serviceusers"
@@ -55,11 +56,24 @@ func resourceIAMServiceUserV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Required: true,
 							ForceNew: false,
+							ValidateFunc: validation.StringInSlice([]string{
+								string(roles.AccountOwner),
+								string(roles.Billing),
+								string(roles.IAMAdmin),
+								string(roles.Member),
+								string(roles.Reader),
+								string(roles.ObjectStorageAdmin),
+								string(roles.ObjectStorageUser),
+							}, false),
 						},
 						"scope": {
 							Type:     schema.TypeString,
 							Required: true,
 							ForceNew: false,
+							ValidateFunc: validation.StringInSlice([]string{
+								string(roles.Account),
+								string(roles.Project),
+							}, false),
 						},
 						"project_id": {
 							Type:     schema.TypeString,
@@ -79,7 +93,7 @@ func resourceIAMServiceUserV1Create(ctx context.Context, d *schema.ResourceData,
 		return diagErr
 	}
 
-	roles, err := convertIAMRoles(d.Get("role").(*schema.Set))
+	roles, err := convertIAMSetToRoles(d.Get("role").(*schema.Set))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -117,9 +131,9 @@ func resourceIAMServiceUserV1Read(ctx context.Context, d *schema.ResourceData, m
 
 	d.Set("name", user.Name)
 	d.Set("enabled", user.Enabled)
-	d.Set("role", flattenIAMRoles(user.Roles))
+	d.Set("role", convertIAMRolesToSet(user.Roles))
 	if _, ok := d.GetOk("password"); !ok {
-		d.Set("password", importFailedIAMFieldValue)
+		d.Set("password", importIAMFieldValueFailed)
 	}
 
 	return nil
@@ -147,11 +161,11 @@ func resourceIAMServiceUserV1Update(ctx context.Context, d *schema.ResourceData,
 
 	if d.HasChange("role") {
 		oldState, newState := d.GetChange("role")
-		newRoles, err := convertIAMRoles(newState.(*schema.Set))
+		newRoles, err := convertIAMSetToRoles(newState.(*schema.Set))
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		oldRoles, err := convertIAMRoles(oldState.(*schema.Set))
+		oldRoles, err := convertIAMSetToRoles(oldState.(*schema.Set))
 		if err != nil {
 			return diag.FromErr(err)
 		}
