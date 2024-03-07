@@ -110,7 +110,6 @@ func resourceIAMServiceUserV1Read(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		if errors.Is(err, iamerrors.ErrUserNotFound) {
 			d.SetId("")
-			return nil
 		}
 
 		return diag.FromErr(errGettingObject(objectServiceUser, d.Id(), err))
