@@ -4,13 +4,10 @@ import (
 	"context"
 	"errors"
 	"log"
-	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/iam-go/iamerrors"
-	"github.com/selectel/iam-go/service/roles"
 	"github.com/selectel/iam-go/service/users"
 )
 
@@ -28,13 +25,9 @@ func resourceIAMUserV1() *schema.Resource {
 			"auth_type": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Default:     "local",
+				Default:     users.Local,
 				ForceNew:    true,
 				Description: "Authentication type of the User. Can be 'local' or 'federated'.",
-				ValidateFunc: validation.StringInSlice([]string{
-					string(users.Local),
-					string(users.Federated),
-				}, false),
 			},
 			"email": {
 				Type:        schema.TypeString,
@@ -45,7 +38,16 @@ func resourceIAMUserV1() *schema.Resource {
 			"federation": {
 				Type:        schema.TypeMap,
 				Optional:    true,
-				Description: "Federation data of the User. Can be set only if 'auth_type' is 'federated'.",
+				Description: "Federation data of the User. Must be set only if 'auth_type' is 'federated'.",
+				ForceNew:    true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"federation1": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Federation data of the User. Must be set only if 'auth_type' is 'federated'.",
 				ForceNew:    true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -62,22 +64,11 @@ func resourceIAMUserV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Required: true,
 							ForceNew: false,
-							ValidateFunc: validation.StringInSlice([]string{
-								string(roles.AccountOwner),
-								string(roles.Billing),
-								string(roles.IAMAdmin),
-								string(roles.Member),
-								string(roles.Reader),
-							}, false),
 						},
 						"scope": {
 							Type:     schema.TypeString,
 							Required: true,
 							ForceNew: false,
-							ValidateFunc: validation.StringInSlice([]string{
-								string(roles.Account),
-								string(roles.Project),
-							}, false),
 						},
 						"project_id": {
 							Type:     schema.TypeString,
@@ -112,14 +103,14 @@ func resourceIAMUserV1Create(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	authType := d.Get("auth_type").(string)
-	if authType != "local" && authType != "federated" {
-		return diag.Errorf("auth_type can be only 'local' or 'federated'")
-	}
-	if authType == "local" && federation != nil {
+	if authType != string(users.Federated) && federation != nil {
 		return diag.Errorf("federation can be set only if auth_type is 'federated'")
 	}
+	if authType == string(users.Federated) && federation == nil {
+		return diag.Errorf("federation must be set if auth_type is 'federated'")
+	}
 	user, err := iamClient.Users.Create(ctx, users.CreateRequest{
-		AuthType:   users.AuthType(d.Get("auth_type").(string)),
+		AuthType:   users.AuthType(authType),
 		Email:      d.Get("email").(string),
 		Federation: federation,
 		Roles:      roles,
@@ -152,10 +143,10 @@ func resourceIAMUserV1Read(ctx context.Context, d *schema.ResourceData, meta int
 	d.Set("keystone_id", user.KeystoneID)
 	d.Set("auth_type", user.AuthType)
 	if _, ok := d.GetOk("email"); !ok {
-		d.Set("email", importIAMFieldValueFailed)
+		d.Set("email", importIAMUndefined)
 	}
 	if user.Federation != nil {
-		d.Set("federation", flattenIAMUserFederation(user.Federation))
+		d.Set("federation", convertIAMFederationToMap(user.Federation))
 	}
 	d.Set("role", convertIAMRolesToSet(user.Roles))
 
@@ -179,33 +170,14 @@ func resourceIAMUserV1Update(ctx context.Context, d *schema.ResourceData, meta i
 			return diag.FromErr(err)
 		}
 
-		rolesToUnassign := make([]roles.Role, 0)
-		rolesToAssign := make([]roles.Role, 0)
+		rolesToUnassign, rolesToAssign := manageRoles(oldRoles, newRoles)
 
-		for _, oldRole := range oldRoles {
-			if !slices.Contains(newRoles, oldRole) {
-				rolesToUnassign = append(rolesToUnassign, oldRole)
-			}
+		err = applyUserRoles(ctx, d, iamClient, rolesToUnassign, rolesToAssign)
+		if err != nil {
+			return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
 		}
 
-		for _, newRole := range newRoles {
-			if !slices.Contains(oldRoles, newRole) {
-				rolesToAssign = append(rolesToAssign, newRole)
-			}
-		}
-		if len(rolesToAssign) != 0 {
-			err := iamClient.Users.AssignRoles(ctx, d.Id(), rolesToAssign)
-			if err != nil {
-				return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
-			}
-		}
-
-		if len(rolesToUnassign) != 0 {
-			err := iamClient.Users.UnassignRoles(ctx, d.Id(), rolesToUnassign)
-			if err != nil {
-				return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
-			}
-		}
+		return nil
 	}
 
 	return resourceIAMUserV1Read(ctx, d, meta)

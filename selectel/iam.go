@@ -1,39 +1,112 @@
 package selectel
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"strings"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient"
 	"github.com/selectel/iam-go"
 	"github.com/selectel/iam-go/service/roles"
 	"github.com/selectel/iam-go/service/users"
 )
 
 const (
-	importIAMFieldValueFailed = "IMPORT_FAILED"
+	importIAMUndefined = "UNDEFINED_WHILE_IMPORTING"
 )
 
 func getIAMClient(meta interface{}) (*iam.Client, diag.Diagnostics) {
 	config := meta.(*Config)
 
-	selvcpclient, err := config.GetSelVPCClient()
+	selvpcClient, err := config.GetSelVPCClient()
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't get selvpc client for iam: %w", err))
+	}
+	// This is for future implementation of Keystone Catalog
+	_, err = getEndpointForIAM(selvpcClient, config.AuthRegion)
+	if err != nil {
+		return nil, diag.FromErr(err)
 	}
 
 	iamClient, err := iam.New(
 		iam.WithAuthOpts(&iam.AuthOpts{
-			KeystoneToken: selvcpclient.GetXAuthToken(),
+			KeystoneToken: selvpcClient.GetXAuthToken(),
 		}),
+		// This is for future implementation of Keystone Catalog
+		// iam.WithAPIUrl(endpoint.URL),
 	)
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't create iam client: %w", err))
 	}
 
 	return iamClient, nil
+}
+
+func getEndpointForIAM(selvpcClient *selvpcclient.Client, region string) (string, error) {
+	endpoint, err := selvpcClient.Catalog.GetEndpoint(IAM, region)
+	if err != nil {
+		return "", fmt.Errorf("can't get endpoint to for iam: %w", err)
+	}
+
+	return endpoint.URL, nil
+}
+
+func manageRoles(oldRoles, newRoles []roles.Role) ([]roles.Role, []roles.Role) {
+	rolesToUnassign := make([]roles.Role, 0)
+	rolesToAssign := make([]roles.Role, 0)
+
+	for _, oldRole := range oldRoles {
+		if !slices.Contains(newRoles, oldRole) {
+			rolesToUnassign = append(rolesToUnassign, oldRole)
+		}
+	}
+
+	for _, newRole := range newRoles {
+		if !slices.Contains(oldRoles, newRole) {
+			rolesToAssign = append(rolesToAssign, newRole)
+		}
+	}
+
+	return rolesToUnassign, rolesToAssign
+}
+
+func applyServiceUserRoles(ctx context.Context, d *schema.ResourceData, iamClient *iam.Client, rolesToUnassign, rolesToAssign []roles.Role) error {
+	if len(rolesToAssign) != 0 {
+		err := iamClient.ServiceUsers.AssignRoles(ctx, d.Id(), rolesToAssign)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(rolesToUnassign) != 0 {
+		err := iamClient.ServiceUsers.UnassignRoles(ctx, d.Id(), rolesToUnassign)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func applyUserRoles(ctx context.Context, d *schema.ResourceData, iamClient *iam.Client, rolesToUnassign, rolesToAssign []roles.Role) error {
+	if len(rolesToAssign) != 0 {
+		err := iamClient.Users.AssignRoles(ctx, d.Id(), rolesToAssign)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(rolesToUnassign) != 0 {
+		err := iamClient.Users.UnassignRoles(ctx, d.Id(), rolesToUnassign)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func convertIAMMapToUserFederation(federationMap map[string]interface{}) (*users.Federation, error) {
@@ -86,8 +159,8 @@ func convertIAMSetToRoles(rolesSet *schema.Set) ([]roles.Role, error) {
 		scope = scopeRaw.(string)
 
 		output[i] = roles.Role{
-			RoleName:  roles.Name(strings.ToLower(roleName)),
-			Scope:     roles.Scope(strings.ToLower(scope)),
+			RoleName:  roles.Name(roleName),
+			Scope:     roles.Scope(scope),
 			ProjectID: projectID,
 		}
 	}
@@ -108,7 +181,7 @@ func convertIAMRolesToSet(roles []roles.Role) []interface{} {
 	return result
 }
 
-func flattenIAMUserFederation(federation *users.Federation) map[string]interface{} {
+func convertIAMFederationToMap(federation *users.Federation) map[string]interface{} {
 	if federation == nil {
 		return nil
 	}

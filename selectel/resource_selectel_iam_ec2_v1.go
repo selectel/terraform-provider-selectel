@@ -3,6 +3,7 @@ package selectel
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -64,10 +65,11 @@ func resourceIAMEC2V1Create(ctx context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectEC2Credentials, err))
 	}
-	log.Print(msgCreate(objectEC2Credentials, credential))
 
 	d.SetId(credential.AccessKey)
 	d.Set("secret_key", credential.SecretKey)
+
+	log.Print(msgCreate(objectEC2Credentials, d.Id()))
 
 	return resourceIAMEC2V1Read(ctx, d, meta)
 }
@@ -91,6 +93,11 @@ func resourceIAMEC2V1Read(ctx context.Context, d *schema.ResourceData, meta inte
 			break
 		}
 	}
+	if credential.AccessKey == "" {
+		d.SetId("")
+		return diag.FromErr(errGettingObject(objectEC2Credentials, d.Id(), fmt.Errorf("EC2 Credentials with ID %s not found", d.Id())))
+	}
+
 	d.Set("name", credential.Name)
 	d.Set("project_id", credential.ProjectID)
 
@@ -105,12 +112,7 @@ func resourceIAMEC2V1Delete(ctx context.Context, d *schema.ResourceData, meta in
 
 	log.Print(msgDelete(objectEC2Credentials, d.Id()))
 	err := iamClient.EC2.Delete(ctx, d.Get("user_id").(string), d.Id())
-	if err != nil {
-		if errors.Is(err, iamerrors.ErrCredentialNotFound) {
-			d.SetId("")
-			return nil
-		}
-
+	if err != nil && !errors.Is(err, iamerrors.ErrCredentialNotFound) {
 		return diag.FromErr(errDeletingObject(objectEC2Credentials, d.Id(), err))
 	}
 

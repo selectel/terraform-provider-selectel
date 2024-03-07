@@ -4,13 +4,10 @@ import (
 	"context"
 	"errors"
 	"log"
-	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/iam-go/iamerrors"
-	"github.com/selectel/iam-go/service/roles"
 	"github.com/selectel/iam-go/service/serviceusers"
 )
 
@@ -56,24 +53,11 @@ func resourceIAMServiceUserV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Required: true,
 							ForceNew: false,
-							ValidateFunc: validation.StringInSlice([]string{
-								string(roles.AccountOwner),
-								string(roles.Billing),
-								string(roles.IAMAdmin),
-								string(roles.Member),
-								string(roles.Reader),
-								string(roles.ObjectStorageAdmin),
-								string(roles.ObjectStorageUser),
-							}, false),
 						},
 						"scope": {
 							Type:     schema.TypeString,
 							Required: true,
 							ForceNew: false,
-							ValidateFunc: validation.StringInSlice([]string{
-								string(roles.Account),
-								string(roles.Project),
-							}, false),
 						},
 						"project_id": {
 							Type:     schema.TypeString,
@@ -133,7 +117,7 @@ func resourceIAMServiceUserV1Read(ctx context.Context, d *schema.ResourceData, m
 	d.Set("enabled", user.Enabled)
 	d.Set("role", convertIAMRolesToSet(user.Roles))
 	if _, ok := d.GetOk("password"); !ok {
-		d.Set("password", importIAMFieldValueFailed)
+		d.Set("password", importIAMUndefined)
 	}
 
 	return nil
@@ -146,7 +130,7 @@ func resourceIAMServiceUserV1Update(ctx context.Context, d *schema.ResourceData,
 	}
 
 	password := d.Get("password").(string)
-	if password == "UNKNOWN" {
+	if password == importIAMUndefined {
 		password = ""
 	}
 
@@ -170,33 +154,14 @@ func resourceIAMServiceUserV1Update(ctx context.Context, d *schema.ResourceData,
 			return diag.FromErr(err)
 		}
 
-		rolesToUnassign := make([]roles.Role, 0)
-		rolesToAssign := make([]roles.Role, 0)
+		rolesToUnassign, rolesToAssign := manageRoles(oldRoles, newRoles)
 
-		for _, oldRole := range oldRoles {
-			if !slices.Contains(newRoles, oldRole) {
-				rolesToUnassign = append(rolesToUnassign, oldRole)
-			}
+		err = applyServiceUserRoles(ctx, d, iamClient, rolesToUnassign, rolesToAssign)
+		if err != nil {
+			return diag.FromErr(errUpdatingObject(objectServiceUser, d.Id(), err))
 		}
 
-		for _, newRole := range newRoles {
-			if !slices.Contains(oldRoles, newRole) {
-				rolesToAssign = append(rolesToAssign, newRole)
-			}
-		}
-		if len(rolesToAssign) != 0 {
-			err := iamClient.ServiceUsers.AssignRoles(ctx, d.Id(), rolesToAssign)
-			if err != nil {
-				return diag.FromErr(errUpdatingObject(objectServiceUser, d.Id(), err))
-			}
-		}
-
-		if len(rolesToUnassign) != 0 {
-			err := iamClient.ServiceUsers.UnassignRoles(ctx, d.Id(), rolesToUnassign)
-			if err != nil {
-				return diag.FromErr(errUpdatingObject(objectServiceUser, d.Id(), err))
-			}
-		}
+		return nil
 	}
 
 	return resourceIAMServiceUserV1Read(ctx, d, meta)
