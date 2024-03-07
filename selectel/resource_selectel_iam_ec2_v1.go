@@ -56,6 +56,7 @@ func resourceIAMEC2V1Create(ctx context.Context, d *schema.ResourceData, meta in
 		return diagErr
 	}
 
+	log.Print(msgCreate(objectEC2Credentials, d.Id()))
 	credential, err := iamClient.EC2.Create(
 		ctx,
 		d.Get("user_id").(string),
@@ -68,8 +69,6 @@ func resourceIAMEC2V1Create(ctx context.Context, d *schema.ResourceData, meta in
 
 	d.SetId(credential.AccessKey)
 	d.Set("secret_key", credential.SecretKey)
-
-	log.Print(msgCreate(objectEC2Credentials, d.Id()))
 
 	return resourceIAMEC2V1Read(ctx, d, meta)
 }

@@ -3,6 +3,7 @@ package selectel
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -82,6 +83,7 @@ func resourceIAMServiceUserV1Create(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
+	log.Print(msgCreate(objectServiceUser, d.Id()))
 	user, err := iamClient.ServiceUsers.Create(ctx, serviceusers.CreateRequest{
 		Enabled:  d.Get("enabled").(bool),
 		Name:     d.Get("name").(string),
@@ -91,6 +93,7 @@ func resourceIAMServiceUserV1Create(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectServiceUser, err))
 	}
+
 	d.SetId(user.ID)
 
 	return resourceIAMServiceUserV1Read(ctx, d, meta)
@@ -134,11 +137,14 @@ func resourceIAMServiceUserV1Update(ctx context.Context, d *schema.ResourceData,
 		password = ""
 	}
 
-	_, err := iamClient.ServiceUsers.Update(ctx, d.Id(), serviceusers.UpdateRequest{
+	opts := serviceusers.UpdateRequest{
 		Enabled:  d.Get("enabled").(bool),
 		Name:     d.Get("name").(string),
 		Password: password,
-	})
+	}
+
+	log.Print(msgUpdate(objectServiceUser, d.Id(), fmt.Sprintf("Enabled: %v, Name: %v", opts.Enabled, opts.Name)))
+	_, err := iamClient.ServiceUsers.Update(ctx, d.Id(), opts)
 	if err != nil {
 		return diag.FromErr(errUpdatingObject(objectServiceUser, d.Id(), err))
 	}
@@ -156,6 +162,7 @@ func resourceIAMServiceUserV1Update(ctx context.Context, d *schema.ResourceData,
 
 		rolesToUnassign, rolesToAssign := manageRoles(oldRoles, newRoles)
 
+		log.Print(msgUpdate(objectServiceUser, d.Id(), fmt.Sprintf("Roles to unassign: %+v, roles to assign: %+v", rolesToUnassign, rolesToAssign)))
 		err = applyServiceUserRoles(ctx, d, iamClient, rolesToUnassign, rolesToAssign)
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectServiceUser, d.Id(), err))

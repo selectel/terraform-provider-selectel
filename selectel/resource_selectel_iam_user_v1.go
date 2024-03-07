@@ -3,6 +3,7 @@ package selectel
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -109,6 +110,8 @@ func resourceIAMUserV1Create(ctx context.Context, d *schema.ResourceData, meta i
 	if authType == string(users.Federated) && federation == nil {
 		return diag.Errorf("federation must be set if auth_type is 'federated'")
 	}
+
+	log.Print(msgGet(objectUser, d.Id()))
 	user, err := iamClient.Users.Create(ctx, users.CreateRequest{
 		AuthType:   users.AuthType(authType),
 		Email:      d.Get("email").(string),
@@ -172,6 +175,7 @@ func resourceIAMUserV1Update(ctx context.Context, d *schema.ResourceData, meta i
 
 		rolesToUnassign, rolesToAssign := manageRoles(oldRoles, newRoles)
 
+		log.Print(msgUpdate(objectUser, d.Id(), fmt.Sprintf("Roles to unassign: %+v, roles to assign: %+v", rolesToUnassign, rolesToAssign)))
 		err = applyUserRoles(ctx, d, iamClient, rolesToUnassign, rolesToAssign)
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
