@@ -25,8 +25,7 @@ func getIAMClient(meta interface{}) (*iam.Client, diag.Diagnostics) {
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't get selvpc client for iam: %w", err))
 	}
-	// This is for future implementation of Keystone Catalog
-	_, err = getEndpointForIAM(selvpcClient, config.AuthRegion)
+	apiURL, err := getEndpointForIAM(selvpcClient, config.AuthRegion)
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}
@@ -35,8 +34,7 @@ func getIAMClient(meta interface{}) (*iam.Client, diag.Diagnostics) {
 		iam.WithAuthOpts(&iam.AuthOpts{
 			KeystoneToken: selvpcClient.GetXAuthToken(),
 		}),
-		// This is for future implementation of Keystone Catalog
-		// iam.WithAPIUrl(endpoint.URL),
+		iam.WithAPIUrl(apiURL),
 	)
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't create iam client: %w", err))
