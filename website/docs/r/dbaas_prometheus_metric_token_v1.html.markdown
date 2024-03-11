@@ -24,7 +24,7 @@ resource "selectel_dbaas_prometheus_metric_token_v1" "token_1" {
 
 * `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new token. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-databases/about/projects/).
 
-* `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new token. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#облачные-базы-данных).
+* `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new token. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-databases).
 
 * `name` - (Required) Token name. Changing this creates a new token.
 
