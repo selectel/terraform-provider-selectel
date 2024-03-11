@@ -37,21 +37,24 @@ func resourceIAMUserV1() *schema.Resource {
 				Description: "Email of the User.",
 			},
 			"federation": {
-				Type:        schema.TypeMap,
+				Type:        schema.TypeList,
 				Optional:    true,
-				Description: "Federation data of the User. Must be set only if 'auth_type' is 'federated'.",
 				ForceNew:    true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
-			"federation1": {
-				Type:        schema.TypeMap,
-				Optional:    true,
+				MaxItems:    1,
 				Description: "Federation data of the User. Must be set only if 'auth_type' is 'federated'.",
-				ForceNew:    true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+						},
+						"external_id": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+						},
+					},
 				},
 			},
 			"role": {
@@ -98,7 +101,7 @@ func resourceIAMUserV1Create(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
-	federation, err := convertIAMMapToUserFederation(d.Get("federation").(map[string]interface{}))
+	federation, err := convertIAMListToUserFederation(d.Get("federation").([]interface{}))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -148,7 +151,7 @@ func resourceIAMUserV1Read(ctx context.Context, d *schema.ResourceData, meta int
 		d.Set("email", importIAMUndefined)
 	}
 	if user.Federation != nil {
-		d.Set("federation", convertIAMFederationToMap(user.Federation))
+		d.Set("federation", convertIAMFederationToList(user.Federation))
 	}
 	d.Set("role", convertIAMRolesToSet(user.Roles))
 

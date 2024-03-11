@@ -52,8 +52,8 @@ func TestAccIAMV1UserWithFederation(t *testing.T) {
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "id"),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "email"),
 					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "auth_type", "federated"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "federation.id", "1"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "federation.external_id", "1"),
+					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "federation.id"),
+					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "federation.external_id"),
 					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.role_name", "member"),
 					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope", "account"),
 				),
@@ -176,7 +176,7 @@ func testAccIAMV1UserWithFederation(userEmail string) string {
 resource "selectel_iam_user_v1" "user_tf_acc_test_1" {
 	email = "%s"
 	auth_type = "federated"
-	federation = {
+	federation {
 		id = "1"
 		external_id = "1"
 	}

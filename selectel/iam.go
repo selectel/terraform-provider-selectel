@@ -107,17 +107,20 @@ func applyUserRoles(ctx context.Context, d *schema.ResourceData, iamClient *iam.
 	return nil
 }
 
-func convertIAMMapToUserFederation(federationMap map[string]interface{}) (*users.Federation, error) {
-	if len(federationMap) == 0 {
+func convertIAMListToUserFederation(federationList []interface{}) (*users.Federation, error) {
+	if len(federationList) == 0 {
 		return nil, nil
+	}
+	if len(federationList) > 1 {
+		return nil, errors.New("more than one federation value provided")
 	}
 	var idRaw, externalIDRaw interface{}
 	var ok bool
 
-	if idRaw, ok = federationMap["id"]; !ok {
+	if idRaw, ok = federationList[0].(map[string]interface{})["id"]; !ok {
 		return nil, errors.New("federation.id value isn't provided")
 	}
-	if externalIDRaw, ok = federationMap["external_id"]; !ok {
+	if externalIDRaw, ok = federationList[0].(map[string]interface{})["external_id"]; !ok {
 		return nil, errors.New("federation.external_id value isn't provided")
 	}
 
@@ -179,13 +182,15 @@ func convertIAMRolesToSet(roles []roles.Role) []interface{} {
 	return result
 }
 
-func convertIAMFederationToMap(federation *users.Federation) map[string]interface{} {
+func convertIAMFederationToList(federation *users.Federation) []interface{} {
 	if federation == nil {
 		return nil
 	}
 
-	return map[string]interface{}{
-		"id":          federation.ID,
-		"external_id": federation.ExternalID,
+	return []interface{}{
+		map[string]interface{}{
+			"id":          federation.ID,
+			"external_id": federation.ExternalID,
+		},
 	}
 }
