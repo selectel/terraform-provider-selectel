@@ -76,7 +76,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 
 * `keypair_name` (Optional) Name of the SSH key added to all nodes. Changing this creates a new node group.
 
-* `user_data` (Optional) Base64 data which is used to pass a script that worker nodes run on boot. Changing this creates a new node group.
+* `user_data` (Optional) Base64-encoded script that worker nodes run on the first boot. Changing this creates a new node group. Learn more about [User data](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/user-data/).
 
 * `affinity_policy` (Optional) Specifies affinity policy of the nodes. Changing this creates a new node group. Available values are `soft-anti-affinity` and `soft-affinity`. The default value is `soft-anti-affinity`. For more information about affinity and anti-affinity, see the [official Kubernetes documentation](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity).
 
