@@ -1,7 +1,6 @@
 package selectel
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"slices"
@@ -52,7 +51,7 @@ func getEndpointForIAM(selvpcClient *selvpcclient.Client, region string) (string
 	return endpoint.URL, nil
 }
 
-func manageRoles(oldRoles, newRoles []roles.Role) ([]roles.Role, []roles.Role) {
+func diffRoles(oldRoles, newRoles []roles.Role) ([]roles.Role, []roles.Role) {
 	rolesToUnassign := make([]roles.Role, 0)
 	rolesToAssign := make([]roles.Role, 0)
 
@@ -69,42 +68,6 @@ func manageRoles(oldRoles, newRoles []roles.Role) ([]roles.Role, []roles.Role) {
 	}
 
 	return rolesToUnassign, rolesToAssign
-}
-
-func applyServiceUserRoles(ctx context.Context, d *schema.ResourceData, iamClient *iam.Client, rolesToUnassign, rolesToAssign []roles.Role) error {
-	if len(rolesToAssign) != 0 {
-		err := iamClient.ServiceUsers.AssignRoles(ctx, d.Id(), rolesToAssign)
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(rolesToUnassign) != 0 {
-		err := iamClient.ServiceUsers.UnassignRoles(ctx, d.Id(), rolesToUnassign)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func applyUserRoles(ctx context.Context, d *schema.ResourceData, iamClient *iam.Client, rolesToUnassign, rolesToAssign []roles.Role) error {
-	if len(rolesToAssign) != 0 {
-		err := iamClient.Users.AssignRoles(ctx, d.Id(), rolesToAssign)
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(rolesToUnassign) != 0 {
-		err := iamClient.Users.UnassignRoles(ctx, d.Id(), rolesToUnassign)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func convertIAMListToUserFederation(federationList []interface{}) (*users.Federation, error) {
@@ -170,7 +133,7 @@ func convertIAMSetToRoles(rolesSet *schema.Set) ([]roles.Role, error) {
 }
 
 func convertIAMRolesToSet(roles []roles.Role) []interface{} {
-	result := make([]interface{}, 0)
+	result := make([]interface{}, 0, len(roles))
 	for _, role := range roles {
 		result = append(result, map[string]interface{}{
 			"role_name":  role.RoleName,

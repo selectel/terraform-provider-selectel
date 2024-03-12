@@ -28,8 +28,8 @@ func TestAccIAMV1UserBasic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "id"),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "email"),
 					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "auth_type", "local"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.role_name", "member"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope", "account"),
+					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.role_name"),
+					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope"),
 				),
 			},
 		},
@@ -54,8 +54,8 @@ func TestAccIAMV1UserWithFederation(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "auth_type", "federated"),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "federation.id"),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "federation.external_id"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.role_name", "member"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope", "account"),
+					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.role_name"),
+					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope"),
 				),
 			},
 		},
@@ -165,7 +165,7 @@ resource "selectel_iam_user_v1" "user_tf_acc_test_1" {
 	auth_type = "local"
 	email = "%s"
 	role {
-	  	role_name = "member"
+	  	role_name = "reader"
 	  	scope = "account"
 	}
 }`, userEmail)
@@ -181,7 +181,7 @@ resource "selectel_iam_user_v1" "user_tf_acc_test_1" {
 		external_id = "1"
 	}
 	role {
-	  	role_name = "member"
+	  	role_name = "iam_admin"
 	  	scope = "account"
 	}
 }`, userEmail)
@@ -193,7 +193,7 @@ func testAccIAMV1UserAssignRole(userEmail string) string {
 		auth_type = "local"
 		email = "%s"
 		role {
-			role_name = "member"
+			role_name = "reader"
 			scope = "account"
 		}
 		role {

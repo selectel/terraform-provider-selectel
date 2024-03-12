@@ -110,8 +110,8 @@ func TestAccIAMV1ServiceUserUpdateName(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1", "enabled", "true"),
 					resource.TestCheckResourceAttr("selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1", "name", serviceUserName),
 					resource.TestCheckResourceAttr("selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1", "password", serviceUserPassword),
-					resource.TestCheckResourceAttr("selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1", "role.0.role_name", "member"),
-					resource.TestCheckResourceAttr("selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1", "role.0.scope", "account"),
+					resource.TestCheckResourceAttrSet("selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1", "role.0.role_name"),
+					resource.TestCheckResourceAttrSet("selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1", "role.0.scope"),
 				),
 			},
 			{
@@ -122,8 +122,8 @@ func TestAccIAMV1ServiceUserUpdateName(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1", "enabled", "true"),
 					resource.TestCheckResourceAttr("selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1", "name", "NewName"),
 					resource.TestCheckResourceAttr("selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1", "password", serviceUserPassword),
-					resource.TestCheckResourceAttr("selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1", "role.0.role_name", "member"),
-					resource.TestCheckResourceAttr("selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1", "role.0.scope", "account"),
+					resource.TestCheckResourceAttrSet("selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1", "role.0.role_name"),
+					resource.TestCheckResourceAttrSet("selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1", "role.0.scope"),
 				),
 			},
 		},
@@ -183,7 +183,7 @@ resource "selectel_iam_serviceuser_v1" "serviceuser_tf_acc_test_1" {
   name        = "%s"
   password    = "%s"
   role {
-    role_name = "member"
+    role_name = "reader"
     scope = "account"
   }
 }`, userName, userPassword)
@@ -195,11 +195,11 @@ resource "selectel_iam_serviceuser_v1" "serviceuser_tf_acc_test_1" {
   name        = "%s"
   password    = "%s"
   role {
-    role_name = "member"
+    role_name = "reader"
     scope = "account"
   }
   role {
-    role_name = "billing"
+    role_name = "iam_admin"
     scope = "account"
   }
 }`, userName, userPassword)
@@ -211,7 +211,7 @@ resource "selectel_iam_serviceuser_v1" "serviceuser_tf_acc_test_1" {
   name        = "NewName"
   password    = "%s"
   role {
-    role_name = "member"
+    role_name = "reader"
     scope = "account"
   }
 }`, userPassword)

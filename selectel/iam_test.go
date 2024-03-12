@@ -1,25 +1,23 @@
 package selectel
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/selectel/iam-go/service/roles"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestIAMManageRoles(t *testing.T) {
+func TestIAMDiffRoles(t *testing.T) {
 	type args struct {
 		oldRoles []roles.Role
 		newRoles []roles.Role
 	}
-	tests := []struct {
-		name           string
+	tests := map[string]struct {
 		args           args
 		wantToUnassign []roles.Role
 		wantToAssign   []roles.Role
 	}{
-		{
-			name: "Test assigning new roles",
+		"Test assigning new roles": {
 			args: args{
 				oldRoles: []roles.Role{},
 				newRoles: []roles.Role{
@@ -49,8 +47,7 @@ func TestIAMManageRoles(t *testing.T) {
 				},
 			},
 		},
-		{
-			name: "Test unassigning all roles",
+		"Test unassigning all roles": {
 			args: args{
 				oldRoles: []roles.Role{
 					{
@@ -80,8 +77,7 @@ func TestIAMManageRoles(t *testing.T) {
 			},
 			wantToAssign: []roles.Role{},
 		},
-		{
-			name: "Test mix of assigning and unassigning roles",
+		"Test mix of assigning and unassigning roles": {
 			args: args{
 				oldRoles: []roles.Role{
 					{
@@ -135,15 +131,12 @@ func TestIAMManageRoles(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			actualRolesToUnassign, actualRolesToAssign := manageRoles(tt.args.oldRoles, tt.args.newRoles)
-			if !reflect.DeepEqual(actualRolesToUnassign, tt.wantToUnassign) {
-				t.Errorf("manageRoles() actualRolesToUnassign = %v, want %v", actualRolesToUnassign, tt.wantToUnassign)
-			}
-			if !reflect.DeepEqual(actualRolesToAssign, tt.wantToAssign) {
-				t.Errorf("manageRoles() actualRolesToAssign = %v, want %v", actualRolesToAssign, tt.wantToAssign)
-			}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			actualRolesToUnassign, actualRolesToAssign := diffRoles(tt.args.oldRoles, tt.args.newRoles)
+			assert := assert.New(t)
+			assert.Equal(tt.wantToUnassign, actualRolesToUnassign)
+			assert.Equal(tt.wantToAssign, actualRolesToAssign)
 		})
 	}
 }
