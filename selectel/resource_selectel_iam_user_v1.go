@@ -8,7 +8,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/selectel/iam-go"
 	"github.com/selectel/iam-go/iamerrors"
+	"github.com/selectel/iam-go/service/roles"
 	"github.com/selectel/iam-go/service/users"
 )
 
@@ -175,7 +177,7 @@ func resourceIAMUserV1Update(ctx context.Context, d *schema.ResourceData, meta i
 			return diag.FromErr(err)
 		}
 
-		rolesToUnassign, rolesToAssign := manageRoles(oldRoles, newRoles)
+		rolesToUnassign, rolesToAssign := diffRoles(oldRoles, newRoles)
 
 		log.Print(msgUpdate(objectUser, d.Id(), fmt.Sprintf("Roles to unassign: %+v, roles to assign: %+v", rolesToUnassign, rolesToAssign)))
 		err = applyUserRoles(ctx, d, iamClient, rolesToUnassign, rolesToAssign)
@@ -199,6 +201,24 @@ func resourceIAMUserV1Delete(ctx context.Context, d *schema.ResourceData, meta i
 	err := iamClient.Users.Delete(ctx, d.Id())
 	if err != nil && !errors.Is(err, iamerrors.ErrUserNotFound) {
 		return diag.FromErr(errDeletingObject(objectUser, d.Id(), err))
+	}
+
+	return nil
+}
+
+func applyUserRoles(ctx context.Context, d *schema.ResourceData, iamClient *iam.Client, rolesToUnassign, rolesToAssign []roles.Role) error {
+	if len(rolesToAssign) != 0 {
+		err := iamClient.Users.AssignRoles(ctx, d.Id(), rolesToAssign)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(rolesToUnassign) != 0 {
+		err := iamClient.Users.UnassignRoles(ctx, d.Id(), rolesToUnassign)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

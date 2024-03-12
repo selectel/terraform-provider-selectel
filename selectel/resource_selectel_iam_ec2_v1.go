@@ -69,8 +69,10 @@ func resourceIAMEC2V1Create(ctx context.Context, d *schema.ResourceData, meta in
 
 	d.SetId(credential.AccessKey)
 	d.Set("secret_key", credential.SecretKey)
+	d.Set("name", credential.Name)
+	d.Set("project_id", credential.ProjectID)
 
-	return resourceIAMEC2V1Read(ctx, d, meta)
+	return nil
 }
 
 func resourceIAMEC2V1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -99,6 +101,9 @@ func resourceIAMEC2V1Read(ctx context.Context, d *schema.ResourceData, meta inte
 
 	d.Set("name", credential.Name)
 	d.Set("project_id", credential.ProjectID)
+	if _, ok := d.GetOk("secret_key"); !ok {
+		d.Set("secret_key", importIAMUndefined)
+	}
 
 	return nil
 }
