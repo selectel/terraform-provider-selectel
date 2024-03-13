@@ -177,7 +177,6 @@ func resourceDBaaSRedisDatastoreV1() *schema.Resource {
 			"instances": {
 				Type:     schema.TypeList,
 				Computed: true,
-				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"role": {
@@ -348,6 +347,12 @@ func resourceDBaaSRedisDatastoreV1Update(ctx context.Context, d *schema.Resource
 	}
 	if d.HasChange("backup_retention_days") {
 		err := updateDatastoreBackups(ctx, d, dbaasClient)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("floating_ips") {
+		err := updateDatastoreFloatingIPs(ctx, d, dbaasClient)
 		if err != nil {
 			return diag.FromErr(err)
 		}

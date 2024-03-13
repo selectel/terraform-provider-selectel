@@ -203,7 +203,6 @@ func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
 			"instances": {
 				Type:     schema.TypeList,
 				Computed: true,
-				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"role": {
@@ -336,6 +335,7 @@ func resourceDBaaSPostgreSQLDatastoreV1Read(ctx context.Context, d *schema.Resou
 	if err := d.Set("connections", datastore.Connection); err != nil {
 		log.Print(errSettingComplexAttr("connections", err))
 	}
+
 	instances := resourceDBaaSDatastoreV1InstancesToList(datastore.Instances)
 	if err := d.Set("instances", instances); err != nil {
 		log.Print(errSettingComplexAttr("instances", err))
@@ -390,6 +390,12 @@ func resourceDBaaSPostgreSQLDatastoreV1Update(ctx context.Context, d *schema.Res
 	}
 	if d.HasChange("backup_retention_days") {
 		err := updateDatastoreBackups(ctx, d, dbaasClient)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("floating_ips") {
+		err := updateDatastoreFloatingIPs(ctx, d, dbaasClient)
 		if err != nil {
 			return diag.FromErr(err)
 		}

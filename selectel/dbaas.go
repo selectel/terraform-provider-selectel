@@ -466,6 +466,36 @@ func validateDatastoreType(ctx context.Context, expectedDatastoreTypeEngines []s
 	return nil
 }
 
+func getDatastoreMasterInstanceID(datastore dbaas.Datastore) (found bool, masterID string) {
+	for _, instance := range datastore.Instances {
+		if instance.Role == "MASTER" {
+			found, masterID = true, instance.ID
+			break
+		}
+	}
+	return
+}
+
+func getDatastoreReplicasInstancesIDsWithFloatings(datastore dbaas.Datastore) (replicasIDs []string) {
+	for _, instance := range datastore.Instances {
+		if instance.Role == "REPLICA" && instance.FloatingIP != "" {
+			replicasIDs = append(replicasIDs, instance.ID)
+		}
+	}
+	return replicasIDs
+}
+
+func getDatastoreReplicasInstancesIDsWithoutFloatings(datastore dbaas.Datastore) (replicasIDs []string) {
+	for _, instance := range datastore.Instances {
+		if instance.Role == "REPLICA" && instance.FloatingIP == "" {
+			replicasIDs = append(replicasIDs, instance.ID)
+		}
+	}
+	return replicasIDs
+}
+
+// Databases
+
 func waitForDBaaSDatabaseV1ActiveState(
 	ctx context.Context, client *dbaas.API, databaseID string, timeout time.Duration,
 ) error {
@@ -495,8 +525,6 @@ func waitForDBaaSDatabaseV1ActiveState(
 
 	return nil
 }
-
-// Databases
 
 func dbaasDatabaseV1StateRefreshFunc(ctx context.Context, client *dbaas.API, databaseID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
@@ -768,4 +796,113 @@ func dbaasACLV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, ac
 
 		return d, strconv.Itoa(http.StatusOK), err
 	}
+}
+
+// Floating IPs
+
+func dbaasFloatingIPCreate(ctx context.Context, d *schema.ResourceData, client *dbaas.API, instanceID string) error {
+	var floatingIPOpts dbaas.FloatingIPsOpts
+	floatingIPOpts.InstanceID = instanceID
+
+	log.Printf("[DEBUG] Creating floating IP for instance %s", instanceID)
+	err := client.CreateFloatingIP(ctx, floatingIPOpts)
+	if err != nil {
+		return fmt.Errorf(
+			"error creating Floating IP for the instance %s", instanceID,
+		)
+	}
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+func dbaasFloatingIPDelete(ctx context.Context, d *schema.ResourceData, client *dbaas.API, instanceID string) error {
+	var floatingIPOpts dbaas.FloatingIPsOpts
+	floatingIPOpts.InstanceID = instanceID
+
+	log.Printf("[DEBUG] Delete floating IP from instance %s", instanceID)
+	err := client.DeleteFloatingIP(ctx, floatingIPOpts)
+	if err != nil {
+		return fmt.Errorf(
+			"error deleting Floating IP from the instance %s", instanceID,
+		)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func getFloatingIPSchemaDiff(oldSchema *dbaas.FloatingIPs, newSchema *dbaas.FloatingIPs) (int, int) {
+	masterDiff := newSchema.Master - oldSchema.Master
+	replicasDiff := newSchema.Replica - oldSchema.Replica
+
+	return masterDiff, replicasDiff
+}
+
+func updateDatastoreFloatingIPs(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	o, n := d.GetChange("floating_ips")
+	oldSchema, err := resourceDBaaSDatastoreV1FloatingIPsOptsFromSet(o.(*schema.Set))
+	if err != nil {
+		return fmt.Errorf(
+			"error updating Floating IP",
+		)
+	}
+	newSchema, err := resourceDBaaSDatastoreV1FloatingIPsOptsFromSet(n.(*schema.Set))
+	if err != nil {
+		return fmt.Errorf(
+			"error updating Floating IP",
+		)
+	}
+
+	masterDiff, replicasDiff := getFloatingIPSchemaDiff(oldSchema, newSchema)
+	datastore, err := client.Datastore(ctx, d.Id())
+	if err != nil {
+		return fmt.Errorf(
+			"can not retrieve datastore to update floating IPs",
+		)
+	}
+	ok, masterID := getDatastoreMasterInstanceID(datastore)
+	if !ok {
+		return fmt.Errorf(
+			"MASTER instance not found in the datastore",
+		)
+	}
+
+	if masterDiff > 0 {
+		dbaasFloatingIPCreate(ctx, d, client, masterID)
+	} else if masterDiff < 0 {
+		dbaasFloatingIPDelete(ctx, d, client, masterID)
+	}
+
+	if replicasDiff > 0 {
+		replicasWithoutFloatingsIDs := getDatastoreReplicasInstancesIDsWithoutFloatings(datastore)
+		if len(replicasWithoutFloatingsIDs) < replicasDiff {
+			return fmt.Errorf(
+				"there is not enough replicas to attach floating IPs",
+			)
+		}
+		for i := 0; i < replicasDiff; i++ {
+			dbaasFloatingIPCreate(ctx, d, client, replicasWithoutFloatingsIDs[i])
+		}
+
+	} else if replicasDiff < 0 {
+		replicasWithFloatingsIDs := getDatastoreReplicasInstancesIDsWithFloatings(datastore)
+		// in this case we have negative counter, we have to get absolute value to use it in the loop
+		replicasDiff = -replicasDiff
+		for i := 0; i < replicasDiff; i++ {
+			dbaasFloatingIPDelete(ctx, d, client, replicasWithFloatingsIDs[i])
+		}
+	}
+
+	return nil
 }

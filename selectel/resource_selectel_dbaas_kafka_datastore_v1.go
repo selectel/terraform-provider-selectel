@@ -127,7 +127,6 @@ func resourceDBaaSKafkaDatastoreV1() *schema.Resource {
 			"instances": {
 				Type:     schema.TypeSet,
 				Computed: true,
-				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"role": {
