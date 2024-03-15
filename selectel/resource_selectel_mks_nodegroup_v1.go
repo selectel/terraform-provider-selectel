@@ -153,9 +153,10 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				RequiredWith: []string{"enable_autoscale", "autoscale_min_nodes"},
 			},
 			"user_data": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringLenBetween(0, 65535),
 			},
 			"nodegroup_type": {
 				Type:     schema.TypeString,
