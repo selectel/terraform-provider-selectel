@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/dbaas-go"
+	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dbaas"
 )
 
 func resourceDBaaSGrantV1() *schema.Resource {
@@ -28,63 +29,20 @@ func resourceDBaaSGrantV1() *schema.Resource {
 			Update: schema.DefaultTimeout(60 * time.Minute),
 			Delete: schema.DefaultTimeout(60 * time.Minute),
 		},
-		Schema: map[string]*schema.Schema{
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"datastore_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"database_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"user_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-		},
+		Schema: resourceDBaaSGrantV1Schema(),
 	}
 }
 
 func resourceDBaaSGrantV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	datastoreID := d.Get("datastore_id").(string)
-
-	selMutexKV.Lock(datastoreID)
-	defer selMutexKV.Unlock(datastoreID)
-
-	databaseID := d.Get("database_id").(string)
-	selMutexKV.Lock(databaseID)
-	defer selMutexKV.Unlock(databaseID)
-
-	userID := d.Get("user_id").(string)
-	selMutexKV.Lock(userID)
-	defer selMutexKV.Unlock(userID)
-
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
 
 	grantCreateOpts := dbaas.GrantCreateOpts{
-		DatastoreID: datastoreID,
-		DatabaseID:  databaseID,
-		UserID:      userID,
+		DatastoreID: d.Get("datastore_id").(string),
+		DatabaseID:  d.Get("database_id").(string),
+		UserID:      d.Get("user_id").(string),
 	}
 
 	log.Print(msgCreate(objectGrant, grantCreateOpts))
@@ -95,7 +53,7 @@ func resourceDBaaSGrantV1Create(ctx context.Context, d *schema.ResourceData, met
 
 	log.Printf("[DEBUG] waiting for grant %s to become 'ACTIVE'", grant.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForDBaaSGrantV1ActiveState(ctx, dbaasClient, grant.ID, timeout)
+	err = waiters.WaitForDBaaSGrantV1ActiveState(ctx, dbaasClient, grant.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectGrant, err))
 	}
@@ -125,19 +83,6 @@ func resourceDBaaSGrantV1Read(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceDBaaSGrantV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	datastoreID := d.Get("datastore_id").(string)
-
-	selMutexKV.Lock(datastoreID)
-	defer selMutexKV.Unlock(datastoreID)
-
-	databaseID := d.Get("database_id").(string)
-	selMutexKV.Lock(databaseID)
-	defer selMutexKV.Unlock(databaseID)
-
-	userID := d.Get("user_id").(string)
-	selMutexKV.Lock(userID)
-	defer selMutexKV.Unlock(userID)
-
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -152,10 +97,10 @@ func resourceDBaaSGrantV1Delete(ctx context.Context, d *schema.ResourceData, met
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{strconv.Itoa(http.StatusOK)},
 		Target:     []string{strconv.Itoa(http.StatusNotFound)},
-		Refresh:    dbaasGrantV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
+		Refresh:    waiters.DBaaSGrantV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
+		MinTimeout: 20 * time.Second,
 	}
 
 	log.Printf("[DEBUG] waiting for grant %s to become deleted", d.Id())
@@ -180,61 +125,4 @@ func resourceDBaaSGrantV1ImportState(_ context.Context, d *schema.ResourceData, 
 	d.Set("region", config.Region)
 
 	return []*schema.ResourceData{d}, nil
-}
-
-func waitForDBaaSGrantV1ActiveState(
-	ctx context.Context, client *dbaas.API, grantID string, timeout time.Duration,
-) error {
-	pending := []string{
-		string(dbaas.StatusPendingCreate),
-		string(dbaas.StatusPendingUpdate),
-	}
-	target := []string{
-		string(dbaas.StatusActive),
-	}
-
-	stateConf := &resource.StateChangeConf{
-		Pending:    pending,
-		Target:     target,
-		Refresh:    dbaasGrantV1StateRefreshFunc(ctx, client, grantID),
-		Timeout:    timeout,
-		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
-	}
-
-	_, err := stateConf.WaitForState()
-	if err != nil {
-		return fmt.Errorf(
-			"error waiting for the grant %s to become 'ACTIVE': %s",
-			grantID, err)
-	}
-
-	return nil
-}
-
-func dbaasGrantV1StateRefreshFunc(ctx context.Context, client *dbaas.API, grantID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.Grant(ctx, grantID)
-		if err != nil {
-			return nil, "", err
-		}
-
-		return d, string(d.Status), nil
-	}
-}
-
-func dbaasGrantV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, grantID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.Grant(ctx, grantID)
-		if err != nil {
-			var dbaasError *dbaas.DBaaSAPIError
-			if errors.As(err, &dbaasError) {
-				return d, strconv.Itoa(dbaasError.StatusCode()), nil
-			}
-
-			return nil, "", err
-		}
-
-		return d, strconv.Itoa(200), err
-	}
 }

@@ -7,16 +7,15 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"net/http"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/dbaas-go"
+	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dbaas"
 )
 
 const (
@@ -103,64 +102,6 @@ func flavorSchema() *schema.Resource {
 
 func flavorHashSetFunc() schema.SchemaSetFunc {
 	return schema.HashResource(flavorSchema())
-}
-
-func waitForDBaaSDatastoreV1ActiveState(
-	ctx context.Context, client *dbaas.API, datastoreID string, timeout time.Duration,
-) error {
-	pending := []string{
-		string(dbaas.StatusPendingCreate),
-		string(dbaas.StatusPendingUpdate),
-		string(dbaas.StatusResizing),
-	}
-	target := []string{
-		string(dbaas.StatusActive),
-	}
-
-	stateConf := &resource.StateChangeConf{
-		Pending:    pending,
-		Target:     target,
-		Refresh:    dbaasDatastoreV1StateRefreshFunc(ctx, client, datastoreID),
-		Timeout:    timeout,
-		Delay:      10 * time.Second,
-		MinTimeout: 20 * time.Second,
-	}
-
-	_, err := stateConf.WaitForState()
-	if err != nil {
-		return fmt.Errorf(
-			"error waiting for the datastore %s to become 'ACTIVE': %s",
-			datastoreID, err)
-	}
-
-	return nil
-}
-
-func dbaasDatastoreV1StateRefreshFunc(ctx context.Context, client *dbaas.API, datastoreID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.Datastore(ctx, datastoreID)
-		if err != nil {
-			return nil, "", err
-		}
-
-		return d, string(d.Status), nil
-	}
-}
-
-func dbaasDatastoreV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, datastoreID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.Datastore(ctx, datastoreID)
-		if err != nil {
-			var dbaasError *dbaas.DBaaSAPIError
-			if errors.As(err, &dbaasError) {
-				return d, strconv.Itoa(dbaasError.StatusCode()), nil
-			}
-
-			return nil, "", err
-		}
-
-		return d, strconv.Itoa(http.StatusOK), err
-	}
 }
 
 func resourceDBaaSDatastoreV1FlavorFromSet(flavorSet *schema.Set) (*dbaas.Flavor, error) {
@@ -267,7 +208,7 @@ func updateDatastoreName(ctx context.Context, d *schema.ResourceData, client *db
 
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
 	timeout := d.Timeout(schema.TimeoutUpdate)
-	err = waitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
+	err = waiters.WaitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
 	if err != nil {
 		return errUpdatingObject(objectDatastore, d.Id(), err)
 	}
@@ -290,7 +231,7 @@ func updateDatastoreFirewall(ctx context.Context, d *schema.ResourceData, client
 
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
 	timeout := d.Timeout(schema.TimeoutUpdate)
-	err = waitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
+	err = waiters.WaitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
 	if err != nil {
 		return errUpdatingObject(objectDatastore, d.Id(), err)
 	}
@@ -322,7 +263,7 @@ func updateDatastoreConfig(ctx context.Context, d *schema.ResourceData, client *
 
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
 	timeout := d.Timeout(schema.TimeoutUpdate)
-	err = waitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
+	err = waiters.WaitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
 	if err != nil {
 		return errUpdatingObject(objectDatastore, d.Id(), err)
 	}
@@ -342,7 +283,7 @@ func updateDatastoreBackups(ctx context.Context, d *schema.ResourceData, client 
 
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
 	timeout := d.Timeout(schema.TimeoutUpdate)
-	err = waitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
+	err = waiters.WaitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
 	if err != nil {
 		return errUpdatingObject(objectDatastore, d.Id(), err)
 	}
@@ -385,7 +326,7 @@ func resizeDatastore(ctx context.Context, d *schema.ResourceData, client *dbaas.
 
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
+	err = waiters.WaitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
 	if err != nil {
 		return errUpdatingObject(objectDatastore, d.Id(), err)
 	}
@@ -424,308 +365,4 @@ func validateDatastoreType(ctx context.Context, expectedDatastoreTypeEngines []s
 	}
 
 	return nil
-}
-
-func waitForDBaaSDatabaseV1ActiveState(
-	ctx context.Context, client *dbaas.API, databaseID string, timeout time.Duration,
-) error {
-	pending := []string{
-		string(dbaas.StatusPendingCreate),
-		string(dbaas.StatusPendingUpdate),
-	}
-	target := []string{
-		string(dbaas.StatusActive),
-	}
-
-	stateConf := &resource.StateChangeConf{
-		Pending:    pending,
-		Target:     target,
-		Refresh:    dbaasDatabaseV1StateRefreshFunc(ctx, client, databaseID),
-		Timeout:    timeout,
-		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
-	}
-
-	_, err := stateConf.WaitForState()
-	if err != nil {
-		return fmt.Errorf(
-			"error waiting for the database %s to become 'ACTIVE': %s",
-			databaseID, err)
-	}
-
-	return nil
-}
-
-// Databases
-
-func dbaasDatabaseV1StateRefreshFunc(ctx context.Context, client *dbaas.API, databaseID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.Database(ctx, databaseID)
-		if err != nil {
-			return nil, "", err
-		}
-
-		return d, string(d.Status), nil
-	}
-}
-
-func dbaasDatabaseV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, datastoreID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.Database(ctx, datastoreID)
-		if err != nil {
-			var dbaasError *dbaas.DBaaSAPIError
-			if errors.As(err, &dbaasError) {
-				return d, strconv.Itoa(dbaasError.StatusCode()), nil
-			}
-
-			return nil, "", err
-		}
-
-		return d, strconv.Itoa(http.StatusOK), err
-	}
-}
-
-func dbaasDatabaseV1LocaleDiffSuppressFunc(k, old, new string, d *schema.ResourceData) bool {
-	// The default locale value - C is the same as null value, so we need to suppress
-	if old == "C" && new == "" {
-		return true
-	}
-
-	return false
-}
-
-// Users
-
-func waitForDBaaSUserV1ActiveState(
-	ctx context.Context, client *dbaas.API, userID string, timeout time.Duration,
-) error {
-	pending := []string{
-		string(dbaas.StatusPendingCreate),
-		string(dbaas.StatusPendingUpdate),
-	}
-	target := []string{
-		string(dbaas.StatusActive),
-	}
-
-	stateConf := &resource.StateChangeConf{
-		Pending:    pending,
-		Target:     target,
-		Refresh:    dbaasUserV1StateRefreshFunc(ctx, client, userID),
-		Timeout:    timeout,
-		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
-	}
-
-	_, err := stateConf.WaitForState()
-	if err != nil {
-		return fmt.Errorf(
-			"error waiting for the user %s to become 'ACTIVE': %s",
-			userID, err)
-	}
-
-	return nil
-}
-
-func dbaasUserV1StateRefreshFunc(ctx context.Context, client *dbaas.API, userID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.User(ctx, userID)
-		if err != nil {
-			return nil, "", err
-		}
-
-		return d, string(d.Status), nil
-	}
-}
-
-func dbaasUserV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, userID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.User(ctx, userID)
-		if err != nil {
-			var dbaasError *dbaas.DBaaSAPIError
-			if errors.As(err, &dbaasError) {
-				return d, strconv.Itoa(dbaasError.StatusCode()), nil
-			}
-
-			return nil, "", err
-		}
-
-		return d, strconv.Itoa(http.StatusOK), err
-	}
-}
-
-// Slots
-
-func waitForDBaaSLogicalReplicationSlotV1ActiveState(
-	ctx context.Context, client *dbaas.API, slotID string, timeout time.Duration,
-) error {
-	pending := []string{
-		string(dbaas.StatusPendingCreate),
-		string(dbaas.StatusPendingUpdate),
-	}
-	target := []string{
-		string(dbaas.StatusActive),
-	}
-
-	stateConf := &resource.StateChangeConf{
-		Pending:    pending,
-		Target:     target,
-		Refresh:    dbaasLogicalReplicationSlotV1StateRefreshFunc(ctx, client, slotID),
-		Timeout:    timeout,
-		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
-	}
-
-	_, err := stateConf.WaitForState()
-	if err != nil {
-		return fmt.Errorf(
-			"error waiting for the slot %s to become 'ACTIVE': %s",
-			slotID, err)
-	}
-
-	return nil
-}
-
-func dbaasLogicalReplicationSlotV1StateRefreshFunc(ctx context.Context, client *dbaas.API, slotID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.LogicalReplicationSlot(ctx, slotID)
-		if err != nil {
-			return nil, "", err
-		}
-
-		return d, string(d.Status), nil
-	}
-}
-
-func dbaasLogicalReplicationSlotV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, slotID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.LogicalReplicationSlot(ctx, slotID)
-		if err != nil {
-			var dbaasError *dbaas.DBaaSAPIError
-			if errors.As(err, &dbaasError) {
-				return d, strconv.Itoa(dbaasError.StatusCode()), nil
-			}
-
-			return nil, "", err
-		}
-
-		return d, strconv.Itoa(http.StatusOK), err
-	}
-}
-
-// Topics
-
-func waitForDBaaSTopicV1ActiveState(
-	ctx context.Context, client *dbaas.API, topicID string, timeout time.Duration,
-) error {
-	pending := []string{
-		string(dbaas.StatusPendingCreate),
-		string(dbaas.StatusPendingUpdate),
-	}
-	target := []string{
-		string(dbaas.StatusActive),
-	}
-
-	stateConf := &resource.StateChangeConf{
-		Pending:    pending,
-		Target:     target,
-		Refresh:    dbaasTopicV1StateRefreshFunc(ctx, client, topicID),
-		Timeout:    timeout,
-		Delay:      10 * time.Second,
-		MinTimeout: 20 * time.Second,
-	}
-
-	_, err := stateConf.WaitForState()
-	if err != nil {
-		return fmt.Errorf(
-			"error waiting for the topic %s to become 'ACTIVE': %s",
-			topicID, err)
-	}
-
-	return nil
-}
-
-func dbaasTopicV1StateRefreshFunc(ctx context.Context, client *dbaas.API, topicID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.Topic(ctx, topicID)
-		if err != nil {
-			return nil, "", err
-		}
-
-		return d, string(d.Status), nil
-	}
-}
-
-func dbaasTopicV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, topicID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.Topic(ctx, topicID)
-		if err != nil {
-			var dbaasError *dbaas.DBaaSAPIError
-			if errors.As(err, &dbaasError) {
-				return d, strconv.Itoa(dbaasError.StatusCode()), nil
-			}
-
-			return nil, "", err
-		}
-
-		return d, strconv.Itoa(http.StatusOK), err
-	}
-}
-
-// ACLs
-
-func waitForDBaaSACLV1ActiveState(
-	ctx context.Context, client *dbaas.API, aclID string, timeout time.Duration,
-) error {
-	pending := []string{
-		string(dbaas.StatusPendingCreate),
-		string(dbaas.StatusPendingUpdate),
-	}
-	target := []string{
-		string(dbaas.StatusActive),
-	}
-
-	stateConf := &resource.StateChangeConf{
-		Pending:    pending,
-		Target:     target,
-		Refresh:    dbaasACLV1StateRefreshFunc(ctx, client, aclID),
-		Timeout:    timeout,
-		Delay:      10 * time.Second,
-		MinTimeout: 15 * time.Second,
-	}
-
-	_, err := stateConf.WaitForState()
-	if err != nil {
-		return fmt.Errorf(
-			"error waiting for the acl %s to become 'ACTIVE': %s",
-			aclID, err)
-	}
-
-	return nil
-}
-
-func dbaasACLV1StateRefreshFunc(ctx context.Context, client *dbaas.API, aclID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.ACL(ctx, aclID)
-		if err != nil {
-			return nil, "", err
-		}
-
-		return d, string(d.Status), nil
-	}
-}
-
-func dbaasACLV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, aclID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		d, err := client.ACL(ctx, aclID)
-		if err != nil {
-			var dbaasError *dbaas.DBaaSAPIError
-			if errors.As(err, &dbaasError) {
-				return d, strconv.Itoa(dbaasError.StatusCode()), nil
-			}
-
-			return nil, "", err
-		}
-
-		return d, strconv.Itoa(http.StatusOK), err
-	}
 }
