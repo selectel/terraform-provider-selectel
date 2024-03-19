@@ -16,7 +16,7 @@ import (
 
 func TestAccMKSNodegroupV1Basic(t *testing.T) {
 	var (
-		mksNodegroup nodegroup.View
+		mksNodegroup nodegroup.GetView
 		project      projects.Project
 	)
 
@@ -45,6 +45,7 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "enable_autoscale", "true"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "autoscale_min_nodes", "2"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "autoscale_max_nodes", "3"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "user_data", "IyEvYmluL2Jhc2ggLXYKYXB0IC15IHVwZGF0ZQphcHQgLXkgaW5zdGFsbCBtdHI="),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key0", "label-value0"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key1", "label-value1"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key2", "label-value2"),
@@ -74,6 +75,7 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "enable_autoscale", "false"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "autoscale_min_nodes", "1"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "autoscale_max_nodes", "4"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "user_data", "IyEvYmluL2Jhc2ggLXYKYXB0IC15IHVwZGF0ZQphcHQgLXkgaW5zdGFsbCBtdHI="),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key3", "label-value3"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key4", "label-value4"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.#", "3"),
@@ -93,7 +95,7 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 	})
 }
 
-func testAccCheckMKSNodegroupV1Exists(n string, mksNodegroup *nodegroup.View) resource.TestCheckFunc {
+func testAccCheckMKSNodegroupV1Exists(n string, mksNodegroup *nodegroup.GetView) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -157,6 +159,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
   enable_autoscale    = true
   autoscale_min_nodes = 2
   autoscale_max_nodes = 3
+  user_data           = "IyEvYmluL2Jhc2ggLXYKYXB0IC15IHVwZGF0ZQphcHQgLXkgaW5zdGFsbCBtdHI="
   labels = {
     label-key0 = "label-value0"
     label-key1 = "label-value1"
@@ -207,6 +210,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
   enable_autoscale    = false
   autoscale_min_nodes = 1
   autoscale_max_nodes = 4
+  user_data           = "IyEvYmluL2Jhc2ggLXYKYXB0IC15IHVwZGF0ZQphcHQgLXkgaW5zdGFsbCBtdHI="
   labels = {
     label-key3 = "label-value3"
     label-key4 = "label-value4"

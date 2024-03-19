@@ -163,8 +163,8 @@ github.com/selectel/domains-go v1.0.2 h1:Si6iGaMnTFJxwiJVI50DOdZnwcxc87kqaWrVQYW
 github.com/selectel/domains-go v1.0.2/go.mod h1:SugRKfq4sTpnOHquslCpzda72wV8u0cMBHx0C0l+bzA=
 github.com/selectel/go-selvpcclient/v3 v3.1.1 h1:C1q2LqqosiapoLpnGITGmysg0YCSQYDo2Gh69CioevM=
 github.com/selectel/go-selvpcclient/v3 v3.1.1/go.mod h1:NM7IXhh1IzqZ88DOw1Qc5Ez3tULLViXo95l5+rKPuyQ=
-github.com/selectel/mks-go v0.12.0 h1:nLWHK8BXkhFlXvjFqf7WRrdAfvmrOhQzDSLx7BGa6aM=
-github.com/selectel/mks-go v0.12.0/go.mod h1:FcFqF3WvZIhztyAt1+ZySKf0zWmCEvg9e2gRwxVyQOw=
+github.com/selectel/mks-go v0.14.0 h1:huNq/oTutPc3ezB8HRqlGN9WJubTDETpNKuIVqcZOn0=
+github.com/selectel/mks-go v0.14.0/go.mod h1:VxtV3dzwgOEzZc+9VMQb9DvxfSlej2ZQ8jnT8kqIGgU=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
 github.com/sergi/go-diff v1.2.0 h1:XU+rvMAioB0UC3q1MFrIQy4Vo5/4VsRDQQXHsEya6xQ=
 github.com/sergi/go-diff v1.2.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
