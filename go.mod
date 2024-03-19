@@ -11,7 +11,7 @@ require (
 	github.com/selectel/domains-go v1.0.2
 	github.com/selectel/go-selvpcclient/v3 v3.1.1
 	github.com/selectel/iam-go v0.1.2
-	github.com/selectel/mks-go v0.12.0
+	github.com/selectel/mks-go v0.14.0
 	github.com/stretchr/testify v1.8.4
 )
 
