@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages a EC2 credentials for Selectel Service User using public API v1. For more information about EC2 Credentials, see the [official Selectel documentation](https://docs.selectel.ru/cloud/object-storage/manage/manage-access/#issue-s3-key).
 
-~> **Note:** The secret key of created EC2 credential is stored as raw data in a plain-text file. Learn more about [sensitive data in state](https://developer.hashicorp.com/terraform/language/state/sensitive-data).
+~> **Note:** The _secret key_ of created EC2 credential is stored as raw data in a plain-text file. Learn more about [sensitive data in state](https://developer.hashicorp.com/terraform/language/state/sensitive-data).
 
 ## Example Usage
 
@@ -32,6 +32,6 @@ resource "selectel_iam_ec2_v1" "ec2_credential_1" {
 
 ## Attributes Reference
 
-* `access_key` - Access Key ID.
+~> **Note:** The _access key_ of EC2 credential is stored as _id_.
 
 * `secret_key` - Secret Access Key.

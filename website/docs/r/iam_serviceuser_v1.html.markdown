@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages a service user using public API v1. Selectel products support Identity and Access Management (IAM). For more information about service users, see the [official Selectel documentation](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
 
-~> **Note:** The service user password is stored as raw data in a plain-text file. Learn more about [sensitive data in
+~> **Note:** The service user _password_ is stored as raw data in a plain-text file. Learn more about [sensitive data in
 state](https://developer.hashicorp.com/terraform/language/state/sensitive-data).
 
 ## Example Usage
