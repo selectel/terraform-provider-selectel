@@ -16,6 +16,7 @@ const (
 	dataSourceAdmissionControllers = "selectel_mks_admission_controllers_v1"
 )
 
+//nolint:goconst
 func TestAccMKSAvailableFeatureGatesV1Basic(t *testing.T) {
 	var project projects.Project
 

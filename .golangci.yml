@@ -8,7 +8,6 @@ linters:
   enable:
     - asciicheck
     - bodyclose
-    - depguard
     - dogsled
     - errcheck
     - exhaustive
@@ -47,8 +46,6 @@ linters:
     - whitespace
 
 linters-settings:
-  dupl:
-    threshold: 425
   nlreturn:
     block-size: 3
 

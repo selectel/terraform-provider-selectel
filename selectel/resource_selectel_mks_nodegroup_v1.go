@@ -54,7 +54,7 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 				ForceNew: false,
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+				DiffSuppressFunc: func(_, _, _ string, d *schema.ResourceData) bool {
 					return d.Id() != "" && d.Get("enable_autoscale").(bool)
 				},
 			},
