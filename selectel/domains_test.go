@@ -52,7 +52,7 @@ func TestDomainsV1ParseDomainRecordIDsPair(t *testing.T) {
 	}
 }
 
-func TestGetIntPtrOrNil(t *testing.T) {
+func TestGetIntPtrOrNil(_ *testing.T) {
 	tableTest := []struct {
 		input    interface{}
 		expected *int

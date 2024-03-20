@@ -28,7 +28,7 @@ func resourceVPCUserV2() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: false,
-				ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+				ValidateDiagFunc: func(i interface{}, _ cty.Path) diag.Diagnostics {
 					password := i.(string)
 					if len(password) < 8 {
 						return diag.Errorf("password must be at least 8 characters long")
