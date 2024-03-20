@@ -29,14 +29,14 @@ func resourceVPCTokenV2() *schema.Resource {
 	}
 }
 
-func resourceVPCTokenV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCTokenV2Create(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return diag.FromErr(errResourceDeprecated("selectel_vpc_token_v2"))
 }
 
-func resourceVPCTokenV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCTokenV2Read(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return diag.FromErr(errResourceDeprecated("selectel_vpc_token_v2"))
 }
 
-func resourceVPCTokenV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCTokenV2Delete(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return diag.FromErr(errResourceDeprecated("selectel_vpc_token_v2"))
 }

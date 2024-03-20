@@ -30,7 +30,7 @@ func resourceMKSClusterV1() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			customdiff.ComputedIf(
 				"maintenance_window_end",
-				func(ctx context.Context, d *schema.ResourceDiff, meta interface{}) bool {
+				func(_ context.Context, d *schema.ResourceDiff, _ interface{}) bool {
 					return d.HasChange("maintenance_window_start")
 				}),
 		),
@@ -45,7 +45,7 @@ func resourceMKSClusterV1() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+				DiffSuppressFunc: func(_, old, new string, _ *schema.ResourceData) bool {
 					return strings.EqualFold(old, new)
 				},
 			},

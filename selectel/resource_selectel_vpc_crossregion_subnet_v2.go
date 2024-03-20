@@ -111,14 +111,14 @@ func resourceVPCCrossRegionSubnetV2() *schema.Resource {
 	}
 }
 
-func resourceVPCCrossRegionSubnetV2Create(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCCrossRegionSubnetV2Create(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return diag.FromErr(errResourceDeprecated("selectel_vpc_crossregion_subnet_v2"))
 }
 
-func resourceVPCCrossRegionSubnetV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCCrossRegionSubnetV2Read(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return diag.FromErr(errResourceDeprecated("selectel_vpc_crossregion_subnet_v2"))
 }
 
-func resourceVPCCrossRegionSubnetV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCCrossRegionSubnetV2Delete(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return diag.FromErr(errResourceDeprecated("selectel_vpc_crossregion_subnet_v2"))
 }
