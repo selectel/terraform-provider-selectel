@@ -122,7 +122,7 @@ func Provider() *schema.Provider {
 			"selectel_vpc_role_v2":                                  resourceVPCRoleV2(), // DEPRECATED
 			"selectel_vpc_subnet_v2":                                resourceVPCSubnetV2(),
 			"selectel_vpc_token_v2":                                 resourceVPCTokenV2(), // DEPRECATED
-			"selectel_vpc_user_v2":                                  resourceVPCUserV2(), // DEPRECATED
+			"selectel_vpc_user_v2":                                  resourceVPCUserV2(),  // DEPRECATED
 			"selectel_iam_serviceuser_v1":                           resourceIAMServiceUserV1(),
 			"selectel_iam_user_v1":                                  resourceIAMUserV1(),
 			"selectel_iam_ec2_v1":                                   resourceIAMEC2V1(),
