@@ -1,3 +1,12 @@
+## 4.1.1 (March 25, 2024)
+
+IMPROVEMENTS:
+
+* Fixed DBaaS documentation ([#252](https://github.com/selectel/terraform-provider-selectel/pull/252))
+* Added `user_data` argument to `selectel_mks_nodegroup_v1` resource ([#255](https://github.com/selectel/terraform-provider-selectel/pull/255))
+* Updated Go version to `1.21` ([#257](https://github.com/selectel/terraform-provider-selectel/pull/257))
+* Updated `golangci-lint` in CI to `v1.56.2` ([#257](https://github.com/selectel/terraform-provider-selectel/pull/257))
+
 ## 4.1.0 (February 26, 2024)
 FEATURES:
 * Added entities for work with DNS v2 API ([#249](https://github.com/selectel/terraform-provider-selectel/pull/249))
