@@ -92,6 +92,23 @@ resource "selectel_domains_rrset_v2" "mx_rrset_1" {
 }
 ```
 
+### NS RRSet
+
+```hcl
+resource "selectel_domains_rrset_v2" "ns_rrset_1" {
+  zone_id    = selectel_domains_zone_v2.zone_1.id
+  # NS RRSet supporting only for subdomains
+  name       = "subdomain.example.com."
+  type       = "NS"
+  ttl        = 86400
+  ptoject_id = selectel_vpc_project_v2.project_1.id
+  records {
+    content = "a.ns.selectel.ru."
+    # The content value is "<name_server>"
+  }
+}
+```
+
 ### SRV RRSet
 
 ```hcl
@@ -162,7 +179,7 @@ resource "selectel_domains_rrset_v2" "caa_rrset_1" {
 
 * `name` - (Required) RRSet name. Changing this creates a new RRSet. The value must be the same as the zone name. If `type` is `SRV`, the name must also include service and protocol, see the [example usage for SRV RRSet](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/domains_rrset_v2#srv-rrset).
 
-* `type` - (Required) RRSet type. Changing this creates a new RRSet. Available types are `A`, `AAAA`, `TXT`, `CNAME`, `MX`, `SRV`, `SSHFP`, `ALIAS`, `CAA`.
+* `type` - (Required) RRSet type. Changing this creates a new RRSet. Available types are `A`, `AAAA`, `TXT`, `CNAME`, `MX`, `NS`, `SRV`, `SSHFP`, `ALIAS`, `CAA`.
 
 * `ttl` - (Required) RRSet time-to-live in seconds. The available range is from 60 to 604800.
 
