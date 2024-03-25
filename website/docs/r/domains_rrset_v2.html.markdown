@@ -101,7 +101,7 @@ resource "selectel_domains_rrset_v2" "ns_rrset_1" {
   name       = "subdomain.example.com."
   type       = "NS"
   ttl        = 60
-  ptoject_id = selectel_vpc_project_v2.project_1.id
+  project_id = selectel_vpc_project_v2.project_1.id
   records {
     content = "a.ns.selectel.ru."
     # The content value is "<name_server>"
