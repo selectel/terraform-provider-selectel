@@ -8,7 +8,7 @@ description: |-
 
 # Upgrading Terraform Selectel Provider to version 5.0.0
 
-Terraform Selectel Provider 5.0.0 introduces a new approach for working with panel users, service users and EC2(S3)-credentials through the IAM API. 
+Terraform Selectel Provider 5.0.0 introduces a new approach for working with panel users, service users and S3)-credentials through the IAM API. 
 
 This guide can help you to migrate your current service users configurations (made with _selectel_vpc_user_v2_ and _selectel_vpc_role_v2_) to a new resources (_selectel_iam_serviceuser_v1_).
 
