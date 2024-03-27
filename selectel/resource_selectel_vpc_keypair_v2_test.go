@@ -9,13 +9,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/keypairs"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/users"
+	"github.com/selectel/iam-go/service/serviceusers"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAccVPCV2KeypairBasic(t *testing.T) {
 	var (
-		user    users.User
+		user    serviceusers.ServiceUser
 		keypair keypairs.Keypair
 	)
 	keypairName := acctest.RandomWithPrefix("tf-acc")
@@ -31,7 +31,7 @@ func TestAccVPCV2KeypairBasic(t *testing.T) {
 			{
 				Config: testAccVPCV2KeypairBasic(userName, userPassword, keypairName, publicKey),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2UserExists("selectel_vpc_user_v2.user_tf_acc_test_1", &user),
+					testAccCheckIAMV1ServiceUserExists("selectel_iam_serviceuser_v1.user_tf_acc_test_1", &user),
 					testAccCheckVPCV2KeypairExists("selectel_vpc_keypair_v2.keypair_tf_acc_test_1", &keypair),
 					resource.TestCheckResourceAttr("selectel_vpc_keypair_v2.keypair_tf_acc_test_1", "name", keypairName),
 					resource.TestCheckResourceAttr("selectel_vpc_keypair_v2.keypair_tf_acc_test_1", "public_key", publicKey),
@@ -126,16 +126,20 @@ func testAccCheckVPCV2KeypairExists(n string, keypair *keypairs.Keypair) resourc
 
 func testAccVPCV2KeypairBasic(userName, userPassword, keypairName, publicKey string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_user_v2" "user_tf_acc_test_1" {
+resource "selectel_iam_serviceuser_v1" "user_tf_acc_test_1" {
   name        = "%s"
   password    = "%s"
+  role {
+	role_name = "member"
+	scope     = "account"
+  }
 }
 
 resource "selectel_vpc_keypair_v2" "keypair_tf_acc_test_1" {
   name       = "%s"
   public_key = "%s"
   regions    = ["ru-1", "ru-3"]
-  user_id    = "${selectel_vpc_user_v2.user_tf_acc_test_1.id}"
+  user_id    = "${selectel_iam_serviceuser_v1.user_tf_acc_test_1.id}"
 }`, userName, userPassword, keypairName, publicKey)
 }
 

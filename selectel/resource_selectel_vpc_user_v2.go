@@ -2,15 +2,11 @@ package selectel
 
 import (
 	"context"
-	"fmt"
-	"log"
-	"net/http"
 	"unicode"
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/users"
 )
 
 func resourceVPCUserV2() *schema.Resource {
@@ -66,97 +62,18 @@ func resourceVPCUserV2() *schema.Resource {
 	}
 }
 
-func resourceVPCUserV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	selvpcClient, err := config.GetSelVPCClient()
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("can't get selvpc client for user object: %w", err))
-	}
-
-	opts := users.UserOpts{
-		Name:     d.Get("name").(string),
-		Password: d.Get("password").(string),
-	}
-
-	log.Print(msgCreate(objectUser, opts))
-	user, _, err := users.Create(selvpcClient, opts)
-	if err != nil {
-		return diag.FromErr(errCreatingObject(objectUser, err))
-	}
-
-	d.SetId(user.ID)
-
-	return resourceVPCUserV2Read(ctx, d, meta)
+func resourceVPCUserV2Create(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	return diag.FromErr(errResourceDeprecated("selectel_vpc_user_v2"))
 }
 
-func resourceVPCUserV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	selvpcClient, err := config.GetSelVPCClient()
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("can't get selvpc client for user object: %w", err))
-	}
-
-	log.Print(msgGet(objectUser, d.Id()))
-	user, response, err := users.Get(selvpcClient, d.Id())
-	if err != nil {
-		if response != nil {
-			if response.StatusCode == http.StatusNotFound {
-				d.SetId("")
-				return nil
-			}
-		}
-
-		return diag.FromErr(errGettingObject(objectUser, d.Id(), err))
-	}
-
-	d.Set("name", user.Name)
-	d.Set("enabled", user.Enabled)
-
-	return nil
+func resourceVPCUserV2Read(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	return diag.FromErr(errResourceDeprecated("selectel_vpc_user_v2"))
 }
 
-func resourceVPCUserV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	selvpcClient, err := config.GetSelVPCClient()
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("can't get selvpc client for user object: %w", err))
-	}
-
-	enabled := d.Get("enabled").(bool)
-	opts := users.UserOpts{
-		Name:     d.Get("name").(string),
-		Password: d.Get("password").(string),
-		Enabled:  &enabled,
-	}
-
-	log.Print(msgUpdate(objectUser, d.Id(), opts))
-	_, _, err = users.Update(selvpcClient, d.Id(), opts)
-	if err != nil {
-		return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
-	}
-
-	return resourceVPCUserV2Read(ctx, d, meta)
+func resourceVPCUserV2Update(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	return diag.FromErr(errResourceDeprecated("selectel_vpc_user_v2"))
 }
 
-func resourceVPCUserV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*Config)
-	selvpcClient, err := config.GetSelVPCClient()
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("can't get selvpc client for user object: %w", err))
-	}
-
-	log.Print(msgDelete(objectUser, d.Id()))
-	response, err := users.Delete(selvpcClient, d.Id())
-	if err != nil {
-		if response != nil {
-			if response.StatusCode == http.StatusNotFound {
-				d.SetId("")
-				return nil
-			}
-		}
-
-		return diag.FromErr(errDeletingObject(objectUser, d.Id(), err))
-	}
-
-	return nil
+func resourceVPCUserV2Delete(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	return diag.FromErr(errResourceDeprecated("selectel_vpc_user_v2"))
 }

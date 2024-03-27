@@ -7,18 +7,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccVPCV2UserImportBasic(t *testing.T) {
-	resourceName := "selectel_vpc_user_v2.user_tf_acc_test_1"
-	userName := acctest.RandomWithPrefix("tf-acc")
-	userPassword := acctest.RandString(8)
+func TestAccIAMV1ServiceUserImportBasic(t *testing.T) {
+	resourceName := "selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1"
+	serviceUserName := acctest.RandomWithPrefix("tf-acc")
+	serviceUserPassword := "A" + acctest.RandString(8) + "1"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2UserDestroy,
+		CheckDestroy:      testAccCheckIAMV1ServiceUserDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccVPCV2UserBasic(userName, userPassword),
+				Config: testAccIAMV1ServiceUserBasic(serviceUserName, serviceUserPassword),
 			},
 			{
 				ResourceName:            resourceName,
