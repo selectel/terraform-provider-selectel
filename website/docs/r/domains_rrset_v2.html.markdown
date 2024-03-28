@@ -97,7 +97,6 @@ resource "selectel_domains_rrset_v2" "mx_rrset_1" {
 ```hcl
 resource "selectel_domains_rrset_v2" "ns_rrset_1" {
   zone_id    = selectel_domains_zone_v2.zone_1.id
-  # NS RRSet supporting only for subdomains
   name       = "subdomain.example.com."
   type       = "NS"
   ttl        = 60
@@ -177,7 +176,7 @@ resource "selectel_domains_rrset_v2" "caa_rrset_1" {
 
 * `zone_id` - (Required) Unique identifier of the zone. Changing this creates a new RRSet. Retrieved from the [selectel_domains_zone_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/domains_zone_v2) resource.
 
-* `name` - (Required) RRSet name. Changing this creates a new RRSet. The value must be the same as the zone name. If `type` is `SRV`, the name must also include service and protocol, see the [example usage for SRV RRSet](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/domains_rrset_v2#srv-rrset).
+* `name` - (Required) RRSet name. Changing this creates a new RRSet. The value must be the same as the zone name. If `type` is `NS`, you can create an RRSet only for a subdomain, so the value must be a subzone name, the parent zone of which is delegated to DNS hosting (actual). If `type` is `SRV`, the name must also include service and protocol, see the [example usage for SRV RRSet](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/domains_rrset_v2#srv-rrset).
 
 * `type` - (Required) RRSet type. Changing this creates a new RRSet. Available types are `A`, `AAAA`, `TXT`, `CNAME`, `MX`, `NS`, `SRV`, `SSHFP`, `ALIAS`, `CAA`.
 
