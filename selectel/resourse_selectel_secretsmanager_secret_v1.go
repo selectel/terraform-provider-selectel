@@ -172,7 +172,7 @@ func resourceSecretsManagerSecretV1Update(ctx context.Context, d *schema.Resourc
 }
 
 // resourceSecretsManagerSecretV1ImportState —  helper used in Importer: &schema.ResourceImporter
-// to avoid difficulties occured with required SEL_PROJECT_ID env in 
+// to avoid difficulties occurred with required SEL_PROJECT_ID env in
 // resourceSecretsManagerSecretV1Read when uising schema.ImportStatePassthroughContext.
 func resourceSecretsManagerSecretV1ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
@@ -189,7 +189,7 @@ func resourceSecretsManagerSecretV1ImportState(ctx context.Context, d *schema.Re
 
 	log.Print(msgImport(objectSecret, key))
 	resourceSecretsManagerSecretV1Read(ctx, d, meta)
-	
+
 	return []*schema.ResourceData{d}, nil
 }
 

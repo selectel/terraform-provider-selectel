@@ -10,7 +10,7 @@ import (
 
 func getSecretsManagerClient(d *schema.ResourceData, meta interface{}) (*secretsmanager.Client, diag.Diagnostics) {
 	config := meta.(*Config)
-	
+
 	if config.AuthRegion == "" {
 		config.AuthRegion = "ru-1"
 	}
@@ -38,7 +38,6 @@ func getSecretsManagerClient(d *schema.ResourceData, meta interface{}) (*secrets
 		secretsmanager.WithCustomURLSecrets(endpointSM.URL),
 		secretsmanager.WithCustomURLCertificates(endpointCM.URL),
 	)
-
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't init secretsmanager client: %w", err))
 	}
@@ -62,7 +61,6 @@ func getSecretsManagerClientForAccImportTests(meta interface{}) (*secretsmanager
 		// secretsmanager.WithCustomURLSecrets(endpoint),
 		// secretsmanager.WithCustomURLCertificates(endpoint),
 	)
-
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't init secretsmanager client: %w", err))
 	}
@@ -75,6 +73,7 @@ func convertToStringSlice(sl []interface{}) []string {
 	for i := range sl {
 		result[i] = sl[i].(string)
 	}
+
 	return result
 }
 

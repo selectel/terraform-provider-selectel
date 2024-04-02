@@ -179,6 +179,7 @@ func resourceSecretsManagerCertificateV1Read(ctx context.Context, d *schema.Reso
 		if errors.Is(errGet, secretsmanagererrors.ErrNotFoundStatusText) {
 			d.SetId("")
 		}
+
 		return diag.FromErr(errGettingObject(objectCertificate, d.Id(), errGet))
 	}
 
@@ -250,7 +251,7 @@ func resourceSecretsManagerCertificateV1Delete(ctx context.Context, d *schema.Re
 }
 
 // resourceSecretsManagerCertificateV1ImportState —  helper used in Importer: &schema.ResourceImporter
-// to avoid difficulties occured with required SEL_PROJECT_ID env in
+// to avoid difficulties occurred with required SEL_PROJECT_ID env in
 // resourceSecretsManagerCertificateV1Read when uising schema.ImportStatePassthroughContext.
 func resourceSecretsManagerCertificateV1ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
