@@ -10,10 +10,24 @@ import (
 
 func getSecretsManagerClient(d *schema.ResourceData, meta interface{}) (*secretsmanager.Client, diag.Diagnostics) {
 	config := meta.(*Config)
-	// region := d.Get("region").(string)
+	
+	if config.AuthRegion == "" {
+		config.AuthRegion = "ru-1"
+	}
+
 	selvpcClient, err := config.GetSelVPCClientWithProjectScope(d.Get("project_id").(string))
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't get project-scope selvpc client for secretsmanager: %w", err))
+	}
+
+	endpointSM, err := selvpcClient.Catalog.GetEndpoint(SecretsManager, config.AuthRegion)
+	if err != nil {
+		return nil, diag.FromErr(fmt.Errorf("can't get %s endpoint to init secretsmanager client: %w, got %s", SecretsManager, err, endpointSM.URL))
+	}
+
+	endpointCM, err := selvpcClient.Catalog.GetEndpoint(CertificateManager, config.AuthRegion)
+	if err != nil {
+		return nil, diag.FromErr(fmt.Errorf("can't get %s endpoint to init secretsmanager client: %w, got %s", CertificateManager, err, endpointCM.URL))
 	}
 
 	cl, err := secretsmanager.New(
@@ -21,8 +35,8 @@ func getSecretsManagerClient(d *schema.ResourceData, meta interface{}) (*secrets
 			&secretsmanager.AuthOpts{KeystoneToken: selvpcClient.GetXAuthToken()},
 		),
 
-		// secretsmanager.WithCustomURLSecrets(endpoint),
-		// secretsmanager.WithCustomURLCertificates(endpoint),
+		secretsmanager.WithCustomURLSecrets(endpointSM.URL),
+		secretsmanager.WithCustomURLCertificates(endpointCM.URL),
 	)
 
 	if err != nil {
