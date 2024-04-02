@@ -31,6 +31,7 @@ func TestAccIAMV1S3CredentialsBasic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("selectel_iam_s3_credentials_v1.s3_creds_tf_acc_test_1", "user_id"),
 					resource.TestCheckResourceAttrSet("selectel_iam_s3_credentials_v1.s3_creds_tf_acc_test_1", "project_id"),
 					resource.TestCheckResourceAttrSet("selectel_iam_s3_credentials_v1.s3_creds_tf_acc_test_1", "secret_key"),
+					resource.TestCheckResourceAttrSet("selectel_iam_s3_credentials_v1.s3_creds_tf_acc_test_1", "access_key"),
 					resource.TestCheckResourceAttr("selectel_iam_s3_credentials_v1.s3_creds_tf_acc_test_1", "name", s3CredsName),
 				),
 			},
@@ -73,7 +74,7 @@ func testAccCheckIAMV1S3CredentialsExists(n string, s3Credential *s3credentials.
 
 		iamClient, diagErr := getIAMClient(testAccProvider.Meta())
 		if diagErr != nil {
-			return fmt.Errorf("can't get  iamclient for test s3 credentials object")
+			return fmt.Errorf("can't get iamclient for test s3 credentials object")
 		}
 
 		credentialsList, _ := iamClient.S3Credentials.List(context.Background(), rs.Primary.Attributes["user_id"])

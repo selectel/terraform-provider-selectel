@@ -40,6 +40,12 @@ func resourceIAMS3CredentialsV1() *schema.Resource {
 				ForceNew:    true,
 				Description: "Project ID to associate S3 Credentials with.",
 			},
+			"access_key": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Sensitive:   true,
+				Description: "Access Key of the S3 Credentials.",
+			},
 			"secret_key": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -69,6 +75,7 @@ func resourceIAMS3CredentialsV1Create(ctx context.Context, d *schema.ResourceDat
 
 	d.SetId(credentials.AccessKey)
 	d.Set("secret_key", credentials.SecretKey)
+	d.Set("access_key", credentials.AccessKey)
 	d.Set("name", credentials.Name)
 	d.Set("project_id", credentials.ProjectID)
 
@@ -104,6 +111,7 @@ func resourceIAMS3CredentialsV1Read(ctx context.Context, d *schema.ResourceData,
 	if _, ok := d.GetOk("secret_key"); !ok {
 		d.Set("secret_key", importIAMUndefined)
 	}
+	d.Set("access_key", credential.AccessKey)
 
 	return nil
 }
