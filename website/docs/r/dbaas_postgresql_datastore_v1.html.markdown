@@ -91,6 +91,11 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
   * `target_time` - (Optional) Time within seven previous days when you have the datastore state to restore.
 
 * `config` - (Optional) Configuration parameters for the datastore. You can retrieve information about available configuration parameters with the [selectel_dbaas_configuration_parameter_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_configuration_parameter_v1) data source.
+* `floating_ips` - (Optional) Assigns floating IP addresses to the nodes in the datastore. The network configuration must meet the requirements. Learn more about [floating IP addresses and the required network configuration](https://docs.selectel.ru/cloud/managed-databases/postgresql/public-ip/).
+
+  * master - (Required) Number of floating IPs associated with the master. Available values are `0` and `1`.
+  
+  * replica - (Required) Number of floating IPs associated with the replicas. The minimum value is `0`. The maximum value must be 1 less that the value of the `node_count` argument. 
 
 ## Attributes Reference
 
