@@ -26,12 +26,12 @@ func resourceSecretsManagerCertificateV1() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Description: "name — name of the certificate",
+				Description: "name of the certificate",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"certificates": {
-				Description: "certificates — ca_chain list of public certs for certificate",
+				Description: "ca_chain list of public certs for certificate",
 				Type:        schema.TypeList,
 				Elem: &schema.Schema{
 					Description: "certificate — that must begin with -----BEGIN CERTIFICATE----- and end with -----END CERTIFICATE-----",
@@ -40,19 +40,19 @@ func resourceSecretsManagerCertificateV1() *schema.Resource {
 				Required: true,
 			},
 			"private_key": {
-				Description: "private_key — that should start with -----BEGIN PRIVATE KEY----- and end with -----END PRIVATE KEY-----",
+				Description: "that should start with -----BEGIN PRIVATE KEY----- and end with -----END PRIVATE KEY-----",
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
 			},
 			"project_id": {
-				Description: "project_id — id of a project where secret is used",
+				Description: "id of a project where secret is used",
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 			},
 			"dns_names": {
-				Description: "dns_names — computed list of Subject Alternative Names",
+				Description: "computed list of Subject Alternative Names",
 				Type:        schema.TypeList,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -60,12 +60,12 @@ func resourceSecretsManagerCertificateV1() *schema.Resource {
 				Computed: true,
 			},
 			"id": {
-				Description: "id — computed id of a certificate",
+				Description: "computed id of a certificate",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"issued_by": {
-				Description: "issued_by — information that is incorporated into certificate",
+				Description: "information that is incorporated into certificate",
 				Type:        schema.TypeSet,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -99,33 +99,33 @@ func resourceSecretsManagerCertificateV1() *schema.Resource {
 				Computed: true,
 			},
 			"serial": {
-				Description: "serial — number written in the certificate that was chosen by the CA which issued the certificate",
+				Description: "number written in the certificate that was chosen by the CA which issued the certificate",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"validity": {
-				Description: "validity — validity of a certificate in terms of notBefore and notAfter timestamps.",
+				Description: "validity of a certificate in terms of notBefore and notAfter timestamps.",
 				Type:        schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"basic_constraints": {
 							Type:     schema.TypeBool,
-							Required: true,
+							Computed: true,
 						},
 						"not_after": {
 							Type:     schema.TypeString,
-							Required: true,
+							Computed: true,
 						},
 						"not_before": {
 							Type:     schema.TypeString,
-							Required: true,
+							Computed: true,
 						},
 					},
 				},
 				Computed: true,
 			},
 			"version": {
-				Description: "version — of the certificate",
+				Description: "of the certificate",
 				Type:        schema.TypeInt,
 				Computed:    true,
 			},

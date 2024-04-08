@@ -28,37 +28,37 @@ func resourceSecretsManagerSecretV1() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"key": {
-				Description: "key — unique key,name of the secret",
+				Description: "unique key,name of the secret",
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 			},
 			"description": {
-				Description: "description — optional description of the secret",
+				Description: "optional description of the secret",
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
 			},
 			"value": {
-				Description: "value — secret value, e.g. password, API key, certificate key, or other",
+				Description: "secret value, e.g. password, API key, certificate key, or other",
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
 				ForceNew:    false, // otherwise, will replace existing secret if you import it
 			},
 			"project_id": {
-				Description: "project_id — id of a project where secret is used",
+				Description: "id of a project where secret is used",
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 			},
 			"name": {
-				Description: "name — computed name of the secret same as key",
+				Description: "computed name of the secret same as key",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"created_at": {
-				Description: "created_at — time when the secret was created",
+				Description: "time when the secret was created",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
