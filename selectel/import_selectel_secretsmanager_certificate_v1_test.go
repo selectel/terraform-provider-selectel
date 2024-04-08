@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/selectel/secretsmanager-go/secretsmanagererrors"
 )
 
 func TestAccSecretsManagerCertificateV1ImportBasic(t *testing.T) {
@@ -115,7 +116,7 @@ func testAccCheckSecretsManagerV1CertificateDestroy(s *terraform.State) error {
 		}
 
 		_, err := smImportClient.Certificates.Get(context.Background(), rs.Primary.ID)
-		if err == nil {
+		if !errors.Is(err, secretsmanagererrors.ErrNotFoundStatusText) {
 			return errors.New("certificate still exists")
 		}
 	}
