@@ -46,6 +46,11 @@ const (
 	objectCertificate             = "certificate"
 )
 
+const (
+	// Pool where the endpoint for Keystone API and Resell API is located.
+	DefaultAuthRegion = "ru-1"
+)
+
 // This is a global MutexKV for use within this plugin.
 var selMutexKV = mutexkv.NewMutexKV()
 
@@ -74,7 +79,7 @@ func Provider() *schema.Provider {
 			"auth_region": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("OS_REGION_NAME", nil),
+				DefaultFunc: schema.EnvDefaultFunc("OS_REGION_NAME", DefaultAuthRegion),
 				Description: "Region for Keystone and Resell API URLs, 'ru-1' is used by default.",
 			},
 			"domain_name": {

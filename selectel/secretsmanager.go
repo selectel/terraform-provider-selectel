@@ -5,16 +5,11 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient"
 	"github.com/selectel/secretsmanager-go"
 )
 
 func getSecretsManagerClient(d *schema.ResourceData, meta interface{}) (*secretsmanager.Client, diag.Diagnostics) {
 	config := meta.(*Config)
-
-	if config.AuthRegion == "" {
-		config.AuthRegion = selvpcclient.DefaultAuthRegion
-	}
 
 	selvpcClient, err := config.GetSelVPCClientWithProjectScope(d.Get("project_id").(string))
 	if err != nil {
