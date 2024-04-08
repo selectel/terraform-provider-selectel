@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/selectel/go-selvpcclient/v3/selvpcclient"
 	"github.com/selectel/secretsmanager-go"
 )
 
@@ -12,14 +13,14 @@ func getSecretsManagerClient(d *schema.ResourceData, meta interface{}) (*secrets
 	config := meta.(*Config)
 
 	if config.AuthRegion == "" {
-		config.AuthRegion = "ru-1"
+		config.AuthRegion = selvpcclient.DefaultAuthRegion
 	}
 
 	selvpcClient, err := config.GetSelVPCClientWithProjectScope(d.Get("project_id").(string))
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't get project-scope selvpc client for secretsmanager: %w", err))
 	}
-
+	
 	endpointSM, err := selvpcClient.Catalog.GetEndpoint(SecretsManager, config.AuthRegion)
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't get %s endpoint to init secretsmanager client: %w, got %s", SecretsManager, err, endpointSM.URL))
