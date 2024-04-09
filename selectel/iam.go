@@ -107,24 +107,29 @@ func convertIAMSetToRoles(rolesSet *schema.Set) ([]roles.Role, error) {
 
 	output := make([]roles.Role, len(rolesList))
 	var roleNameRaw, scopeRaw, projectIDRaw interface{}
-	var ok bool
 
 	for i := range rolesList {
 		var roleName, scope, projectID string
 		resourceRoleMap := rolesList[i].(map[string]interface{})
 
-		if roleNameRaw, ok = resourceRoleMap["role_name"]; !ok {
+		if roleNameRaw = resourceRoleMap["role_name"]; roleNameRaw == "" {
 			return nil, errors.New("role_name value isn't provided")
 		}
-		if scopeRaw, ok = resourceRoleMap["scope"]; !ok {
+		if scopeRaw = resourceRoleMap["scope"]; scopeRaw == "" {
 			return nil, errors.New("scope value isn't provided")
-		}
-		if projectIDRaw, ok = resourceRoleMap["project_id"]; ok {
-			projectID = projectIDRaw.(string)
 		}
 
 		roleName = roleNameRaw.(string)
 		scope = scopeRaw.(string)
+
+		if projectIDRaw = resourceRoleMap["project_id"]; projectIDRaw == "" && scope == string(roles.Project) {
+			return nil, errors.New("project_id must be set for project scope")
+		} else if projectIDRaw != "" {
+			if scope != string(roles.Project) {
+				return nil, errors.New("project_id can be set only for project scope")
+			}
+			projectID = projectIDRaw.(string)
+		}
 
 		output[i] = roles.Role{
 			RoleName:  roles.Name(roleName),

@@ -29,43 +29,36 @@ func resourceIAMServiceUserV1() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				ForceNew:    false,
 				Description: "Indicates whether the Service User is enabled. True by default.",
 			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    false,
 				Description: "Name of the Service User.",
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    false,
 				Sensitive:   true,
 				Description: "Password of the Service User.",
 			},
 			"role": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				ForceNew:    false,
 				Description: "Role block of the Service User.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"role_name": {
 							Type:     schema.TypeString,
 							Required: true,
-							ForceNew: false,
 						},
 						"scope": {
 							Type:     schema.TypeString,
 							Required: true,
-							ForceNew: false,
 						},
 						"project_id": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ForceNew: false,
 						},
 					},
 				},
@@ -151,12 +144,12 @@ func resourceIAMServiceUserV1Update(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if d.HasChange("role") {
-		oldState, newState := d.GetChange("role")
-		newRoles, err := convertIAMSetToRoles(newState.(*schema.Set))
+		currentUser, err := iamClient.ServiceUsers.Get(ctx, d.Id())
 		if err != nil {
-			return diag.FromErr(err)
+			return diag.FromErr(errGettingObject(objectServiceUser, d.Id(), err))
 		}
-		oldRoles, err := convertIAMSetToRoles(oldState.(*schema.Set))
+		oldRoles := currentUser.Roles
+		newRoles, err := convertIAMSetToRoles(d.Get("role").(*schema.Set))
 		if err != nil {
 			return diag.FromErr(err)
 		}

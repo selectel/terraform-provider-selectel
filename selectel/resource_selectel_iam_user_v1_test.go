@@ -27,7 +27,6 @@ func TestAccIAMV1UserBasic(t *testing.T) {
 					testAccCheckIAMV1UserExists("selectel_iam_user_v1.user_tf_acc_test_1", &user),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "id"),
 					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "email", userEmail),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "auth_type", "local"),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.role_name"),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope"),
 				),
@@ -53,7 +52,6 @@ func TestAccIAMV1UserUpdateRoles(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "email", userEmail),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.role_name"),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "auth_type", "local"),
 				),
 			},
 			{
@@ -66,7 +64,6 @@ func TestAccIAMV1UserUpdateRoles(t *testing.T) {
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope"),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.1.role_name"),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.1.scope"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "auth_type", "local"),
 				),
 			},
 			{
@@ -79,7 +76,6 @@ func TestAccIAMV1UserUpdateRoles(t *testing.T) {
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope"),
 					resource.TestCheckNoResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.1.role_name"),
 					resource.TestCheckNoResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.1.scope"),
-					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "auth_type", "local"),
 				),
 			},
 		},
@@ -136,7 +132,6 @@ func testAccCheckIAMV1UserExists(n string, user *users.User) resource.TestCheckF
 func testAccIAMV1UserBasic(userEmail string) string {
 	return fmt.Sprintf(`
 resource "selectel_iam_user_v1" "user_tf_acc_test_1" {
-	auth_type = "local"
 	email = "%s"
 	role {
 	  	role_name = "reader"
@@ -148,7 +143,6 @@ resource "selectel_iam_user_v1" "user_tf_acc_test_1" {
 func testAccIAMV1UserAssignRole(userEmail string) string {
 	return fmt.Sprintf(`
 	resource "selectel_iam_user_v1" "user_tf_acc_test_1" {
-		auth_type = "local"
 		email = "%s"
 		role {
 			role_name = "reader"

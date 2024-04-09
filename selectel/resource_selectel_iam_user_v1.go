@@ -25,13 +25,6 @@ func resourceIAMUserV1() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
-			"auth_type": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     users.Local,
-				ForceNew:    true,
-				Description: "Authentication type of the User. Can be 'local' or 'federated'.",
-			},
 			"email": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -43,7 +36,7 @@ func resourceIAMUserV1() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 				MaxItems:    1,
-				Description: "Federation data of the User. Must be set only if 'auth_type' is 'federated'.",
+				Description: "Federation data of the User.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
@@ -62,24 +55,20 @@ func resourceIAMUserV1() *schema.Resource {
 			"role": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				ForceNew:    false,
 				Description: "Role block of the User.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"role_name": {
 							Type:     schema.TypeString,
 							Required: true,
-							ForceNew: false,
 						},
 						"scope": {
 							Type:     schema.TypeString,
 							Required: true,
-							ForceNew: false,
 						},
 						"project_id": {
 							Type:     schema.TypeString,
 							Optional: true,
-							ForceNew: false,
 						},
 					},
 				},
@@ -108,15 +97,12 @@ func resourceIAMUserV1Create(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
-	authType := d.Get("auth_type").(string)
-	if authType != string(users.Federated) && federation != nil {
-		return diag.Errorf("federation can be set only if auth_type is 'federated'")
-	}
-	if authType == string(users.Federated) && federation == nil {
-		return diag.Errorf("federation must be set if auth_type is 'federated'")
+	authType := string(users.Local)
+	if federation != nil {
+		authType = string(users.Federated)
 	}
 
-	log.Print(msgGet(objectUser, d.Id()))
+	log.Print(msgCreate(objectUser, d.Id()))
 	user, err := iamClient.Users.Create(ctx, users.CreateRequest{
 		AuthType:   users.AuthType(authType),
 		Email:      d.Get("email").(string),
@@ -148,7 +134,6 @@ func resourceIAMUserV1Read(ctx context.Context, d *schema.ResourceData, meta int
 	}
 
 	d.Set("keystone_id", user.KeystoneID)
-	d.Set("auth_type", user.AuthType)
 	if _, ok := d.GetOk("email"); !ok {
 		d.Set("email", importIAMUndefined)
 	}
@@ -167,12 +152,12 @@ func resourceIAMUserV1Update(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	if d.HasChange("role") {
-		oldState, newState := d.GetChange("role")
-		newRoles, err := convertIAMSetToRoles(newState.(*schema.Set))
+		currentUser, err := iamClient.Users.Get(ctx, d.Id())
 		if err != nil {
-			return diag.FromErr(err)
+			return diag.FromErr(errGettingObject(objectUser, d.Id(), err))
 		}
-		oldRoles, err := convertIAMSetToRoles(oldState.(*schema.Set))
+		oldRoles := currentUser.Roles
+		newRoles, err := convertIAMSetToRoles(d.Get("role").(*schema.Set))
 		if err != nil {
 			return diag.FromErr(err)
 		}
