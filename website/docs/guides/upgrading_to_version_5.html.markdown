@@ -3,150 +3,90 @@ layout: "selectel"
 page_title: "Upgrading Terraform Selectel Provider to version 5.0.0"
 sidebar_current: "docs-selectel-guide-iam-migrating-guide"
 description: |-
-  How to migrate from vpc_user_v2/vpc_roles_v2 to iam_serviceuser_v1.
+ How to upgrade Terraform Selectel Provider to version 5.0.0.
 ---
 
 # Upgrading Terraform Selectel Provider to version 5.0.0
 
-Terraform Selectel Provider 5.0.0 introduces a new approach for working with panel users, service users and S3)-credentials through the IAM API. 
+In version 5.0.0, Terraform Selectel Provider introduces new resources for managing:
 
-This guide can help you to migrate your current service users configurations (made with _selectel_vpc_user_v2_ and _selectel_vpc_role_v2_) to a new resources (_selectel_iam_serviceuser_v1_).
+- service users — [selectel_iam_serviceuser_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/iam_serviceuser_v1);
+- control panel users (local and federated) — [selectel_iam_user_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/iam_user_v1).
 
-~> **Note:** Make sure you have a backup of your current _.tfstate_ file before going through the steps below.
+The selectel_iam_serviceuser_v1 resource replaces selectel_vpc_user_v2 and selectel_vpc_role_v2 resources. Update your files according to the guide.
 
-Let’s take this example as a configuration to be migrated:
+Before upgrading to version 5.0.0, [upgrade to the most recent 4.X version of the provider](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_4) and ensure that your environment successfully runs `terraform plan`. You should not see changes you do not expect or deprecation notices.
 
-```hcl
-resource "selectel_vpc_user_v2" "my_service_user" {
-  name     = "MyServiceUser"
-  password = "Qazwsxedc123!"
-  enabled  = true
-}
-
-resource "selectel_vpc_role_v2" "role" {
-  project_id = "1a2b3c4d..."
-  user_id    = selectel_vpc_user_v2.my_service_user.id
-}
-```
-
-To migrate from a deprecated resources _selectel_vpc_user_v2_ and _selectel_vpc_roles_v2_ to a new _selectel_iam_serviceuser_v1_ follow these steps:
-
-1. Obtain your _my_service_user_ id. 
-    
-    We'll need to provide our service user id further so Terraform knows which service user should be migrated. This id can be obtained from:
-        
-    * _.tfstate_: find _selectel_vpc_user_v2_._my_service_user_ in your _.tfstate_ and get the _id_ field value;
-        
-    * _my.selectel_ panel: go to the account menu ⟶     **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the id.
-
-2. Remove the existing resources from the _.tfstate_ file
-    
-    Run the following command to remove information about _selectel_vpc_user_v2_ from _.tfstate_:
-
-    ```bash
-    terraform state rm selectel_vpc_user_v2.my_service_user
- 
-    Removed selectel_vpc_user_v2.my_service_user
-    Successfully removed 1 resource instance(s).
-    ```
-    Also remove information about _selectel_vpc_role_v2_ from _.tfstate_:
-
-    ```bash
-    terraform state rm selectel_vpc_role_v2.role
- 
-    Removed selectel_vpc_role_v2.role
-    Successfully removed 1 resource instance(s).
-    ```
-
-    All necessary roles that the service user has will be later put in _.tfstate_ during the import.
-
-3. Update the configuration files (_.tf_ files)
-    
-    Change the name of your resource from _selectel_vpc_user_v2_ to _selectel_iam_serviceuser_v1_. 
-
-    At the same time, you need to add manualy the roles that your service user has to the _selectel_iam_serviceuser_v1_.
-    
-    The _selectel_vpc_role_v2_ resource can be removed.
-
-    For example, if the _selectel_vpc_user_v2_ has only _Project Administrator_ role (i. e. _selectel_vpc_role_v2_), then the resulting resource should look like this:
+1. In the Terraform configuration, update the version constraints:
 
     ```hcl
-    resource "selectel_iam_serviceuser_v1" "my_service_user" {
-        name     = "username"
-        password = "Qazwsxedc123!"
-        enabled  = true
-        role {
-            role_name  = "member"
-            scope      = "project"
-            project_id = "1a2b3c4d..."
-        }
+    terraform {
+    required_providers {
+      selectel  = {
+        source  = "selectel/selectel"
+        version = "~> 5.0"
+      }
+      openstack = {
+        source  = "terraform-provider-openstack/openstack"
+        version = "1.54.0"
+      }
+    }
     }
     ```
 
-    You can add multiple roles. For example, if the _selectel_vpc_user_v2_ is _Project Administrator_ in two projects, then the resulting resource should look like this:
+2. To download the new version, initialize the Terraform configuration.
+
+    ```bash
+    terraform init -upgrade
+    ```
+
+3. Backup the `.tfstate` file.
+4. Remove the selectel_vpc_user_v2 resource from the `.tfstate` file:
+
+    ```bash
+    terraform state rm $(terraform state list | grep selectel_vpc_user_v2)
+    ```
+
+5. Remove the selectel_vpc_role_v2 resource from the `.tfstate` file:
+
+    ```bash
+    terraform state rm $(terraform state list | grep selectel_vpc_role_v2)
+    ```
+
+6. In the configuration files (`.tf` files), rename the selectel_vpc_user_v2 resource to selectel_iam_serviceuser_v1 and add the role of the service user to the selectel_iam_serviceuser_v1 resource. You can add multiple roles — each role in a separate block.
 
     ```hcl
-    resource "selectel_iam_serviceuser_v1" "my_service_user" {
-        name     = "username"
-        password = "Qazwsxedc123!"
-        enabled  = true
-        role {
-            role_name  = "member"
-            scope      = "project"
-            project_id = "1a2b3c4d..."
-        }
-        role {
-            role_name  = "member"
-            scope      = "project"
-            project_id = "5e6f7g8h..."
-        }
+    resource "selectel_iam_serviceuser_v1" "serviceuser_1" {
+      name     = "username"
+      password = "password"
+      role {
+        role_name = "member"
+        scope     = "account"
+      }
+      role {
+        role_name = "iam_admin"
+        scope     = "account"
+      }
     }
     ```
-4. Import the service user into a _.tfstate_ file
-    
-    Now, provide the service user id you retrieved on the step 1: 
+
+  For more information about available roles, see the [selectel_iam_serviceuser_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/iam_serviceuser_v1) resource.
+
+7. Remove the selectel_vpc_role_v2 resource from the configuration files.
+8. [Import the service user into the `.tfstate` file](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/iam_serviceuser_v1#import).
+
+  After the import, the `.tfstate` file contains the data from the selectel_iam_serviceuser_v1 resource. The value in the `password` field is `UNDEFINED_WHILE_IMPORTING`. Terraform adds the password when you apply the changes.
+9. To ensure that Terraform applies the required changes, preview the changes:
 
     ```bash
-    terraform import selectel_iam_serviceuser_v1.my_service_user <YOUR_SERVICE_USER_ID>
-    ```
+    terraform plan
+    ``` 
 
-    The output should be similar to the following:
-    
-    ```bash
-    selectel_iam_serviceuser_v1.my_service_user: Importing from ID "<YOUR_SERVICE_USER_ID>"...
-    selectel_iam_serviceuser_v1.my_service_user: Import prepared!
-    Prepared selectel_iam_serviceuser_v1 for import selectel_iam_serviceuser_v1.my_service_user: Refreshing state... [id=<YOUR_SERVICE_USER_ID>]
- 
-    Import successful!
- 
-    The resources that were imported are shown above. These resources are now in your Terraform state and will henceforth be managed by Terraform.
-    ```
-
-    After this, your _.tfstate_ will contain the _selectel_iam_serviceuser_v1_ resource information, but the **password field will be set to "UNDEFINED_WHILE_IMPORTING"**, because password is not stored on the server, so Terraform can't retrieve it from _my.selectel_. To fix this, just call `terraform apply`:
+10. If Terraform shows that Terraform will destroy a role you need, check if the `role`  blocks in the selectel_iam_serviceuser_v1 resource contain all the required roles.
+11. Repeat steps 6-11 for all service users.
+12. If you refer to the selectel_vpc_user_v2 resource in other resources, replace it with the selectel_iam_serviceuser_v1 resource.
+13. Apply the changes:
 
     ```bash
     terraform apply
-
-    ---
-
-    Terraform will perform the following actions:
-
-    # selectel_iam_serviceuser_v1.user will be updated in-place
-    ~ resource "selectel_iam_serviceuser_v1" "my_service_user" {
-        id       = "<YOUR_SERVICE_USER_ID>"
-        name     = "MyServiceUser"
-      ~ password = (sensitive value)
-        # (1 unchanged attribute hidden)
-
-        # (1 unchanged block hidden)
-    }
-
-    Plan: 0 to add, 1 to change, 0 to destroy.
     ```
-
-    ~> **Note:** Make sure your output shows only one change (_password_). If there are any roles to be destroyed, it means, that you didn't add all necessary _role_ blocks for the roles stored in _.tfstate_ file.
-
-    After this, the correct password will be set in _.tfstate_ for this service user and the migration from _selectel_vpc_user_v2_ and _selectel_vpc_role_v2_ to _selectel_iam_serviceuser_v1_ can be considered complete.
-
-    Also, in case your _selectel_vpc_user_v2_ was used in other resources, such as _selectel_vpc_keypair_v2_ for example, don't forget to change it's name to _selectel_iam_serviceuser_v1_.
-
