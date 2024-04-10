@@ -42,6 +42,8 @@ export SEL_PROJECT_ID=<selectel_project_id>
 terraform import selectel_secretsmanager_secret_v1.secret_1 <selectel_project_id>/<key>
 ```
 
+where:
+
 * `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
 * `<key>` — Secret name. To get the secret name, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager/), go to **Cloud Platform** ⟶ **Secrets Manager** ⟶ the **Secrets** tab ⟶ copy the name of the required secret.
