@@ -3,12 +3,10 @@ package selectel
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/secretsmanager-go/secretsmanagererrors"
 	"github.com/selectel/secretsmanager-go/service/certs"
 )
 
@@ -174,12 +172,6 @@ func resourceSecretsManagerCertificateV1Read(ctx context.Context, d *schema.Reso
 	log.Print(msgGet(objectCertificate, d.Id()))
 	cert, errGet := cl.Certificates.Get(ctx, d.Get("id").(string))
 	if errGet != nil {
-		// When certificate isn't found Backend -> SDK return the following error:
-		// — secretsmanager-go: error — NOT_FOUND:.
-		if errors.Is(errGet, secretsmanagererrors.ErrNotFoundStatusText) {
-			d.SetId("")
-		}
-
 		return diag.FromErr(errGettingObject(objectCertificate, d.Id(), errGet))
 	}
 
@@ -256,7 +248,7 @@ func resourceSecretsManagerCertificateV1Delete(ctx context.Context, d *schema.Re
 func resourceSecretsManagerCertificateV1ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
-		return nil, fmt.Errorf("SEL_PROJECT_ID must be set for the resource import")
+		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")
 	}
 
 	d.Set("project_id", config.ProjectID)

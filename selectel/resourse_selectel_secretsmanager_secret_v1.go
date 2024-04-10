@@ -9,7 +9,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/secretsmanager-go/secretsmanagererrors"
 	"github.com/selectel/secretsmanager-go/service/secrets"
 )
 
@@ -110,11 +109,6 @@ func resourceSecretsManagerSecretV1Read(ctx context.Context, d *schema.ResourceD
 
 	secret, errGet := cl.Secrets.Get(ctx, key)
 	if errGet != nil {
-		// When secret isn't found Backend -> SDK return the following error:
-		// — secretsmanager-go: error — INCORRECT_REQUEST: not a secret.
-		if errors.Is(errGet, secretsmanagererrors.ErrBadRequestStatusText) {
-			d.SetId("")
-		}
 		return diag.FromErr(errGettingObject(objectSecret, d.Id(), errGet))
 	}
 
