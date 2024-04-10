@@ -9,6 +9,11 @@ import (
 )
 
 const (
+	// Pool where the endpoint for Keystone API and Resell API is located.
+	DefaultAuthRegion = "ru-1"
+)
+
+const (
 	objectACL                     = "acl"
 	objectFloatingIP              = "floating IP"
 	objectKeypair                 = "keypair"
@@ -74,7 +79,7 @@ func Provider() *schema.Provider {
 			"auth_region": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("OS_REGION_NAME", nil),
+				DefaultFunc: schema.EnvDefaultFunc("OS_REGION_NAME", DefaultAuthRegion),
 				Description: "Region for Keystone and Resell API URLs, 'ru-1' is used by default.",
 			},
 			"domain_name": {

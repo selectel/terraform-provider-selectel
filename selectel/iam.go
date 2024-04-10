@@ -25,10 +25,6 @@ func getIAMClient(meta interface{}) (*iam.Client, diag.Diagnostics) {
 		return nil, diag.FromErr(fmt.Errorf("can't get selvpc client for iam: %w", err))
 	}
 
-	if config.AuthRegion == "" {
-		config.AuthRegion = "ru-1"
-	}
-
 	apiURL, err := getEndpointForIAM(selvpcClient, config.AuthRegion)
 	if err != nil {
 		return nil, diag.FromErr(err)
