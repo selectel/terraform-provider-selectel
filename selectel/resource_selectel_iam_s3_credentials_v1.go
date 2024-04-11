@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -19,7 +20,7 @@ func resourceIAMS3CredentialsV1() *schema.Resource {
 		ReadContext:   resourceIAMS3CredentialsV1Read,
 		DeleteContext: resourceIAMS3CredentialsV1Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceIAMS3CredentialsV1ImportState,
 		},
 		Schema: map[string]*schema.Schema{
 			"user_id": {
@@ -129,4 +130,15 @@ func resourceIAMS3CredentialsV1Delete(ctx context.Context, d *schema.ResourceDat
 	}
 
 	return nil
+}
+
+func resourceIAMS3CredentialsV1ImportState(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+	var v string
+	if v = os.Getenv("OS_S3_CREDENTIALS_USER_ID"); v == "" {
+		return nil, fmt.Errorf("no OS_S3_CREDENTIALS_USER_ID environment variable was found, provide one to use import")
+	}
+
+	d.Set("user_id", v)
+
+	return []*schema.ResourceData{d}, nil
 }
