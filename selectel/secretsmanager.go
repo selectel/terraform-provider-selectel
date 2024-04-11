@@ -15,7 +15,7 @@ func getSecretsManagerClient(d *schema.ResourceData, meta interface{}) (*secrets
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't get project-scope selvpc client for secretsmanager: %w", err))
 	}
-	
+
 	endpointSM, err := selvpcClient.Catalog.GetEndpoint(SecretsManager, config.AuthRegion)
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't get %s endpoint to init secretsmanager client: %w, got %s", SecretsManager, err, endpointSM.URL))
@@ -75,5 +75,6 @@ func convertToInterfaceSlice(sl []string) []interface{} {
 	for i := range sl {
 		result[i] = sl[i]
 	}
+
 	return result
 }
