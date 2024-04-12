@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_domains\_zone_v2
 
-Provides full information about a zone in Selectel DNS Hosting (actual). If you want manage a zone use [resource selectel_domains_zone_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/domains_zone_v2). For more information about zones, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/zones/).
+Provides information about a zone in Selectel DNS Hosting (actual). For more information about zones, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/zones/).
 
 ## Example Usage
 

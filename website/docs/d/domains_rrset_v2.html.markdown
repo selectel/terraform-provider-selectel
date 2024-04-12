@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_domains\_rrset_v2
 
-Provides full information about an RRSet in DNS Hosting (actual). If you want manage an RRSet use [resource selectel_domains_rrset_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/domains_rrset_v2). For more information about RRSets, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/records/).
+Provides information about an RRSet in DNS Hosting (actual). For more information about RRSets, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/records/).
 
 ## Example Usage
 
