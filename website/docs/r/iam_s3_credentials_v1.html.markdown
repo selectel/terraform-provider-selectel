@@ -35,3 +35,27 @@ resource "selectel_iam_s3_credentials_v1" "s3_credential_1" {
 ~> **Note:** The _access key_ of S3 credentials is stored as _id_.
 
 * `secret_key` - Secret Access Key.
+
+## Import
+
+You can import an S3 credentials:
+
+```shell
+export OS_DOMAIN_NAME=<account_id>
+export OS_USERNAME=<username>
+export OS_PASSWORD=<password>
+export OS_S3_CREDENTIALS_USER_ID=<user_id>
+terraform import selectel_iam_s3_credentials_v1.s3_credentials_1 <access_key>
+```
+
+where:
+
+* `<account_id>` - Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/control-panel-actions/account/registration/).
+
+* `<username>` - Name of the service user. To get the name, in the top right corner of the [Control panel](https://my.selectel.ru/profile/users_management/users?type=service), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the user. Learn more about [service users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
+
+* `<password>` - Password of the service user.
+
+* `<user_id>` - Unique identifier of the service user who owns S3 credentials, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the ID, in the top right corner of the [Control panel](https://my.selectel.ru/), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the ID under the user name.
+
+* `<access_key>` - Access Key of S3 Credentials. To get the Access Key, in the top right corner of the [Control panel](https://my.selectel.ru/), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ click on the service user who owns credentials ⟶ get the Access Key of the S3 Credentials under **S3 Credentials** section.

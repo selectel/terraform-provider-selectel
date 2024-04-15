@@ -103,7 +103,6 @@ func resourceIAMS3CredentialsV1Read(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 	if credential.AccessKey == "" {
-		d.SetId("")
 		return diag.FromErr(errGettingObject(objectS3Credentials, d.Id(), fmt.Errorf("S3 Credentials with ID %s not found", d.Id())))
 	}
 
