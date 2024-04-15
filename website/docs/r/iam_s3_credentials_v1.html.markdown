@@ -3,38 +3,36 @@ layout: "selectel"
 page_title: "Selectel: selectel_iam_s3_credentials_v1"
 sidebar_current: "docs-selectel-resource-iam-s3-credentials-v1"
 description: |-
-  Creates and manages a S3 credentials for Selectel service user using public API v1.
+  Creates and manages S3 credentials for a service user using public API v1.
 ---
 
 # selectel\_iam\_s3_credentials\_v1
 
-Creates and manages a S3 credentials for Selectel Service User using public API v1. For more information about S3 Credentials, see the [official Selectel documentation](https://docs.selectel.ru/cloud/object-storage/manage/manage-access/#issue-s3-key).
+Creates and manages S3 credentials for a service user using public API v1. S3 credentials are required to access Selectel Object Storage via S3 API. S3 credentials include Access Key ID and Secret Access Key. For more information about S3 Credentials, see the official Selectel documentation.
 
-~> **Note:** The _secret key_ of created S3 credentials is stored as raw data in a plain-text file. Learn more about [sensitive data in state](https://developer.hashicorp.com/terraform/language/state/sensitive-data).
+~> **Note:** In S3 credentials, the Secret Access Key is stored as raw data in a plain-text file. Learn more about sensitive data in state.
 
 ## Example Usage
 
 ```hcl
-resource "selectel_iam_s3_credentials_v1" "s3_credential_1" {
+resource "selectel_iam_s3_credentials_v1" "s3_credentials_1" {
   user_id     = selectel_iam_serviceuser_v1.serviceuser_1.id
   project_id  = selectel_vpc_project_v2.project_1.id
-  name        = "MyCredential"
+  name        = "S3Credentials"
 }
 ```
 
 ## Argument Reference
 
-* `user_id` - (Required) A service user id to create S3 credentials for. Retrieved from the [selectel_iam_serviceuser_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/iam_serviceuser_v1) resource. Changing this creates a new credentials.
-
-* `project_id` - (Required) A Project ID to create S3 credentials for. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Changing this creates a new credentials.
-
-* `name` - (Required) Name of the S3 credentials. Changing this creates a new credentials.
+* `user_id` - (Required) Unique identifier of the service user. Changing this creates new credentials. Retrieved from the selectel_iam_serviceuser_v1 resource. Learn more about service users.
+* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates new credentials. Retrieved from the selectel_vpc_project_v2 resource. Learn more about Cloud Platform projects.
+* `name` - (Required) Name of the S3 credentials. Changing this creates new credentials.
 
 ## Attributes Reference
 
-~> **Note:** The _access key_ of S3 credentials is stored as _id_.
-
+* `access_key` - Access Key ID.
 * `secret_key` - Secret Access Key.
+
 
 ## Import
 
