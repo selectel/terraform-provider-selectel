@@ -47,19 +47,6 @@ resource "selectel_iam_serviceuser_v1" "serviceuser_1" {
 
 * `enabled` - (Optional) Specifies if you can create a Cloud Platform Keystone token for the service user. Boolean flag, the default value is `true`. Learn more about Cloud Platform Keystone tokens.
 
-| Role name in the role model | Scope   | Role name              |
-|------------------------|---------|------------------------|
-| Account administrator | account | member                 |
-| Billing administrator | account | billing                |
-| User administrator    | account | iam_admin              |
-| Project administrator | project | member                 |
-| Account viewer        | account | reader                 |
-| Project viewer        | project | reader                 |
-| Object storage admin  | project | object_storage:admin   |
-| Object storage user   | project | object_storage_user    |
-
-
-
 ## Import
 
 You can import a service user:
