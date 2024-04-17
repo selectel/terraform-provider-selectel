@@ -15,6 +15,8 @@ When you create users, they do not have any roles. To grant a role, use the [sel
 ~> **Note:** The user password is stored as raw data in a plain-text file. Learn more about [sensitive data in
 state](https://developer.hashicorp.com/terraform/language/state/sensitive-data).
 
+> **WARNING**: This resource has been removed, use [selectel_iam_serviceuser_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/iam_serviceuser_v1) instead.
+
 ## Example Usage
 
 ```hcl

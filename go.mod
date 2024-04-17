@@ -10,6 +10,7 @@ require (
 	github.com/selectel/dbaas-go v0.12.1
 	github.com/selectel/domains-go v1.0.2
 	github.com/selectel/go-selvpcclient/v3 v3.1.1
+	github.com/selectel/iam-go v0.2.0
 	github.com/selectel/mks-go v0.14.0
 	github.com/selectel/secretsmanager-go v0.2.1
 	github.com/stretchr/testify v1.8.4
@@ -24,7 +25,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/gophercloud/gophercloud v1.5.0 // indirect
+	github.com/gophercloud/gophercloud v1.10.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-checkpoint v0.5.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect

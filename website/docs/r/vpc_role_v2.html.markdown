@@ -12,6 +12,8 @@ Creates and manages a Project Administrator role for service users using public 
 
 The role is assigned to the service user information about whom is retrieved from the [selectel_vpc_user_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_user_v2) resource.
 
+> **WARNING**: This resource has been removed, use `roles` block of the [selectel_iam_serviceuser_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/iam_serviceuser_v1) instead.
+
 ## Example Usage
 
 ```hcl
