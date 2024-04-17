@@ -42,6 +42,17 @@ resource "selectel_iam_user_v1" "user_1" {
 
 * `project_id` - (Optional) Unique identifier of the associated Cloud Platform project. Changing this creates a new service user.  If `scope` is `project`, the `project_id` argument is required. Retrieved from the selectel_vpc_project_v2 resource. Learn more about Cloud Platform projects.
 
+### Roles
+
+To assign roles, use the following values for `scope` and `role_name`:
+
+* Account administrator - `scope` is `account`, `role_name` is `member`;
+* Billing administrator - `scope` is `account`, `role_name` is `billing`;
+* User administrator - `scope` is `account`, `role_name` is `iam_admin`;
+* Project administrator - `scope` is `project`, `role_name` is `member`;
+* Account viewer - `scope` is `account`, `role_name` is `reader`;
+* Project viewer - `scope` is `project`, `role_name` is `reader`;
+
 ## Attributes Reference
 
 * `keystone_id` - Unique Keystone identifier of the user.
