@@ -36,7 +36,7 @@ resource "selectel_iam_s3_credentials_v1" "s3_credentials_1" {
 
 ## Import
 
-You can import an S3 credentials:
+You can import S3 credentials:
 
 ```shell
 export OS_DOMAIN_NAME=<account_id>
@@ -56,4 +56,5 @@ where:
 
 * `<user_id>` - Unique identifier of the service user who owns S3 credentials, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the ID, in the top right corner of the [Control panel](https://my.selectel.ru/), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the ID under the user name.
 
-* `<access_key>` - Access Key of S3 Credentials. To get the Access Key, in the top right corner of the [Control panel](https://my.selectel.ru/), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ click on the service user who owns credentials ⟶ get the Access Key of the S3 Credentials under **S3 Credentials** section.
+* `<access_key>` - Access Key ID from S3 сredentials. To get the Access Key, in the top right corner of the [Control panel](https://my.selectel.ru/), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ click on the service user who owns credentials ⟶ copy the Access Key in the **S3 keys** section.
+
