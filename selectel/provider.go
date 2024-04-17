@@ -53,11 +53,6 @@ const (
 	objectCertificate             = "certificate"
 )
 
-const (
-	// Pool where the endpoint for Keystone API and Resell API is located.
-	DefaultAuthRegion = "ru-1"
-)
-
 // This is a global MutexKV for use within this plugin.
 var selMutexKV = mutexkv.NewMutexKV()
 
