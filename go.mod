@@ -12,6 +12,7 @@ require (
 	github.com/selectel/go-selvpcclient/v3 v3.1.1
 	github.com/selectel/iam-go v0.2.0
 	github.com/selectel/mks-go v0.14.0
+	github.com/selectel/secretsmanager-go v0.2.1
 	github.com/stretchr/testify v1.8.4
 )
 

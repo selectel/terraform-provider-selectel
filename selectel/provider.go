@@ -49,6 +49,13 @@ const (
 	objectLogicalReplicationSlot  = "logical-replication-slot"
 	objectRegistry                = "registry"
 	objectRegistryToken           = "registry token"
+	objectSecret                  = "secret"
+	objectCertificate             = "certificate"
+)
+
+const (
+	// Pool where the endpoint for Keystone API and Resell API is located.
+	DefaultAuthRegion = "ru-1"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -159,6 +166,8 @@ func Provider() *schema.Provider {
 			"selectel_dbaas_kafka_topic_v1":                         resourceDBaaSKafkaTopicV1(),
 			"selectel_craas_registry_v1":                            resourceCRaaSRegistryV1(),
 			"selectel_craas_token_v1":                               resourceCRaaSTokenV1(),
+			"selectel_secretsmanager_secret_v1":                     resourceSecretsManagerSecretV1(),
+			"selectel_secretsmanager_certificate_v1":                resourceSecretsManagerCertificateV1(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}
