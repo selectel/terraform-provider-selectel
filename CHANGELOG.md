@@ -1,3 +1,21 @@
+## 5.0.0 (April 17, 2024)
+
+IMPROVEMENTS:
+* Bump google.golang.org/protobuf from 1.30.0 to 1.33.0 ([#259](https://github.com/selectel/terraform-provider-selectel/pull/259))
+
+
+FEATURES:
+* Added selectel_iam_user_v1 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
+* Added selectel_iam_serviceuser_v1 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
+* Added selectel_iam_s3_credentials_v1 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
+* Added selectel_secretsmanager_secret_v1 resource ([#264](https://github.com/selectel/terraform-provider-selectel/pull/264))
+* Added selectel_secretsmanager_certificate_v1 resource ([#264](https://github.com/selectel/terraform-provider-selectel/pull/264))
+
+DEPRECATED:
+
+* Deprecated selectel_vpc_user_v2 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
+* Deprecated selectel_vpc_role_v2 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
+
 ## 4.2.0 (April 17, 2024)
 
 IMPROVEMENTS:
