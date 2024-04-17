@@ -1,3 +1,13 @@
+## 4.2.0 (April 17, 2024)
+
+IMPROVEMENTS:
+
+* Added NS RRSet example in docs ([#262](https://github.com/selectel/terraform-provider-selectel/pull/262))
+
+FEATURES:
+* Added datasources rrset and zone for domains_v2 with docs ([#266](https://github.com/selectel/terraform-provider-selectel/pull/266))
+* Add 'floating_ips' to datastore ([#253](https://github.com/selectel/terraform-provider-selectel/pull/253))
+
 ## 4.1.1 (March 25, 2024)
 
 IMPROVEMENTS:
