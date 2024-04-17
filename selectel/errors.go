@@ -103,3 +103,7 @@ func errParseDatastoreV1Resize(err error) error {
 func errParseDatastoreV1Restore(err error) error {
 	return fmt.Errorf("got error parsing restore opts: %s", err)
 }
+
+func errParseDatastoreV1FloatingIPs(err error) error {
+	return fmt.Errorf("got error parsing floating IPs opts: %s", err)
+}

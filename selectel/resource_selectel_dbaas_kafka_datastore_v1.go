@@ -124,6 +124,22 @@ func resourceDBaaSKafkaDatastoreV1() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"instances": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"role": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"floating_ip": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -214,6 +230,11 @@ func resourceDBaaSKafkaDatastoreV1Read(ctx context.Context, d *schema.ResourceDa
 
 	if err := d.Set("connections", datastore.Connection); err != nil {
 		log.Print(errSettingComplexAttr("connections", err))
+	}
+
+	instances := resourceDBaaSDatastoreV1InstancesToList(datastore.Instances)
+	if err := d.Set("instances", instances); err != nil {
+		log.Print(errSettingComplexAttr("instances", err))
 	}
 
 	configMap := make(map[string]string)
