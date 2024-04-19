@@ -1,3 +1,44 @@
+## 5.0.1 (April 19, 2024)
+
+IMPROVEMENTS:
+* Update docs for IAM resources ([#259](https://github.com/selectel/terraform-provider-selectel/pull/259))
+
+## 5.0.0 (April 17, 2024)
+
+IMPROVEMENTS:
+* Bump google.golang.org/protobuf from 1.30.0 to 1.33.0 ([#259](https://github.com/selectel/terraform-provider-selectel/pull/259))
+
+
+FEATURES:
+* Added selectel_iam_user_v1 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
+* Added selectel_iam_serviceuser_v1 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
+* Added selectel_iam_s3_credentials_v1 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
+* Added selectel_secretsmanager_secret_v1 resource ([#264](https://github.com/selectel/terraform-provider-selectel/pull/264))
+* Added selectel_secretsmanager_certificate_v1 resource ([#264](https://github.com/selectel/terraform-provider-selectel/pull/264))
+
+DEPRECATED:
+* Deprecated selectel_vpc_user_v2 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
+* Deprecated selectel_vpc_role_v2 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
+
+## 4.2.0 (April 17, 2024)
+
+IMPROVEMENTS:
+
+* Added NS RRSet example in docs ([#262](https://github.com/selectel/terraform-provider-selectel/pull/262))
+
+FEATURES:
+* Added datasources rrset and zone for domains_v2 with docs ([#266](https://github.com/selectel/terraform-provider-selectel/pull/266))
+* Add 'floating_ips' to datastore ([#253](https://github.com/selectel/terraform-provider-selectel/pull/253))
+
+## 4.1.1 (March 25, 2024)
+
+IMPROVEMENTS:
+
+* Fixed DBaaS documentation ([#252](https://github.com/selectel/terraform-provider-selectel/pull/252))
+* Added `user_data` argument to `selectel_mks_nodegroup_v1` resource ([#255](https://github.com/selectel/terraform-provider-selectel/pull/255))
+* Updated Go version to `1.21` ([#257](https://github.com/selectel/terraform-provider-selectel/pull/257))
+* Updated `golangci-lint` in CI to `v1.56.2` ([#257](https://github.com/selectel/terraform-provider-selectel/pull/257))
+
 ## 4.1.0 (February 26, 2024)
 FEATURES:
 * Added entities for work with DNS v2 API ([#249](https://github.com/selectel/terraform-provider-selectel/pull/249))

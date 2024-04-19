@@ -54,7 +54,7 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 				ForceNew: false,
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+				DiffSuppressFunc: func(_, _, _ string, d *schema.ResourceData) bool {
 					return d.Id() != "" && d.Get("enable_autoscale").(bool)
 				},
 			},
@@ -152,6 +152,12 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				Computed:     true,
 				RequiredWith: []string{"enable_autoscale", "autoscale_min_nodes"},
 			},
+			"user_data": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringLenBetween(0, 65535),
+			},
 			"nodegroup_type": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -230,6 +236,7 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 		KeypairName:      d.Get("keypair_name").(string),
 		AffinityPolicy:   d.Get("affinity_policy").(string),
 		AvailabilityZone: d.Get("availability_zone").(string),
+		UserData:         d.Get("user_data").(string),
 	}
 
 	projectQuotas, _, err := quotas.GetProjectQuotas(selvpcClient, projectID, region)
@@ -336,6 +343,7 @@ func resourceMKSNodegroupV1Read(ctx context.Context, d *schema.ResourceData, met
 	d.Set("autoscale_min_nodes", mksNodegroup.AutoscaleMinNodes)
 	d.Set("autoscale_max_nodes", mksNodegroup.AutoscaleMaxNodes)
 	d.Set("nodegroup_type", mksNodegroup.NodegroupType)
+	d.Set("user_data", mksNodegroup.UserData)
 
 	if err := d.Set("labels", mksNodegroup.Labels); err != nil {
 		log.Print(errSettingComplexAttr("labels", err))
