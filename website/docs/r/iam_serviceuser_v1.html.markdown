@@ -43,7 +43,7 @@ resource "selectel_iam_serviceuser_v1" "serviceuser_1" {
 
     * `scope` - (Required) Scope of the role. Available scopes are `account` and `project`. If `scope` is `project`, the `project_id` argument is required.
 
-* `project_id` - (Optional) Unique identifier of the associated Cloud Platform project. Changing this creates a new service user. If `scope` is `project`, the `project_id` argument is required. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-databases/about/projects/).
+    * `project_id` - (Optional) Unique identifier of the associated Cloud Platform project. Changing this creates a new service user. If `scope` is `project`, the `project_id` argument is required. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-databases/about/projects/).
 
 * `enabled` - (Optional) Specifies if you can create a Cloud Platform Keystone token for the service user. Boolean flag, the default value is `true`. Learn more about [Cloud Platform Keystone tokens](https://developers.selectel.ru/docs/control-panel/authorization/).
 
