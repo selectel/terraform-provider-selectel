@@ -8,11 +8,11 @@ description: |-
 
 # selectel\_vpc\_role_v2
 
+> **WARNING**: This resource is deprecated. Since version 5.0.0, replace the resource with the roles block in the [selectel_iam_serviceuser_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/iam_serviceuser_v1) resource. For more information about upgrading to version 5.0.0, see the [upgrading guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_5).
+
 Creates and manages a Project Administrator role for service users using public API v2. Selectel products support Identity and Access Management (IAM). For more information about roles, see the [official Selectel documentation](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
 
 The role is assigned to the service user information about whom is retrieved from the [selectel_vpc_user_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_user_v2) resource.
-
-> **WARNING**: This resource has been removed, use `roles` block of the [selectel_iam_serviceuser_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/iam_serviceuser_v1) instead.
 
 ## Example Usage
 
