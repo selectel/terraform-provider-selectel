@@ -25,7 +25,9 @@ resource "selectel_iam_s3_credentials_v1" "s3_credentials_1" {
 ## Argument Reference
 
 * `user_id` - (Required) Unique identifier of the service user. Changing this creates new credentials. Retrieved from the [selectel_iam_serviceuser_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/iam_serviceuser_v1) resource. Learn more about [Service Users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
+
 * `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates new credentials. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-databases/about/projects/).
+
 * `name` - (Required) Name of the S3 credentials. Changing this creates new credentials.
 
 ## Attributes Reference
