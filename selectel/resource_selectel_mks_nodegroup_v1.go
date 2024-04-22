@@ -187,10 +187,10 @@ func resourceMKSNodegroupV1() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			// OpenStack cannot resize an instance, if its original flavor is deleted, that is why
 			// we need to force recreation, if old flavor name or ID is reported as an empty string
-			customdiff.ForceNewIfChange("flavor_id", func(ctx context.Context, old, new, meta interface{}) bool {
+			customdiff.ForceNewIfChange("flavor_id", func(_ context.Context, old, new, meta interface{}) bool {
 				return old.(string) == ""
 			}),
-			customdiff.ForceNewIfChange("local_volume", func(ctx context.Context, old, new, meta interface{}) bool {
+			customdiff.ForceNewIfChange("local_volume", func(_ context.Context, old, new, meta interface{}) bool {
 				return old.(bool) != new.(bool)
 			}),
 		),
