@@ -84,7 +84,7 @@ func resourceMKSNodegroupV1() *schema.Resource {
 			"volume_gb": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				ForceNew: false,
+				ForceNew: true,
 				Computed: true,
 			},
 			"volume_type": {
