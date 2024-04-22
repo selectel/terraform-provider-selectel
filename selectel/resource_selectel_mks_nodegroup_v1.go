@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"log"
 	"net/http"
 	"time"
@@ -83,7 +84,8 @@ func resourceMKSNodegroupV1() *schema.Resource {
 			"volume_gb": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				ForceNew: true,
+				ForceNew: false,
+				Computed: true,
 			},
 			"volume_type": {
 				Type:          schema.TypeString,
@@ -94,8 +96,7 @@ func resourceMKSNodegroupV1() *schema.Resource {
 			"local_volume": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				ForceNew: true,
-				Default:  false,
+				Computed: true,
 			},
 			"flavor_id": {
 				Type:     schema.TypeString,
@@ -183,6 +184,16 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				},
 			},
 		},
+		CustomizeDiff: customdiff.All(
+			// OpenStack cannot resize an instance, if its original flavor is deleted, that is why
+			// we need to force recreation, if old flavor name or ID is reported as an empty string
+			customdiff.ForceNewIfChange("flavor_id", func(ctx context.Context, old, new, meta interface{}) bool {
+				return old.(string) == ""
+			}),
+			customdiff.ForceNewIfChange("local_volume", func(ctx context.Context, old, new, meta interface{}) bool {
+				return old.(bool) != new.(bool)
+			}),
+		),
 	}
 }
 
@@ -244,8 +255,11 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(errGettingObject(objectProjectQuotas, projectID, err))
 	}
 
-	if err := checkQuotasForNodegroup(projectQuotas, createOpts); err != nil {
-		return diag.FromErr(errCreatingObject(objectNodegroup, err))
+	// Skip quota validation cause we can not open flavor and check resource claim.
+	if createOpts.FlavorID == "" {
+		if err := checkQuotasForNodegroup(projectQuotas, createOpts); err != nil {
+			return diag.FromErr(errCreatingObject(objectNodegroup, err))
+		}
 	}
 
 	// Check nodegroup autoscaling options.
