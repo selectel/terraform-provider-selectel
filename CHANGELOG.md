@@ -1,3 +1,8 @@
+## 5.0.2 (April 23, 2024)
+
+IMPROVEMENTS:
+* Fixed bug that prevent using flavors for `selectel_mks_nodegroup creation` ([#273](https://github.com/selectel/terraform-provider-selectel/issues/273))
+
 ## 5.0.1 (April 19, 2024)
 
 IMPROVEMENTS:
