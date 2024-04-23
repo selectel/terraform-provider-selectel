@@ -1,3 +1,8 @@
+## 5.0.1 (April 19, 2024)
+
+IMPROVEMENTS:
+* Update docs for IAM resources ([#259](https://github.com/selectel/terraform-provider-selectel/pull/259))
+
 ## 5.0.0 (April 17, 2024)
 
 IMPROVEMENTS:
@@ -12,7 +17,6 @@ FEATURES:
 * Added selectel_secretsmanager_certificate_v1 resource ([#264](https://github.com/selectel/terraform-provider-selectel/pull/264))
 
 DEPRECATED:
-
 * Deprecated selectel_vpc_user_v2 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
 * Deprecated selectel_vpc_role_v2 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
 
