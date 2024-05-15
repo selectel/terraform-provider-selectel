@@ -85,6 +85,13 @@ func dataSourceDBaaSConfigurationParameterV1() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
+						"invalid_values": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
 						"is_restart_required": {
 							Type:     schema.TypeBool,
 							Computed: true,
@@ -188,6 +195,15 @@ func filterConfigurationParametersByName(configurationParameters []dbaas.Configu
 	return filteredConfigurationParameters
 }
 
+func convertListParametersTypes(parameters []interface{}) []string {
+	parameterList := make([]string, len(parameters))
+	for i, value := range parameters {
+		parameterList[i] = convertFieldToStringByType(value)
+	}
+
+	return parameterList
+}
+
 func flattenDBaaSConfigurationParameters(configurationParameters []dbaas.ConfigurationParameter) []interface{} {
 	configurationParametersList := make([]interface{}, len(configurationParameters))
 	for i, param := range configurationParameters {
@@ -200,11 +216,8 @@ func flattenDBaaSConfigurationParameters(configurationParameters []dbaas.Configu
 		configurationParametersMap["min"] = convertFieldToStringByType(param.Min)
 		configurationParametersMap["max"] = convertFieldToStringByType(param.Max)
 		configurationParametersMap["default_value"] = convertFieldToStringByType(param.DefaultValue)
-		choicesList := make([]string, len(param.Choices))
-		for i, choice := range param.Choices {
-			choicesList[i] = convertFieldToStringByType(choice)
-		}
-		configurationParametersMap["choices"] = choicesList
+		configurationParametersMap["choices"] = convertListParametersTypes(param.Choices)
+		configurationParametersMap["invalid_values"] = convertListParametersTypes(param.InvalidValues)
 		configurationParametersMap["is_restart_required"] = param.IsRestartRequired
 		configurationParametersMap["is_changeable"] = param.IsChangeable
 

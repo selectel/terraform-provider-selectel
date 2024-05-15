@@ -33,6 +33,8 @@ data "selectel_dbaas_flavor_v1" "flavor" {
 
   * `disk` - (Optional) Volume size in GB.
 
+  * `fl_size` - (Optional) Fl size of the flavor.
+
   * `datastore_type_id` - (Optional)  Unique identifier of the datastore type.
 
 ## Attributes Reference
@@ -50,5 +52,7 @@ data "selectel_dbaas_flavor_v1" "flavor" {
   * `ram` - Amount of RAM in MB.
 
   * `disk` - Volume size in GB.
+
+  * `fl_size` - Fl size of the flavor.
 
   * `datastore_type_ids` - List of datastore types that support this flavor.

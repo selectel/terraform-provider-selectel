@@ -53,6 +53,9 @@ data "selectel_dbaas_configuration_parameter_v1" "configuration_parameter_1" {
 
   * `choices` - Available choices for the configuration parameter. Some parameters have list of available options.
 
+  * `invalid_values` - Invalid values for the configuration parameter.
+  Some parameters have list of values within a range that are not available for the parameter.
+
   * `is_restart_required` - Shows if the database needs a restart to apply changes.
 
   * `is_changeable` - Shows if the parameter can be changed.
