@@ -68,7 +68,7 @@ func mksClusterV1StateRefreshFunc(
 	}
 }
 
-func mksClusterV1KubeVersionDiffSuppressFunc(k, old, new string, d *schema.ResourceData) bool {
+func mksClusterV1KubeVersionDiffSuppressFunc(_, old, new string, d *schema.ResourceData) bool {
 	if d.Id() == "" {
 		return false
 	}

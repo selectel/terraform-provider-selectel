@@ -9,6 +9,12 @@ import (
 )
 
 const (
+	// Pool where the endpoint for Keystone API and Resell API is located.
+	DefaultAuthRegion = "ru-1"
+)
+
+const (
+	objectACL                     = "acl"
 	objectFloatingIP              = "floating IP"
 	objectKeypair                 = "keypair"
 	objectLicense                 = "license"
@@ -17,13 +23,18 @@ const (
 	objectRole                    = "role"
 	objectSubnet                  = "subnet"
 	objectToken                   = "token"
+	objectTopic                   = "topic"
 	objectUser                    = "user"
+	objectServiceUser             = "service user"
+	objectS3Credentials           = "s3 credentials"
 	objectCluster                 = "cluster"
 	objectKubeConfig              = "kubeconfig"
 	objectKubeVersions            = "kube-versions"
 	objectNodegroup               = "nodegroup"
 	objectDomain                  = "domain"
 	objectRecord                  = "record"
+	objectZone                    = "zone"
+	objectRRSet                   = "rrset"
 	objectDatastore               = "datastore"
 	objectDatabase                = "database"
 	objectGrant                   = "grant"
@@ -38,6 +49,8 @@ const (
 	objectLogicalReplicationSlot  = "logical-replication-slot"
 	objectRegistry                = "registry"
 	objectRegistryToken           = "registry token"
+	objectSecret                  = "secret"
+	objectCertificate             = "certificate"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -68,7 +81,7 @@ func Provider() *schema.Provider {
 			"auth_region": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("OS_REGION_NAME", nil),
+				DefaultFunc: schema.EnvDefaultFunc("OS_REGION_NAME", DefaultAuthRegion),
 				Description: "Region for Keystone and Resell API URLs, 'ru-1' is used by default.",
 			},
 			"domain_name": {
@@ -98,6 +111,8 @@ func Provider() *schema.Provider {
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"selectel_domains_domain_v1":                dataSourceDomainsDomainV1(),
+			"selectel_domains_zone_v2":                  dataSourceDomainsZoneV2(),
+			"selectel_domains_rrset_v2":                 dataSourceDomainsRRSetV2(),
 			"selectel_dbaas_datastore_type_v1":          dataSourceDBaaSDatastoreTypeV1(),
 			"selectel_dbaas_available_extension_v1":     dataSourceDBaaSAvailableExtensionV1(),
 			"selectel_dbaas_flavor_v1":                  dataSourceDBaaSFlavorV1(),
@@ -113,16 +128,21 @@ func Provider() *schema.Provider {
 			"selectel_vpc_keypair_v2":                               resourceVPCKeypairV2(),
 			"selectel_vpc_license_v2":                               resourceVPCLicenseV2(),
 			"selectel_vpc_project_v2":                               resourceVPCProjectV2(),
-			"selectel_vpc_role_v2":                                  resourceVPCRoleV2(),
+			"selectel_vpc_role_v2":                                  resourceVPCRoleV2(), // DEPRECATED
 			"selectel_vpc_subnet_v2":                                resourceVPCSubnetV2(),
 			"selectel_vpc_token_v2":                                 resourceVPCTokenV2(), // DEPRECATED
-			"selectel_vpc_user_v2":                                  resourceVPCUserV2(),
+			"selectel_vpc_user_v2":                                  resourceVPCUserV2(),  // DEPRECATED
+			"selectel_iam_serviceuser_v1":                           resourceIAMServiceUserV1(),
+			"selectel_iam_user_v1":                                  resourceIAMUserV1(),
+			"selectel_iam_s3_credentials_v1":                        resourceIAMS3CredentialsV1(),
 			"selectel_vpc_vrrp_subnet_v2":                           resourceVPCVRRPSubnetV2(),        // DEPRECATED
 			"selectel_vpc_crossregion_subnet_v2":                    resourceVPCCrossRegionSubnetV2(), // DEPRECATED
 			"selectel_mks_cluster_v1":                               resourceMKSClusterV1(),
 			"selectel_mks_nodegroup_v1":                             resourceMKSNodegroupV1(),
 			"selectel_domains_domain_v1":                            resourceDomainsDomainV1(),
 			"selectel_domains_record_v1":                            resourceDomainsRecordV1(),
+			"selectel_domains_zone_v2":                              resourceDomainsZoneV2(),
+			"selectel_domains_rrset_v2":                             resourceDomainsRRSetV2(),
 			"selectel_dbaas_datastore_v1":                           resourceDBaaSDatastoreV1(), // DEPRECATED
 			"selectel_dbaas_postgresql_datastore_v1":                resourceDBaaSPostgreSQLDatastoreV1(),
 			"selectel_dbaas_mysql_datastore_v1":                     resourceDBaaSMySQLDatastoreV1(),
@@ -136,8 +156,13 @@ func Provider() *schema.Provider {
 			"selectel_dbaas_postgresql_extension_v1":                resourceDBaaSPostgreSQLExtensionV1(),
 			"selectel_dbaas_prometheus_metric_token_v1":             resourceDBaaSPrometheusMetricTokenV1(),
 			"selectel_dbaas_postgresql_logical_replication_slot_v1": resourceDBaaSPostgreSQLLogicalReplicationSlotV1(),
+			"selectel_dbaas_kafka_acl_v1":                           resourceDBaaSKafkaACLV1(),
+			"selectel_dbaas_kafka_datastore_v1":                     resourceDBaaSKafkaDatastoreV1(),
+			"selectel_dbaas_kafka_topic_v1":                         resourceDBaaSKafkaTopicV1(),
 			"selectel_craas_registry_v1":                            resourceCRaaSRegistryV1(),
 			"selectel_craas_token_v1":                               resourceCRaaSTokenV1(),
+			"selectel_secretsmanager_secret_v1":                     resourceSecretsManagerSecretV1(),
+			"selectel_secretsmanager_certificate_v1":                resourceSecretsManagerCertificateV1(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}

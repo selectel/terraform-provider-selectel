@@ -35,8 +35,8 @@ func TestAccMKSAvailableFeatureGatesV1Basic(t *testing.T) {
 				Config: testKubeOptionsV1BasicConfig(projectName, dataSourceFeatureGates, kubeVersion),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					resource.TestCheckResourceAttr("data."+dataSourceFeatureGates+".dt", "feature_gates.0.kube_version", kubeVersionMinor),
-					testFeatureGatesIsNotEmpty("data."+dataSourceFeatureGates+".dt"),
+					resource.TestCheckResourceAttr(getDataSourceName(dataSourceFeatureGates), "feature_gates.0.kube_version", kubeVersionMinor),
+					testFeatureGatesIsNotEmpty(getDataSourceName(dataSourceFeatureGates)),
 				),
 			},
 		},
@@ -57,7 +57,7 @@ func TestAccMKSAvailableFeatureGatesV1NoFilter(t *testing.T) {
 				Config: testKubeOptionsV1ConfigNoFilter(projectName, dataSourceFeatureGates),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testFeatureGatesNoFilter("data."+dataSourceFeatureGates+".dt"),
+					testFeatureGatesNoFilter(getDataSourceName(dataSourceFeatureGates)),
 				),
 			},
 		},
@@ -83,8 +83,8 @@ func TestAccMKSAvailableAdmissionControllersV1Basic(t *testing.T) {
 				Config: testKubeOptionsV1BasicConfig(projectName, dataSourceAdmissionControllers, kubeVersion),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					resource.TestCheckResourceAttr("data."+dataSourceAdmissionControllers+".dt", "admission_controllers.0.kube_version", kubeVersionMinor),
-					testAdmissionControllersIsNotEmpty("data."+dataSourceAdmissionControllers+".dt"),
+					resource.TestCheckResourceAttr(getDataSourceName(dataSourceAdmissionControllers), "admission_controllers.0.kube_version", kubeVersionMinor),
+					testAdmissionControllersIsNotEmpty(getDataSourceName(dataSourceAdmissionControllers)),
 				),
 			},
 		},
@@ -105,7 +105,7 @@ func TestAccMKSAvailableAdmissionControllersV1NoFilter(t *testing.T) {
 				Config: testKubeOptionsV1ConfigNoFilter(projectName, dataSourceAdmissionControllers),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
-					testAdmissionControllersNoFilter("data."+dataSourceAdmissionControllers+".dt"),
+					testAdmissionControllersNoFilter(getDataSourceName(dataSourceAdmissionControllers)),
 				),
 			},
 		},
@@ -231,4 +231,8 @@ data "%s" "dt" {
   region     = "ru-3"
 }
 `, projectName, dataSource)
+}
+
+func getDataSourceName(dataSource string) string {
+	return fmt.Sprintf("data.%s.dt", dataSource)
 }

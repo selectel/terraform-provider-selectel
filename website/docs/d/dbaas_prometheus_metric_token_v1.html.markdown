@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_dbaas\_prometheus_metric_token_v1
 
-Provides a list of tokens for Prometheus available in Managed Databases. For more information about tokens for Prometheus, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/monitoring/#экспортировать-метрики-в-формате-prometheus), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/monitoring-1c/#экспортировать-метрики-в-формате-prometheus), [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/monitoring/#экспортировать-метрики-в-формате-prometheus), [MySQL semi-sync](https://docs.selectel.ru/cloud/managed-databases/mysql-semi-sync/monitoring/#экспортировать-метрики-в-формате-prometheus), [MySQL sync](https://docs.selectel.ru/cloud/managed-databases/mysql-sync/monitoring/#экспортировать-метрики-в-формате-prometheus), and [Redis](https://docs.selectel.ru/cloud/managed-databases/redis/monitoring/#экспортировать-метрики-в-формате-prometheus).
+Provides a list of tokens for Prometheus available in Managed Databases. For more information about tokens for Prometheus, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/monitoring/#export-metrics-in-prometheus-format), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/monitoring-1c/#export-metrics-in-prometheus-format), [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/monitoring/#export-metrics-in-prometheus-format), [MySQL semi-sync](https://docs.selectel.ru/cloud/managed-databases/mysql-semi-sync/monitoring/#export-metrics-in-prometheus-format), [MySQL sync](https://docs.selectel.ru/cloud/managed-databases/mysql-sync/monitoring/#export-metrics-in-prometheus-format), [Redis](https://docs.selectel.ru/cloud/managed-databases/redis/monitoring/#export-metrics-in-prometheus-format), and [Kafka](https://docs.selectel.ru/cloud/managed-databases/kafka/monitoring/#export-metrics-in-prometheus-format).
 
 ## Example Usage
 
@@ -23,7 +23,7 @@ data "selectel_dbaas_prometheus_metric_token_v1" "token_1" {
 
 * `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
 
-* `region` - (Required) Pool where the database is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#облачные-базы-данных).
+* `region` - (Required) Pool where the database is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-databases).
 
 ## Attributes Reference
 

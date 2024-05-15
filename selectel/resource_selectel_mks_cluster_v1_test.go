@@ -49,7 +49,7 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 					testAccCheckMKSClusterV1Exists("selectel_mks_cluster_v1.cluster_tf_acc_test_1", &mksCluster),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "name", clusterName),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "kube_version", kubeVersion),
-					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "region", "ru-3"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "region", "ru-9"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_autorepair", "true"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_patch_version_auto_upgrade", "true"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_start", maintenanceWindowStart),
@@ -63,7 +63,7 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "name", clusterName),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "kube_version", kubeVersion),
-					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "region", "ru-3"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "region", "ru-9"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_autorepair", "false"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_patch_version_auto_upgrade", "false"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_pod_security_policy", "false"),
@@ -100,7 +100,7 @@ func TestAccMKSClusterV1Zonal(t *testing.T) {
 					testAccCheckMKSClusterV1Exists("selectel_mks_cluster_v1.cluster_tf_acc_test_1", &mksCluster),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "name", clusterName),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "kube_version", kubeVersion),
-					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "region", "ru-3"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "region", "ru-9"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_autorepair", "true"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_patch_version_auto_upgrade", "false"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "zonal", "true"),
@@ -136,7 +136,7 @@ func TestAccMKSClusterV1PrivateKubeAPI(t *testing.T) {
 					testAccCheckMKSClusterV1Exists("selectel_mks_cluster_v1.cluster_tf_acc_test_1", &mksCluster),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "name", clusterName),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "kube_version", kubeVersion),
-					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "region", "ru-3"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "region", "ru-9"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_autorepair", "true"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_patch_version_auto_upgrade", "false"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "zonal", "false"),
@@ -247,7 +247,7 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
   name                     = "%s"
   kube_version             = "%s"
   project_id               = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
-  region                   = "ru-3"
+  region                   = "ru-9"
   maintenance_window_start = "%s"
 }`, projectName, clusterName, kubeVersion, maintenanceWindowStart)
 }
@@ -264,7 +264,7 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
   name                     = "%s"
   kube_version             = "%s"
   project_id               = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
-  region                   = "ru-3"
+  region                   = "ru-9"
   maintenance_window_start = "%s"
   feature_gates            = [%s]
   admission_controllers    = [%s]
@@ -283,7 +283,7 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
   name         = "%s"
   kube_version = "%s"
   project_id                        = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
-  region                            = "ru-3"
+  region                            = "ru-9"
   maintenance_window_start          = "%s"
   enable_autorepair                 = false
   enable_patch_version_auto_upgrade = false
@@ -302,7 +302,7 @@ func testAccMKSClusterV1Zonal(projectName, clusterName, kubeVersion, maintenance
    name                              = "%s"
    kube_version                      = "%s"
    project_id                        = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
-   region                            = "ru-3"
+   region                            = "ru-9"
    maintenance_window_start          = "%s"
    enable_patch_version_auto_upgrade = false
    zonal                             = true
@@ -318,7 +318,7 @@ func testAccMKSClusterV1PrivateKubeAPI(projectName, clusterName, kubeVersion, ma
    name                              = "%s"
    kube_version                      = "%s"
    project_id                        = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
-   region                            = "ru-3"
+   region                            = "ru-9"
    maintenance_window_start          = "%s"
    enable_patch_version_auto_upgrade = false
    zonal                             = false

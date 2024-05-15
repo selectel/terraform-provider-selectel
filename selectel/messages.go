@@ -17,3 +17,7 @@ func msgUpdate(object, id string, options interface{}) string {
 func msgDelete(object, id string) string {
 	return fmt.Sprintf("[DEBUG] Deleting %s '%s'", object, id)
 }
+
+func msgImport(object, id string) string {
+	return fmt.Sprintf("[DEBUG] Importing %s '%s'", object, id)
+}

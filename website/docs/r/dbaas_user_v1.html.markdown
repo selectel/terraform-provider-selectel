@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_dbaas\_user\_v1
 
-Creates and manages a user in Managed Databases using public API v1. Not applicable to Redis. For more information about managing users in Managed Databases, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/manage-users/), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/manage-users-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/manage-users/), [MySQL semi-sync](https://docs.selectel.ru/cloud/managed-databases/mysql-semi-sync/manage-users/), and [MySQL sync](https://docs.selectel.ru/cloud/managed-databases/mysql-sync/manage-users/).
+Creates and manages a user in Managed Databases using public API v1. Not applicable to Redis. For more information about managing users in Managed Databases, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/manage-users/), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/manage-users-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/manage-users/), [MySQL semi-sync](https://docs.selectel.ru/cloud/managed-databases/mysql-semi-sync/manage-users/), [MySQL sync](https://docs.selectel.ru/cloud/managed-databases/mysql-sync/manage-users/), and [Kafka](https://docs.selectel.ru/cloud/managed-databases/kafka/manage-users/).
 
 ## Example usage
 
@@ -36,6 +36,18 @@ resource "selectel_dbaas_user_v1" "user_1" {
 }
 ```
 
+### Kafka
+
+```hcl
+resource "selectel_dbaas_user_v1" "user_1" {
+  project_id   = selectel_vpc_project_v2.project_1.id
+  region       = "ru-3"
+  datastore_id = selectel_dbaas_kafka_datastore_v1.datastore_1.id
+  name         = "user"
+  password     = "secret"
+}
+```
+
 ## Argument Reference
 
 * `name` - (Required, Sensitive) User name. Changing this creates a new user.
@@ -44,7 +56,7 @@ resource "selectel_dbaas_user_v1" "user_1" {
 
 * `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new user. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-databases/about/projects/).
 
-* `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new user. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#облачные-базы-данных).
+* `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new user. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-databases).
 
 * `datastore_id` - (Required) Unique identifier of the associated datastore. Changing this creates a new user. Retrieved from the [selectel_dbaas_postgresql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_datastore_v1) or [selectel_dbaas_mysql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_mysql_datastore_v1) resource depending on the datastore type you use.
 

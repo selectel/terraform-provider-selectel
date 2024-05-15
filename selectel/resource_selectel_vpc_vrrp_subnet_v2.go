@@ -120,14 +120,14 @@ func resourceVPCVRRPSubnetV2() *schema.Resource {
 	}
 }
 
-func resourceVPCVRRPSubnetV2Create(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCVRRPSubnetV2Create(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return diag.FromErr(errResourceDeprecated("selectel_vpc_vrrp_subnet_v2"))
 }
 
-func resourceVPCVRRPSubnetV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCVRRPSubnetV2Read(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return diag.FromErr(errResourceDeprecated("selectel_vpc_vrrp_subnet_v2"))
 }
 
-func resourceVPCVRRPSubnetV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCVRRPSubnetV2Delete(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return diag.FromErr(errResourceDeprecated("selectel_vpc_vrrp_subnet_v2"))
 }

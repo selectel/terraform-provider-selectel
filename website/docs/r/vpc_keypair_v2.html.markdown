@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages a SSH key pair using public API v2. For more information about SSH key pairs, see the [official Selectel documentation](https://docs.selectel.ru/cloud/servers/manage/create-and-place-ssh-key/).
 
-Selectel products support Identity and Access Management (IAM). Only service users can use SSH key pairs. To create a service user, use the [selectel_vpc_user_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_user_v2) resource. For more information about service users, see the [official Selectel documentation](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
+Selectel products support Identity and Access Management (IAM). Only service users can use SSH key pairs. To create a service user, use the [selectel_iam_serviceuser_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/iam_serviceuser_v1) resource. For more information about service users, see the [official Selectel documentation](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
 
 ## Example Usage
 
@@ -18,7 +18,7 @@ Selectel products support Identity and Access Management (IAM). Only service use
 resource "selectel_vpc_keypair_v2" "keypair_1" {
   name       = "keypair"
   public_key = file("~/.ssh/id_rsa.pub")
-  user_id    = selectel_vpc_user_v2.user_1.id
+  user_id    = selectel_iam_serviceuser_v1.user_1.id
 }
 ```
 
@@ -26,9 +26,9 @@ resource "selectel_vpc_keypair_v2" "keypair_1" {
 
 * `name` - (Required) Name of the SSH key pair. Changing this creates a new key pair.
 
-* `public_key` - (Required) Pregenerated OpenSSH-formatted public key. Changing this creates a new key pair. Learn more [how to create SSH key pair](https://docs.selectel.ru/cloud/servers/manage/create-and-place-ssh-key/#создать-ssh-ключи).
+* `public_key` - (Required) Pregenerated OpenSSH-formatted public key. Changing this creates a new key pair. Learn more [how to create SSH key pair](https://docs.selectel.ru/cloud/servers/manage/create-and-place-ssh-key/#create-ssh-keys).
 
-* `user_id` - (Required) Unique identifier of the associated service user. Changing this creates a new key pair. Retrieved from the [selectel_vpc_user_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_user_v2) resource.
+* `user_id` - (Required) Unique identifier of the associated service user. Changing this creates a new key pair. Retrieved from the [selectel_iam_serviceuser_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/iam_serviceuser_v1) resource.
 
 * `regions` - (Optional) List of pools where the key pair is located, for example, `ru-3`. Changing this creates a new key pair. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/).
 

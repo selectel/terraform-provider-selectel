@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/go-selvpcclient/v3/selvpcclient/quotamanager/quotas"
@@ -54,7 +55,7 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 				ForceNew: false,
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+				DiffSuppressFunc: func(_, _, _ string, d *schema.ResourceData) bool {
 					return d.Id() != "" && d.Get("enable_autoscale").(bool)
 				},
 			},
@@ -84,6 +85,7 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 				ForceNew: true,
+				Computed: true,
 			},
 			"volume_type": {
 				Type:          schema.TypeString,
@@ -94,8 +96,7 @@ func resourceMKSNodegroupV1() *schema.Resource {
 			"local_volume": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				ForceNew: true,
-				Default:  false,
+				Computed: true,
 			},
 			"flavor_id": {
 				Type:     schema.TypeString,
@@ -152,6 +153,12 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				Computed:     true,
 				RequiredWith: []string{"enable_autoscale", "autoscale_min_nodes"},
 			},
+			"user_data": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringLenBetween(0, 65535),
+			},
 			"nodegroup_type": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -177,6 +184,15 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				},
 			},
 		},
+		CustomizeDiff: customdiff.All(
+			// We need to recreate nodegroup if flavor changed.
+			customdiff.ForceNewIfChange("flavor_id", func(_ context.Context, old, new, _ interface{}) bool {
+				return old.(string) != new.(string)
+			}),
+			customdiff.ForceNewIfChange("local_volume", func(_ context.Context, old, new, _ interface{}) bool {
+				return old.(bool) != new.(bool)
+			}),
+		),
 	}
 }
 
@@ -230,6 +246,7 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 		KeypairName:      d.Get("keypair_name").(string),
 		AffinityPolicy:   d.Get("affinity_policy").(string),
 		AvailabilityZone: d.Get("availability_zone").(string),
+		UserData:         d.Get("user_data").(string),
 	}
 
 	projectQuotas, _, err := quotas.GetProjectQuotas(selvpcClient, projectID, region)
@@ -237,8 +254,11 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(errGettingObject(objectProjectQuotas, projectID, err))
 	}
 
-	if err := checkQuotasForNodegroup(projectQuotas, createOpts); err != nil {
-		return diag.FromErr(errCreatingObject(objectNodegroup, err))
+	// Skip quota validation cause we can not open flavor and check resource claim.
+	if createOpts.FlavorID == "" {
+		if err := checkQuotasForNodegroup(projectQuotas, createOpts); err != nil {
+			return diag.FromErr(errCreatingObject(objectNodegroup, err))
+		}
 	}
 
 	// Check nodegroup autoscaling options.
@@ -336,6 +356,7 @@ func resourceMKSNodegroupV1Read(ctx context.Context, d *schema.ResourceData, met
 	d.Set("autoscale_min_nodes", mksNodegroup.AutoscaleMinNodes)
 	d.Set("autoscale_max_nodes", mksNodegroup.AutoscaleMaxNodes)
 	d.Set("nodegroup_type", mksNodegroup.NodegroupType)
+	d.Set("user_data", mksNodegroup.UserData)
 
 	if err := d.Set("labels", mksNodegroup.Labels); err != nil {
 		log.Print(errSettingComplexAttr("labels", err))

@@ -58,7 +58,7 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
   
   * `true` —  for a basic cluster with one master node. Set `enable_patch_version_auto_upgrade` to `false`.
 
-  Learn more about [Cluster types](https://docs.selectel.ru/cloud/managed-kubernetes/about/about-managed-kubernetes/#типы-кластера).
+  Learn more about [Cluster types](https://docs.selectel.ru/cloud/managed-kubernetes/about/about-managed-kubernetes/#cluster-types).
 
 * `enable_autorepair` - (Optional) Enables or disables node auto-repairing (worker nodes are automatically restarted). Auto-repairing is not available if you have one worker node. After auto-repairing, all data on the boot volumes are deleted. Boolean flag, the default value is `true`. Learn more about [Nodes auto-repairing](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/reinstall-nodes/).
 

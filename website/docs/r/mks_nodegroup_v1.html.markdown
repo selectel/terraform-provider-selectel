@@ -64,17 +64,19 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 
 * `volume_gb` (Optional) Volume size in GB for each node. Can be skipped only when flavor_id is set and local_volume is `true`. Changing this creates a new node group.  Learn more about [Configurations](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/configurations/).
 
-* `volume_type` (Optional) Type of an OpenStack blockstorage volume for each node. Can be skipped only when `flavor_id` is set and `local_volume` is `true`. Changing this creates a new node group.  Available volume types are `fast`, `basic`, and `universal`. The format is `<volume_type>`.`<availability_zone>`. Learn more about [Network volumes](https://docs.selectel.ru/cloud/servers/volumes/about-network-volumes/).
+* `volume_type` (Optional) Type of an OpenStack blockstorage volume for each node. Can be skipped only when `flavor_id` is set and flavor contains disk specification. Changing this creates a new node group.  Available volume types are `fast`, `basic`, and `universal`. The format is `<volume_type>`.`<availability_zone>`. Learn more about [Network volumes](https://docs.selectel.ru/cloud/servers/volumes/about-network-volumes/).
 
-* `local_volume` (Optional) Specifies if nodes use a local volume.  Changing this creates a new node group. Boolean flag, the default value is false.
+* `local_volume` (Optional) Specifies if nodes use a local volume. Conflicts with flavors that have `local_volume` specs. Changing this creates a new node group. Boolean flag, the default value is false.
 
-* `flavor_id` (Optional) Unique identifier of an OpenStack flavor for all nodes in the node group. Changing this creates a new node group. Learn more about [Flavors](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/configurations/#создать-группу-нод-с-фиксированной-конфигурацией-облачного-сервера).
+* `flavor_id` (Optional) Unique identifier of an OpenStack flavor for all nodes in the node group. Changing this creates a new node group. Learn more about [Flavors](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/configurations/#create-node-group-with-prebuilt-cloud-server-configuration).
 
 * `labels` (Optional) List of Kubernetes labels applied to each node in the node group.
 
 * `taints` (Optional) List of Kubernetes taints applied to each node in the node group.  Contains a key-value pair and an effect applied for the taint. Available effects are `NoSchedule`, `PreferNoSchedule`, and `NoExecute`. Learn more about [Taints](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/add-taints/).
 
 * `keypair_name` (Optional) Name of the SSH key added to all nodes. Changing this creates a new node group.
+
+* `user_data` (Optional) Base64-encoded script that worker nodes run on the first boot. Changing this creates a new node group. Learn more about [User data](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/user-data/).
 
 * `affinity_policy` (Optional) Specifies affinity policy of the nodes. Changing this creates a new node group. Available values are `soft-anti-affinity` and `soft-affinity`. The default value is `soft-anti-affinity`. For more information about affinity and anti-affinity, see the [official Kubernetes documentation](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity).
 
@@ -87,7 +89,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 
 * `nodes` - List of nodes in the node group.
 
-* `nodegroup_type` - Type of the node group. Available values are `STANDARD` and `GPU`.
+* `nodegroup_type` - Type of the node group. Available values are `STANDARD`, `GPU`, `SGX`.
 
 ## Import
 

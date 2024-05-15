@@ -34,13 +34,13 @@ resource "selectel_dbaas_mysql_datastore_v1" "datastore_1" {
 
 * `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new datastore. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-databases/about/projects/).
 
-* `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new datastore. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#облачные-базы-данных).
+* `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new datastore. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-databases).
 
 * `subnet_id` - (Required) Unique identifier of the associated OpenStack network. Changing this creates a new datastore. Learn more about the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_network_v2) resource in the official OpenStack documentation.
   
 * `type_id` - (Required) Unique identifier of the datastore type. Changing this creates a new datastore. Retrieved from the [selectel_dbaas_datastore_type_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_datastore_type_v1) data source.
 
-* `node_count` - (Required) Number of replicas in the datastore. Available values are `1` and `2`. Learn more about [Replication](https://docs.selectel.ru/cloud/managed-databases/about/about-managed-databases/#отказоустойчивость-и-репликация).
+* `node_count` - (Required) Number of nodes in the datastore. The available range for MySQL semi-sync is from 1 to 3. Available values for MySQL sync are `1` and `3`. Learn more about [Replication](https://docs.selectel.ru/cloud/managed-databases/about/about-managed-databases/#fault-tolerance-and-replication).
 
 * `flavor_id` - (Optional) Unique identifier of the flavor for the datastore. Can be skipped when `flavor` is set. You can retrieve information about available flavors with the [selectel_dbaas_flavor_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_flavor_v1) data source.
 
@@ -61,6 +61,11 @@ resource "selectel_dbaas_mysql_datastore_v1" "datastore_1" {
   * `target_time` - (Optional) Time within seven previous days when you have the datastore state to restore.
 
 * `config` - (Optional) Configuration parameters for the datastore. You can retrieve information about available configuration parameters with the [selectel_dbaas_configuration_parameter_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_configuration_parameter_v1) data source.
+* `floating_ips` - (Optional) Assigns floating IP addresses to the nodes in the datastore. The network configuration must meet the requirements. Learn more about [floating IP addresses and the required network configuration](https://docs.selectel.ru/cloud/managed-databases/mysql-sync/public-ip/).
+
+  * master - (Required) Number of floating IPs associated with the master. Available values are `0` and `1`.
+  
+  * replica - (Required) Number of floating IPs associated with the replicas. The minimum value is `0`. The maximum value must be 1 less that the value of the `node_count` argument. 
 
 ## Attributes Reference
 

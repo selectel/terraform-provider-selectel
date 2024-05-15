@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/dbaas-go"
@@ -24,6 +25,9 @@ func resourceDBaaSMySQLDatastoreV1() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceDBaaSMySQLDatastoreV1ImportState,
 		},
+		CustomizeDiff: customdiff.All(
+			refreshDatastoreInstancesOutputsDiff,
+		),
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(60 * time.Minute),
 			Update: schema.DefaultTimeout(60 * time.Minute),
@@ -78,6 +82,7 @@ func resourceDBaaSMySQLDatastoreV1() *schema.Resource {
 			"backup_retention_days": {
 				Type:        schema.TypeInt,
 				Optional:    true,
+				Computed:    true,
 				Description: "Number of days to retain backups.",
 			},
 			"connections": {
@@ -85,6 +90,22 @@ func resourceDBaaSMySQLDatastoreV1() *schema.Resource {
 				Computed: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
+				},
+			},
+			"floating_ips": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"master": {
+							Type:     schema.TypeInt,
+							Required: true,
+						},
+						"replica": {
+							Type:     schema.TypeInt,
+							Required: true,
+						},
+					},
 				},
 			},
 			"flavor": {
@@ -158,6 +179,22 @@ func resourceDBaaSMySQLDatastoreV1() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"instances": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"role": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"floating_ip": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -186,14 +223,20 @@ func resourceDBaaSMySQLDatastoreV1Create(ctx context.Context, d *schema.Resource
 	if err != nil {
 		return diag.FromErr(errParseDatastoreV1Restore(err))
 	}
+	floatingIPsSet := d.Get("floating_ips").(*schema.Set)
+	floatingIPsSchema, err := resourceDBaaSDatastoreV1FloatingIPsOptsFromSet(floatingIPsSet)
+	if err != nil {
+		return diag.FromErr(errParseDatastoreV1FloatingIPs(err))
+	}
 
 	datastoreCreateOpts := dbaas.DatastoreCreateOpts{
-		Name:      d.Get("name").(string),
-		TypeID:    typeID,
-		SubnetID:  d.Get("subnet_id").(string),
-		NodeCount: d.Get("node_count").(int),
-		Restore:   restore,
-		Config:    d.Get("config").(map[string]interface{}),
+		Name:        d.Get("name").(string),
+		TypeID:      typeID,
+		SubnetID:    d.Get("subnet_id").(string),
+		NodeCount:   d.Get("node_count").(int),
+		Restore:     restore,
+		Config:      d.Get("config").(map[string]interface{}),
+		FloatingIPs: floatingIPsSchema,
 	}
 
 	if flavorOk {
@@ -252,6 +295,7 @@ func resourceDBaaSMySQLDatastoreV1Read(ctx context.Context, d *schema.ResourceDa
 	d.Set("node_count", datastore.NodeCount)
 	d.Set("enabled", datastore.Enabled)
 	d.Set("flavor_id", datastore.FlavorID)
+	d.Set("backup_retention_days", datastore.BackupRetentionDays)
 
 	flavor := resourceDBaaSDatastoreV1FlavorToSet(datastore.Flavor)
 	if err := d.Set("flavor", flavor); err != nil {
@@ -260,6 +304,11 @@ func resourceDBaaSMySQLDatastoreV1Read(ctx context.Context, d *schema.ResourceDa
 
 	if err := d.Set("connections", datastore.Connection); err != nil {
 		log.Print(errSettingComplexAttr("connections", err))
+	}
+
+	instances := resourceDBaaSDatastoreV1InstancesToList(datastore.Instances)
+	if err := d.Set("instances", instances); err != nil {
+		log.Print(errSettingComplexAttr("instances", err))
 	}
 
 	configMap := make(map[string]string)
@@ -305,6 +354,12 @@ func resourceDBaaSMySQLDatastoreV1Update(ctx context.Context, d *schema.Resource
 	}
 	if d.HasChange("backup_retention_days") {
 		err := updateDatastoreBackups(ctx, d, dbaasClient)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("floating_ips") {
+		err := updateDatastoreFloatingIPs(ctx, d, dbaasClient)
 		if err != nil {
 			return diag.FromErr(err)
 		}
