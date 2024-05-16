@@ -1,3 +1,11 @@
+## 5.1.0 (May 16, 2024)
+
+IMPROVEMENTS:
+* Updated docs for the resource `selectel_iam_s3_credentials_v1` ([#272](https://github.com/selectel/terraform-provider-selectel/pull/272))
+* Updated docs for the resource `selectel_mks_nodegroup_v1` ([#275](https://github.com/selectel/terraform-provider-selectel/pull/275))
+* Code refactoring for `selectel_dbaas_*` resources ([#251](https://github.com/selectel/terraform-provider-selectel/pull/251)) 
+* Schema updates for `selectel_dbaas_postgresql_database_v1` resource ([#260](https://github.com/selectel/terraform-provider-selectel/pull/260)
+
 ## 5.0.2 (April 23, 2024)
 
 IMPROVEMENTS:
