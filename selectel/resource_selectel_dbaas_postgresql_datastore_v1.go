@@ -13,8 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/dbaas-go"
+	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dbaas"
 )
 
 func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
@@ -34,193 +34,7 @@ func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
 			Update: schema.DefaultTimeout(60 * time.Minute),
 			Delete: schema.DefaultTimeout(60 * time.Minute),
 		},
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: false,
-			},
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"subnet_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"type_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"flavor_id": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Computed:      true,
-				ForceNew:      false,
-				ConflictsWith: []string{"flavor"},
-			},
-			"node_count": {
-				Type:     schema.TypeInt,
-				Required: true,
-				ForceNew: false,
-			},
-			"enabled": {
-				Type:     schema.TypeBool,
-				Computed: true,
-			},
-			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"backup_retention_days": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Computed:    true,
-				Description: "Number of days to retain backups.",
-			},
-			"connections": {
-				Type:     schema.TypeMap,
-				Computed: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
-			"floating_ips": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"master": {
-							Type:     schema.TypeInt,
-							Required: true,
-						},
-						"replica": {
-							Type:     schema.TypeInt,
-							Required: true,
-						},
-					},
-				},
-			},
-			"flavor": {
-				Type:          schema.TypeSet,
-				Optional:      true,
-				Computed:      true,
-				ForceNew:      false,
-				ConflictsWith: []string{"flavor_id"},
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"vcpus": {
-							Type:     schema.TypeInt,
-							Required: true,
-							ForceNew: false,
-						},
-						"ram": {
-							Type:     schema.TypeInt,
-							Required: true,
-							ForceNew: false,
-						},
-						"disk": {
-							Type:     schema.TypeInt,
-							Required: true,
-							ForceNew: false,
-						},
-					},
-				},
-			},
-			"pooler": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: false,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"mode": {
-							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: false,
-							ValidateFunc: validation.StringInSlice([]string{
-								"session",
-								"transaction",
-								"statement",
-							}, false),
-						},
-						"size": {
-							Type:     schema.TypeInt,
-							Required: true,
-							ForceNew: false,
-						},
-					},
-				},
-			},
-			"firewall": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: false,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"ips": {
-							Type:     schema.TypeList,
-							Required: true,
-							ForceNew: false,
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
-							},
-						},
-					},
-				},
-			},
-			"restore": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"datastore_id": {
-							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: false,
-						},
-						"target_time": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: false,
-						},
-					},
-				},
-			},
-			"config": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				Computed: true,
-				ForceNew: false,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
-			"instances": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"role": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"floating_ip": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
-			},
-		},
+		Schema: resourceDBaaSPostgreSQLDatastoreV1Schema(),
 	}
 }
 
@@ -299,7 +113,7 @@ func resourceDBaaSPostgreSQLDatastoreV1Create(ctx context.Context, d *schema.Res
 
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", datastore.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForDBaaSDatastoreV1ActiveState(ctx, dbaasClient, datastore.ID, timeout)
+	err = waiters.WaitForDBaaSDatastoreV1ActiveState(ctx, dbaasClient, datastore.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectDatastore, err))
 	}
@@ -422,10 +236,10 @@ func resourceDBaaSPostgreSQLDatastoreV1Delete(ctx context.Context, d *schema.Res
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{strconv.Itoa(http.StatusOK)},
 		Target:     []string{strconv.Itoa(http.StatusNotFound)},
-		Refresh:    dbaasDatastoreV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
+		Refresh:    waiters.DBaaSDatastoreV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
+		MinTimeout: 20 * time.Second,
 	}
 
 	log.Printf("[DEBUG] waiting for datastore %s to become deleted", d.Id())
