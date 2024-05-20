@@ -6,7 +6,7 @@ import (
 
 func resourceDBaaSPostgreSQLDatabaseV1Schema() map[string]*schema.Schema {
 	databaseSchema := resourceDBaaSDatabaseV1BaseSchema()
-	databaseSchema["owner"] = &schema.Schema{
+	databaseSchema["owner_id"] = &schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
 	}
