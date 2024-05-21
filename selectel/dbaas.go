@@ -166,27 +166,6 @@ func resourceDBaaSDatastoreV1InstancesToList(instances []dbaas.Instances) []inte
 	return flattenedInstances
 }
 
-func resourceDBaaSDatastoreV1FirewallOptsFromSet(firewallSet *schema.Set) (dbaas.DatastoreFirewallOpts, error) {
-	if firewallSet.Len() == 0 {
-		return dbaas.DatastoreFirewallOpts{IPs: []string{}}, nil
-	}
-
-	var resourceIPsRaw interface{}
-	var ok bool
-
-	resourceFirewallRaw := firewallSet.List()[0].(map[string]interface{})
-	if resourceIPsRaw, ok = resourceFirewallRaw["ips"]; !ok {
-		return dbaas.DatastoreFirewallOpts{}, errors.New("firewall.ips value isn't provided")
-	}
-	resourceIPRaw := resourceIPsRaw.([]interface{})
-	var firewall dbaas.DatastoreFirewallOpts
-	for _, ip := range resourceIPRaw {
-		firewall.IPs = append(firewall.IPs, ip.(string))
-	}
-
-	return firewall, nil
-}
-
 func resourceDBaaSDatastoreV1RestoreOptsFromSet(restoreSet *schema.Set) (*dbaas.Restore, error) {
 	if restoreSet.Len() == 0 {
 		return nil, nil

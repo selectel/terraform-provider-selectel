@@ -82,7 +82,7 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
   
   * `size` - (Required) Pool size. The available range is from 1 to 500. The default value is `30`. Learn more about pool size for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/connection-pooler/#pool-size) and [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/connection-pooler/#pool-size).
 
-* `firewall` - (Optional) List of IP-addresses with access to the datastore.
+* `firewall` - (Deprecated) Remove this argument as it is no longer in use and will be removed in the next major version of the provider. To manage a list of IP-addresses with access to the datastore, use the [selectel_dbaas_firewall_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_firewall_v1) resource.
 
 * `restore` - (Optional) Restores parameters for the datastore. Changing this creates a new datastore.
 
