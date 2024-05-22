@@ -22,6 +22,6 @@ resource "selectel_vpc_token_v2" "token_1" {
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new Keystone token. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new Keystone token. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
 * `account_name` - (Optional) Selectel account ID. Changing this creates a new Keystone token. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/).

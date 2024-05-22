@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_secretsmanager\_secret_v1
 
-Creates and manages a secret in Selectel Secrets Manager using public API v1. For more information about Secrets Manager, see the [official Selectel documentation](https://docs.selectel.ru/cloud/secrets-manager/secrets/).
+Creates and manages a secret in Selectel Secrets Manager using public API v1. For more information about Secrets Manager, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/secrets-manager/secrets/).
 
 ## Example Usage
 
@@ -27,7 +27,7 @@ resource "selectel_secretsmanager_secret_v1" "secret_1" {
 
 * `value` - (Required, Sensitive) Secret value, for example password, API key, certificate key. The limit is 65 536 characters.
 
-* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
 * `description` - (Optional) Secret description.
 
@@ -48,6 +48,6 @@ terraform import selectel_secretsmanager_secret_v1.secret_1 <selectel_project_id
 
 where:
 
-* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
+* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
 * `<key>` — Secret name. To get the secret name, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager/), go to **Cloud Platform** ⟶ **Secrets Manager** ⟶ the **Secrets** tab ⟶ copy the name of the required secret.

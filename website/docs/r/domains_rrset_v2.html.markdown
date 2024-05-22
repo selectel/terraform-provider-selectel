@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_domains\_rrset\_v2
 
-Creates and manages an RRSet in DNS Hosting (actual) using public API v2. For more information about RRSets, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/records/).
+Creates and manages an RRSet in DNS Hosting (actual) using public API v2. For more information about RRSets, see the [official Selectel documentation](https://docs.selectel.ru/en/networks-services/dns/records/).
 
 ## Example usage
 
@@ -203,7 +203,7 @@ resource "selectel_domains_rrset_v2" "caa_rrset_1" {
 
   * `disabled` - (Optional) Enables or disables the record. Boolean flag, the default value is false.
 
-* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new RRSet. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new RRSet. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
 * `comment` - (Optional) Comment to add to the RRSet.
 
@@ -225,13 +225,13 @@ terraform import selectel_domains_rrset_v2.rrset_1 <zone_name>/<rrset_name>/<rrs
 
 where:
 
-* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/control-panel-actions/account/registration/).
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
 
-* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
 
 * `<password>` — Password of the service user.
 
-* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/dbbas), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
+* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/dbbas), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
 * `<zone_name>` — Zone name, for example, `example.com.`. To get the name, in the [Control panel](https://my.selectel.ru/dns/), go to **DNS**. The zone name is in the **Zone** column.
 

@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_iam\_s3_credentials\_v1
 
-Creates and manages S3 credentials for a service user using public API v1. S3 credentials are required to access Selectel Object Storage via S3 API. S3 credentials include Access Key and Secret Key. For more information about S3 сredentials, see the [official Selectel documentation](https://docs.selectel.ru/cloud/object-storage/manage/manage-access/#issue-s3-key).
+Creates and manages S3 credentials for a service user using public API v1. S3 credentials are required to access Selectel Object Storage via S3 API. S3 credentials include Access Key and Secret Key. For more information about S3 сredentials, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/object-storage/manage/manage-access/#issue-s3-key).
 
 ~> **Note:** In S3 credentials, the Secret Key is stored as raw data in a plain-text file. Learn more about [sensitive data in state](https://developer.hashicorp.com/terraform/language/state/sensitive-data).
 
@@ -24,9 +24,9 @@ resource "selectel_iam_s3_credentials_v1" "s3_credentials_1" {
 
 ## Argument Reference
 
-* `user_id` - (Required) Unique identifier of the service user. Changing this creates new credentials. Retrieved from the [selectel_iam_serviceuser_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/iam_serviceuser_v1) resource. Learn more about [Service Users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
+* `user_id` - (Required) Unique identifier of the service user. Changing this creates new credentials. Retrieved from the [selectel_iam_serviceuser_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/iam_serviceuser_v1) resource. Learn more about [Service Users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
 
-* `project_id` - (Required) Unique identifier of the associated project. Changing this creates new credentials. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Changing this creates new credentials. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
 * `name` - (Required) Name of the S3 credentials. Changing this creates new credentials.
 
@@ -50,9 +50,9 @@ terraform import selectel_iam_s3_credentials_v1.s3_credentials_1 <access_key>
 
 where:
 
-* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/control-panel-actions/account/registration/).
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
 
-* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service Users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service Users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
 
 * `<password>` — Password of the service user.
 

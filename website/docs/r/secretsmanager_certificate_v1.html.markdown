@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_secretsmanager\_certificate_v1
 
-Creates and manages a certificate in Selectel Secrets Manager using public API v1. For more information about certificates, see the [official Selectel documentation](https://docs.selectel.ru/cloud/secrets-manager/certificates/).
+Creates and manages a certificate in Selectel Secrets Manager using public API v1. For more information about certificates, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/secrets-manager/certificates/).
 
 ## Example Usage
 
@@ -54,7 +54,7 @@ resource "selectel_secretsmanager_certificate_v1" "certificate_1" {
 
 * `private_key` - (Required, Sensitive) Private key. The value must begin with `-----BEGIN PRIVATE KEY-----` and end with `-----END PRIVATE KEY-----`.
 
-* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
 ## Attributes Reference
 
@@ -85,6 +85,6 @@ terraform import selectel_secretsmanager_certificate_v1.certificate_1 <cetrifica
 
 where:
 
-* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
+* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
 * `<cetrificate_id>` — Unique identifier of the certificate. To get the ID of the certificate, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager/), go to **Cloud Platform** ⟶ **Secrets Manager** ⟶ the **Certificates** tab ⟶ in the certificate menu select **Copy UUID**.

@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_dbaas\_flavors_v1
 
-Provides a list of flavors available in Managed Databases. For more information about available configurations, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/cloud/managed-databases/postgresql/configurations/), [PostgreSQL for 1C](https://docs.selectel.ru/cloud/managed-databases/postgresql-for-1c/configurations-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/cloud/managed-databases/timescaledb/configurations/), [MySQL semi-sync](https://docs.selectel.ru/cloud/managed-databases/mysql-semi-sync/configurations/), [MySQL sync](https://docs.selectel.ru/cloud/managed-databases/mysql-sync/configurations/), [Redis](https://docs.selectel.ru/cloud/managed-databases/redis/configurations/), and [Kafka](https://docs.selectel.ru/cloud/managed-databases/kafka/configurations/).
+Provides a list of flavors available in Managed Databases. For more information about available configurations, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/configurations/), [PostgreSQL for 1C](https://docs.selectel.ru/en/cloud/managed-databases/postgresql-for-1c/configurations-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/configurations/), [MySQL semi-sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-semi-sync/configurations/), [MySQL sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-sync/configurations/), [Redis](https://docs.selectel.ru/en/cloud/managed-databases/redis/configurations/), and [Kafka](https://docs.selectel.ru/en/cloud/managed-databases/kafka/configurations/).
 
 ## Example Usage
 
@@ -21,9 +21,9 @@ data "selectel_dbaas_flavor_v1" "flavor" {
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
-* `region` - (Required) Pool where the database is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-databases).
+* `region` - (Required) Pool where the database is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-databases).
 
 * `filter` - (Optional) Values to filter available flavors:
 

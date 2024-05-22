@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_domains\_rrset_v2
 
-Provides information about an RRSet in DNS Hosting (actual). For more information about RRSets, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/records/).
+Provides information about an RRSet in DNS Hosting (actual). For more information about RRSets, see the [official Selectel documentation](https://docs.selectel.ru/en/networks-services/dns/records/).
 
 ## Example Usage
 
@@ -29,7 +29,7 @@ data "selectel_domains_rrset_v2" "rrset_1" {
 
 * `zone_id` - (Required) Unique identifier of the zone. Retrieved from the [selectel_domains_zone_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/domains_zone_v2) resource.
 
-* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
 ## Attributes Reference
 

@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_dbaas\_kafka\_acl\_v1
 
-Creates and manages an access control list (ACL) in a Kafka datastore using public API v1. For more information about managing users in Kafka, see the [official Selectel documentation](https://docs.selectel.ru/cloud/managed-databases/kafka/manage-users/)
+Creates and manages an access control list (ACL) in a Kafka datastore using public API v1. For more information about managing users in Kafka, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/managed-databases/kafka/manage-users/)
 
 ## Example usage
 
@@ -34,9 +34,9 @@ resource "selectel_dbaas_kafka_acl_v1" "acl_1" {
 
 * `allow_write` - (Required) Allows to connect as a producer.
 
-* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new user. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new user. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
-* `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new ACL. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-databases).
+* `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new ACL. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-databases).
 
 * `datastore_id` - (Required) Unique identifier of the associated datastore. Changing this creates a new ACL. Retrieved from the [selectel_dbaas_kafka_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_kafka_datastore_v1).
 
