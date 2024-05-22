@@ -33,4 +33,4 @@ resource "selectel_vpc_user_v2" "user_1" {
 
 * `password` - (Required, Sensitive) Password of the service user. Changing this updates the password of the existing user.
 
-* `enabled` - (Optional) Specifies if you can create a Cloud Platform Keystone token for the user. Boolean flag, the default value is `true`. Learn more about [Cloud Platform Keystone tokens](https://developers.selectel.ru/docs/control-panel/authorization/).
+* `enabled` - (Optional) Specifies if you can create a Keystone token for the user. Boolean flag, the default value is `true`. Learn more about [Keystone tokens](https://developers.selectel.ru/docs/control-panel/authorization/).

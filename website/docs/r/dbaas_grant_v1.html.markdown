@@ -38,7 +38,7 @@ resource "selectel_dbaas_grant_v1" "grant_1" {
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new privilege for the user. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-databases/about/projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new privilege for the user. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
 
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new privilege for the user.
 

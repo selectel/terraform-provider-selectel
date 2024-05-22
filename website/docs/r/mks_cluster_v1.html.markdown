@@ -40,11 +40,11 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
 
 * `name` - (Required) Cluster name. Changing this creates a new cluster. The cluster name is included into the names of the cluster entities: node groups, nodes, load balancers, networks, and volumes.
 
-* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new cluster. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new cluster. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
 
 * `region` - (Required) Pool where the cluster is located, for example, `ru-3`. Changing this creates a new cluster. In a pool, you can create two clusters for a project. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-kubernetes).
 
-* `kube_version` - (Required) Kubernetes version of the cluster. Changing this upgrades the cluster version. You can retrieve information about the Kubernetes versions with the  [selectel_mks_kube_versions_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/mks_kube_versions_v1) data source.
+* `kube_version` - (Required) Kubernetes version of the cluster. Changing this upgrades the cluster version. You can retrieve information about the Kubernetes versions with the [selectel_mks_kube_versions_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/mks_kube_versions_v1) data source.
   
   To upgrade a patch version, the desired version should match the latest available patch version for the current minor release.
   
@@ -54,15 +54,15 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
   
   Boolean flag:
 
-  * `false` (default) —  for a high availability cluster with three master nodes located on different hosts in one pool segment.
+  * `false` (default) - for a high availability cluster with three master nodes located on different hosts in one pool segment.
   
-  * `true` —  for a basic cluster with one master node. Set `enable_patch_version_auto_upgrade` to `false`.
+  * `true` - for a basic cluster with one master node. Set `enable_patch_version_auto_upgrade` to `false`.
 
   Learn more about [Cluster types](https://docs.selectel.ru/cloud/managed-kubernetes/about/about-managed-kubernetes/#cluster-types).
 
 * `enable_autorepair` - (Optional) Enables or disables node auto-repairing (worker nodes are automatically restarted). Auto-repairing is not available if you have one worker node. After auto-repairing, all data on the boot volumes are deleted. Boolean flag, the default value is `true`. Learn more about [Nodes auto-repairing](https://docs.selectel.ru/cloud/managed-kubernetes/node-groups/reinstall-nodes/).
 
-* `enable_patch_version_auto_upgrade` - (Optional) Enables or disables auto-upgrading of the cluster to the latest available Kubernetes patch version during the maintenance window. Boolean flag, the  default value is `true`. Must be set to false for basic clusters (if `zonal` is `true`).  Learn more about [Patch versions auto-upgrading](https://docs.selectel.ru/cloud/managed-kubernetes/clusters/upgrade-version/).
+* `enable_patch_version_auto_upgrade` - (Optional) Enables or disables auto-upgrading of the cluster to the latest available Kubernetes patch version during the maintenance window. Boolean flag, the default value is `true`. Must be set to false for basic clusters (if `zonal` is `true`).  Learn more about [Patch versions auto-upgrading](https://docs.selectel.ru/cloud/managed-kubernetes/clusters/upgrade-version/).
 
 * `network_id` - (Optional) Unique identifier of the associated OpenStack network. Changing this creates a new cluster. Learn more about the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_network_v2) resource in the official OpenStack documentation.
 
@@ -78,9 +78,9 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
 
   Boolean flag:
 
-  * `false` (default) —  Kube API is available from the Internet;
+  * `false` (default) - Kube API is available from the Internet;
   
-  * `true` —  Kube API is available only from the cluster network.
+  * `true` - Kube API is available only from the cluster network.
 
 ## Attributes Reference
 
@@ -107,12 +107,12 @@ where:
 
 * `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/control-panel-actions/account/registration/).
 
-* `<username>` — Name of the service user. To get the name, in the top right corner of the [Control panel](https://my.selectel.ru/profile/users_management/users?type=service), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
 
 * `<password>` — Password of the service user. 
 
-* `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
+* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/mks), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/cloud/managed-kubernetes/about/projects/).
 
-* `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Managed Databases**. The pool is in the **Pool** column.
+* `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes**. The pool is in the **Pool** column.
 
 * `<cluster_id>` — Unique identifier of the cluster, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the cluster ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes** ⟶ the cluster page ⟶ copy the ID at the top of the page under the cluster name, near the region and pool.

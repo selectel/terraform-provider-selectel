@@ -82,7 +82,7 @@ Before upgrading to version 5.0.0, [upgrade to the most recent 4.X version of th
     terraform plan
     ``` 
 
-10. If Terraform shows that Terraform will destroy a role you need, check if the `role`  blocks in the selectel_iam_serviceuser_v1 resource contain all the required roles.
+10. If Terraform shows that Terraform will destroy a role you need, check if the `role` blocks in the selectel_iam_serviceuser_v1 resource contain all the required roles.
 11. Repeat steps 6-11 for all service users.
 12. If you refer to the selectel_vpc_user_v2 resource in other resources, replace it with the selectel_iam_serviceuser_v1 resource.
 13. Apply the changes:

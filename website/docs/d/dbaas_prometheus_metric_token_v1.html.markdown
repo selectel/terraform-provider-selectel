@@ -21,13 +21,13 @@ data "selectel_dbaas_prometheus_metric_token_v1" "token_1" {
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
 
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-databases).
 
 ## Attributes Reference
 
-* `prometheus_metrics_tokens` -  List of tokens for Prometheus.
+* `prometheus_metrics_tokens` - List of tokens for Prometheus.
 
   * `id` - Unique identifier of the token.
 
@@ -35,7 +35,7 @@ data "selectel_dbaas_prometheus_metric_token_v1" "token_1" {
 
   * `updated_at` - Time when the token was updated.
 
-  * `project_id` - Unique identifier of the associated Cloud Platform project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-databases/about/projects/).
+  * `project_id` - Unique identifier of the associated project. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
 
   * `name` - Token name.
 

@@ -21,13 +21,13 @@ data "selectel_dbaas_flavor_v1" "flavor" {
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
 
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-databases).
 
 * `filter` - (Optional) Values to filter available flavors:
 
-  * `vcpus` - (Optional) Number of vCPU cores.
+  * `vcpus` - (Optional) Number of vCPUs.
 
   * `ram` - (Optional) Amount of RAM in MB.
 
@@ -35,7 +35,7 @@ data "selectel_dbaas_flavor_v1" "flavor" {
 
   * `fl_size` - (Optional) Fl size of the flavor.
 
-  * `datastore_type_id` - (Optional)  Unique identifier of the datastore type.
+  * `datastore_type_id` - (Optional) Unique identifier of the datastore type.
 
 ## Attributes Reference
 
@@ -47,7 +47,7 @@ data "selectel_dbaas_flavor_v1" "flavor" {
 
   * `description` - Flavor description.
 
-  * `vcpus` - Number of vCPU cores.
+  * `vcpus` - Number of vCPUs.
 
   * `ram` - Amount of RAM in MB.
 

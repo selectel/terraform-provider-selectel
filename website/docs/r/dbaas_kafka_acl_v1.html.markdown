@@ -34,7 +34,7 @@ resource "selectel_dbaas_kafka_acl_v1" "acl_1" {
 
 * `allow_write` - (Required) Allows to connect as a producer.
 
-* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new user. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/managed-databases/about/projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new user. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
 
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new ACL. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/#managed-databases).
 

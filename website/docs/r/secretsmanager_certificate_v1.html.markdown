@@ -49,19 +49,29 @@ resource "selectel_secretsmanager_certificate_v1" "certificate_1" {
 ## Argument Reference
 
 * `name` - (Required) Certificate name.
+
 * `certificates` - (Required) Certificate chain in PEM format. The value of each certificate must begin with `-----BEGIN CERTIFICATE-----` and end with `-----END CERTIFICATE-----`.
+
 * `private_key` - (Required, Sensitive) Private key. The value must begin with `-----BEGIN PRIVATE KEY-----` and end with `-----END PRIVATE KEY-----`.
-* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
+
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
 
 ## Attributes Reference
 
 * `dns_names` - Domain names for which the certificate is issued.
+
 * `id` - Unique identifier of the certificate.
+
 * `issued_by` - Information about the Certificate Authority (CA) which verified and signed the certificate.
+
 * `serial` - Certificate serial number assigned by the Certificate Authority (CA) which issued the certificate.
+
 * `validity` - Certificate validity in the RFC3339 timestamp format:
+
     * `not_before` - Effective date and time of the certificate.
+
     * `not_after` - Expiration date and time of the certificate.
+
 * `version` - Certificate version.
 
 ## Import
@@ -75,6 +85,6 @@ terraform import selectel_secretsmanager_certificate_v1.certificate_1 <cetrifica
 
 where:
 
-* `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
+* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
 
-* `<cetrificate_id>` — Unique identifier of the certificate. To get the ID of the certificate, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager/), go to **Cloud Platform** ⟶ **Secrets Manager** ⟶ the **Certificates** tab ⟶ in the certificate menu select *Copy UUID*.
+* `<cetrificate_id>` — Unique identifier of the certificate. To get the ID of the certificate, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager/), go to **Cloud Platform** ⟶ **Secrets Manager** ⟶ the **Certificates** tab ⟶ in the certificate menu select **Copy UUID**.

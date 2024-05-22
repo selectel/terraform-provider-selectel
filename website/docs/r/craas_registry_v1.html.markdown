@@ -23,7 +23,7 @@ resource "selectel_craas_registry_v1" "registry_1" {
 
 * `name` - (Required) Registry name. Changing this creates a new registry. The name can contain lowercase latin characters, digits, and hyphens. The name starts with a letter and ends with a letter or a digit. It cannot exceed 20 symbols. Learn more about [Registries in Container Registry](https://docs.selectel.ru/cloud/craas/registry/).
 
-* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new registry. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/craas/about/projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new registry. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
 
 ## Attributes Reference
 
@@ -47,10 +47,10 @@ where:
 
 * `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/control-panel-actions/account/registration/).
 
-* `<username>` — Name of the service user. To get the name, in the top right corner of the [Control panel](https://my.selectel.ru/profile/users_management/users?type=service), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
 
 * `<password>` — Password of the service user.
 
-* `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/craas/about/projects/).
+* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/craas), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
 
 * `<registry_id>` — Unique identifier of the registry, for example, `939506d6-7621-4581-b673-eacf3db30f5b`. To get the registry ID, use [Selectel Cloud Management API](https://developers.selectel.ru/docs/selectel-cloud-platform/craas_api/).

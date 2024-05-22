@@ -24,13 +24,17 @@ resource "selectel_secretsmanager_secret_v1" "secret_1" {
 ## Argument Reference
 
 * `key` - (Required) Secret name.
+
 * `value` - (Required, Sensitive) Secret value, for example password, API key, certificate key. The limit is 65 536 characters.
-* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
+
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
+
 * `description` - (Optional) Secret description.
 
 ## Attributes Reference
 
 * `created_at` - Time when the secret was created.
+
 * `name` - Secret name, same as the secret key.
 
 ## Import
@@ -44,6 +48,6 @@ terraform import selectel_secretsmanager_secret_v1.secret_1 <selectel_project_id
 
 where:
 
-* `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
+* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
 
 * `<key>` — Secret name. To get the secret name, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager/), go to **Cloud Platform** ⟶ **Secrets Manager** ⟶ the **Secrets** tab ⟶ copy the name of the required secret.

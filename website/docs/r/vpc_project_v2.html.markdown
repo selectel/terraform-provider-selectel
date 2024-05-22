@@ -3,12 +3,12 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_project_v2"
 sidebar_current: "docs-selectel-resource-vpc-project-v2"
 description: |-
-  Creates and manages a Selectel Cloud Platform project using public API v2.
+  Creates and manages a Selectel project using public API v2.
 ---
 
 # selectel\_vpc\_project_v2
 
-Creates and manages a Cloud Platform project using public API v2. For more information about Cloud Platform projects, see the [official Selectel documentation](https://docs.selectel.ru/cloud/servers/about/projects/).
+Creates and manages a project using public API v2. For more information about projects, see the [official Selectel documentation](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
 
 ## Example Usage
 
@@ -60,7 +60,7 @@ resource "selectel_vpc_project_v2" "project_1" {
 
 * `name` - (Required) Project name.
 
-* `quotas` - (Optional) Array of quotas for the project. Learn more about [Quotas](https://docs.selectel.ru/cloud/servers/about/quotas/).
+* `quotas` - (Optional) Array of quotas for the project. Learn more about [Project limits and quotas](https://docs.selectel.ru/control-panel-actions/projects/quotas/).
 
   * `resource_name` - (Required) Resource name. To get the name of the resource, use [Selectel Cloud Quota Management API](https://developers.selectel.ru/docs/selectel-cloud-platform/main-services/cloud-quota-management/).
 
@@ -68,9 +68,9 @@ resource "selectel_vpc_project_v2" "project_1" {
 
     * `region` - (Optional) Pool where the resource is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/).
 
-    * `zone` - (Optional) Pool segment where the resource is located, for example, `ru-3a`.  Learn more about available pool segments in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/).
+    * `zone` - (Optional) Pool segment where the resource is located, for example, `ru-3a`. Learn more about available pool segments in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/).
 
-    * `value` - (Required) Quota value. The value cannot exceed the project limit. To get the project limit, in the [Control panel](https://my.selectel.ru/vpc/quotas/), go to **Cloud Platform** ⟶ **Quotas**. The project limit for the resource is in the **Quota** column. Learn more about [Project limits](https://docs.selectel.ru/cloud/servers/about/quotas/).
+    * `value` - (Required) Quota value. The value cannot exceed the project limit. To get the project limit, in the [Control panel](https://my.selectel.ru/vpc/quotas/), go to **Cloud Platform** ⟶ **Quotas**. The project limit for the resource is in the **Quota** column. Learn more about [Project limits and quotas](https://docs.selectel.ru/control-panel-actions/projects/quotas/).
 
 * `custom_url` - (Optional) URL of the project in the external panel. The available value is the third-level domain, for example, `123456.selvpc.ru` or `project.example.com`. Learn more [how to set up access to external panel](https://docs.selectel.ru/control-panel-actions/account/external-panel/).
 
@@ -103,9 +103,9 @@ where:
 
 * `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/control-panel-actions/account/registration/).
 
-* `<username>` — Name of the service user. To get the name, in the top right corner of the [Control panel](https://my.selectel.ru/profile/users_management/users?type=service), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
 
 * `<password>` — Password of the service user.
 
-* `<project_id>` — Unique identifier of the Cloud Platform project, for example, `a07abc12310546f1b9291ab3013a7d75`. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/), go to the **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project.
+* `<project_id>` — Unique identifier of the project, for example, `a07abc12310546f1b9291ab3013a7d75`. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project.
 
