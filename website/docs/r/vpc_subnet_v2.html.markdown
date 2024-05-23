@@ -35,9 +35,9 @@ resource "selectel_vpc_subnet_v2" "subnet_1" {
 
 * `cidr` - CIDR of the public subnet.
 
-* `network_id` - Unique identifier of the associated OpenStack network. Learn more about the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_network_v2) resource in the official OpenStack documentation.
+* `network_id` - Unique identifier of the associated OpenStack network. Learn more about the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_network_v2) resource in the official OpenStack documentation.
 
-* `subnet_id` - Unique identifier of the associated OpenStack subnet. Learn more about the [openstack_networking_subnet_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_subnet_v2) resource in the official OpenStack documentation.
+* `subnet_id` - Unique identifier of the associated OpenStack subnet. Learn more about the [openstack_networking_subnet_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_subnet_v2) resource in the official OpenStack documentation.
 
 * `status` - Status of the public subnet.
 

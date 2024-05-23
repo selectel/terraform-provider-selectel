@@ -27,11 +27,11 @@ resource "selectel_vpc_floatingip_v2" "floatingip_1" {
 
 ## Attributes Reference
 
-* `port_id` - Unique identifier of the associated OpenStack port. Learn more about the [openstack_networking_port_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_port_v2) resource in the official OpenStack documentation.
+* `port_id` - Unique identifier of the associated OpenStack port. Learn more about the [openstack_networking_port_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_port_v2) resource in the official OpenStack documentation.
 
 * `floating_ip_address` - Public IP address.
 
-* `fixed_ip_address` - Fixed private IP address of the OpenStack port, that is associated with the public IP address. Learn more about the [openstack_networking_port_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_port_v2) resource in the official OpenStack documentation.
+* `fixed_ip_address` - Fixed private IP address of the OpenStack port, that is associated with the public IP address. Learn more about the [openstack_networking_port_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_port_v2) resource in the official OpenStack documentation.
 
 * `status` - Status of the public IP address.
 

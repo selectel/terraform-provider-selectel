@@ -47,12 +47,19 @@ resource "selectel_iam_user_v1" "user_1" {
 To assign roles, use the following values for `scope` and `role_name`:
 
 * Account administrator - `scope` is `account`, `role_name` is `member`.
+
 * Billing administrator - `scope` is `account`, `role_name` is `billing`.
+
 * User administrator - `scope` is `account`, `role_name` is `iam_admin`.
+
 * Project administrator - `scope` is `project`, `role_name` is `member`.
+
 * Account viewer - `scope` is `account`, `role_name` is `reader`.
+
 * Project viewer - `scope` is `project`, `role_name` is `reader`.
+
 * Object storage admin - `scope` is `project`, `role_name` is `object_storage:admin`.
+
 * Object storage user - `scope` is `project`, `role_name` is `object_storage_user`.
 
 ## Attributes Reference

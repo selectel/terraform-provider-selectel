@@ -185,21 +185,36 @@ resource "selectel_domains_rrset_v2" "caa_rrset_1" {
 * `records` - (Required) List of records in the RRSet.
   
   * `content` - (Required) Record value. The value depends on the RRSet type.
-    - `<ipv4_address>` — IPv4-address. Applicable only to A RRSets.
-    - `<ipv6_address>` — IPv6-address. Applicable only to AAAA RRSets.
-    - `<text>` — Any text wrapped in `\"`. Applicable only to TXT RRSets.
-    - `<target>` — Canonical name of the host providing the service with a dot at the end. Applicable only to CNAME, ALIAS, and SRV RRSets.
-    - `<name_server>` — Canonical name of the NS server. Applicable only to NS RRSets.
-    - `<priority>` — Priority of the records preferences. Applicable only to MX and SRV RRSets. Lower value means more preferred.
-    - `<host>` — Name of the mailserver with a dot at the end. Applicable only to MX RRSets.
-    - `<weight>` — Weight for the records with the same priority. Higher value means more preferred. Applicable only to SRV RRSets.
-    - `<port>` — TCP or UDP port of the host of the service. Applicable only to SRV RRSets.
-    - `<algorithm>` — Algorithm of the public key. Applicable only to SSHFP RRSets. Available values are `1` for RSA, `2` for DSA, `3` for ECDSA, `4` for Ed25519.
-    - `<fingerprint_type>` — Algorithm used to hash the public key. Applicable only to SSHFP RRSets. Available values are `1` for SHA-1, `2` for SHA-256.
-    - `<fingerprint>` — Hexadecimal representation of the hash result, as text. Applicable only to SSHFP RRSets.
-    - `<flag>` — Critical value that has a specific meaning per RFC. Applicable only to CAA RRSets. The available range is from 0 to 128.
-    - `<tag>` — Identifier of the property represented by the record. Applicable only to CAA RRSets. Available values are `issue`, `issuewild`, `iodef`, `auth`, `path`, `policy`.
-    - `<value>` — Value associated with the tag wrapped in `\"`. Applicable only to CAA RRSets.
+
+    * `<ipv4_address>` — IPv4-address. Applicable only to A RRSets.
+
+    * `<ipv6_address>` — IPv6-address. Applicable only to AAAA RRSets.
+
+    * `<text>` — Any text wrapped in `\"`. Applicable only to TXT RRSets.
+
+    * `<target>` — Canonical name of the host providing the service with a dot at the end. Applicable only to CNAME, ALIAS, and SRV RRSets.
+
+    * `<name_server>` — Canonical name of the NS server. Applicable only to NS RRSets.
+
+    * `<priority>` — Priority of the records preferences. Applicable only to MX and SRV RRSets. Lower value means more preferred.
+
+    * `<host>` — Name of the mailserver with a dot at the end. Applicable only to MX RRSets.
+
+    * `<weight>` — Weight for the records with the same priority. Higher value means more preferred. Applicable only to SRV RRSets.
+
+    * `<port>` — TCP or UDP port of the host of the service. Applicable only to SRV RRSets.
+
+    * `<algorithm>` — Algorithm of the public key. Applicable only to SSHFP RRSets. Available values are `1` for RSA, `2` for DSA, `3` for ECDSA, `4` for Ed25519.
+
+    * `<fingerprint_type>` — Algorithm used to hash the public key. Applicable only to SSHFP RRSets. Available values are `1` for SHA-1, `2` for SHA-256.
+
+    * `<fingerprint>` — Hexadecimal representation of the hash result, as text. Applicable only to SSHFP RRSets.
+
+    * `<flag>` — Critical value that has a specific meaning per RFC. Applicable only to CAA RRSets. The available range is from 0 to 128.
+
+    * `<tag>` — Identifier of the property represented by the record. Applicable only to CAA RRSets. Available values are `issue`, `issuewild`, `iodef`, `auth`, `path`, `policy`.
+
+    * `<value>` — Value associated with the tag wrapped in `\"`. Applicable only to CAA RRSets.
 
   * `disabled` - (Optional) Enables or disables the record. Boolean flag, the default value is false.
 
