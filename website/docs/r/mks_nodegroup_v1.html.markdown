@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_mks\_nodegroup\_v1
 
-Creates and manages a Managed Kubernetes node group using public API v1. For more information about node groups, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/).
+Creates and manages a Managed Kubernetes node groups using public API v1. For more information about node groups, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/).
 
 ## Example usage
 
@@ -48,15 +48,15 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 
 ## Argument Reference
 
-* `cluster_id` - (Required) Unique identifier of the associated Managed Kubernetes cluster. Changing this creates a new node group. You can create up to eight group nodes in a cluster. Retrieved from the [selectel_mks_cluster_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/mks_cluster_v1) resource.
+* `cluster_id` - (Required) Unique identifier of the associated Managed Kubernetes cluster. Changing this creates a new node group. Retrieved from the [selectel_mks_cluster_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/mks_cluster_v1) resource.
 
 * `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new node group. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/cloud/managed-kubernetes/about/projects/).
 
 * `region` - (Required) Pool where the cluster is located, for example, `ru-3`. Changing this creates a new node group. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-kubernetes).
 
-* `availability_zone` - (Required) Pool segment where all nodes of the node group are located. Changing this creates a new node group.  Learn more about available pool segments in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-kubernetes).  
+* `availability_zone` - (Required) Pool segment where all nodes of the node group are located. Changing this creates a new node group. Learn more about available pool segments in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-kubernetes).  
 
-* `nodes_count` - (Required) Number of worker nodes in the node group. The maximum number of nodes in a node group is 15. Changing this resizes the node group if `enable_autoscale` is false.
+* `nodes_count` - (Required) Number of worker nodes in the node group. The maximum number of nodes in a node group is 20. Changing this resizes the node group if `enable_autoscale` is false.
 
 * `cpus` - (Optional) Number of vCPUs for each node. Can be skipped only when `flavor_id` is set. Changing this creates a new node group. Learn more about [Configurations](https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/configurations/).
 
@@ -64,7 +64,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 
 * `volume_gb` - (Optional) Volume size in GB for each node. Can be skipped only when flavor_id is set and local_volume is `true`. Changing this creates a new node group.  Learn more about [Configurations](https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/configurations/).
 
-* `volume_type` - (Optional) Type of an OpenStack blockstorage volume for each node. Can be skipped only when `flavor_id` is set and the flavor properties contain additional specifications for a local volume. Changing this creates a new node group. Available volume types are `fast`, `basic`, and `universal`. The format is `<volume_type>.<availability_zone>`. Learn more about [Network volumes](https://docs.selectel.ru/en/cloud/servers/volumes/about-network-volumes/).
+* `volume_type` - (Optional) Type of OpenStack blockstorage volume for each node. Can be skipped only when `flavor_id` is set and the flavor properties contain additional specifications for a local volume. Changing this creates a new node group. Available volume types are `fast`, `basic`, and `universal`. The format is `<volume_type>.<availability_zone>`. Learn more about [Network volumes](https://docs.selectel.ru/en/cloud/servers/volumes/about-network-volumes/).
 
 * `local_volume` - (Optional) Specifies if nodes use a local volume. Cannot be used with the flavors that have specifications for a local volume. Changing this creates a new node group. Boolean flag, the default value is false.
 
@@ -72,7 +72,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 
 * `labels` - (Optional) List of Kubernetes labels applied to each node in the node group.
 
-* `taints` - (Optional) List of Kubernetes taints applied to each node in the node group.  Contains a key-value pair and an effect applied for the taint. Available effects are `NoSchedule`, `PreferNoSchedule`, and `NoExecute`. Learn more about [Taints](https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/add-taints/).
+* `taints` - (Optional) List of Kubernetes taints applied to each node in the node group. Contains a key-value pair and an effect applied for the taint. Available effects are `NoSchedule`, `PreferNoSchedule`, and `NoExecute`. Learn more about [Taints](https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/add-taints/).
 
 * `keypair_name` - (Optional) Name of the SSH key added to all nodes. Changing this creates a new node group.
 
@@ -119,4 +119,4 @@ where:
 
 * `<cluster_id>` — Unique identifier of the cluster, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the cluster ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes** ⟶ the cluster page ⟶ copy the ID at the top of the page under the cluster name, near the region and pool.
 
-* `<nodegroup_id>` — Unique identifier of the node, for example, `63ed5342-b22c-4c7a-9d41-c1fe4a142c13`. To get the cluster ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes**. Click the required cluster ⟶ the required node group. The node group ID is at the top of the page under the node group name, near the region and pool.
+* `<nodegroup_id>` — Unique identifier of the node group, for example, `63ed5342-b22c-4c7a-9d41-c1fe4a142c13`. To get the node group ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes**. Click the required cluster ⟶ the `⋮` symbol on top of the required node group ⟶ the "Delete node group" button ⟶ copy the ID from the message "Are you sure want to delete group <nodegroup_id>?" ⟶ click the "Cancel" button. Alternatively, you can get the ID using the [API request](https://developers.selectel.com/docs/selectel-cloud-platform/kubernetes_api/) to get list of node groups in the cluster.
