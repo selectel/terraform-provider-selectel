@@ -26,7 +26,7 @@ data "selectel_dbaas_configuration_parameter_v1" "configuration_parameter_1" {
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-databases).
 
 * `filter` - (Optional) Values to filter available extensions.
-  
+
   * `datastore_type_id` - (Optional) Unique identifier of the datastore type for which you get configuration parameters.  You can retrieve information about available datastore types with the [selectel_dbaas_datastore_type_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_datastore_type_v1) data source.
 
   * `name` - (Optional) Name of the configuration parameter to search.

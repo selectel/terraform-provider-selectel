@@ -26,7 +26,7 @@ data "selectel_dbaas_available_extension_v1" "available_extension_1" {
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-databases).
 
 * `filter` - (Optional) Values to filter available extensions.
-  
+
   * `name` - (Optional) Name of the extension to search.
 
 ## Attributes Reference

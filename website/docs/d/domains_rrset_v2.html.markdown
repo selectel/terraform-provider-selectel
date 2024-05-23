@@ -40,7 +40,7 @@ data "selectel_domains_rrset_v2" "rrset_1" {
 * `managed_by` - RRSet owner.
 
 * `records` - List of records in the RRSet.
-  
+
   * `content` - Record value.
 
   * `disabled` - Shows if the record is enabled or disabled.
