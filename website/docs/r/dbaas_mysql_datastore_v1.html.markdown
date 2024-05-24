@@ -36,7 +36,7 @@ resource "selectel_dbaas_mysql_datastore_v1" "datastore_1" {
 
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new datastore. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-databases).
 
-* `subnet_id` - (Required) Unique identifier of the associated OpenStack network. Changing this creates a new datastore. Learn more about the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_network_v2) resource in the official OpenStack documentation.
+* `subnet_id` - (Required) Unique identifier of the associated OpenStack network. Changing this creates a new datastore. Learn more about the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_network_v2) resource in the official OpenStack documentation.
   
 * `type_id` - (Required) Unique identifier of the datastore type. Changing this creates a new datastore. Retrieved from the [selectel_dbaas_datastore_type_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_datastore_type_v1) data source.
 

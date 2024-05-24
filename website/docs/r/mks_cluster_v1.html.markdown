@@ -64,9 +64,9 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
 
 * `enable_patch_version_auto_upgrade` - (Optional) Enables or disables auto-upgrading of the cluster to the latest available Kubernetes patch version during the maintenance window. Boolean flag, the default value is `true`. Must be set to false for basic clusters (if `zonal` is `true`).  Learn more about [Patch versions auto-upgrading](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/upgrade-version/).
 
-* `network_id` - (Optional) Unique identifier of the associated OpenStack network. Changing this creates a new cluster. Learn more about the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_network_v2) resource in the official OpenStack documentation.
+* `network_id` - (Optional) Unique identifier of the associated OpenStack network. Changing this creates a new cluster. Learn more about the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_network_v2) resource in the official OpenStack documentation.
 
-* `subnet_id` - (Optional) Unique identifier of the associated OpenStack subnet. Changing this creates a new cluster. Learn more about the [openstack_networking_subnet_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_subnet_v2) resource in the official OpenStack documentation.
+* `subnet_id` - (Optional) Unique identifier of the associated OpenStack subnet. Changing this creates a new cluster. Learn more about the [openstack_networking_subnet_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_subnet_v2) resource in the official OpenStack documentation.
 
 * `maintenance_window_start` - (Optional) Time in UTC when maintenance in the cluster starts. The format is `hh:mm:ss`. Learn more about the [Maintenance window](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/set-up-maintenance-window/).
 
