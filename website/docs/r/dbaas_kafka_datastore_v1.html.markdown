@@ -47,9 +47,9 @@ resource "selectel_dbaas_kafka_datastore_v1" "datastore_1" {
 * `flavor` - (Optional) Flavor configuration for the datastore. You can retrieve information about available flavors with the [selectel_dbaas_flavor_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_flavor_v1) data source. Learn more about available configurations for [Kafka](https://docs.selectel.ru/en/cloud/managed-databases/kafka/configurations/).
 
   * `vcpus` - (Required) Number of vCPUs.
-  
+
   * `ram` - (Required) Amount of RAM in MB.
-  
+
   * `disk` - (Required) Volume size in GB.
 
 * `firewall` - (Optional) List of IP-addresses with access to the datastore.

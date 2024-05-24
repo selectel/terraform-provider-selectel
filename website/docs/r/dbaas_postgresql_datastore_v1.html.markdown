@@ -71,15 +71,15 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
 * `flavor` - (Optional) Flavor configuration for the datastore. You can retrieve information about available flavors with the [selectel_dbaas_flavor_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_flavor_v1) data source. Learn more about available configurations for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/configurations/), [PostgreSQL for 1C](https://docs.selectel.ru/en/cloud/managed-databases/postgresql-for-1c/configurations-1c/), and [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/configurations/).
 
   * `vcpus` - (Required) Number of vCPUs.
-  
+
   * `ram` - (Required) Amount of RAM in MB.
-  
+
   * `disk` - (Required) Volume size in GB.
 
 * `pooler` - (Optional) Configures a connection pooler for the datastore. Applicable to PostgreSQL and PostgreSQL TimescaleDB.
 
   * `mode` - (Required) Pooling mode. Available values are `session`, `transaction`, and `statement`. The default value is `transaction.` Learn more about pooling modes for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/connection-pooler/#pooling-modes) and [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/connection-pooler/#pooling-modes).
-  
+
   * `size` - (Required) Pool size. The available range is from 1 to 500. The default value is `30`. Learn more about pool size for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/connection-pooler/#pool-size) and [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/connection-pooler/#pool-size).
 
 * `firewall` - (Optional) List of IP-addresses with access to the datastore.
@@ -87,7 +87,7 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
 * `restore` - (Optional) Restores parameters for the datastore. Changing this creates a new datastore.
 
   * `datastore_id` - (Optional) Unique identifier of the datastore from which you restore. To get the datastore ID, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases** ⟶ copy the ID under the cluster name.
-  
+
   * `target_time` - (Optional) Time within seven previous days when you have the datastore state to restore.
 
 * `config` - (Optional) Configuration parameters for the datastore. You can retrieve information about available configuration parameters with the [selectel_dbaas_configuration_parameter_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_configuration_parameter_v1) data source.
@@ -95,7 +95,7 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
 * `floating_ips` - (Optional) Assigns floating IP addresses to the nodes in the datastore. The network configuration must meet the requirements. Learn more about [floating IP addresses and the required network configuration](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/public-ip/).
 
   * master - (Required) Number of floating IPs associated with the master. Available values are `0` and `1`.
-  
+
   * replica - (Required) Number of floating IPs associated with the replicas. The minimum value is `0`. The maximum value must be 1 less that the value of the `node_count` argument. 
 
 ## Attributes Reference
