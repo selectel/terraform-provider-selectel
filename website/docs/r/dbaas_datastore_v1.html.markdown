@@ -98,19 +98,20 @@ The following arguments are supported:
 
 **flavor**
 
-- `vcpus` - (Required) CPU count for the flavor.
-- `ram` - (Required) RAM count for the flavor.
-- `disk` - (Required) Disk size for the flavor.
+* `vcpus` - (Required) CPU count for the flavor.
+* `ram` - (Required) RAM count for the flavor.
+
+* `disk` - (Required) Disk size for the flavor.
 
 **pooler**
 
-- `mode` - (Required) Mode for the pooler. Valid values: ["session", "transaction", "statement"].
-- `size` - (Required) Size of the pooler.
+* `mode` - (Required) Mode for the pooler. Valid values: ["session", "transaction", "statement"].
+* `size` - (Required) Size of the pooler.
 
 **restore**
 
-- `datastore_id` - (Optional) - Datastore ID to restore from.
-- `target_time` - (Optional) - Restore by the target time.
+* `datastore_id` - (Optional) - Datastore ID to restore from.
+* `target_time` - (Optional) - Restore by the target time.
 
 ## Attributes Reference
 

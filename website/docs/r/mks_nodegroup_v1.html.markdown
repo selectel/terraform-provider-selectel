@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_mks\_nodegroup\_v1
 
-Creates and manages a Managed Kubernetes node groups using public API v1. For more information about node groups, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/).
+Creates and manages a Managed Kubernetes node group using public API v1. For more information about node groups, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/).
 
 ## Example usage
 
@@ -64,7 +64,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 
 * `volume_gb` - (Optional) Volume size in GB for each node. Can be skipped only when flavor_id is set and local_volume is `true`. Changing this creates a new node group.  Learn more about [Configurations](https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/configurations/).
 
-* `volume_type` - (Optional) Type of OpenStack blockstorage volume for each node. Can be skipped only when `flavor_id` is set and the flavor properties contain additional specifications for a local volume. Changing this creates a new node group. Available volume types are `fast`, `basic`, and `universal`. The format is `<volume_type>.<availability_zone>`. Learn more about [Network volumes](https://docs.selectel.ru/en/cloud/servers/volumes/about-network-volumes/).
+* `volume_type` - (Optional) Type of an OpenStack Block Storage volume for each node. Can be skipped only when `flavor_id` is set and the flavor properties contain additional specifications for a local volume. Changing this creates a new node group. Available volume types are `fast`, `basic`, and `universal`. The format is `<volume_type>.<availability_zone>`. Learn more about [Network volumes](https://docs.selectel.ru/en/cloud/servers/volumes/about-network-volumes/).
 
 * `local_volume` - (Optional) Specifies if nodes use a local volume. Cannot be used with the flavors that have specifications for a local volume. Changing this creates a new node group. Boolean flag, the default value is false.
 
@@ -119,4 +119,4 @@ where:
 
 * `<cluster_id>` — Unique identifier of the cluster, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the cluster ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes** ⟶ the cluster page ⟶ copy the ID at the top of the page under the cluster name, near the region and pool.
 
-* `<nodegroup_id>` — Unique identifier of the node group, for example, `63ed5342-b22c-4c7a-9d41-c1fe4a142c13`. To get the node group ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes**. Click the required cluster ⟶ the `⋮` symbol on top of the required node group ⟶ the "Delete node group" button ⟶ copy the ID from the message "Are you sure want to delete group <nodegroup_id>?" ⟶ click the "Cancel" button. Alternatively, you can get the ID using the [API request](https://developers.selectel.com/docs/selectel-cloud-platform/kubernetes_api/) to get list of node groups in the cluster.
+* `<nodegroup_id>` — Unique identifier of the node group, for example, `63ed5342-b22c-4c7a-9d41-c1fe4a142c13`. To get the node group ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes**. Click the required cluster. The node group ID is at the top of the node group card, near the pool.
