@@ -28,7 +28,7 @@ resource "selectel_dbaas_postgresql_extension_v1" "extension_1" {
 
 * `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new extension. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
-* `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new extension. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#облачные-базы-данных).
+* `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new extension. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-databases).
 
 * `datastore_id` - (Required) Unique identifier of the associated datastore. Changing this creates a new extension. Retrieved from the [selectel_dbaas_postgresql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_datastore_v1)
 
