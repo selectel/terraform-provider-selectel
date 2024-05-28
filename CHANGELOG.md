@@ -1,3 +1,7 @@
+## 5.1.1 (May 21, 2024)
+IMPROVEMENTS:
+* Fixed schema for `schema_selectel_dbaas_postgresql_database_v1` ([#276](https://github.com/selectel/terraform-provider-selectel/pull/276))
+
 ## 5.1.0 (May 16, 2024)
 
 IMPROVEMENTS:
