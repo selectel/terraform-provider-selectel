@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"math/rand"
+	"math/rand" // nosemgrep: go.lang.security.audit.crypto.math_random.math-random-used
 	"sort"
 	"strconv"
 	"strings"
@@ -58,7 +58,8 @@ func getDBaaSClient(d *schema.ResourceData, meta interface{}) (*dbaas.API, diag.
 }
 
 func stringChecksum(s string) (string, error) {
-	h := md5.New() // #nosec
+	// #nosec G401
+	h := md5.New() // nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-md5
 	_, err := h.Write([]byte(s))
 	if err != nil {
 		return "", err
