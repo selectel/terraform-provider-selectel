@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/dbaas-go"
+	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dbaas"
 )
 
 func resourceDBaaSPostgreSQLExtensionV1() *schema.Resource {
@@ -28,51 +29,11 @@ func resourceDBaaSPostgreSQLExtensionV1() *schema.Resource {
 			Update: schema.DefaultTimeout(60 * time.Minute),
 			Delete: schema.DefaultTimeout(60 * time.Minute),
 		},
-		Schema: map[string]*schema.Schema{
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"available_extension_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"datastore_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"database_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-		},
+		Schema: resourceDBaaSPostgreSQLExtensionV1Schema(),
 	}
 }
 
 func resourceDBaaSPostgreSQLExtensionV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	datastoreID := d.Get("datastore_id").(string)
-
-	selMutexKV.Lock(datastoreID)
-	defer selMutexKV.Unlock(datastoreID)
-
-	databaseID := d.Get("database_id").(string)
-
-	selMutexKV.Lock(databaseID)
-	defer selMutexKV.Unlock(databaseID)
-
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -80,8 +41,8 @@ func resourceDBaaSPostgreSQLExtensionV1Create(ctx context.Context, d *schema.Res
 
 	extensionCreateOpts := dbaas.ExtensionCreateOpts{
 		AvailableExtensionID: d.Get("available_extension_id").(string),
-		DatastoreID:          datastoreID,
-		DatabaseID:           databaseID,
+		DatastoreID:          d.Get("datastore_id").(string),
+		DatabaseID:           d.Get("database_id").(string),
 	}
 
 	log.Print(msgCreate(objectExtension, extensionCreateOpts))
@@ -92,7 +53,7 @@ func resourceDBaaSPostgreSQLExtensionV1Create(ctx context.Context, d *schema.Res
 
 	log.Printf("[DEBUG] waiting for extension %s to become 'ACTIVE'", extension.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForDBaaSExtensionV1ActiveState(ctx, dbaasClient, extension.ID, timeout)
+	err = waiters.WaitForDBaaSExtensionV1ActiveState(ctx, dbaasClient, extension.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectExtension, err))
 	}
@@ -122,16 +83,6 @@ func resourceDBaaSPostgreSQLExtensionV1Read(ctx context.Context, d *schema.Resou
 }
 
 func resourceDBaaSPostgreSQLExtensionV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	datastoreID := d.Get("datastore_id").(string)
-
-	selMutexKV.Lock(datastoreID)
-	defer selMutexKV.Unlock(datastoreID)
-
-	databaseID := d.Get("database_id").(string)
-
-	selMutexKV.Lock(databaseID)
-	defer selMutexKV.Unlock(databaseID)
-
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -146,10 +97,10 @@ func resourceDBaaSPostgreSQLExtensionV1Delete(ctx context.Context, d *schema.Res
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{strconv.Itoa(http.StatusOK)},
 		Target:     []string{strconv.Itoa(http.StatusNotFound)},
-		Refresh:    dbaasExtensionV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
+		Refresh:    waiters.DBaaSExtensionV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
+		MinTimeout: 20 * time.Second,
 	}
 
 	log.Printf("[DEBUG] waiting for extension %s to become deleted", d.Id())

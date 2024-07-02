@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_domains\_rrset\_v2
 
-Creates and manages an RRSet in DNS Hosting (actual) using public API v2. For more information about RRSets, see the [official Selectel documentation](https://docs.selectel.ru/networks-services/dns/records/).
+Creates and manages an RRSet in DNS Hosting (actual) using public API v2. For more information about RRSets, see the [official Selectel documentation](https://docs.selectel.ru/en/networks-services/dns/records/).
 
 ## Example usage
 
@@ -185,25 +185,40 @@ resource "selectel_domains_rrset_v2" "caa_rrset_1" {
 * `records` - (Required) List of records in the RRSet.
   
   * `content` - (Required) Record value. The value depends on the RRSet type.
-    - `<ipv4_address>` — IPv4-address. Applicable only to A RRSets.
-    - `<ipv6_address>` — IPv6-address. Applicable only to AAAA RRSets.
-    - `<text>` — Any text wrapped in `\"`. Applicable only to TXT RRSets.
-    - `<target>` — Canonical name of the host providing the service with a dot at the end. Applicable only to CNAME, ALIAS, and SRV RRSets.
-    - `<name_server>` — Canonical name of the NS server. Applicable only to NS RRSets.
-    - `<priority>` — Priority of the records preferences. Applicable only to MX and SRV RRSets. Lower value means more preferred.
-    - `<host>` — Name of the mailserver with a dot at the end. Applicable only to MX RRSets.
-    - `<weight>` — Weight for the records with the same priority. Higher value means more preferred. Applicable only to SRV RRSets.
-    - `<port>` — TCP or UDP port of the host of the service. Applicable only to SRV RRSets.
-    - `<algorithm>` — Algorithm of the public key. Applicable only to SSHFP RRSets. Available values are `1` for RSA, `2` for DSA, `3` for ECDSA, `4` for Ed25519.
-    - `<fingerprint_type>` — Algorithm used to hash the public key. Applicable only to SSHFP RRSets. Available values are `1` for SHA-1, `2` for SHA-256.
-    - `<fingerprint>` — Hexadecimal representation of the hash result, as text. Applicable only to SSHFP RRSets.
-    - `<flag>` — Critical value that has a specific meaning per RFC. Applicable only to CAA RRSets. The available range is from 0 to 128.
-    - `<tag>` — Identifier of the property represented by the record. Applicable only to CAA RRSets. Available values are `issue`, `issuewild`, `iodef`, `auth`, `path`, `policy`.
-    - `<value>` — Value associated with the tag wrapped in `\"`. Applicable only to CAA RRSets.
+
+    * `<ipv4_address>` — IPv4-address. Applicable only to A RRSets.
+
+    * `<ipv6_address>` — IPv6-address. Applicable only to AAAA RRSets.
+
+    * `<text>` — Any text wrapped in `\"`. Applicable only to TXT RRSets.
+
+    * `<target>` — Canonical name of the host providing the service with a dot at the end. Applicable only to CNAME, ALIAS, and SRV RRSets.
+
+    * `<name_server>` — Canonical name of the NS server. Applicable only to NS RRSets.
+
+    * `<priority>` — Priority of the records preferences. Applicable only to MX and SRV RRSets. Lower value means more preferred.
+
+    * `<host>` — Name of the mailserver with a dot at the end. Applicable only to MX RRSets.
+
+    * `<weight>` — Weight for the records with the same priority. Higher value means more preferred. Applicable only to SRV RRSets.
+
+    * `<port>` — TCP or UDP port of the host of the service. Applicable only to SRV RRSets.
+
+    * `<algorithm>` — Algorithm of the public key. Applicable only to SSHFP RRSets. Available values are `1` for RSA, `2` for DSA, `3` for ECDSA, `4` for Ed25519.
+
+    * `<fingerprint_type>` — Algorithm used to hash the public key. Applicable only to SSHFP RRSets. Available values are `1` for SHA-1, `2` for SHA-256.
+
+    * `<fingerprint>` — Hexadecimal representation of the hash result, as text. Applicable only to SSHFP RRSets.
+
+    * `<flag>` — Critical value that has a specific meaning per RFC. Applicable only to CAA RRSets. The available range is from 0 to 128.
+
+    * `<tag>` — Identifier of the property represented by the record. Applicable only to CAA RRSets. Available values are `issue`, `issuewild`, `iodef`, `auth`, `path`, `policy`.
+
+    * `<value>` — Value associated with the tag wrapped in `\"`. Applicable only to CAA RRSets.
 
   * `disabled` - (Optional) Enables or disables the record. Boolean flag, the default value is false.
 
-* `project_id` - (Required) Unique identifier of the associated Cloud Platform project. Changing this creates a new RRSet. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new RRSet. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
 * `comment` - (Optional) Comment to add to the RRSet.
 
@@ -225,13 +240,13 @@ terraform import selectel_domains_rrset_v2.rrset_1 <zone_name>/<rrset_name>/<rrs
 
 where:
 
-* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/control-panel-actions/account/registration/).
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
 
-* `<username>` — Name of the service user. To get the name, in the top right corner of the [Control panel](https://my.selectel.ru/profile/users_management/users?type=service), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
 
 * `<password>` — Password of the service user.
 
-* `<selectel_project_id>` — Unique identifier of the associated Cloud Platform project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to Cloud Platform ⟶ project name ⟶ copy the ID of the required project. Learn more about [Cloud Platform projects](https://docs.selectel.ru/cloud/servers/about/projects/).
+* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/dbaas), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
 * `<zone_name>` — Zone name, for example, `example.com.`. To get the name, in the [Control panel](https://my.selectel.ru/dns/), go to **DNS**. The zone name is in the **Zone** column.
 

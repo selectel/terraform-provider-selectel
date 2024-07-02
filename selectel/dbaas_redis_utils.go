@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/dbaas-go"
+	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dbaas"
 )
 
 func updateRedisDatastorePassword(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
@@ -21,7 +22,7 @@ func updateRedisDatastorePassword(ctx context.Context, d *schema.ResourceData, c
 
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
 	timeout := d.Timeout(schema.TimeoutUpdate)
-	err = waitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
+	err = waiters.WaitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
 	if err != nil {
 		return errUpdatingObject(objectDatastore, d.Id(), err)
 	}
@@ -47,7 +48,7 @@ func resizeRedisDatastore(ctx context.Context, d *schema.ResourceData, client *d
 
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
+	err = waiters.WaitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout)
 	if err != nil {
 		return errUpdatingObject(objectDatastore, d.Id(), err)
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/dbaas-go"
+	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dbaas"
 )
 
 func resourceDBaaSKafkaTopicV1() *schema.Resource {
@@ -29,36 +30,7 @@ func resourceDBaaSKafkaTopicV1() *schema.Resource {
 			Update: schema.DefaultTimeout(60 * time.Minute),
 			Delete: schema.DefaultTimeout(60 * time.Minute),
 		},
-		Schema: map[string]*schema.Schema{
-			"datastore_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"partitions": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-		},
+		Schema: resourceDBaaSKafkaTopicV1Schema(),
 	}
 }
 
@@ -82,7 +54,7 @@ func resourceDBaaSTopicV1Create(ctx context.Context, d *schema.ResourceData, met
 
 	log.Printf("[DEBUG] waiting for topic %s to become 'ACTIVE'", topic.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForDBaaSTopicV1ActiveState(ctx, dbaasClient, topic.ID, timeout)
+	err = waiters.WaitForDBaaSTopicV1ActiveState(ctx, dbaasClient, topic.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectTopic, err))
 	}
@@ -131,7 +103,7 @@ func resourceDBaaSTopicV1Update(ctx context.Context, d *schema.ResourceData, met
 
 		log.Printf("[DEBUG] waiting for topic %s to become 'ACTIVE'", d.Id())
 		timeout := d.Timeout(schema.TimeoutCreate)
-		err = waitForDBaaSTopicV1ActiveState(ctx, dbaasClient, d.Id(), timeout)
+		err = waiters.WaitForDBaaSTopicV1ActiveState(ctx, dbaasClient, d.Id(), timeout)
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectTopic, d.Id(), err))
 		}
@@ -155,7 +127,7 @@ func resourceDBaaSTopicV1Delete(ctx context.Context, d *schema.ResourceData, met
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{strconv.Itoa(http.StatusOK)},
 		Target:     []string{strconv.Itoa(http.StatusNotFound)},
-		Refresh:    dbaasTopicV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
+		Refresh:    waiters.DBaaSTopicV1DeleteStateRefreshFunc(ctx, dbaasClient, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      10 * time.Second,
 		MinTimeout: 20 * time.Second,
