@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_dbaas\_available_extension_v1
 
-Provides a list of extensions available for Managed Databases. Applicable to PostgreSQL, PostgreSQL for 1C, PostgreSQL TimescaleDB. For more information about extensions, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/add-extensions/), [PostgreSQL for 1C](https://docs.selectel.ru/en/cloud/managed-databases/postgresql-for-1c/extensions-1c/), and [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/add-extensions/).
+Provides a list of extensions available for Managed Databases. Applicable to PostgreSQL and PostgreSQL TimescaleDB. For more information about extensions, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/add-extensions/) and [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/add-extensions/).
 
 ## Example Usage
 
