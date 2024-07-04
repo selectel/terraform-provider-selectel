@@ -90,7 +90,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 
 * `nodes` - List of nodes in the node group.
 
-* `nodegroup_type` - Type of the node group. Available values are `STANDARD`, `GPU`, `SGX`.
+* `nodegroup_type` - Type of the node group. Available values are `STANDARD`, `GPU`, and `SGX`.
 
 ## Import
 

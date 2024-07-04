@@ -13,7 +13,7 @@ Provides a list of available datastore types in Managed Databases. For more info
 ## Example Usage for PostgreSQL
 
 ```hcl
-data "selectel_dbaas_datastore_type_v1" "dt" {
+data "selectel_dbaas_datastore_type_v1" "datastore_type_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-3"
   filter {
@@ -26,7 +26,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
 ## Example Usage for PostgreSQL for 1C
 
 ```hcl
-data "selectel_dbaas_datastore_type_v1" "dt" {
+data "selectel_dbaas_datastore_type_v1" "datastore_type_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-3"
   filter {
@@ -39,7 +39,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
 ## Example Usage for PostgreSQL TimescaleDB
 
 ```hcl
-data "selectel_dbaas_datastore_type_v1" "dt" {
+data "selectel_dbaas_datastore_type_v1" "datastore_type_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-3"
   filter {
@@ -109,9 +109,9 @@ data "selectel_dbaas_datastore_type_v1" "datastore_type_1" {
 
 * `filter` - (Optional) Values to filter available datastore types:
 
-  * `engine` - (Optional) Engine of the datastore type to search. Available values are `postgresql` (for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/), [PostgreSQL for 1C](https://docs.selectel.ru/en/cloud/managed-databases/postgresql-for-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/)), `mysql` (for [MySQL sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-sync/)), `mysql_native` (for [MySQL semi-sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-semi-sync/)), and `redis`(for [Redis](https://docs.selectel.ru/en/cloud/managed-databases/redis/)).
+  * `engine` - (Optional) Engine of the datastore type to search. Available values are `postgresql` (for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/), [PostgreSQL for 1C](https://docs.selectel.ru/en/cloud/managed-databases/postgresql-for-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/)), `mysql` (for [MySQL sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-sync/)), `mysql_native` (for [MySQL semi-sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-semi-sync/)), `redis` (for [Redis](https://docs.selectel.ru/en/cloud/managed-databases/redis/)), and `kafka` (for [Kafka](https://docs.selectel.ru/en/cloud/managed-databases/kafka/)).
 
-  * `version` - (Optional) Version of the datastore type to search. For PostgreSQL for 1C, the versions are in the format `<version_number>-1C`. For PostgreSQL TimescaleDB, the versions are in the format `<version_number>-TimescaleDB`. Learn more about available versions for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/configurations/), [PostgreSQL for 1C](https://docs.selectel.ru/en/cloud/managed-databases/postgresql-for-1c/configurations-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/configurations/), [MySQL semi-sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-semi-sync/configurations/), [MySQL sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-sync/configurations/), and [Redis](https://docs.selectel.ru/en/cloud/managed-databases/redis/configurations/).
+  * `version` - (Optional) Version of the datastore type to search. For PostgreSQL for 1C, the versions are in the format `<version_number>-1C`. For PostgreSQL TimescaleDB, the versions are in the format `<version_number>-TimescaleDB`. Learn more about available versions for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/configurations/), [PostgreSQL for 1C](https://docs.selectel.ru/en/cloud/managed-databases/postgresql-for-1c/configurations-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/configurations/), [MySQL semi-sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-semi-sync/configurations/), [MySQL sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-sync/configurations/), [Redis](https://docs.selectel.ru/en/cloud/managed-databases/redis/configurations/), and [Kafka](https://docs.selectel.ru/en/cloud/managed-databases/kafka/configurations/).
 
 ## Attributes Reference
 
