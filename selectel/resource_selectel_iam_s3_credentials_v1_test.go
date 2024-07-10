@@ -27,7 +27,7 @@ func TestAccIAMV1S3CredentialsBasic(t *testing.T) {
 			{
 				Config: testAccIAMV1S3CredentialsBasic(projectName, userName, userPassword, s3CredsName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckIAMV1S3CredentialsExists("selectel_iam_s3_credentials_v1.s3_creds_tf_acc_test_1", &s3credentials),
+					testAccCheckIAMV1S3CredentialsExists("selectel_iam_s3_credentials_v1.s3_creds_tf_acc_test_1", &s3credential),
 					resource.TestCheckResourceAttrSet("selectel_iam_s3_credentials_v1.s3_creds_tf_acc_test_1", "user_id"),
 					resource.TestCheckResourceAttrSet("selectel_iam_s3_credentials_v1.s3_creds_tf_acc_test_1", "project_id"),
 					resource.TestCheckResourceAttrSet("selectel_iam_s3_credentials_v1.s3_creds_tf_acc_test_1", "secret_key"),
@@ -50,8 +50,8 @@ func testAccCheckIAMV1S3CredentialsDestroy(s *terraform.State) error {
 			continue
 		}
 
-		credentialsList, _ := iamClient.S3Credentials.List(context.Background(), rs.Primary.Attributes["user_id"])
-		for _, cred := range credentialsList {
+		response, _ := iamClient.S3Credentials.List(context.Background(), rs.Primary.Attributes["user_id"])
+		for _, cred := range response.Credentials {
 			if cred.AccessKey == rs.Primary.ID {
 				return errors.New("s3 credentials still exist")
 			}
@@ -61,7 +61,7 @@ func testAccCheckIAMV1S3CredentialsDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckIAMV1S3CredentialsExists(n string, s3Credential *s3credentials.Credentials) resource.TestCheckFunc {
+func testAccCheckIAMV1S3CredentialsExists(n string, s3Credential *s3credentials.Credential) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -77,9 +77,9 @@ func testAccCheckIAMV1S3CredentialsExists(n string, s3Credential *s3credentials.
 			return fmt.Errorf("can't get iamclient for test s3 credentials object")
 		}
 
-		credentialsList, _ := iamClient.S3Credentials.List(context.Background(), rs.Primary.Attributes["user_id"])
-		var neededS3Credentials s3credentials.Credentials
-		for _, cred := range credentialsList {
+		response, _ := iamClient.S3Credentials.List(context.Background(), rs.Primary.Attributes["user_id"])
+		var neededS3Credentials s3credentials.Credential
+		for _, cred := range response.Credentials {
 			if cred.Name == rs.Primary.Attributes["name"] {
 				neededS3Credentials = cred
 				break
