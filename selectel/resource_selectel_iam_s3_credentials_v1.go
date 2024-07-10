@@ -90,13 +90,13 @@ func resourceIAMS3CredentialsV1Read(ctx context.Context, d *schema.ResourceData,
 	}
 
 	log.Print(msgGet(objectS3Credentials, d.Id()))
-	credentials, err := iamClient.S3Credentials.List(ctx, d.Get("user_id").(string))
+	response, err := iamClient.S3Credentials.List(ctx, d.Get("user_id").(string))
 	if err != nil {
 		return diag.FromErr(errGettingObject(objectS3Credentials, d.Id(), err))
 	}
 
-	var credential s3credentials.Credentials
-	for _, c := range credentials {
+	var credential s3credentials.Credential
+	for _, c := range response.Credentials {
 		if d.Id() == c.AccessKey {
 			credential = c
 			break
