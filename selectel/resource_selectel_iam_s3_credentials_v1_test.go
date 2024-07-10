@@ -13,7 +13,7 @@ import (
 )
 
 func TestAccIAMV1S3CredentialsBasic(t *testing.T) {
-	var s3credentials s3credentials.Credentials
+	var s3credential s3credentials.Credential
 	s3CredsName := acctest.RandomWithPrefix("tf-acc")
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	userName := acctest.RandomWithPrefix("tf-acc")
