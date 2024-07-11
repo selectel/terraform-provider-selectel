@@ -1,6 +1,18 @@
 package selectel
 
-import ()
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/selectel/iam-go"
+	"github.com/selectel/iam-go/iamerrors"
+	"github.com/selectel/iam-go/service/groups"
+	"github.com/selectel/iam-go/service/roles"
+)
 
 func resourceIAMGroupV1() *schema.Resource {
 	return &schema.Resource{
