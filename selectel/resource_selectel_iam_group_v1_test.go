@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/iam-go/service/groups"
-	"testing"
 )
 
 func TestAccIAMV1GroupBasic(t *testing.T) {

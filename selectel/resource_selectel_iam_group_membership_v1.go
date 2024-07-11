@@ -1,14 +1,16 @@
 package selectel
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"log"
 	"slices"
 	"sort"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceIAMGroupMembershipV1() *schema.Resource {
@@ -160,6 +162,7 @@ func generateCompositeID(groupID string, userIDs []string) string {
 	sort.Strings(userIDs)
 	concatenated := groupID + ":" + strings.Join(userIDs, ",")
 	encoded := base64.StdEncoding.EncodeToString([]byte(concatenated))
+
 	return encoded
 }
 
@@ -200,7 +203,7 @@ func diffUsers(oldUsers, newUsers []string) ([]string, []string) {
 	return usersToAdd, usersToRemove
 }
 
-// containsAll checks if sliceB is a subset of sliceA
+// containsAll checks if sliceB is a subset of sliceA.
 func containsAll(sliceA, sliceB []string) bool {
 	for _, b := range sliceB {
 		found := false
@@ -214,5 +217,6 @@ func containsAll(sliceA, sliceB []string) bool {
 			return false
 		}
 	}
+
 	return true
 }

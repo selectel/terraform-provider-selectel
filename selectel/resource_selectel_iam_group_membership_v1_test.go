@@ -1,9 +1,9 @@
 package selectel
 
 import (
-	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccIAMV1GroupMembershipBasic(t *testing.T) {
@@ -59,7 +59,7 @@ func TestAccIAMV1GroupUpdate(t *testing.T) {
 }
 
 func testAccIAMV1GroupMembershipBasic() string {
-	return fmt.Sprintf(`
+	return `
 resource "selectel_iam_serviceuser_v1" "serviceuser_tf_acc_test_1" {
   name        = "test-service-user-1"
   password    = "Qazwsxedc123"
@@ -93,11 +93,11 @@ resource "selectel_iam_group_membership_v1" "membership_tf_acc_test_1" {
 		selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1.id
 	]
 }
-`)
+`
 }
 
 func testAccIAMV1GroupMembershipUpdate() string {
-	return fmt.Sprintf(`
+	return `
 resource "selectel_iam_serviceuser_v1" "serviceuser_tf_acc_test_1" {
   name        = "test-service-user-1"
   password    = "Qazwsxedc123"
@@ -132,5 +132,5 @@ resource "selectel_iam_group_membership_v1" "membership_tf_acc_test_1" {
 		selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_2.id
 	]
 }
-`)
+`
 }
