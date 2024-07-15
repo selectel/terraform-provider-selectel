@@ -1,0 +1,5 @@
+secrets:
+  - id: private-key
+    statement: false-positive in description field
+    paths:
+      - selectel/resourse_selectel_secretsmanager_certificate_v1.go

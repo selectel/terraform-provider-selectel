@@ -18,12 +18,12 @@ func getSecretsManagerClient(d *schema.ResourceData, meta interface{}) (*secrets
 
 	endpointSM, err := selvpcClient.Catalog.GetEndpoint(SecretsManager, config.AuthRegion)
 	if err != nil {
-		return nil, diag.FromErr(fmt.Errorf("can't get %s endpoint to init secretsmanager client: %w, got %s", SecretsManager, err, endpointSM.URL))
+		return nil, diag.FromErr(fmt.Errorf("can't get %s endpoint to init secretsmanager client: %w", SecretsManager, err))
 	}
 
 	endpointCM, err := selvpcClient.Catalog.GetEndpoint(CertificateManager, config.AuthRegion)
 	if err != nil {
-		return nil, diag.FromErr(fmt.Errorf("can't get %s endpoint to init secretsmanager client: %w, got %s", CertificateManager, err, endpointCM.URL))
+		return nil, diag.FromErr(fmt.Errorf("can't get %s endpoint to init secretsmanager client: %w", CertificateManager, err))
 	}
 
 	cl, err := secretsmanager.New(
