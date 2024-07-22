@@ -9,7 +9,8 @@ description: |-
 # selectel\_iam\_group\_v1
 
 Creates and manages a user group for Selectel products using public API v1.
- Selectel products support Identity and Access Management (IAM).
+Selectel products support Identity and Access Management (IAM).
+For more information about user groups, see the [official Selectel documentation](https://docs.selectel.ru/control-panel-actions/users-and-roles/groups/).
 
 ## Example Usage
 
@@ -26,13 +27,13 @@ resource "selectel_iam_group_v1" "group_1" {
 
 ## Argument Reference
 
-* `name` - (Required) Name of the group.
+* `name` - (Required) Group name.
 
-* `description` - (Optional) Description of the group.
+* `description` - (Optional) Group description.
 
 * `role` - (Optional) Manages group roles. You can add multiple roles – each role in a separate block. For more information about roles, see the [Roles](#roles) section.
 
-    * `role_name` - (Required) Role name. Available role names are `iam_admin`, `member`, `reader`, and `billing`.
+    * `role_name` - (Required) Role name. Available role names are `iam_admin`, `member`, `reader`, `billing`, `object_storage:admin`, and `object_storage_user`.
 
     * `scope` - (Required) Scope of the role. Available scopes are `account` and `project`. If `scope` is `project`, the `project_id` argument is required.
 
@@ -77,4 +78,4 @@ where:
 
 * `<password>` — Password of the service user.
 
-* `<group_id>` — Unique identifier of the group to import, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the ID, use either [iam-go](https://github.com/selectel/iam-go) or [IAM API](https://developers.selectel.ru/docs/control-panel/iam/).
+* `<group_id>` — Unique identifier of the group, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the group ID, use either [iam-go](https://github.com/selectel/iam-go) or [IAM API](https://developers.selectel.ru/docs/control-panel/iam/).
