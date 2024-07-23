@@ -16,7 +16,7 @@ Creates and manages a certificate in Selectel Secrets Manager using public API v
 
 ```hcl
 resource "selectel_secretsmanager_certificate_v1" "certificate_1" {
-  name          = "certificate",
+  name          = "certificate"
   certificates  = [file("./_cert.pem")]
   private_key   = file("./_private_key.pem")
   project_id    = selectel_vpc_project_v2.project_1.id
@@ -27,7 +27,7 @@ resource "selectel_secretsmanager_certificate_v1" "certificate_1" {
 
 ```hcl
 resource "selectel_secretsmanager_certificate_v1" "certificate_1" {
-  name         = "certificate",
+  name         = "certificate"
   certificates = [
       <<-EOF
       -----BEGIN CERTIFICATE-----
@@ -80,11 +80,11 @@ You can import a certificate:
 
 ```shell
 export SEL_PROJECT_ID=<selectel_project_id>
-terraform import selectel_secretsmanager_certificate_v1.certificate_1 <cetrificate_id>
+terraform import selectel_secretsmanager_certificate_v1.certificate_1 <certificate_id>
 ```
 
 where:
 
 * `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
-* `<cetrificate_id>` — Unique identifier of the certificate. To get the ID of the certificate, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager/), go to **Cloud Platform** ⟶ **Secrets Manager** ⟶ the **Certificates** tab ⟶ in the certificate menu select **Copy UUID**.
+* `<certificate_id>` — Unique identifier of the certificate. To get the ID of the certificate, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager/), go to **Cloud Platform** ⟶ **Secrets Manager** ⟶ the **Certificates** tab ⟶ in the certificate menu select **Copy UUID**.
