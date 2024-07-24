@@ -159,6 +159,11 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(0, 65535),
 			},
+			"install_nvidia_device_plugin": {
+				Type:     schema.TypeBool,
+				Required: true,
+				ForceNew: true,
+			},
 			"nodegroup_type": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -235,18 +240,20 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	// Prepare nodegroup create options.
+	installNvidiaDevicePlugin := d.Get("install_nvidia_device_plugin").(bool)
 	createOpts := &nodegroup.CreateOpts{
-		Count:            d.Get("nodes_count").(int),
-		FlavorID:         d.Get("flavor_id").(string),
-		CPUs:             d.Get("cpus").(int),
-		RAMMB:            d.Get("ram_mb").(int),
-		VolumeGB:         d.Get("volume_gb").(int),
-		VolumeType:       d.Get("volume_type").(string),
-		LocalVolume:      d.Get("local_volume").(bool),
-		KeypairName:      d.Get("keypair_name").(string),
-		AffinityPolicy:   d.Get("affinity_policy").(string),
-		AvailabilityZone: d.Get("availability_zone").(string),
-		UserData:         d.Get("user_data").(string),
+		Count:                     d.Get("nodes_count").(int),
+		FlavorID:                  d.Get("flavor_id").(string),
+		CPUs:                      d.Get("cpus").(int),
+		RAMMB:                     d.Get("ram_mb").(int),
+		VolumeGB:                  d.Get("volume_gb").(int),
+		VolumeType:                d.Get("volume_type").(string),
+		LocalVolume:               d.Get("local_volume").(bool),
+		KeypairName:               d.Get("keypair_name").(string),
+		AffinityPolicy:            d.Get("affinity_policy").(string),
+		AvailabilityZone:          d.Get("availability_zone").(string),
+		UserData:                  d.Get("user_data").(string),
+		InstallNvidiaDevicePlugin: &installNvidiaDevicePlugin,
 	}
 
 	projectQuotas, _, err := quotas.GetProjectQuotas(selvpcClient, projectID, region)
@@ -357,6 +364,7 @@ func resourceMKSNodegroupV1Read(ctx context.Context, d *schema.ResourceData, met
 	d.Set("autoscale_max_nodes", mksNodegroup.AutoscaleMaxNodes)
 	d.Set("nodegroup_type", mksNodegroup.NodegroupType)
 	d.Set("user_data", mksNodegroup.UserData)
+	d.Set("install_nvidia_device_plugin", mksNodegroup.InstallNvidiaDevicePlugin)
 
 	if err := d.Set("labels", mksNodegroup.Labels); err != nil {
 		log.Print(errSettingComplexAttr("labels", err))
