@@ -1,6 +1,8 @@
 name: Secure
 
-on: push
+on:
+  push:
+  pull_request:
 
 jobs:
   # Sample GitHub Actions:

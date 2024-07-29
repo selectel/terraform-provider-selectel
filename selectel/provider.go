@@ -27,8 +27,6 @@ const (
 	objectUser                      = "user"
 	objectServiceUser               = "service user"
 	objectS3Credentials             = "s3 credentials"
-	objectGroup                     = "group"
-	objectGroupMembership           = "group-membership"
 	objectSAMLFederation            = "saml federation"
 	objectSAMLFederationCertificate = "saml federation certificate"
 	objectCluster                   = "cluster"
@@ -139,8 +137,6 @@ func Provider() *schema.Provider {
 			"selectel_iam_serviceuser_v1":                           resourceIAMServiceUserV1(),
 			"selectel_iam_user_v1":                                  resourceIAMUserV1(),
 			"selectel_iam_s3_credentials_v1":                        resourceIAMS3CredentialsV1(),
-			"selectel_iam_group_v1":                                 resourceIAMGroupV1(),
-			"selectel_iam_group_membership_v1":                      resourceIAMGroupMembershipV1(),
 			"selectel_iam_saml_federation_v1":                       resourceIAMSAMLFederationV1(),
 			"selectel_iam_saml_federation_certificate_v1":           resourceIAMSAMLFederationCertificateV1(),
 			"selectel_vpc_vrrp_subnet_v2":                           resourceVPCVRRPSubnetV2(),        // DEPRECATED
