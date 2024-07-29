@@ -90,7 +90,7 @@ func resourceIAMSAMLFederationV1Create(ctx context.Context, d *schema.ResourceDa
 
 	d.SetId(federation.ID)
 
-	return resourceIAMServiceUserV1Read(ctx, d, meta)
+	return resourceIAMSAMLFederationV1Read(ctx, d, meta)
 }
 
 func resourceIAMSAMLFederationV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -143,7 +143,7 @@ func resourceIAMSAMLFederationV1Update(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(errUpdatingObject(objectSAMLFederation, d.Id(), err))
 	}
 
-	return resourceIAMServiceUserV1Read(ctx, d, meta)
+	return resourceIAMSAMLFederationV1Read(ctx, d, meta)
 }
 
 func resourceIAMSAMLFederationV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

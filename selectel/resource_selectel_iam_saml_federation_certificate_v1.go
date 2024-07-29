@@ -87,7 +87,7 @@ func resourceIAMSAMLFederationCertificateV1Create(ctx context.Context, d *schema
 
 	d.SetId(federation.ID)
 
-	return resourceIAMServiceUserV1Read(ctx, d, meta)
+	return resourceIAMSAMLFederationCertificateV1Read(ctx, d, meta)
 }
 
 func resourceIAMSAMLFederationCertificateV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -103,7 +103,6 @@ func resourceIAMSAMLFederationCertificateV1Read(ctx context.Context, d *schema.R
 	}
 
 	d.Set("account_id", certificate.AccountID)
-	d.Set("federation_id", certificate.FederationID)
 	d.Set("name", certificate.Name)
 	d.Set("description", certificate.Description)
 	d.Set("not_before", certificate.NotBefore)
@@ -133,7 +132,7 @@ func resourceIAMSAMLFederationCertificateV1Update(ctx context.Context, d *schema
 		return diag.FromErr(errUpdatingObject(objectSAMLFederationCertificate, d.Id(), err))
 	}
 
-	return resourceIAMServiceUserV1Read(ctx, d, meta)
+	return resourceIAMSAMLFederationCertificateV1Read(ctx, d, meta)
 }
 
 func resourceIAMSAMLFederationCertificateV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
