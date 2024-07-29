@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/selectel/iam-go/service/federations/saml/certificates"
 	"log"
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/iam-go/iamerrors"
+	"github.com/selectel/iam-go/service/federations/saml/certificates"
 )
 
 func resourceIAMSAMLFederationCertificateV1() *schema.Resource {

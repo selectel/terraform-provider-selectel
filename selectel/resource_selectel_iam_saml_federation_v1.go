@@ -3,12 +3,12 @@ package selectel
 import (
 	"context"
 	"errors"
-	"github.com/selectel/iam-go/service/federations/saml"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/iam-go/iamerrors"
+	"github.com/selectel/iam-go/service/federations/saml"
 )
 
 func resourceIAMSAMLFederationV1() *schema.Resource {
