@@ -27,6 +27,7 @@ func resourceIAMSAMLFederationCertificateV1() *schema.Resource {
 			"federation_id": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "Federation ID to create Certificate for.",
 			},
 			"name": {
@@ -43,6 +44,7 @@ func resourceIAMSAMLFederationCertificateV1() *schema.Resource {
 			"data": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "Certificate issued on the provider side. It must begin with -----BEGIN CERTIFICATE----- and end with -----END CERTIFICATE-----.",
 			},
 			"account_id": {
