@@ -71,11 +71,13 @@ func resourceIAMGroupV1Create(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(err)
 	}
 
-	log.Print(msgCreate(objectGroup, d.Id()))
-	group, err := iamClient.Groups.Create(ctx, groups.CreateRequest{
+	opts := groups.CreateRequest{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-	})
+	}
+	log.Print(msgCreate(objectGroup, opts))
+
+	group, err := iamClient.Groups.Create(ctx, opts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectGroup, err))
 	}
@@ -103,12 +105,7 @@ func resourceIAMGroupV1Read(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.FromErr(errGettingObject(objectGroup, d.Id(), err))
 	}
 
-	if group.Group.Roles != nil && len(group.Group.Roles) != 0 {
-		err = d.Set("role", convertIAMRolesToSet(group.Roles))
-		if err != nil {
-			return nil
-		}
-	}
+	d.Set("role", convertIAMRolesToSet(group.Roles))
 
 	return nil
 }

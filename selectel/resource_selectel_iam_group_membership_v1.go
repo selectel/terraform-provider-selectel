@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -43,8 +42,8 @@ func resourceIAMGroupMembershipV1Create(ctx context.Context, d *schema.ResourceD
 	for i, v := range userIDsInterface {
 		userIDs[i] = v.(string)
 	}
+	log.Print(msgCreate(objectGroupMembership, userIDs))
 
-	log.Print(msgCreate(objectGroupMembership, d.Id()))
 	if len(userIDs) == 0 {
 		createErr := fmt.Errorf("error creating group membership: no user ids specified")
 		return diag.FromErr(errCreatingObject(objectGroupMembership, createErr))
@@ -104,14 +103,14 @@ func resourceIAMGroupMembershipV1Update(ctx context.Context, d *schema.ResourceD
 
 	oldValue, newValue := d.GetChange("user_ids")
 
-	oldUserIDs := make([]string, len(oldValue.([]interface{})))
-	for i, v := range oldValue.([]interface{}) {
-		oldUserIDs[i] = v.(string)
+	oldUserIDs := make(map[string]struct{})
+	for _, v := range oldValue.([]interface{}) {
+		oldUserIDs[v.(string)] = struct{}{}
 	}
 
-	newUserIDs := make([]string, len(newValue.([]interface{})))
-	for i, v := range newValue.([]interface{}) {
-		newUserIDs[i] = v.(string)
+	newUserIDs := make(map[string]struct{})
+	for _, v := range newValue.([]interface{}) {
+		newUserIDs[v.(string)] = struct{}{}
 	}
 
 	usersToAdd, usersToRemove := diffUsers(oldUserIDs, newUserIDs)
@@ -159,19 +158,19 @@ func resourceIAMGroupMembershipV1Delete(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
-func diffUsers(oldUsers, newUsers []string) ([]string, []string) {
+func diffUsers(oldUsers, newUsers map[string]struct{}) ([]string, []string) {
 	usersToAdd := make([]string, 0)
 	usersToRemove := make([]string, 0)
 
-	for _, user := range newUsers {
-		if !slices.Contains(oldUsers, user) {
-			usersToAdd = append(usersToAdd, user)
+	for id := range newUsers {
+		if _, ok := oldUsers[id]; !ok {
+			usersToAdd = append(usersToAdd, id)
 		}
 	}
 
-	for _, user := range oldUsers {
-		if !slices.Contains(newUsers, user) {
-			usersToRemove = append(usersToRemove, user)
+	for id := range oldUsers {
+		if _, ok := newUsers[id]; !ok {
+			usersToRemove = append(usersToRemove, id)
 		}
 	}
 
