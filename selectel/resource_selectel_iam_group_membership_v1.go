@@ -2,12 +2,9 @@ package selectel
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"log"
 	"slices"
-	"sort"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -57,7 +54,7 @@ func resourceIAMGroupMembershipV1Create(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(errCreatingObject(objectGroupMembership, err))
 	}
 
-	d.SetId(generateCompositeID(d.Get("group_id").(string), userIDs))
+	d.SetId(d.Get("group_id").(string))
 
 	return resourceIAMGroupMembershipV1Read(ctx, d, meta)
 }
@@ -68,9 +65,12 @@ func resourceIAMGroupMembershipV1Read(ctx context.Context, d *schema.ResourceDat
 		return diagErr
 	}
 
-	groupID, userIDs, err := parseCompositeID(d.Id())
-	if err != nil {
-		return diag.FromErr(errGettingObject(objectGroupMembership, d.Id(), err))
+	groupID := d.Id()
+
+	userIDsInterface := d.Get("user_ids").([]interface{})
+	userIDs := make([]string, len(userIDsInterface))
+	for i, v := range userIDsInterface {
+		userIDs[i] = v.(string)
 	}
 
 	response, err := iamClient.Groups.Get(ctx, groupID)
@@ -88,11 +88,6 @@ func resourceIAMGroupMembershipV1Read(ctx context.Context, d *schema.ResourceDat
 		responseServiceUserIDs = append(responseServiceUserIDs, serviceUser.ID)
 	}
 
-	if !containsAll(userIDs, responseUserIDs) || !containsAll(userIDs, responseServiceUserIDs) {
-		readErr := fmt.Errorf("error validating group memberships: Group %s does not contain all users %v", groupID, userIDs)
-		return diag.FromErr(errGettingObject(objectGroupMembership, d.Id(), readErr))
-	}
-
 	d.Set("group_id", groupID)
 	d.Set("user_ids", append(responseUserIDs, responseServiceUserIDs...))
 
@@ -105,14 +100,17 @@ func resourceIAMGroupMembershipV1Update(ctx context.Context, d *schema.ResourceD
 		return diagErr
 	}
 
-	groupID, oldUserIDs, err := parseCompositeID(d.Id())
-	if err != nil {
-		return diag.FromErr(errUpdatingObject(objectGroupMembership, d.Id(), err))
+	groupID := d.Id()
+
+	oldValue, newValue := d.GetChange("user_ids")
+
+	oldUserIDs := make([]string, len(oldValue.([]interface{})))
+	for i, v := range oldValue.([]interface{}) {
+		oldUserIDs[i] = v.(string)
 	}
 
-	newUserIDsInterface := d.Get("user_ids").([]interface{})
-	newUserIDs := make([]string, len(newUserIDsInterface))
-	for i, v := range newUserIDsInterface {
+	newUserIDs := make([]string, len(newValue.([]interface{})))
+	for i, v := range newValue.([]interface{}) {
 		newUserIDs[i] = v.(string)
 	}
 
@@ -132,7 +130,7 @@ func resourceIAMGroupMembershipV1Update(ctx context.Context, d *schema.ResourceD
 		}
 	}
 
-	d.SetId(generateCompositeID(groupID, newUserIDs))
+	d.SetId(groupID)
 
 	return resourceIAMGroupMembershipV1Read(ctx, d, meta)
 }
@@ -143,12 +141,15 @@ func resourceIAMGroupMembershipV1Delete(ctx context.Context, d *schema.ResourceD
 		return diagErr
 	}
 
-	groupID, userIDs, err := parseCompositeID(d.Id())
-	if err != nil {
-		return diag.FromErr(errDeletingObject(objectGroupMembership, d.Id(), err))
+	groupID := d.Id()
+
+	userIDsInterface := d.Get("user_ids").([]interface{})
+	userIDs := make([]string, len(userIDsInterface))
+	for i, v := range userIDsInterface {
+		userIDs[i] = v.(string)
 	}
 
-	err = iamClient.Groups.DeleteUsers(ctx, groupID, userIDs)
+	err := iamClient.Groups.DeleteUsers(ctx, groupID, userIDs)
 	if err != nil {
 		return diag.FromErr(errDeletingObject(objectGroupMembership, d.Id(), err))
 	}
@@ -156,32 +157,6 @@ func resourceIAMGroupMembershipV1Delete(ctx context.Context, d *schema.ResourceD
 	d.SetId("")
 
 	return nil
-}
-
-func generateCompositeID(groupID string, userIDs []string) string {
-	sort.Strings(userIDs)
-	concatenated := groupID + ":" + strings.Join(userIDs, ",")
-	encoded := base64.StdEncoding.EncodeToString([]byte(concatenated))
-
-	return encoded
-}
-
-func parseCompositeID(compositeID string) (string, []string, error) {
-	decodedBytes, err := base64.StdEncoding.DecodeString(compositeID)
-	if err != nil {
-		return "", nil, fmt.Errorf("error decoding composite ID: %s, %v", compositeID, err)
-	}
-	decodedString := string(decodedBytes)
-
-	parts := strings.Split(decodedString, ":")
-	if len(parts) != 2 {
-		return "", nil, fmt.Errorf("invalid decoded composite ID: %s", decodedString)
-	}
-
-	groupID := parts[0]
-	userIDs := strings.Split(parts[1], ",")
-
-	return groupID, userIDs, nil
 }
 
 func diffUsers(oldUsers, newUsers []string) ([]string, []string) {
