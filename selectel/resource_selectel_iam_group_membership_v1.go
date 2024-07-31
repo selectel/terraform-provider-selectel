@@ -177,21 +177,3 @@ func diffUsers(oldUsers, newUsers []string) ([]string, []string) {
 
 	return usersToAdd, usersToRemove
 }
-
-// containsAll checks if sliceB is a subset of sliceA.
-func containsAll(sliceA, sliceB []string) bool {
-	for _, b := range sliceB {
-		found := false
-		for _, a := range sliceA {
-			if a == b {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return false
-		}
-	}
-
-	return true
-}
