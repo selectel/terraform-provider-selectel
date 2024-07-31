@@ -38,7 +38,7 @@ resource "selectel_iam_saml_federation_v1" "federation_1" {
 
 * `sign_authn_requests` - (Required) Enable authentication requests signing.
 
-* `forec_authn` - (Optional) Require users to authenticate via SSO every time they log in.
+* `force_authn` - (Optional) Require users to authenticate via SSO every time they log in.
 
 * `session_max_age_hours` - (Required) Session lifetime.
 

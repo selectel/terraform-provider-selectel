@@ -2,14 +2,12 @@ package selectel
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/iam-go/iamerrors"
 	"github.com/selectel/iam-go/service/federations/saml/certificates"
 )
 
@@ -77,17 +75,19 @@ func resourceIAMSAMLFederationCertificateV1Create(ctx context.Context, d *schema
 		return diagErr
 	}
 
-	log.Print(msgCreate(objectSAMLFederationCertificate, d.Id()))
-	federation, err := iamClient.SAMLFederations.Certificates.Create(ctx, d.Get("federation_id").(string), certificates.CreateRequest{
+	opts := certificates.CreateRequest{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		Data:        d.Get("data").(string),
-	})
+	}
+	log.Print(msgCreate(objectSAMLFederationCertificate, opts))
+
+	certificate, err := iamClient.SAMLFederations.Certificates.Create(ctx, d.Get("federation_id").(string), opts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectSAMLFederationCertificate, err))
 	}
 
-	d.SetId(federation.ID)
+	d.SetId(certificate.ID)
 
 	return resourceIAMSAMLFederationCertificateV1Read(ctx, d, meta)
 }
@@ -145,7 +145,7 @@ func resourceIAMSAMLFederationCertificateV1Delete(ctx context.Context, d *schema
 
 	log.Print(msgDelete(objectSAMLFederationCertificate, d.Id()))
 	err := iamClient.SAMLFederations.Certificates.Delete(ctx, d.Get("federation_id").(string), d.Id())
-	if err != nil && !errors.Is(err, iamerrors.ErrFederationNotFound) {
+	if err != nil {
 		return diag.FromErr(errDeletingObject(objectSAMLFederationCertificate, d.Id(), err))
 	}
 

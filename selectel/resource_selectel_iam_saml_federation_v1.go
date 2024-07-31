@@ -25,7 +25,7 @@ func resourceIAMSAMLFederationV1() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of the Federation",
+				Description: "Name of the Federation.",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -36,7 +36,7 @@ func resourceIAMSAMLFederationV1() *schema.Resource {
 			"issuer": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "IdP server endpoint URL.",
+				Description: "ID of the credential provider.",
 			},
 			"sso_url": {
 				Type:        schema.TypeString,
@@ -45,7 +45,8 @@ func resourceIAMSAMLFederationV1() *schema.Resource {
 			},
 			"sign_authn_requests": {
 				Type:        schema.TypeBool,
-				Required:    true,
+				Optional:    true,
+				Default:     false,
 				Description: "Should sign authentication requests.",
 			},
 			"session_max_age_hours": {
@@ -74,8 +75,7 @@ func resourceIAMSAMLFederationV1Create(ctx context.Context, d *schema.ResourceDa
 		return diagErr
 	}
 
-	log.Print(msgCreate(objectSAMLFederation, d.Id()))
-	federation, err := iamClient.SAMLFederations.Create(ctx, saml.CreateRequest{
+	opts := saml.CreateRequest{
 		Name:               d.Get("name").(string),
 		Description:        d.Get("description").(string),
 		Issuer:             d.Get("issuer").(string),
@@ -83,7 +83,10 @@ func resourceIAMSAMLFederationV1Create(ctx context.Context, d *schema.ResourceDa
 		SignAuthnRequests:  d.Get("sign_authn_requests").(bool),
 		ForceAuthn:         d.Get("force_authn").(bool),
 		SessionMaxAgeHours: d.Get("session_max_age_hours").(int),
-	})
+	}
+	log.Print(msgCreate(objectSAMLFederation, opts))
+
+	federation, err := iamClient.SAMLFederations.Create(ctx, opts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectSAMLFederation, err))
 	}
