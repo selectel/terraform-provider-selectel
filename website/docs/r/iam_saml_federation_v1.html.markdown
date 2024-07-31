@@ -20,8 +20,6 @@ resource "selectel_iam_saml_federation_v1" "federation_1" {
   description           = "simple description"
   issuer                = "http://localhost:8080/realms/master"
   sso_url               = "http://localhost:8080/realms/master/protocol/saml"
-  sign_authn_requests   = true
-  force_authn           = true
   session_max_age_hours = 24
 }
 ```
@@ -36,7 +34,7 @@ resource "selectel_iam_saml_federation_v1" "federation_1" {
 
 * `sso_url` - (Required) Link to the credential provider login page.
 
-* `sign_authn_requests` - (Required) Enable authentication requests signing.
+* `sign_authn_requests` - (Optional) Enable authentication requests signing.
 
 * `force_authn` - (Optional) Require users to authenticate via SSO every time they log in.
 
