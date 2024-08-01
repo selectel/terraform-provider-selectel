@@ -2,12 +2,14 @@ package selectel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/selectel/iam-go/iamerrors"
 	"github.com/selectel/iam-go/service/federations/saml/certificates"
 )
 
@@ -145,7 +147,7 @@ func resourceIAMSAMLFederationCertificateV1Delete(ctx context.Context, d *schema
 
 	log.Print(msgDelete(objectSAMLFederationCertificate, d.Id()))
 	err := iamClient.SAMLFederations.Certificates.Delete(ctx, d.Get("federation_id").(string), d.Id())
-	if err != nil {
+	if err != nil && !errors.Is(err, iamerrors.ErrFederationCertificateNotFound) {
 		return diag.FromErr(errDeletingObject(objectSAMLFederationCertificate, d.Id(), err))
 	}
 
