@@ -171,7 +171,7 @@ func testAccCheckIAMV1ServiceUserExists(n string, serviceUser *serviceusers.Serv
 			return errors.New("serviceUser not found")
 		}
 
-		*serviceUser = *su
+		*serviceUser = su.ServiceUser
 
 		return nil
 	}
