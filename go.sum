@@ -172,8 +172,8 @@ github.com/selectel/go-selvpcclient/v3 v3.1.1 h1:C1q2LqqosiapoLpnGITGmysg0YCSQYD
 github.com/selectel/go-selvpcclient/v3 v3.1.1/go.mod h1:NM7IXhh1IzqZ88DOw1Qc5Ez3tULLViXo95l5+rKPuyQ=
 github.com/selectel/iam-go v0.3.0 h1:HRoxSBXwvASE9v/A4WgeEDeMvomARIWyj2essV4LmYc=
 github.com/selectel/iam-go v0.3.0/go.mod h1:OIAkW7MZK97YUm+uvUgYbgDhkI9SdzTCxwd4yZoOR1o=
-github.com/selectel/mks-go v0.14.0 h1:huNq/oTutPc3ezB8HRqlGN9WJubTDETpNKuIVqcZOn0=
-github.com/selectel/mks-go v0.14.0/go.mod h1:VxtV3dzwgOEzZc+9VMQb9DvxfSlej2ZQ8jnT8kqIGgU=
+github.com/selectel/mks-go v0.15.0 h1:0ytV5DiQAgbojKA0ukBjtwfWBSQh658nF3mhjZTrWj8=
+github.com/selectel/mks-go v0.15.0/go.mod h1:VxtV3dzwgOEzZc+9VMQb9DvxfSlej2ZQ8jnT8kqIGgU=
 github.com/selectel/secretsmanager-go v0.2.1 h1:OSBrA/07lm/Ecpwg59IJHFAoUHZR29oyfwUgTpr/dos=
 github.com/selectel/secretsmanager-go v0.2.1/go.mod h1:DUPexhiJWLTyZEvse7grJWdcA8p8TEI93gNu1dDu7Yg=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
