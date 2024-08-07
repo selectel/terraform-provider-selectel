@@ -58,6 +58,11 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 
 * `nodes_count` - (Required) Number of worker nodes in the node group. Changing this resizes the node group if `enable_autoscale` is false.
 
+* `install_nvidia_device_plugin` - (Required) Enables or disables installation of the NVIDIA Device Plugin and GPU drivers.  
+Boolean flag: 
+  * `true` — for flavors with GPU enables installation of the NVIDIA Device Plugin and GPU drivers. 
+  * `false` — for flavors without GPU and flavors with GPU disables installation of the NVIDIA Device Plugin and GPU drivers. Learn more about [manual installation of GPU drivers](https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/install-gpu-drivers/).
+
 * `cpus` - (Optional) Number of vCPUs for each node. Can be skipped only when `flavor_id` is set. Changing this creates a new node group. Learn more about [Configurations](https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/configurations/).
 
 * `ram_mb` - (Optional) Amount of RAM in MB for each node. Can be skipped only when `flavor_id` is set. Changing this creates a new node group. Learn more about [Configurations](https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/configurations/).
@@ -90,7 +95,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 
 * `nodes` - List of nodes in the node group.
 
-* `nodegroup_type` - Type of the node group. Available values are `STANDARD`, `GPU`, `SGX`.
+* `nodegroup_type` - Type of the node group. Available values are `STANDARD`, `GPU`, and `SGX`.
 
 ## Import
 

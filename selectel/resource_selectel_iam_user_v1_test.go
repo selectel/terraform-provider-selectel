@@ -123,7 +123,7 @@ func testAccCheckIAMV1UserExists(n string, user *users.User) resource.TestCheckF
 			return errors.New("user not found")
 		}
 
-		*user = *u
+		*user = u.User
 
 		return nil
 	}

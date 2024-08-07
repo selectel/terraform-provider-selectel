@@ -1,0 +1,80 @@
+name: Secure
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  # Sample GitHub Actions:
+  # https://semgrep.dev/docs/semgrep-ci/sample-ci-configs#sample-github-actions-configuration-file
+  #
+  # CLI Reference:
+  # https://semgrep.dev/docs/cli-reference
+  semgrep:
+    runs-on: ubuntu-24.04
+    container:
+      image: semgrep/semgrep
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: semgrep scan --sarif --output=semgrep.sarif --error --severity=WARNING
+        env:
+          SEMGREP_RULES: >-
+            p/command-injection
+            p/comment
+            p/cwe-top-25
+            p/default
+            p/gitlab
+            p/gitleaks
+            p/golang
+            p/gosec
+            p/insecure-transport
+            p/owasp-top-ten
+            p/r2c-best-practices
+            p/r2c-bug-scan
+            p/r2c-security-audit
+            p/secrets
+            p/security-audit
+            p/sql-injection
+            p/xss
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+        if: always()
+
+  # CLI Reference:
+  # https://github.com/aquasecurity/trivy/blob/main/docs/docs/references/configuration/cli/trivy_filesystem.md
+  # https://aquasecurity.github.io/trivy/latest/docs/configuration/#environment-variables
+  trivy:
+    runs-on: ubuntu-24.04
+    container:
+      image: aquasec/trivy
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: trivy fs .
+        env:
+          TRIVY_FORMAT: sarif
+          TRIVY_OUTPUT: trivy.sarif
+          TRIVY_severity: MEDIUM,HIGH
+          TRIVY_EXIT_CODE: 1
+          TRIVY_IGNOREFILE: .trivyignore.yml
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy.sarif
+        if: always()
+
+  # Samples GitHub Actions:
+  # https://github.com/golang/govulncheck-action
+  govulncheck:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: golang/govulncheck-action@v1
+        with:
+          go-version-file: go.mod

@@ -53,11 +53,11 @@ resource "selectel_dbaas_redis_datastore_v1" "datastore_1" {
 
 * `redis_password` - (Required, Sensitive) Datastore password.
 
-* `floating_ips` - (Optional) Assigns floating IP addresses to the nodes in the datastore. The network configuration must meet the requirements. Learn more about [floating IP addresses and the required network configuration](https://docs.selectel.ru/en/cloud/managed-databases/redis/public-ip/).
+* `floating_ips` - (Optional) Assigns public IP addresses to the nodes in the datastore. The network configuration must meet the requirements. Learn more about [public IP addresses and the required network configuration](https://docs.selectel.ru/en/cloud/managed-databases/redis/public-ip/).
 
-  * master - (Required) Number of floating IPs associated with the master. Available values are `0` and `1`.
+  * master - (Required) Number of public IPs associated with the master. Available values are `0` and `1`.
 
-  * replica - (Required) Number of floating IPs associated with the replicas. The minimum value is `0`. The maximum value must be 1 less than the value of the `node_count` argument. 
+  * replica - (Required) Number of public IPs associated with the replicas. The minimum value is `0`. The maximum value must be 1 less than the value of the `node_count` argument.
 
 ## Attributes Reference
 
