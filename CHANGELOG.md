@@ -1,3 +1,15 @@
+## 5.2.0 (Aug 8, 2024)
+
+FEATURES:
+* Schema updates for the resource `selectel_mks_nodegroup_v1`  ([#285](https://github.com/selectel/terraform-provider-selectel/pull/285))
+* Added `selectel_iam_saml_federation_v1` resource ([#286](https://github.com/selectel/terraform-provider-selectel/pull/286))
+* Added `selectel_iam_saml_federation_certificate_v1` resource ([#286](https://github.com/selectel/terraform-provider-selectel/pull/286))
+
+IMPROVEMENTS:
+* Docs updates for `selectel_secretsmanager_certificate_v1` resource ([#284](https://github.com/selectel/terraform-provider-selectel/pull/284))
+* Docs updates for `selectel_dbaas_*` resource ([#282](https://github.com/selectel/terraform-provider-selectel/pull/282))
+* Bump github.com/hashicorp/go-retryablehttp from 0.6.6 to 0.7.7 ([#280](https://github.com/selectel/terraform-provider-selectel/pull/280))
+
 ## 5.1.1 (May 21, 2024)
 IMPROVEMENTS:
 * Fixed schema for `schema_selectel_dbaas_postgresql_database_v1` ([#276](https://github.com/selectel/terraform-provider-selectel/pull/276))
