@@ -12,6 +12,8 @@ Creates and manages a service user using public API v1. Selectel products suppor
 
 The `selectel_iam_serviceuser_v1` resource replaces the deprecated `selectel_vpc_user_v2` and `selectel_vpc_role_v2` resources. For additional information, see the [Upgrading Terraform Selectel Provider to version 5.0.0](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_5) guide.
 
+Only users with the User administrator role can manage other users.
+
 ~> **Note:** The password of the service user is stored as raw data in a plain-text file. Learn more about [sensitive data in state](https://developer.hashicorp.com/terraform/language/state/sensitive-data).
 
 ## Example Usage
