@@ -96,6 +96,7 @@ func resourceDBaaSDatastoreV1BaseSchema() map[string]*schema.Schema {
 					},
 				},
 			},
+			Deprecated: "firewall has been deprecated in favour of using `selectel_dbaas_firewall_v1` resource instead.",
 		},
 		"config": {
 			Type:     schema.TypeMap,

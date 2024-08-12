@@ -52,7 +52,7 @@ resource "selectel_dbaas_kafka_datastore_v1" "datastore_1" {
 
   * `disk` - (Required) Volume size in GB.
 
-* `firewall` - (Optional) List of IP-addresses with access to the datastore.
+* `firewall` - (Deprecated) Remove this argument as it is no longer in use and will be removed in the next major version of the provider. To manage a list of IP-addresses with access to the datastore, use the [selectel_dbaas_firewall_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_firewall_v1) resource.
 
 * `config` - (Optional) Configuration parameters for the datastore. You can retrieve information about available configuration parameters with the [selectel_dbaas_configuration_parameter_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_configuration_parameter_v1) data source.
 
