@@ -1,3 +1,9 @@
+## 5.3.0 (Aug 13, 2024)
+
+FEATURES:
+* __New Resource:__ `selectel_dbaas_firewall_v1` ([#278](https://github.com/selectel/terraform-provider-selectel/pull/278))
+* __Schema Updates:__ Deprecate `firewall` argument for the `selectel_dbaas_datastore_v1` resource ([#278](https://github.com/selectel/terraform-provider-selectel/pull/278))
+
 ## 5.2.0 (Aug 8, 2024)
 
 FEATURES:
