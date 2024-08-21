@@ -17,12 +17,12 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
   cluster_id        = selectel_mks_cluster_v1.cluster_1.id
   project_id        = selectel_mks_cluster_v1.cluster_1.project_id
   region            = selectel_mks_cluster_v1.cluster_1.region
-  availability_zone = "ru-3a"
+  availability_zone = "ru-7a"
   nodes_count       = 3
   cpus              = 2
-  ram_mb            = 2048
+  ram_mb            = 4096
   volume_gb         = 20
-  volume_type       = "fast.ru-3a"
+  volume_type       = "fast.ru-7a"
   labels            = {
     "label-key0": "label-value0",
     "label-key1": "label-value1",
@@ -52,7 +52,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 
 * `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new node group. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/cloud/managed-kubernetes/about/projects/).
 
-* `region` - (Required) Pool where the cluster is located, for example, `ru-3`. Changing this creates a new node group. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-kubernetes).
+* `region` - (Required) Pool where the cluster is located, for example, `ru-7`. Changing this creates a new node group. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-kubernetes).
 
 * `availability_zone` - (Required) Pool segment where all nodes of the node group are located. Changing this creates a new node group. Learn more about available pool segments in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-kubernetes).  
 
@@ -120,7 +120,7 @@ where:
 
 * `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/mks), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/cloud/managed-kubernetes/about/projects/).
 
-* `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes**. The pool is in the **Pool** column.
+* `<selectel_pool>` — Pool where the cluster is located, for example, `ru-7`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes**. The pool is in the **Pool** column.
 
 * `<cluster_id>` — Unique identifier of the cluster, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the cluster ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes** ⟶ the cluster page ⟶ copy the ID at the top of the page under the cluster name, near the region and pool.
 
