@@ -23,6 +23,9 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
   ram_mb            = 4096
   volume_gb         = 20
   volume_type       = "fast.ru-7a"
+
+  install_nvidia_device_plugin = false
+
   labels            = {
     "label-key0": "label-value0",
     "label-key1": "label-value1",
