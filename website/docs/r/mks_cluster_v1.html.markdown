@@ -18,7 +18,7 @@ Creates and manages a Managed Kubernetes cluster using public API v1. For more i
 resource "selectel_mks_cluster_v1" "ha_cluster" {
   name         = "cluster-1"
   project_id   = selectel_vpc_project_v2.project_1.id
-  region       = "ru-3"
+  region       = "ru-7"
   kube_version = data.selectel_mks_kube_versions_v1.versions.latest_version
 }
 ```
@@ -29,7 +29,7 @@ resource "selectel_mks_cluster_v1" "ha_cluster" {
 resource "selectel_mks_cluster_v1" "basic_cluster" {
   name                              = "cluster-1"
   project_id                        = selectel_vpc_project_v2.project_1.id
-  region                            = "ru-3"
+  region                            = "ru-7"
   kube_version                      = data.selectel_mks_kube_versions_v1.versions.latest_version
   zonal                             = true
   enable_patch_version_auto_upgrade = false
@@ -42,7 +42,7 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
 
 * `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new cluster. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/cloud/managed-kubernetes/about/projects/).
 
-* `region` - (Required) Pool where the cluster is located, for example, `ru-3`. Changing this creates a new cluster. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-kubernetes).
+* `region` - (Required) Pool where the cluster is located, for example, `ru-7`. Changing this creates a new cluster. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-kubernetes).
 
 * `kube_version` - (Required) Kubernetes version of the cluster. Changing this upgrades the cluster version. You can retrieve information about the Kubernetes versions with the [selectel_mks_kube_versions_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/mks_kube_versions_v1) data source.
   
@@ -113,6 +113,6 @@ where:
 
 * `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/mks), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/cloud/managed-kubernetes/about/projects/).
 
-* `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes**. The pool is in the **Pool** column.
+* `<selectel_pool>` — Pool where the cluster is located, for example, `ru-7`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes**. The pool is in the **Pool** column.
 
 * `<cluster_id>` — Unique identifier of the cluster, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the cluster ID, in the [Control panel](https://my.selectel.ru/vpc/mks/), go to **Cloud Platform** ⟶ **Kubernetes** ⟶ the cluster page ⟶ copy the ID at the top of the page under the cluster name, near the region and pool.
