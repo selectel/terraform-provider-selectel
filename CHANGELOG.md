@@ -10,6 +10,8 @@ FEATURES:
 * Schema updates for the resource `selectel_mks_nodegroup_v1`  ([#285](https://github.com/selectel/terraform-provider-selectel/pull/285))
 * Added `selectel_iam_saml_federation_v1` resource ([#286](https://github.com/selectel/terraform-provider-selectel/pull/286))
 * Added `selectel_iam_saml_federation_certificate_v1` resource ([#286](https://github.com/selectel/terraform-provider-selectel/pull/286))
+* Added `selectel_iam_group_v1` resource ([#283](https://github.com/selectel/terraform-provider-selectel/pull/283))
+* Added `selectel_iam_group_membership_v1` resource ([#283](https://github.com/selectel/terraform-provider-selectel/pull/283))
 
 IMPROVEMENTS:
 * Docs updates for `selectel_secretsmanager_certificate_v1` resource ([#284](https://github.com/selectel/terraform-provider-selectel/pull/284))
