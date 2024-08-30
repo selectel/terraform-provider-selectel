@@ -47,11 +47,6 @@ func resourceDBaaSDatastoreV1BaseSchema() map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
-		"backup_retention_days": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "Number of days to retain backups.",
-		},
 		"connections": {
 			Type:     schema.TypeMap,
 			Computed: true,
