@@ -1,3 +1,10 @@
+## 5.4.0 (September 09, 2024)
+
+IMPROVEMENTS:
+* Added default value for `backup_retention_days` field ([#297](https://github.com/selectel/terraform-provider-selectel/pull/297))
+* Updated docs for `mks_nodegroup_v1` and `mks_cluster_v1` resources ([#295](https://github.com/selectel/terraform-provider-selectel/pull/295))
+* Updated Go version to `1.22` ([#298](https://github.com/selectel/terraform-provider-selectel/pull/298))
+
 ## 5.3.0 (Aug 13, 2024)
 
 FEATURES:
