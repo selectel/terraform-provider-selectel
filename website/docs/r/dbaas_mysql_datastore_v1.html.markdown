@@ -68,6 +68,8 @@ resource "selectel_dbaas_mysql_datastore_v1" "datastore_1" {
 
   * replica - (Required) Number of public IPs associated with the replicas. The minimum value is `0`. The maximum value must be 1 less than the value of the `node_count` argument.
 
+* `backup_retention_days` - (Optional) Number of days to retain backups.
+
 ## Attributes Reference
 
 * `status` - Datastore status.
