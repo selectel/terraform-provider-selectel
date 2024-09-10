@@ -1,6 +1,6 @@
 module github.com/terraform-providers/terraform-provider-selectel
 
-go 1.21
+go 1.22.7
 
 require (
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
