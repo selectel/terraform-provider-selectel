@@ -26,23 +26,23 @@ resource "selectel_iam_saml_federation_certificate_v1" "certificate" {
 
 ## Argument Reference
 
-* `federation_id` - (Required) Federation ID.
+* `federation_id` - (Required) Unique identifier of the federation.
 
 * `name` - (Required) Certificate name.
 
 * `description` - (Optional) Certificate description.
 
-* `data` - (Required) Certificate data.  It must begin with -----BEGIN CERTIFICATE----- and end with -----END CERTIFICATE-----.
+* `data` - (Required) Certificate data. Must begin with `-----BEGIN CERTIFICATE-----` and end with `-----END CERTIFICATE-----`.
 
 ## Attributes Reference
 
-* `account_id` - Federation account ID.
+* `account_id` - Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
 
-* `not_before` - Issuing date.
+* `not_before` - Issue date of the certificate.
 
-* `not_after` - End date.
+* `not_after` - Expiration date of the certificate.
 
-* `fingerprint` - Fingerprint.
+* `fingerprint` - Fingerprint of the certificate.
 
 ## Import
 
@@ -64,6 +64,6 @@ where:
 
 * `<password>` — Password of the service user.
 
-* `<federtaion_id>` — Unique identifier of the Federation, which has this certificate, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, use either [Control Panel](https://my.selectel.ru/iam/federations) or [IAM API](https://developers.selectel.ru/docs/control-panel/iam/)
+* `<federation_id>` — Unique identifier of the associated federation, for which the certificate is issued, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, use either [Control Panel](https://my.selectel.ru/iam/federations) or [IAM API](https://developers.selectel.ru/docs/control-panel/iam/).
 
-* `<certificate_id>` — Unique identifier of the Certificate.
+* `<certificate_id>` — Unique identifier of the certificate.

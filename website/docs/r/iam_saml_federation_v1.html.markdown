@@ -10,7 +10,7 @@ description: |-
 
 Manages SAML Federation for Selectel products using public API v1.
 Selectel products support Identity and Access Management (IAM).
-For more information about Federations, see the [official Selectel documentation](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/federations/).
+For more information about federations, see the [official Selectel documentation](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/federations/).
 
 ## Example Usage
 
@@ -30,19 +30,19 @@ resource "selectel_iam_saml_federation_v1" "federation_1" {
 
 * `description` - (Optional) Federation description.
 
-* `issuer` - (Required) ID of the credential provider.
+* `issuer` - (Required) Identifier of the credential provider.
 
 * `sso_url` - (Required) Link to the credential provider login page.
 
-* `sign_authn_requests` - (Optional) Enable authentication requests signing.
+* `sign_authn_requests` - (Optional) Enables signing of authentication requests.
 
-* `force_authn` - (Optional) Require users to authenticate via SSO every time they log in.
+* `force_authn` - (Optional) Requires users to authenticate via SSO every time they log in.
 
 * `session_max_age_hours` - (Required) Session lifetime.
 
 ## Attributes Reference
 
-* `account_id` - Federation account ID.
+* `account_id` - Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/control-panel-actions/account/registration/).
 
 ## Import
 
