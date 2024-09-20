@@ -325,13 +325,17 @@ func resizeDatastore(ctx context.Context, d *schema.ResourceData, client *dbaas.
 	nodeCount := d.Get("node_count").(int)
 	resizeOpts.NodeCount = nodeCount
 
-	flavorID := d.Get("flavor_id")
-	flavorRaw := d.Get("flavor")
-
-	flavorSet := flavorRaw.(*schema.Set)
-	flavor, err := resourceDBaaSDatastoreV1FlavorFromSet(flavorSet)
-	if err != nil {
-		return errParseDatastoreV1Resize(err)
+	if d.HasChange("flavor_id") {
+		flavorID := d.Get("flavor_id")
+		resizeOpts.FlavorID = flavorID.(string)
+	} else if d.HasChange("flavor") {
+		flavorRaw := d.Get("flavor")
+		flavorSet := flavorRaw.(*schema.Set)
+		flavor, err := resourceDBaaSDatastoreV1FlavorFromSet(flavorSet)
+		if err != nil {
+			return errParseDatastoreV1Resize(err)
+		}
+		resizeOpts.Flavor = flavor
 	}
 
 	typeID := d.Get("type_id").(string)
@@ -339,12 +343,9 @@ func resizeDatastore(ctx context.Context, d *schema.ResourceData, client *dbaas.
 	if err != nil {
 		return errors.New("Couldnt get datastore type with id" + typeID)
 	}
+
 	if datastoreType.Engine == "redis" {
 		resizeOpts.Flavor = nil
-		resizeOpts.FlavorID = flavorID.(string)
-	} else {
-		resizeOpts.Flavor = flavor
-		resizeOpts.FlavorID = flavorID.(string)
 	}
 
 	log.Print(msgUpdate(objectDatastore, d.Id(), resizeOpts))
