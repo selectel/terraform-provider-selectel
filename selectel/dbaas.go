@@ -3,15 +3,15 @@ package selectel
 import (
 	"context"
 	"crypto/md5"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"log"
 	"math"
-	"math/rand" // nosemgrep: go.lang.security.audit.crypto.math_random.math-random-used
+	"math/big"
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -97,7 +97,8 @@ func convertFieldToStringByType(field interface{}) string {
 }
 
 func RandomWithPrefix(name string) string {
-	return fmt.Sprintf("%s_%d", name, rand.New(rand.NewSource(time.Now().UnixNano())).Int())
+	n, _ := rand.Int(rand.Reader, big.NewInt(1000000))
+	return fmt.Sprintf("%s_%d", name, n.Int64())
 }
 
 func flavorSchema() *schema.Resource {
