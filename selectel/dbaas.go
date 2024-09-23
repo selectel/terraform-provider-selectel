@@ -320,7 +320,7 @@ func updateDatastoreBackups(ctx context.Context, d *schema.ResourceData, client 
 	return nil
 }
 
-func getResizeOpts(ctx context.Context, d *schema.ResourceData, client *dbaas.API) (error, dbaas.DatastoreResizeOpts) {
+func getResizeOpts(ctx context.Context, d *schema.ResourceData, client *dbaas.API) (dbaas.DatastoreResizeOpts, error) {
 	var resizeOpts dbaas.DatastoreResizeOpts
 	nodeCount := d.Get("node_count").(int)
 	resizeOpts.NodeCount = nodeCount
@@ -333,7 +333,7 @@ func getResizeOpts(ctx context.Context, d *schema.ResourceData, client *dbaas.AP
 		flavorSet := flavorRaw.(*schema.Set)
 		flavor, err := resourceDBaaSDatastoreV1FlavorFromSet(flavorSet)
 		if err != nil {
-			return errParseDatastoreV1Resize(err), resizeOpts
+			return resizeOpts, errParseDatastoreV1Resize(err)
 		}
 		resizeOpts.Flavor = flavor
 	}
@@ -341,18 +341,18 @@ func getResizeOpts(ctx context.Context, d *schema.ResourceData, client *dbaas.AP
 	typeID := d.Get("type_id").(string)
 	datastoreType, err := client.DatastoreType(ctx, typeID)
 	if err != nil {
-		return errors.New("Couldnt get datastore type with id" + typeID), resizeOpts
+		return resizeOpts, errors.New("Couldnt get datastore type with id" + typeID)
 	}
 
 	if datastoreType.Engine == "redis" {
 		resizeOpts.Flavor = nil
 	}
 
-	return nil, resizeOpts
+	return resizeOpts, nil
 }
 
 func resizeDatastore(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
-	err, resizeOpts := getResizeOpts(ctx, d, client)
+	resizeOpts, err := getResizeOpts(ctx, d, client)
 	if err != nil {
 		return errUpdatingObject(objectDatastore, d.Id(), err)
 	}
