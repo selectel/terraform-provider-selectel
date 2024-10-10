@@ -89,7 +89,6 @@ func resourceMKSNodegroupV1() *schema.Resource {
 			},
 			"volume_type": {
 				Type:          schema.TypeString,
-				ConflictsWith: []string{"local_volume"},
 				Optional:      true,
 				ForceNew:      true,
 			},
@@ -254,6 +253,10 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 		AvailabilityZone:          d.Get("availability_zone").(string),
 		UserData:                  d.Get("user_data").(string),
 		InstallNvidiaDevicePlugin: &installNvidiaDevicePlugin,
+	}
+
+	if createOpts.VolumeType != "" && !createOpts.LocalVolume {
+		return diag.FromErr(fmt.Errorf("can't use volume_type with local_volume: %w", err))
 	}
 
 	projectQuotas, _, err := quotas.GetProjectQuotas(selvpcClient, projectID, region)
