@@ -256,6 +256,10 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 		InstallNvidiaDevicePlugin: &installNvidiaDevicePlugin,
 	}
 
+	if createOpts.VolumeType != "" && !createOpts.LocalVolume {
+		return diag.FromErr(fmt.Errorf("can't use volume_type with local_volume: %w", err))
+	}
+
 	projectQuotas, _, err := quotas.GetProjectQuotas(selvpcClient, projectID, region)
 	if err != nil {
 		return diag.FromErr(errGettingObject(objectProjectQuotas, projectID, err))
