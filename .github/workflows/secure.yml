@@ -21,7 +21,7 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@v4
-      - run: semgrep scan --sarif --output=semgrep.sarif --error --severity=WARNING
+      - run: semgrep scan --json --output=semgrep.json --error --severity=WARNING
         env:
           SEMGREP_RULES: >-
             p/command-injection
