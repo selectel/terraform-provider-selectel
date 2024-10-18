@@ -14,25 +14,6 @@ jobs:
   # https://semgrep.dev/docs/cli-reference
   semgrep:
     runs-on: ubuntu-24.04
-    env:
-      SEMGREP_RULES: >-
-        p/command-injection
-        p/comment
-        p/cwe-top-25
-        p/default
-        p/gitlab
-        p/gitleaks
-        p/golang
-        p/gosec
-        p/insecure-transport
-        p/owasp-top-ten
-        p/r2c-best-practices
-        p/r2c-bug-scan
-        p/r2c-security-audit
-        p/secrets
-        p/security-audit
-        p/sql-injection
-        p/xss
     container:
       image: semgrep/semgrep
     permissions:
@@ -40,9 +21,25 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@v4
-      - run: semgrep scan --error --severity=WARNING
-      - uses: actions/checkout@v4
       - run: semgrep scan --sarif --output=semgrep.sarif --error --severity=WARNING
+        env:
+          SEMGREP_RULES: >-
+            p/command-injection
+            p/comment
+            p/cwe-top-25
+            p/default
+            p/gitleaks
+            p/golang
+            p/gosec
+            p/insecure-transport
+            p/owasp-top-ten
+            p/r2c-best-practices
+            p/r2c-bug-scan
+            p/r2c-security-audit
+            p/secrets
+            p/security-audit
+            p/sql-injection
+            p/xss
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep.sarif
