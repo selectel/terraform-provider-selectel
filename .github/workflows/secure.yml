@@ -28,7 +28,6 @@ jobs:
             p/comment
             p/cwe-top-25
             p/default
-            p/gitlab
             p/gitleaks
             p/golang
             p/gosec
