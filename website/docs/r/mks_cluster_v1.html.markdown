@@ -82,7 +82,7 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
   
   * `true` - Kube API is available only from the cluster network.
 
-* `enable_audit_logs` - (Optional) Specifies if audit logs should be collected. Learn how to [configure export of audit logs to the log storage and analysis system](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/logs/#configure-export-of-audit-logs).
+* `enable_audit_logs` - (Optional) Enables or disables collection of audit logs. Learn how to [configure export of audit logs to a logging system](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/logs/#configure-export-of-audit-logs).
 
   Boolean flag:
 
