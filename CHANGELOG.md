@@ -1,7 +1,7 @@
 ## 5.5.0 (Nov 5, 2024)
 
 FEATURES:
-* Added `enable_audit_logs` argument to `selectel_mks_cluster_v1` resouce
+* Added `enable_audit_logs` argument to `selectel_mks_cluster_v1` resource
 
 IMPROVEMENTS:
 * Added `enable_audit_logs` option to docs 
