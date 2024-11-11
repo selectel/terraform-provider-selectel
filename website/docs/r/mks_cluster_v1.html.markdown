@@ -72,7 +72,7 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
 
 * `feature_gates` - (Optional) Enables or disables feature gates for the cluster. You can retrieve the list of available feature gates with the [selectel_mks_feature_gates_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/mks_feature_gates_v1) data source. Learn more about [Feature gates](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/feature-gates/).
 
-* `admission_controllers` - (Optional) Enables or disables admission controllers for the cluster. You can retrieve  the list of available admission controllers with the [selectel_mks_admission_controllers_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/mks_admission_controllers_v1) data source. Learn more about [Admission controllers](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/admission-controllers/).
+* `admission_controllers` - (Optional) Enables or disables admission controllers for the cluster. You can retrieve the list of available admission controllers with the [selectel_mks_admission_controllers_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/mks_admission_controllers_v1) data source. Learn more about [Admission controllers](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/admission-controllers/).
 
 * `private_kube_api` - (Optional) Specifies if Kube API is available from the Internet. Changing this creates a new cluster.
 
@@ -81,6 +81,14 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
   * `false` (default) - Kube API is available from the Internet;
   
   * `true` - Kube API is available only from the cluster network.
+
+* `enable_audit_logs` - (Optional) Enables or disables collection of audit logs. Learn how to [configure export of audit logs to a logging system](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/logs/#configure-export-of-audit-logs).
+
+  Boolean flag:
+
+  * `false` (default) - Audit logs are not collected and are not available for export;
+
+  * `true` - Audit logs are collected and available for export.
 
 ## Attributes Reference
 
