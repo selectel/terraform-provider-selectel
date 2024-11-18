@@ -92,7 +92,7 @@ func resourceVPCKeypairV2Read(_ context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.FromErr(errParseID(objectKeypair, d.Id()))
 	}
-	existingKeypairs, _, err := keypairs.List(selvpcClient)
+	existingKeypairs, _, err := keypairs.ListWithOpts(selvpcClient, keypairs.ListOpts{UserID: userID})
 	if err != nil {
 		return diag.FromErr(errSearchingKeypair(keypairName, err))
 	}
