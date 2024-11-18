@@ -64,6 +64,7 @@ jobs:
           TRIVY_severity: MEDIUM,HIGH
           TRIVY_EXIT_CODE: 1
           TRIVY_IGNOREFILE: .trivyignore.yml
+          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy.sarif
