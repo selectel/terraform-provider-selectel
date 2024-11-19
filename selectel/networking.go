@@ -7,7 +7,6 @@ import (
 
 	"github.com/selectel/go-selvpcclient/v3/selvpcclient"
 	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/subnets"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/hashcode"
 )
 
 func getPrefixLengthFromCIDR(cidr string) (int, error) {
@@ -52,10 +51,4 @@ func subnetsMapsFromStructs(subnetsStructs []subnets.Subnet) []map[string]interf
 	}
 
 	return associatedSubnets
-}
-
-// hashSubnets is a hash function to use with the "subnet" set.
-func hashSubnets(v interface{}) int {
-	m := v.(map[string]interface{})
-	return hashcode.String(fmt.Sprintf("%s-", m["network_id"].(string)))
 }

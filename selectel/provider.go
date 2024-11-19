@@ -132,10 +132,7 @@ func Provider() *schema.Provider {
 			"selectel_vpc_keypair_v2":                               resourceVPCKeypairV2(),
 			"selectel_vpc_license_v2":                               resourceVPCLicenseV2(),
 			"selectel_vpc_project_v2":                               resourceVPCProjectV2(),
-			"selectel_vpc_role_v2":                                  resourceVPCRoleV2(), // DEPRECATED
 			"selectel_vpc_subnet_v2":                                resourceVPCSubnetV2(),
-			"selectel_vpc_token_v2":                                 resourceVPCTokenV2(), // DEPRECATED
-			"selectel_vpc_user_v2":                                  resourceVPCUserV2(),  // DEPRECATED
 			"selectel_iam_serviceuser_v1":                           resourceIAMServiceUserV1(),
 			"selectel_iam_user_v1":                                  resourceIAMUserV1(),
 			"selectel_iam_s3_credentials_v1":                        resourceIAMS3CredentialsV1(),
@@ -143,8 +140,6 @@ func Provider() *schema.Provider {
 			"selectel_iam_saml_federation_certificate_v1":           resourceIAMSAMLFederationCertificateV1(),
 			"selectel_iam_group_v1":                                 resourceIAMGroupV1(),
 			"selectel_iam_group_membership_v1":                      resourceIAMGroupMembershipV1(),
-			"selectel_vpc_vrrp_subnet_v2":                           resourceVPCVRRPSubnetV2(),        // DEPRECATED
-			"selectel_vpc_crossregion_subnet_v2":                    resourceVPCCrossRegionSubnetV2(), // DEPRECATED
 			"selectel_mks_cluster_v1":                               resourceMKSClusterV1(),
 			"selectel_mks_nodegroup_v1":                             resourceMKSNodegroupV1(),
 			"selectel_domains_domain_v1":                            resourceDomainsDomainV1(),
