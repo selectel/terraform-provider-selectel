@@ -9,11 +9,6 @@ import (
 )
 
 const (
-	// Pool where the endpoint for Keystone API and Resell API is located.
-	DefaultAuthRegion = "ru-1"
-)
-
-const (
 	objectACL                       = "acl"
 	objectFloatingIP                = "floating IP"
 	objectKeypair                   = "keypair"
@@ -67,26 +62,26 @@ func Provider() *schema.Provider {
 			"project_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("SEL_PROJECT_ID", nil),
+				DefaultFunc: schema.EnvDefaultFunc("INFRA_PROJECT_ID", nil),
 				Description: "VPC project ID to import resources that need the project scope auth token.",
 			},
 			"region": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("SEL_REGION", nil),
+				DefaultFunc: schema.EnvDefaultFunc("INFRA_REGION", nil),
 				Description: "VPC region to import resources associated with the specific region.",
 			},
 			"auth_url": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("OS_AUTH_URL", nil),
-				Description: "Base url to work with auth API (Keystone URL). https://api.selvpc.ru/identity/v3/ used by default",
+				Description: "Base url to work with auth API (Keystone URL).",
 			},
 			"auth_region": {
 				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("OS_REGION_NAME", DefaultAuthRegion),
-				Description: "Region for Keystone and Resell API URLs, 'ru-1' is used by default.",
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("OS_REGION_NAME", nil),
+				Description: "Region for Keystone and Resell API URLs.",
 			},
 			"domain_name": {
 				Type:        schema.TypeString,

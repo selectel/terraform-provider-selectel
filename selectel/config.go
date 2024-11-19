@@ -37,12 +37,8 @@ func getConfig(d *schema.ResourceData) (*Config, diag.Diagnostics) {
 			Username:   d.Get("username").(string),
 			Password:   d.Get("password").(string),
 			DomainName: d.Get("domain_name").(string),
-		}
-		if v, ok := d.GetOk("auth_url"); ok {
-			cfgSingletone.AuthURL = v.(string)
-		}
-		if v, ok := d.GetOk("auth_region"); ok {
-			cfgSingletone.AuthRegion = v.(string)
+			AuthURL:    d.Get("auth_url").(string),
+			AuthRegion: d.Get("auth_region").(string),
 		}
 		if v, ok := d.GetOk("user_domain_name"); ok {
 			cfgSingletone.UserDomainName = v.(string)
