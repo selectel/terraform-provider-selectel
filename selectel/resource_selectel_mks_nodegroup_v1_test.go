@@ -47,6 +47,7 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "autoscale_max_nodes", "3"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "user_data", "IyEvYmluL2Jhc2ggLXYKYXB0IC15IHVwZGF0ZQphcHQgLXkgaW5zdGFsbCBtdHI="),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "install_nvidia_device_plugin", "false"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "preemptible", "false"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key0", "label-value0"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key1", "label-value1"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key2", "label-value2"),
@@ -78,6 +79,7 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "autoscale_max_nodes", "4"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "user_data", "IyEvYmluL2Jhc2ggLXYKYXB0IC15IHVwZGF0ZQphcHQgLXkgaW5zdGFsbCBtdHI="),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "install_nvidia_device_plugin", "false"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "preemptible", "false"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key3", "label-value3"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key4", "label-value4"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.#", "3"),
@@ -107,6 +109,7 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "autoscale_max_nodes", "4"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "user_data", "IyEvYmluL2Jhc2ggLXYKYXB0IC15IHVwZGF0ZQphcHQgLXkgaW5zdGFsbCBtdHI="),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "install_nvidia_device_plugin", "false"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "preemptible", "false"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key3", "label-value3"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key4", "label-value4"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.#", "3"),
@@ -136,6 +139,7 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "autoscale_max_nodes", "4"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "user_data", "IyEvYmluL2Jhc2ggLXYKYXB0IC15IHVwZGF0ZQphcHQgLXkgaW5zdGFsbCBtdHI="),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "install_nvidia_device_plugin", "false"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "preemptible", "false"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key3", "label-value3"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "labels.label-key4", "label-value4"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "taints.#", "3"),
@@ -221,6 +225,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
   autoscale_max_nodes = 3
   user_data           = "IyEvYmluL2Jhc2ggLXYKYXB0IC15IHVwZGF0ZQphcHQgLXkgaW5zdGFsbCBtdHI="
   install_nvidia_device_plugin = false
+  preemptible         = false
   labels = {
     label-key0 = "label-value0"
     label-key1 = "label-value1"
@@ -273,6 +278,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
   autoscale_max_nodes = 4
   user_data           = "IyEvYmluL2Jhc2ggLXYKYXB0IC15IHVwZGF0ZQphcHQgLXkgaW5zdGFsbCBtdHI="
   install_nvidia_device_plugin = false
+  preemptible         = false
   labels = {
     label-key3 = "label-value3"
     label-key4 = "label-value4"
@@ -323,6 +329,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
   autoscale_max_nodes = 4
   user_data           = "IyEvYmluL2Jhc2ggLXYKYXB0IC15IHVwZGF0ZQphcHQgLXkgaW5zdGFsbCBtdHI="
   install_nvidia_device_plugin = false
+  preemptible        = false
   labels = {
     label-key3 = "label-value3"
     label-key4 = "label-value4"
@@ -371,6 +378,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
   autoscale_max_nodes = 4
   user_data           = "IyEvYmluL2Jhc2ggLXYKYXB0IC15IHVwZGF0ZQphcHQgLXkgaW5zdGFsbCBtdHI="
   install_nvidia_device_plugin = false
+  preemptible         = false
   labels = {
     label-key3 = "label-value3"
     label-key4 = "label-value4"
