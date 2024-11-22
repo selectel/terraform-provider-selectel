@@ -4,7 +4,7 @@ on:
     branches:
       - master
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
 
 jobs:
   acceptance-test:
@@ -19,7 +19,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22.7'
+          go-version: "1.23"
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
@@ -30,5 +30,5 @@ jobs:
         run: make testacc
         env:
           OS_DOMAIN_NAME: ${{ secrets.OS_DOMAIN_NAME }}
-          OS_USERNAME:    ${{ secrets.OS_USERNAME }}
-          OS_PASSWORD:    ${{ secrets.OS_PASSWORD }}
+          OS_USERNAME: ${{ secrets.OS_USERNAME }}
+          OS_PASSWORD: ${{ secrets.OS_PASSWORD }}

@@ -196,11 +196,11 @@ func resourceMKSNodegroupV1() *schema.Resource {
 		},
 		CustomizeDiff: customdiff.All(
 			// We need to recreate nodegroup if flavor changed.
-			customdiff.ForceNewIfChange("flavor_id", func(_ context.Context, old, new, _ interface{}) bool {
-				return old.(string) != new.(string)
+			customdiff.ForceNewIfChange("flavor_id", func(_ context.Context, oldVersion, newVersion, _ interface{}) bool {
+				return oldVersion.(string) != newVersion.(string)
 			}),
-			customdiff.ForceNewIfChange("local_volume", func(_ context.Context, old, new, _ interface{}) bool {
-				return old.(bool) != new.(bool)
+			customdiff.ForceNewIfChange("local_volume", func(_ context.Context, oldVersion, newVersion, _ interface{}) bool {
+				return oldVersion.(bool) != newVersion.(bool)
 			}),
 		),
 	}

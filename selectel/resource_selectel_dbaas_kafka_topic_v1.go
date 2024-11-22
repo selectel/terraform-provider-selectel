@@ -43,7 +43,7 @@ func resourceDBaaSTopicV1Create(ctx context.Context, d *schema.ResourceData, met
 	topicCreateOpts := dbaas.TopicCreateOpts{
 		DatastoreID: d.Get("datastore_id").(string),
 		Name:        d.Get("name").(string),
-		Partitions:  uint16(d.Get("partitions").(int)),
+		Partitions:  uint16(d.Get("partitions").(int)), //nolint:gosec
 	}
 
 	log.Print(msgCreate(objectTopic, topicCreateOpts))
@@ -90,7 +90,7 @@ func resourceDBaaSTopicV1Update(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	if d.HasChange("partitions") {
-		partitions := uint16(d.Get("partitions").(int))
+		partitions := uint16(d.Get("partitions").(int)) //nolint:gosec
 		updateOpts := dbaas.TopicUpdateOpts{
 			Partitions: partitions,
 		}

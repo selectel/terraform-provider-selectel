@@ -68,20 +68,20 @@ func mksClusterV1StateRefreshFunc(
 	}
 }
 
-func mksClusterV1KubeVersionDiffSuppressFunc(_, old, new string, d *schema.ResourceData) bool {
+func mksClusterV1KubeVersionDiffSuppressFunc(_, oldVersion, newVersion string, d *schema.ResourceData) bool {
 	if d.Id() == "" {
 		return false
 	}
 
-	currentMajor, err := kubeVersionToMajor(old)
+	currentMajor, err := kubeVersionToMajor(oldVersion)
 	if err != nil {
-		log.Printf("[DEBUG] error getting a major part of the current kube version %s: %s", old, err)
+		log.Printf("[DEBUG] error getting a major part of the current kube version %s: %s", oldVersion, err)
 
 		return false
 	}
-	desiredMajor, err := kubeVersionToMajor(new)
+	desiredMajor, err := kubeVersionToMajor(newVersion)
 	if err != nil {
-		log.Printf("[DEBUG] error getting a major part of the desired kube version %s: %s", new, err)
+		log.Printf("[DEBUG] error getting a major part of the desired kube version %s: %s", newVersion, err)
 
 		return false
 	}
@@ -96,15 +96,15 @@ func mksClusterV1KubeVersionDiffSuppressFunc(_, old, new string, d *schema.Resou
 		return true
 	}
 
-	currentMinor, err := kubeVersionToMinor(old)
+	currentMinor, err := kubeVersionToMinor(oldVersion)
 	if err != nil {
-		log.Printf("[DEBUG] error getting a minor part of the current kube version %s: %s", old, err)
+		log.Printf("[DEBUG] error getting a minor part of the current kube version %s: %s", oldVersion, err)
 
 		return false
 	}
-	desiredMinor, err := kubeVersionToMinor(new)
+	desiredMinor, err := kubeVersionToMinor(newVersion)
 	if err != nil {
-		log.Printf("[DEBUG] error getting a minor part of the desired kube version %s: %s", new, err)
+		log.Printf("[DEBUG] error getting a minor part of the desired kube version %s: %s", newVersion, err)
 
 		return false
 	}
@@ -119,15 +119,15 @@ func mksClusterV1KubeVersionDiffSuppressFunc(_, old, new string, d *schema.Resou
 		return true
 	}
 
-	currentPatch, err := kubeVersionToPatch(old)
+	currentPatch, err := kubeVersionToPatch(oldVersion)
 	if err != nil {
-		log.Printf("[DEBUG] error getting a patch part of the current kube version %s: %s", old, err)
+		log.Printf("[DEBUG] error getting a patch part of the current kube version %s: %s", oldVersion, err)
 
 		return false
 	}
-	desiredPatch, err := kubeVersionToPatch(new)
+	desiredPatch, err := kubeVersionToPatch(newVersion)
 	if err != nil {
-		log.Printf("[DEBUG] error getting a patch part of the desired kube version %s: %s", new, err)
+		log.Printf("[DEBUG] error getting a patch part of the desired kube version %s: %s", newVersion, err)
 
 		return true
 	}

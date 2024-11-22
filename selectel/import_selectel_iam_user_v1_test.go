@@ -9,7 +9,6 @@ import (
 
 func TestAccIAMV1UserImportBasic(t *testing.T) {
 	resourceName := "selectel_iam_user_v1.user_tf_acc_test_1"
-	//nolint:goconst
 	userEmail := acctest.RandomWithPrefix("tf-acc") + "@example.com"
 
 	resource.Test(t, resource.TestCase{
