@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient"
 )
 
 var (

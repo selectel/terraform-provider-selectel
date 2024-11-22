@@ -3,8 +3,8 @@ package selectel
 import (
 	"testing"
 
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/subnets"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/subnets"
 	"github.com/stretchr/testify/assert"
 )
 

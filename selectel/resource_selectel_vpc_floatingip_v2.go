@@ -8,8 +8,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient/clients"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/floatingips"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient/clients"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/floatingips"
 )
 
 func resourceVPCFloatingIPV2() *schema.Resource {

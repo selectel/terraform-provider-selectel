@@ -8,8 +8,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient/quotamanager/quotas"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient/quotamanager/quotas"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/projects"
 )
 
 func resourceVPCProjectV2() *schema.Resource {

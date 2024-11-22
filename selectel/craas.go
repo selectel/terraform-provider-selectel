@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	v1 "github.com/selectel/craas-go/pkg"
 	"github.com/selectel/craas-go/pkg/v1/registry"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient"
 )
 
 const (

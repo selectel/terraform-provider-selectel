@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/projects"
 )
 
 func TestAccSecretsManagerCertificateV1Basic(t *testing.T) {

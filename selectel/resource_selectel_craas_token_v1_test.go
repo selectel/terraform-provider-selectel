@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/craas-go/pkg/v1/token"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/projects"
 )
 
 func TestAccCRaaSTokenV1Basic(t *testing.T) {

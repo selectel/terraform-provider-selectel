@@ -7,9 +7,9 @@ import (
 	"net/url"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient/quotamanager/quotas"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/projects"
-	resellQuotas "github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/quotas"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient/quotamanager/quotas"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/projects"
+	resellQuotas "github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/quotas"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/hashcode"
 )
 

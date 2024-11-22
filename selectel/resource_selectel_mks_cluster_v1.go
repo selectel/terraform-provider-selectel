@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient/quotamanager/quotas"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient/quotamanager/quotas"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
 )
 
@@ -45,8 +45,8 @@ func resourceMKSClusterV1() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				DiffSuppressFunc: func(_, old, new string, _ *schema.ResourceData) bool {
-					return strings.EqualFold(old, new)
+				DiffSuppressFunc: func(_, oldVersion, newVersion string, _ *schema.ResourceData) bool {
+					return strings.EqualFold(oldVersion, newVersion)
 				},
 			},
 			"project_id": {
