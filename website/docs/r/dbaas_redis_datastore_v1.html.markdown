@@ -46,7 +46,6 @@ resource "selectel_dbaas_redis_datastore_v1" "datastore_1" {
 * `restore` - (Optional) Restores parameters for the datastore. Changing this creates a new datastore.
 
   * `datastore_id` - (Optional) Unique identifier of the datastore from which you restore. To get the datastore ID, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases** ⟶ copy the ID under the cluster name.
-  
   * `target_time` - (Optional) Time within seven previous days when you have the datastore state to restore.
 
 * `config` - (Optional) Configuration parameters for the datastore. You can retrieve information about available configuration parameters with the [selectel_dbaas_configuration_parameter_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_configuration_parameter_v1) data source.
@@ -75,8 +74,8 @@ You can import a datastore:
 export OS_DOMAIN_NAME=<account_id>
 export OS_USERNAME=<username>
 export OS_PASSWORD=<password>
-export SEL_PROJECT_ID=<selectel_project_id>
-export SEL_REGION=<selectel_pool>
+export INFRA_PROJECT_ID=<selectel_project_id>
+export INFRA_REGION=<selectel_pool>
 terraform import selectel_dbaas_redis_datastore_v1.datastore_1 <datastore_id>
 ```
 
