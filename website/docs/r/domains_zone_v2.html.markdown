@@ -49,7 +49,7 @@ You can import a zone:
 export OS_DOMAIN_NAME=<account_id>
 export OS_USERNAME=<username>
 export OS_PASSWORD=<password>
-export SEL_PROJECT_ID=<selectel_project_id>
+export INFRA_PROJECT_ID=<selectel_project_id>
 terraform import selectel_domains_zone_v2.zone_1 <zone_name>
 ```
 

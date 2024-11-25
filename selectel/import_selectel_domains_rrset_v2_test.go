@@ -12,7 +12,7 @@ import (
 )
 
 func TestAccDomainsRRSetV2ImportBasic(t *testing.T) {
-	projectID := os.Getenv("SEL_PROJECT_ID")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 	testZoneName := fmt.Sprintf("%s.xyz.", acctest.RandomWithPrefix("tf-acc"))
 	testRRSetName := fmt.Sprintf("%[1]s.%[2]s", acctest.RandomWithPrefix("tf-acc"), testZoneName)
 	testRRSetType := domainsV2.TXT

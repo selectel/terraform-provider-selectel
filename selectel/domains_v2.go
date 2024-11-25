@@ -14,7 +14,7 @@ import (
 	domainsV2 "github.com/selectel/domains-go/pkg/v2"
 )
 
-var ErrProjectIDNotSetupForDNSV2 = errors.New("env variable SEL_PROJECT_ID or variable project_id must be set for the dns v2")
+var ErrProjectIDNotSetupForDNSV2 = errors.New("env variable INFRA_PROJECT_ID or variable project_id must be set for the dns v2")
 
 func getDomainsV2Client(d *schema.ResourceData, meta interface{}) (domainsV2.DNSClient[domainsV2.Zone, domainsV2.RRSet], error) {
 	config := meta.(*Config)
