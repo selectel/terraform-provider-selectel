@@ -14,7 +14,7 @@ import (
 )
 
 func TestAccSecretsManagerCertificateV1ImportBasic(t *testing.T) {
-	projectID := os.Getenv("SEL_PROJECT_ID")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 	resourceName := "selectel_secretsmanager_certificate_v1.certificate_tf_acc_test_1"
 
 	certificateName := acctest.RandomWithPrefix("tf-acc")

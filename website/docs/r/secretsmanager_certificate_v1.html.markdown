@@ -79,7 +79,7 @@ resource "selectel_secretsmanager_certificate_v1" "certificate_1" {
 You can import a certificate:
 
 ```shell
-export SEL_PROJECT_ID=<selectel_project_id>
+export INFRA_PROJECT_ID=<selectel_project_id>
 terraform import selectel_secretsmanager_certificate_v1.certificate_1 <certificate_id>
 ```
 

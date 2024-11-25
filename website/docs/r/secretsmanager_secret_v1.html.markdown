@@ -42,7 +42,7 @@ resource "selectel_secretsmanager_secret_v1" "secret_1" {
 You can import a secret:
 
 ```shell
-export SEL_PROJECT_ID=<selectel_project_id>
+export INFRA_PROJECT_ID=<selectel_project_id>
 terraform import selectel_secretsmanager_secret_v1.secret_1 <selectel_project_id>/<key>
 ```
 
