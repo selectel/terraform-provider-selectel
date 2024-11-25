@@ -181,7 +181,7 @@ func resourceVPCLicenseV2Delete(_ context.Context, d *schema.ResourceData, meta 
 func resourceVPCLicenseV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
-		return nil, fmt.Errorf("SEL_PROJECT_ID must be set for the resource import")
+		return nil, fmt.Errorf("INFRA_PROJECT_ID must be set for the resource import")
 	}
 
 	d.Set("project_id", config.ProjectID)
