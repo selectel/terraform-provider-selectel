@@ -1,3 +1,24 @@
+## 6.0.0 (Dec 2, 2024)
+
+BREAKING CHANGES:
+
+* Configuration parameters `auth_region` and `auth_url` are made mandatory
+  for the provider configuration ([#313](https://github.com/selectel/terraform-provider-selectel/pull/313))
+* Renamed environment variables for resources:
+  * `SEL_PROJECT_ID` -> `INFRA_PROJECT_ID`
+  * `SEL_REGION` -> `INFRA_REGION`
+* Removed deprecated resources ([#313](https://github.com/selectel/terraform-provider-selectel/pull/313)):
+  * `selectel_vpc_role_v2`
+  * `selectel_vpc_token_v2`
+  * `selectel_vpc_user_v2`
+  * `selectel_vpc_vrrp_subnet_v2`
+  * `selectel_vpc_crossregion_subnet_v2`
+
+IMPROVEMENTS:
+
+* Added migration guide to upgrade to new major v6 version ([#313](https://github.com/selectel/terraform-provider-selectel/pull/313))
+* Updated docs ([#313](https://github.com/selectel/terraform-provider-selectel/pull/313))
+
 ## 5.5.0 (Dec 2, 2024)
 
 FEATURES:
