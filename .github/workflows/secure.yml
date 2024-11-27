@@ -21,14 +21,13 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@v4
-      - run: semgrep scan --sarif --output=semgrep.sarif --error --severity=WARNING
+      - run: semgrep scan --sarif --output=semgrep.sarif --error --severity=WARNING --severity=ERROR
         env:
           SEMGREP_RULES: >-
             p/command-injection
             p/comment
             p/cwe-top-25
             p/default
-            p/gitlab
             p/gitleaks
             p/golang
             p/gosec
@@ -65,6 +64,7 @@ jobs:
           TRIVY_severity: MEDIUM,HIGH
           TRIVY_EXIT_CODE: 1
           TRIVY_IGNOREFILE: .trivyignore.yml
+          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy.sarif

@@ -45,4 +45,27 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: golangci-lint build test testacc fmt test-compile website website-test
+
+# CLI reference:
+# https://semgrep.dev/docs/cli-reference
+semgrep:
+	docker run --rm -v ${PWD}:/app:ro -w /app semgrep/semgrep semgrep scan --error --metrics=off \
+		--config=p/command-injection \
+		--config=p/comment \
+		--config=p/cwe-top-25 \
+		--config=p/default \
+		--config=p/gitleaks \
+		--config=p/golang \
+		--config=p/gosec \
+		--config=p/insecure-transport \
+		--config=p/owasp-top-ten \
+		--config=p/r2c-best-practices \
+		--config=p/r2c-bug-scan \
+		--config=p/r2c-security-audit \
+		--config=p/secrets \
+		--config=p/security-audit \
+		--config=p/sql-injection \
+		--config=p/xss \
+		.
+
+.PHONY: golangci-lint build test testacc fmt test-compile semgrep website website-test

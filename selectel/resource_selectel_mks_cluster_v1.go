@@ -146,6 +146,12 @@ func resourceMKSClusterV1() *schema.Resource {
 				Default:  false,
 				ForceNew: true,
 			},
+			"enable_audit_logs": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				ForceNew: false,
+			},
 		},
 	}
 }
@@ -175,6 +181,7 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 	enablePodSecurityPolicy := d.Get("enable_pod_security_policy").(bool)
 	zonal := d.Get("zonal").(bool)
 	privateKubeAPI := d.Get("private_kube_api").(bool)
+	enableAuditLogs := d.Get("enable_audit_logs").(bool)
 
 	// Check if "enable_patch_version_auto_upgrade" and "zonal" arguments are both not set to true.
 	if enablePatchVersionAutoUpgrade && zonal {
@@ -205,6 +212,9 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 			EnablePodSecurityPolicy: enablePodSecurityPolicy,
 			FeatureGates:            featureGates,
 			AdmissionControllers:    admissionControllers,
+			AuditLogs: cluster.AuditLogs{
+				Enabled: enableAuditLogs,
+			},
 		},
 		Zonal:          &zonal,
 		PrivateKubeAPI: &privateKubeAPI,
@@ -271,6 +281,7 @@ func resourceMKSClusterV1Read(ctx context.Context, d *schema.ResourceData, meta 
 	d.Set("enable_pod_security_policy", mksCluster.KubernetesOptions.EnablePodSecurityPolicy)
 	d.Set("zonal", mksCluster.Zonal)
 	d.Set("private_kube_api", mksCluster.PrivateKubeAPI)
+	d.Set("enable_audit_logs", mksCluster.KubernetesOptions.AuditLogs.Enabled)
 
 	return nil
 }
@@ -319,6 +330,11 @@ func resourceMKSClusterV1Update(ctx context.Context, d *schema.ResourceData, met
 		}
 		kubeOptions.AdmissionControllers = v
 	}
+	if d.HasChange("enable_audit_logs") {
+		v := d.Get("enable_audit_logs").(bool)
+		kubeOptions.AuditLogs.Enabled = v
+	}
+
 	updateOpts.KubernetesOptions = kubeOptions
 
 	if updateOpts != (cluster.UpdateOpts{}) {

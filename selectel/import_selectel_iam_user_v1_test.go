@@ -9,7 +9,8 @@ import (
 
 func TestAccIAMV1UserImportBasic(t *testing.T) {
 	resourceName := "selectel_iam_user_v1.user_tf_acc_test_1"
-	userEmail := acctest.RandomWithPrefix("tf-acc") + "@example.com"
+	const domain = "@example.com"
+	userEmail := acctest.RandomWithPrefix("tf-acc") + domain
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },

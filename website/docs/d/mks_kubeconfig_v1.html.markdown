@@ -37,9 +37,9 @@ data "selectel_mks_kubeconfig_v1" "kubeconfig" {
 
 provider "kubernetes" {
   host                   = data.selectel_mks_kubeconfig_v1.kubeconfig.server
-  client_certificate     = data.selectel_mks_kubeconfig_v1.kubeconfig.cluster_ca_cert
-  client_key             = data.selectel_mks_kubeconfig_v1.kubeconfig.client_key
-  cluster_ca_certificate = data.selectel_mks_kubeconfig_v1.kubeconfig.client_cert
+  client_certificate     = base64decode(data.selectel_mks_kubeconfig_v1.kubeconfig.client_cert)
+  client_key             = base64decode(data.selectel_mks_kubeconfig_v1.kubeconfig.client_key)
+  cluster_ca_certificate = base64decode(data.selectel_mks_kubeconfig_v1.kubeconfig.cluster_ca_cert)
 }
 
 output "kubeconfig" {
