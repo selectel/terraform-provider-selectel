@@ -164,6 +164,11 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"preemptible": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: true,
+			},
 			"nodegroup_type": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -241,6 +246,7 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 
 	// Prepare nodegroup create options.
 	installNvidiaDevicePlugin := d.Get("install_nvidia_device_plugin").(bool)
+	preemptible := d.Get("preemptible").(bool)
 	createOpts := &nodegroup.CreateOpts{
 		Count:                     d.Get("nodes_count").(int),
 		FlavorID:                  d.Get("flavor_id").(string),
@@ -254,6 +260,7 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 		AvailabilityZone:          d.Get("availability_zone").(string),
 		UserData:                  d.Get("user_data").(string),
 		InstallNvidiaDevicePlugin: &installNvidiaDevicePlugin,
+		Preemptible:               &preemptible,
 	}
 
 	projectQuotas, _, err := quotas.GetProjectQuotas(selvpcClient, projectID, region)
@@ -365,6 +372,7 @@ func resourceMKSNodegroupV1Read(ctx context.Context, d *schema.ResourceData, met
 	d.Set("nodegroup_type", mksNodegroup.NodegroupType)
 	d.Set("user_data", mksNodegroup.UserData)
 	d.Set("install_nvidia_device_plugin", mksNodegroup.InstallNvidiaDevicePlugin)
+	d.Set("preemptible", mksNodegroup.Preemptible)
 
 	if err := d.Set("labels", mksNodegroup.Labels); err != nil {
 		log.Print(errSettingComplexAttr("labels", err))

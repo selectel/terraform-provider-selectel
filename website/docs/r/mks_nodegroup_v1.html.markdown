@@ -25,6 +25,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
   volume_type       = "fast.ru-7a"
 
   install_nvidia_device_plugin = false
+  preemptible                  = false
 
   labels            = {
     "label-key0": "label-value0",
@@ -65,6 +66,8 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_1" {
 Boolean flag: 
   * `true` — for flavors with GPU enables installation of the NVIDIA Device Plugin and GPU drivers. 
   * `false` — for flavors without GPU and flavors with GPU disables installation of the NVIDIA Device Plugin and GPU drivers. Learn more about [manual installation of GPU drivers](https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/install-gpu-drivers/).
+
+* `preemptible` - (Optional) Enables or disables the use of preemptible nodes for the node group. Boolean flag, the default value is false. Learn more about [Preemptible node groups](https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/preemptible-node-groups/).
 
 * `cpus` - (Optional) Number of vCPUs for each node. Can be skipped only when `flavor_id` is set. Changing this creates a new node group. Learn more about [Configurations](https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/configurations/).
 
