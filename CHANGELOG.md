@@ -1,3 +1,11 @@
+## 6.0.1 (Dec 2, 2024)
+
+IMPROVEMENTS:
+
+* Removed deprecated resources from docs ([#316](https://github.com/selectel/terraform-provider-selectel/pull/316)):
+  * `selectel_vpc_role_v2`
+  * `selectel_vpc_user_v2`
+
 ## 6.0.0 (Dec 2, 2024)
 
 BREAKING CHANGES:
