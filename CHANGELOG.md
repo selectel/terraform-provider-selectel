@@ -1,11 +1,15 @@
-## 5.5.0 (Nov 5, 2024)
+## 5.5.0 (Dec 2, 2024)
 
 FEATURES:
 * Added `enable_audit_logs` argument to `selectel_mks_cluster_v1` resource
+* Added the preemptible argument to the `selectel_mks_nodegroup_v1` resource.
+* Upgraded the `mks-go` dependency to version v0.17.0.
 
 IMPROVEMENTS:
-* Added `enable_audit_logs` option to docs 
+* Added `enable_audit_logs` option to docs
 * Fixed semgrep configuration
+* Fixed documentation for the `selectel_mks_kubeconfig_v1` data source.
+* Updated documentation to include the preemptible option.
 
 ## 5.4.0 (September 09, 2024)
 
