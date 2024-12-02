@@ -11,7 +11,7 @@ import (
 )
 
 func TestAccDomainsZoneV2ImportBasic(t *testing.T) {
-	projectID := os.Getenv("SEL_PROJECT_ID")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 	fullResourceName := fmt.Sprintf("selectel_domains_zone_v2.%[1]s", resourceZoneName)
 	testZoneName := fmt.Sprintf("%s.xyz.", acctest.RandomWithPrefix("tf-acc"))
 	resource.Test(t, resource.TestCase{

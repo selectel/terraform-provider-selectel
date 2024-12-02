@@ -46,8 +46,8 @@ You can import a topic:
 export OS_DOMAIN_NAME=<account_id>
 export OS_USERNAME=<username>
 export OS_PASSWORD=<password>
-export SEL_PROJECT_ID=<selectel_project_id>
-export SEL_REGION=<selectel_pool>
+export INFRA_PROJECT_ID=<selectel_project_id>
+export INFRA_REGION=<selectel_pool>
 terraform import selectel_dbaas_kafka_topic_v1.topic_1 <topic_id>
 ```
 

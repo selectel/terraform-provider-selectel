@@ -234,7 +234,7 @@ You can import an RRSet:
 export OS_DOMAIN_NAME=<account_id>
 export OS_USERNAME=<username>
 export OS_PASSWORD=<password>
-export SEL_PROJECT_ID=<selectel_project_id>
+export INFRA_PROJECT_ID=<selectel_project_id>
 terraform import selectel_domains_rrset_v2.rrset_1 <zone_name>/<rrset_name>/<rrset_type>
 ```
 

@@ -1,15 +1,14 @@
 module github.com/terraform-providers/terraform-provider-selectel
 
-go 1.22.7
+go 1.23
 
 require (
-	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.1
 	github.com/selectel/craas-go v0.3.0
 	github.com/selectel/dbaas-go v0.12.1
 	github.com/selectel/domains-go v1.0.2
-	github.com/selectel/go-selvpcclient/v3 v3.2.1
+	github.com/selectel/go-selvpcclient/v4 v4.0.0
 	github.com/selectel/iam-go v0.4.1
 	github.com/selectel/mks-go v0.17.0
 	github.com/selectel/secretsmanager-go v0.2.1
@@ -29,6 +28,7 @@ require (
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-checkpoint v0.5.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
+	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-plugin v1.4.6 // indirect

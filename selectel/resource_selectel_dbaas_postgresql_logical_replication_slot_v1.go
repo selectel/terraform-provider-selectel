@@ -115,10 +115,10 @@ func resourceDBaaSPostgreSQLLogicalReplicationSlotV1Delete(ctx context.Context, 
 func resourceDBaaSPostgreSQLLogicalReplicationSlotV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
-		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")
+		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")
 	}
 	if config.Region == "" {
-		return nil, errors.New("SEL_REGION must be set for the resource import")
+		return nil, errors.New("INFRA_REGION must be set for the resource import")
 	}
 
 	d.Set("project_id", config.ProjectID)

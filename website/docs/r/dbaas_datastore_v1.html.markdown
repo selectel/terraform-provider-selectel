@@ -125,10 +125,10 @@ The following attributes are exported:
 Datastore can be imported using the `id`, e.g.
 
 ```shell
-$ export OS_DOMAIN_NAME=999999
-$ export OS_USERNAME=example_user
-$ export OS_PASSWORD=example_password
-$ export SEL_PROJECT_ID=SELECTEL_VPC_PROJECT_ID
-$ export SEL_REGION=SELECTEL_VPC_REGION
-$ terraform import selectel_dbaas_datastore_v1.datastore_1 b311ce58-2658-46b5-b733-7a0f418703f2
+export OS_DOMAIN_NAME=999999
+export OS_USERNAME=example_user
+export OS_PASSWORD=example_password
+export INFRA_PROJECT_ID=SELECTEL_VPC_PROJECT_ID
+export INFRA_REGION=SELECTEL_VPC_REGION
+terraform import selectel_dbaas_datastore_v1.datastore_1 b311ce58-2658-46b5-b733-7a0f418703f2
 ```

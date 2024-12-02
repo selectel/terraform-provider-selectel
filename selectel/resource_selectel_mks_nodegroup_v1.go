@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient/quotamanager/quotas"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient/quotamanager/quotas"
 	"github.com/selectel/mks-go/pkg/v1/nodegroup"
 )
 
@@ -196,11 +196,11 @@ func resourceMKSNodegroupV1() *schema.Resource {
 		},
 		CustomizeDiff: customdiff.All(
 			// We need to recreate nodegroup if flavor changed.
-			customdiff.ForceNewIfChange("flavor_id", func(_ context.Context, old, new, _ interface{}) bool {
-				return old.(string) != new.(string)
+			customdiff.ForceNewIfChange("flavor_id", func(_ context.Context, oldVersion, newVersion, _ interface{}) bool {
+				return oldVersion.(string) != newVersion.(string)
 			}),
-			customdiff.ForceNewIfChange("local_volume", func(_ context.Context, old, new, _ interface{}) bool {
-				return old.(bool) != new.(bool)
+			customdiff.ForceNewIfChange("local_volume", func(_ context.Context, oldVersion, newVersion, _ interface{}) bool {
+				return oldVersion.(bool) != newVersion.(bool)
 			}),
 		),
 	}
@@ -540,10 +540,10 @@ func resourceMKSNodegroupV1Delete(ctx context.Context, d *schema.ResourceData, m
 func resourceMKSNodegroupV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
-		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")
+		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")
 	}
 	if config.Region == "" {
-		return nil, errors.New("SEL_REGION must be set for the resource import")
+		return nil, errors.New("INFRA_REGION must be set for the resource import")
 	}
 
 	d.Set("project_id", config.ProjectID)

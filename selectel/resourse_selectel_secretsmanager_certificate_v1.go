@@ -243,12 +243,12 @@ func resourceSecretsManagerCertificateV1Delete(ctx context.Context, d *schema.Re
 }
 
 // resourceSecretsManagerCertificateV1ImportState —  helper used in Importer: &schema.ResourceImporter
-// to avoid difficulties occurred with required SEL_PROJECT_ID env in
+// to avoid difficulties occurred with required INFRA_PROJECT_ID env in
 // resourceSecretsManagerCertificateV1Read when uising schema.ImportStatePassthroughContext.
 func resourceSecretsManagerCertificateV1ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
-		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")
+		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")
 	}
 
 	d.Set("project_id", config.ProjectID)

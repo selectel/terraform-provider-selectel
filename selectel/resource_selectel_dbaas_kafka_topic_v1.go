@@ -43,7 +43,7 @@ func resourceDBaaSTopicV1Create(ctx context.Context, d *schema.ResourceData, met
 	topicCreateOpts := dbaas.TopicCreateOpts{
 		DatastoreID: d.Get("datastore_id").(string),
 		Name:        d.Get("name").(string),
-		Partitions:  uint16(d.Get("partitions").(int)),
+		Partitions:  uint16(d.Get("partitions").(int)), //nolint:gosec
 	}
 
 	log.Print(msgCreate(objectTopic, topicCreateOpts))
@@ -90,7 +90,7 @@ func resourceDBaaSTopicV1Update(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	if d.HasChange("partitions") {
-		partitions := uint16(d.Get("partitions").(int))
+		partitions := uint16(d.Get("partitions").(int)) //nolint:gosec
 		updateOpts := dbaas.TopicUpdateOpts{
 			Partitions: partitions,
 		}
@@ -145,10 +145,10 @@ func resourceDBaaSTopicV1Delete(ctx context.Context, d *schema.ResourceData, met
 func resourceDBaaSTopicV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
-		return nil, errors.New("SEL_PROJECT_ID must be set for the resource import")
+		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")
 	}
 	if config.Region == "" {
-		return nil, errors.New("SEL_REGION must be set for the resource import")
+		return nil, errors.New("INFRA_REGION must be set for the resource import")
 	}
 
 	d.Set("project_id", config.ProjectID)

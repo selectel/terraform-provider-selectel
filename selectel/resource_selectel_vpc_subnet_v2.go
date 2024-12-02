@@ -10,9 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient/clients"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient/resell/v2/subnets"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient/clients"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/subnets"
 )
 
 func resourceVPCSubnetV2() *schema.Resource {
@@ -203,7 +203,7 @@ func resourceVPCSubnetV2Delete(_ context.Context, d *schema.ResourceData, meta i
 func resourceVPCSubnetV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
-		return nil, fmt.Errorf("SEL_PROJECT_ID must be set for the resource import")
+		return nil, fmt.Errorf("INFRA_PROJECT_ID must be set for the resource import")
 	}
 
 	d.Set("project_id", config.ProjectID)

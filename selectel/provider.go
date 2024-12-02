@@ -9,11 +9,6 @@ import (
 )
 
 const (
-	// Pool where the endpoint for Keystone API and Resell API is located.
-	DefaultAuthRegion = "ru-1"
-)
-
-const (
 	objectACL                       = "acl"
 	objectFloatingIP                = "floating IP"
 	objectKeypair                   = "keypair"
@@ -67,26 +62,26 @@ func Provider() *schema.Provider {
 			"project_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("SEL_PROJECT_ID", nil),
+				DefaultFunc: schema.EnvDefaultFunc("INFRA_PROJECT_ID", nil),
 				Description: "VPC project ID to import resources that need the project scope auth token.",
 			},
 			"region": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("SEL_REGION", nil),
+				DefaultFunc: schema.EnvDefaultFunc("INFRA_REGION", nil),
 				Description: "VPC region to import resources associated with the specific region.",
 			},
 			"auth_url": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("OS_AUTH_URL", nil),
-				Description: "Base url to work with auth API (Keystone URL). https://api.selvpc.ru/identity/v3/ used by default",
+				Description: "Base url to work with auth API (Keystone URL).",
 			},
 			"auth_region": {
 				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("OS_REGION_NAME", DefaultAuthRegion),
-				Description: "Region for Keystone and Resell API URLs, 'ru-1' is used by default.",
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("OS_REGION_NAME", nil),
+				Description: "Region for Keystone and Resell API URLs.",
 			},
 			"domain_name": {
 				Type:        schema.TypeString,
@@ -132,10 +127,7 @@ func Provider() *schema.Provider {
 			"selectel_vpc_keypair_v2":                               resourceVPCKeypairV2(),
 			"selectel_vpc_license_v2":                               resourceVPCLicenseV2(),
 			"selectel_vpc_project_v2":                               resourceVPCProjectV2(),
-			"selectel_vpc_role_v2":                                  resourceVPCRoleV2(), // DEPRECATED
 			"selectel_vpc_subnet_v2":                                resourceVPCSubnetV2(),
-			"selectel_vpc_token_v2":                                 resourceVPCTokenV2(), // DEPRECATED
-			"selectel_vpc_user_v2":                                  resourceVPCUserV2(),  // DEPRECATED
 			"selectel_iam_serviceuser_v1":                           resourceIAMServiceUserV1(),
 			"selectel_iam_user_v1":                                  resourceIAMUserV1(),
 			"selectel_iam_s3_credentials_v1":                        resourceIAMS3CredentialsV1(),
@@ -143,8 +135,6 @@ func Provider() *schema.Provider {
 			"selectel_iam_saml_federation_certificate_v1":           resourceIAMSAMLFederationCertificateV1(),
 			"selectel_iam_group_v1":                                 resourceIAMGroupV1(),
 			"selectel_iam_group_membership_v1":                      resourceIAMGroupMembershipV1(),
-			"selectel_vpc_vrrp_subnet_v2":                           resourceVPCVRRPSubnetV2(),        // DEPRECATED
-			"selectel_vpc_crossregion_subnet_v2":                    resourceVPCCrossRegionSubnetV2(), // DEPRECATED
 			"selectel_mks_cluster_v1":                               resourceMKSClusterV1(),
 			"selectel_mks_nodegroup_v1":                             resourceMKSNodegroupV1(),
 			"selectel_domains_domain_v1":                            resourceDomainsDomainV1(),

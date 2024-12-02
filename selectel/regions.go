@@ -4,8 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v3/selvpcclient"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/hashcode"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient"
 )
 
 func expandVPCV2Regions(rawRegions *schema.Set) []string {
@@ -18,12 +17,6 @@ func expandVPCV2Regions(rawRegions *schema.Set) []string {
 	}
 
 	return expandedRegions
-}
-
-// hashRegions is a hash function to use with the "regions" set.
-func hashRegions(v interface{}) int {
-	m := v.(map[string]interface{})
-	return hashcode.String(fmt.Sprintf("%s-", m["region"].(string)))
 }
 
 func validateRegion(selvpcClient *selvpcclient.Client, serviceType string, region string) error {

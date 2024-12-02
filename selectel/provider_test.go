@@ -47,8 +47,8 @@ func testAccSelectelPreCheck(t *testing.T) {
 
 func testAccSelectelPreCheckWithProjectID(t *testing.T) {
 	testAccSelectelPreCheck(t)
-	if v := os.Getenv("SEL_PROJECT_ID"); v == "" {
-		t.Fatal("SEL_PROJECT_ID must be set for acceptance tests")
+	if v := os.Getenv("INFRA_PROJECT_ID"); v == "" {
+		t.Fatal("INFRA_PROJECT_ID must be set for acceptance tests")
 	}
 }
 
@@ -70,11 +70,11 @@ func testAccCheckSelectelImportEnv(resourceName string) resource.TestCheckFunc {
 			region = v
 		}
 
-		if err := os.Setenv("SEL_PROJECT_ID", projectID); err != nil {
-			return fmt.Errorf("error setting SEL_PROJECT_ID: %s", err)
+		if err := os.Setenv("INFRA_PROJECT_ID", projectID); err != nil {
+			return fmt.Errorf("error setting INFRA_PROJECT_ID: %s", err)
 		}
-		if err := os.Setenv("SEL_REGION", region); err != nil {
-			return fmt.Errorf("error setting SEL_REGION: %s", err)
+		if err := os.Setenv("INFRA_REGION", region); err != nil {
+			return fmt.Errorf("error setting INFRA_REGION: %s", err)
 		}
 
 		return nil
@@ -97,8 +97,8 @@ func testAccCheckSelectelCRaaSImportEnv(resourceName string) resource.TestCheckF
 			projectID = v
 		}
 
-		if err := os.Setenv("SEL_PROJECT_ID", projectID); err != nil {
-			return fmt.Errorf("error setting SEL_PROJECT_ID: %s", err)
+		if err := os.Setenv("INFRA_PROJECT_ID", projectID); err != nil {
+			return fmt.Errorf("error setting INFRA_PROJECT_ID: %s", err)
 		}
 
 		return nil
