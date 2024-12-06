@@ -101,7 +101,7 @@ Boolean flag:
 
 * `nodes` - List of nodes in the node group.
 
-* `nodegroup_type` - Type of the node group. Available values are `STANDARD`, `GPU`, and `SGX`.
+* `nodegroup_type` - Type of the node group. Available values are `STANDARD` and `GPU`.
 
 ## Import
 
