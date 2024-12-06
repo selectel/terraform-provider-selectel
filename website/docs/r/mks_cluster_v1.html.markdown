@@ -90,7 +90,7 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
 
   * `true` - Audit logs are collected and available for export.
 
-* `oidc` - (Optional) Configures OpenID Connect provider in the cluster.
+* `oidc` - (Optional) Configures OpenID Connect provider in the cluster. Learn how to [configure OpenID Connect provider in the cluster](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/access-to-cluster-with-oidc-provider/).
   
   Contains parameters:
   
@@ -98,7 +98,7 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
 
   * `provider_name` - (Required) The name of the connection to be created. It will not affect other settings.
 
-  * `issuer_url` - (Required) The URL for the OIDC provider used to authenticate users requesting access to the cluster. The link must start with https://.
+  * `issuer_url` - (Required) The URL of the OIDC provider used to authenticate users requesting access to the cluster. The link must start with https://.
 
   * `client_id` - (Required) The service identifier issued by the OIDC provider that makes authentication requests to resources.
 
