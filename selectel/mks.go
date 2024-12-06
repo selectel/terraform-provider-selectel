@@ -553,7 +553,7 @@ func expandMKSNodegroupV1Labels(labels map[string]interface{}) map[string]string
 
 func expandAndValidateMKSClusterV1OIDC(d *schema.ResourceData) (cluster.OIDC, error) {
 	nestedResource := d.Get("oidc").([]any)
-	if nestedResource == nil || len(nestedResource) == 0 {
+	if len(nestedResource) == 0 {
 		return cluster.OIDC{}, nil
 	}
 

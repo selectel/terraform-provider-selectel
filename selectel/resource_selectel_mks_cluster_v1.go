@@ -180,7 +180,7 @@ func resourceMKSClusterV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 							Default:  "",
-							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+							DiffSuppressFunc: func(_, old, new string, _ *schema.ResourceData) bool {
 								// Ignore diff on default value from API.
 								return old == "sub" && new == ""
 							},
@@ -189,7 +189,7 @@ func resourceMKSClusterV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 							Default:  "",
-							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+							DiffSuppressFunc: func(_, old, new string, _ *schema.ResourceData) bool {
 								// Ignore diff on default value from API.
 								return old == "groups" && new == ""
 							},
