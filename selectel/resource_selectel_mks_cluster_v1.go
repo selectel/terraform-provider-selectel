@@ -152,6 +152,51 @@ func resourceMKSClusterV1() *schema.Resource {
 				Default:  false,
 				ForceNew: false,
 			},
+			"oidc": {
+				Type:     schema.TypeList,
+				Optional: true,
+				ForceNew: false,
+				MaxItems: 1,
+				MinItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"enabled": {
+							Type:     schema.TypeBool,
+							Required: true,
+						},
+						"provider_name": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"issuer_url": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"client_id": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"username_claim": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Default:  "",
+							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+								// Ignore diff on default value from API.
+								return old == "sub" && new == ""
+							},
+						},
+						"groups_claim": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Default:  "",
+							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+								// Ignore diff on default value from API.
+								return old == "groups" && new == ""
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -199,6 +244,11 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 		return diag.FromErr(errCreatingObject(objectCluster, err))
 	}
 
+	oidc, err := expandAndValidateMKSClusterV1OIDC(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	createOpts := &cluster.CreateOpts{
 		Name:                          d.Get("name").(string),
 		NetworkID:                     d.Get("network_id").(string),
@@ -215,6 +265,7 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 			AuditLogs: cluster.AuditLogs{
 				Enabled: enableAuditLogs,
 			},
+			OIDC: oidc,
 		},
 		Zonal:          &zonal,
 		PrivateKubeAPI: &privateKubeAPI,
@@ -265,6 +316,7 @@ func resourceMKSClusterV1Read(ctx context.Context, d *schema.ResourceData, meta 
 
 		return diag.FromErr(errGettingObject(objectCluster, d.Id(), err))
 	}
+	log.Printf("[TEST] test read oidc: %v ", d.Get("oidc"))
 
 	d.Set("name", mksCluster.Name)
 	d.Set("status", mksCluster.Status)
@@ -282,6 +334,7 @@ func resourceMKSClusterV1Read(ctx context.Context, d *schema.ResourceData, meta 
 	d.Set("zonal", mksCluster.Zonal)
 	d.Set("private_kube_api", mksCluster.PrivateKubeAPI)
 	d.Set("enable_audit_logs", mksCluster.KubernetesOptions.AuditLogs.Enabled)
+	d.Set("oidc", flattenMKSClusterV1OIDC(mksCluster))
 
 	return nil
 }
@@ -333,6 +386,13 @@ func resourceMKSClusterV1Update(ctx context.Context, d *schema.ResourceData, met
 	if d.HasChange("enable_audit_logs") {
 		v := d.Get("enable_audit_logs").(bool)
 		kubeOptions.AuditLogs.Enabled = v
+	}
+	if d.HasChange("oidc") {
+		oidc, err := expandAndValidateMKSClusterV1OIDC(d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		kubeOptions.OIDC = oidc
 	}
 
 	updateOpts.KubernetesOptions = kubeOptions

@@ -90,6 +90,22 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
 
   * `true` - Audit logs are collected and available for export.
 
+* `oidc` - (Optional) Configures OpenID Connect provider in the cluster.
+  
+  Contains parameters:
+  
+  * `enabled` - (Required) Enables or disables OpenID Connect in the cluster. 
+
+  * `provider_name` - (Required) The name of the connection to be created. It will not affect other settings.
+
+  * `issuer_url` - (Required) The URL for the OIDC provider used to authenticate users requesting access to the cluster. The link must start with https://.
+
+  * `client_id` - (Required) The service identifier issued by the OIDC provider that makes authentication requests to resources.
+
+  * `username_claim` - JWT claim to use as the username. By default, `sub`, which is expected to be a unique identifier of the end user.
+
+  * `groups_claim` - JWT claim to use as the user's group. By default, `groups`.
+
 ## Attributes Reference
 
 * `maintenance_window_end` - Time in UTC when maintenance in the cluster ends. The format is `hh:mm:ss`. Learn more about the [Maintenance window](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/set-up-maintenance-window/).
