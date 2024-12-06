@@ -180,18 +180,18 @@ func resourceMKSClusterV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 							Default:  "",
-							DiffSuppressFunc: func(_, old, new string, _ *schema.ResourceData) bool {
+							DiffSuppressFunc: func(_, oldVersion, newVersion string, _ *schema.ResourceData) bool {
 								// Ignore diff on default value from API.
-								return old == "sub" && new == ""
+								return oldVersion == "sub" && newVersion == ""
 							},
 						},
 						"groups_claim": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Default:  "",
-							DiffSuppressFunc: func(_, old, new string, _ *schema.ResourceData) bool {
+							DiffSuppressFunc: func(_, oldVersion, newVersion string, _ *schema.ResourceData) bool {
 								// Ignore diff on default value from API.
-								return old == "groups" && new == ""
+								return oldVersion == "groups" && newVersion == ""
 							},
 						},
 					},
