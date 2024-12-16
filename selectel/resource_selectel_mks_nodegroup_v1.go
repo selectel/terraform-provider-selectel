@@ -279,9 +279,8 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 	if v, ok := d.GetOk("enable_autoscale"); ok {
 		enableAutoscale := v.(bool)
 		createOpts.EnableAutoscale = &enableAutoscale
-	}
-	if v, ok := d.GetOk("autoscale_min_nodes"); ok {
-		autoscaleMinNodes := v.(int)
+		// d.GetOk returns false on autoscale_min_nodes set as 0.
+		autoscaleMinNodes := d.Get("autoscale_min_nodes").(int)
 		createOpts.AutoscaleMinNodes = &autoscaleMinNodes
 	}
 	if v, ok := d.GetOk("autoscale_max_nodes"); ok {
