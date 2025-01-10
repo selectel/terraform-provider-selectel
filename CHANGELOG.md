@@ -1,3 +1,13 @@
+## 6.0.2 (Jan 10, 2025)
+
+IMPROVEMENTS:
+
+* Bump golang.org/x/crypto to v0.31.0 ([#320](https://github.com/selectel/terraform-provider-selectel/pull/2320))
+
+BUG FIXES:
+
+* Fixed validation of autoscale_min_nodes MKS parameter ([#320](https://github.com/selectel/terraform-provider-selectel/pull/2320))
+
 ## 6.0.1 (Dec 2, 2024)
 
 IMPROVEMENTS:
