@@ -316,7 +316,6 @@ func resourceMKSClusterV1Read(ctx context.Context, d *schema.ResourceData, meta 
 
 		return diag.FromErr(errGettingObject(objectCluster, d.Id(), err))
 	}
-	log.Printf("[TEST] test read oidc: %v ", d.Get("oidc"))
 
 	d.Set("name", mksCluster.Name)
 	d.Set("status", mksCluster.Status)
