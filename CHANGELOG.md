@@ -1,3 +1,21 @@
+## 6.0.2 (Jan 14, 2025)
+
+FEATURES:
+
+* Added `oidc` argument to `selectel_mks_cluster_v1` resource ([#318](https://github.com/selectel/terraform-provider-selectel/pull/318))
+
+IMPROVEMENTS:
+
+* Added OIDC options to docs ([#318](https://github.com/selectel/terraform-provider-selectel/pull/318))
+* Removed unsupported SGX nodegroup type from docs ([#318](https://github.com/selectel/terraform-provider-selectel/pull/318))
+* Bump golang.org/x/crypto to v0.31.0 ([#320](https://github.com/selectel/terraform-provider-selectel/pull/320))
+* Bump golang.org/x/net to v0.33.0 ([#318](https://github.com/selectel/terraform-provider-selectel/pull/318))
+* Bump github.com/selectel/mks-go to v0.18.0 ([#318](https://github.com/selectel/terraform-provider-selectel/pull/318))
+
+BUG FIXES:
+
+* Fixed validation of autoscale_min_nodes MKS parameter ([#320](https://github.com/selectel/terraform-provider-selectel/pull/320))
+
 ## 6.0.1 (Dec 2, 2024)
 
 IMPROVEMENTS:
