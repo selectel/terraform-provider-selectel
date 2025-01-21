@@ -507,6 +507,17 @@ func flattenAdmissionControllersFromSlice(kubeVersion string, admissionControlle
 	return availableAdmissionControllers
 }
 
+func flattenMKSClusterV1OIDC(view *cluster.View) []interface{} {
+	return []interface{}{map[string]interface{}{
+		"enabled":        view.KubernetesOptions.OIDC.Enabled,
+		"provider_name":  view.KubernetesOptions.OIDC.ProviderName,
+		"issuer_url":     view.KubernetesOptions.OIDC.IssuerURL,
+		"client_id":      view.KubernetesOptions.OIDC.ClientID,
+		"username_claim": view.KubernetesOptions.OIDC.UsernameClaim,
+		"groups_claim":   view.KubernetesOptions.OIDC.GroupsClaim,
+	}}
+}
+
 func expandMKSNodegroupV1Taints(taints []interface{}) []nodegroup.Taint {
 	result := make([]nodegroup.Taint, len(taints))
 	for i := range taints {
@@ -538,6 +549,41 @@ func expandMKSNodegroupV1Labels(labels map[string]interface{}) map[string]string
 	}
 
 	return result
+}
+
+func expandAndValidateMKSClusterV1OIDC(d *schema.ResourceData) (cluster.OIDC, error) {
+	nestedResource := d.Get("oidc").([]any)
+	if len(nestedResource) == 0 {
+		return cluster.OIDC{}, nil
+	}
+
+	// Resource always comes with only first element because of validation
+	resourceMap := nestedResource[0].(map[string]interface{})
+	oidc := cluster.OIDC{
+		Enabled:       resourceMap["enabled"].(bool),
+		ProviderName:  resourceMap["provider_name"].(string),
+		IssuerURL:     resourceMap["issuer_url"].(string),
+		ClientID:      resourceMap["client_id"].(string),
+		UsernameClaim: resourceMap["username_claim"].(string),
+		GroupsClaim:   resourceMap["groups_claim"].(string),
+	}
+
+	if oidc.Enabled {
+		for _, s := range []string{oidc.ProviderName, oidc.IssuerURL, oidc.ClientID} {
+			if s == "" {
+				return cluster.OIDC{}, errors.New("\"provider_name\", \"issuer_url\" and \"client_id\" " +
+					"should not be empty in case of enabled oidc")
+			}
+		}
+	} else {
+		for _, s := range []string{oidc.ProviderName, oidc.IssuerURL, oidc.ClientID, oidc.UsernameClaim, oidc.GroupsClaim} {
+			if s != "" {
+				return cluster.OIDC{}, errors.New("oidc params cannot be configured if it is disabled")
+			}
+		}
+	}
+
+	return oidc, nil
 }
 
 func getMKSClient(d *schema.ResourceData, meta interface{}) (*v1.ServiceClient, diag.Diagnostics) {
