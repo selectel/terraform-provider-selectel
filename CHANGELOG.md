@@ -1,3 +1,9 @@
+## 6.1.1 (Jan 28, 2025)
+
+BUG FIXES:
+
+* Fixed creating nodegroup after changes ([#324](https://github.com/selectel/terraform-provider-selectel/pull/324))
+
 ## 6.1.0 (Jan 16, 2025)
 
 FEATURES:
