@@ -262,8 +262,11 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 		Preemptible:               &preemptible,
 	}
 
-	if createOpts.VolumeType != "" && !createOpts.LocalVolume {
-		return diag.FromErr(fmt.Errorf("can't use volume_type with local_volume: %w", err))
+	if createOpts.LocalVolume && createOpts.VolumeType != "" {
+		return diag.FromErr(fmt.Errorf("can't use local_volume=true with volume_type: %w", err))
+	}
+	if !createOpts.LocalVolume && createOpts.VolumeType == "" {
+		return diag.FromErr(fmt.Errorf("can't use local_volume=false without specify volume_type: %w", err))
 	}
 
 	projectQuotas, _, err := quotas.GetProjectQuotas(selvpcClient, projectID, region)
