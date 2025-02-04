@@ -71,7 +71,7 @@ func waitForMKSNodegroupV1ActiveState(
 		string(nodegroup.StatusActive),
 	}
 
-	stateConfNodegroup := &resource.StateChangeConf{
+	stateConf := &resource.StateChangeConf{
 		Pending:    pending,
 		Target:     target,
 		Refresh:    mksNodegroupV1StateRefreshFunc(ctx, client, clusterID, nodegroupID),
@@ -80,7 +80,7 @@ func waitForMKSNodegroupV1ActiveState(
 		MinTimeout: 3 * time.Second,
 	}
 
-	_, err := stateConfNodegroup.WaitForStateContext(ctx)
+	_, err := stateConf.WaitForStateContext(ctx)
 	if err != nil {
 		return fmt.Errorf(
 			"error waiting for the nodegroup %s to become 'ACTIVE': %s",
