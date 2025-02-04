@@ -58,7 +58,7 @@ func waitForMKSClusterV1ActiveState(
 func waitForMKSNodegroupV1ActiveState(
 	ctx context.Context, client *v1.ServiceClient, clusterID string, nodegroupID string, timeout time.Duration,
 ) error {
-	pendingNodegroup := []string{
+	pending := []string{
 		string(nodegroup.StatusPendingCreate),
 		string(nodegroup.StatusPendingUpdate),
 		string(nodegroup.StatusPendingDelete),
@@ -67,13 +67,13 @@ func waitForMKSNodegroupV1ActiveState(
 		string(nodegroup.StatusPendingNodeReinstall),
 	}
 
-	targetNodegroup := []string{
+	target := []string{
 		string(nodegroup.StatusActive),
 	}
 
 	stateConfNodegroup := &resource.StateChangeConf{
-		Pending:    pendingNodegroup,
-		Target:     targetNodegroup,
+		Pending:    pending,
+		Target:     target,
 		Refresh:    mksNodegroupV1StateRefreshFunc(ctx, client, clusterID, nodegroupID),
 		Timeout:    timeout,
 		Delay:      10 * time.Second,
