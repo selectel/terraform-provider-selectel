@@ -41,6 +41,10 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"status": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"region": {
 				Type:     schema.TypeString,
 				Required: true,
