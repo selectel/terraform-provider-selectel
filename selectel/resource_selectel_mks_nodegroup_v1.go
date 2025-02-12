@@ -464,9 +464,9 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 			return diag.FromErr(errUpdatingObject(objectNodegroup, d.Id(), err))
 		}
 
-		log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", clusterID)
+		log.Printf("[DEBUG] waiting for nodegroup %s to become 'ACTIVE'", nodegroupID)
 		timeout := d.Timeout(schema.TimeoutUpdate)
-		err = waitForMKSClusterV1ActiveState(ctx, mksClient, clusterID, timeout)
+		err = waitForMKSNodegroupV1ActiveState(ctx, mksClient, clusterID, nodegroupID, timeout)
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectNodegroup, d.Id(), err))
 		}
