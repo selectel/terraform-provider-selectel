@@ -41,6 +41,10 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"status": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"region": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -365,6 +369,7 @@ func resourceMKSNodegroupV1Read(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	d.Set("cluster_id", mksNodegroup.ClusterID)
+	d.Set("status", mksNodegroup.Status)
 	d.Set("flavor_id", mksNodegroup.FlavorID)
 	d.Set("volume_gb", mksNodegroup.VolumeGB)
 	d.Set("volume_type", mksNodegroup.VolumeType)
@@ -459,9 +464,9 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 			return diag.FromErr(errUpdatingObject(objectNodegroup, d.Id(), err))
 		}
 
-		log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", clusterID)
+		log.Printf("[DEBUG] waiting for nodegroup %s to become 'ACTIVE'", nodegroupID)
 		timeout := d.Timeout(schema.TimeoutUpdate)
-		err = waitForMKSClusterV1ActiveState(ctx, mksClient, clusterID, timeout)
+		err = waitForMKSNodegroupV1ActiveState(ctx, mksClient, clusterID, nodegroupID, timeout)
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectNodegroup, d.Id(), err))
 		}
@@ -500,9 +505,9 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 			return diag.FromErr(errUpdatingObject(objectNodegroup, d.Id(), err))
 		}
 
-		log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", clusterID)
+		log.Printf("[DEBUG] waiting for nodegroup %s to become 'ACTIVE'", nodegroupID)
 		timeout := d.Timeout(schema.TimeoutUpdate)
-		err = waitForMKSClusterV1ActiveState(ctx, mksClient, clusterID, timeout)
+		err = waitForMKSNodegroupV1ActiveState(ctx, mksClient, clusterID, nodegroupID, timeout)
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectNodegroup, d.Id(), err))
 		}
