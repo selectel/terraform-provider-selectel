@@ -103,6 +103,8 @@ Boolean flag:
 
 * `nodegroup_type` - Type of the node group. Available values are `STANDARD` and `GPU`.
 
+* status - Node group status.
+
 ## Import
 
 You can import a node group:
