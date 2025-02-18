@@ -1,3 +1,11 @@
+## 6.2.0 (Feb 24, 2025)
+
+FEATURES:
+* Added new field `status` at `selectel_mks_nodegroup_v1` ([#327](https://github.com/selectel/terraform-provider-selectel/pull/327))
+
+BUG FIXES:
+* Fixed wrong behavior causing cluster creation failed due to conflict of values `zonal` and `enable_patch_version_auto_upgrade` ([#326](https://github.com/selectel/terraform-provider-selectel/pull/326))
+
 ## 6.1.1 (Jan 28, 2025)
 
 BUG FIXES:
