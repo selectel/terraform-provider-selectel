@@ -6,6 +6,8 @@ FEATURES:
 BUG FIXES:
 * Fixed wrong behavior causing cluster creation failed due to conflict of values `zonal` and `enable_patch_version_auto_upgrade` ([#326](https://github.com/selectel/terraform-provider-selectel/pull/326))
 
+BREAKING CHANGES:
+* Due to API changes, older versions of the provider will incorrectly display node group resizing as instant, even though the operation is still in progress. The latest version correctly reflects the actual state of the resize process.
 ## 6.1.1 (Jan 28, 2025)
 
 BUG FIXES:
