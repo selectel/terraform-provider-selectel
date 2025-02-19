@@ -8,6 +8,7 @@ BUG FIXES:
 
 BREAKING CHANGES:
 * Due to API changes, older versions of the provider will incorrectly display node group resizing as instant, even though the operation is still in progress. The latest version correctly reflects the actual state of the resize process.
+
 ## 6.1.1 (Jan 28, 2025)
 
 BUG FIXES:
