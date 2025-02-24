@@ -139,22 +139,19 @@ func resourceMKSNodegroupV1() *schema.Resource {
 				},
 			},
 			"enable_autoscale": {
-				Type:         schema.TypeBool,
-				Optional:     true,
-				Computed:     true,
-				RequiredWith: []string{"autoscale_min_nodes", "autoscale_max_nodes"},
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
 			},
 			"autoscale_min_nodes": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				Computed:     true,
-				RequiredWith: []string{"enable_autoscale", "autoscale_max_nodes"},
+				Type:     schema.TypeInt,
+				Optional: true,
+				Computed: true,
 			},
 			"autoscale_max_nodes": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				Computed:     true,
-				RequiredWith: []string{"enable_autoscale", "autoscale_min_nodes"},
+				Type:     schema.TypeInt,
+				Optional: true,
+				Computed: true,
 			},
 			"user_data": {
 				Type:         schema.TypeString,
@@ -289,12 +286,11 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 	if v, ok := d.GetOk("enable_autoscale"); ok {
 		enableAutoscale := v.(bool)
 		createOpts.EnableAutoscale = &enableAutoscale
-		// d.GetOk returns false on autoscale_min_nodes set as 0.
+
+		// d.GetOk returns false on value set as 0.
 		autoscaleMinNodes := d.Get("autoscale_min_nodes").(int)
 		createOpts.AutoscaleMinNodes = &autoscaleMinNodes
-	}
-	if v, ok := d.GetOk("autoscale_max_nodes"); ok {
-		autoscaleMaxNodes := v.(int)
+		autoscaleMaxNodes := d.Get("autoscale_max_nodes").(int)
 		createOpts.AutoscaleMaxNodes = &autoscaleMaxNodes
 	}
 
