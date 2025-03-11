@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -272,8 +273,26 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 	if !createOpts.LocalVolume && createOpts.VolumeType == "" {
 		return diag.FromErr(fmt.Errorf("can't use local_volume=false without specify volume_type: %w", err))
 	}
+	filters := []func(url.Values){
+		quotas.WithResourceFilter("compute_cores"),
+		quotas.WithResourceFilter("compute_ram"),
+	}
+	if createOpts.LocalVolume {
+		filters = append(filters, quotas.WithResourceFilter("volume_gigabytes_local"))
+	} else {
+		filters = append(filters,
+			quotas.WithResourceFilter("volume_gigabytes_fast"),
+			quotas.WithResourceFilter("volume_gigabytes_universal"),
+			quotas.WithResourceFilter("volume_gigabytes_basic"),
+		)
+	}
 
-	projectQuotas, _, err := quotas.GetProjectQuotas(selvpcClient, projectID, region)
+	projectQuotas, _, err := quotas.GetProjectQuotas(
+		selvpcClient,
+		projectID,
+		region,
+		filters...,
+	)
 	if err != nil {
 		return diag.FromErr(errGettingObject(objectProjectQuotas, projectID, err))
 	}
@@ -486,7 +505,26 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 			AvailabilityZone: d.Get("availability_zone").(string),
 		}
 
-		projectQuotas, _, err := quotas.GetProjectQuotas(selvpcClient, projectID, region)
+		filters := []func(url.Values){
+			quotas.WithResourceFilter("compute_cores"),
+			quotas.WithResourceFilter("compute_ram"),
+		}
+		if newNodesRequest.LocalVolume {
+			filters = append(filters, quotas.WithResourceFilter("volume_gigabytes_local"))
+		} else {
+			filters = append(filters,
+				quotas.WithResourceFilter("volume_gigabytes_fast"),
+				quotas.WithResourceFilter("volume_gigabytes_universal"),
+				quotas.WithResourceFilter("volume_gigabytes_basic"),
+			)
+		}
+
+		projectQuotas, _, err := quotas.GetProjectQuotas(
+			selvpcClient,
+			projectID,
+			region,
+			filters...,
+		)
 		if err != nil {
 			return diag.FromErr(errGettingObject(objectProjectQuotas, projectID, err))
 		}
