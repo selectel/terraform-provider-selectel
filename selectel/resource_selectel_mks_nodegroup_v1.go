@@ -310,29 +310,11 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(errCreatingObject(objectNodegroup, err))
 	}
 
-	log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", clusterID)
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForMKSClusterV1ActiveState(ctx, mksClient, clusterID, timeout)
+
+	nodegroupID, err := waitForMKSNodegroupV1Creation(ctx, mksClient, clusterID, timeout, nodegroupIDs)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectNodegroup, err))
-	}
-
-	// Get a list of all nodegroups in the cluster and find a new nodegroup.
-	allNodegroups, _, err = nodegroup.List(ctx, mksClient, clusterID)
-	if err != nil {
-		return diag.FromErr(errGettingObject("all nodegroups in the cluster", clusterID, err))
-	}
-
-	var nodegroupID string
-	for _, ng := range allNodegroups {
-		if _, ok := nodegroupIDs[ng.ID]; !ok {
-			nodegroupID = ng.ID
-		}
-	}
-	if nodegroupID == "" {
-		return diag.FromErr(errCreatingObject(objectNodegroup,
-			errors.New("unable to find new nodegroup by ID after creating"),
-		))
 	}
 
 	// The ID must be a combination of the cluster and nodegroup ID
@@ -537,9 +519,9 @@ func resourceMKSNodegroupV1Delete(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(errDeletingObject(objectNodegroup, d.Id(), err))
 	}
 
-	log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", clusterID)
 	timeout := d.Timeout(schema.TimeoutDelete)
-	err = waitForMKSClusterV1ActiveState(ctx, mksClient, clusterID, timeout)
+
+	err = waitForMKSNodegroupV1Deletion(ctx, mksClient, clusterID, nodegroupID, timeout)
 	if err != nil {
 		return diag.FromErr(errDeletingObject(objectNodegroup, d.Id(), err))
 	}

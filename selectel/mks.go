@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -856,4 +857,65 @@ func checkQuotasForNodegroup(projectQuotas []*quotas.Quota, nodegroupOpts *nodeg
 	}
 
 	return nil
+}
+
+// waitForMKSNodegroupV1Creation waits for the nodegroup to be created. It returns an error if the nodegroup is not created.
+func waitForMKSNodegroupV1Creation(ctx context.Context, mksClient *v1.ServiceClient, clusterID string, timeout time.Duration, nodegroupIDs map[string]struct{}) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	var nodegroupID string
+	for {
+		allNodegroups, _, err := nodegroup.List(ctx, mksClient, clusterID)
+		if err != nil {
+			return "", fmt.Errorf("error getting nodegroups in cluster %s: %w", clusterID, err)
+		}
+
+		for _, ng := range allNodegroups {
+			if _, ok := nodegroupIDs[ng.ID]; !ok {
+				nodegroupID = ng.ID
+				break
+			}
+		}
+
+		if nodegroupID != "" {
+			log.Printf("[DEBUG] waiting for nodegroup %s to become 'ACTIVE'", nodegroupID)
+			err := waitForMKSNodegroupV1ActiveState(ctx, mksClient, clusterID, nodegroupID, timeout)
+			if err != nil {
+				return "", err
+			}
+
+			return nodegroupID, nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return "", fmt.Errorf("timeout waiting for nodegroup creation in cluster %s", clusterID)
+		case <-time.After(10 * time.Second):
+		}
+	}
+}
+
+// waitForMKSNodegroupV1Deletion waits for the nodegroup to be deleted. It returns an error if the nodegroup still exists.
+func waitForMKSNodegroupV1Deletion(ctx context.Context, mksClient *v1.ServiceClient, clusterID, nodegroupID string, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	for {
+		_, res, err := nodegroup.Get(ctx, mksClient, clusterID, nodegroupID)
+		if err != nil {
+			if res != nil && res.StatusCode == http.StatusNotFound {
+				log.Printf("[DEBUG] nodegroup %s has been deleted", nodegroupID)
+				return nil
+			}
+
+			return fmt.Errorf("error getting nodegroup %s: %w", nodegroupID, err)
+		}
+
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("timeout waiting for nodegroup %s to be deleted", nodegroupID)
+		case <-time.After(10 * time.Second):
+		}
+	}
 }
