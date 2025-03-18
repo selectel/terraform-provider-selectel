@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/go-selvpcclient/v4/selvpcclient/quotamanager/quotas"
@@ -519,11 +521,30 @@ func resourceMKSNodegroupV1Delete(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(errDeletingObject(objectNodegroup, d.Id(), err))
 	}
 
-	timeout := d.Timeout(schema.TimeoutDelete)
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{strconv.Itoa(http.StatusOK)},
+		Target:  []string{strconv.Itoa(http.StatusNotFound)},
+		Refresh: func() (result interface{}, state string, err error) {
+			result, response, err := nodegroup.Get(ctx, mksClient, clusterID, nodegroupID)
+			if err != nil {
+				if response != nil {
+					return result, strconv.Itoa(response.StatusCode), nil
+				}
 
-	err = waitForMKSNodegroupV1Deletion(ctx, mksClient, clusterID, nodegroupID, timeout)
+				return nil, "", err
+			}
+
+			return result, strconv.Itoa(response.StatusCode), err
+		},
+		Timeout:    d.Timeout(schema.TimeoutDelete),
+		Delay:      10 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+
+	log.Printf("[DEBUG] waiting for nodegroup %s to become deleted", d.Id())
+	_, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return diag.FromErr(errDeletingObject(objectNodegroup, d.Id(), err))
+		return diag.FromErr(fmt.Errorf("error waiting for the nodegroup %s to become deleted: %s", d.Id(), err))
 	}
 
 	return nil
