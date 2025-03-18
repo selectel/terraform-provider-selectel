@@ -274,7 +274,13 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 		PrivateKubeAPI: &privateKubeAPI,
 	}
 
-	projectQuotas, _, err := quotas.GetProjectQuotas(selvpcClient, projectID, region)
+	projectQuotas, _, err := quotas.GetProjectQuotas(
+		selvpcClient,
+		projectID,
+		region,
+		quotas.WithResourceFilter("mks_cluster_zonal"),
+		quotas.WithResourceFilter("mks_cluster_regional"),
+	)
 	if err != nil {
 		return diag.FromErr(errGettingObject(objectProjectQuotas, projectID, err))
 	}

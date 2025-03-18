@@ -1,3 +1,8 @@
+## 6.3.0 (March 12, 2025)
+
+BUG FIXES:
+* Added filters to `quotas.GetProjectQuotas` calls to avoid errors ([#330](https://github.com/selectel/terraform-provider-selectel/pull/330))
+
 ## 6.2.0 (Feb 24, 2025)
 
 FEATURES:

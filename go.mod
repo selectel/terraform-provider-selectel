@@ -8,7 +8,7 @@ require (
 	github.com/selectel/craas-go v0.3.0
 	github.com/selectel/dbaas-go v0.12.1
 	github.com/selectel/domains-go v1.0.2
-	github.com/selectel/go-selvpcclient/v4 v4.0.0
+	github.com/selectel/go-selvpcclient/v4 v4.1.0
 	github.com/selectel/iam-go v0.4.1
 	github.com/selectel/mks-go v0.19.0
 	github.com/selectel/secretsmanager-go v0.2.1
