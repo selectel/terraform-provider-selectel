@@ -857,3 +857,42 @@ func checkQuotasForNodegroup(projectQuotas []*quotas.Quota, nodegroupOpts *nodeg
 
 	return nil
 }
+
+// waitForMKSNodegroupV1Creation waits for the nodegroup to be created. It returns an error if the nodegroup is not created.
+func waitForMKSNodegroupV1Creation(ctx context.Context, mksClient *v1.ServiceClient, clusterID string, timeout time.Duration, existingNodegroups map[string]struct{}) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	var nodegroupID string
+	for {
+		allNodegroups, _, err := nodegroup.List(ctx, mksClient, clusterID)
+		if err != nil {
+			return "", fmt.Errorf("error getting nodegroups in cluster %s: %w", clusterID, err)
+		}
+
+		for _, ng := range allNodegroups {
+			if _, ok := existingNodegroups[ng.ID]; !ok {
+				nodegroupID = ng.ID
+				break
+			}
+		}
+
+		if nodegroupID != "" {
+			break
+		}
+
+		select {
+		case <-ctx.Done():
+			return "", fmt.Errorf("timeout waiting for nodegroup creation in cluster %s", clusterID)
+		case <-time.After(10 * time.Second):
+		}
+	}
+
+	log.Printf("[DEBUG] waiting for nodegroup %s to become 'ACTIVE'", nodegroupID)
+	// Timeout should not be reduced here because it's already applied to ctx in WithTimeout.
+	if err := waitForMKSNodegroupV1ActiveState(ctx, mksClient, clusterID, nodegroupID, timeout); err != nil {
+		return "", err
+	}
+
+	return nodegroupID, nil
+}
