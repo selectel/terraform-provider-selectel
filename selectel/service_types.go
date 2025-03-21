@@ -7,4 +7,5 @@ const (
 	IAM                = "iam"
 	SecretsManager     = "secrets-manager"
 	CertificateManager = "certificate-manager"
+	DNSv2              = "dnsv2"
 )

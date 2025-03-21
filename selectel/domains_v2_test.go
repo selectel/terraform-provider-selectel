@@ -20,18 +20,24 @@ func getDomainsV2ClientTest(rs *terraform.ResourceState, testAccProvider *schema
 	if !ok {
 		return nil, ErrProjectIDNotSetupForDNSV2
 	}
+
 	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
 	if err != nil {
 		return nil, fmt.Errorf("can't get selvpc client for domains v2: %w", err)
 	}
 
+	userAgent := "terraform-provider"
+	endpoint, err := selvpcClient.Catalog.GetEndpoint(DNSv2, config.AuthRegion)
+	if err != nil {
+		return nil, fmt.Errorf("can't get endpoint to init dnsv2 client: %w", err)
+	}
+
 	httpClient := &http.Client{}
-	userAgent := "terraform-provider-selectel"
-	defaultAPIURL := "https://api.selectel.ru/domains/v2"
 	hdrs := http.Header{}
 	hdrs.Add("X-Auth-Token", selvpcClient.GetXAuthToken())
 	hdrs.Add("User-Agent", userAgent)
-	domainsClient := domainsV2.NewClient(defaultAPIURL, httpClient, hdrs)
+
+	domainsClient := domainsV2.NewClient(endpoint.URL, httpClient, hdrs)
 
 	return domainsClient, nil
 }
