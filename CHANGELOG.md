@@ -2,7 +2,7 @@
 
 FEATURES:
 
-* Get endpoint for DNSv2 client from keystone catalog ([#332](https://github.com/selectel/terraform-provider-selectel/pull/332))
+* Get endpoint for DNSv2 client from keystone catalog ([#333](https://github.com/selectel/terraform-provider-selectel/pull/333))
 
 ## 6.3.0 (March 12, 2025)
 
