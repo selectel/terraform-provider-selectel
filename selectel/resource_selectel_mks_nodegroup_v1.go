@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/go-selvpcclient/v4/selvpcclient/quotamanager/quotas"
@@ -269,8 +272,26 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 	if !createOpts.LocalVolume && createOpts.VolumeType == "" {
 		return diag.FromErr(fmt.Errorf("can't use local_volume=false without specify volume_type: %w", err))
 	}
+	filters := []func(url.Values){
+		quotas.WithResourceFilter("compute_cores"),
+		quotas.WithResourceFilter("compute_ram"),
+	}
+	if createOpts.LocalVolume {
+		filters = append(filters, quotas.WithResourceFilter("volume_gigabytes_local"))
+	} else {
+		filters = append(filters,
+			quotas.WithResourceFilter("volume_gigabytes_fast"),
+			quotas.WithResourceFilter("volume_gigabytes_universal"),
+			quotas.WithResourceFilter("volume_gigabytes_basic"),
+		)
+	}
 
-	projectQuotas, _, err := quotas.GetProjectQuotas(selvpcClient, projectID, region)
+	projectQuotas, _, err := quotas.GetProjectQuotas(
+		selvpcClient,
+		projectID,
+		region,
+		filters...,
+	)
 	if err != nil {
 		return diag.FromErr(errGettingObject(objectProjectQuotas, projectID, err))
 	}
@@ -309,29 +330,11 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(errCreatingObject(objectNodegroup, err))
 	}
 
-	log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", clusterID)
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForMKSClusterV1ActiveState(ctx, mksClient, clusterID, timeout)
+
+	nodegroupID, err := waitForMKSNodegroupV1Creation(ctx, mksClient, clusterID, timeout, nodegroupIDs)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectNodegroup, err))
-	}
-
-	// Get a list of all nodegroups in the cluster and find a new nodegroup.
-	allNodegroups, _, err = nodegroup.List(ctx, mksClient, clusterID)
-	if err != nil {
-		return diag.FromErr(errGettingObject("all nodegroups in the cluster", clusterID, err))
-	}
-
-	var nodegroupID string
-	for _, ng := range allNodegroups {
-		if _, ok := nodegroupIDs[ng.ID]; !ok {
-			nodegroupID = ng.ID
-		}
-	}
-	if nodegroupID == "" {
-		return diag.FromErr(errCreatingObject(objectNodegroup,
-			errors.New("unable to find new nodegroup by ID after creating"),
-		))
 	}
 
 	// The ID must be a combination of the cluster and nodegroup ID
@@ -485,7 +488,26 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 			AvailabilityZone: d.Get("availability_zone").(string),
 		}
 
-		projectQuotas, _, err := quotas.GetProjectQuotas(selvpcClient, projectID, region)
+		filters := []func(url.Values){
+			quotas.WithResourceFilter("compute_cores"),
+			quotas.WithResourceFilter("compute_ram"),
+		}
+		if newNodesRequest.LocalVolume {
+			filters = append(filters, quotas.WithResourceFilter("volume_gigabytes_local"))
+		} else {
+			filters = append(filters,
+				quotas.WithResourceFilter("volume_gigabytes_fast"),
+				quotas.WithResourceFilter("volume_gigabytes_universal"),
+				quotas.WithResourceFilter("volume_gigabytes_basic"),
+			)
+		}
+
+		projectQuotas, _, err := quotas.GetProjectQuotas(
+			selvpcClient,
+			projectID,
+			region,
+			filters...,
+		)
 		if err != nil {
 			return diag.FromErr(errGettingObject(objectProjectQuotas, projectID, err))
 		}
@@ -536,11 +558,30 @@ func resourceMKSNodegroupV1Delete(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(errDeletingObject(objectNodegroup, d.Id(), err))
 	}
 
-	log.Printf("[DEBUG] waiting for cluster %s to become 'ACTIVE'", clusterID)
-	timeout := d.Timeout(schema.TimeoutDelete)
-	err = waitForMKSClusterV1ActiveState(ctx, mksClient, clusterID, timeout)
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{strconv.Itoa(http.StatusOK)},
+		Target:  []string{strconv.Itoa(http.StatusNotFound)},
+		Refresh: func() (result interface{}, state string, err error) {
+			result, response, err := nodegroup.Get(ctx, mksClient, clusterID, nodegroupID)
+			if err != nil {
+				if response != nil {
+					return result, strconv.Itoa(response.StatusCode), nil
+				}
+
+				return nil, "", err
+			}
+
+			return result, strconv.Itoa(response.StatusCode), err
+		},
+		Timeout:    d.Timeout(schema.TimeoutDelete),
+		Delay:      10 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+
+	log.Printf("[DEBUG] waiting for nodegroup %s to become deleted", d.Id())
+	_, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return diag.FromErr(errDeletingObject(objectNodegroup, d.Id(), err))
+		return diag.FromErr(fmt.Errorf("error waiting for the nodegroup %s to become deleted: %s", d.Id(), err))
 	}
 
 	return nil
