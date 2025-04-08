@@ -1,8 +1,13 @@
-## 6.4.0 (March 21, 2025)
+## 6.4.0 (March 24, 2025)
 
 FEATURES:
 
 * Get endpoint for DNSv2 client from keystone catalog ([#333](https://github.com/selectel/terraform-provider-selectel/pull/333))
+* Add full support statuses of MKS nodegroup ([#331](https://github.com/selectel/terraform-provider-selectel/pull/331))
+
+BUG FIXES:
+
+* Fix validation of MKS nodegroup autoscaling params ([#329](https://github.com/selectel/terraform-provider-selectel/pull/329))
 
 ## 6.3.0 (March 12, 2025)
 
