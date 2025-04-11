@@ -10,6 +10,8 @@ description: |-
 
 Creates and manages a public subnet using public API v2. For more information about public subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/servers/networks/about-networks/).
 
+For private networks and subnets, use [openstack\_networking\_network\_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_network_v2) and [openstack\_networking\_subnet\_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_subnet_v2) resources of the OpenStack provider.
+
 ## Example Usage
 
 ```hcl
