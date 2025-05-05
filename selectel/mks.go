@@ -608,6 +608,7 @@ func expandMKSClusterV1OIDC(d *schema.ResourceData) cluster.OIDC {
 
 	// Resource always comes with only first element because of validation
 	resourceMap := nestedResource[0].(map[string]interface{})
+
 	return cluster.OIDC{
 		Enabled:       resourceMap["enabled"].(bool),
 		ProviderName:  resourceMap["provider_name"].(string),
