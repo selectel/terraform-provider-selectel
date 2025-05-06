@@ -1,3 +1,13 @@
+## 6.4.1 (May 6, 2025)
+
+BUG FIXES:
+* Request only the specified disk quota for mks nodegroup ([#338](https://github.com/selectel/terraform-provider-selectel/pull/338))
+
+IMPROVEMENTS:
+* Update documentation for subnet ([#336](https://github.com/selectel/terraform-provider-selectel/pull/336))
+* Update documentation for mks nodegroup ([#334](https://github.com/selectel/terraform-provider-selectel/pull/334))
+
+
 ## 6.4.0 (March 24, 2025)
 
 FEATURES:

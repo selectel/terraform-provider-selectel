@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -279,11 +280,12 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 	if createOpts.LocalVolume {
 		filters = append(filters, quotas.WithResourceFilter("volume_gigabytes_local"))
 	} else {
-		filters = append(filters,
-			quotas.WithResourceFilter("volume_gigabytes_fast"),
-			quotas.WithResourceFilter("volume_gigabytes_universal"),
-			quotas.WithResourceFilter("volume_gigabytes_basic"),
-		)
+		// Removing an availability zone from volume type.
+		// For example: `fast.ru-3a` -> `fast`.
+		volumeType := strings.Split(createOpts.VolumeType, ".")[0]
+		resourceName := "volume_gigabytes_" + volumeType
+
+		filters = append(filters, quotas.WithResourceFilter(resourceName))
 	}
 
 	projectQuotas, _, err := quotas.GetProjectQuotas(
@@ -495,11 +497,12 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 		if newNodesRequest.LocalVolume {
 			filters = append(filters, quotas.WithResourceFilter("volume_gigabytes_local"))
 		} else {
-			filters = append(filters,
-				quotas.WithResourceFilter("volume_gigabytes_fast"),
-				quotas.WithResourceFilter("volume_gigabytes_universal"),
-				quotas.WithResourceFilter("volume_gigabytes_basic"),
-			)
+			// Removing an availability zone from volume type.
+			// For example: `fast.ru-3a` -> `fast`.
+			volumeType := strings.Split(newNodesRequest.VolumeType, ".")[0]
+			resourceName := "volume_gigabytes_" + volumeType
+
+			filters = append(filters, quotas.WithResourceFilter(resourceName))
 		}
 
 		projectQuotas, _, err := quotas.GetProjectQuotas(
