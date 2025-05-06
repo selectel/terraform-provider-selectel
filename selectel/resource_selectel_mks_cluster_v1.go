@@ -157,6 +157,7 @@ func resourceMKSClusterV1() *schema.Resource {
 				ForceNew: false,
 				MaxItems: 1,
 				MinItems: 1,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"enabled": {
@@ -165,32 +166,44 @@ func resourceMKSClusterV1() *schema.Resource {
 						},
 						"provider_name": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 						},
 						"issuer_url": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 						},
 						"client_id": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 						},
 						"username_claim": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Default:  "",
-							DiffSuppressFunc: func(_, oldVersion, newVersion string, _ *schema.ResourceData) bool {
+							DiffSuppressFunc: func(_, oldVersion, newVersion string, d *schema.ResourceData) bool {
+								oidc := expandMKSClusterV1OIDC(d)
+
 								// Ignore diff on default value from API.
-								return oldVersion == "sub" && newVersion == ""
+								return oldVersion == "sub" && newVersion == "" && oidc.Enabled
 							},
 						},
 						"groups_claim": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Default:  "",
-							DiffSuppressFunc: func(_, oldVersion, newVersion string, _ *schema.ResourceData) bool {
+							DiffSuppressFunc: func(_, oldVersion, newVersion string, d *schema.ResourceData) bool {
+								oidc := expandMKSClusterV1OIDC(d)
+
 								// Ignore diff on default value from API.
-								return oldVersion == "groups" && newVersion == ""
+								return oldVersion == "groups" && newVersion == "" && oidc.Enabled
+							},
+						},
+						"ca_certs": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Default:  "",
+							DiffSuppressFunc: func(_, oldVersion, newVersion string, _ *schema.ResourceData) bool {
+								return strings.TrimSpace(oldVersion) == strings.TrimSpace(newVersion)
 							},
 						},
 					},
