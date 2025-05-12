@@ -563,6 +563,7 @@ func flattenMKSClusterV1OIDC(view *cluster.View) []interface{} {
 		"client_id":      view.KubernetesOptions.OIDC.ClientID,
 		"username_claim": view.KubernetesOptions.OIDC.UsernameClaim,
 		"groups_claim":   view.KubernetesOptions.OIDC.GroupsClaim,
+		"ca_certs":       view.KubernetesOptions.OIDC.CACerts,
 	}}
 }
 
@@ -599,22 +600,28 @@ func expandMKSNodegroupV1Labels(labels map[string]interface{}) map[string]string
 	return result
 }
 
-func expandAndValidateMKSClusterV1OIDC(d *schema.ResourceData) (cluster.OIDC, error) {
+func expandMKSClusterV1OIDC(d *schema.ResourceData) cluster.OIDC {
 	nestedResource := d.Get("oidc").([]any)
 	if len(nestedResource) == 0 {
-		return cluster.OIDC{}, nil
+		return cluster.OIDC{}
 	}
 
 	// Resource always comes with only first element because of validation
 	resourceMap := nestedResource[0].(map[string]interface{})
-	oidc := cluster.OIDC{
+
+	return cluster.OIDC{
 		Enabled:       resourceMap["enabled"].(bool),
 		ProviderName:  resourceMap["provider_name"].(string),
 		IssuerURL:     resourceMap["issuer_url"].(string),
 		ClientID:      resourceMap["client_id"].(string),
 		UsernameClaim: resourceMap["username_claim"].(string),
 		GroupsClaim:   resourceMap["groups_claim"].(string),
+		CACerts:       resourceMap["ca_certs"].(string),
 	}
+}
+
+func expandAndValidateMKSClusterV1OIDC(d *schema.ResourceData) (cluster.OIDC, error) {
+	oidc := expandMKSClusterV1OIDC(d)
 
 	if oidc.Enabled {
 		for _, s := range []string{oidc.ProviderName, oidc.IssuerURL, oidc.ClientID} {
