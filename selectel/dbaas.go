@@ -129,11 +129,13 @@ func resourceDBaaSDatastoreV1FlavorFromSet(flavorSet *schema.Set) (*dbaas.Flavor
 	resourceVcpus := resourceVcpusRaw.(int)
 	resourceRAM := resourceRAMRaw.(int)
 	resourceDisk := resourceDiskRaw.(int)
+	resourceDiskType := resourceFlavorMap["disk_type"].(string)
 
 	flavor := &dbaas.Flavor{
-		Vcpus: resourceVcpus,
-		RAM:   resourceRAM,
-		Disk:  resourceDisk,
+		Vcpus:    resourceVcpus,
+		RAM:      resourceRAM,
+		Disk:     resourceDisk,
+		DiskType: resourceDiskType,
 	}
 
 	return flavor, nil
@@ -145,9 +147,10 @@ func resourceDBaaSDatastoreV1FlavorToSet(flavor dbaas.Flavor) *schema.Set {
 	}
 
 	flavorSet.Add(map[string]interface{}{
-		"vcpus": flavor.Vcpus,
-		"ram":   flavor.RAM,
-		"disk":  flavor.Disk,
+		"vcpus":     flavor.Vcpus,
+		"ram":       flavor.RAM,
+		"disk":      flavor.Disk,
+		"disk_type": flavor.DiskType,
 	})
 
 	return flavorSet
@@ -325,13 +328,22 @@ func resizeDatastore(ctx context.Context, d *schema.ResourceData, client *dbaas.
 	nodeCount := d.Get("node_count").(int)
 	resizeOpts.NodeCount = nodeCount
 
-	flavorID := d.Get("flavor_id")
-	flavorRaw := d.Get("flavor")
-
-	flavorSet := flavorRaw.(*schema.Set)
-	flavor, err := resourceDBaaSDatastoreV1FlavorFromSet(flavorSet)
-	if err != nil {
-		return errParseDatastoreV1Resize(err)
+	if d.HasChange("flavor_id") {
+		flavorID := d.Get("flavor_id")
+		resizeOpts.FlavorID = flavorID.(string)
+	} else if d.HasChange("flavor") {
+		flavorRaw := d.Get("flavor")
+		flavorSet := flavorRaw.(*schema.Set)
+		flavor, err := resourceDBaaSDatastoreV1FlavorFromSet(flavorSet)
+		if err != nil {
+			return errParseDatastoreV1Resize(err)
+		}
+		// Api does'not support resize using flavor disk_type
+		resizeOpts.Flavor = &dbaas.Flavor{
+			Vcpus: flavor.Vcpus,
+			RAM:   flavor.RAM,
+			Disk:  flavor.Disk,
+		}
 	}
 
 	typeID := d.Get("type_id").(string)
@@ -341,10 +353,6 @@ func resizeDatastore(ctx context.Context, d *schema.ResourceData, client *dbaas.
 	}
 	if datastoreType.Engine == "redis" {
 		resizeOpts.Flavor = nil
-		resizeOpts.FlavorID = flavorID.(string)
-	} else {
-		resizeOpts.Flavor = flavor
-		resizeOpts.FlavorID = flavorID.(string)
 	}
 
 	log.Print(msgUpdate(objectDatastore, d.Id(), resizeOpts))

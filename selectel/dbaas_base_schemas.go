@@ -74,6 +74,12 @@ func resourceDBaaSDatastoreV1BaseSchema() map[string]*schema.Schema {
 						Type:     schema.TypeInt,
 						Required: true,
 					},
+					"disk_type": {
+						Type:     schema.TypeString,
+						Required: false,
+						Optional: true,
+						Default:  "local",
+					},
 				},
 			},
 		},
