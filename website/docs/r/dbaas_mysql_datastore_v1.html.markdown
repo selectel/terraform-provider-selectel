@@ -24,6 +24,7 @@ resource "selectel_dbaas_mysql_datastore_v1" "datastore_1" {
     vcpus = 4
     ram   = 4096
     disk  = 32
+    disk_type = "network-ultra"
   }
 }
 ```
@@ -51,6 +52,8 @@ resource "selectel_dbaas_mysql_datastore_v1" "datastore_1" {
   * `ram` - (Required) Amount of RAM in MB.
 
   * `disk` - (Required) Volume size in GB.
+
+  * `disk_type` - (Optional) Disk type. Available values are `local` and `network-ultra`. The default value is `local.` Learn more about disks for [MySQL sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-sync/volumes/) and [MySQL semi-sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-semi-sync/volumes/).
 
 * `firewall` - (Deprecated) Remove this argument as it is no longer in use and will be removed in the next major version of the provider. To manage a list of IP-addresses with access to the datastore, use the [selectel_dbaas_firewall_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_firewall_v1) resource.
 
