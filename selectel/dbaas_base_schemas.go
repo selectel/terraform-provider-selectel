@@ -1,6 +1,9 @@
 package selectel
 
-import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+import (
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+)
 
 func resourceDBaaSDatastoreV1BaseSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
@@ -79,6 +82,10 @@ func resourceDBaaSDatastoreV1BaseSchema() map[string]*schema.Schema {
 						Required: false,
 						Optional: true,
 						Default:  "local",
+						ValidateFunc: validation.StringInSlice([]string{
+							"local",
+							"network-ultra",
+						}, false),
 					},
 				},
 			},
