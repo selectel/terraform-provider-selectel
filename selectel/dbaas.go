@@ -356,18 +356,8 @@ func resizeDatastore(ctx context.Context, d *schema.ResourceData, client *dbaas.
 			Disk:  newFlavor.Disk,
 		}
 	}
-
-	typeID := d.Get("type_id").(string)
-	datastoreType, err := client.DatastoreType(ctx, typeID)
-	if err != nil {
-		return errors.New("Couldnt get datastore type with id" + typeID)
-	}
-	if datastoreType.Engine == "redis" {
-		resizeOpts.Flavor = nil
-	}
-
 	log.Print(msgUpdate(objectDatastore, d.Id(), resizeOpts))
-	_, err = client.ResizeDatastore(ctx, d.Id(), resizeOpts)
+	_, err := client.ResizeDatastore(ctx, d.Id(), resizeOpts)
 	if err != nil {
 		return errUpdatingObject(objectDatastore, d.Id(), err)
 	}
