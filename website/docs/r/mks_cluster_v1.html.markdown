@@ -102,11 +102,11 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
 
   * `client_id` - (Required) Service identifier issued by the OIDC provider and used in authentication requests to the resources.
 
-  * `username_claim` - JWT claim to use as the username. The default value is `sub`. The content of the claim must be a unique identifier of the end user.
+  * `username_claim` - (Optional) JWT claim to use as the username. The default value is `sub`. The content of the claim must be a unique identifier of the end user.
 
-  * `groups_claim` - JWT claim to use as the user's group. The default value is `groups`.
+  * `groups_claim` - (Optional) JWT claim to use as the user's group. The default value is `groups`.
 
-  * `ca_certs` - Certificate in PEM format for the CA that signed your identity provider's web certificate. Required when using self-signed certificates. *Learn more about [Access to the cluster through an OIDC provider](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/access-to-cluster-with-oidc-provider/).*
+  * `ca_certs` - (Optional) Certificate in PEM format for the CA that signed your identity provider's web certificate. Optional if the certificate is issued by the public CA that Ubuntu by default considers trustworthy. *Learn more about [Access to the cluster through an OIDC provider](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/access-to-cluster-with-oidc-provider/).*
 
 ## Attributes Reference
 
