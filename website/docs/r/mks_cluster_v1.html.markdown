@@ -106,7 +106,7 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
 
   * `groups_claim` - (Optional) JWT claim to use as the user's group. The default value is `groups`.
 
-  * `ca_certs` - (Optional) Certificate in PEM format for the CA that signed your identity provider's web certificate. Optional if the certificate is issued by the public CA that Ubuntu by default considers trustworthy. *Learn more about [Access to the cluster through an OIDC provider](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/access-to-cluster-with-oidc-provider/).*
+  * `ca_certs` - (Optional) Certificate in PEM format for the CA that signed your identity provider's web certificate. Optional if the certificate is issued by the public CA that Ubuntu by default considers trustworthy. Learn more about [Access to the cluster through an OIDC provider](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/access-to-cluster-with-oidc-provider/).
 
 ## Attributes Reference
 
