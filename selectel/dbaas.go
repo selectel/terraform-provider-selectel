@@ -125,11 +125,12 @@ func resourceDBaaSDatastoreV1FlavorFromSet(flavorSet *schema.Set) (*dbaas.Flavor
 	if resourceDiskRaw, ok = resourceFlavorMap["disk"]; !ok {
 		return &dbaas.Flavor{}, errors.New("flavor.disk value isn't provided")
 	}
+	resourceDiskTypeRaw := resourceFlavorMap["disk_type"].(string)
 
 	resourceVcpus := resourceVcpusRaw.(int)
 	resourceRAM := resourceRAMRaw.(int)
 	resourceDisk := resourceDiskRaw.(int)
-	resourceDiskType := resourceFlavorMap["disk_type"].(string)
+	resourceDiskType := dbaas.DiskType(resourceDiskTypeRaw)
 
 	flavor := &dbaas.Flavor{
 		Vcpus:    resourceVcpus,
@@ -150,7 +151,7 @@ func resourceDBaaSDatastoreV1FlavorToSet(flavor dbaas.Flavor) *schema.Set {
 		"vcpus":     flavor.Vcpus,
 		"ram":       flavor.RAM,
 		"disk":      flavor.Disk,
-		"disk_type": flavor.DiskType,
+		"disk_type": string(flavor.DiskType),
 	})
 
 	return flavorSet

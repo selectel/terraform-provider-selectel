@@ -3,6 +3,7 @@ package selectel
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/selectel/dbaas-go"
 )
 
 func resourceDBaaSDatastoreV1BaseSchema() map[string]*schema.Schema {
@@ -79,13 +80,14 @@ func resourceDBaaSDatastoreV1BaseSchema() map[string]*schema.Schema {
 					},
 					"disk_type": {
 						Type:     schema.TypeString,
-						Required: false,
 						Optional: true,
-						Default:  "local",
+						Default:  string(dbaas.DiskLocal),
 						ValidateFunc: validation.StringInSlice([]string{
-							"local",
-							"network-ultra",
-						}, false),
+							string(dbaas.DiskLocal),
+							string(dbaas.DiskNetworkUltra),
+						},
+							false,
+						),
 					},
 				},
 			},
