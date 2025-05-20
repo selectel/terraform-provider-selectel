@@ -106,7 +106,7 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
 
   * `groups_claim` - JWT claim to use as the user's group. The default value is `groups`.
 
-  * `ca_certs` - Certificate in PEM format for the CA that signed your identity provider's web certificate. Required when using self-signed certificates.
+  * `ca_certs` - Certificate in PEM format for the CA that signed your identity provider's web certificate. Required when using self-signed certificates. *Learn more about [Access to the cluster through an OIDC provider](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/access-to-cluster-with-oidc-provider/).*
 
 ## Attributes Reference
 
