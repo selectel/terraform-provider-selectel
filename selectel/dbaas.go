@@ -348,7 +348,7 @@ func resizeDatastore(ctx context.Context, d *schema.ResourceData, client *dbaas.
 		}
 
 		if newFlavor.DiskType != oldFlavor.DiskType {
-			return errors.New("Cannot change flavor disk type.")
+			return errors.New("flavor disk type cannot be changed")
 		}
 		// Api does'not support resize using flavor disk_type
 		resizeOpts.Flavor = &dbaas.Flavor{
