@@ -77,7 +77,7 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
 
   * `disk` - (Required) Volume size in GB.
 
-  * `disk_type` - (Optional) Disk type. Available values are `local` and `network-ultra`. The default value is `local.` Learn more about disks for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/volumes/) and [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/volumes).
+  * `disk_type` - (Optional) Volume type. Available values are `local` and `network-ultra`. The default value is `local.` Learn more about volumes for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/volumes/) and [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/volumes).
 
 * `pooler` - (Optional) Configures a connection pooler for the datastore. Applicable to PostgreSQL and PostgreSQL TimescaleDB.
 
