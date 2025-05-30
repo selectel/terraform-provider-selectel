@@ -1,3 +1,15 @@
+## 6.5.0 (May 30, 2025)
+
+FEATURES:
+* Support dbaas flavor disktype to create and resize cluster with local and network-ultra disk type ([#340] (https://github.com/selectel/terraform-provider-selectel/pull/340))
+
+BUG FIXES:
+* Fix datastore resize to change flavor to flavor_id or the other way ([#340](https://github.com/selectel/terraform-provider-selectel/pull/340))
+
+IMPROVEMENTS:
+* Update documentation for dbaas datastores ([#340](https://github.com/selectel/terraform-provider-selectel/pull/340))
+
+
 ## 6.4.1 (May 6, 2025)
 
 BUG FIXES:
