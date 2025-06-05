@@ -1,3 +1,18 @@
+## 6.5.0 (June 5, 2025)
+
+FEATURES:
+
+* Add `ca_certs` to `oidc` in Managed Kubernetes ([#337](https://github.com/selectel/terraform-provider-selectel/pull/337))
+
+BUG FIXES:
+ 
+* Fix updating `oidc` in Managed Kubernetes: cluster state does not change when it is not necessary ([#337](https://github.com/selectel/terraform-provider-selectel/pull/337))
+
+IMPROVEMENTS:
+ 
+* Bump `mks-go` to v0.20.0 ([#337](https://github.com/selectel/terraform-provider-selectel/pull/337))
+* Bump `golang.org/x/net` to v0.38.0 ([#337](https://github.com/selectel/terraform-provider-selectel/pull/337))
+
 ## 6.4.1 (May 6, 2025)
 
 BUG FIXES:
