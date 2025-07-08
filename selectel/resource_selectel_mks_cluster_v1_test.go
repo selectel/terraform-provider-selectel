@@ -63,6 +63,7 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.client_id", ""),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.username_claim", ""),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.groups_claim", ""),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.ca_certs", ""),
 				),
 			},
 			{
@@ -85,6 +86,7 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.client_id", "test"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.username_claim", "email"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.groups_claim", "groups"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.ca_certs", "ca_certs"),
 				),
 			},
 		},
@@ -128,6 +130,7 @@ func TestAccMKSClusterV1Zonal(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.client_id", "test"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.username_claim", "email"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.groups_claim", "groups"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.ca_certs", "ca_certs"),
 				),
 			},
 		},
@@ -171,6 +174,7 @@ func TestAccMKSClusterV1PrivateKubeAPI(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.client_id", ""),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.username_claim", ""),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.groups_claim", ""),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.ca_certs", ""),
 				),
 			},
 		},
@@ -343,6 +347,7 @@ func testAccMKSClusterV1Zonal(projectName, clusterName, kubeVersion, maintenance
 	 issuer_url     = "https://keycloak.example.com/realms/kubernetes"
 	 username_claim = "email"
 	 groups_claim   = "groups"
+	 ca_certs       = "ca_certs"
    }
  }`, projectName, clusterName, kubeVersion, maintenanceWindowStart)
 }
