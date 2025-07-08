@@ -17,7 +17,7 @@ resource "selectel_dbaas_redis_datastore_v1" "datastore_1" {
   name           = "datastore-1"
   project_id     = selectel_vpc_project_v2.project_1.id
   region         = "ru-3"
-  type_id        = data.selectel_dbaas_datastore_type_v1.datastore_type_1.datastore_types[0].iddatastore_types[0].id
+  type_id        = data.selectel_dbaas_datastore_type_v1.datastore_type_1.datastore_types[0].id
   subnet_id      = selectel_vpc_subnet_v2.subnet.subnet_id
   node_count     = 3
   flavor_id      = data.selectel_dbaas_flavor_v1.flavor.flavors[0].id

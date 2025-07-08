@@ -43,6 +43,7 @@ resource "selectel_dbaas_datastore_v1" "datastore_1" {
     vcpus = 4
     ram   = 4096
     disk  = 32
+    disk_type = "network-ultra"
   }
   pooler {
     mode = "transaction"
@@ -101,6 +102,7 @@ The following arguments are supported:
 - `vcpus` - (Required) CPU count for the flavor.
 - `ram` - (Required) RAM count for the flavor.
 - `disk` - (Required) Disk size for the flavor.
+- `disk_type` - (Optional) Disk type for the flavor. Valid values: ["local", "network-ultra"]. Default value: "local".
 
 **pooler**
 

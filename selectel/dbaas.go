@@ -125,15 +125,18 @@ func resourceDBaaSDatastoreV1FlavorFromSet(flavorSet *schema.Set) (*dbaas.Flavor
 	if resourceDiskRaw, ok = resourceFlavorMap["disk"]; !ok {
 		return &dbaas.Flavor{}, errors.New("flavor.disk value isn't provided")
 	}
+	resourceDiskTypeRaw := resourceFlavorMap["disk_type"].(string)
 
 	resourceVcpus := resourceVcpusRaw.(int)
 	resourceRAM := resourceRAMRaw.(int)
 	resourceDisk := resourceDiskRaw.(int)
+	resourceDiskType := dbaas.DiskType(resourceDiskTypeRaw)
 
 	flavor := &dbaas.Flavor{
-		Vcpus: resourceVcpus,
-		RAM:   resourceRAM,
-		Disk:  resourceDisk,
+		Vcpus:    resourceVcpus,
+		RAM:      resourceRAM,
+		Disk:     resourceDisk,
+		DiskType: resourceDiskType,
 	}
 
 	return flavor, nil
@@ -145,9 +148,10 @@ func resourceDBaaSDatastoreV1FlavorToSet(flavor dbaas.Flavor) *schema.Set {
 	}
 
 	flavorSet.Add(map[string]interface{}{
-		"vcpus": flavor.Vcpus,
-		"ram":   flavor.RAM,
-		"disk":  flavor.Disk,
+		"vcpus":     flavor.Vcpus,
+		"ram":       flavor.RAM,
+		"disk":      flavor.Disk,
+		"disk_type": string(flavor.DiskType),
 	})
 
 	return flavorSet
@@ -325,30 +329,36 @@ func resizeDatastore(ctx context.Context, d *schema.ResourceData, client *dbaas.
 	nodeCount := d.Get("node_count").(int)
 	resizeOpts.NodeCount = nodeCount
 
-	flavorID := d.Get("flavor_id")
-	flavorRaw := d.Get("flavor")
-
-	flavorSet := flavorRaw.(*schema.Set)
-	flavor, err := resourceDBaaSDatastoreV1FlavorFromSet(flavorSet)
-	if err != nil {
-		return errParseDatastoreV1Resize(err)
-	}
-
-	typeID := d.Get("type_id").(string)
-	datastoreType, err := client.DatastoreType(ctx, typeID)
-	if err != nil {
-		return errors.New("Couldnt get datastore type with id" + typeID)
-	}
-	if datastoreType.Engine == "redis" {
-		resizeOpts.Flavor = nil
+	if d.HasChange("flavor_id") {
+		flavorID := d.Get("flavor_id")
 		resizeOpts.FlavorID = flavorID.(string)
-	} else {
-		resizeOpts.Flavor = flavor
-		resizeOpts.FlavorID = flavorID.(string)
-	}
+	} else if d.HasChange("flavor") {
+		oldFlavorRaw, newFlavorRaw := d.GetChange("flavor")
 
+		newFlavorSet := newFlavorRaw.(*schema.Set)
+		newFlavor, err := resourceDBaaSDatastoreV1FlavorFromSet(newFlavorSet)
+		if err != nil {
+			return errParseDatastoreV1Resize(err)
+		}
+
+		oldFlavorSet := oldFlavorRaw.(*schema.Set)
+		oldFlavor, err := resourceDBaaSDatastoreV1FlavorFromSet(oldFlavorSet)
+		if err != nil {
+			return errParseDatastoreV1Resize(err)
+		}
+
+		if newFlavor.DiskType != oldFlavor.DiskType {
+			return errors.New("flavor disk type cannot be changed")
+		}
+		// Api does'not support resize using flavor disk_type
+		resizeOpts.Flavor = &dbaas.Flavor{
+			Vcpus: newFlavor.Vcpus,
+			RAM:   newFlavor.RAM,
+			Disk:  newFlavor.Disk,
+		}
+	}
 	log.Print(msgUpdate(objectDatastore, d.Id(), resizeOpts))
-	_, err = client.ResizeDatastore(ctx, d.Id(), resizeOpts)
+	_, err := client.ResizeDatastore(ctx, d.Id(), resizeOpts)
 	if err != nil {
 		return errUpdatingObject(objectDatastore, d.Id(), err)
 	}
