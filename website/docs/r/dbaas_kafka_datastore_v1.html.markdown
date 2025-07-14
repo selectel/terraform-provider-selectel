@@ -21,9 +21,9 @@ resource "selectel_dbaas_kafka_datastore_v1" "datastore_1" {
   subnet_id      = selectel_vpc_subnet_v2.subnet.subnet_id
   node_count     = 1
   flavor {
-    vcpus = 2
-    ram   = 8192
-    disk  = 32
+    vcpus     = 2
+    ram       = 8192
+    disk      = 32
     disk_type = "network-ultra"
   }
 }

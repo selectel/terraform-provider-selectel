@@ -21,9 +21,9 @@ resource "selectel_dbaas_mysql_datastore_v1" "datastore_1" {
   subnet_id  = selectel_vpc_subnet_v2.subnet.subnet_id
   node_count = 3
   flavor {
-    vcpus = 4
-    ram   = 4096
-    disk  = 32
+    vcpus     = 4
+    ram       = 4096
+    disk      = 32
     disk_type = "network-ultra"
   }
 }
