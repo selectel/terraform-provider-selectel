@@ -160,6 +160,7 @@ func Provider() *schema.Provider {
 			"selectel_dbaas_firewall_v1":                            resourceDBaaSFirewallV1(),
 			"selectel_craas_registry_v1":                            resourceCRaaSRegistryV1(),
 			"selectel_craas_token_v1":                               resourceCRaaSTokenV1(),
+			"selectel_craas_token_v2":                               resourceCRaaSTokenV2(),
 			"selectel_secretsmanager_secret_v1":                     resourceSecretsManagerSecretV1(),
 			"selectel_secretsmanager_certificate_v1":                resourceSecretsManagerCertificateV1(),
 		},
