@@ -2,7 +2,6 @@ package selectel
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -138,8 +137,6 @@ func resourceCRaaSTokenV2Read(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(errGettingObject(objectRegistryToken, d.Id(), err))
 	}
 
-	fmt.Printf("##### TOKEN R: %+v #####\n", tkn)
-
 	d.Set("username", craasV1TokenUsername)
 	d.Set("token", d.Get("token").(string))
 
@@ -184,7 +181,6 @@ func resourceCRaaSTokenV2Update(ctx context.Context, d *schema.ResourceData, met
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	fmt.Printf("####### EXPIRES AFTER PARSE : %s\n", expires.Format("2006-01-02 15:04:05"))
 	exp.ExpiresAt = expires
 
 	log.Print(msgUpdate(objectRegistryToken, d.Id(), sc))
