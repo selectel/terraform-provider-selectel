@@ -125,7 +125,7 @@ func resourceCRaaSTokenV2Read(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	log.Print(msgGet(objectRegistryToken, d.Id()))
-	tkn, response, err := tokenv2.GetByID(ctx, craasClient, d.Id())
+	_, response, err := tokenv2.GetByID(ctx, craasClient, d.Id())
 	if err != nil {
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
