@@ -98,7 +98,7 @@ func resourceCRaaSTokenV2Create(ctx context.Context, d *schema.ResourceData, met
 			AllRegistries: allRegistries,
 			RegistryIDs:   registriesIDs,
 		},
-		Expiration: tokenv2.Exp{
+		Expiration: tokenv2.Expiration{
 			IsSet:     isSet,
 			ExpiresAt: expires,
 		},
@@ -168,7 +168,7 @@ func resourceCRaaSTokenV2Update(ctx context.Context, d *schema.ResourceData, met
 	}
 	var (
 		sc  tokenv2.Scope
-		exp tokenv2.Exp
+		exp tokenv2.Expiration
 	)
 	name := d.Get("name").(string)
 	sc.AllRegistries = d.Get("all_registries").(bool)
