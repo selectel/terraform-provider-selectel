@@ -94,6 +94,8 @@ resource "selectel_domains_rrset_v2" "mx_rrset_1" {
 
 ### NS RRSet
 
+You can only create and manage NS records for a subdomain. NS records for a domain are created automatically when you create a zone using the [selectel_domains_zone_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/domains_zone_v2) resource, you cannot edit or delete them.
+
 ```hcl
 resource "selectel_domains_rrset_v2" "ns_rrset_1" {
   zone_id    = selectel_domains_zone_v2.zone_1.id
