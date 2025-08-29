@@ -446,6 +446,12 @@ func refreshDatastoreInstancesOutputsDiff(_ context.Context, diff *schema.Resour
 		}
 	}
 
+	if diff.HasChanges("node_count") {
+		if err := diff.SetNewComputed("connections"); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
