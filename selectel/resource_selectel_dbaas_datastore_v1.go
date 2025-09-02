@@ -69,15 +69,22 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(errParseDatastoreV1FloatingIPs(err))
 	}
 
+	securityGroupsSet := d.Get("security_groups").(*schema.Set)
+	securityGroups, err := resourceDBaaSDatastoreV1SecurityGroupsOptsFromSet(securityGroupsSet)
+	if err != nil {
+		return diag.FromErr(errParseDatastoreV1SecurityGroups(err))
+	}
+
 	datastoreCreateOpts := dbaas.DatastoreCreateOpts{
-		Name:        d.Get("name").(string),
-		TypeID:      d.Get("type_id").(string),
-		SubnetID:    d.Get("subnet_id").(string),
-		NodeCount:   d.Get("node_count").(int),
-		Pooler:      pooler,
-		Restore:     restore,
-		Config:      d.Get("config").(map[string]interface{}),
-		FloatingIPs: floatingIPsSchema,
+		Name:           d.Get("name").(string),
+		TypeID:         d.Get("type_id").(string),
+		SubnetID:       d.Get("subnet_id").(string),
+		NodeCount:      d.Get("node_count").(int),
+		Pooler:         pooler,
+		Restore:        restore,
+		Config:         d.Get("config").(map[string]interface{}),
+		FloatingIPs:    floatingIPsSchema,
+		SecurityGroups: securityGroups,
 	}
 
 	if flavorOk {

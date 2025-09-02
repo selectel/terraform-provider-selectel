@@ -1,6 +1,10 @@
 package selectel
 
 import (
+	"fmt"
+	"uuid"
+
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/selectel/dbaas-go"
@@ -129,6 +133,21 @@ func resourceDBaaSDatastoreV1BaseSchema() map[string]*schema.Schema {
 						Type:     schema.TypeString,
 						Computed: true,
 					},
+				},
+			},
+		},
+		"security_groups": {
+			Type:     schema.TypeSet,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+				ValidateFunc: func(value interface{}, key string) (warns []string, errs []error) {
+					var warnings = []string{}
+					var errors = []error{}
+					if _, err := uuid.Parse(value); err != nil {
+						errs = append(errs, fmt.Errorf("%q must be a valid UUID, got %s", key, v))
+					}
+					return warnings, errors
 				},
 			},
 		},

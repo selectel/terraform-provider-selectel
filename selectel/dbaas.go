@@ -680,3 +680,22 @@ func removeReplicasFloatingIPs(ctx context.Context, d *schema.ResourceData, clie
 
 	return nil
 }
+
+func resourceDBaaSDatastoreV1SecurityGroupsOptsFromSet(securityGroupsSet *schema.Set) ([]string, error) {
+	var securityGroups []string
+
+	if securityGroupsSet.Len() == 0 {
+		return securityGroups, nil
+	}
+
+	for _, uuidVal := range securityGroupsSet.List() {
+		value, ok := uuidVal.(string)
+		if ok {
+			securityGroups = append(securityGroups, value)
+		} else {
+			return securityGroups, fmt.Errorf("impossible to cast to string %q", value)
+		}
+	}
+
+	return securityGroups, nil
+}
