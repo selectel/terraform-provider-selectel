@@ -70,7 +70,7 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 	}
 
 	securityGroupsSet := d.Get("security_groups").(*schema.Set)
-	securityGroups, err := resourceDBaaSDatastoreV1SecurityGroupsOptsFromSet(securityGroupsSet)
+	securityGroups, err := resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet)
 	if err != nil {
 		return diag.FromErr(errParseDatastoreV1SecurityGroups(err))
 	}
@@ -140,6 +140,7 @@ func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(errGettingObject(objectDatastore, d.Id(), err))
 	}
+
 	d.Set("name", datastore.Name)
 	d.Set("status", datastore.Status)
 	d.Set("project_id", datastore.ProjectID)
@@ -149,6 +150,7 @@ func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, m
 	d.Set("enabled", datastore.Enabled)
 	d.Set("flavor_id", datastore.FlavorID)
 	d.Set("backup_retention_days", datastore.BackupRetentionDays)
+	d.Set("security_groups", datastore.SecurityGroups)
 
 	flavor := resourceDBaaSDatastoreV1FlavorToSet(datastore.Flavor)
 	if err := d.Set("flavor", flavor); err != nil {

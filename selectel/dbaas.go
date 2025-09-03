@@ -681,7 +681,7 @@ func removeReplicasFloatingIPs(ctx context.Context, d *schema.ResourceData, clie
 	return nil
 }
 
-func resourceDBaaSDatastoreV1SecurityGroupsOptsFromSet(securityGroupsSet *schema.Set) ([]string, error) {
+func resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet *schema.Set) ([]string, error) {
 	var securityGroups []string
 
 	if securityGroupsSet.Len() == 0 {
