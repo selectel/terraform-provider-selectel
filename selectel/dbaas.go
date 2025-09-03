@@ -686,3 +686,55 @@ func removeReplicasFloatingIPs(ctx context.Context, d *schema.ResourceData, clie
 
 	return nil
 }
+
+// Log Platform
+func dbaasLogPlatformEnable(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	var logPlatformOpts dbaas.LogPlatformOpts
+	logPlatformOpts.LogPlatform = dbaas.DatastoreLogGroup{LogGroup: d.Get("log_platform").(string)}
+
+	log.Printf("[DEBUG] Enable Log Platform for the datastore %s", d.Id())
+
+	if _, err := client.EnableLogPlatform(ctx, d.Id(), logPlatformOpts); err != nil {
+		return fmt.Errorf("error enabling Log Platform for the datastore %s", d.Id())
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	if err := waiters.WaitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout); err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func dbaasLogPlatformDisable(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	log.Printf("[DEBUG] Disable Log Platform for the datastore %s", d.Id())
+
+	if err := client.DisableLogPlatform(ctx, d.Id()); err != nil {
+		return fmt.Errorf("error disabling Log Platform for the datastore %s", d.Id())
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	if err := waiters.WaitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout); err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func dbaasLogPlatformUpdate(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	oldLogPlatform, newLogPlatform := d.GetChange("log_platform")
+
+	if oldLogPlatform.(string) == "" || oldLogPlatform.(string) != newLogPlatform.(string) {
+		return dbaasLogPlatformEnable(ctx, d, client)
+	}
+
+	if newLogPlatform.(string) == "" {
+		return dbaasLogPlatformDisable(ctx, d, client)
+	}
+
+	return nil
+}

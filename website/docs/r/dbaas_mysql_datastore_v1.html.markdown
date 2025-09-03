@@ -38,7 +38,7 @@ resource "selectel_dbaas_mysql_datastore_v1" "datastore_1" {
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new datastore. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-databases).
 
 * `subnet_id` - (Required) Unique identifier of the associated OpenStack network. Changing this creates a new datastore. Learn more about the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_network_v2) resource in the official OpenStack documentation.
-  
+
 * `type_id` - (Required) Unique identifier of the datastore type. Changing this creates a new datastore. Retrieved from the [selectel_dbaas_datastore_type_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_datastore_type_v1) data source.
 
 * `node_count` - (Required) Number of nodes in the datastore. The available range for MySQL semi-sync is from 1 to 3. Available values for MySQL sync are `1` and `3`. Learn more about [Replication](https://docs.selectel.ru/en/cloud/managed-databases/about/about-managed-databases/#fault-tolerance-and-replication).
@@ -72,6 +72,8 @@ resource "selectel_dbaas_mysql_datastore_v1" "datastore_1" {
   * replica - (Required) Number of public IPs associated with the replicas. The minimum value is `0`. The maximum value must be 1 less than the value of the `node_count` argument.
 
 * `backup_retention_days` - (Optional) Number of days to retain backups.
+
+* `log_platform` - (Optional) Name of Log Group for Log Platform. Requirements: must start with 's/dbaas/' prefix, can be between 1 and 512 characters long and consist of the following characters: "a-z, A-Z, 0-9, '_' (underscore), '-' (hyphen), '/' (forward slash), '.' (period)' and '#' (hash). For example: "s/dbaas/My-first-group". You can read more information about logs in [docs](https://docs.selectel.ru/en/managed-databases/mysql-sync/logs/).
 
 ## Attributes Reference
 

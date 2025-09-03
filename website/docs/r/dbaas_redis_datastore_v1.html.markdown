@@ -60,6 +60,8 @@ resource "selectel_dbaas_redis_datastore_v1" "datastore_1" {
 
 * `backup_retention_days` - (Optional) Number of days to retain backups.
 
+* `log_platform` - (Optional) Name of Log Group for Log Platform. Requirements: must start with 's/dbaas/' prefix, can be between 1 and 512 characters long and consist of the following characters: "a-z, A-Z, 0-9, '_' (underscore), '-' (hyphen), '/' (forward slash), '.' (period)' and '#' (hash). For example: "s/dbaas/My-first-group". You can read more information about logs in [docs](https://docs.selectel.ru/en/managed-databases/redis/logs/).
+
 ## Attributes Reference
 
 * `status` - Datastore status.

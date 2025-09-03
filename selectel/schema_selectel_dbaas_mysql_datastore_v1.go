@@ -43,6 +43,11 @@ func resourceDBaaSMySQLDatastoreV1Schema() map[string]*schema.Schema {
 			},
 		},
 	}
+	datastoreSchema["log_platform"] = &schema.Schema{
+		Type: schema.TypeString,
+		Optional: true,
+		Description: "Name of Log Platform group.",
+	}
 
 	return datastoreSchema
 }

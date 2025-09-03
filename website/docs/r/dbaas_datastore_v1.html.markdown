@@ -95,7 +95,9 @@ The following arguments are supported:
 
 * `backup_retention_days` - (Optional) Number of days to retain backups.
 
-* `redis_password` - (Optional) Password for the Redis datastore (only for Redis datastores)
+* `redis_password` - (Optional) Password for the Redis datastore (only for Redis datastores).
+
+* `log_platform` - (Optional) Name of Log Group for Log Platform. Requirements: must start with 's/dbaas/' prefix, can be between 1 and 512 characters long and consist of the following characters: "a-z, A-Z, 0-9, '_' (underscore), '-' (hyphen), '/' (forward slash), '.' (period)' and '#' (hash). For example: "s/dbaas/My-first-group". You can read more information about logs for specific DB, for example for the [PostgreSQL](https://docs.selectel.ru/en/managed-databases/postgresql/logs/).
 
 **flavor**
 
