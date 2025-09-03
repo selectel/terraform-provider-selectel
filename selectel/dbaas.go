@@ -728,12 +728,12 @@ func dbaasLogPlatformDisable(ctx context.Context, d *schema.ResourceData, client
 func dbaasLogPlatformUpdate(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
 	oldLogPlatform, newLogPlatform := d.GetChange("log_platform")
 
-	if oldLogPlatform.(string) == "" || oldLogPlatform.(string) != newLogPlatform.(string) {
-		return dbaasLogPlatformEnable(ctx, d, client)
-	}
-
 	if newLogPlatform.(string) == "" {
 		return dbaasLogPlatformDisable(ctx, d, client)
+	}
+
+	if oldLogPlatform.(string) == "" || oldLogPlatform.(string) != newLogPlatform.(string) {
+		return dbaasLogPlatformEnable(ctx, d, client)
 	}
 
 	return nil
