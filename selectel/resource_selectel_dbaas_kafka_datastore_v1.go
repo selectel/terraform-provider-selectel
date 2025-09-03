@@ -54,7 +54,7 @@ func resourceDBaaSKafkaDatastoreV1Create(ctx context.Context, d *schema.Resource
 	}
 
 	datastoreCreateOpts := dbaas.DatastoreCreateOpts{
-		ProjectID:   d.Get("project_id").(string),
+		ProjectID: d.Get("project_id").(string),
 		Name:      d.Get("name").(string),
 		TypeID:    typeID,
 		SubnetID:  d.Get("subnet_id").(string),

@@ -688,6 +688,7 @@ func removeReplicasFloatingIPs(ctx context.Context, d *schema.ResourceData, clie
 }
 
 // Log Platform
+
 func dbaasLogPlatformEnable(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
 	var logPlatformOpts dbaas.LogPlatformOpts
 	logPlatformOpts.LogPlatform = dbaas.DatastoreLogGroup{LogGroup: d.Get("log_platform").(string)}
