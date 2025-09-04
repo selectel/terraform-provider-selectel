@@ -693,7 +693,7 @@ func resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet *schema.Set
 		if ok {
 			securityGroups[index] = value
 		} else {
-			return securityGroups, fmt.Errorf("impossible to cast to string %q", value)
+			return securityGroups, fmt.Errorf("string cast error %q", value)
 		}
 	}
 
@@ -701,11 +701,12 @@ func resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet *schema.Set
 }
 
 func updateDatastoreSecurityGroups(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
-	securityGroupsSet, ok := d.Get("security_groups").(*schema.Set)
+	sgInterface, ok := d.GetOk("security_groups")
 	if !ok {
-		return errParseDatastoreV1SecurityGroups(fmt.Errorf("is not a list of string"))
+		return errParseDatastoreV1SecurityGroups(fmt.Errorf("attribute not found in schema"))
 	}
 
+	securityGroupsSet := sgInterface.(*schema.Set)
 	securityGroups, err := resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet)
 	if err != nil {
 		return errParseDatastoreV1SecurityGroups(err)
