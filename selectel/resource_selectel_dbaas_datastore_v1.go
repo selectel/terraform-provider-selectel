@@ -231,6 +231,12 @@ func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData,
 			return diag.FromErr(err)
 		}
 	}
+	if d.HasChange("security_groups") {
+		err := updateDatastoreSecurityGroups(ctx, d, dbaasClient)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
 
 	return resourceDBaaSDatastoreV1Read(ctx, d, meta)
 }

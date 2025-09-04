@@ -142,7 +142,6 @@ func Provider() *schema.Provider {
 			"selectel_domains_zone_v2":                              resourceDomainsZoneV2(),
 			"selectel_domains_rrset_v2":                             resourceDomainsRRSetV2(),
 			"selectel_dbaas_datastore_v1":                           resourceDBaaSDatastoreV1(), // DEPRECATED
-			"selectel_dbaas_datastore_security_group_v1":            resourceDBaaSDatastoreSecurityGroupV1(),
 			"selectel_dbaas_postgresql_datastore_v1":                resourceDBaaSPostgreSQLDatastoreV1(),
 			"selectel_dbaas_mysql_datastore_v1":                     resourceDBaaSMySQLDatastoreV1(),
 			"selectel_dbaas_redis_datastore_v1":                     resourceDBaaSRedisDatastoreV1(),

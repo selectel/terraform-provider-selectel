@@ -53,12 +53,19 @@ func resourceDBaaSKafkaDatastoreV1Create(ctx context.Context, d *schema.Resource
 		return diagErr
 	}
 
+	securityGroupsSet := d.Get("security_groups").(*schema.Set)
+	securityGroups, err := resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet)
+	if err != nil {
+		return diag.FromErr(errParseDatastoreV1SecurityGroups(err))
+	}
+
 	datastoreCreateOpts := dbaas.DatastoreCreateOpts{
-		Name:      d.Get("name").(string),
-		TypeID:    typeID,
-		SubnetID:  d.Get("subnet_id").(string),
-		NodeCount: d.Get("node_count").(int),
-		Config:    d.Get("config").(map[string]interface{}),
+		Name:           d.Get("name").(string),
+		TypeID:         typeID,
+		SubnetID:       d.Get("subnet_id").(string),
+		NodeCount:      d.Get("node_count").(int),
+		Config:         d.Get("config").(map[string]interface{}),
+		SecurityGroups: securityGroups,
 	}
 
 	if flavorOk {
@@ -112,6 +119,7 @@ func resourceDBaaSKafkaDatastoreV1Read(ctx context.Context, d *schema.ResourceDa
 	d.Set("node_count", datastore.NodeCount)
 	d.Set("enabled", datastore.Enabled)
 	d.Set("flavor_id", datastore.FlavorID)
+	d.Set("security_groups", datastore.SecurityGroups)
 
 	flavor := resourceDBaaSDatastoreV1FlavorToSet(datastore.Flavor)
 	if err := d.Set("flavor", flavor); err != nil {
@@ -164,6 +172,12 @@ func resourceDBaaSKafkaDatastoreV1Update(ctx context.Context, d *schema.Resource
 	}
 	if d.HasChange("config") {
 		err := updateDatastoreConfig(ctx, d, dbaasClient)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("security_groups") {
+		err := updateDatastoreSecurityGroups(ctx, d, dbaasClient)
 		if err != nil {
 			return diag.FromErr(err)
 		}

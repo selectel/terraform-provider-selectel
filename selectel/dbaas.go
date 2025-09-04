@@ -699,3 +699,27 @@ func resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet *schema.Set
 
 	return securityGroups, nil
 }
+
+func updateDatastoreSecurityGroups(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	securityGroupsSet, ok := d.Get("security_groups").(*schema.Set)
+	if !ok {
+		return errParseDatastoreV1SecurityGroups(fmt.Errorf("is not a list of string"))
+	}
+
+	securityGroups, err := resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet)
+	if err != nil {
+		return errParseDatastoreV1SecurityGroups(err)
+	}
+
+	securityGroupsOpts := dbaas.DatastoreSecurityGroupOpts{
+		SecurityGroups: securityGroups,
+	}
+
+	log.Printf("[DEBUG] updating datastore %q security groups %+v", d.Id(), securityGroupsOpts)
+	_, update_err := client.UpdateSecurityGroup(ctx, d.Id(), securityGroupsOpts)
+	if update_err != nil {
+		return update_err
+	}
+
+	return nil
+}

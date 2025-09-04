@@ -68,14 +68,21 @@ func resourceDBaaSMySQLDatastoreV1Create(ctx context.Context, d *schema.Resource
 		return diag.FromErr(errParseDatastoreV1FloatingIPs(err))
 	}
 
+	securityGroupsSet := d.Get("security_groups").(*schema.Set)
+	securityGroups, err := resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet)
+	if err != nil {
+		return diag.FromErr(errParseDatastoreV1SecurityGroups(err))
+	}
+
 	datastoreCreateOpts := dbaas.DatastoreCreateOpts{
-		Name:        d.Get("name").(string),
-		TypeID:      typeID,
-		SubnetID:    d.Get("subnet_id").(string),
-		NodeCount:   d.Get("node_count").(int),
-		Restore:     restore,
-		Config:      d.Get("config").(map[string]interface{}),
-		FloatingIPs: floatingIPsSchema,
+		Name:           d.Get("name").(string),
+		TypeID:         typeID,
+		SubnetID:       d.Get("subnet_id").(string),
+		NodeCount:      d.Get("node_count").(int),
+		Restore:        restore,
+		Config:         d.Get("config").(map[string]interface{}),
+		FloatingIPs:    floatingIPsSchema,
+		SecurityGroups: securityGroups,
 	}
 
 	if flavorOk {
@@ -135,6 +142,7 @@ func resourceDBaaSMySQLDatastoreV1Read(ctx context.Context, d *schema.ResourceDa
 	d.Set("enabled", datastore.Enabled)
 	d.Set("flavor_id", datastore.FlavorID)
 	d.Set("backup_retention_days", datastore.BackupRetentionDays)
+	d.Set("security_groups", datastore.SecurityGroups)
 
 	flavor := resourceDBaaSDatastoreV1FlavorToSet(datastore.Flavor)
 	if err := d.Set("flavor", flavor); err != nil {
@@ -199,6 +207,12 @@ func resourceDBaaSMySQLDatastoreV1Update(ctx context.Context, d *schema.Resource
 	}
 	if d.HasChange("floating_ips") {
 		err := updateDatastoreFloatingIPs(ctx, d, dbaasClient)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("security_groups") {
+		err := updateDatastoreSecurityGroups(ctx, d, dbaasClient)
 		if err != nil {
 			return diag.FromErr(err)
 		}
