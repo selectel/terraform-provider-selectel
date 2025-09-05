@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/selectel/craas-go/pkg/v2/token"
+	tokenv2 "github.com/selectel/craas-go/pkg/v2/token"
 )
 
 func resourceCRaaSTokenV2() *schema.Resource {
