@@ -73,7 +73,7 @@ resource "selectel_dbaas_mysql_datastore_v1" "datastore_1" {
 
 * `backup_retention_days` - (Optional) Number of days to retain backups.
 
-* `log_platform` - (Optional) Name of Log Group for Log Platform. Requirements: must start with 's/dbaas/' prefix, can be between 1 and 512 characters long and consist of the following characters: "a-z, A-Z, 0-9, '_' (underscore), '-' (hyphen), '/' (forward slash), '.' (period)' and '#' (hash). For example: "s/dbaas/My-first-group". You can read more information about logs in [docs](https://docs.selectel.ru/en/managed-databases/mysql-sync/logs/).
+`logs` - (Optional) Name of an existing or a new log group in the [Logs](https://docs.selectel.ru/en/logs/about-logs/) service. The name must start with the prefix 's/dbaas/'. It can contain uppercase and lowercase letters, digits and symbols (underscore, hyphen, forward slash, period and hash). The name cannot exceed 512 symbols.  For example, s/dbaas/My-first-group. Learn more  about logs for [MySQL sync](https://docs.selectel.ru/en/managed-databases/mysql-sync/logs/) and [MySQL semi-sync](https://docs.selectel.ru/en/managed-databases/mysql-semi-sync/logs/).
 
 ## Attributes Reference
 

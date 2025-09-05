@@ -59,7 +59,7 @@ resource "selectel_dbaas_kafka_datastore_v1" "datastore_1" {
 
 * `config` - (Optional) Configuration parameters for the datastore. You can retrieve information about available configuration parameters with the [selectel_dbaas_configuration_parameter_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_configuration_parameter_v1) data source.
 
-* `log_platform` - (Optional) Name of Log Group for Log Platform. Requirements: must start with 's/dbaas/' prefix, can be between 1 and 512 characters long and consist of the following characters: "a-z, A-Z, 0-9, '_' (underscore), '-' (hyphen), '/' (forward slash), '.' (period)' and '#' (hash). For example: "s/dbaas/My-first-group". You can read more information about logs in [docs](https://docs.selectel.ru/en/managed-databases/kafka/logs/).
+`logs` - (Optional) Name of an existing or a new log group in the [Logs](https://docs.selectel.ru/en/logs/about-logs/) service. The name must start with the prefix 's/dbaas/'. It can contain uppercase and lowercase letters, digits and symbols (underscore, hyphen, forward slash, period and hash). The name cannot exceed 512 symbols.  For example, s/dbaas/My-first-group. Learn more  about [Logs](https://docs.selectel.ru/en/managed-databases/kafka/logs/).
 
 ## Attributes Reference
 

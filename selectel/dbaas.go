@@ -687,16 +687,16 @@ func removeReplicasFloatingIPs(ctx context.Context, d *schema.ResourceData, clie
 	return nil
 }
 
-// Log Platform
+// Logs
 
-func dbaasLogPlatformEnable(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
-	var logPlatformOpts dbaas.LogPlatformOpts
-	logPlatformOpts.LogPlatform = dbaas.DatastoreLogGroup{LogGroup: d.Get("log_platform").(string)}
+func dbaasLogsEnable(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	var logsOpts dbaas.LogPlatformOpts
+	logsOpts.LogPlatform = dbaas.DatastoreLogGroup{LogGroup: d.Get("logs").(string)}
 
-	log.Printf("[DEBUG] Enable Log Platform for the datastore %s", d.Id())
+	log.Printf("[DEBUG] Enable Logs for the datastore %s", d.Id())
 
-	if _, err := client.EnableLogPlatform(ctx, d.Id(), logPlatformOpts); err != nil {
-		return fmt.Errorf("error enabling Log Platform for the datastore %s", d.Id())
+	if _, err := client.EnableLogPlatform(ctx, d.Id(), logsOpts); err != nil {
+		return fmt.Errorf("error enabling Logs for the datastore %s", d.Id())
 	}
 
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
@@ -709,11 +709,11 @@ func dbaasLogPlatformEnable(ctx context.Context, d *schema.ResourceData, client 
 	return nil
 }
 
-func dbaasLogPlatformDisable(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
-	log.Printf("[DEBUG] Disable Log Platform for the datastore %s", d.Id())
+func dbaasLogsDisable(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	log.Printf("[DEBUG] Disable Logs for the datastore %s", d.Id())
 
 	if err := client.DisableLogPlatform(ctx, d.Id()); err != nil {
-		return fmt.Errorf("error disabling Log Platform for the datastore %s", d.Id())
+		return fmt.Errorf("error disabling Logs for the datastore %s", d.Id())
 	}
 
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
@@ -726,16 +726,12 @@ func dbaasLogPlatformDisable(ctx context.Context, d *schema.ResourceData, client
 	return nil
 }
 
-func dbaasLogPlatformUpdate(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
-	oldLogPlatform, newLogPlatform := d.GetChange("log_platform")
+func dbaasLogsUpdate(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	newLogs := d.Get("logs")
 
-	if newLogPlatform.(string) == "" {
-		return dbaasLogPlatformDisable(ctx, d, client)
+	if newLogs.(string) == "" {
+		return dbaasLogsDisable(ctx, d, client)
 	}
 
-	if oldLogPlatform.(string) == "" || oldLogPlatform.(string) != newLogPlatform.(string) {
-		return dbaasLogPlatformEnable(ctx, d, client)
-	}
-
-	return nil
+	return dbaasLogsEnable(ctx, d, client)
 }
