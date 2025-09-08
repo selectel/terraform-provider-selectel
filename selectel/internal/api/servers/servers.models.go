@@ -147,3 +147,16 @@ const (
 	ResourceDetailsStateExpiring   = "expiring"
 	ResourceDetailsStateEnding     = "ending"
 )
+
+type Service struct {
+	ID    string `json:"uuid"`
+	Model string `json:"model"`
+}
+
+func (s *Service) IsServerChip() bool {
+	return s.Model == "serverchip"
+}
+
+func (s *Service) IsServer() bool {
+	return s.Model == "server"
+}

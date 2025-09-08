@@ -21,8 +21,6 @@ resource "selectel_servers_server_v1" "server_1" {
   os_id            = data.selectel_servers_os_v1.server_os.os[0].id
   price_plan_name  = "1 день"
 
-  is_server_chip = true
-
   os_host_name     = "Turing"
   public_subnet_id = data.selectel_servers_public_subnet_v1.subnets.subnets[0].id
   private_subnet   = "192.168.0.0/16"
@@ -97,8 +95,6 @@ resource "selectel_servers_server_v1" "server_1" {
 * `public_subnet_id` - (Optional) ID of the public subnet to connect the server to. 
 
 * `private_subnet` - (Optional) Private subnet to connect the server to. 
-
-* `is_server_chip` - (Optional) Flag to indicate if the configuration is a server chip. Defaults to `false`. 
 
 * `os_host_name` - (Optional) Hostname for the server.
 

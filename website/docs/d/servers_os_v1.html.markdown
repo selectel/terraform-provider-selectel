@@ -17,7 +17,6 @@ data "selectel_servers_configuration_v1" "server_configs" {
   project_id = selectel_vpc_project_v2.project_1.id
   filter {
     name           = "CL25-NVMe"
-    is_server_chip = true
   }
 }
 

@@ -55,14 +55,13 @@ func resourceServersServerV1Create(ctx context.Context, d *schema.ResourceData, 
 		pricePlanName   = d.Get(serversServerSchemaKeyPricePlanName).(string)
 		sshKeyName, _   = d.Get(serversServerSchemaKeyOSSSHKeyName).(string)
 
-		isServerChip, _   = d.Get(serversServerSchemaKeyIsServerChip).(bool)
 		publicSubnetID, _ = d.Get(serversServerSchemaKeyPublicSubnetID).(string)
 		privateSubnet, _  = d.Get(serversServerSchemaKeyPrivateSubnet).(string)
 	)
 
 	data, diagErr := resourceServersServerV1CreateLoadData(
 		ctx, dsClient, locationID, osID, configurationID, publicSubnetID, privateSubnet,
-		sshKeyName, pricePlanName, isServerChip, partitionsConfigFromSchema,
+		sshKeyName, pricePlanName, partitionsConfigFromSchema,
 	)
 	if diagErr != nil {
 		return diagErr
@@ -81,7 +80,7 @@ func resourceServersServerV1Create(ctx context.Context, d *schema.ResourceData, 
 
 	diagErr = resourceServersServerV1CreateValidatePreconditions(
 		ctx, dsClient, data, locationID, data.pricePlan.UUID, configurationID, osID, userData != "",
-		sshKeyPK != "" || data.sshKeyByName != nil, isServerChip, privateSubnet != "",
+		sshKeyPK != "" || data.sshKeyByName != nil, privateSubnet != "",
 	)
 	if diagErr != nil {
 		return diagErr
@@ -90,7 +89,7 @@ func resourceServersServerV1Create(ctx context.Context, d *schema.ResourceData, 
 	// creating
 
 	serverObjectName := objectServer
-	if isServerChip {
+	if data.server.IsServerChip {
 		serverObjectName = objectServerChip
 	}
 
@@ -123,7 +122,7 @@ func resourceServersServerV1Create(ctx context.Context, d *schema.ResourceData, 
 
 	log.Print(msgCreate(serverObjectName, req))
 
-	billingRes, _, err := dsClient.ServerBilling(ctx, req, isServerChip)
+	billingRes, _, err := dsClient.ServerBilling(ctx, req, data.server.IsServerChip)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf(
 			"failed to create %s %s: %w", serverObjectName, configurationID, err,
@@ -173,7 +172,6 @@ type serversServerV1CreateData struct {
 func resourceServersServerV1CreateLoadData(
 	ctx context.Context, dsClient *servers.ServiceClient,
 	locationID, osID, configurationID, publicSubnetID, privateSubnet, sshKeyName, pricePlanName string,
-	isServerChip bool,
 	partitionsConfigFromSchema *PartitionsConfig,
 ) (*serversServerV1CreateData, diag.Diagnostics) {
 	operatingSystems, _, err := dsClient.OperatingSystems(ctx, servers.OperatingSystemsQuery{
@@ -189,6 +187,19 @@ func resourceServersServerV1CreateLoadData(
 		return nil, diag.FromErr(errGettingObject(objectOS, osID, ErrNotFound))
 	}
 
+	service, _, err := dsClient.Service(ctx, configurationID)
+	if err != nil {
+		return nil, diag.FromErr(errGettingObject(objectService, configurationID, err))
+	}
+
+	isServerChip := service.IsServerChip()
+	isServer := service.IsServer()
+	if !isServer && !isServerChip {
+		return nil, diag.FromErr(errors.New(
+			"configuration is neither a server nor a server chip",
+		))
+	}
+
 	objectServerName := objectServer
 	if isServerChip {
 		objectServerName = objectServerChip
@@ -199,27 +210,9 @@ func resourceServersServerV1CreateLoadData(
 		return nil, diag.FromErr(errGettingObject(objectServerName, configurationID, err))
 	}
 
-	var partitionsConfig servers.PartitionsConfig
-	if !partitionsConfigFromSchema.IsEmpty() || os.Partitioning {
-		if !os.Partitioning { // in case of configured partitions
-			return nil, diag.FromErr(fmt.Errorf(
-				"%s %s does not support partitions config", objectOS, os.OSValue,
-			))
-		}
-
-		localDrives, _, err := dsClient.LocalDrives(ctx, configurationID)
-		if err != nil {
-			return nil, diag.FromErr(fmt.Errorf(
-				"failed to get local drives for %s %s: %w", objectServerName, configurationID, err,
-			))
-		}
-
-		partitionsConfig, err = partitionsConfigFromSchema.CastToAPIPartitionsConfig(localDrives, os.DefaultPartitions)
-		if err != nil {
-			return nil, diag.FromErr(fmt.Errorf(
-				"failed to read partitions config input: %w", err,
-			))
-		}
+	partitionsConfig, diagErr := resourceServersServerV1CreateLoadPartitions(ctx, partitionsConfigFromSchema, dsClient, os, configurationID)
+	if diagErr != nil {
+		return nil, diagErr
 	}
 
 	var publicIPs []net.IP
@@ -316,15 +309,46 @@ func resourceServersServerV1CreateLoadData(
 	}, nil
 }
 
+func resourceServersServerV1CreateLoadPartitions(
+	ctx context.Context, partitionsConfigFromSchema *PartitionsConfig, dsClient *servers.ServiceClient, os *servers.OperatingSystem,
+	configurationID string,
+) (servers.PartitionsConfig, diag.Diagnostics) {
+	if !partitionsConfigFromSchema.IsEmpty() || os.Partitioning {
+		if !os.Partitioning { // in case of configured partitions
+			return nil, diag.FromErr(fmt.Errorf(
+				"%s %s does not support partitions config", objectOS, os.OSValue,
+			))
+		}
+
+		localDrives, _, err := dsClient.LocalDrives(ctx, configurationID)
+		if err != nil {
+			return nil, diag.FromErr(fmt.Errorf(
+				"failed to get local drives for %s %s: %w", objectServer, configurationID, err,
+			))
+		}
+
+		partitionsConfig, err := partitionsConfigFromSchema.CastToAPIPartitionsConfig(localDrives, os.DefaultPartitions)
+		if err != nil {
+			return nil, diag.FromErr(fmt.Errorf(
+				"failed to read partitions config input: %w", err,
+			))
+		}
+
+		return partitionsConfig, nil
+	}
+
+	return nil, nil
+}
+
 func resourceServersServerV1CreateValidatePreconditions(
 	ctx context.Context, dsClient *servers.ServiceClient,
 	data *serversServerV1CreateData,
 	locationID, pricePlanID, configurationID, osID string,
-	needUserData, sshKey, isServerChip bool,
+	needUserData, sshKey bool,
 	needPrivateIP bool,
 ) diag.Diagnostics {
 	objectServerName := objectServer
-	if isServerChip {
+	if data.server.IsServerChip {
 		objectServerName = objectServerChip
 	}
 
@@ -406,16 +430,6 @@ func resourceServersServerV1Read(ctx context.Context, d *schema.ResourceData, me
 	_ = d.Set("location_id", rd.LocationUUID)
 	_ = d.Set("configuration_id", rd.ServiceUUID)
 	_ = d.Set("price_plan_name", rd.Billing.CurrentPricePlan.Name)
-
-	isServerChip := rd.IsServerChip()
-	isServer := rd.IsServer()
-	if !isServer && !isServerChip {
-		return diag.FromErr(errors.New(
-			"the resource is neither a server nor a server chip",
-		))
-	}
-
-	_ = d.Set("is_server_chip", isServerChip)
 
 	resourceOS, _, err := dsClient.OperatingSystemByResource(ctx, d.Id())
 	if err != nil {

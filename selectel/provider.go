@@ -54,6 +54,7 @@ const (
 	objectServerChip                = "server-chip"
 	objectOS                        = "os"
 	objectLocation                  = "location"
+	objectService                   = "service"
 )
 
 // This is a global MutexKV for use within this plugin.

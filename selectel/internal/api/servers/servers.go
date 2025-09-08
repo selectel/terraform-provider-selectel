@@ -326,3 +326,25 @@ func (client *ServiceClient) DeleteResource(
 
 	return responseResult, nil
 }
+
+func (client *ServiceClient) Service(ctx context.Context, id string) (*Service, *ResponseResult, error) {
+	url := fmt.Sprintf("%s/service/%s", client.Endpoint, id)
+
+	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	if responseResult.Err != nil {
+		return nil, responseResult, responseResult.Err
+	}
+
+	var result struct {
+		Server *Service `json:"result"`
+	}
+	err = responseResult.ExtractResult(&result)
+	if err != nil {
+		return nil, responseResult, err
+	}
+
+	return result.Server, responseResult, nil
+}

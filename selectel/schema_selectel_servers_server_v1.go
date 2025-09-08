@@ -10,7 +10,6 @@ const (
 	serversServerSchemaKeyLocationID               = "location_id"
 	serversServerSchemaKeyOSID                     = "os_id"
 	serversServerSchemaKeyPricePlanName            = "price_plan_name"
-	serversServerSchemaKeyIsServerChip             = "is_server_chip"
 	serversServerSchemaKeyPublicSubnetID           = "public_subnet_id"
 	serversServerSchemaKeyPrivateSubnet            = "private_subnet"
 	serversServerSchemaKeyOSUserData               = "user_data"
@@ -141,10 +140,6 @@ func resourceServersServerV1Schema() map[string]*schema.Schema {
 		},
 
 		// optional misc
-		serversServerSchemaKeyIsServerChip: {
-			Type:     schema.TypeBool,
-			Optional: true,
-		},
 		serversServerSchemaKeyOSHostName: {
 			Type:     schema.TypeString,
 			Optional: true,

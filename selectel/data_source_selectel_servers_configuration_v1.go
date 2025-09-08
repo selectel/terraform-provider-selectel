@@ -27,10 +27,6 @@ func dataSourceServersConfigurationV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
-						"is_server_chip": {
-							Type:     schema.TypeBool,
-							Required: true,
-						},
 					},
 				},
 			},
@@ -63,17 +59,19 @@ func dataSourceServersConfigurationV1Read(ctx context.Context, d *schema.Resourc
 
 	filter := expandServersConfigurationSearchFilter(d.Get("filter").(*schema.Set))
 
-	objectServerName := objectServerChip
-	if !filter.isServerChip {
-		objectServerName = objectServer
-	}
+	log.Print(msgGet(objectServer, filter.name))
 
-	log.Print(msgGet(objectServerName, filter.name))
-
-	serversList, _, err := dsClient.Servers(ctx, filter.isServerChip)
+	serversList, _, err := dsClient.Servers(ctx, false)
 	if err != nil {
-		return diag.FromErr(errGettingObjects(objectServerName, err))
+		return diag.FromErr(errGettingObjects(objectServer, err))
 	}
+
+	serverChipsList, _, err := dsClient.Servers(ctx, true)
+	if err != nil {
+		return diag.FromErr(errGettingObjects(objectServerChip, err))
+	}
+
+	serversList = append(serversList, serverChipsList...)
 
 	filteredServers, err := filterServersConfigurations(serversList, filter)
 	if err != nil {
@@ -101,8 +99,7 @@ func dataSourceServersConfigurationV1Read(ctx context.Context, d *schema.Resourc
 }
 
 type serversConfigurationFilter struct {
-	name         string
-	isServerChip bool
+	name string
 }
 
 func expandServersConfigurationSearchFilter(filterSet *schema.Set) serversConfigurationFilter {
@@ -116,11 +113,6 @@ func expandServersConfigurationSearchFilter(filterSet *schema.Set) serversConfig
 	name, ok := resourceFilterMap["name"]
 	if ok {
 		filter.name = name.(string)
-	}
-
-	isServerChip, ok := resourceFilterMap["is_server_chip"]
-	if ok {
-		filter.isServerChip = isServerChip.(bool)
 	}
 
 	return filter
