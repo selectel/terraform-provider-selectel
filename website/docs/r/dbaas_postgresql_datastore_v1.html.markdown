@@ -63,7 +63,7 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
 * `region` - (Required) Pool where the datastore is located, for example, `ru-3`. Changing this creates a new datastore. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-databases).
 
 * `subnet_id` - (Required) Unique identifier of the associated OpenStack network. Changing this creates a new datastore. Learn more about the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_network_v2) resource in the official OpenStack documentation.
-  
+
 * `type_id` - (Required) Unique identifier of the datastore type. Changing this creates a new datastore. Retrieved from the [selectel_dbaas_datastore_type_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_datastore_type_v1) data source.
 
 * `node_count` - (Required) Number of nodes in the datastore. The available range is from 1 to 6. Learn more about [Replication](https://docs.selectel.ru/en/cloud/managed-databases/about/about-managed-databases/#fault-tolerance-and-replication).
@@ -103,6 +103,8 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
   * replica - (Required) Number of public IPs associated with the replicas. The minimum value is `0`. The maximum value must be 1 less than the value of the `node_count` argument.
 
 * `backup_retention_days` - (Optional) Number of days to retain backups.
+
+`logs` - (Optional) Name of an existing or a new log group in the [Logs](https://docs.selectel.ru/en/logs/about-logs/) service. The name must start with the prefix 's/dbaas/'. It can contain uppercase and lowercase letters, digits and symbols (underscore, hyphen, forward slash, period and hash). The name cannot exceed 512 symbols.  For example, s/dbaas/My-first-group. Learn more  about logs for [PostgreSQL](https://docs.selectel.ru/en/managed-databases/postgresql/logs/), [PostgreSQL for 1C](https://docs.selectel.ru/en/managed-databases/postgresql-for-1c/logs/) and [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/managed-databases/timescaledb/logs/).
 
 ## Attributes Reference
 
