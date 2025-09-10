@@ -26,6 +26,7 @@ resource "selectel_dbaas_mysql_datastore_v1" "datastore_1" {
     disk      = 32
     disk_type = "network-ultra"
   }
+  security_groups = ["796f1f0a-d97d-4a8e-904e-4fd5ef57465c", "b9c2e73d-a6c5-4def-994d-ce85e3ce98d3"]
 }
 ```
 
@@ -72,6 +73,8 @@ resource "selectel_dbaas_mysql_datastore_v1" "datastore_1" {
   * replica - (Required) Number of public IPs associated with the replicas. The minimum value is `0`. The maximum value must be 1 less than the value of the `node_count` argument.
 
 * `backup_retention_days` - (Optional) Number of days to retain backups.
+
+* `security_groups` - (Optional) List of security groups.
 
 ## Attributes Reference
 

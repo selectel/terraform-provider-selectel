@@ -1,3 +1,8 @@
+## 6.8.0 (September 10, 2025)
+
+FEATURES:
+* Added supporting security groups
+
 ## 6.6.0 (July 8, 2025)
 
 FEATURES:

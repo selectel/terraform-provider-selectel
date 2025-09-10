@@ -26,6 +26,7 @@ resource "selectel_dbaas_kafka_datastore_v1" "datastore_1" {
     disk      = 32
     disk_type = "network-ultra"
   }
+  security_groups = ["796f1f0a-d97d-4a8e-904e-4fd5ef57465c", "b9c2e73d-a6c5-4def-994d-ce85e3ce98d3"]
 }
 ```
 
@@ -58,6 +59,8 @@ resource "selectel_dbaas_kafka_datastore_v1" "datastore_1" {
 * `firewall` - (Deprecated) Remove this argument as it is no longer in use and will be removed in the next major version of the provider. To manage a list of IP-addresses with access to the datastore, use the [selectel_dbaas_firewall_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_firewall_v1) resource.
 
 * `config` - (Optional) Configuration parameters for the datastore. You can retrieve information about available configuration parameters with the [selectel_dbaas_configuration_parameter_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_configuration_parameter_v1) data source.
+
+* `security_groups` - (Optional) List of security groups.
 
 ## Attributes Reference
 
