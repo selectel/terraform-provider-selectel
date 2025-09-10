@@ -74,6 +74,16 @@ func resourceDBaaSRedisDatastoreV1Create(ctx context.Context, d *schema.Resource
 		FloatingIPs: floatingIPsSchema,
 	}
 
+	sgRaw, sgOk := d.GetOk("security_groups")
+	if sgOk {
+		sgSet := sgRaw.(*schema.Set)
+		sg, err := resourceDBaaSDatastoreV1SecurityGroupsFromSet(sgSet)
+		if err != nil {
+			return diag.FromErr(errParseDatastoreV1SecurityGroups(err))
+		}
+		datastoreCreateOpts.SecurityGroups = sg
+	}
+
 	if flavorIDOk {
 		datastoreCreateOpts.FlavorID = flavorID.(string)
 	}
@@ -126,6 +136,7 @@ func resourceDBaaSRedisDatastoreV1Read(ctx context.Context, d *schema.ResourceDa
 	d.Set("enabled", datastore.Enabled)
 	d.Set("flavor_id", datastore.FlavorID)
 	d.Set("backup_retention_days", datastore.BackupRetentionDays)
+	d.Set("security_groups", datastore.SecurityGroups)
 
 	flavor := resourceDBaaSDatastoreV1FlavorToSet(datastore.Flavor)
 	if err := d.Set("flavor", flavor); err != nil {
@@ -196,6 +207,13 @@ func resourceDBaaSRedisDatastoreV1Update(ctx context.Context, d *schema.Resource
 	}
 	if d.HasChange("floating_ips") {
 		err := updateDatastoreFloatingIPs(ctx, d, dbaasClient)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("security_groups") {
+		err := updateDatastoreSecurityGroups(ctx, d, dbaasClient)
 		if err != nil {
 			return diag.FromErr(err)
 		}

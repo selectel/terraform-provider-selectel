@@ -53,19 +53,22 @@ func resourceDBaaSKafkaDatastoreV1Create(ctx context.Context, d *schema.Resource
 		return diagErr
 	}
 
-	securityGroupsSet := d.Get("security_groups").(*schema.Set)
-	securityGroups, err := resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet)
-	if err != nil {
-		return diag.FromErr(errParseDatastoreV1SecurityGroups(err))
+	datastoreCreateOpts := dbaas.DatastoreCreateOpts{
+		Name:      d.Get("name").(string),
+		TypeID:    typeID,
+		SubnetID:  d.Get("subnet_id").(string),
+		NodeCount: d.Get("node_count").(int),
+		Config:    d.Get("config").(map[string]interface{}),
 	}
 
-	datastoreCreateOpts := dbaas.DatastoreCreateOpts{
-		Name:           d.Get("name").(string),
-		TypeID:         typeID,
-		SubnetID:       d.Get("subnet_id").(string),
-		NodeCount:      d.Get("node_count").(int),
-		Config:         d.Get("config").(map[string]interface{}),
-		SecurityGroups: securityGroups,
+	sgRaw, sgOk := d.GetOk("security_groups")
+	if sgOk {
+		sgSet := sgRaw.(*schema.Set)
+		sg, err := resourceDBaaSDatastoreV1SecurityGroupsFromSet(sgSet)
+		if err != nil {
+			return diag.FromErr(errParseDatastoreV1SecurityGroups(err))
+		}
+		datastoreCreateOpts.SecurityGroups = sg
 	}
 
 	if flavorOk {
