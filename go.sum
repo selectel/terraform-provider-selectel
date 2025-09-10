@@ -166,10 +166,6 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/sebdah/goldie v1.0.0/go.mod h1:jXP4hmWywNEwZzhMuv2ccnqTSFpuq8iyQhtQdkkZBH4=
 github.com/selectel/craas-go v0.3.0 h1:tXiw3LNN+ZVV0wZdeBBXX6u8kMuA5PV/5W1uYqV0yXg=
 github.com/selectel/craas-go v0.3.0/go.mod h1:9RAUn9PdMITP4I3GAade6v2hjB2j3lo3J2dDlG5SLYE=
-github.com/selectel/dbaas-go v0.13.0 h1:lXdcvFbJv+xhjOGsaaNZMpb4eTf3wSlTn1hWuf/0Nl8=
-github.com/selectel/dbaas-go v0.13.0/go.mod h1:Ffq6RQ4PmgZX8eL9oXsaKDc0lzbCK9wadyDV6AHaz/k=
-github.com/selectel/dbaas-go v0.17.0 h1:2rc/xWsM6fwcO5DNaKDOgGdBIFHbZfV9zmCms5kt/j4=
-github.com/selectel/dbaas-go v0.17.0/go.mod h1:KU+HEvlHGdq4hgHaKagz+JvCIAVya1N+ugZIaea0m4Y=
 github.com/selectel/dbaas-go v0.18.0 h1:IrnEt/6ETx6oKvV4est6RGei4AebrUPN/njczZfbVL0=
 github.com/selectel/dbaas-go v0.18.0/go.mod h1:KU+HEvlHGdq4hgHaKagz+JvCIAVya1N+ugZIaea0m4Y=
 github.com/selectel/domains-go v1.0.2 h1:Si6iGaMnTFJxwiJVI50DOdZnwcxc87kqaWrVQYW0a4U=
