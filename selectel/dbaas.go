@@ -717,9 +717,9 @@ func updateDatastoreSecurityGroups(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	log.Printf("[DEBUG] updating datastore %q security groups %+v", d.Id(), securityGroupsOpts)
-	_, update_err := client.UpdateSecurityGroup(ctx, d.Id(), securityGroupsOpts)
-	if update_err != nil {
-		return update_err
+	_, updateErr := client.UpdateSecurityGroup(ctx, d.Id(), securityGroupsOpts)
+	if updateErr != nil {
+		return updateErr
 	}
 
 	return nil
