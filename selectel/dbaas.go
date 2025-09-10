@@ -703,7 +703,7 @@ func resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet *schema.Set
 func updateDatastoreSecurityGroups(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
 	sgInterface, ok := d.GetOk("security_groups")
 	if !ok {
-		return errParseDatastoreV1SecurityGroups(fmt.Errorf("attribute not found in schema"))
+		return nil
 	}
 
 	securityGroupsSet := sgInterface.(*schema.Set)
