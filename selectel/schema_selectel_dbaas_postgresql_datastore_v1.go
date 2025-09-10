@@ -67,6 +67,11 @@ func resourceDBaaSPostgreSQLDatastoreV1Schema() map[string]*schema.Schema {
 			},
 		},
 	}
+	datastoreSchema["logs"] = &schema.Schema{
+		Type:        schema.TypeString,
+		Optional:    true,
+		Description: "Name of Logs group.",
+	}
 
 	return datastoreSchema
 }

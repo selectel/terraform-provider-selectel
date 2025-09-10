@@ -1,11 +1,25 @@
-## 6.7.0 (August 27, 2025)
+## 6.8.0 (September 10, 2025)
 
 FEATURES:
 * Add selectel_craas_token_v2 resource ([#343] (https://github.com/selectel/terraform-provider-selectel/pull/343))
-
+* Add documentation for selectel_craas_token_v2 resource ([#343] (https://github.com/selectel/terraform-provider-selectel/pull/343))
 IMPROVEMENTS:
 
 * Bump `craas-go` to v0.4.1 ([#343](https://github.com/selectel/terraform-provider-selectel/pull/343))
+
+
+## 6.7.0 (September 4, 2025)
+
+FEATURES:
+* Add new field `logs` for all datastores in DBaaS ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344)
+
+BUG FIXES:
+* Fix updating datastore `connections` after change `node_count` field ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344)
+* Fix `selectel_dbaas_prometheus_metric_token_v1` reading ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344)
+
+IMPROVEMENTS:
+* Update documentation for dbaas datastores ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344)
+
 
 ## 6.6.0 (July 8, 2025)
 
@@ -26,11 +40,11 @@ FEATURES:
 * Add `ca_certs` to `oidc` in Managed Kubernetes ([#337](https://github.com/selectel/terraform-provider-selectel/pull/337))
 
 BUG FIXES:
- 
+
 * Fix updating `oidc` in Managed Kubernetes: cluster state does not change when it is not necessary ([#337](https://github.com/selectel/terraform-provider-selectel/pull/337))
 
 IMPROVEMENTS:
- 
+
 * Bump `mks-go` to v0.20.0 ([#337](https://github.com/selectel/terraform-provider-selectel/pull/337))
 * Bump `golang.org/x/net` to v0.38.0 ([#337](https://github.com/selectel/terraform-provider-selectel/pull/337))
 
@@ -173,7 +187,7 @@ IMPROVEMENTS:
 IMPROVEMENTS:
 * Updated docs for the resource `selectel_iam_s3_credentials_v1` ([#272](https://github.com/selectel/terraform-provider-selectel/pull/272))
 * Updated docs for the resource `selectel_mks_nodegroup_v1` ([#275](https://github.com/selectel/terraform-provider-selectel/pull/275))
-* Code refactoring for `selectel_dbaas_*` resources ([#251](https://github.com/selectel/terraform-provider-selectel/pull/251)) 
+* Code refactoring for `selectel_dbaas_*` resources ([#251](https://github.com/selectel/terraform-provider-selectel/pull/251))
 * Schema updates for `selectel_dbaas_postgresql_database_v1` resource ([#260](https://github.com/selectel/terraform-provider-selectel/pull/260)
 
 ## 5.0.2 (April 23, 2024)
@@ -612,9 +626,9 @@ IMPROVEMENTS:
 * Changed `TypeList` to `TypeSet` for the `servers`, `quotas`, `all_quotas`, `resource_quotas` attributes ([#48](https://github.com/selectel/terraform-provider-selvpc/issues/48))
 * Added a check for error on setting non-scalars ([#52](https://github.com/selectel/terraform-provider-selvpc/issues/52))
 * Added a check for if resources don’t exist during read with unsetting the ID ([#53](https://github.com/selectel/terraform-provider-selvpc/issues/53))
-* Grouped attributes at the top of resources followed by the optional attributes ([#54](https://github.com/selectel/terraform-provider-selvpc/issues/54)) 
+* Grouped attributes at the top of resources followed by the optional attributes ([#54](https://github.com/selectel/terraform-provider-selvpc/issues/54))
 
-BUG FIXES: 
+BUG FIXES:
 
 * Fixed `golint` URL in the TravisCI configuration ([#49](https://github.com/selectel/terraform-provider-selvpc/issues/49))
 * Fixed `all_quotas` attribute checking in the `TestAccResellV2ProjectAutoQuotas` ([#57](https://github.com/selectel/terraform-provider-selvpc/issues/57)), ([#62](https://github.com/selectel/terraform-provider-selvpc/issues/62))

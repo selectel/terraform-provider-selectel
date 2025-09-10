@@ -95,7 +95,7 @@ The following arguments are supported:
 
 * `backup_retention_days` - (Optional) Number of days to retain backups.
 
-* `redis_password` - (Optional) Password for the Redis datastore (only for Redis datastores)
+* `redis_password` - (Optional) Password for the Redis datastore (only for Redis datastores).
 
 **flavor**
 
