@@ -446,6 +446,12 @@ func refreshDatastoreInstancesOutputsDiff(_ context.Context, diff *schema.Resour
 		}
 	}
 
+	if diff.HasChanges("node_count") {
+		if err := diff.SetNewComputed("connections"); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -715,9 +721,57 @@ func updateDatastoreSecurityGroups(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	log.Printf("[DEBUG] updating datastore %q security groups %+v", d.Id(), securityGroupsOpts)
+
 	if _, updateErr := client.UpdateSecurityGroup(ctx, d.Id(), securityGroupsOpts); updateErr != nil {
 		return updateErr
 	}
 
 	return nil
+}
+
+func dbaasLogsEnable(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	var logsOpts dbaas.LogPlatformOpts
+	logsOpts.LogPlatform = dbaas.DatastoreLogGroup{LogGroup: d.Get("logs").(string)}
+
+	log.Printf("[DEBUG] Enable Logs for the datastore %s", d.Id())
+
+	if _, err := client.EnableLogPlatform(ctx, d.Id(), logsOpts); err != nil {
+		return fmt.Errorf("error enabling Logs for the datastore %s", d.Id())
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	if err := waiters.WaitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout); err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func dbaasLogsDisable(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	log.Printf("[DEBUG] Disable Logs for the datastore %s", d.Id())
+
+	if err := client.DisableLogPlatform(ctx, d.Id()); err != nil {
+		return fmt.Errorf("error disabling Logs for the datastore %s", d.Id())
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	if err := waiters.WaitForDBaaSDatastoreV1ActiveState(ctx, client, d.Id(), timeout); err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func dbaasLogsUpdate(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	newLogs := d.Get("logs")
+
+	if newLogs.(string) == "" {
+		return dbaasLogsDisable(ctx, d, client)
+	}
+
+	return dbaasLogsEnable(ctx, d, client)
 }

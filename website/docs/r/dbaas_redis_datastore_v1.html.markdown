@@ -63,6 +63,8 @@ resource "selectel_dbaas_redis_datastore_v1" "datastore_1" {
 
 * `security_groups` - (Optional) List of security groups.
 
+* `logs` - (Optional) Name of an existing or a new log group in the [Logs](https://docs.selectel.ru/en/logs/about-logs/) service. The name must start with the prefix 's/dbaas/'. It can contain uppercase and lowercase letters, digits and symbols (underscore, hyphen, forward slash, period and hash). The name cannot exceed 512 symbols.  For example, s/dbaas/My-first-group. Learn more  about [Logs](https://docs.selectel.ru/en/managed-databases/redis/logs/).
+
 ## Attributes Reference
 
 * `status` - Datastore status.

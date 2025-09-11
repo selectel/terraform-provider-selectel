@@ -70,6 +70,7 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 	}
 
 	datastoreCreateOpts := dbaas.DatastoreCreateOpts{
+		ProjectID:   d.Get("project_id").(string),
 		Name:        d.Get("name").(string),
 		TypeID:      d.Get("type_id").(string),
 		SubnetID:    d.Get("subnet_id").(string),
@@ -114,6 +115,11 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 		datastoreCreateOpts.BackupRetentionDays = backupRetentionDays.(int)
 	}
 
+	logs, logsOk := d.GetOk("logs")
+	if logsOk {
+		datastoreCreateOpts.LogPlatform = &dbaas.DatastoreLogGroup{LogGroup: logs.(string)}
+	}
+
 	log.Print(msgCreate(objectDatastore, datastoreCreateOpts))
 	datastore, err := dbaasClient.CreateDatastore(ctx, datastoreCreateOpts)
 	if err != nil {
@@ -154,6 +160,7 @@ func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, m
 	d.Set("flavor_id", datastore.FlavorID)
 	d.Set("backup_retention_days", datastore.BackupRetentionDays)
 	d.Set("security_groups", datastore.SecurityGroups)
+	d.Set("logs", datastore.LogPlatform.LogGroup)
 
 	flavor := resourceDBaaSDatastoreV1FlavorToSet(datastore.Flavor)
 	if err := d.Set("flavor", flavor); err != nil {
@@ -237,6 +244,11 @@ func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData,
 	if d.HasChange("security_groups") {
 		err := updateDatastoreSecurityGroups(ctx, d, dbaasClient)
 		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("logs") {
+		if err := dbaasLogsUpdate(ctx, d, dbaasClient); err != nil {
 			return diag.FromErr(err)
 		}
 	}
