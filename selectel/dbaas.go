@@ -683,7 +683,7 @@ func removeReplicasFloatingIPs(ctx context.Context, d *schema.ResourceData, clie
 
 func resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet *schema.Set) ([]string, error) {
 	if securityGroupsSet.Len() == 0 {
-		return []string{}, nil
+		return nil, fmt.Errorf("security group must include at least one value")
 	}
 
 	securityGroups := make([]string, securityGroupsSet.Len())
@@ -701,12 +701,10 @@ func resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet *schema.Set
 }
 
 func updateDatastoreSecurityGroups(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
-	sgInterface, ok := d.GetOk("security_groups")
-	if !ok {
-		return nil
-	}
+	sgInterface := d.Get("security_groups")
 
 	securityGroupsSet := sgInterface.(*schema.Set)
+
 	securityGroups, err := resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet)
 	if err != nil {
 		return errParseDatastoreV1SecurityGroups(err)
@@ -717,8 +715,7 @@ func updateDatastoreSecurityGroups(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	log.Printf("[DEBUG] updating datastore %q security groups %+v", d.Id(), securityGroupsOpts)
-	_, updateErr := client.UpdateSecurityGroup(ctx, d.Id(), securityGroupsOpts)
-	if updateErr != nil {
+	if _, updateErr := client.UpdateSecurityGroup(ctx, d.Id(), securityGroupsOpts); updateErr != nil {
 		return updateErr
 	}
 
