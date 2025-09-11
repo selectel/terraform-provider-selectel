@@ -106,9 +106,9 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
 
 * `backup_retention_days` - (Optional) Number of days to retain backups.
 
-* `security_groups` - (Optional) List of security groups.
-
 * `logs` - (Optional) Name of an existing or a new log group in the [Logs](https://docs.selectel.ru/en/logs/about-logs/) service. The name must start with the prefix 's/dbaas/'. It can contain uppercase and lowercase letters, digits and symbols (underscore, hyphen, forward slash, period and hash). The name cannot exceed 512 symbols.  For example, s/dbaas/My-first-group. Learn more  about logs for [PostgreSQL](https://docs.selectel.ru/en/managed-databases/postgresql/logs/), [PostgreSQL for 1C](https://docs.selectel.ru/en/managed-databases/postgresql-for-1c/logs/) and [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/managed-databases/timescaledb/logs/).
+
+* `security_groups` - (Optional) List of security groups.
 
 ## Attributes Reference
 
