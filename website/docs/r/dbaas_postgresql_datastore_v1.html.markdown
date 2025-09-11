@@ -108,7 +108,7 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_1" {
 
 * `logs` - (Optional) Name of an existing or a new log group in the [Logs](https://docs.selectel.ru/en/logs/about-logs/) service. The name must start with the prefix 's/dbaas/'. It can contain uppercase and lowercase letters, digits and symbols (underscore, hyphen, forward slash, period and hash). The name cannot exceed 512 symbols.  For example, s/dbaas/My-first-group. Learn more  about logs for [PostgreSQL](https://docs.selectel.ru/en/managed-databases/postgresql/logs/), [PostgreSQL for 1C](https://docs.selectel.ru/en/managed-databases/postgresql-for-1c/logs/) and [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/managed-databases/timescaledb/logs/).
 
-* `security_groups` - (Optional) List of security groups.
+* `security_groups` - (Optional) List of security groups. If UUID is not specified when creating a group, the default UUID of the security group will be applied to the datastore when created. A datastore must have at least one security group.
 
 ## Attributes Reference
 
