@@ -69,6 +69,7 @@ func resourceDBaaSMySQLDatastoreV1Create(ctx context.Context, d *schema.Resource
 	}
 
 	datastoreCreateOpts := dbaas.DatastoreCreateOpts{
+		ProjectID:   d.Get("project_id").(string),
 		Name:        d.Get("name").(string),
 		TypeID:      typeID,
 		SubnetID:    d.Get("subnet_id").(string),
@@ -95,6 +96,11 @@ func resourceDBaaSMySQLDatastoreV1Create(ctx context.Context, d *schema.Resource
 	backupRetentionDays, ok := d.GetOk("backup_retention_days")
 	if ok {
 		datastoreCreateOpts.BackupRetentionDays = backupRetentionDays.(int)
+	}
+
+	logs, logsOk := d.GetOk("logs")
+	if logsOk {
+		datastoreCreateOpts.LogPlatform = &dbaas.DatastoreLogGroup{LogGroup: logs.(string)}
 	}
 
 	log.Print(msgCreate(objectDatastore, datastoreCreateOpts))
@@ -135,6 +141,7 @@ func resourceDBaaSMySQLDatastoreV1Read(ctx context.Context, d *schema.ResourceDa
 	d.Set("enabled", datastore.Enabled)
 	d.Set("flavor_id", datastore.FlavorID)
 	d.Set("backup_retention_days", datastore.BackupRetentionDays)
+	d.Set("logs", datastore.LogPlatform.LogGroup)
 
 	flavor := resourceDBaaSDatastoreV1FlavorToSet(datastore.Flavor)
 	if err := d.Set("flavor", flavor); err != nil {
@@ -200,6 +207,11 @@ func resourceDBaaSMySQLDatastoreV1Update(ctx context.Context, d *schema.Resource
 	if d.HasChange("floating_ips") {
 		err := updateDatastoreFloatingIPs(ctx, d, dbaasClient)
 		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("logs") {
+		if err := dbaasLogsUpdate(ctx, d, dbaasClient); err != nil {
 			return diag.FromErr(err)
 		}
 	}

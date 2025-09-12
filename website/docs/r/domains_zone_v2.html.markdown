@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_domains\_zone\_v2
 
-Creates and manages a zone in DNS Hosting (actual) using public API v2. For more information about zones, see the [official Selectel documentation](https://docs.selectel.ru/en/networks-services/dns/zones/).
+Creates and manages a zone in DNS Hosting (actual) using public API v2. For more information about zones, see the [official Selectel documentation](https://docs.selectel.ru/en/networks-services/dns/zones/). With the zone, NS and SOA records with default values will be automatically created, you cannot edit or delete these records.
 
 ## Example usage
 

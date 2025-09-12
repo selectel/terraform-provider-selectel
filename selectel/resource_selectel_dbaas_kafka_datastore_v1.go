@@ -54,6 +54,7 @@ func resourceDBaaSKafkaDatastoreV1Create(ctx context.Context, d *schema.Resource
 	}
 
 	datastoreCreateOpts := dbaas.DatastoreCreateOpts{
+		ProjectID: d.Get("project_id").(string),
 		Name:      d.Get("name").(string),
 		TypeID:    typeID,
 		SubnetID:  d.Get("subnet_id").(string),
@@ -73,6 +74,11 @@ func resourceDBaaSKafkaDatastoreV1Create(ctx context.Context, d *schema.Resource
 
 	if flavorIDOk {
 		datastoreCreateOpts.FlavorID = flavorID.(string)
+	}
+
+	logs, logsOk := d.GetOk("logs")
+	if logsOk {
+		datastoreCreateOpts.LogPlatform = &dbaas.DatastoreLogGroup{LogGroup: logs.(string)}
 	}
 
 	log.Print(msgCreate(objectDatastore, datastoreCreateOpts))
@@ -112,6 +118,7 @@ func resourceDBaaSKafkaDatastoreV1Read(ctx context.Context, d *schema.ResourceDa
 	d.Set("node_count", datastore.NodeCount)
 	d.Set("enabled", datastore.Enabled)
 	d.Set("flavor_id", datastore.FlavorID)
+	d.Set("logs", datastore.LogPlatform.LogGroup)
 
 	flavor := resourceDBaaSDatastoreV1FlavorToSet(datastore.Flavor)
 	if err := d.Set("flavor", flavor); err != nil {
@@ -165,6 +172,11 @@ func resourceDBaaSKafkaDatastoreV1Update(ctx context.Context, d *schema.Resource
 	if d.HasChange("config") {
 		err := updateDatastoreConfig(ctx, d, dbaasClient)
 		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("logs") {
+		if err := dbaasLogsUpdate(ctx, d, dbaasClient); err != nil {
 			return diag.FromErr(err)
 		}
 	}
