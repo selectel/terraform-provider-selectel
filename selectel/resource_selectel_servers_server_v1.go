@@ -24,8 +24,9 @@ func resourceServersServerV1() *schema.Resource {
 			StateContext: resourceServersServerV1ImportState,
 		},
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(80 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(5 * time.Minute),
 		},
 		Schema: resourceServersServerV1Schema(),
 		CustomizeDiff: func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
@@ -498,7 +499,7 @@ func resourceServersServerV1Delete(ctx context.Context, d *schema.ResourceData, 
 
 	log.Printf("[DEBUG] waiting for server %s to become 'EXPIRING'", d.Id())
 
-	timeout := d.Timeout(schema.TimeoutCreate)
+	timeout := d.Timeout(schema.TimeoutDelete)
 	err = waiters.WaitForServersServerV1RefusedToRenewState(ctx, dsClient, d.Id(), timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectServer, err))
@@ -569,7 +570,7 @@ func resourceServersServerV1Update(ctx context.Context, d *schema.ResourceData, 
 
 	log.Printf("[DEBUG] waiting for server %s to become 'ACTIVE'", d.Id())
 
-	timeout := d.Timeout(schema.TimeoutCreate)
+	timeout := d.Timeout(schema.TimeoutUpdate)
 	err = waiters.WaitForServersServerInstallNewOSV1ActiveState(ctx, dsClient, d.Id(), timeout)
 	if err != nil {
 		return diag.FromErr(errUpdatingObject(objectServer, d.Id(), err))
