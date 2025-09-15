@@ -17,7 +17,7 @@ type Locations []*Location
 
 func (l Locations) FindOneByName(name string) *Location {
 	for _, location := range l {
-		if strings.ToLower(location.Name) == strings.ToLower(name) {
+		if strings.EqualFold(location.Name, name) {
 			return location
 		}
 	}

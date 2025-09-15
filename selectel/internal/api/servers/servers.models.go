@@ -76,7 +76,7 @@ func (s Server) IsPricePlanAvailableForLocation(pricePlanID, locationID string) 
 
 func (s Servers) FindOneByName(name string) *Server {
 	for _, server := range s {
-		if strings.ToLower(server.Name) == strings.ToLower(name) {
+		if strings.EqualFold(server.Name, name) {
 			return server
 		}
 	}
