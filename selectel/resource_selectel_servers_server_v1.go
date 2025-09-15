@@ -60,12 +60,12 @@ func resourceServersServerV1Create(ctx context.Context, d *schema.ResourceData, 
 		privateSubnet, _  = d.Get(serversServerSchemaKeyPrivateSubnet).(string)
 	)
 
-	data, diagErr := resourceServersServerV1CreateLoadData(
+	data, err := resourceServersServerV1CreateLoadData(
 		ctx, dsClient, locationID, osID, configurationID, publicSubnetID, privateSubnet,
 		sshKeyName, pricePlanName, partitionsConfigFromSchema,
 	)
-	if diagErr != nil {
-		return diagErr
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	// validating availability of the server, OS, price plan and balance, partitions config
@@ -79,20 +79,15 @@ func resourceServersServerV1Create(ctx context.Context, d *schema.ResourceData, 
 		sshKeyPK = data.sshKeyByName.PublicKey
 	}
 
-	diagErr = resourceServersServerV1CreateValidatePreconditions(
+	err = resourceServersServerV1CreateValidatePreconditions(
 		ctx, dsClient, data, locationID, data.pricePlan.UUID, configurationID, osID, userData != "",
 		sshKeyPK != "" || data.sshKeyByName != nil, privateSubnet != "",
 	)
-	if diagErr != nil {
-		return diagErr
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	// creating
-
-	serverObjectName := objectServer
-	if data.server.IsServerChip {
-		serverObjectName = objectServerChip
-	}
 
 	var (
 		hostName = resourceServersServerV1GenerateHostNameIfNotPresented(d)
@@ -121,24 +116,22 @@ func resourceServersServerV1Create(ctx context.Context, d *schema.ResourceData, 
 		}
 	)
 
-	log.Print(msgCreate(serverObjectName, req))
+	log.Print(msgCreate(objectServer, req))
 
 	billingRes, _, err := dsClient.ServerBilling(ctx, req, data.server.IsServerChip)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf(
-			"failed to create %s %s: %w", serverObjectName, configurationID, err,
-		))
+		return diag.FromErr(errCreatingObject(objectServer, err))
 	}
 
 	switch {
 	case len(billingRes) > 1:
 		return diag.FromErr(fmt.Errorf(
-			"failed to create one %s %s: multiple resources created: %#v", serverObjectName, configurationID, billingRes,
+			"failed to create one %s %s: multiple resources created: %#v", objectServer, configurationID, billingRes,
 		))
 
 	case len(billingRes) == 0:
 		return diag.FromErr(fmt.Errorf(
-			"failed to create %s %s: no resource returned", serverObjectName, configurationID,
+			"failed to create %s %s: no resource returned", objectServer, configurationID,
 		))
 	}
 
@@ -151,7 +144,7 @@ func resourceServersServerV1Create(ctx context.Context, d *schema.ResourceData, 
 	timeout := d.Timeout(schema.TimeoutCreate)
 	err = waiters.WaitForServersServerV1ActiveState(ctx, dsClient, uuid, timeout)
 	if err != nil {
-		return diag.FromErr(errCreatingObject(serverObjectName, err))
+		return diag.FromErr(errCreatingObject(objectServer, err))
 	}
 
 	return nil
@@ -174,54 +167,49 @@ func resourceServersServerV1CreateLoadData(
 	ctx context.Context, dsClient *servers.ServiceClient,
 	locationID, osID, configurationID, publicSubnetID, privateSubnet, sshKeyName, pricePlanName string,
 	partitionsConfigFromSchema *PartitionsConfig,
-) (*serversServerV1CreateData, diag.Diagnostics) {
+) (*serversServerV1CreateData, error) {
 	operatingSystems, _, err := dsClient.OperatingSystems(ctx, servers.OperatingSystemsQuery{
 		LocationID: locationID,
 		ServiceID:  configurationID,
 	})
 	if err != nil {
-		return nil, diag.FromErr(errGettingObject(objectOS, osID, err))
+		return nil, fmt.Errorf("getting os: %w", err)
 	}
 
 	os := operatingSystems.FindOneByID(osID)
 	if os == nil {
-		return nil, diag.FromErr(errGettingObject(objectOS, osID, ErrNotFound))
+		return nil, fmt.Errorf("os %s not found", osID)
 	}
 
 	service, _, err := dsClient.Service(ctx, configurationID)
 	if err != nil {
-		return nil, diag.FromErr(errGettingObject(objectService, configurationID, err))
+		return nil, fmt.Errorf("getting service %s: %w", configurationID, err)
 	}
 
 	isServerChip := service.IsServerChip()
 	isServer := service.IsServer()
 	if !isServer && !isServerChip {
-		return nil, diag.FromErr(errors.New(
+		return nil, errors.New(
 			"configuration is neither a server nor a server chip",
-		))
-	}
-
-	objectServerName := objectServer
-	if isServerChip {
-		objectServerName = objectServerChip
+		)
 	}
 
 	server, _, err := dsClient.ServerByID(ctx, configurationID, isServerChip)
 	if err != nil {
-		return nil, diag.FromErr(errGettingObject(objectServerName, configurationID, err))
+		return nil, fmt.Errorf("getting server %s: %w", configurationID, err)
 	}
 
-	partitionsConfig, diagErr := resourceServersServerV1CreateLoadPartitions(ctx, partitionsConfigFromSchema, dsClient, os, configurationID)
-	if diagErr != nil {
-		return nil, diagErr
+	partitionsConfig, err := resourceServersServerV1LoadPartitions(ctx, partitionsConfigFromSchema, dsClient, os, configurationID)
+	if err != nil {
+		return nil, err
 	}
 
 	var publicIPs []net.IP
 	if publicSubnetID != "" {
 		// also validating the sufficiency of free addresses
-		publicIP, diagErr := resourceServersServerV1GetFreePublicIPs(ctx, dsClient, locationID, publicSubnetID)
-		if diagErr != nil {
-			return nil, diagErr
+		publicIP, err := resourceServersServerV1GetFreePublicIPs(ctx, dsClient, locationID, publicSubnetID)
+		if err != nil {
+			return nil, err
 		}
 
 		publicIPs = append(publicIPs, publicIP)
@@ -233,13 +221,11 @@ func resourceServersServerV1CreateLoadData(
 	)
 	if privateSubnet != "" {
 		// also validating the sufficiency of free addresses
-		var (
-			diagErr   diag.Diagnostics
-			privateIP net.IP
-		)
-		privateIP, localSubnetUUID, diagErr = resourceServersServerV1GetFreePrivateIPs(ctx, dsClient, locationID, privateSubnet)
-		if diagErr != nil {
-			return nil, diagErr
+		var privateIP net.IP
+
+		privateIP, localSubnetUUID, err = resourceServersServerV1GetFreePrivateIPs(ctx, dsClient, locationID, privateSubnet)
+		if err != nil {
+			return nil, err
 		}
 
 		privateIPs = append(privateIPs, privateIP)
@@ -249,38 +235,28 @@ func resourceServersServerV1CreateLoadData(
 	if sshKeyName != "" {
 		sshKeys, _, err := dsClient.SSHKeys(ctx)
 		if err != nil {
-			return nil, diag.FromErr(fmt.Errorf(
-				"failed to get SSH keys: %w", err,
-			))
+			return nil, fmt.Errorf("error getting SSH keys: %w", err)
 		}
 
 		sshKey = sshKeys.FindOneByName(sshKeyName)
 		if sshKey == nil {
-			return nil, diag.FromErr(fmt.Errorf(
-				"SSH key %s not found", sshKeyName,
-			))
+			return nil, fmt.Errorf("SSH key %s not found", sshKeyName)
 		}
 	}
 
 	pricePlans, _, err := dsClient.PricePlans(ctx)
 	if err != nil {
-		return nil, diag.FromErr(fmt.Errorf(
-			"failed to get price plans: %w", err,
-		))
+		return nil, fmt.Errorf("error getting price plans: %w", err)
 	}
 
 	pricePlan := pricePlans.FindOneByName(pricePlanName)
 	if pricePlan == nil {
-		return nil, diag.FromErr(fmt.Errorf(
-			"price plan %s not found", pricePlanName,
-		))
+		return nil, fmt.Errorf("price plan %s not found", pricePlanName)
 	}
 
 	billing, _, err := dsClient.ServerCalculateBilling(ctx, configurationID, locationID, pricePlan.UUID, servers.ServiceBillingPayCurrencyMain, isServerChip)
 	if err != nil {
-		return nil, diag.FromErr(fmt.Errorf(
-			"can't calculate billing for %s %s: %w", objectServerName, configurationID, err,
-		))
+		return nil, fmt.Errorf("can't calculate billing for %s %s: %w", objectServer, configurationID, err)
 	}
 
 	billingPayCurrency := servers.ServiceBillingPayCurrencyMain
@@ -288,9 +264,7 @@ func resourceServersServerV1CreateLoadData(
 	if !billing.HasEnoughBalance {
 		billing, _, err = dsClient.ServerCalculateBilling(ctx, configurationID, locationID, pricePlan.UUID, servers.ServiceBillingPayCurrencyBonus, isServerChip)
 		if err != nil {
-			return nil, diag.FromErr(fmt.Errorf(
-				"can't calculate billing for %s %s: %w", objectServerName, configurationID, err,
-			))
+			return nil, fmt.Errorf("can't calculate billing for %s %s: %w", objectServer, configurationID, err)
 		}
 
 		billingPayCurrency = servers.ServiceBillingPayCurrencyBonus
@@ -310,29 +284,29 @@ func resourceServersServerV1CreateLoadData(
 	}, nil
 }
 
-func resourceServersServerV1CreateLoadPartitions(
+func resourceServersServerV1LoadPartitions(
 	ctx context.Context, partitionsConfigFromSchema *PartitionsConfig, dsClient *servers.ServiceClient, os *servers.OperatingSystem,
 	configurationID string,
-) (servers.PartitionsConfig, diag.Diagnostics) {
+) (servers.PartitionsConfig, error) {
 	if !partitionsConfigFromSchema.IsEmpty() || os.Partitioning {
 		if !os.Partitioning { // in case of configured partitions
-			return nil, diag.FromErr(fmt.Errorf(
+			return nil, fmt.Errorf(
 				"%s %s does not support partitions config", objectOS, os.OSValue,
-			))
+			)
 		}
 
 		localDrives, _, err := dsClient.LocalDrives(ctx, configurationID)
 		if err != nil {
-			return nil, diag.FromErr(fmt.Errorf(
-				"failed to get local drives for %s %s: %w", objectServer, configurationID, err,
-			))
+			return nil, fmt.Errorf(
+				"error getting local drives for %s %s: %w", objectServer, configurationID, err,
+			)
 		}
 
 		partitionsConfig, err := partitionsConfigFromSchema.CastToAPIPartitionsConfig(localDrives, os.DefaultPartitions)
 		if err != nil {
-			return nil, diag.FromErr(fmt.Errorf(
+			return nil, fmt.Errorf(
 				"failed to read partitions config input: %w", err,
-			))
+			)
 		}
 
 		return partitionsConfig, nil
@@ -347,67 +321,62 @@ func resourceServersServerV1CreateValidatePreconditions(
 	locationID, pricePlanID, configurationID, osID string,
 	needUserData, sshKey bool,
 	needPrivateIP bool,
-) diag.Diagnostics {
-	objectServerName := objectServer
-	if data.server.IsServerChip {
-		objectServerName = objectServerChip
-	}
-
+) error {
 	switch {
 	case !data.server.IsLocationAvailable(locationID):
-		return diag.FromErr(fmt.Errorf(
-			"%s %s is not available for %s %s", objectLocation, locationID, objectServerName, configurationID,
-		))
+		return fmt.Errorf(
+			"%s %s is not available for %s %s", objectLocation, locationID, objectServer, configurationID,
+		)
 
 	case !data.server.IsPricePlanAvailableForLocation(pricePlanID, locationID):
-		return diag.FromErr(fmt.Errorf(
+		return fmt.Errorf(
 			"price-plan %s is not available for %s %s in %s %s",
-			pricePlanID, objectServerName, configurationID, objectLocation, locationID,
-		))
+			pricePlanID, objectServer, configurationID, objectLocation, locationID,
+		)
 
 	case data.os == nil:
-		return diag.FromErr(fmt.Errorf(
+		return fmt.Errorf(
 			"%s %s is not available for %s %s in %s %s",
-			objectOS, osID, objectServerName, configurationID, objectLocation, locationID,
-		))
+			objectOS, osID, objectServer, configurationID, objectLocation, locationID,
+		)
 
 	case needUserData && !data.os.ScriptAllowed:
-		return diag.FromErr(fmt.Errorf(
+		return fmt.Errorf(
 			"%s %s does not allow scripts", objectOS, osID,
-		))
+		)
 
 	case sshKey && !data.os.IsSSHKeyAllowed:
-		return diag.FromErr(fmt.Errorf(
+		return fmt.Errorf(
 			"%s %s does not allow SSH keys", objectOS, osID,
-		))
+		)
 
 	case data.partitions != nil && !data.os.Partitioning:
-		return diag.FromErr(fmt.Errorf(
+		return fmt.Errorf(
 			"%s %s does not support partitions config", objectOS, data.os.OSValue,
-		))
+		)
 
 	case !data.billing.HasEnoughBalance:
-		return diag.FromErr(fmt.Errorf(
+		return fmt.Errorf(
 			"%s %s is not available for price-plan %s in %s %s because of insufficient balance (main, bonus)",
-			objectServerName, configurationID, pricePlanID, objectLocation, locationID,
-		))
+			objectServer, configurationID, pricePlanID, objectLocation, locationID,
+		)
 
 	case needPrivateIP && !data.server.IsPrivateNetworkAvailable():
-		return diag.FromErr(fmt.Errorf(
-			"%s %s does not support private network", objectServerName, configurationID,
-		))
+		return fmt.Errorf(
+			"%s %s does not support private network", objectServer, configurationID,
+		)
 
 	case needPrivateIP && !data.os.IsPrivateNetworkAvailable():
-		return diag.FromErr(fmt.Errorf(
+		return fmt.Errorf(
 			"%s %s does not support private network", objectOS, osID,
-		))
+		)
 	}
 
 	_, _, err := dsClient.PartitionsValidate(ctx, data.partitions, configurationID)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf(
-			"failed to validate partitions config for %s %s: %w", objectServerName, configurationID, err,
-		))
+		return fmt.Errorf(
+			"failed to validate partitions config for %s %s: %w", objectServer, configurationID, err,
+		)
 	}
 
 	return nil
@@ -423,9 +392,7 @@ func resourceServersServerV1Read(ctx context.Context, d *schema.ResourceData, me
 
 	rd, _, err := dsClient.ResourceDetails(ctx, d.Id())
 	if err != nil {
-		return diag.FromErr(fmt.Errorf(
-			"failed to read: %w", err,
-		))
+		return diag.FromErr(errGettingObject(objectServer, d.Id(), err))
 	}
 
 	_ = d.Set("location_id", rd.LocationUUID)
@@ -435,7 +402,7 @@ func resourceServersServerV1Read(ctx context.Context, d *schema.ResourceData, me
 	resourceOS, _, err := dsClient.OperatingSystemByResource(ctx, d.Id())
 	if err != nil {
 		return diag.FromErr(fmt.Errorf(
-			"failed to read OS for server %s: %w", d.Id(), err,
+			"error getting OS for server %s: %w", d.Id(), err,
 		))
 	}
 
@@ -446,7 +413,7 @@ func resourceServersServerV1Read(ctx context.Context, d *schema.ResourceData, me
 	keys, _, err := dsClient.SSHKeys(ctx)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf(
-			"failed to get SSH keys: %w", err,
+			"error getting SSH keys: %w", err,
 		))
 	}
 
@@ -467,7 +434,9 @@ func resourceServersServerV1Read(ctx context.Context, d *schema.ResourceData, me
 		ServiceID:  rd.ServiceUUID,
 	})
 	if err != nil {
-		return diag.FromErr(errGettingObjects(objectOS, err))
+		return diag.FromErr(fmt.Errorf(
+			"error getting operation systems: %w", err,
+		))
 	}
 
 	os := operatingSystems.FindOneByArchAndVersionAndOs(resourceOS.Arch, resourceOS.Version, resourceOS.OSValue)
@@ -492,9 +461,7 @@ func resourceServersServerV1Delete(ctx context.Context, d *schema.ResourceData, 
 
 	_, err := dsClient.DeleteResource(ctx, d.Id())
 	if err != nil {
-		return diag.FromErr(fmt.Errorf(
-			"failed to delete %s %s: %w", objectServer, d.Id(), err,
-		))
+		return diag.FromErr(errDeletingObject(objectServer, d.Id(), err))
 	}
 
 	log.Printf("[DEBUG] waiting for server %s to become 'EXPIRING'", d.Id())
@@ -502,7 +469,7 @@ func resourceServersServerV1Delete(ctx context.Context, d *schema.ResourceData, 
 	timeout := d.Timeout(schema.TimeoutDelete)
 	err = waiters.WaitForServersServerV1RefusedToRenewState(ctx, dsClient, d.Id(), timeout)
 	if err != nil {
-		return diag.FromErr(errCreatingObject(objectServer, err))
+		return diag.FromErr(errDeletingObject(objectServer, d.Id(), err))
 	}
 
 	return nil
@@ -521,9 +488,9 @@ func resourceServersServerV1Update(ctx context.Context, d *schema.ResourceData, 
 		sshKeyName, _   = d.Get(serversServerSchemaKeyOSSSHKeyName).(string)
 	)
 
-	data, diagErr := resourceServersServerV1UpdateLoadData(ctx, dsClient, d, locationID, osID, configurationID, sshKeyName)
-	if diagErr != nil {
-		return diagErr
+	data, err := resourceServersServerV1UpdateLoadData(ctx, dsClient, d, locationID, osID, configurationID, sshKeyName)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	var (
@@ -535,11 +502,11 @@ func resourceServersServerV1Update(ctx context.Context, d *schema.ResourceData, 
 		sshKeyPK = data.sshKeyByName.PublicKey
 	}
 
-	diagErr = resourceServersServerV1UpdateValidatePreconditions(
+	err = resourceServersServerV1UpdateValidatePreconditions(
 		ctx, d, dsClient, data.os, data.partitions, userData != "", sshKeyPK != "" || data.sshKeyByName != nil,
 	)
-	if diagErr != nil {
-		return diagErr
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	var (
@@ -561,11 +528,9 @@ func resourceServersServerV1Update(ctx context.Context, d *schema.ResourceData, 
 
 	log.Print(msgUpdate(objectServer, d.Id(), payload))
 
-	_, err := dsClient.InstallNewOS(ctx, payload, d.Id())
+	_, err = dsClient.InstallNewOS(ctx, payload, d.Id())
 	if err != nil {
-		return diag.FromErr(fmt.Errorf(
-			"failed to update %s %s: %w", objectServer, d.Id(), err,
-		))
+		return diag.FromErr(errUpdatingObject(objectServer, d.Id(), err))
 	}
 
 	log.Printf("[DEBUG] waiting for server %s to become 'ACTIVE'", d.Id())
@@ -588,65 +553,47 @@ type serversServerV1UpdateData struct {
 func resourceServersServerV1UpdateLoadData(
 	ctx context.Context, dsClient *servers.ServiceClient, d *schema.ResourceData,
 	locationID, osID, configurationID, sshKeyName string,
-) (*serversServerV1UpdateData, diag.Diagnostics) {
+) (*serversServerV1UpdateData, error) {
 	operatingSystems, _, err := dsClient.OperatingSystems(ctx, servers.OperatingSystemsQuery{
 		LocationID: locationID,
 		ServiceID:  configurationID,
 	})
 	if err != nil {
-		return nil, diag.FromErr(errGettingObjects(objectOS, err))
+		return nil, fmt.Errorf("error getting operating systems: %w", err)
 	}
 
 	os := operatingSystems.FindOneByID(osID)
 
 	if os == nil {
-		return nil, diag.FromErr(errGettingObject(objectOS, osID, ErrNotFound))
+		return nil, fmt.Errorf("error finding operating system '%s'", osID)
 	}
 
 	partitionsConfigFromSchema, err := resourceServersServerV1ReadPartitionsConfig(d)
 	if err != nil {
-		return nil, diag.FromErr(fmt.Errorf(
+		return nil, fmt.Errorf(
 			"failed to read partitions config: %w", err,
-		))
+		)
 	}
 
-	var partitionsConfig servers.PartitionsConfig
-	if !partitionsConfigFromSchema.IsEmpty() || os.Partitioning {
-		if !os.Partitioning { // in case of configured partitions
-			return nil, diag.FromErr(fmt.Errorf(
-				"%s %s does not support partitions config", objectOS, os.OSValue,
-			))
-		}
-
-		localDrives, _, err := dsClient.LocalDrives(ctx, configurationID)
-		if err != nil {
-			return nil, diag.FromErr(fmt.Errorf(
-				"failed to get local drives for configuration %s: %w", configurationID, err,
-			))
-		}
-
-		partitionsConfig, err = partitionsConfigFromSchema.CastToAPIPartitionsConfig(localDrives, os.DefaultPartitions)
-		if err != nil {
-			return nil, diag.FromErr(fmt.Errorf(
-				"failed to read partitions config input: %w", err,
-			))
-		}
+	partitionsConfig, err := resourceServersServerV1LoadPartitions(ctx, partitionsConfigFromSchema, dsClient, os, configurationID)
+	if err != nil {
+		return nil, err
 	}
 
 	var sshKey *servers.SSHKey
 	if sshKeyName != "" {
 		sshKeys, _, err := dsClient.SSHKeys(ctx)
 		if err != nil {
-			return nil, diag.FromErr(fmt.Errorf(
-				"failed to get SSH keys: %w", err,
-			))
+			return nil, fmt.Errorf(
+				"error getting SSH keys: %w", err,
+			)
 		}
 
 		sshKey = sshKeys.FindOneByName(sshKeyName)
 		if sshKey == nil {
-			return nil, diag.FromErr(fmt.Errorf(
+			return nil, fmt.Errorf(
 				"SSH key %s not found", sshKeyName,
-			))
+			)
 		}
 	}
 
@@ -661,7 +608,7 @@ func resourceServersServerV1UpdateValidatePreconditions(
 	ctx context.Context, d *schema.ResourceData, dsClient *servers.ServiceClient,
 	os *servers.OperatingSystem, partitions servers.PartitionsConfig,
 	needUserData, needSSHKey bool,
-) diag.Diagnostics {
+) error {
 	var (
 		osID                           = d.Get(serversServerSchemaKeyOSID).(string)
 		forceUpdateAdditionalParams, _ = d.Get(serversServerSchemaForceUpdateAdditionalParams).(bool)
@@ -676,42 +623,42 @@ func resourceServersServerV1UpdateValidatePreconditions(
 
 	switch {
 	case !(d.HasChange(serversServerSchemaKeyOSID) || (forceUpdateAdditionalParams && isAdditionalParamsChanged)):
-		return diag.Errorf("can't update cause os configuration has not changed")
+		return fmt.Errorf("can't update cause os configuration has not changed")
 
 	case d.HasChange(serversServerSchemaKeyProjectID):
 		prevID, _ := d.GetChange(serversServerSchemaKeyProjectID)
 
-		return diag.Errorf("can't update cause project ID has changed, use previous id %s", prevID)
+		return fmt.Errorf("can't update cause project ID has changed, use previous id %s", prevID)
 
 	case d.HasChange(serversServerSchemaKeyLocationID):
 		prevID, _ := d.GetChange(serversServerSchemaKeyLocationID)
 
-		return diag.Errorf("can't update cause location ID has changed, use previous id %s", prevID)
+		return fmt.Errorf("can't update cause location ID has changed, use previous id %s", prevID)
 
 	case d.HasChange(serversServerSchemaKeyConfigurationID):
 		prevID, _ := d.GetChange(serversServerSchemaKeyConfigurationID)
 
-		return diag.Errorf("can't update cause configuration ID has changed, use previous id %s", prevID)
+		return fmt.Errorf("can't update cause configuration ID has changed, use previous id %s", prevID)
 
 	case d.HasChange(serversServerSchemaKeyPricePlanName):
 		prevName, _ := d.GetChange(serversServerSchemaKeyPricePlanName)
 
-		return diag.Errorf("can't update cause price plan ID has changed, use previous name %s", prevName)
+		return fmt.Errorf("can't update cause price plan ID has changed, use previous name %s", prevName)
 
 	case needUserData && !os.ScriptAllowed:
-		return diag.FromErr(fmt.Errorf(
+		return fmt.Errorf(
 			"%s %s does not allow scripts", objectOS, osID,
-		))
+		)
 
 	case needSSHKey && !os.IsSSHKeyAllowed:
-		return diag.FromErr(fmt.Errorf(
+		return fmt.Errorf(
 			"%s %s does not allow SSH keys", objectOS, osID,
-		))
+		)
 
 	case partitions != nil && !os.Partitioning:
-		return diag.FromErr(fmt.Errorf(
+		return fmt.Errorf(
 			"%s %s does not support partitions config", objectOS, os.OSValue,
-		))
+		)
 	}
 
 	diagErr := resourceServersServerV1UpdateValidatePreconditionsAdditionalOSParams(d, forceUpdateAdditionalParams || d.HasChange(serversServerSchemaKeyOSID))
@@ -723,9 +670,9 @@ func resourceServersServerV1UpdateValidatePreconditions(
 
 	_, _, err := dsClient.PartitionsValidate(ctx, partitions, configurationID)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf(
+		return fmt.Errorf(
 			"failed to validate partitions config: %w", err,
-		))
+		)
 	}
 
 	return nil
@@ -733,35 +680,35 @@ func resourceServersServerV1UpdateValidatePreconditions(
 
 func resourceServersServerV1UpdateValidatePreconditionsAdditionalOSParams(
 	d *schema.ResourceData, canUpdateAdditionalOSParams bool,
-) diag.Diagnostics {
+) error {
 	switch {
 	case !canUpdateAdditionalOSParams && d.HasChange(serversServerSchemaKeyOSHostName):
 		prevName, _ := d.GetChange(serversServerSchemaKeyOSHostName)
 
-		return diag.Errorf("can't update cause host name has changed, use previous name %s or %s flag", prevName, serversServerSchemaForceUpdateAdditionalParams)
+		return fmt.Errorf("can't update cause host name has changed, use previous name %s or %s flag", prevName, serversServerSchemaForceUpdateAdditionalParams)
 
 	case !canUpdateAdditionalOSParams && d.HasChange(serversServerSchemaKeyOSSSHKey):
 		prevKey, _ := d.GetChange(serversServerSchemaKeyOSSSHKey)
 
-		return diag.Errorf("can't update cause ssh key has changed, use previous key %s or %s flag", prevKey, serversServerSchemaForceUpdateAdditionalParams)
+		return fmt.Errorf("can't update cause ssh key has changed, use previous key %s or %s flag", prevKey, serversServerSchemaForceUpdateAdditionalParams)
 
 	case !canUpdateAdditionalOSParams && d.HasChange(serversServerSchemaKeyOSSSHKeyName):
 		prevName, _ := d.GetChange(serversServerSchemaKeyOSSSHKeyName)
 
-		return diag.Errorf("can't update cause ssh key name has changed, use previous name %s or %s flag", prevName, serversServerSchemaForceUpdateAdditionalParams)
+		return fmt.Errorf("can't update cause ssh key name has changed, use previous name %s or %s flag", prevName, serversServerSchemaForceUpdateAdditionalParams)
 
 	case !canUpdateAdditionalOSParams && d.HasChange(serversServerSchemaKeyOSPassword):
 		prevPassword, _ := d.GetChange(serversServerSchemaKeyOSPassword)
 
-		return diag.Errorf("can't update cause os password has changed, use previous password %s or %s flag", prevPassword, serversServerSchemaForceUpdateAdditionalParams)
+		return fmt.Errorf("can't update cause os password has changed, use previous password %s or %s flag", prevPassword, serversServerSchemaForceUpdateAdditionalParams)
 
 	case !canUpdateAdditionalOSParams && d.HasChange(serversServerSchemaKeyOSPartitionsConfig):
-		return diag.Errorf("can't update cause partitions has changed or %s flag", serversServerSchemaForceUpdateAdditionalParams)
+		return fmt.Errorf("can't update cause partitions has changed or %s flag", serversServerSchemaForceUpdateAdditionalParams)
 
 	case !canUpdateAdditionalOSParams && d.HasChange(serversServerSchemaKeyOSUserData):
 		prevScript, _ := d.GetChange(serversServerSchemaKeyOSUserData)
 
-		return diag.Errorf("can't update cause user data has changed, use previous data %s or %s flag", prevScript, serversServerSchemaForceUpdateAdditionalParams)
+		return fmt.Errorf("can't update cause user data has changed, use previous data %s or %s flag", prevScript, serversServerSchemaForceUpdateAdditionalParams)
 	}
 
 	return nil

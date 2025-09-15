@@ -357,16 +357,16 @@ func Test_resourceServersServerV1CreateValidatePreconditions(t *testing.T) {
 				}),
 			}
 
-			diags := resourceServersServerV1CreateValidatePreconditions(
+			err := resourceServersServerV1CreateValidatePreconditions(
 				context.Background(), client, tt.data, locationID, pricePlanID, configurationID, osID,
 				tt.needUserScrip, tt.needSSHKey, tt.needPrivateIP,
 			)
 
 			if tt.wantErr != "" {
-				assert.True(t, diags.HasError())
-				assert.Contains(t, diags[0].Summary, tt.wantErr)
+				assert.Error(t, err)
+				assert.ErrorContains(t, err, tt.wantErr)
 			} else {
-				assert.False(t, diags.HasError())
+				assert.NoError(t, err)
 			}
 		})
 	}
@@ -522,15 +522,15 @@ func Test_resourceServersServerV1UpdateValidatePreconditions(t *testing.T) {
 				}),
 			}
 
-			diags := resourceServersServerV1UpdateValidatePreconditions(
+			err := resourceServersServerV1UpdateValidatePreconditions(
 				context.Background(), d, client, tt.os, tt.partitions, tt.needUserData, tt.needSSHKey,
 			)
 
 			if tt.wantErr != "" {
-				assert.True(t, diags.HasError())
-				assert.Contains(t, diags[0].Summary, tt.wantErr)
+				assert.Error(t, err)
+				assert.ErrorContains(t, err, tt.wantErr)
 			} else {
-				assert.False(t, diags.HasError())
+				assert.NoError(t, err)
 			}
 		})
 	}

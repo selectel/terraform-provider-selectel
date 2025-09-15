@@ -487,19 +487,19 @@ func resourceServersServerV1ReadPartitionsConfigDiskPartitions(partitionsConfig 
 
 func resourceServersServerV1GetFreePublicIPs(
 	ctx context.Context, cl *serverslocal.ServiceClient, locationID, subnetID string,
-) (net.IP, diag.Diagnostics) {
+) (net.IP, error) {
 	subnet, _, err := cl.NetworkSubnet(ctx, subnetID)
 	if err != nil {
-		return nil, diag.FromErr(fmt.Errorf(
+		return nil, fmt.Errorf(
 			"failed to get subnets for %s %s: %w", objectLocation, locationID, err,
-		))
+		)
 	}
 
 	nets, _, err := cl.Networks(ctx, locationID, serverslocal.NetworkTypeInet)
 	if err != nil {
-		return nil, diag.FromErr(fmt.Errorf(
+		return nil, fmt.Errorf(
 			"failed to get %s networks for %s %s: %w", serverslocal.NetworkTypeInet, objectLocation, locationID, err,
-		))
+		)
 	}
 
 	nets = nets.FilterByTelematicsTypeHosting()
@@ -509,23 +509,23 @@ func resourceServersServerV1GetFreePublicIPs(
 	})
 
 	if !netsContainSubnet || subnet.Free == 0 {
-		return nil, diag.FromErr(fmt.Errorf(
+		return nil, fmt.Errorf(
 			"subnet %s is not suitable for allocating ip", subnetID,
-		))
+		)
 	}
 
 	reservedIPs, _, err := cl.NetworkReservedIPs(ctx, locationID)
 	if err != nil {
-		return nil, diag.FromErr(fmt.Errorf(
+		return nil, fmt.Errorf(
 			"failed to get reserved ips for %s %s: %w", objectLocation, locationID, err,
-		))
+		)
 	}
 
 	freeIP, err := subnet.GetFreeIP(reservedIPs, false)
 	if err != nil {
-		return nil, diag.FromErr(fmt.Errorf(
+		return nil, fmt.Errorf(
 			"failed to compute free ips for %s %s: %w", objectLocation, locationID, err,
-		))
+		)
 	}
 
 	return freeIP, nil
@@ -533,46 +533,46 @@ func resourceServersServerV1GetFreePublicIPs(
 
 func resourceServersServerV1GetFreePrivateIPs(
 	ctx context.Context, cl *serverslocal.ServiceClient, locationID, subnetStr string,
-) (ip net.IP, subnetID string, diagErr diag.Diagnostics) {
+) (ip net.IP, subnetID string, err error) {
 	nets, _, err := cl.Networks(ctx, locationID, serverslocal.NetworkTypeLocal)
 	if err != nil {
-		return nil, "", diag.FromErr(fmt.Errorf(
+		return nil, "", fmt.Errorf(
 			"failed to get %s networks for %s %s: %w", serverslocal.NetworkTypeInet, objectLocation, locationID, err,
-		))
+		)
 	}
 
 	if len(nets) != 1 {
-		return nil, "", diag.FromErr(fmt.Errorf(
+		return nil, "", fmt.Errorf(
 			"expected exactly one local network for %s %s, got %d", objectLocation, locationID, len(nets),
-		))
+		)
 	}
 
 	subnets, _, err := cl.NetworkLocalSubnets(ctx, nets[0].UUID)
 	if err != nil {
-		return nil, "", diag.FromErr(fmt.Errorf(
+		return nil, "", fmt.Errorf(
 			"failed to get subnets for %s %s: %w", objectLocation, locationID, err,
-		))
+		)
 	}
 
 	subnet := subnets.FindBySubnet(subnetStr)
 	if subnet == nil {
-		return nil, "", diag.FromErr(fmt.Errorf(
+		return nil, "", fmt.Errorf(
 			"can't find subnet %s for %s %s and network %s", subnetStr, objectLocation, locationID, nets[0].UUID,
-		))
+		)
 	}
 
 	reservedIPs, _, err := cl.NetworkSubnetLocalReservedIPs(ctx, subnet.UUID)
 	if err != nil {
-		return nil, "", diag.FromErr(fmt.Errorf(
+		return nil, "", fmt.Errorf(
 			"failed to get reserved ips for %s %s: %w", objectLocation, locationID, err,
-		))
+		)
 	}
 
 	freeIP, err := subnet.GetFreeIP(reservedIPs, true)
 	if err != nil {
-		return nil, "", diag.FromErr(fmt.Errorf(
+		return nil, "", fmt.Errorf(
 			"failed to compute free ips for %s %s: %w", objectLocation, locationID, err,
-		))
+		)
 	}
 
 	return freeIP, subnet.UUID, nil

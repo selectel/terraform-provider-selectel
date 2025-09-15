@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"slices"
 
@@ -64,12 +65,15 @@ func dataSourceServersConfigurationV1Read(ctx context.Context, d *schema.Resourc
 
 	serversList, _, err := dsClient.Servers(ctx, false)
 	if err != nil {
-		return diag.FromErr(errGettingObjects(objectServer, err))
+		return diag.FromErr(fmt.Errorf(
+			"error getting list of servers configurations (without chips): %w", err,
+		))
 	}
 
 	serverChipsList, _, err := dsClient.Servers(ctx, true)
 	if err != nil {
-		return diag.FromErr(errGettingObjects(objectServerChip, err))
+		return diag.FromErr(fmt.Errorf(
+			"error getting list of servers configurations (with chips): %w", err))
 	}
 
 	serversList = append(serversList, serverChipsList...)

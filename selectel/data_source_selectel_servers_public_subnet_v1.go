@@ -89,7 +89,7 @@ func dataSourceServersPublicSubnetV1Read(ctx context.Context, d *schema.Resource
 
 	subnets, _, err := dsClient.NetworkSubnets(ctx, filter.locationID)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(errGettingObjects(objectSubnet, err))
 	}
 
 	filteredSubnets, err := filterSubnets(subnets, filter)
