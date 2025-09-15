@@ -123,3 +123,25 @@ type OperatingSystemAtResource struct {
 	Version      string `json:"version"`
 	Reinstall    int    `json:"reinstall"`
 }
+
+type InstallNewOSPayload struct {
+	OSVersion        string           `json:"version"`
+	OSTemplate       string           `json:"os_template"`
+	OSArch           string           `json:"arch"`
+	UserSSHKey       string           `json:"user_ssh_key,omitempty"`
+	UserHostname     string           `json:"userhostname"`
+	Password         string           `json:"password,omitempty"`
+	PartitionsConfig PartitionsConfig `json:"partitions_config,omitempty"`
+	UserData         string           `json:"cloud_init_user_data,omitempty"`
+}
+
+func (p *InstallNewOSPayload) CopyWithoutSensitiveData() *InstallNewOSPayload {
+	return &InstallNewOSPayload{
+		OSVersion:        p.OSVersion,
+		OSTemplate:       p.OSTemplate,
+		OSArch:           p.OSArch,
+		UserHostname:     p.UserHostname,
+		PartitionsConfig: p.PartitionsConfig,
+		UserData:         p.UserData,
+	}
+}

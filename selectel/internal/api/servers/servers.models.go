@@ -121,6 +121,27 @@ type (
 	}
 )
 
+func (p *ServerBillingPostPayload) CopyWithoutSensitiveData() *ServerBillingPostPayload {
+	return &ServerBillingPostPayload{
+		ServiceUUID:      p.ServiceUUID,
+		PricePlanUUID:    p.PricePlanUUID,
+		PayCurrency:      p.PayCurrency,
+		LocationUUID:     p.LocationUUID,
+		Quantity:         p.Quantity,
+		IPList:           p.IPList,
+		LocalSubnetUUID:  p.LocalSubnetUUID,
+		LocalIPList:      p.LocalIPList,
+		ProjectUUID:      p.ProjectUUID,
+		PartitionsConfig: p.PartitionsConfig,
+		OSVersion:        p.OSVersion,
+		OSTemplate:       p.OSTemplate,
+		OSArch:           p.OSArch,
+		UserHostname:     p.UserHostname,
+		UserDesc:         p.UserDesc,
+		UserData:         p.UserData,
+	}
+}
+
 type ResourceDetails struct {
 	UUID         string          `json:"uuid"`
 	State        string          `json:"state"`

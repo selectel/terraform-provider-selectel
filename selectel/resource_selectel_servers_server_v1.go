@@ -116,7 +116,7 @@ func resourceServersServerV1Create(ctx context.Context, d *schema.ResourceData, 
 		}
 	)
 
-	log.Print(msgCreate(objectServer, req))
+	log.Print(msgCreate(objectServer, req.CopyWithoutSensitiveData()))
 
 	billingRes, _, err := dsClient.ServerBilling(ctx, req, data.server.IsServerChip)
 	if err != nil {
@@ -526,7 +526,7 @@ func resourceServersServerV1Update(ctx context.Context, d *schema.ResourceData, 
 		}
 	)
 
-	log.Print(msgUpdate(objectServer, d.Id(), payload))
+	log.Print(msgUpdate(objectServer, d.Id(), payload.CopyWithoutSensitiveData()))
 
 	_, err = dsClient.InstallNewOS(ctx, payload, d.Id())
 	if err != nil {

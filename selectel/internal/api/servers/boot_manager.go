@@ -159,17 +159,6 @@ func (client *ServiceClient) PartitionsValidate(ctx context.Context, config Part
 	return result.PartitionsConfig, responseResult, nil
 }
 
-type InstallNewOSPayload struct {
-	OSVersion        string           `json:"version"`
-	OSTemplate       string           `json:"os_template"`
-	OSArch           string           `json:"arch"`
-	UserSSHKey       string           `json:"user_ssh_key,omitempty"`
-	UserHostname     string           `json:"userhostname"`
-	Password         string           `json:"password,omitempty"`
-	PartitionsConfig PartitionsConfig `json:"partitions_config,omitempty"`
-	UserData         string           `json:"cloud_init_user_data,omitempty"`
-}
-
 func (client *ServiceClient) InstallNewOS(
 	ctx context.Context, payload *InstallNewOSPayload, resourceID string,
 ) (*ResponseResult, error) {
