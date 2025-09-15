@@ -643,7 +643,7 @@ func resourceServersServerV1UpdateValidatePreconditions(
 	case d.HasChange(serversServerSchemaKeyPricePlanName):
 		prevName, _ := d.GetChange(serversServerSchemaKeyPricePlanName)
 
-		return fmt.Errorf("can't update cause price plan ID has changed, use previous name %s", prevName)
+		return fmt.Errorf("can't update cause price plan name has changed, use previous name %s", prevName)
 
 	case needUserData && !os.ScriptAllowed:
 		return fmt.Errorf(
@@ -698,9 +698,7 @@ func resourceServersServerV1UpdateValidatePreconditionsAdditionalOSParams(
 		return fmt.Errorf("can't update cause ssh key name has changed, use previous name %s or %s flag", prevName, serversServerSchemaForceUpdateAdditionalParams)
 
 	case !canUpdateAdditionalOSParams && d.HasChange(serversServerSchemaKeyOSPassword):
-		prevPassword, _ := d.GetChange(serversServerSchemaKeyOSPassword)
-
-		return fmt.Errorf("can't update cause os password has changed, use previous password %s or %s flag", prevPassword, serversServerSchemaForceUpdateAdditionalParams)
+		return fmt.Errorf("can't update cause os password has changed, use previous password or %s flag", serversServerSchemaForceUpdateAdditionalParams)
 
 	case !canUpdateAdditionalOSParams && d.HasChange(serversServerSchemaKeyOSPartitionsConfig):
 		return fmt.Errorf("can't update cause partitions has changed or %s flag", serversServerSchemaForceUpdateAdditionalParams)

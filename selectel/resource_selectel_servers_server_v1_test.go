@@ -464,7 +464,7 @@ func Test_resourceServersServerV1UpdateValidatePreconditions(t *testing.T) {
 			name:    "PricePlanNameChanged",
 			os:      defaultOS(),
 			changes: []string{serversServerSchemaKeyOSID, serversServerSchemaKeyOSHostName, serversServerSchemaKeyPricePlanName},
-			wantErr: "can't update cause price plan ID has changed",
+			wantErr: "can't update cause price plan name has changed",
 		},
 		{
 			name:         "UserScriptNotAllowed",
