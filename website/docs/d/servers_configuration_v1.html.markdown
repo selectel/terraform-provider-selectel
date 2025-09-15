@@ -13,7 +13,7 @@ Provides a list of server configurations available in Selectel.
 ## Example Usage
 
 ```hcl
-data "selectel_servers_configuration_v1" "server_configs" {
+data "selectel_servers_configuration_v1" "server_config" {
   project_id = selectel_vpc_project_v2.project_1.id
   filter {
     name           = "CL25-NVMe"

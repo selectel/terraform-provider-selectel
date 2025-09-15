@@ -57,16 +57,18 @@ func resourceServersServerV1Schema() map[string]*schema.Schema {
 
 		// optional os params
 		serversServerSchemaKeyOSPassword: {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:      schema.TypeString,
+			Sensitive: true,
+			Optional:  true,
 		},
 		serversServerSchemaKeyOSUserData: {
 			Type:     schema.TypeString,
 			Optional: true,
 		},
 		serversServerSchemaKeyOSSSHKey: {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:      schema.TypeString,
+			Sensitive: true,
+			Optional:  true,
 		},
 		serversServerSchemaKeyOSSSHKeyName: {
 			Type:     schema.TypeString,

@@ -109,7 +109,9 @@ func (client *ServiceClient) serverChipByID(ctx context.Context, id string) (*Se
 		return nil, responseResult, err
 	}
 
-	result.Server.IsServerChip = true
+	if result.Server != nil {
+		result.Server.IsServerChip = true
+	}
 
 	return result.Server, responseResult, nil
 }

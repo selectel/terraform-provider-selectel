@@ -65,7 +65,7 @@ func dataSourceServersPublicSubnetV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"reserved_vrp_ips": {
+						"reserved_vrrp_ips": {
 							Type:     schema.TypeList,
 							Computed: true,
 							Elem: &schema.Schema{
@@ -192,7 +192,7 @@ func flattenSubnets(subnets servers.Subnets) []interface{} {
 		subnetsMap["subnet"] = subnet.Subnet
 		subnetsMap["broadcast"] = subnet.Broadcast.String()
 		subnetsMap["gateway"] = subnet.Gateway.String()
-		subnetsMap["reserved_vrp_ips"] = subnet.ReservedVRRPIPAsStrings()
+		subnetsMap["reserved_vrrp_ips"] = subnet.ReservedVRRPIPAsStrings()
 
 		subnetsList[i] = subnetsMap
 	}

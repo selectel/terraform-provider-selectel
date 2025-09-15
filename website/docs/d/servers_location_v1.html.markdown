@@ -13,7 +13,7 @@ Provides a list of available locations.
 ## Example Usage
 
 ```hcl
-data "selectel_servers_location_v1" "server_locations" {
+data "selectel_servers_location_v1" "server_location" {
   project_id = selectel_vpc_project_v2.project_1.id
   filter {
     name = "MSK-2"

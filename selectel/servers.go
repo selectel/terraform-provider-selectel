@@ -381,11 +381,13 @@ func resourceServersServerV1ReadPartitionsConfig(d *schema.ResourceData) (*Parti
 }
 
 func resourceServersServerV1ReadPartitionsConfigSoftRaid(partitionsConfig map[string]interface{}) ([]*SoftRaidConfigItem, error) {
-	var (
-		srCfgRaw = partitionsConfig[serversServerSchemaKeySoftRaidConfig].([]interface{})
+	srCfgRaw, ok := partitionsConfig[serversServerSchemaKeySoftRaidConfig].([]interface{})
+	if !ok {
+		srCfgRaw = make([]interface{}, 0)
+	}
 
-		res = make([]*SoftRaidConfigItem, 0, len(srCfgRaw))
-	)
+	res := make([]*SoftRaidConfigItem, 0, len(srCfgRaw))
+
 	for idx, itemRaw := range srCfgRaw {
 		item, ok := itemRaw.(map[string]interface{})
 		if !ok {
@@ -418,11 +420,13 @@ func resourceServersServerV1ReadPartitionsConfigSoftRaid(partitionsConfig map[st
 }
 
 func resourceServersServerV1ReadPartitionsConfigDiskPartitions(partitionsConfig map[string]interface{}) ([]*DiskPartitionsItem, error) {
-	var (
-		dpCfgRaw = partitionsConfig[serversServerSchemaKeyDiskPartitions].([]interface{})
+	dpCfgRaw, ok := partitionsConfig[serversServerSchemaKeyDiskPartitions].([]interface{})
+	if !ok {
+		dpCfgRaw = make([]interface{}, 0)
+	}
 
-		res = make([]*DiskPartitionsItem, 0, len(dpCfgRaw))
-	)
+	res := make([]*DiskPartitionsItem, 0, len(dpCfgRaw))
+
 	for idx, itemRaw := range dpCfgRaw {
 		item, ok := itemRaw.(map[string]interface{})
 		if !ok {
@@ -460,7 +464,7 @@ func resourceServersServerV1ReadPartitionsConfigDiskPartitions(partitionsConfig 
 
 		raid, ok := item[serversServerSchemaKeyRaid].(string)
 		if !ok {
-			return nil, fmt.Errorf("partitions_config.disk_partitions[%d].mount has unexpected type", idx)
+			return nil, fmt.Errorf("partitions_config.disk_partitions[%d].raid has unexpected type", idx)
 		}
 
 		fsTypeRaw, ok := item[serversServerSchemaKeyFSType]
@@ -601,7 +605,6 @@ var defaultHostNames = [52]string{
 	"Poincare",
 	"Kolmogorov",
 	"Bohr",
-	"Curie",
 	"Lorentz",
 	"Maxwell",
 	"Planck",

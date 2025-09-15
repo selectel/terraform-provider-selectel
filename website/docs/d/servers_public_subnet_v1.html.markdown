@@ -13,7 +13,7 @@ Provides a list of available public subnets.
 ## Example Usage
 
 ```hcl
-data "selectel_servers_location_v1" "server_locations" {
+data "selectel_servers_location_v1" "server_location" {
   project_id = selectel_vpc_project_v2.project_1.id
   filter {
     name = "some-subnet"
@@ -23,7 +23,7 @@ data "selectel_servers_location_v1" "server_locations" {
 data "selectel_servers_public_subnet_v1" "public_subnets" {
   project_id = selectel_vpc_project_v2.project_1.id
   filter {
-    location_id = data.selectel_servers_location_v1.server_locations.locations[0].id
+    location_id = data.selectel_servers_location_v1.server_location.locations[0].id
     subnet = "192.168.1.0/29"
     ip = "192.168.1.3"
   }
@@ -49,4 +49,4 @@ data "selectel_servers_public_subnet_v1" "public_subnets" {
   * `subnet` - Subnet in CIDR notation.
   * `broadcast` - Broadcast address.
   * `gateway` - Gateway address.
-  * `reserved_vrp_ips` - List of reserved VRP IPs.
+  * `reserved_vrrp_ips` - List of reserved VRRP IPs.

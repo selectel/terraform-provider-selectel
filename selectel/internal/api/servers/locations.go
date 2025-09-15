@@ -3,6 +3,7 @@ package servers
 import (
 	"context"
 	"net/http"
+	"strings"
 )
 
 type Location struct {
@@ -16,7 +17,7 @@ type Locations []*Location
 
 func (l Locations) FindOneByName(name string) *Location {
 	for _, location := range l {
-		if location.Name == name {
+		if strings.ToLower(location.Name) == strings.ToLower(name) {
 			return location
 		}
 	}

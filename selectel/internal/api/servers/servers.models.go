@@ -3,6 +3,7 @@ package servers
 import (
 	"net"
 	"slices"
+	"strings"
 )
 
 type (
@@ -75,7 +76,7 @@ func (s Server) IsPricePlanAvailableForLocation(pricePlanID, locationID string) 
 
 func (s Servers) FindOneByName(name string) *Server {
 	for _, server := range s {
-		if server.Name == name {
+		if strings.ToLower(server.Name) == strings.ToLower(name) {
 			return server
 		}
 	}

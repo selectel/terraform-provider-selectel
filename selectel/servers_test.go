@@ -194,7 +194,7 @@ func TestPartitionsConfig_CastToAPIPartitionsConfig(t *testing.T) {
 
 		backupFS := findFSByMount(apiConfig, "backup")
 		require.NotNil(t, backupFS)
-		assert.Equal(t, "xfs", rootFS.FSType)
+		assert.Equal(t, "xfs", backupFS.FSType)
 
 		softRaids := findItemsByType(apiConfig, "soft_raid")
 		require.Len(t, softRaids, 3)
