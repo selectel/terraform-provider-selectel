@@ -2,8 +2,8 @@ package selectel
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -20,7 +20,8 @@ func dataSourceServersConfigurationV1() *schema.Resource {
 			},
 			"filter": {
 				Type:     schema.TypeSet,
-				Required: true,
+				Optional: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -57,7 +58,7 @@ func dataSourceServersConfigurationV1Read(ctx context.Context, d *schema.Resourc
 		return diagErr
 	}
 
-	filter := expandServersConfigurationSearchFilter(d.Get("filter").(*schema.Set))
+	filter := expandServersConfigurationSearchFilter(d)
 
 	log.Print(msgGet(objectServer, filter.name))
 
@@ -73,20 +74,19 @@ func dataSourceServersConfigurationV1Read(ctx context.Context, d *schema.Resourc
 
 	serversList = append(serversList, serverChipsList...)
 
-	filteredServers, err := filterServersConfigurations(serversList, filter)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error filtering servers: %w", err))
-	}
+	filteredServers := filterServersConfigurations(serversList, filter)
 
 	serversFlatten := flattenServersConfiguration(filteredServers)
 	if err := d.Set("configurations", serversFlatten); err != nil {
 		return diag.FromErr(err)
 	}
 
-	ids := make([]string, 0, len(serversList))
-	for _, e := range serversList {
+	ids := make([]string, 0, len(filteredServers))
+	for _, e := range filteredServers {
 		ids = append(ids, e.ID)
 	}
+
+	slices.Sort(ids)
 
 	checksum, err := stringListChecksum(ids)
 	if err != nil {
@@ -102,8 +102,14 @@ type serversConfigurationFilter struct {
 	name string
 }
 
-func expandServersConfigurationSearchFilter(filterSet *schema.Set) serversConfigurationFilter {
+func expandServersConfigurationSearchFilter(d *schema.ResourceData) serversConfigurationFilter {
 	filter := serversConfigurationFilter{}
+
+	filterSet, ok := d.Get("filter").(*schema.Set)
+	if !ok {
+		return filter
+	}
+
 	if filterSet.Len() == 0 {
 		return filter
 	}
@@ -118,7 +124,7 @@ func expandServersConfigurationSearchFilter(filterSet *schema.Set) serversConfig
 	return filter
 }
 
-func filterServersConfigurations(list servers.Servers, filter serversConfigurationFilter) (servers.Servers, error) {
+func filterServersConfigurations(list servers.Servers, filter serversConfigurationFilter) servers.Servers {
 	var filtered servers.Servers
 	for _, entry := range list {
 		if filter.name == "" || entry.Name == filter.name {
@@ -126,7 +132,7 @@ func filterServersConfigurations(list servers.Servers, filter serversConfigurati
 		}
 	}
 
-	return filtered, nil
+	return filtered
 }
 
 func flattenServersConfiguration(list servers.Servers) []interface{} {

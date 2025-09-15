@@ -2,8 +2,8 @@ package selectel
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -21,6 +21,7 @@ func dataSourceServersLocationV1() *schema.Resource {
 			"filter": {
 				Type:     schema.TypeSet,
 				Optional: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -65,7 +66,7 @@ func dataSourceServersLocationV1Read(ctx context.Context, d *schema.ResourceData
 		return diagErr
 	}
 
-	filter := expandServersLocationSearchFilter(d.Get("filter").(*schema.Set))
+	filter := expandServersLocationSearchFilter(d)
 
 	log.Print(msgGet(objectLocation, filter.name))
 
@@ -74,20 +75,19 @@ func dataSourceServersLocationV1Read(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(errGettingObjects(objectLocation, err))
 	}
 
-	filteredLocations, err := filterServersLocations(locations, filter)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error filtering locations: %w", err))
-	}
+	filteredLocations := filterServersLocations(locations, filter)
 
 	locationsFlatten := flattenServersLocation(filteredLocations)
 	if err := d.Set("locations", locationsFlatten); err != nil {
 		return diag.FromErr(err)
 	}
 
-	ids := make([]string, 0, len(locations))
-	for _, e := range locations {
+	ids := make([]string, 0, len(filteredLocations))
+	for _, e := range filteredLocations {
 		ids = append(ids, e.UUID)
 	}
+
+	slices.Sort(ids)
 
 	checksum, err := stringListChecksum(ids)
 	if err != nil {
@@ -103,8 +103,14 @@ type serversLocationFilter struct {
 	name string
 }
 
-func expandServersLocationSearchFilter(filterSet *schema.Set) serversLocationFilter {
+func expandServersLocationSearchFilter(d *schema.ResourceData) serversLocationFilter {
 	filter := serversLocationFilter{}
+
+	filterSet, ok := d.Get("filter").(*schema.Set)
+	if !ok {
+		return filter
+	}
+
 	if filterSet.Len() == 0 {
 		return filter
 	}
@@ -119,7 +125,7 @@ func expandServersLocationSearchFilter(filterSet *schema.Set) serversLocationFil
 	return filter
 }
 
-func filterServersLocations(list servers.Locations, filter serversLocationFilter) (servers.Locations, error) {
+func filterServersLocations(list servers.Locations, filter serversLocationFilter) servers.Locations {
 	var filtered servers.Locations
 	for _, entry := range list {
 		if filter.name == "" || entry.Name == filter.name {
@@ -127,7 +133,7 @@ func filterServersLocations(list servers.Locations, filter serversLocationFilter
 		}
 	}
 
-	return filtered, nil
+	return filtered
 }
 
 func flattenServersLocation(list servers.Locations) []interface{} {

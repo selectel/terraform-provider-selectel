@@ -3,6 +3,7 @@ package selectel
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -19,7 +20,8 @@ func dataSourceServersPublicSubnetV1() *schema.Resource {
 			},
 			"filter": {
 				Type:     schema.TypeSet,
-				Required: true,
+				Optional: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"ip": {
@@ -32,7 +34,7 @@ func dataSourceServersPublicSubnetV1() *schema.Resource {
 						},
 						"location_id": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 						},
 					},
 				},
@@ -83,7 +85,7 @@ func dataSourceServersPublicSubnetV1Read(ctx context.Context, d *schema.Resource
 		return diagErr
 	}
 
-	filter := expandSubnetSearchFilter(d.Get("filter").(*schema.Set))
+	filter := expandSubnetSearchFilter(d)
 
 	subnets, _, err := dsClient.NetworkSubnets(ctx, filter.locationID)
 	if err != nil {
@@ -100,10 +102,12 @@ func dataSourceServersPublicSubnetV1Read(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	subnetsIDs := make([]string, 0, len(subnets))
-	for _, subnet := range subnets {
+	subnetsIDs := make([]string, 0, len(filteredSubnets))
+	for _, subnet := range filteredSubnets {
 		subnetsIDs = append(subnetsIDs, subnet.UUID)
 	}
+
+	slices.Sort(subnetsIDs)
 
 	checksum, err := stringListChecksum(subnetsIDs)
 	if err != nil {
@@ -121,8 +125,14 @@ type subnetSearchFilter struct {
 	locationID string
 }
 
-func expandSubnetSearchFilter(filterSet *schema.Set) subnetSearchFilter {
+func expandSubnetSearchFilter(d *schema.ResourceData) subnetSearchFilter {
 	filter := subnetSearchFilter{}
+
+	filterSet, ok := d.Get("filter").(*schema.Set)
+	if !ok {
+		return filter
+	}
+
 	if filterSet.Len() == 0 {
 		return filter
 	}

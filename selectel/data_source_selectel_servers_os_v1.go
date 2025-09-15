@@ -2,8 +2,8 @@ package selectel
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -21,6 +21,7 @@ func dataSourceServersOSV1() *schema.Resource {
 			"filter": {
 				Type:     schema.TypeSet,
 				Optional: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -93,7 +94,7 @@ func dataSourceServersOSV1Read(ctx context.Context, d *schema.ResourceData, meta
 		return diagErr
 	}
 
-	filter := expandServersOperatingSystemsSearchFilter(d.Get("filter").(*schema.Set))
+	filter := expandServersOperatingSystemsSearchFilter(d)
 
 	log.Printf("[DEBUG] Getting %s '%#v'", objectOS, filter)
 
@@ -105,10 +106,7 @@ func dataSourceServersOSV1Read(ctx context.Context, d *schema.ResourceData, meta
 		return diag.FromErr(errGettingObjects(objectOS, err))
 	}
 
-	filteredOS, err := filterServersOperatingSystems(opSystems, filter)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error filtering locations: %w", err))
-	}
+	filteredOS := filterServersOperatingSystems(opSystems, filter)
 
 	osFlatten := flattenServersOperatingSystems(filteredOS)
 	if err := d.Set("os", osFlatten); err != nil {
@@ -119,6 +117,8 @@ func dataSourceServersOSV1Read(ctx context.Context, d *schema.ResourceData, meta
 	for _, e := range filteredOS {
 		ids = append(ids, e.UUID)
 	}
+
+	slices.Sort(ids)
 
 	checksum, err := stringListChecksum(ids)
 	if err != nil {
@@ -137,8 +137,14 @@ type serversOperatingSystemsFilter struct {
 	locationID      string
 }
 
-func expandServersOperatingSystemsSearchFilter(filterSet *schema.Set) serversOperatingSystemsFilter {
+func expandServersOperatingSystemsSearchFilter(d *schema.ResourceData) serversOperatingSystemsFilter {
 	filter := serversOperatingSystemsFilter{}
+
+	filterSet, ok := d.Get("filter").(*schema.Set)
+	if !ok {
+		return filter
+	}
+
 	if filterSet.Len() == 0 {
 		return filter
 	}
@@ -168,7 +174,7 @@ func expandServersOperatingSystemsSearchFilter(filterSet *schema.Set) serversOpe
 	return filter
 }
 
-func filterServersOperatingSystems(list servers.OperatingSystems, filter serversOperatingSystemsFilter) (servers.OperatingSystems, error) {
+func filterServersOperatingSystems(list servers.OperatingSystems, filter serversOperatingSystemsFilter) servers.OperatingSystems {
 	var filtered servers.OperatingSystems
 	for _, entry := range list {
 		if (filter.name == "" || entry.Name == filter.name) &&
@@ -177,7 +183,7 @@ func filterServersOperatingSystems(list servers.OperatingSystems, filter servers
 		}
 	}
 
-	return filtered, nil
+	return filtered
 }
 
 func flattenServersOperatingSystems(list servers.OperatingSystems) []interface{} {

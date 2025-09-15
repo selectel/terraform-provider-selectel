@@ -37,6 +37,9 @@ func (client *ServiceClient) Networks(ctx context.Context, locationID string, ne
 
 func (client *ServiceClient) NetworkSubnets(ctx context.Context, locationID string) (Subnets, *ResponseResult, error) {
 	url := fmt.Sprintf("%s/network/ipam/subnet?location_uuid=%s&is_master_shared=false", client.Endpoint, locationID)
+	if locationID == "" {
+		url = fmt.Sprintf("%s/network/ipam/subnet?is_master_shared=false", client.Endpoint)
+	}
 
 	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
