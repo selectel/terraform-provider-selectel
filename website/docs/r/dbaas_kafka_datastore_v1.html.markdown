@@ -62,7 +62,7 @@ resource "selectel_dbaas_kafka_datastore_v1" "datastore_1" {
 
 * `logs` - (Optional) Name of an existing or a new log group in the [Logs](https://docs.selectel.ru/en/logs/about-logs/) service. The name must start with the prefix 's/dbaas/'. It can contain uppercase and lowercase letters, digits and symbols (underscore, hyphen, forward slash, period and hash). The name cannot exceed 512 symbols.  For example, s/dbaas/My-first-group. Learn more  about [Logs](https://docs.selectel.ru/en/managed-databases/kafka/logs/).
 
-* `security_groups` - (Optional) List of security groups. If UUID is not specified when creating a group, the default UUID of the security group will be applied to the datastore when created. A datastore must have at least one security group.
+* `security_groups` - (Optional) List of security groups. If no security group UUIDs are specified when creating the datastore, a default security group will be created and its UUID will be assigned automatically. A datastore must have at least one security group. Learn more about security groups for [Kafka](https://docs.selectel.ru/en/managed-databases/kafka/network-access-control/#security-groups-in-managed-databases).
 
 ## Attributes Reference
 
