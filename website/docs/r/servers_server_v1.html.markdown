@@ -26,7 +26,7 @@ resource "selectel_servers_server_v1" "server_1" {
   private_subnet   = "192.168.0.0/16"
   ssh_key_name     = "deploy-ed25519"
   os_password      = "Passw0rd!"
-  user_data        = "#!/bin/bash"
+  user_data        = file("init-script-dir/init.sh")
 
   partitions_config {
     soft_raid_config {
@@ -57,6 +57,15 @@ resource "selectel_servers_server_v1" "server_1" {
       fs_type = "xfs"
     }
   }
+
+  # Optional: You can choose your own timeout values or remove them.
+  # 
+  # Current values represent default values.
+  timeouts {
+    create = "80m"
+    update = "20m"
+    delete = "5m"
+  }
 }
 ```
 
@@ -74,7 +83,7 @@ resource "selectel_servers_server_v1" "server_1" {
 
 * `os_password` - (Optional) Password for the OS user.
 
-* `user_data` - (Optional) These are custom configuration settings that automatically perform common tasks or run server setup scripts, reducing the time it takes to configure and deploy your infrastructure. 
+* `user_data` - (Optional) These are custom configuration settings that automatically perform common tasks or run server setup scripts, reducing the time it takes to configure and deploy your infrastructure.
 
 * `ssh_key` - (Optional) The public SSH key to be added to the server. 
 
