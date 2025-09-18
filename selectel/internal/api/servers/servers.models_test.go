@@ -6,32 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestServers_FindOneByName(t *testing.T) {
-	svrs := Servers{
-		&Server{Name: "server1"},
-		&Server{Name: "server2"},
-	}
-	tests := []struct {
-		name string
-		arg  string
-		want *Server
-	}{
-		{"FoundServer1", "server1", &Server{Name: "server1"}},
-		{"NotFound", "server3", nil},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Prepare
-
-			// Execute
-			got := svrs.FindOneByName(tt.arg)
-
-			// Analyse
-			require.Equal(t, tt.want, got)
-		})
-	}
-}
-
 func TestServer_IsLocationAvailable(t *testing.T) {
 	server := Server{
 		Available: []*ServerAvailable{

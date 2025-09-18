@@ -3,7 +3,6 @@ package servers
 import (
 	"net"
 	"slices"
-	"strings"
 )
 
 type (
@@ -26,8 +25,6 @@ type (
 		Count    int    `json:"count"`
 		PlanUUID string `json:"plan_uuid"`
 	}
-
-	Servers []*Server
 )
 
 func (s Server) IsLocationAvailable(locationID string) bool {
@@ -66,16 +63,6 @@ func (s Server) IsPricePlanAvailableForLocation(pricePlanID, locationID string) 
 	}
 
 	return false
-}
-
-func (s Servers) FindOneByName(name string) *Server {
-	for _, server := range s {
-		if strings.EqualFold(server.Name, name) {
-			return server
-		}
-	}
-
-	return nil
 }
 
 type ServiceBilling struct {

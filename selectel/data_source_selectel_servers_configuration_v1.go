@@ -2,13 +2,14 @@ package selectel
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/api/servers"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/reflect"
 )
 
 func dataSourceServersConfigurationV1() *schema.Resource {
@@ -19,18 +20,9 @@ func dataSourceServersConfigurationV1() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"filter": {
-				Type:     schema.TypeSet,
+			"deep_filter": {
+				Type:     schema.TypeString,
 				Optional: true,
-				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
-				},
 			},
 			// computed
 			"configurations": {
@@ -59,18 +51,21 @@ func dataSourceServersConfigurationV1Read(ctx context.Context, d *schema.Resourc
 		return diagErr
 	}
 
-	filter := expandServersConfigurationSearchFilter(d)
+	filter, err := expandServersConfigurationSearchFilter(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
-	log.Print(msgGet(objectServer, filter.name))
+	log.Printf("[DEBUG] Getting server configurations")
 
-	serversList, _, err := dsClient.Servers(ctx, false)
+	serversList, _, err := dsClient.ServersRaw(ctx, false)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf(
 			"error getting list of servers configurations (without chips): %w", err,
 		))
 	}
 
-	serverChipsList, _, err := dsClient.Servers(ctx, true)
+	serverChipsList, _, err := dsClient.ServersRaw(ctx, true)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf(
 			"error getting list of servers configurations (with chips): %w", err))
@@ -87,7 +82,8 @@ func dataSourceServersConfigurationV1Read(ctx context.Context, d *schema.Resourc
 
 	ids := make([]string, 0, len(filteredServers))
 	for _, e := range filteredServers {
-		ids = append(ids, e.ID)
+		id, _ := e["uuid"].(string)
+		ids = append(ids, id)
 	}
 
 	slices.Sort(ids)
@@ -103,48 +99,44 @@ func dataSourceServersConfigurationV1Read(ctx context.Context, d *schema.Resourc
 }
 
 type serversConfigurationFilter struct {
-	name string
+	deepFilter map[string]any
 }
 
-func expandServersConfigurationSearchFilter(d *schema.ResourceData) serversConfigurationFilter {
-	filter := serversConfigurationFilter{}
+func expandServersConfigurationSearchFilter(d *schema.ResourceData) (*serversConfigurationFilter, error) {
+	filter := &serversConfigurationFilter{
+		deepFilter: make(map[string]any),
+	}
 
-	filterSet, ok := d.Get("filter").(*schema.Set)
+	filterRaw, ok := d.Get("filter").(string)
 	if !ok {
-		return filter
+		return filter, nil
 	}
 
-	if filterSet.Len() == 0 {
-		return filter
+	err := json.Unmarshal([]byte(filterRaw), &filter.deepFilter)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling deep_filter: %w", err)
 	}
 
-	resourceFilterMap := filterSet.List()[0].(map[string]interface{})
-
-	name, ok := resourceFilterMap["name"]
-	if ok {
-		filter.name = name.(string)
-	}
-
-	return filter
+	return filter, nil
 }
 
-func filterServersConfigurations(list servers.Servers, filter serversConfigurationFilter) servers.Servers {
-	var filtered servers.Servers
+func filterServersConfigurations(list []map[string]any, filter *serversConfigurationFilter) []map[string]any {
+	var filteredRaw []map[string]any
 	for _, entry := range list {
-		if filter.name == "" || entry.Name == filter.name {
-			filtered = append(filtered, entry)
+		if reflect.IsSetContainsSubset(filter.deepFilter, entry) {
+			filteredRaw = append(filteredRaw, entry)
 		}
 	}
 
-	return filtered
+	return filteredRaw
 }
 
-func flattenServersConfiguration(list servers.Servers) []interface{} {
+func flattenServersConfiguration(list []map[string]any) []interface{} {
 	res := make([]interface{}, len(list))
 	for i, e := range list {
 		sMap := make(map[string]interface{})
-		sMap["id"] = e.ID
-		sMap["name"] = e.Name
+		sMap["id"] = e["uuid"]
+		sMap["name"] = e["name"]
 
 		res[i] = sMap
 	}

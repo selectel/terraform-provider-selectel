@@ -34,11 +34,11 @@ data "selectel_servers_public_subnet_v1" "public_subnets" {
 
 * `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
-* `filter` - (Required) Values to filter available subnets.
+* `filter` - (Optional) Values to filter available subnets.
 
   * `ip` - (Optional) IP address to search included in a subnet.
   * `subnet` - (Optional) Subnet in CIDR notation to search.
-  * `location_id` - (Required) Unique identifier of the location.
+  * `location_id` - (Optional) Unique identifier of the location.
 
 ## Attributes Reference
 

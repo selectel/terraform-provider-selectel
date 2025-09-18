@@ -9,7 +9,7 @@ import (
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/httptest"
 )
 
-func TestServiceClient_Servers(t *testing.T) {
+func TestServiceClient_ServersRaw(t *testing.T) {
 	t.Run("Server_Success", func(t *testing.T) {
 		// Prepare
 		body := `{
@@ -22,14 +22,14 @@ func TestServiceClient_Servers(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		svrs, respRes, err := client.Servers(context.Background(), false)
+		svrs, respRes, err := client.ServersRaw(context.Background(), false)
 
 		// Analyse
 		require.NoError(t, err)
 		require.NotNil(t, respRes)
 		require.Equal(t, 200, respRes.StatusCode)
-		wantSvrs := Servers{
-			&Server{Name: "server1"},
+		wantSvrs := []map[string]any{
+			{"name": "server1"},
 		}
 		require.Equal(t, wantSvrs, svrs)
 	})
@@ -42,7 +42,7 @@ func TestServiceClient_Servers(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		svrs, respRes, err := client.Servers(context.Background(), false)
+		svrs, respRes, err := client.ServersRaw(context.Background(), false)
 
 		// Analyse
 		require.Error(t, err)
@@ -59,7 +59,7 @@ func TestServiceClient_Servers(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		svrs, respRes, err := client.Servers(context.Background(), false)
+		svrs, respRes, err := client.ServersRaw(context.Background(), false)
 
 		// Analyse
 		require.Error(t, err)
@@ -75,7 +75,7 @@ func TestServiceClient_Servers(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		svrs, respRes, err := client.Servers(context.Background(), false)
+		svrs, respRes, err := client.ServersRaw(context.Background(), false)
 
 		// Analyse
 		require.Error(t, err)
@@ -95,14 +95,14 @@ func TestServiceClient_Servers(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		svrs, respRes, err := client.Servers(context.Background(), true)
+		svrs, respRes, err := client.ServersRaw(context.Background(), true)
 
 		// Analyse
 		require.NoError(t, err)
 		require.NotNil(t, respRes)
 		require.Equal(t, 200, respRes.StatusCode)
-		wantSvrs := Servers{
-			&Server{Name: "chip1"},
+		wantSvrs := []map[string]any{
+			{"name": "chip1"},
 		}
 		require.Equal(t, wantSvrs, svrs)
 	})
@@ -115,7 +115,7 @@ func TestServiceClient_Servers(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		svrs, respRes, err := client.Servers(context.Background(), true)
+		svrs, respRes, err := client.ServersRaw(context.Background(), true)
 
 		// Analyse
 		require.Error(t, err)
@@ -132,7 +132,7 @@ func TestServiceClient_Servers(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		svrs, respRes, err := client.Servers(context.Background(), true)
+		svrs, respRes, err := client.ServersRaw(context.Background(), true)
 
 		// Analyse
 		require.Error(t, err)
@@ -148,7 +148,7 @@ func TestServiceClient_Servers(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		svrs, respRes, err := client.Servers(context.Background(), true)
+		svrs, respRes, err := client.ServersRaw(context.Background(), true)
 
 		// Analyse
 		require.Error(t, err)

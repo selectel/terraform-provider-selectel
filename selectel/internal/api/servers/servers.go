@@ -8,15 +8,15 @@ import (
 	"net/http"
 )
 
-func (client *ServiceClient) Servers(ctx context.Context, isServerChip bool) (Servers, *ResponseResult, error) {
+func (client *ServiceClient) ServersRaw(ctx context.Context, isServerChip bool) ([]map[string]any, *ResponseResult, error) {
 	if isServerChip {
-		return client.serverChips(ctx)
+		return client.serverChipsRaw(ctx)
 	}
 
-	return client.servers(ctx)
+	return client.serversRaw(ctx)
 }
 
-func (client *ServiceClient) servers(ctx context.Context) (Servers, *ResponseResult, error) {
+func (client *ServiceClient) serversRaw(ctx context.Context) ([]map[string]any, *ResponseResult, error) {
 	url := client.Endpoint + "/service/server"
 
 	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil)
@@ -28,7 +28,7 @@ func (client *ServiceClient) servers(ctx context.Context) (Servers, *ResponseRes
 	}
 
 	var result struct {
-		Servers Servers `json:"result"`
+		Servers []map[string]any `json:"result"`
 	}
 	err = responseResult.ExtractResult(&result)
 	if err != nil {
@@ -38,7 +38,7 @@ func (client *ServiceClient) servers(ctx context.Context) (Servers, *ResponseRes
 	return result.Servers, responseResult, nil
 }
 
-func (client *ServiceClient) serverChips(ctx context.Context) (Servers, *ResponseResult, error) {
+func (client *ServiceClient) serverChipsRaw(ctx context.Context) ([]map[string]any, *ResponseResult, error) {
 	url := client.Endpoint + "/service/serverchip"
 
 	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil)
@@ -50,7 +50,7 @@ func (client *ServiceClient) serverChips(ctx context.Context) (Servers, *Respons
 	}
 
 	var result struct {
-		Servers Servers `json:"result"`
+		Servers []map[string]any `json:"result"`
 	}
 	err = responseResult.ExtractResult(&result)
 	if err != nil {

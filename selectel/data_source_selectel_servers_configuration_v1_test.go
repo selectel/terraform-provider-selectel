@@ -47,12 +47,18 @@ func testAccServersConfigurationV1Exists(
 
 		dsClient := newTestServersAPIClient(rs, testAccProvider)
 
-		serversFromAPI, _, err := dsClient.Servers(ctx, false)
+		serversFromAPI, _, err := dsClient.ServersRaw(ctx, false)
 		if err != nil {
 			return err
 		}
 
-		srvFromAPI := serversFromAPI.FindOneByName(serverName)
+		var srvFromAPI map[string]interface{}
+		for _, srv := range serversFromAPI {
+			name, _ := srv["name"].(string)
+			if name == serverName {
+				srvFromAPI = srv
+			}
+		}
 
 		if srvFromAPI == nil {
 			return fmt.Errorf("server %s not found", serverName)
@@ -71,9 +77,7 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
 data "selectel_servers_configuration_v1" "server_configuration_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
 
-  filter {
-    name           = "%s"
-  }
+  deep_filter = "{"name": "%s"}"
 }
 `, projectName, configurationName)
 }
