@@ -98,7 +98,7 @@ func dataSourceServersOSV1Read(ctx context.Context, d *schema.ResourceData, meta
 
 	log.Printf("[DEBUG] Getting %s '%#v'", objectOS, filter)
 
-	opSystems, _, err := dsClient.OperatingSystems(ctx, servers.OperatingSystemsQuery{
+	opSystems, _, err := dsClient.OperatingSystems(ctx, &servers.OperatingSystemsQuery{
 		LocationID: filter.locationID,
 		ServiceID:  filter.configurationID,
 	})

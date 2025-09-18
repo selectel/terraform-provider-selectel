@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 type OperatingSystemsQuery struct {
@@ -13,28 +14,26 @@ type OperatingSystemsQuery struct {
 	ServiceID  string `json:"service_id"`
 }
 
-func (os OperatingSystemsQuery) queryParamsRaw() string {
-	switch {
-	case os.LocationID != "" && os.ServiceID != "":
-		return "?service_uuid=" + os.ServiceID + "&location_uuid=" + os.LocationID
-
-	case os.LocationID != "":
-		return "?location_uuid=" + os.LocationID
-
-	case os.ServiceID != "":
-		return "?service_uuid=" + os.ServiceID
+func (os *OperatingSystemsQuery) queryParamsRaw() string {
+	params := url.Values{}
+	if os.ServiceID != "" {
+		params.Add("service_uuid", os.ServiceID)
 	}
 
-	return ""
+	if os.LocationID != "" {
+		params.Add("location_uuid", os.LocationID)
+	}
+
+	return params.Encode()
 }
 
-func (client *ServiceClient) OperatingSystems(ctx context.Context, query ...OperatingSystemsQuery) (OperatingSystems, *ResponseResult, error) {
-	url := client.Endpoint + "/boot/template/os/new"
-	if len(query) > 0 {
-		url += query[0].queryParamsRaw()
+func (client *ServiceClient) OperatingSystems(ctx context.Context, query *OperatingSystemsQuery) (OperatingSystems, *ResponseResult, error) {
+	u := client.Endpoint + "/boot/template/os/new"
+	if query != nil {
+		u += "?" + query.queryParamsRaw()
 	}
 
-	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil)
+	responseResult, err := client.DoRequest(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return nil, nil, err
 	}

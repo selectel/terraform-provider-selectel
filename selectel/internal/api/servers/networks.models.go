@@ -10,8 +10,8 @@ import (
 
 type (
 	Network struct {
-		UUID          string `json:"uuid"`
-		TelematicType string `json:"telematics_type"`
+		UUID           string `json:"uuid"`
+		TelematicsType string `json:"telematics_type"`
 	}
 
 	Networks []*Network
@@ -21,7 +21,7 @@ func (n Networks) FilterByTelematicsTypeHosting() Networks {
 	result := make(Networks, 0, len(n))
 
 	for _, network := range n {
-		if network.TelematicType == "HOSTING" {
+		if network.TelematicsType == "HOSTING" {
 			result = append(result, network)
 		}
 	}
@@ -86,25 +86,17 @@ func (s *Subnet) GetFreeIP(reservedIPs ReservedIPs, isLocal bool) (net.IP, error
 }
 
 func (s *Subnet) IsIncluding(ip string) (bool, error) {
-	baseIP, ipNet, err := net.ParseCIDR(s.Subnet)
+	_, subnet, err := net.ParseCIDR(s.Subnet)
 	if err != nil {
 		return false, fmt.Errorf("error parsing subnet %s: %s", s.Subnet, err)
 	}
-
-	base := ipToUint32(baseIP.Mask(ipNet.Mask))
-
-	ones, bits := ipNet.Mask.Size()
-	total := uint32(1) << uint32(bits-ones) //nolint:gosec
-	last := base + total - 1
 
 	ipAddr := net.ParseIP(ip)
 	if ipAddr == nil {
 		return false, fmt.Errorf("invalid IP address: %s", ip)
 	}
 
-	currentIP := ipToUint32(ipAddr)
-
-	return currentIP >= base && currentIP <= last, nil
+	return subnet.Contains(ipAddr), nil
 }
 
 type Subnets []*Subnet

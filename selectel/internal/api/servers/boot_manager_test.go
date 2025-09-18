@@ -3,6 +3,7 @@ package servers
 import (
 	"context"
 	"errors"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -37,7 +38,7 @@ func TestServiceClient_OperatingSystems(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		ops, respRes, err := client.OperatingSystems(context.Background(), OperatingSystemsQuery{
+		ops, respRes, err := client.OperatingSystems(context.Background(), &OperatingSystemsQuery{
 			LocationID: "locid",
 			ServiceID:  "serviceid",
 		})
@@ -79,7 +80,7 @@ func TestServiceClient_OperatingSystems(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		ops, respRes, err := client.OperatingSystems(context.Background())
+		ops, respRes, err := client.OperatingSystems(context.Background(), nil)
 
 		// Analyse
 		require.Error(t, err)
@@ -95,7 +96,7 @@ func TestServiceClient_OperatingSystems(t *testing.T) {
 		client := newFakeClient("http://fake", httptest.NewFakeTransport(fakeResp, nil))
 
 		// Execute
-		ops, respRes, err := client.OperatingSystems(context.Background())
+		ops, respRes, err := client.OperatingSystems(context.Background(), nil)
 
 		// Analyse
 		require.Error(t, err)
@@ -111,7 +112,7 @@ func TestServiceClient_OperatingSystems(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		ops, respRes, err := client.OperatingSystems(context.Background())
+		ops, respRes, err := client.OperatingSystems(context.Background(), nil)
 
 		// Analyse
 		require.Error(t, err)
@@ -461,34 +462,44 @@ func TestOperatingSystemsQuery_queryParamsRaw(t *testing.T) {
 	tests := []struct {
 		name   string
 		query  OperatingSystemsQuery
-		expect string
+		expect url.Values
 	}{
 		{
 			name:   "BothLocationAndServiceID",
 			query:  OperatingSystemsQuery{LocationID: "locid", ServiceID: "serviceid"},
-			expect: "?service_uuid=serviceid&location_uuid=locid",
+			expect: url.Values{"location_uuid": []string{"locid"}, "service_uuid": []string{"serviceid"}},
 		},
 		{
 			name:   "OnlyLocationID",
 			query:  OperatingSystemsQuery{LocationID: "locid"},
-			expect: "?location_uuid=locid",
+			expect: url.Values{"location_uuid": []string{"locid"}},
 		},
 		{
 			name:   "OnlyServiceID",
 			query:  OperatingSystemsQuery{ServiceID: "serviceid"},
-			expect: "?service_uuid=serviceid",
+			expect: url.Values{"service_uuid": []string{"serviceid"}},
 		},
 		{
 			name:   "NoParams",
 			query:  OperatingSystemsQuery{},
-			expect: "",
+			expect: url.Values{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := tt.query.queryParamsRaw()
-			require.Equal(t, tt.expect, result)
+
+			resValues, err := url.ParseQuery(result)
+			require.NoError(t, err)
+
+			for k, v := range tt.expect {
+				require.Equal(t, v[0], resValues.Get(k))
+
+				resValues.Del(k)
+			}
+
+			require.Empty(t, resValues)
 		})
 	}
 }

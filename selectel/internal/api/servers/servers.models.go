@@ -49,24 +49,18 @@ func (s Server) IsPrivateNetworkAvailable() bool {
 }
 
 func (s Server) IsPricePlanAvailableForLocation(pricePlanID, locationID string) bool {
-	var foundAvailable bool
-	for _, psAvailable := range s.PricePlanAvailable {
-		if psAvailable == pricePlanID {
-			foundAvailable = true
-			break
-		}
-	}
-
-	if !foundAvailable {
+	if !slices.Contains(s.PricePlanAvailable, pricePlanID) {
 		return false
 	}
 
 	for _, avByLoc := range s.Available {
-		if avByLoc.LocationID == locationID {
-			for _, planCount := range avByLoc.PlanCount {
-				if planCount.PlanUUID == pricePlanID && planCount.Count >= 1 {
-					return true
-				}
+		if avByLoc.LocationID != locationID {
+			continue
+		}
+
+		for _, planCount := range avByLoc.PlanCount {
+			if planCount.PlanUUID == pricePlanID && planCount.Count >= 1 {
+				return true
 			}
 		}
 	}

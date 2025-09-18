@@ -9,10 +9,10 @@ import (
 
 func TestNetworks_FilterByTelematicsTypeHosting(t *testing.T) {
 	networks := Networks{
-		&Network{UUID: "1", TelematicType: "HOSTING"},
-		&Network{UUID: "2", TelematicType: "INET"},
-		&Network{UUID: "3", TelematicType: "HOSTING"},
-		&Network{UUID: "4", TelematicType: "INET"},
+		&Network{UUID: "1", TelematicsType: "HOSTING"},
+		&Network{UUID: "2", TelematicsType: "INET"},
+		&Network{UUID: "3", TelematicsType: "HOSTING"},
+		&Network{UUID: "4", TelematicsType: "INET"},
 	}
 
 	result := networks.FilterByTelematicsTypeHosting()

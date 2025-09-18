@@ -20,27 +20,27 @@ type (
 
 func (ld LocalDrives) GetDefaultType() string {
 	var (
-		fastestDiskType string
-		fastestDiskSize int
+		fastest, next int
+		founded       string
 	)
+	for key, localDrive := range ld {
+		if founded == "" {
+			founded = key
+			continue
+		}
 
-	for _, localDrive := range ld {
-		switch {
-		case fastestDiskType == "":
-			fastestDiskType = localDrive.Match.Type
-			fastestDiskSize = localDrive.Match.Size
-
-		case computeLocalDriveSpeedRatio(localDrive.Match.Type) > computeLocalDriveSpeedRatio(fastestDiskType):
-			fastestDiskType = localDrive.Match.Type
-			fastestDiskSize = localDrive.Match.Size
-
-		case computeLocalDriveSpeedRatio(localDrive.Match.Type) == computeLocalDriveSpeedRatio(fastestDiskType) && localDrive.Match.Size > fastestDiskSize:
-			fastestDiskType = localDrive.Match.Type
-			fastestDiskSize = localDrive.Match.Size
+		next = computeLocalDriveSpeedRatio(localDrive.Match.Type)
+		fastest = computeLocalDriveSpeedRatio(ld[founded].Match.Type)
+		if next > fastest {
+			founded = key
+		} else if next == fastest {
+			if localDrive.Match.Size > ld[founded].Match.Size {
+				founded = key
+			}
 		}
 	}
 
-	return fastestDiskType
+	return ld[founded].Match.Type
 }
 
 func (l *LocalDrive) SpeedRatio() int {
@@ -105,9 +105,19 @@ func (o OperatingSystems) FindOneByID(id string) *OperatingSystem {
 
 func (o OperatingSystems) FindOneByArchAndVersionAndOs(arch, version, osValue string) *OperatingSystem {
 	for _, os := range o {
-		if os.Arch == arch && os.VersionValue == version && os.OSValue == osValue {
-			return os
+		if os.Arch != arch {
+			continue
 		}
+
+		if os.VersionValue != version {
+			continue
+		}
+
+		if os.OSValue != osValue {
+			continue
+		}
+
+		return os
 	}
 
 	return nil

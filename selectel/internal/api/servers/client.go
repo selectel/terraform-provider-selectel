@@ -56,7 +56,7 @@ func NewClientV2(tokenID, endpoint string) *ServiceClient {
 		HTTPClient: newHTTPClient(),
 		TokenID:    tokenID,
 		Endpoint:   endpoint,
-		UserAgent:  "terraform-provider-selectel",
+		UserAgent:  "terraform-provider",
 	}
 }
 

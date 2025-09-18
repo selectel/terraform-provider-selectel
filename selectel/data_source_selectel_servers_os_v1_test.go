@@ -49,7 +49,7 @@ func testAccServersOSV1Exists(
 
 		dsClient := newTestServersAPIClient(rs, testAccProvider)
 
-		operatingSystemsFromAPI, _, err := dsClient.OperatingSystems(ctx)
+		operatingSystemsFromAPI, _, err := dsClient.OperatingSystems(ctx, nil)
 		if err != nil {
 			return err
 		}

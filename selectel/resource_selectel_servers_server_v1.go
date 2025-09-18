@@ -168,7 +168,7 @@ func resourceServersServerV1CreateLoadData(
 	locationID, osID, configurationID, publicSubnetID, privateSubnet, sshKeyName, pricePlanName string,
 	partitionsConfigFromSchema *PartitionsConfig,
 ) (*serversServerV1CreateData, error) {
-	operatingSystems, _, err := dsClient.OperatingSystems(ctx, servers.OperatingSystemsQuery{
+	operatingSystems, _, err := dsClient.OperatingSystems(ctx, &servers.OperatingSystemsQuery{
 		LocationID: locationID,
 		ServiceID:  configurationID,
 	})
@@ -429,7 +429,7 @@ func resourceServersServerV1Read(ctx context.Context, d *schema.ResourceData, me
 		_ = d.Set("ssh_key", resourceOS.UserSSHKey)
 	}
 
-	operatingSystems, _, err := dsClient.OperatingSystems(ctx, servers.OperatingSystemsQuery{
+	operatingSystems, _, err := dsClient.OperatingSystems(ctx, &servers.OperatingSystemsQuery{
 		LocationID: rd.LocationUUID,
 		ServiceID:  rd.ServiceUUID,
 	})
@@ -554,7 +554,7 @@ func resourceServersServerV1UpdateLoadData(
 	ctx context.Context, dsClient *servers.ServiceClient, d *schema.ResourceData,
 	locationID, osID, configurationID, sshKeyName string,
 ) (*serversServerV1UpdateData, error) {
-	operatingSystems, _, err := dsClient.OperatingSystems(ctx, servers.OperatingSystemsQuery{
+	operatingSystems, _, err := dsClient.OperatingSystems(ctx, &servers.OperatingSystemsQuery{
 		LocationID: locationID,
 		ServiceID:  configurationID,
 	})
