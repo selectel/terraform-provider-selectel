@@ -124,7 +124,6 @@ export OS_DOMAIN_NAME=<account_id>
 export OS_USERNAME=<username>
 export OS_PASSWORD=<password>
 export INFRA_PROJECT_ID=<selectel_project_id>
-export INFRA_REGION=<selectel_pool>
 terraform import selectel_dedicated_servers_server_v1.server_1 <server_id>
 ```
 
@@ -136,8 +135,6 @@ where:
 
 * `<password>` — Password of the service user.
 
-* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/dbaas), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
-
-* `<selectel_pool>` — Pool where the cluster is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases**. The pool is in the **Pool** column.
+* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/servers), go to **Servers and colocation** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
 * `<server_id>` — Unique identifier of the server.
