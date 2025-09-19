@@ -82,7 +82,6 @@ func TestServiceClient_ServersRaw(t *testing.T) {
 		require.Nil(t, svrs)
 		require.Nil(t, respRes)
 	})
-
 }
 
 func TestServiceClient_ServerChipsRaw(t *testing.T) {
