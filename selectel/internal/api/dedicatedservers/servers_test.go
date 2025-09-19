@@ -10,7 +10,7 @@ import (
 )
 
 func TestServiceClient_ServersRaw(t *testing.T) {
-	t.Run("Server_Success", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		// Prepare
 		body := `{
 			"result": [{
@@ -22,7 +22,7 @@ func TestServiceClient_ServersRaw(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		svrs, respRes, err := client.ServersRaw(context.Background(), false)
+		svrs, respRes, err := client.ServersRaw(context.Background())
 
 		// Analyse
 		require.NoError(t, err)
@@ -34,7 +34,7 @@ func TestServiceClient_ServersRaw(t *testing.T) {
 		require.Equal(t, wantSvrs, svrs)
 	})
 
-	t.Run("Server_InvalidJSON", func(t *testing.T) {
+	t.Run("InvalidJSON", func(t *testing.T) {
 		// Prepare
 		body := invalidJSONBody
 		fakeResp := httptest.NewFakeResponse(200, body) //nolint:bodyclose
@@ -42,7 +42,7 @@ func TestServiceClient_ServersRaw(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		svrs, respRes, err := client.ServersRaw(context.Background(), false)
+		svrs, respRes, err := client.ServersRaw(context.Background())
 
 		// Analyse
 		require.Error(t, err)
@@ -51,7 +51,7 @@ func TestServiceClient_ServersRaw(t *testing.T) {
 		require.Equal(t, 200, respRes.StatusCode)
 	})
 
-	t.Run("Server_HTTPError", func(t *testing.T) {
+	t.Run("HTTPError", func(t *testing.T) {
 		// Prepare
 		body := httpErrorBody
 		fakeResp := httptest.NewFakeResponse(404, body) //nolint:bodyclose
@@ -59,7 +59,7 @@ func TestServiceClient_ServersRaw(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		svrs, respRes, err := client.ServersRaw(context.Background(), false)
+		svrs, respRes, err := client.ServersRaw(context.Background())
 
 		// Analyse
 		require.Error(t, err)
@@ -69,13 +69,13 @@ func TestServiceClient_ServersRaw(t *testing.T) {
 		require.EqualError(t, respRes.Err, httpErrorMessage)
 	})
 
-	t.Run("Server_DoRequestError", func(t *testing.T) {
+	t.Run("DoRequestError", func(t *testing.T) {
 		// Prepare
 		fakeTransport := httptest.NewFakeTransport(nil, errors.New("network failure"))
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		svrs, respRes, err := client.ServersRaw(context.Background(), false)
+		svrs, respRes, err := client.ServersRaw(context.Background())
 
 		// Analyse
 		require.Error(t, err)
@@ -83,6 +83,9 @@ func TestServiceClient_ServersRaw(t *testing.T) {
 		require.Nil(t, respRes)
 	})
 
+}
+
+func TestServiceClient_ServerChipsRaw(t *testing.T) {
 	t.Run("ServerChip_Success", func(t *testing.T) {
 		// Prepare
 		body := `{
@@ -95,7 +98,7 @@ func TestServiceClient_ServersRaw(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		svrs, respRes, err := client.ServersRaw(context.Background(), true)
+		svrs, respRes, err := client.ServerChipsRaw(context.Background())
 
 		// Analyse
 		require.NoError(t, err)
@@ -115,7 +118,7 @@ func TestServiceClient_ServersRaw(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		svrs, respRes, err := client.ServersRaw(context.Background(), true)
+		svrs, respRes, err := client.ServerChipsRaw(context.Background())
 
 		// Analyse
 		require.Error(t, err)
@@ -132,7 +135,7 @@ func TestServiceClient_ServersRaw(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		svrs, respRes, err := client.ServersRaw(context.Background(), true)
+		svrs, respRes, err := client.ServerChipsRaw(context.Background())
 
 		// Analyse
 		require.Error(t, err)
@@ -148,7 +151,7 @@ func TestServiceClient_ServersRaw(t *testing.T) {
 		client := newFakeClient("http://fake", fakeTransport)
 
 		// Execute
-		svrs, respRes, err := client.ServersRaw(context.Background(), true)
+		svrs, respRes, err := client.ServerChipsRaw(context.Background())
 
 		// Analyse
 		require.Error(t, err)

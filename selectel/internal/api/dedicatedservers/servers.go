@@ -8,15 +8,7 @@ import (
 	"net/http"
 )
 
-func (client *ServiceClient) ServersRaw(ctx context.Context, isServerChip bool) ([]map[string]any, *ResponseResult, error) {
-	if isServerChip {
-		return client.serverChipsRaw(ctx)
-	}
-
-	return client.serversRaw(ctx)
-}
-
-func (client *ServiceClient) serversRaw(ctx context.Context) ([]map[string]any, *ResponseResult, error) {
+func (client *ServiceClient) ServersRaw(ctx context.Context) ([]map[string]any, *ResponseResult, error) {
 	url := client.Endpoint + "/service/server"
 
 	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil)
@@ -38,7 +30,7 @@ func (client *ServiceClient) serversRaw(ctx context.Context) ([]map[string]any, 
 	return result.Servers, responseResult, nil
 }
 
-func (client *ServiceClient) serverChipsRaw(ctx context.Context) ([]map[string]any, *ResponseResult, error) {
+func (client *ServiceClient) ServerChipsRaw(ctx context.Context) ([]map[string]any, *ResponseResult, error) {
 	url := client.Endpoint + "/service/serverchip"
 
 	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil)

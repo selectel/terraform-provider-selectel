@@ -47,7 +47,7 @@ func testAccDedicatedServersConfigurationV1Exists(
 
 		dsClient := newTestDedicatedServersAPIClient(rs, testAccProvider)
 
-		serversFromAPI, _, err := dsClient.ServersRaw(ctx, false)
+		serversFromAPI, _, err := dsClient.ServersRaw(ctx)
 		if err != nil {
 			return err
 		}

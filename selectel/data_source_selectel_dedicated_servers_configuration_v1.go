@@ -58,14 +58,14 @@ func dataSourceDedicatedServersConfigurationV1Read(ctx context.Context, d *schem
 
 	log.Printf("[DEBUG] Getting server configurations")
 
-	serversList, _, err := dsClient.ServersRaw(ctx, false)
+	serversList, _, err := dsClient.ServersRaw(ctx)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf(
 			"error getting list of servers configurations (without chips): %w", err,
 		))
 	}
 
-	serverChipsList, _, err := dsClient.ServersRaw(ctx, true)
+	serverChipsList, _, err := dsClient.ServerChipsRaw(ctx)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf(
 			"error getting list of servers configurations (with chips): %w", err))
