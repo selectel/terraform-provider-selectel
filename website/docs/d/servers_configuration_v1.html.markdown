@@ -1,19 +1,19 @@
 ---
 layout: "selectel"
-page_title: "Selectel: selectel_servers_configuration_v1"
-sidebar_current: "docs-selectel-datasource-servers-configuration-v1"
+page_title: "Selectel: selectel_dedicated_servers_configuration_v1"
+sidebar_current: "docs-selectel-datasource-dedicated-servers-configuration-v1"
 description: |-
   Provides a list of server configurations available in Selectel.
 ---
 
-# selectel\_servers\_configuration\_v1
+# selectel\_dedicated\_servers\_configuration\_v1
 
 Provides a list of server configurations available in Selectel.
 
 ## Example Usage
 
 ```hcl
-data "selectel_servers_configuration_v1" "server_config" {
+data "selectel_dedicated_servers_configuration_v1" "server_config" {
   project_id = selectel_vpc_project_v2.project_1.id
   deep_filter = file("filter.json")
 }

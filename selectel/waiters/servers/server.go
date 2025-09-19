@@ -6,21 +6,21 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/api/servers"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/api/dedicatedservers"
 )
 
 func WaitForServersServerV1ActiveState(
-	ctx context.Context, client *servers.ServiceClient, resourceID string, timeout time.Duration,
+	ctx context.Context, client *dedicatedservers.ServiceClient, resourceID string, timeout time.Duration,
 ) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{
-			servers.ResourceDetailsStatePending,
-			servers.ResourceDetailsStateProcessing,
-			servers.ResourceDetailsStatePaid,
-			servers.ResourceDetailsStateDeploy,
+			dedicatedservers.ResourceDetailsStatePending,
+			dedicatedservers.ResourceDetailsStateProcessing,
+			dedicatedservers.ResourceDetailsStatePaid,
+			dedicatedservers.ResourceDetailsStateDeploy,
 		},
 		Target: []string{
-			servers.ResourceDetailsStateActive,
+			dedicatedservers.ResourceDetailsStateActive,
 		},
 		Timeout:    timeout,
 		Refresh:    serversServerV1StateRefreshFunc(ctx, client, resourceID),
@@ -35,7 +35,7 @@ func WaitForServersServerV1ActiveState(
 	return nil
 }
 
-func serversServerV1StateRefreshFunc(ctx context.Context, client *servers.ServiceClient, id string) resource.StateRefreshFunc {
+func serversServerV1StateRefreshFunc(ctx context.Context, client *dedicatedservers.ServiceClient, id string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		d, _, err := client.ResourceDetails(ctx, id)
 		if err != nil {
@@ -47,19 +47,19 @@ func serversServerV1StateRefreshFunc(ctx context.Context, client *servers.Servic
 }
 
 func WaitForServersServerV1RefusedToRenewState(
-	ctx context.Context, client *servers.ServiceClient, resourceID string, timeout time.Duration,
+	ctx context.Context, client *dedicatedservers.ServiceClient, resourceID string, timeout time.Duration,
 ) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{
-			servers.ResourceDetailsStatePending,
-			servers.ResourceDetailsStateProcessing,
-			servers.ResourceDetailsStatePaid,
-			servers.ResourceDetailsStateDeploy,
-			servers.ResourceDetailsStateActive,
+			dedicatedservers.ResourceDetailsStatePending,
+			dedicatedservers.ResourceDetailsStateProcessing,
+			dedicatedservers.ResourceDetailsStatePaid,
+			dedicatedservers.ResourceDetailsStateDeploy,
+			dedicatedservers.ResourceDetailsStateActive,
 		},
 		Target: []string{
-			servers.ResourceDetailsStateExpiring,
-			servers.ResourceDetailsStateEnding,
+			dedicatedservers.ResourceDetailsStateExpiring,
+			dedicatedservers.ResourceDetailsStateEnding,
 		},
 		Timeout:    timeout,
 		Refresh:    serversServerV1StateRefreshFunc(ctx, client, resourceID),

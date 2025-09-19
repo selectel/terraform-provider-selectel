@@ -1,39 +1,39 @@
 ---
 layout: "selectel"
-page_title: "Selectel: selectel_servers_os_v1"
-sidebar_current: "docs-selectel-datasource-servers-os-v1"
+page_title: "Selectel: selectel_dedicated_servers_os_v1"
+sidebar_current: "docs-selectel-datasource-dedicated-servers-os-v1"
 description: |-
   Provides a list of available operating systems.
 ---
 
-# selectel\_servers\_os\_v1
+# selectel\_dedicated\_servers\_os\_v1
 
 Provides a list of available operating systems.
 
 ## Example Usage
 
 ```hcl
-data "selectel_servers_configuration_v1" "server_config" {
+data "selectel_dedicated_servers_configuration_v1" "server_config" {
   project_id = selectel_vpc_project_v2.project_1.id
   filter {
     name           = "CL25-NVMe"
   }
 }
 
-data "selectel_servers_location_v1" "server_location" {
+data "selectel_dedicated_servers_location_v1" "server_location" {
   project_id = selectel_vpc_project_v2.project_1.id
   filter {
     name = "MSK-2"
   }
 }
 
-data "selectel_servers_os_v1" "server_os" {
+data "selectel_dedicated_servers_os_v1" "server_os" {
   project_id = selectel_vpc_project_v2.project_1.id
   filter {
     name             = "Ubuntu"
     version          = "22.04"
-    configuration_id = data.selectel_servers_configuration_v1.server_config.configurations[0].id
-    location_id      = data.selectel_servers_location_v1.server_location.locations[0].id
+    configuration_id = data.selectel_dedicated_servers_configuration_v1.server_config.configurations[0].id
+    location_id      = data.selectel_dedicated_servers_location_v1.server_location.locations[0].id
   }
 }
 ```

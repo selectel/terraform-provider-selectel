@@ -1,19 +1,19 @@
 ---
 layout: "selectel"
-page_title: "Selectel: selectel_servers_location_v1"
-sidebar_current: "docs-selectel-datasource-servers-location-v1"
+page_title: "Selectel: selectel_dedicated_servers_location_v1"
+sidebar_current: "docs-selectel-datasource-dedicated-servers-location-v1"
 description: |-
   Provides a list of available locations.
 ---
 
-# selectel\_servers\_location\_v1
+# selectel\_dedicated\_servers\_location\_v1
 
 Provides a list of available locations.
 
 ## Example Usage
 
 ```hcl
-data "selectel_servers_location_v1" "server_location" {
+data "selectel_dedicated_servers_location_v1" "server_location" {
   project_id = selectel_vpc_project_v2.project_1.id
   filter {
     name = "MSK-2"

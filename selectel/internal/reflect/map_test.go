@@ -11,6 +11,7 @@ func jsonToMap(t *testing.T, s string) map[string]interface{} {
 	var m map[string]interface{}
 	err := json.Unmarshal([]byte(s), &m)
 	require.NoError(t, err)
+
 	return m
 }
 

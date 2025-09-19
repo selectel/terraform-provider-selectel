@@ -31,6 +31,7 @@ func IsSetContainsSubset(subset, set map[string]interface{}) bool {
 			}
 		}
 	}
+
 	return true
 }
 
@@ -64,5 +65,6 @@ func isArrayContainsSubarray(subarray, array []interface{}) bool {
 			return false
 		}
 	}
+
 	return true
 }

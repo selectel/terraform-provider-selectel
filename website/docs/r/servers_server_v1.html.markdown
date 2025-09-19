@@ -1,28 +1,28 @@
 ---
 layout: "selectel"
-page_title: "Selectel: selectel_servers_server_v1"
-sidebar_current: "docs-selectel-resource-servers-server-v1"
+page_title: "Selectel: selectel_dedicated_servers_server_v1"
+sidebar_current: "docs-selectel-resource-dedicated-servers-server-v1"
 description: |-
   Creates and manages a server in Selectel Dedicated Servers.
 ---
 
-# selectel\_servers\_server\_v1
+# selectel\_dedicated\_servers\_server\_v1
 
 Creates and manages a server in Selectel Dedicated Servers.
 
 ## Example usage
 
 ```hcl
-resource "selectel_servers_server_v1" "server_1" {
+resource "selectel_dedicated_dedicated_servers_server_v1" "server_1" {
   project_id = selectel_vpc_project_v2.project_1.id
 
-  configuration_id = data.selectel_servers_configuration_v1.server_config.configurations[0].id
-  location_id      = data.selectel_servers_location_v1.server_location.locations[0].id
-  os_id            = data.selectel_servers_os_v1.server_os.os[0].id
+  configuration_id = data.selectel_dedicated_servers_configuration_v1.server_config.configurations[0].id
+  location_id      = data.selectel_dedicated_servers_location_v1.server_location.locations[0].id
+  os_id            = data.selectel_dedicated_servers_os_v1.server_os.os[0].id
   price_plan_name  = "1 день"
 
   os_host_name     = "Turing"
-  public_subnet_id = data.selectel_servers_public_subnet_v1.subnets.subnets[0].id
+  public_subnet_id = data.selectel_dedicated_servers_public_subnet_v1.subnets.subnets[0].id
   private_subnet   = "192.168.0.0/16"
   ssh_key_name     = "deploy-ed25519"
   os_password      = "Passw0rd!"
@@ -125,7 +125,7 @@ export OS_USERNAME=<username>
 export OS_PASSWORD=<password>
 export INFRA_PROJECT_ID=<selectel_project_id>
 export INFRA_REGION=<selectel_pool>
-terraform import selectel_servers_server_v1.server_1 <server_id>
+terraform import selectel_dedicated_servers_server_v1.server_1 <server_id>
 ```
 
 where:

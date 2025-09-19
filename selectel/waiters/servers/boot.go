@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/api/servers"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/api/dedicatedservers"
 )
 
 func WaitForServersServerInstallNewOSV1ActiveState(
-	ctx context.Context, client *servers.ServiceClient, resourceID string, timeout time.Duration,
+	ctx context.Context, client *dedicatedservers.ServiceClient, resourceID string, timeout time.Duration,
 ) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{
@@ -33,7 +33,7 @@ func WaitForServersServerInstallNewOSV1ActiveState(
 	return nil
 }
 
-func serversServerInstallNewOSV1StateRefreshFunc(ctx context.Context, client *servers.ServiceClient, resourceID string) resource.StateRefreshFunc {
+func serversServerInstallNewOSV1StateRefreshFunc(ctx context.Context, client *dedicatedservers.ServiceClient, resourceID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		d, _, err := client.OperatingSystemByResource(ctx, resourceID)
 		if err != nil {

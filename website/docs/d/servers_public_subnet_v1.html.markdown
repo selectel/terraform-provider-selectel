@@ -1,29 +1,29 @@
 ---
 layout: "selectel"
-page_title: "Selectel: selectel_servers_public_subnet_v1"
-sidebar_current: "docs-selectel-datasource-servers-public-subnet-v1"
+page_title: "Selectel: selectel_dedicated_servers_public_subnet_v1"
+sidebar_current: "docs-selectel-datasource-dedicated-servers-public-subnet-v1"
 description: |-
   Provides a list of available public subnets.
 ---
 
-# selectel\_servers\_public\_subnet\_v1
+# selectel\_dedicated\_servers\_public\_subnet\_v1
 
 Provides a list of available public subnets.
 
 ## Example Usage
 
 ```hcl
-data "selectel_servers_location_v1" "server_location" {
+data "selectel_dedicated_servers_location_v1" "server_location" {
   project_id = selectel_vpc_project_v2.project_1.id
   filter {
     name = "some-subnet"
   }
 }
 
-data "selectel_servers_public_subnet_v1" "public_subnets" {
+data "selectel_dedicated_servers_public_subnet_v1" "public_subnets" {
   project_id = selectel_vpc_project_v2.project_1.id
   filter {
-    location_id = data.selectel_servers_location_v1.server_location.locations[0].id
+    location_id = data.selectel_dedicated_servers_location_v1.server_location.locations[0].id
     subnet = "192.168.1.0/29"
     ip = "192.168.1.3"
   }
