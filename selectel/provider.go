@@ -50,6 +50,9 @@ const (
 	objectRegistryToken             = "registry token"
 	objectSecret                    = "secret"
 	objectCertificate               = "certificate"
+	objectDedicatedServer           = "dedicated-server"
+	objectOS                        = "os"
+	objectLocation                  = "location"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -109,18 +112,22 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"selectel_domains_domain_v1":                dataSourceDomainsDomainV1(),
-			"selectel_domains_zone_v2":                  dataSourceDomainsZoneV2(),
-			"selectel_domains_rrset_v2":                 dataSourceDomainsRRSetV2(),
-			"selectel_dbaas_datastore_type_v1":          dataSourceDBaaSDatastoreTypeV1(),
-			"selectel_dbaas_available_extension_v1":     dataSourceDBaaSAvailableExtensionV1(),
-			"selectel_dbaas_flavor_v1":                  dataSourceDBaaSFlavorV1(),
-			"selectel_dbaas_configuration_parameter_v1": dataSourceDBaaSConfigurationParameterV1(),
-			"selectel_dbaas_prometheus_metric_token_v1": dataSourceDBaaSPrometheusMetricTokenV1(),
-			"selectel_mks_kubeconfig_v1":                dataSourceMKSKubeconfigV1(),
-			"selectel_mks_kube_versions_v1":             dataSourceMKSKubeVersionsV1(),
-			"selectel_mks_feature_gates_v1":             dataSourceMKSFeatureGatesV1(),
-			"selectel_mks_admission_controllers_v1":     dataSourceMKSAdmissionControllersV1(),
+			"selectel_domains_domain_v1":                  dataSourceDomainsDomainV1(),
+			"selectel_domains_zone_v2":                    dataSourceDomainsZoneV2(),
+			"selectel_domains_rrset_v2":                   dataSourceDomainsRRSetV2(),
+			"selectel_dbaas_datastore_type_v1":            dataSourceDBaaSDatastoreTypeV1(),
+			"selectel_dbaas_available_extension_v1":       dataSourceDBaaSAvailableExtensionV1(),
+			"selectel_dbaas_flavor_v1":                    dataSourceDBaaSFlavorV1(),
+			"selectel_dbaas_configuration_parameter_v1":   dataSourceDBaaSConfigurationParameterV1(),
+			"selectel_dbaas_prometheus_metric_token_v1":   dataSourceDBaaSPrometheusMetricTokenV1(),
+			"selectel_mks_kubeconfig_v1":                  dataSourceMKSKubeconfigV1(),
+			"selectel_mks_kube_versions_v1":               dataSourceMKSKubeVersionsV1(),
+			"selectel_mks_feature_gates_v1":               dataSourceMKSFeatureGatesV1(),
+			"selectel_mks_admission_controllers_v1":       dataSourceMKSAdmissionControllersV1(),
+			"selectel_dedicated_servers_configuration_v1": dataSourceDedicatedServersConfigurationV1(),
+			"selectel_dedicated_servers_os_v1":            dataSourceDedicatedServersOSV1(),
+			"selectel_dedicated_servers_location_v1":      dataSourceDedicatedServersLocationV1(),
+			"selectel_dedicated_servers_public_subnet_v1": dataSourceDedicatedServersPublicSubnetV1(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"selectel_vpc_floatingip_v2":                            resourceVPCFloatingIPV2(),
@@ -162,6 +169,7 @@ func Provider() *schema.Provider {
 			"selectel_craas_token_v1":                               resourceCRaaSTokenV1(),
 			"selectel_secretsmanager_secret_v1":                     resourceSecretsManagerSecretV1(),
 			"selectel_secretsmanager_certificate_v1":                resourceSecretsManagerCertificateV1(),
+			"selectel_dedicated_servers_server_v1":                  resourceDedicatedServersServerV1(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}
