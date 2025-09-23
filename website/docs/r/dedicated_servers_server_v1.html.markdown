@@ -13,7 +13,7 @@ Creates and manages a server in Selectel Dedicated Servers.
 ## Example usage
 
 ```hcl
-resource "selectel_dedicated_dedicated_servers_server_v1" "server_1" {
+resource "selectel_dedicated_servers_server_v1" "server_1" {
   project_id = selectel_vpc_project_v2.project_1.id
 
   configuration_id = data.selectel_dedicated_servers_configuration_v1.server_config.configurations[0].id
