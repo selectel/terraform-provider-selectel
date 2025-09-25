@@ -8,7 +8,7 @@ import (
 	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/servers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	serverslocal "github.com/terraform-providers/terraform-provider-selectel/selectel/internal/api/dedicated"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/api/dedicated"
 )
 
 func TestServersMapsFromStructs(t *testing.T) {
@@ -32,7 +32,7 @@ func TestServersMapsFromStructs(t *testing.T) {
 	assert.Equal(t, expectedServersMaps, actualServersMaps)
 }
 
-func newTestDedicatedAPIClient(rs *terraform.ResourceState, testAccProvider *schema.Provider) *serverslocal.ServiceClient {
+func newTestDedicatedAPIClient(rs *terraform.ResourceState, testAccProvider *schema.Provider) *dedicated.ServiceClient {
 	config := testAccProvider.Meta().(*Config)
 
 	var projectID string
@@ -48,7 +48,7 @@ func newTestDedicatedAPIClient(rs *terraform.ResourceState, testAccProvider *sch
 
 	url := "https://api.selectel.ru/servers/v2"
 
-	return serverslocal.NewClientV2(selvpcClient.GetXAuthToken(), url)
+	return dedicated.NewClientV2(selvpcClient.GetXAuthToken(), url)
 }
 
 func TestPartitionsConfig_IsEmpty(t *testing.T) {
@@ -82,38 +82,38 @@ func TestPartitionsConfig_ContainsBootPartition(t *testing.T) {
 }
 
 func TestPartitionsConfig_CastToAPIPartitionsConfig(t *testing.T) {
-	localDrives := serverslocal.LocalDrives{
+	localDrives := dedicated.LocalDrives{
 		"drive-ssd-1": {
 			Type: "drive",
-			Match: &serverslocal.LocalDriveMatch{
+			Match: &dedicated.LocalDriveMatch{
 				Size: 1000,
 				Type: "SSD",
 			},
 		},
 		"drive-ssd-2": {
 			Type: "drive",
-			Match: &serverslocal.LocalDriveMatch{
+			Match: &dedicated.LocalDriveMatch{
 				Size: 1000,
 				Type: "SSD",
 			},
 		},
 		"drive-hdd-1": {
 			Type: "drive",
-			Match: &serverslocal.LocalDriveMatch{
+			Match: &dedicated.LocalDriveMatch{
 				Size: 2000,
 				Type: "SATA",
 			},
 		},
 	}
 
-	defaultPartitions := []*serverslocal.PartitionConfigItem{
+	defaultPartitions := []*dedicated.PartitionConfigItem{
 		{Mount: "/boot", Size: 1, FSType: "ext3"},
 		{Mount: "/", Size: -1, FSType: "ext4"},
 		{Mount: "swap", Size: 12, FSType: "swap"},
 	}
 
-	findItemsByType := func(cfg serverslocal.PartitionsConfig, itemType string) []*serverslocal.PartitionConfigItem {
-		var items []*serverslocal.PartitionConfigItem
+	findItemsByType := func(cfg dedicated.PartitionsConfig, itemType string) []*dedicated.PartitionConfigItem {
+		var items []*dedicated.PartitionConfigItem
 		for _, item := range cfg {
 			if item.Type == itemType {
 				items = append(items, item)
@@ -123,7 +123,7 @@ func TestPartitionsConfig_CastToAPIPartitionsConfig(t *testing.T) {
 		return items
 	}
 
-	findFSByMount := func(cfg serverslocal.PartitionsConfig, mount string) *serverslocal.PartitionConfigItem {
+	findFSByMount := func(cfg dedicated.PartitionsConfig, mount string) *dedicated.PartitionConfigItem {
 		for _, item := range cfg {
 			if item.Type == "filesystem" && item.Mount == mount {
 				return item

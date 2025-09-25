@@ -1,7 +1,7 @@
 ---
 layout: "selectel"
 page_title: "Selectel: selectel_dedicated_server_v1"
-sidebar_current: "docs-selectel-resource-dedicated-v1"
+sidebar_current: "docs-selectel-resource-dedicated-server-v1"
 description: |-
   Creates and manages a server in Selectel Dedicated Servers.
 ---
