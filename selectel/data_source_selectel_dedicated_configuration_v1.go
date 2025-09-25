@@ -107,7 +107,7 @@ func expandDedicatedConfigurationsSearchFilter(d *schema.ResourceData) (*dedicat
 		deepFilter: make(map[string]any),
 	}
 
-	filterRaw, ok := d.Get("filter").(string)
+	filterRaw, ok := d.Get("deep_filter").(string)
 	if !ok {
 		return filter, nil
 	}
