@@ -137,9 +137,7 @@ data "selectel_dedicated_location_v1" "location_tf_acc_test_1" {
 
 data "selectel_dedicated_configuration_v1" "server_configuration_tf_acc_test_1" {
  project_id     = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
- filter {
-   name           = "%s"
- }
+ deep_filter = "{\"name\": \"%s\"}"
 }
 
 resource "selectel_dedicated_server_v1" "server_tf_acc_test_1" {
