@@ -50,6 +50,8 @@ const (
 	objectRegistryToken             = "registry token"
 	objectSecret                    = "secret"
 	objectCertificate               = "certificate"
+	objectCloudBackupPlan           = "cloud-backup-plan"
+	objectCloudBackupCheckpoint     = "cloud-backup-checkpoint"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -121,6 +123,8 @@ func Provider() *schema.Provider {
 			"selectel_mks_kube_versions_v1":             dataSourceMKSKubeVersionsV1(),
 			"selectel_mks_feature_gates_v1":             dataSourceMKSFeatureGatesV1(),
 			"selectel_mks_admission_controllers_v1":     dataSourceMKSAdmissionControllersV1(),
+			"selectel_cloudbackup_plan_v2":              dataSourceCloudBackupPlanV2(),
+			"selectel_cloudbackup_checkpoint_v2":        dataSourceCloudBackupCheckpointV2(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"selectel_vpc_floatingip_v2":                            resourceVPCFloatingIPV2(),
@@ -162,6 +166,7 @@ func Provider() *schema.Provider {
 			"selectel_craas_token_v1":                               resourceCRaaSTokenV1(),
 			"selectel_secretsmanager_secret_v1":                     resourceSecretsManagerSecretV1(),
 			"selectel_secretsmanager_certificate_v1":                resourceSecretsManagerCertificateV1(),
+			"selectel_cloudbackup_plan_v2":                          resourceCloudBackupPlanV2(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}

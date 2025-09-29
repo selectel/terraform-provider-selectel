@@ -9,11 +9,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/terraform-provider-openstack/terraform-provider-openstack/openstack"
 )
 
 var (
-	testAccProviders map[string]func() (*schema.Provider, error)
-	testAccProvider  *schema.Provider
+	testAccProviders              map[string]func() (*schema.Provider, error)
+	testAccProvidersWithOpenStack map[string]func() (*schema.Provider, error)
+	testAccProvider               *schema.Provider
 )
 
 func init() {
@@ -21,6 +23,14 @@ func init() {
 	testAccProviders = map[string]func() (*schema.Provider, error){
 		"selectel": func() (*schema.Provider, error) {
 			return testAccProvider, nil
+		},
+	}
+	testAccProvidersWithOpenStack = map[string]func() (*schema.Provider, error){
+		"selectel": func() (*schema.Provider, error) {
+			return testAccProvider, nil
+		},
+		"openstack": func() (*schema.Provider, error) {
+			return openstack.Provider(), nil
 		},
 	}
 }

@@ -1,32 +1,25 @@
+version: "2"
 run:
-  timeout: 5m
   modules-download-mode: readonly
-
 linters:
-  fast: false
-  disable-all: true
+  default: none
   enable:
     - asciicheck
     - bodyclose
+    - copyloopvar
     - dogsled
     - errcheck
     - exhaustive
-    - exportloopref
-    - gci
     - gocognit
     - goconst
     - gocritic
     - gocyclo
     - godot
     - godox
-    - gofmt
-    - gofumpt
     - goheader
-    - goimports
     - gomodguard
     - goprintffuncname
     - gosec
-    - gosimple
     - govet
     - ineffassign
     - misspell
@@ -35,34 +28,49 @@ linters:
     - noctx
     - nolintlint
     - prealloc
-    - rowserrcheck
     - revive
+    - rowserrcheck
     - sqlclosecheck
     - staticcheck
-    - stylecheck
-    - typecheck
     - unconvert
     - unused
     - whitespace
-
-linters-settings:
-  nlreturn:
-    block-size: 3
-
-issues:
-  exclude-rules:
-    - linters:
-        - staticcheck
-      text: "SA1019:"
-
-    - linters:
-        - errcheck
-      text: "Error return value of `d.Set` is not checked"
-
-    - linters:
-        - gosec
-      text: "G501:"
-
-    - linters:
-        - gosec
-      text: "G404:"
+  settings:
+    nlreturn:
+      block-size: 3
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - staticcheck
+        text: 'SA1019:'
+      - linters:
+          - errcheck
+        text: Error return value of `d.Set` is not checked
+      - linters:
+          - gosec
+        text: 'G501:'
+      - linters:
+          - gosec
+        text: 'G404:'
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

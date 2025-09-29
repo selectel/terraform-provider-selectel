@@ -8,4 +8,5 @@ const (
 	SecretsManager     = "secrets-manager"
 	CertificateManager = "certificate-manager"
 	DNSv2              = "dnsv2"
+	DataProtectV2      = "data-protectv2"
 )
