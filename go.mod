@@ -3,6 +3,7 @@ module github.com/terraform-providers/terraform-provider-selectel
 go 1.23.0
 
 require (
+	github.com/MurashovVen/cloudbackup-go v0.0.0-20250929100943-8703f02967e7
 	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.1
 	github.com/selectel/craas-go v0.3.0
@@ -12,7 +13,7 @@ require (
 	github.com/selectel/iam-go v0.4.1
 	github.com/selectel/mks-go v0.20.0
 	github.com/selectel/secretsmanager-go v0.2.1
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.11.1
 	github.com/terraform-provider-openstack/terraform-provider-openstack v1.49.0
 )
 
@@ -57,7 +58,7 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/vmihailenco/msgpack/v4 v4.3.12 // indirect
 	github.com/vmihailenco/tagparser v0.1.2 // indirect

@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"time"
 
+	cloudbackup "github.com/MurashovVen/cloudbackup-go/pkg/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/api/cloudbackup"
 )
 
 func resourceCloudBackupPlanV2() *schema.Resource {
