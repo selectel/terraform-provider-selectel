@@ -410,7 +410,6 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 
 	_ = d.Set("os_host_name", resourceOS.UserHostName)
 	_ = d.Set("user_data", resourceOS.UserData)
-	_ = d.Set("os_password", resourceOS.Password)
 
 	keys, _, err := dsClient.SSHKeys(ctx)
 	if err != nil {
