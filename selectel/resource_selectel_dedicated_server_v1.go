@@ -372,11 +372,13 @@ func resourceDedicatedServerV1CreateValidatePreconditions(
 		)
 	}
 
-	_, _, err := dsClient.PartitionsValidate(ctx, data.partitions, configurationID)
-	if err != nil {
-		return fmt.Errorf(
-			"failed to validate partitions config for %s %s: %w", objectDedicatedServer, configurationID, err,
-		)
+	if data.partitions != nil {
+		_, _, err := dsClient.PartitionsValidate(ctx, data.partitions, configurationID)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to validate partitions config for %s %s: %w", objectDedicatedServer, configurationID, err,
+			)
+		}
 	}
 
 	return nil
@@ -666,13 +668,15 @@ func resourceDedicatedServerV1UpdateValidatePreconditions(
 		return diagErr
 	}
 
-	configurationID := d.Get(dedicatedServerSchemaKeyConfigurationID).(string)
+	if partitions != nil {
+		configurationID := d.Get(dedicatedServerSchemaKeyConfigurationID).(string)
 
-	_, _, err := dsClient.PartitionsValidate(ctx, partitions, configurationID)
-	if err != nil {
-		return fmt.Errorf(
-			"failed to validate partitions config: %w", err,
-		)
+		_, _, err := dsClient.PartitionsValidate(ctx, partitions, configurationID)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to validate partitions config: %w", err,
+			)
+		}
 	}
 
 	return nil
