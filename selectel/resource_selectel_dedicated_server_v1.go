@@ -55,6 +55,7 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 		configurationID = d.Get(dedicatedServerSchemaKeyConfigurationID).(string)
 		pricePlanName   = d.Get(dedicatedServerSchemaKeyPricePlanName).(string)
 		sshKeyName, _   = d.Get(dedicatedServerSchemaKeyOSSSHKeyName).(string)
+		password, _     = d.Get(dedicatedServerSchemaKeyOSPassword).(string)
 
 		publicSubnetID, _ = d.Get(dedicatedServerSchemaKeyPublicSubnetID).(string)
 		privateSubnet, _  = d.Get(dedicatedServerSchemaKeyPrivateSubnet).(string)
@@ -81,7 +82,7 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 
 	err = resourceDedicatedServerV1CreateValidatePreconditions(
 		ctx, dsClient, data, locationID, data.pricePlan.UUID, configurationID, osID, userData != "",
-		sshKeyPK != "" || data.sshKeyByName != nil, privateSubnet != "",
+		sshKeyPK != "" || data.sshKeyByName != nil, password != "", privateSubnet != "",
 	)
 	if err != nil {
 		return diag.FromErr(err)
@@ -91,8 +92,6 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 
 	var (
 		hostName = resourceDedicatedServerV1GenerateHostNameIfNotPresented(d)
-
-		password, _ = d.Get(dedicatedServerSchemaKeyOSPassword).(string)
 
 		req = &dedicated.ServerBillingPostPayload{
 			ServiceUUID:      configurationID,
@@ -319,7 +318,7 @@ func resourceDedicatedServerV1CreateValidatePreconditions(
 	ctx context.Context, dsClient *dedicated.ServiceClient,
 	data *serversDedicatedServerV1CreateData,
 	locationID, pricePlanID, configurationID, osID string,
-	needUserData, sshKey bool,
+	needUserData, sshKey, needPassword bool,
 	needPrivateIP bool,
 ) error {
 	switch {
@@ -354,6 +353,9 @@ func resourceDedicatedServerV1CreateValidatePreconditions(
 		return fmt.Errorf(
 			"%s %s does not support partitions config", objectOS, data.os.OSValue,
 		)
+
+	case data.os.OSValue == "noos" && needPassword:
+		return errors.New("noos configuration does not support password")
 
 	case !data.billing.HasEnoughBalance:
 		return fmt.Errorf(
@@ -487,6 +489,7 @@ func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData
 		configurationID = d.Get(dedicatedServerSchemaKeyConfigurationID).(string)
 		osID            = d.Get(dedicatedServerSchemaKeyOSID).(string)
 		sshKeyName, _   = d.Get(dedicatedServerSchemaKeyOSSSHKeyName).(string)
+		password, _     = d.Get(dedicatedServerSchemaKeyOSPassword).(string)
 	)
 
 	data, err := resourceDedicatedServerV1UpdateLoadData(ctx, dsClient, d, locationID, osID, configurationID, sshKeyName)
@@ -504,7 +507,8 @@ func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData
 	}
 
 	err = resourceDedicatedServerV1UpdateValidatePreconditions(
-		ctx, d, dsClient, data.os, data.partitions, userData != "", sshKeyPK != "" || data.sshKeyByName != nil,
+		ctx, d, dsClient, data.os, data.partitions, userData != "",
+		sshKeyPK != "" || data.sshKeyByName != nil, password != "",
 	)
 	if err != nil {
 		return diag.FromErr(err)
@@ -512,8 +516,6 @@ func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData
 
 	var (
 		hostName = resourceDedicatedServerV1GenerateHostNameIfNotPresented(d)
-
-		password, _ = d.Get(dedicatedServerSchemaKeyOSPassword).(string)
 
 		payload = &dedicated.InstallNewOSPayload{
 			OSVersion:        data.os.VersionValue,
@@ -608,7 +610,7 @@ func resourceDedicatedServerV1UpdateLoadData(
 func resourceDedicatedServerV1UpdateValidatePreconditions(
 	ctx context.Context, d *schema.ResourceData, dsClient *dedicated.ServiceClient,
 	os *dedicated.OperatingSystem, partitions dedicated.PartitionsConfig,
-	needUserData, needSSHKey bool,
+	needUserData, needSSHKey, needPassword bool,
 ) error {
 	var (
 		osID                           = d.Get(dedicatedServerSchemaKeyOSID).(string)
@@ -660,6 +662,9 @@ func resourceDedicatedServerV1UpdateValidatePreconditions(
 		return fmt.Errorf(
 			"%s %s does not support partitions config", objectOS, os.OSValue,
 		)
+
+	case os.OSValue == "noos" && needPassword:
+		return errors.New("noos configuration does not support password")
 	}
 
 	diagErr := resourceDedicatedServerV1UpdateValidatePreconditionsAdditionalOSParams(d, forceUpdateAdditionalParams || d.HasChange(dedicatedServerSchemaKeyOSID))
