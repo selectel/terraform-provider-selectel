@@ -164,8 +164,8 @@ github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINE
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/sebdah/goldie v1.0.0/go.mod h1:jXP4hmWywNEwZzhMuv2ccnqTSFpuq8iyQhtQdkkZBH4=
-github.com/selectel/craas-go v0.3.0 h1:tXiw3LNN+ZVV0wZdeBBXX6u8kMuA5PV/5W1uYqV0yXg=
-github.com/selectel/craas-go v0.3.0/go.mod h1:9RAUn9PdMITP4I3GAade6v2hjB2j3lo3J2dDlG5SLYE=
+github.com/selectel/craas-go v0.4.1 h1:s5P9etiHzQGr1TKdvc92aU88Y0ZROun1xwiqr25KmhE=
+github.com/selectel/craas-go v0.4.1/go.mod h1:9RAUn9PdMITP4I3GAade6v2hjB2j3lo3J2dDlG5SLYE=
 github.com/selectel/dbaas-go v0.18.0 h1:IrnEt/6ETx6oKvV4est6RGei4AebrUPN/njczZfbVL0=
 github.com/selectel/dbaas-go v0.18.0/go.mod h1:KU+HEvlHGdq4hgHaKagz+JvCIAVya1N+ugZIaea0m4Y=
 github.com/selectel/domains-go v1.0.2 h1:Si6iGaMnTFJxwiJVI50DOdZnwcxc87kqaWrVQYW0a4U=

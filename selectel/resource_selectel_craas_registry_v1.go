@@ -82,7 +82,7 @@ func resourceCRaaSRegistryV1Read(ctx context.Context, d *schema.ResourceData, me
 		return diagErr
 	}
 
-	craasHostName, err := getHostNameForCRaaS(craasClient.Endpoint)
+	craasHostName, err := getHostNameForCRaaS(craasClient.Endpoint())
 	if err != nil {
 		return diag.FromErr(err)
 	}
