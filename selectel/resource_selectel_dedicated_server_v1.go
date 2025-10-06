@@ -354,7 +354,7 @@ func resourceDedicatedServerV1CreateValidatePreconditions(
 			"%s %s does not support partitions config", objectOS, data.os.OSValue,
 		)
 
-	case data.os.OSValue == "noos" && needPassword:
+	case data.os.OSValue == dedicated.NoOSValue && needPassword:
 		return errors.New("noos configuration does not support password")
 
 	case !data.billing.HasEnoughBalance:
@@ -663,7 +663,7 @@ func resourceDedicatedServerV1UpdateValidatePreconditions(
 			"%s %s does not support partitions config", objectOS, os.OSValue,
 		)
 
-	case os.OSValue == "noos" && needPassword:
+	case os.OSValue == dedicated.NoOSValue && needPassword:
 		return errors.New("noos configuration does not support password")
 	}
 
