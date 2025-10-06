@@ -1,4 +1,4 @@
-## 6.8.0 (September 10, 2025)
+## 6.8.0 (October 6, 2025)
 
 FEATURES:
 * Add selectel_craas_token_v2 resource ([#343] (https://github.com/selectel/terraform-provider-selectel/pull/343))
