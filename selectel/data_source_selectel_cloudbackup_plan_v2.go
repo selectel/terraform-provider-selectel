@@ -5,9 +5,9 @@ import (
 	"log"
 	"slices"
 
-	cloudbackup "github.com/MurashovVen/cloudbackup-go/pkg/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	cloudbackup "github.com/selectel/cloudbackup-go/pkg/v2"
 )
 
 func dataSourceCloudBackupPlanV2() *schema.Resource {

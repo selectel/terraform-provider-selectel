@@ -3,9 +3,9 @@ module github.com/terraform-providers/terraform-provider-selectel
 go 1.23.0
 
 require (
-	github.com/MurashovVen/cloudbackup-go v0.0.0-20250929100943-8703f02967e7
 	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.1
+	github.com/selectel/cloudbackup-go v0.0.0-20251006115239-9da0974d9510
 	github.com/selectel/craas-go v0.3.0
 	github.com/selectel/dbaas-go v0.18.0
 	github.com/selectel/domains-go v1.0.2
