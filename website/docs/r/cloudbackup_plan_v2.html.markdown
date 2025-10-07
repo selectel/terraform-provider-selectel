@@ -55,4 +55,4 @@ resource "selectel_cloudbackup_plan_v2" "plan_1" {
   * `resource` - (Required) List of resource objects:
     * `id` - (Required) UUID of the backed up resource.
     * `name` - (Required) Name of the backed up resource.
-    * `type` - (Required) Type of the backed up resource. You can see allowed values [here](https://docs.selectel.ru/en/api/scheduled-backups/#tag/Plans/operation/createBackupPlan).
+    * `type` - (Required) Type of the backed up resource. Learn more about available resource types in the [Scheduled Backup API](https://docs.selectel.ru/api/scheduled-backups/#tag/Plans/operation/createBackupPlan).
