@@ -32,7 +32,7 @@ data "selectel_cloudbackup_checkpoint_v2" "checkpoint_1" {
 * `filter` - (Optional) Values to filter available checkpoints.
 
   * `plan_name` - (Optional) Name of the backup plan to search.
-  * `volume_name` - (Optional) Name of the volume.
+  * `volume_name` - (Optional) Name of the volume to search.
 
 ## Attributes Reference
 
