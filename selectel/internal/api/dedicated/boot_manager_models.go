@@ -70,6 +70,7 @@ type OperatingSystem struct {
 	OSValue           string                 `json:"os_value"`
 	Arch              string                 `json:"arch"`
 	VersionValue      string                 `json:"version_value"`
+	VersionName       string                 `json:"version_name"`
 	ScriptAllowed     bool                   `json:"script_allowed"`
 	IsSSHKeyAllowed   bool                   `json:"is_ssh_key_allowed"`
 	Partitioning      bool                   `json:"partitioning"`
