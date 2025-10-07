@@ -27,7 +27,7 @@ func TestAccDedicatedServerV1Basic(t *testing.T) {
 		osVersion, updatedOSVersion   = "2404", "2204"
 		locationName                  = "MSK-2"
 		cfgName                       = "CL25-NVMe"
-		pricePlanName                 = "1 день"
+		pricePlanName                 = "1 day"
 		osHostName, updatedOSHostName = "hostname", "hostname1"
 		osPassword, updatedOSPassword = "Passw0rd!", "Passw0rd!1"
 		userData, updatedUserData     = "#!/bin/bash", "#!/bin/sh"

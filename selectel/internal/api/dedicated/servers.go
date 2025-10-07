@@ -273,7 +273,14 @@ func (client *ServiceClient) ResourceDetails(
 ) (*ResourceDetails, *ResponseResult, error) {
 	url := fmt.Sprintf("%s/resource/%s", client.Endpoint, id)
 
-	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil)
+	headers := []*RequestHeader{
+		{
+			Key:   "Accept-Language",
+			Value: "en-US",
+		},
+	}
+
+	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil, headers...)
 	if err != nil {
 		return nil, nil, err
 	}
