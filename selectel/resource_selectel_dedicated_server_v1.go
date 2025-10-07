@@ -474,22 +474,7 @@ func resourceDedicatedServerV1Delete(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceDedicatedServerV1UpdateWithStateRollback(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	rollbackState := func() {
-		if d.HasChange(dedicatedServerSchemaKeyOSPassword) {
-			oldPass, _ := d.GetChange(dedicatedServerSchemaKeyOSPassword)
-			_ = d.Set(dedicatedServerSchemaKeyOSPassword, oldPass)
-		}
-
-		if d.HasChange(dedicatedServerSchemaKeyOSHostName) {
-			oldHostName, _ := d.GetChange(dedicatedServerSchemaKeyOSHostName)
-			_ = d.Set(dedicatedServerSchemaKeyOSHostName, oldHostName)
-		}
-
-		if d.HasChange(dedicatedServerSchemaKeyOSPartitionsConfig) {
-			oldPartitions, _ := d.GetChange(dedicatedServerSchemaKeyOSPartitionsConfig)
-			_ = d.Set(dedicatedServerSchemaKeyOSPartitionsConfig, oldPartitions)
-		}
-	}
+	d.Partial(true)
 
 	dsClient, diagErr := getDedicatedClient(d, meta)
 	if diagErr != nil {
@@ -498,10 +483,10 @@ func resourceDedicatedServerV1UpdateWithStateRollback(ctx context.Context, d *sc
 
 	diagErr = resourceDedicatedServerV1Update(ctx, d, dsClient)
 	if diagErr != nil {
-		rollbackState()
-
 		return diagErr
 	}
+
+	d.Partial(false)
 
 	log.Printf("[DEBUG] waiting for server %s to become 'ACTIVE'", d.Id())
 
