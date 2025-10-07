@@ -36,7 +36,7 @@ resource "selectel_cloudbackup_plan_v2" "plan_1" {
 
 * `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
-* `region` - (Required) Region where the backup plan is located, for example, `ru-3`. Learn more about available regions in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
+* `region` - (Required) Pool where the backup plan is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
 
 * `name` - (Required) Name of the backup plan.
 
