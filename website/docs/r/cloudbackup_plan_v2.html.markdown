@@ -40,7 +40,7 @@ resource "selectel_cloudbackup_plan_v2" "plan_1" {
 
 * `name` - (Required) Name of the backup plan.
 
-* `backup_mode` - (Optional) Backup mode used for this plan. Allowed values: `full`, `frequency`. Default is `full`.
+* `backup_mode` - (Optional) Backup mode used for the plan. Available values are `full` and `frequency`. The default value is `full`. Learn more about [backup modes](https://docs.selectel.ru/cloud-servers/backups/about-backups/). 
 
 * `description` - (Optional) Description of the backup plan.
 
