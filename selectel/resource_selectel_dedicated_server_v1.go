@@ -18,7 +18,7 @@ func resourceDedicatedServerV1() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceDedicatedServerV1Create,
 		ReadContext:   resourceDedicatedServerV1Read,
-		UpdateContext: resourceDedicatedServerV1Update,
+		UpdateContext: resourceDedicatedServerV1UpdateWithStateRollback,
 		DeleteContext: resourceDedicatedServerV1Delete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceDedicatedServerV1ImportState,
@@ -29,10 +29,6 @@ func resourceDedicatedServerV1() *schema.Resource {
 			Delete: schema.DefaultTimeout(5 * time.Minute),
 		},
 		Schema: resourceDedicatedServerV1Schema(),
-		CustomizeDiff: func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
-			_ = d.Clear(dedicatedServerSchemaForceUpdateAdditionalParams)
-			return nil
-		},
 	}
 }
 
@@ -410,7 +406,6 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 		))
 	}
 
-	_ = d.Set("os_host_name", resourceOS.UserHostName)
 	_ = d.Set("user_data", resourceOS.UserData)
 
 	keys, _, err := dsClient.SSHKeys(ctx)
@@ -478,12 +473,48 @@ func resourceDedicatedServerV1Delete(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDedicatedServerV1UpdateWithStateRollback(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	rollbackState := func() {
+		if d.HasChange(dedicatedServerSchemaKeyOSPassword) {
+			oldPass, _ := d.GetChange(dedicatedServerSchemaKeyOSPassword)
+			_ = d.Set(dedicatedServerSchemaKeyOSPassword, oldPass)
+		}
+
+		if d.HasChange(dedicatedServerSchemaKeyOSHostName) {
+			oldHostName, _ := d.GetChange(dedicatedServerSchemaKeyOSHostName)
+			_ = d.Set(dedicatedServerSchemaKeyOSHostName, oldHostName)
+		}
+
+		if d.HasChange(dedicatedServerSchemaKeyOSPartitionsConfig) {
+			oldPartitions, _ := d.GetChange(dedicatedServerSchemaKeyOSPartitionsConfig)
+			_ = d.Set(dedicatedServerSchemaKeyOSPartitionsConfig, oldPartitions)
+		}
+	}
+
 	dsClient, diagErr := getDedicatedClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
 
+	diagErr = resourceDedicatedServerV1Update(ctx, d, dsClient)
+	if diagErr != nil {
+		rollbackState()
+
+		return diagErr
+	}
+
+	log.Printf("[DEBUG] waiting for server %s to become 'ACTIVE'", d.Id())
+
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err := waiters.WaitForServersServerInstallNewOSV1ActiveState(ctx, dsClient, d.Id(), timeout)
+	if err != nil {
+		return diag.FromErr(errUpdatingObject(objectDedicatedServer, d.Id(), err))
+	}
+
+	return nil
+}
+
+func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData, dsClient *dedicated.ServiceClient) diag.Diagnostics {
 	var (
 		locationID      = d.Get(dedicatedServerSchemaKeyLocationID).(string)
 		configurationID = d.Get(dedicatedServerSchemaKeyConfigurationID).(string)
@@ -532,14 +563,6 @@ func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData
 	log.Print(msgUpdate(objectDedicatedServer, d.Id(), payload.CopyWithoutSensitiveData()))
 
 	_, err = dsClient.InstallNewOS(ctx, payload, d.Id())
-	if err != nil {
-		return diag.FromErr(errUpdatingObject(objectDedicatedServer, d.Id(), err))
-	}
-
-	log.Printf("[DEBUG] waiting for server %s to become 'ACTIVE'", d.Id())
-
-	timeout := d.Timeout(schema.TimeoutUpdate)
-	err = waiters.WaitForServersServerInstallNewOSV1ActiveState(ctx, dsClient, d.Id(), timeout)
 	if err != nil {
 		return diag.FromErr(errUpdatingObject(objectDedicatedServer, d.Id(), err))
 	}
