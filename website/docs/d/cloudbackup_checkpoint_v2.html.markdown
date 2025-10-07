@@ -49,7 +49,7 @@ data "selectel_cloudbackup_checkpoint_v2" "checkpoint_1" {
     * `checkpoint_id` - Uniquer identifier of the checkpoint.
     * `created_at` - Time when the checkpoint item was created.
     * `backup_created_at` - Time when the backup was created.
-    * `is_incremental` - Whether the backup is incremental.
+    * `is_incremental` - Shows whether the backup is incremental.
     * `status` - Status of the checkpoint item.
     * `resource` - List of resource details:
       * `id` - Resource ID.
