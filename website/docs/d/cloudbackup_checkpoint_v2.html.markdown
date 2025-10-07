@@ -29,7 +29,7 @@ data "selectel_cloudbackup_checkpoint_v2" "checkpoint_1" {
 
 * `region` - (Required) Pool where the backup plan is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
 
-* `filter` - (Optional) Values to filter checkpoints.
+* `filter` - (Optional) Values to filter available checkpoints.
 
   * `plan_name` - (Optional) Name of the backup plan.
   * `volume_name` - (Optional) Name of the volume.
