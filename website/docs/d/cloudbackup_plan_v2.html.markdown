@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_cloudbackup\_plan\_v2
 
-Provides a list of backup plans for Selectel Scheduled Backup service. For more information about backup plans, see the official Selectel documentation for [Scheduled Backup](https://docs.selectel.ru/en/api/scheduled-backups/).
+Provides a list of backup plans for Selectel Scheduled Backups. For more information about backup plans, see the [official Selectel documentation](https://docs.selectel.ru/cloud-servers/backups/create-backup/#configure-scheduled-backups).
 
 ## Example Usage
 
