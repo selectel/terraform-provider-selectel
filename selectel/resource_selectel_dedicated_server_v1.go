@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/api/dedicated"
-	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/servers"
+	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dedicated"
 )
 
 func resourceDedicatedServerV1() *schema.Resource {

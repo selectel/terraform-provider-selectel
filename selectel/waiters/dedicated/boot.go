@@ -1,8 +1,9 @@
-package servers
+package dedicated
 
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -13,6 +14,8 @@ import (
 func WaitForServersServerInstallNewOSV1ActiveState(
 	ctx context.Context, client *dedicated.ServiceClient, resourceID string, timeout time.Duration,
 ) error {
+	timer := time.NewTimer(30 * time.Minute)
+
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{
 			"1",
@@ -20,7 +23,7 @@ func WaitForServersServerInstallNewOSV1ActiveState(
 		Target: []string{
 			"0",
 		},
-		Refresh:    serversServerInstallNewOSV1StateRefreshFunc(ctx, client, resourceID),
+		Refresh:    serversServerInstallNewOSV1StateRefreshFunc(ctx, client, resourceID, timer),
 		Timeout:    timeout,
 		MinTimeout: 15 * time.Second,
 	}
@@ -33,8 +36,16 @@ func WaitForServersServerInstallNewOSV1ActiveState(
 	return nil
 }
 
-func serversServerInstallNewOSV1StateRefreshFunc(ctx context.Context, client *dedicated.ServiceClient, resourceID string) resource.StateRefreshFunc {
+func serversServerInstallNewOSV1StateRefreshFunc(
+	ctx context.Context, client *dedicated.ServiceClient, resourceID string, timer *time.Timer,
+) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
+		select {
+		case <-timer.C:
+			log.Printf("[WARN] reinstalling the OS is taking more than 30 minutes, contact support")
+		default:
+		}
+
 		d, _, err := client.OperatingSystemByResource(ctx, resourceID)
 		if err != nil {
 			return nil, "", err
