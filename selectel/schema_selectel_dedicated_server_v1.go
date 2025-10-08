@@ -66,9 +66,8 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 			Optional: true,
 		},
 		dedicatedServerSchemaKeyOSSSHKey: {
-			Type:      schema.TypeString,
-			Sensitive: true,
-			Optional:  true,
+			Type:     schema.TypeString,
+			Optional: true,
 		},
 		dedicatedServerSchemaKeyOSSSHKeyName: {
 			Type:     schema.TypeString,

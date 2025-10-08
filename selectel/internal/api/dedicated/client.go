@@ -83,11 +83,18 @@ func newHTTPTransport() *http.Transport {
 	}
 }
 
+type RequestHeader struct {
+	Key   string
+	Value string
+}
+
 // DoRequest performs the HTTP request with the current ServiceClient's HTTPClient.
 // Authentication and optional headers will be added automatically.
 //
 //nolint:bodyclose
-func (client *ServiceClient) DoRequest(ctx context.Context, method, path string, body io.Reader) (*ResponseResult, error) {
+func (client *ServiceClient) DoRequest(
+	ctx context.Context, method, path string, body io.Reader, headers ...*RequestHeader,
+) (*ResponseResult, error) {
 	// Prepare an HTTP request with the provided context.
 	request, err := http.NewRequestWithContext(ctx, method, path, body)
 	if err != nil {
@@ -98,6 +105,10 @@ func (client *ServiceClient) DoRequest(ctx context.Context, method, path string,
 	request.Header.Set("X-Auth-Token", client.TokenID)
 	if body != nil {
 		request.Header.Set("Content-Type", "application/json")
+	}
+
+	for _, header := range headers {
+		request.Header.Set(header.Key, header.Value)
 	}
 
 	// Send the HTTP request and populate the ResponseResult.

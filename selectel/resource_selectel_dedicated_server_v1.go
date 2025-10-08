@@ -18,7 +18,7 @@ func resourceDedicatedServerV1() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceDedicatedServerV1Create,
 		ReadContext:   resourceDedicatedServerV1Read,
-		UpdateContext: resourceDedicatedServerV1Update,
+		UpdateContext: resourceDedicatedServerV1UpdateWithStateRollback,
 		DeleteContext: resourceDedicatedServerV1Delete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceDedicatedServerV1ImportState,
@@ -29,10 +29,6 @@ func resourceDedicatedServerV1() *schema.Resource {
 			Delete: schema.DefaultTimeout(5 * time.Minute),
 		},
 		Schema: resourceDedicatedServerV1Schema(),
-		CustomizeDiff: func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
-			_ = d.Clear(dedicatedServerSchemaForceUpdateAdditionalParams)
-			return nil
-		},
 	}
 }
 
@@ -55,6 +51,7 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 		configurationID = d.Get(dedicatedServerSchemaKeyConfigurationID).(string)
 		pricePlanName   = d.Get(dedicatedServerSchemaKeyPricePlanName).(string)
 		sshKeyName, _   = d.Get(dedicatedServerSchemaKeyOSSSHKeyName).(string)
+		password, _     = d.Get(dedicatedServerSchemaKeyOSPassword).(string)
 
 		publicSubnetID, _ = d.Get(dedicatedServerSchemaKeyPublicSubnetID).(string)
 		privateSubnet, _  = d.Get(dedicatedServerSchemaKeyPrivateSubnet).(string)
@@ -81,7 +78,7 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 
 	err = resourceDedicatedServerV1CreateValidatePreconditions(
 		ctx, dsClient, data, locationID, data.pricePlan.UUID, configurationID, osID, userData != "",
-		sshKeyPK != "" || data.sshKeyByName != nil, privateSubnet != "",
+		sshKeyPK != "" || data.sshKeyByName != nil, password != "", privateSubnet != "",
 	)
 	if err != nil {
 		return diag.FromErr(err)
@@ -91,8 +88,6 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 
 	var (
 		hostName = resourceDedicatedServerV1GenerateHostNameIfNotPresented(d)
-
-		password, _ = d.Get(dedicatedServerSchemaKeyOSPassword).(string)
 
 		req = &dedicated.ServerBillingPostPayload{
 			ServiceUUID:      configurationID,
@@ -319,7 +314,7 @@ func resourceDedicatedServerV1CreateValidatePreconditions(
 	ctx context.Context, dsClient *dedicated.ServiceClient,
 	data *serversDedicatedServerV1CreateData,
 	locationID, pricePlanID, configurationID, osID string,
-	needUserData, sshKey bool,
+	needUserData, sshKey, needPassword bool,
 	needPrivateIP bool,
 ) error {
 	switch {
@@ -355,6 +350,9 @@ func resourceDedicatedServerV1CreateValidatePreconditions(
 			"%s %s does not support partitions config", objectOS, data.os.OSValue,
 		)
 
+	case data.os.OSValue == dedicated.NoOSValue && needPassword:
+		return errors.New("noos configuration does not support password")
+
 	case !data.billing.HasEnoughBalance:
 		return fmt.Errorf(
 			"%s %s is not available for price-plan %s in %s %s because of insufficient balance (main, bonus)",
@@ -372,11 +370,13 @@ func resourceDedicatedServerV1CreateValidatePreconditions(
 		)
 	}
 
-	_, _, err := dsClient.PartitionsValidate(ctx, data.partitions, configurationID)
-	if err != nil {
-		return fmt.Errorf(
-			"failed to validate partitions config for %s %s: %w", objectDedicatedServer, configurationID, err,
-		)
+	if data.partitions != nil {
+		_, _, err := dsClient.PartitionsValidate(ctx, data.partitions, configurationID)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to validate partitions config for %s %s: %w", objectDedicatedServer, configurationID, err,
+			)
+		}
 	}
 
 	return nil
@@ -406,9 +406,7 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 		))
 	}
 
-	_ = d.Set("os_host_name", resourceOS.UserHostName)
 	_ = d.Set("user_data", resourceOS.UserData)
-	_ = d.Set("os_password", resourceOS.Password)
 
 	keys, _, err := dsClient.SSHKeys(ctx)
 	if err != nil {
@@ -475,17 +473,39 @@ func resourceDedicatedServerV1Delete(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDedicatedServerV1UpdateWithStateRollback(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	d.Partial(true)
+
 	dsClient, diagErr := getDedicatedClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
 
+	diagErr = resourceDedicatedServerV1Update(ctx, d, dsClient)
+	if diagErr != nil {
+		return diagErr
+	}
+
+	d.Partial(false)
+
+	log.Printf("[DEBUG] waiting for server %s to become 'ACTIVE'", d.Id())
+
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err := waiters.WaitForServersServerInstallNewOSV1ActiveState(ctx, dsClient, d.Id(), timeout)
+	if err != nil {
+		return diag.FromErr(errUpdatingObject(objectDedicatedServer, d.Id(), err))
+	}
+
+	return nil
+}
+
+func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData, dsClient *dedicated.ServiceClient) diag.Diagnostics {
 	var (
 		locationID      = d.Get(dedicatedServerSchemaKeyLocationID).(string)
 		configurationID = d.Get(dedicatedServerSchemaKeyConfigurationID).(string)
 		osID            = d.Get(dedicatedServerSchemaKeyOSID).(string)
 		sshKeyName, _   = d.Get(dedicatedServerSchemaKeyOSSSHKeyName).(string)
+		password, _     = d.Get(dedicatedServerSchemaKeyOSPassword).(string)
 	)
 
 	data, err := resourceDedicatedServerV1UpdateLoadData(ctx, dsClient, d, locationID, osID, configurationID, sshKeyName)
@@ -503,7 +523,8 @@ func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData
 	}
 
 	err = resourceDedicatedServerV1UpdateValidatePreconditions(
-		ctx, d, dsClient, data.os, data.partitions, userData != "", sshKeyPK != "" || data.sshKeyByName != nil,
+		ctx, d, dsClient, data.os, data.partitions, userData != "",
+		sshKeyPK != "" || data.sshKeyByName != nil, password != "",
 	)
 	if err != nil {
 		return diag.FromErr(err)
@@ -511,8 +532,6 @@ func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData
 
 	var (
 		hostName = resourceDedicatedServerV1GenerateHostNameIfNotPresented(d)
-
-		password, _ = d.Get(dedicatedServerSchemaKeyOSPassword).(string)
 
 		payload = &dedicated.InstallNewOSPayload{
 			OSVersion:        data.os.VersionValue,
@@ -529,14 +548,6 @@ func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData
 	log.Print(msgUpdate(objectDedicatedServer, d.Id(), payload.CopyWithoutSensitiveData()))
 
 	_, err = dsClient.InstallNewOS(ctx, payload, d.Id())
-	if err != nil {
-		return diag.FromErr(errUpdatingObject(objectDedicatedServer, d.Id(), err))
-	}
-
-	log.Printf("[DEBUG] waiting for server %s to become 'ACTIVE'", d.Id())
-
-	timeout := d.Timeout(schema.TimeoutUpdate)
-	err = waiters.WaitForServersServerInstallNewOSV1ActiveState(ctx, dsClient, d.Id(), timeout)
 	if err != nil {
 		return diag.FromErr(errUpdatingObject(objectDedicatedServer, d.Id(), err))
 	}
@@ -607,7 +618,7 @@ func resourceDedicatedServerV1UpdateLoadData(
 func resourceDedicatedServerV1UpdateValidatePreconditions(
 	ctx context.Context, d *schema.ResourceData, dsClient *dedicated.ServiceClient,
 	os *dedicated.OperatingSystem, partitions dedicated.PartitionsConfig,
-	needUserData, needSSHKey bool,
+	needUserData, needSSHKey, needPassword bool,
 ) error {
 	var (
 		osID                           = d.Get(dedicatedServerSchemaKeyOSID).(string)
@@ -659,6 +670,9 @@ func resourceDedicatedServerV1UpdateValidatePreconditions(
 		return fmt.Errorf(
 			"%s %s does not support partitions config", objectOS, os.OSValue,
 		)
+
+	case os.OSValue == dedicated.NoOSValue && needPassword:
+		return errors.New("noos configuration does not support password")
 	}
 
 	diagErr := resourceDedicatedServerV1UpdateValidatePreconditionsAdditionalOSParams(d, forceUpdateAdditionalParams || d.HasChange(dedicatedServerSchemaKeyOSID))
@@ -666,13 +680,15 @@ func resourceDedicatedServerV1UpdateValidatePreconditions(
 		return diagErr
 	}
 
-	configurationID := d.Get(dedicatedServerSchemaKeyConfigurationID).(string)
+	if partitions != nil {
+		configurationID := d.Get(dedicatedServerSchemaKeyConfigurationID).(string)
 
-	_, _, err := dsClient.PartitionsValidate(ctx, partitions, configurationID)
-	if err != nil {
-		return fmt.Errorf(
-			"failed to validate partitions config: %w", err,
-		)
+		_, _, err := dsClient.PartitionsValidate(ctx, partitions, configurationID)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to validate partitions config: %w", err,
+			)
+		}
 	}
 
 	return nil
