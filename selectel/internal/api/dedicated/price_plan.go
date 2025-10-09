@@ -25,8 +25,18 @@ func (p PricePlans) FindOneByName(name string) *PricePlan {
 	return nil
 }
 
+func (p PricePlans) FindOneID(id string) *PricePlan {
+	for _, pp := range p {
+		if pp.UUID == id {
+			return pp
+		}
+	}
+
+	return nil
+}
+
 func (client *ServiceClient) PricePlans(ctx context.Context) (PricePlans, *ResponseResult, error) {
-	url := fmt.Sprintf("%s/plan", client.Endpoint)
+	url := fmt.Sprintf("%s/pub/plan", client.Endpoint)
 
 	headers := []*RequestHeader{
 		{
@@ -35,7 +45,7 @@ func (client *ServiceClient) PricePlans(ctx context.Context) (PricePlans, *Respo
 		},
 	}
 
-	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil, headers...)
+	responseResult, err := client.DoRequestWithoutAuth(ctx, http.MethodGet, url, nil, headers...)
 	if err != nil {
 		return nil, nil, err
 	}

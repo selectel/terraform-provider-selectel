@@ -88,6 +88,49 @@ type RequestHeader struct {
 	Value string
 }
 
+// DoRequestWithoutAuth performs the HTTP request with the current ServiceClient's HTTPClient.
+// Authentication and optional headers will be added automatically.
+//
+//nolint:bodyclose
+func (client *ServiceClient) DoRequestWithoutAuth(
+	ctx context.Context, method, path string, body io.Reader, headers ...*RequestHeader,
+) (*ResponseResult, error) {
+	// Prepare an HTTP request with the provided context.
+	request, err := http.NewRequestWithContext(ctx, method, path, body)
+	if err != nil {
+		return nil, err
+	}
+
+	request.Header.Set("User-Agent", client.UserAgent)
+	if body != nil {
+		request.Header.Set("Content-Type", "application/json")
+	}
+
+	for _, header := range headers {
+		request.Header.Set(header.Key, header.Value)
+	}
+
+	// Send the HTTP request and populate the ResponseResult.
+	response, err := client.HTTPClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+
+	responseResult := &ResponseResult{
+		Response: response,
+	}
+
+	// Check status code and populate custom error body with extended error message if it's possible.
+	if response.StatusCode >= http.StatusBadRequest {
+		err = responseResult.extractErr()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return responseResult, nil
+}
+
 // DoRequest performs the HTTP request with the current ServiceClient's HTTPClient.
 // Authentication and optional headers will be added automatically.
 //
