@@ -46,7 +46,7 @@ resource "selectel_cloudbackup_plan_v2" "plan_1" {
 
 * `full_backups_amount` - (Required) Maximum number of backups to save in a full plan or full backups in a frequency plan.
 
-* `schedule_type` - (Optional) Backup scheduling type. Available values are `calendar` and `crontab`. Learn more about [schedule types](https://docs.selectel.ru/cloud-servers/backups/create-backup/#configure-scheduled-backups).
+* `schedule_type` - (Optional) Backup scheduling type. Available values are `calendar` and `crontab`. Learn more about [schedule types](https://docs.selectel.ru/en/cloud-servers/backups/create-backup/#configure-scheduled-backups).
 
 * `schedule_pattern` - (Optional) Backup scheduling pattern. The default value is `0 0 * * *`.
 
