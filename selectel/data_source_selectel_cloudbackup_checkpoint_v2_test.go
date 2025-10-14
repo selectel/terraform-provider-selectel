@@ -26,6 +26,9 @@ func TestAccCloudBackupCheckpointV2Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"data.selectel_cloudbackup_checkpoint_v2.checkpoints", "checkpoints.list.#", "0",
 					),
+					resource.TestCheckResourceAttr(
+						"data.selectel_cloudbackup_checkpoint_v2.checkpoints", "checkpoints.total.#", "0",
+					),
 				),
 			},
 		},
@@ -41,6 +44,11 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
 data "selectel_cloudbackup_checkpoint_v2" "checkpoints" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-1"
+
+  filter {
+     plan_name = "non-existing-plan-name"
+     volume_name = "non-existing-volume-name"
+  }
 }
 `, projectName)
 }
