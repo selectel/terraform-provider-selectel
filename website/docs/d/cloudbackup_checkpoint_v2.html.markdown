@@ -37,22 +37,23 @@ data "selectel_cloudbackup_checkpoint_v2" "checkpoint_1" {
 ## Attributes Reference
 
 * `checkpoints` - List of available checkpoints:
+  * `list`- Checkpoints list:
+      * `id` - Unique identifier of the checkpoint.
+    * `plan_id` - Unique identifier of the backup plan.
+    * `created_at` - Time when the checkpoint was created.
+    * `status` - Status of the checkpoint.
+    * `checkpoint_items` - List of checkpoint items:
+      * `id` - Unique identifier of the checkpoint item.
+      * `backup_id` - Unique identifier of the backup.
+      * `chain_id` - Uniquer identifier of the backup chain.
+      * `checkpoint_id` - Uniquer identifier of the checkpoint.
+      * `created_at` - Time when the checkpoint item was created.
+      * `backup_created_at` - Time when the backup was created.
+      * `is_incremental` - Shows whether the backup is incremental.
+      * `status` - Status of the checkpoint item.
+      * `resource` - List of resource details:
+        * `id` - Unique identifier of the resource.
+        * `name` - Resource name.
+        * `type` - Resource type.
 
-  * `id` - Unique identifier of the checkpoint.
-  * `plan_id` - Unique identifier of the backup plan.
-  * `created_at` - Time when the checkpoint was created.
-  * `status` - Status of the checkpoint.
-  * `checkpoint_items` - List of checkpoint items:
-    * `id` - Unique identifier of the checkpoint item.
-    * `backup_id` - Unique identifier of the backup.
-    * `chain_id` - Uniquer identifier of the backup chain.
-    * `checkpoint_id` - Uniquer identifier of the checkpoint.
-    * `created_at` - Time when the checkpoint item was created.
-    * `backup_created_at` - Time when the backup was created.
-    * `is_incremental` - Shows whether the backup is incremental.
-    * `status` - Status of the checkpoint item.
-    * `resource` - List of resource details:
-      * `id` - Unique identifier of the resource.
-      * `name` - Resource name.
-      * `type` - Resource type.
-
+  * `total` - Total number of checkpoints.

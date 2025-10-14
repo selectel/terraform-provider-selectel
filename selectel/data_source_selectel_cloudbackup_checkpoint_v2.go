@@ -41,27 +41,11 @@ func dataSourceCloudBackupCheckpointV2() *schema.Resource {
 			},
 			// computed
 			"checkpoints": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"plan_id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"created_at": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"status": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"checkpoint_items": {
+						"list": {
 							Type:     schema.TypeList,
 							Computed: true,
 							Elem: &schema.Resource{
@@ -70,15 +54,7 @@ func dataSourceCloudBackupCheckpointV2() *schema.Resource {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
-									"backup_id": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"chain_id": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"checkpoint_id": {
+									"plan_id": {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
@@ -86,19 +62,11 @@ func dataSourceCloudBackupCheckpointV2() *schema.Resource {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
-									"backup_created_at": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"is_incremental": {
-										Type:     schema.TypeBool,
-										Computed: true,
-									},
 									"status": {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
-									"resource": {
+									"checkpoint_items": {
 										Type:     schema.TypeList,
 										Computed: true,
 										Elem: &schema.Resource{
@@ -107,19 +75,63 @@ func dataSourceCloudBackupCheckpointV2() *schema.Resource {
 													Type:     schema.TypeString,
 													Computed: true,
 												},
-												"name": {
+												"backup_id": {
 													Type:     schema.TypeString,
 													Computed: true,
 												},
-												"type": {
+												"chain_id": {
 													Type:     schema.TypeString,
 													Computed: true,
+												},
+												"checkpoint_id": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"created_at": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"backup_created_at": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"is_incremental": {
+													Type:     schema.TypeBool,
+													Computed: true,
+												},
+												"status": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"resource": {
+													Type:     schema.TypeList,
+													Computed: true,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"id": {
+																Type:     schema.TypeString,
+																Computed: true,
+															},
+															"name": {
+																Type:     schema.TypeString,
+																Computed: true,
+															},
+															"type": {
+																Type:     schema.TypeString,
+																Computed: true,
+															},
+														},
+													},
 												},
 											},
 										},
 									},
 								},
 							},
+						},
+						"total": {
+							Type:     schema.TypeInt,
+							Computed: true,
 						},
 					},
 				},
@@ -138,7 +150,7 @@ func dataSourceCloudBackupCheckpointV2Read(ctx context.Context, d *schema.Resour
 
 	log.Printf("[DEBUG] Getting %s '%#v'", objectCloudBackupCheckpoint, filter)
 
-	checkpoints, _, err := client.Checkpoints(ctx, &cloudbackup.CheckpointsQuery{
+	resp, _, err := client.Checkpoints(ctx, &cloudbackup.CheckpointsQuery{
 		PlanName:   filter.planName,
 		VolumeName: filter.volumeName,
 	})
@@ -146,13 +158,13 @@ func dataSourceCloudBackupCheckpointV2Read(ctx context.Context, d *schema.Resour
 		return diag.FromErr(errGettingObjects(objectCloudBackupCheckpoint, err))
 	}
 
-	osFlatten := flattenCloudBlockStorageBackupCheckpoints(checkpoints)
-	if err := d.Set("checkpoints", osFlatten); err != nil {
+	checkpointsFlatten := flattenCloudBlockStorageBackupCheckpoints(resp)
+	if err := d.Set("checkpoints", checkpointsFlatten); err != nil {
 		return diag.FromErr(err)
 	}
 
-	ids := make([]string, 0, len(checkpoints))
-	for _, e := range checkpoints {
+	ids := make([]string, 0, len(resp.Checkpoints))
+	for _, e := range resp.Checkpoints {
 		ids = append(ids, e.ID)
 	}
 
@@ -200,9 +212,9 @@ func expandCloudBlockStorageBackupCheckpointsSearchFilter(d *schema.ResourceData
 	return filter
 }
 
-func flattenCloudBlockStorageBackupCheckpoints(list []*cloudbackup.Checkpoint) []interface{} {
-	res := make([]interface{}, len(list))
-	for i, e := range list {
+func flattenCloudBlockStorageBackupCheckpoints(resp *cloudbackup.CheckpointsResponse) []interface{} {
+	checkpoints := make([]interface{}, len(resp.Checkpoints))
+	for i, e := range resp.Checkpoints {
 		sMap := make(map[string]interface{})
 		sMap["id"] = e.ID
 		sMap["plan_id"] = e.PlanID
@@ -233,8 +245,13 @@ func flattenCloudBlockStorageBackupCheckpoints(list []*cloudbackup.Checkpoint) [
 		}
 		sMap["checkpoint_items"] = items
 
-		res[i] = sMap
+		checkpoints[i] = sMap
 	}
 
-	return res
+	return []interface{}{
+		map[string]interface{}{
+			"list":  checkpoints,
+			"total": resp.Total,
+		},
+	}
 }

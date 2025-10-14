@@ -24,7 +24,7 @@ func TestAccCloudBackupCheckpointV2Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					resource.TestCheckResourceAttr(
-						"data.selectel_cloudbackup_checkpoint_v2.checkpoints", "checkpoints.#", "0",
+						"data.selectel_cloudbackup_checkpoint_v2.checkpoints", "checkpoints.list.#", "0",
 					),
 				),
 			},
