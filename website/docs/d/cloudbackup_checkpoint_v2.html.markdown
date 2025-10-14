@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_cloudbackup\_checkpoint\_v2
 
-Provides a list of backup checkpoints for Selectel Scheduled Backups. For more information about checkpoints, see the [official Selectel API documentation](https://docs.selectel.ru/en/api/scheduled-backups/).
+Provides a list of created backups for Selectel Backups in the Cloud. For more information about backups, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/backups/about-backups/).
 
 ## Example Usage
 
