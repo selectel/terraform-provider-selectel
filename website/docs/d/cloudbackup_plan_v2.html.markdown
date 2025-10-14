@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_cloudbackup_plan_v2"
 sidebar_current: "docs-selectel-datasource-cloudbackup-plan-v2"
 description: |-
-  Provides a list of backup plans for Selectel Scheduled Backup service.
+  Provides a list of backup plans for Selectel Backups in the Cloud.
 ---
 
 # selectel\_cloudbackup\_plan\_v2
