@@ -3,14 +3,13 @@ package selectel
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	cloudbackup "github.com/selectel/cloudbackup-go/pkg/v2"
+	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/cloudbackup"
 )
 
 func resourceCloudBackupPlanV2() *schema.Resource {
@@ -146,35 +145,9 @@ func resourceCloudBackupPlanV2Create(ctx context.Context, d *schema.ResourceData
 
 	d.SetId(createdPlan.ID)
 
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{
-			cloudbackup.PlanStatusSuspended,
-		},
-		Target: []string{
-			cloudbackup.PlanStatusStarted,
-		},
-		Timeout: d.Timeout(schema.TimeoutCreate),
-		Refresh: func() (result interface{}, state string, err error) {
-			p, _, err := client.Plan(ctx, createdPlan.ID)
-			if err != nil {
-				return nil, "", err
-			}
-
-			if p == nil {
-				return nil, "", fmt.Errorf("can't find created plan %q", createdPlan.ID)
-			}
-
-			return p, p.Status, nil
-		},
-		MinTimeout: 10 * time.Second,
-	}
-
-	_, err = stateConf.WaitForStateContext(ctx)
-	if err != nil {
-		return diag.Errorf(
-			"error waiting for the plan %s to become '%s': %v",
-			createdPlan.ID, cloudbackup.PlanStatusStarted, err,
-		)
+	diagErr = waiters.WaitForPlanV2StartedState(ctx, client, d.Id(), d.Timeout(schema.TimeoutCreate))
+	if diagErr != nil {
+		return diagErr
 	}
 
 	return nil
@@ -303,35 +276,9 @@ func resourceCloudBackupPlanV2Update(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(errUpdatingObject(objectCloudBackupPlan, d.Id(), err))
 	}
 
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{
-			cloudbackup.PlanStatusSuspended,
-		},
-		Target: []string{
-			cloudbackup.PlanStatusStarted,
-		},
-		Timeout: d.Timeout(schema.TimeoutUpdate),
-		Refresh: func() (result interface{}, state string, err error) {
-			p, _, err := client.Plan(ctx, d.Id())
-			if err != nil {
-				return nil, "", err
-			}
-
-			if p == nil {
-				return nil, "", fmt.Errorf("can't find created plan %q", d.Id())
-			}
-
-			return p, p.Status, nil
-		},
-		MinTimeout: 10 * time.Second,
-	}
-
-	_, err = stateConf.WaitForStateContext(ctx)
-	if err != nil {
-		return diag.Errorf(
-			"error waiting for the plan %s to become '%s': %v",
-			d.Id(), cloudbackup.PlanStatusStarted, err,
-		)
+	diagErr = waiters.WaitForPlanV2StartedState(ctx, client, d.Id(), d.Timeout(schema.TimeoutUpdate))
+	if diagErr != nil {
+		return diagErr
 	}
 
 	return nil
@@ -350,29 +297,9 @@ func resourceCloudBackupPlanV2Delete(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(errDeletingObject(objectCloudBackupPlan, d.Id(), err))
 	}
 
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{
-			cloudbackup.PlanStatusStarted,
-			cloudbackup.PlanStatusSuspended,
-		},
-		Target:  []string{},
-		Timeout: d.Timeout(schema.TimeoutDelete),
-		Refresh: func() (result interface{}, state string, err error) {
-			p, resp, err := client.Plan(ctx, planID)
-			switch {
-			case resp != nil && resp.StatusCode == http.StatusNotFound:
-				return nil, "", nil
-			case err != nil:
-				return nil, "", err
-			}
-
-			return p, p.Status, nil
-		},
-	}
-
-	_, err = stateConf.WaitForStateContext(ctx)
-	if err != nil {
-		return diag.Errorf("error waiting for the plan %s to be deleted: %v", d.Id(), err)
+	diagErr = waiters.WaitForPlanV2Deleted(ctx, client, d.Id(), d.Timeout(schema.TimeoutDelete))
+	if diagErr != nil {
+		return diagErr
 	}
 
 	d.SetId("")
