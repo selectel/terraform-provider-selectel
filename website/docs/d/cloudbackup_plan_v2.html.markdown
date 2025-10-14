@@ -47,7 +47,7 @@ data "selectel_cloudbackup_plan_v2" "plan_1" {
   * `backup_mode` - Backup mode.
   * `created_at` - Time when the backup plan was created.
   * `full_backups_amount` - Number of full backups.
-  * `resources` - List of resources attached to the plan:
+  * `resources` - List of resources that are backed up according to the backup plan:
     * `id` - Resource ID.
     * `name` - Resource name.
     * `type` - Resource type.
