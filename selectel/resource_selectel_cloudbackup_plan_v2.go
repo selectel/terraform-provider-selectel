@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	cloudbackup "github.com/selectel/cloudbackup-go/pkg/v2"
-
 	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/cloudbackup"
 )
 
@@ -219,12 +218,12 @@ func resourceCloudBackupPlanV2Read(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(fmt.Errorf("can't find plan %q", d.Id()))
 	}
 
-	_ = d.Set("name", res.Name)
-	_ = d.Set("backup_mode", res.BackupMode)
-	_ = d.Set("description", res.Description)
-	_ = d.Set("full_backups_amount", res.FullBackupsAmount)
-	_ = d.Set("schedule_type", res.ScheduleType)
-	_ = d.Set("schedule_pattern", res.SchedulePattern)
+	d.Set("name", res.Name)
+	d.Set("backup_mode", res.BackupMode)
+	d.Set("description", res.Description)
+	d.Set("full_backups_amount", res.FullBackupsAmount)
+	d.Set("schedule_type", res.ScheduleType)
+	d.Set("schedule_pattern", res.SchedulePattern)
 
 	resources := make([]map[string]interface{}, 0, len(res.Resources))
 	for _, r := range res.Resources {
@@ -235,7 +234,7 @@ func resourceCloudBackupPlanV2Read(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 
-	_ = d.Set("resources", []interface{}{map[string]interface{}{
+	d.Set("resources", []interface{}{map[string]interface{}{
 		"resource": resources,
 	}})
 

@@ -38,7 +38,7 @@ data "selectel_cloudbackup_checkpoint_v2" "checkpoint_1" {
 
 * `checkpoints` - List of available checkpoints:
   * `list`- Checkpoints list:
-      * `id` - Unique identifier of the checkpoint.
+    * `id` - Unique identifier of the checkpoint.
     * `plan_id` - Unique identifier of the backup plan.
     * `created_at` - Time when the checkpoint was created.
     * `status` - Status of the checkpoint.
