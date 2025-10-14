@@ -54,5 +54,5 @@ resource "selectel_cloudbackup_plan_v2" "plan_1" {
 
   * `resource` - (Required) List of resource objects:
     * `id` - (Required) Unique identifier of the resource to back up.
-    * `name` - (Required) Name of the backed up resource.
+    * `name` - (Required) Name of the resource to back up.
     * `type` - (Required) Type of the resource to back up. The only available value is `"OS::Cinder::Volume"`.
