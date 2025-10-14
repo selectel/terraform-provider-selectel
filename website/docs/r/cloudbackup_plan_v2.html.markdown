@@ -50,7 +50,7 @@ resource "selectel_cloudbackup_plan_v2" "plan_1" {
 
 * `schedule_pattern` - (Optional) Backup scheduling pattern. The default value is `0 0 * * *`.
 
-* `resources` - (Required) List of resources included in the plan. Each resource block supports the following:
+* `resources` - (Required) List of resources to back up according to the backup plan. The only available type of resources is a volume. You can add multiple volumes – each volume in a separate block.
 
   * `resource` - (Required) List of resource objects:
     * `id` - (Required) UUID of the backed up resource.
