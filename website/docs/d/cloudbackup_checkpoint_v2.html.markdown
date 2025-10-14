@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_cloudbackup_checkpoint_v2"
 sidebar_current: "docs-selectel-datasource-cloudbackup-checkpoint-v2"
 description: |-
-  Provides a list of backup checkpoints for Selectel Scheduled Backup service.
+  Provides a list of backup checkpoints for Selectel Backups in the Cloud.
 ---
 
 # selectel\_cloudbackup\_checkpoint\_v2
