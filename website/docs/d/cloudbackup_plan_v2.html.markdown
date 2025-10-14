@@ -40,18 +40,22 @@ data "selectel_cloudbackup_plan_v2" "plan_1" {
 
 * `plans` - List of backup plans:
 
-  * `id` - Unique identifier of the backup plan.
-  * `name` - Name of the backup plan.
-  * `description` - Description of the backup plan.
-  * `status` - Status of the backup plan.
-  * `backup_mode` - Backup mode.
-  * `created_at` - Time when the backup plan was created.
-  * `full_backups_amount` - Number of full backups.
-  * `resources` - List of resources that are backed up according to the backup plan:
-    * `id` - Resource ID.
-    * `name` - Resource name.
-    * `type` - Resource type.
-  * `schedule_pattern` - Schedule pattern for the backup plan.
-  * `schedule_type` - Schedule type for the backup plan.
+  * `list`- Plans list:
+
+    * `id` - Unique identifier of the backup plan.
+    * `name` - Name of the backup plan.
+    * `description` - Description of the backup plan.
+    * `status` - Status of the backup plan.
+    * `backup_mode` - Backup mode.
+    * `created_at` - Time when the backup plan was created.
+    * `full_backups_amount` - Number of full backups.
+    * `resources` - List of resources that are backed up according to the backup plan:
+      * `id` - Resource ID.
+      * `name` - Resource name.
+      * `type` - Resource type.
+    * `schedule_pattern` - Schedule pattern for the backup plan.
+    * `schedule_type` - Schedule type for the backup plan.
+  
+  * `total` - Total number of backup plans.
 
 

@@ -45,64 +45,76 @@ func dataSourceCloudBackupPlanV2() *schema.Resource {
 			},
 			// computed
 			"plans": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"backup_mode": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"created_at": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"description": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"full_backups_amount": {
-							Type:     schema.TypeInt,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"resources": {
+						"list": {
 							Type:     schema.TypeList,
 							Computed: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
+									"backup_mode": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"created_at": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"description": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
 									"id": {
 										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"full_backups_amount": {
+										Type:     schema.TypeInt,
 										Computed: true,
 									},
 									"name": {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
-									"type": {
+									"resources": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"id": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"name": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"type": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+											},
+										},
+									},
+									"schedule_pattern": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"schedule_type": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"status": {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
 								},
 							},
 						},
-						"schedule_pattern": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"schedule_type": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"status": {
-							Type:     schema.TypeString,
+						"total": {
+							Type:     schema.TypeInt,
 							Computed: true,
 						},
 					},
@@ -122,7 +134,7 @@ func dataSourceCloudBackupPlanV2Read(ctx context.Context, d *schema.ResourceData
 
 	log.Printf("[DEBUG] Getting %s '%#v'", objectCloudBackupPlan, filter)
 
-	plans, _, err := client.Plans(ctx, &cloudbackup.PlansQuery{
+	resp, _, err := client.Plans(ctx, &cloudbackup.PlansQuery{
 		Name:       filter.name,
 		VolumeName: filter.volumeName,
 	})
@@ -130,10 +142,10 @@ func dataSourceCloudBackupPlanV2Read(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(errGettingObjects(objectCloudBackupPlan, err))
 	}
 
-	filteredPlans := filterCloudBackupPlans(plans, filter)
+	filteredPlans := filterCloudBackupPlans(resp.Plans, filter)
 
-	osFlatten := flattenCloudBackupPlans(filteredPlans)
-	if err := d.Set("plans", osFlatten); err != nil {
+	plansFlatten := flattenCloudBackupPlans(filteredPlans, len(filteredPlans))
+	if err := d.Set("plans", plansFlatten); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -205,8 +217,8 @@ func filterCloudBackupPlans(list []*cloudbackup.Plan, filter cloudBackupPlansFil
 	return filtered
 }
 
-func flattenCloudBackupPlans(list []*cloudbackup.Plan) []interface{} {
-	res := make([]interface{}, len(list))
+func flattenCloudBackupPlans(list []*cloudbackup.Plan, total int) []interface{} {
+	plans := make([]interface{}, len(list))
 	for i, e := range list {
 		sMap := make(map[string]interface{})
 		sMap["backup_mode"] = e.BackupMode
@@ -230,8 +242,13 @@ func flattenCloudBackupPlans(list []*cloudbackup.Plan) []interface{} {
 		sMap["schedule_type"] = e.ScheduleType
 		sMap["status"] = e.Status
 
-		res[i] = sMap
+		plans[i] = sMap
 	}
 
-	return res
+	return []interface{}{
+		map[string]interface{}{
+			"list":  plans,
+			"total": total,
+		},
+	}
 }
