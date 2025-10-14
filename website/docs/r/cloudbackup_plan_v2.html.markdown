@@ -53,6 +53,6 @@ resource "selectel_cloudbackup_plan_v2" "plan_1" {
 * `resources` - (Required) List of resources to back up according to the backup plan. The only available type of resources is a volume. You can add multiple volumes – each volume in a separate block.
 
   * `resource` - (Required) List of resource objects:
-    * `id` - (Required) UUID of the backed up resource.
+    * `id` - (Required) Unique identifier of the resource to back up.
     * `name` - (Required) Name of the backed up resource.
     * `type` - (Required) Type of the resource to back up. The only available value is `"OS::Cinder::Volume"`.
