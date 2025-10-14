@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	cloudbackup "github.com/selectel/cloudbackup-go/pkg/v2"
+
 	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/cloudbackup"
 )
 
@@ -150,7 +151,7 @@ func resourceCloudBackupPlanV2Create(ctx context.Context, d *schema.ResourceData
 		return diagErr
 	}
 
-	return nil
+	return resourceCloudBackupPlanV2Read(ctx, d, meta)
 }
 
 func readCloudBackupPlanV2Resource(d *schema.ResourceData) ([]*cloudbackup.PlanResource, diag.Diagnostics) {
@@ -281,7 +282,7 @@ func resourceCloudBackupPlanV2Update(ctx context.Context, d *schema.ResourceData
 		return diagErr
 	}
 
-	return nil
+	return resourceCloudBackupPlanV2Read(ctx, d, meta)
 }
 
 func resourceCloudBackupPlanV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
