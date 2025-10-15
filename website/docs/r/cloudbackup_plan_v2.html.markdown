@@ -48,7 +48,7 @@ resource "selectel_cloudbackup_plan_v2" "plan_1" {
 
 * `schedule_type` - (Optional) Backup scheduling type. Available values are `calendar` and `crontab`. Learn more about [schedule types](https://docs.selectel.ru/en/cloud-servers/backups/create-backup/#configure-scheduled-backups).
 
-* `schedule_pattern` - (Optional) Backup scheduling pattern. The default value is `0 0 * * *`.
+* `schedule_pattern` - (Optional) Backup scheduling pattern.
 
 * `resources` - (Required) List of resources to back up according to the backup plan. The only available type of resources is a volume. You can add multiple volumes – each volume in a separate block.
 

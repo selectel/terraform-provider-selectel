@@ -57,15 +57,13 @@ func resourceCloudBackupPlanV2() *schema.Resource {
 			},
 			"schedule_type": {
 				Type:         schema.TypeString,
-				Optional:     true,
-				Default:      "crontab",
+				Required:     true,
 				ValidateFunc: validation.StringInSlice([]string{"crontab", "calendar"}, true),
 				Description:  `Backup scheduling type. Allowed values: "calendar", "crontab"`,
 			},
 			"schedule_pattern": {
 				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "0 0 * * *",
+				Required:    true,
 				Description: "Backup scheduling pattern",
 			},
 			"resources": {
