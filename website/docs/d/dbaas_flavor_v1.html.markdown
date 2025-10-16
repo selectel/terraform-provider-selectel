@@ -35,7 +35,7 @@ data "selectel_dbaas_flavor_v1" "flavor" {
 
   * `fl_size` - (Optional) Line of flavors. Available values are `standard` (for the Standard, CPU, and Memory lines) and `high_freq` (for the HighFreq line). Learn more about available lines for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/configurations/), [PostgreSQL for 1C](https://docs.selectel.ru/en/cloud/managed-databases/postgresql-for-1c/configurations-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/configurations/), [MySQL semi-sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-semi-sync/configurations/), [MySQL sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-sync/configurations/), [Redis](https://docs.selectel.ru/en/cloud/managed-databases/redis/configurations/), and [Kafka](https://docs.selectel.ru/en/cloud/managed-databases/kafka/configurations/).
 
-  * `datastore_type_id` - (Optional) Unique identifier of the datastore type.
+  * `datastore_type_id` - (Optional) Unique identifier of the cluster type.
 
 ## Attributes Reference
 
@@ -55,4 +55,5 @@ data "selectel_dbaas_flavor_v1" "flavor" {
 
   * `fl_size` - Line of flavors.
 
-  * `datastore_type_ids` - List of datastore types that support this flavor.
+  * `datastore_type_ids` - List of cluster types that support this flavor.
+  
