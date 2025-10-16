@@ -60,7 +60,7 @@ resource "selectel_dbaas_kafka_datastore_v1" "cluster_1" {
 
 * `config` - (Optional) Configuration parameters for the cluster. You can retrieve information about available configuration parameters with the [selectel_dbaas_configuration_parameter_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_configuration_parameter_v1) data source.
 
-* `logs` - (Optional) Name of an existing or a new log group in the [Logs](https://docs.selectel.ru/en/logs/about-logs/) service. The name must start with the prefix 's/dbaas/'. It can contain uppercase and lowercase letters, digits and symbols (underscore, hyphen, forward slash, period and hash). The name cannot exceed 512 symbols.  For example, s/dbaas/My-first-group. Learn more  about [Logs](https://docs.selectel.ru/en/managed-databases/kafka/logs/).
+* `logs` - (Optional) Name of an existing or a new log group in the [Logs](https://docs.selectel.ru/en/logs/about-logs/) service. The name must start with the prefix 's/dbaas/'. It can contain uppercase and lowercase letters, digits and symbols (underscore, hyphen, forward slash, period and hash). The name cannot exceed 512 symbols. For example, s/dbaas/My-first-group. Learn more about [Logs](https://docs.selectel.ru/en/managed-databases/kafka/logs/).
 
 * `security_groups` - (Optional) List of security groups. If no security group UUIDs are specified when creating the datastore, a default security group will be created and its UUID will be assigned automatically. A datastore must have at least one security group. Learn more about security groups for [Kafka](https://docs.selectel.ru/en/managed-databases/kafka/network-access-control/#security-groups-in-managed-databases).
 
