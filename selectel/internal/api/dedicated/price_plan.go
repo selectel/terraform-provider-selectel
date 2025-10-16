@@ -28,7 +28,14 @@ func (p PricePlans) FindOneByName(name string) *PricePlan {
 func (client *ServiceClient) PricePlans(ctx context.Context) (PricePlans, *ResponseResult, error) {
 	url := fmt.Sprintf("%s/plan", client.Endpoint)
 
-	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil)
+	headers := []*RequestHeader{
+		{
+			Key:   "Accept-Language",
+			Value: "en-US",
+		},
+	}
+
+	responseResult, err := client.DoRequest(ctx, http.MethodGet, url, nil, headers...)
 	if err != nil {
 		return nil, nil, err
 	}

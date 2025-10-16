@@ -27,7 +27,7 @@ func TestAccDedicatedServerV1Basic(t *testing.T) {
 		osVersion, updatedOSVersion   = "2404", "2204"
 		locationName                  = "MSK-2"
 		cfgName                       = "CL25-NVMe"
-		pricePlanName                 = "1 день"
+		pricePlanName                 = "1 day"
 		osHostName, updatedOSHostName = "hostname", "hostname1"
 		osPassword, updatedOSPassword = "Passw0rd!", "Passw0rd!1"
 		userData, updatedUserData     = "#!/bin/bash", "#!/bin/sh"
@@ -137,9 +137,7 @@ data "selectel_dedicated_location_v1" "location_tf_acc_test_1" {
 
 data "selectel_dedicated_configuration_v1" "server_configuration_tf_acc_test_1" {
  project_id     = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
- filter {
-   name           = "%s"
- }
+ deep_filter = "{\"name\": \"%s\"}"
 }
 
 resource "selectel_dedicated_server_v1" "server_tf_acc_test_1" {
@@ -235,6 +233,7 @@ func Test_resourceDedicatedServerV1CreateValidatePreconditions(t *testing.T) {
 		needUserScrip bool
 		needSSHKey    bool
 		needPrivateIP bool
+		needPassword  bool
 		data          *serversDedicatedServerV1CreateData
 		wantErr       string
 	}{
@@ -338,6 +337,20 @@ func Test_resourceDedicatedServerV1CreateValidatePreconditions(t *testing.T) {
 			}(),
 			wantErr: "failed to validate partitions config",
 		},
+		{
+			name:         "PasswordNotAllowed",
+			needPassword: true,
+			data: func() *serversDedicatedServerV1CreateData {
+				d := defaultData()
+				d.partitions = nil
+				d.os = &dedicated.OperatingSystem{
+					OSValue: "noos",
+				}
+
+				return d
+			}(),
+			wantErr: "noos configuration does not support password",
+		},
 	}
 
 	for _, tt := range tests {
@@ -359,7 +372,7 @@ func Test_resourceDedicatedServerV1CreateValidatePreconditions(t *testing.T) {
 
 			err := resourceDedicatedServerV1CreateValidatePreconditions(
 				context.Background(), client, tt.data, locationID, pricePlanID, configurationID, osID,
-				tt.needUserScrip, tt.needSSHKey, tt.needPrivateIP,
+				tt.needUserScrip, tt.needSSHKey, tt.needPassword, tt.needPrivateIP,
 			)
 
 			if tt.wantErr != "" {
@@ -394,6 +407,7 @@ func Test_resourceDedicatedServerV1UpdateValidatePreconditions(t *testing.T) {
 		partitions   dedicated.PartitionsConfig
 		needUserData bool
 		needSSHKey   bool
+		needPassword bool
 		changes      []string
 		wantErr      string
 	}{
@@ -494,6 +508,13 @@ func Test_resourceDedicatedServerV1UpdateValidatePreconditions(t *testing.T) {
 			changes:    []string{dedicatedServerSchemaKeyOSID, dedicatedServerSchemaKeyOSHostName, dedicatedServerSchemaKeyOSPartitionsConfig},
 			wantErr:    "failed to validate partitions config",
 		},
+		{
+			name:         "PasswordNotAllowed",
+			needPassword: true,
+			os:           func() *dedicated.OperatingSystem { o := defaultOS(); o.OSValue = "noos"; return o }(),
+			changes:      []string{dedicatedServerSchemaKeyOSID, dedicatedServerSchemaKeyOSHostName, dedicatedServerSchemaKeyOSPassword},
+			wantErr:      "noos configuration does not support password",
+		},
 	}
 
 	for _, tt := range tests {
@@ -523,7 +544,7 @@ func Test_resourceDedicatedServerV1UpdateValidatePreconditions(t *testing.T) {
 			}
 
 			err := resourceDedicatedServerV1UpdateValidatePreconditions(
-				context.Background(), d, client, tt.os, tt.partitions, tt.needUserData, tt.needSSHKey,
+				context.Background(), d, client, tt.os, tt.partitions, tt.needUserData, tt.needSSHKey, tt.needPassword,
 			)
 
 			if tt.wantErr != "" {

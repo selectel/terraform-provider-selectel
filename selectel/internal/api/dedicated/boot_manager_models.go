@@ -156,3 +156,7 @@ func (p *InstallNewOSPayload) CopyWithoutSensitiveData() *InstallNewOSPayload {
 		UserData:         p.UserData,
 	}
 }
+
+const (
+	NoOSValue = "noos"
+)
