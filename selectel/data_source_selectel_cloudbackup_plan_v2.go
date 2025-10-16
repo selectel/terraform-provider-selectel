@@ -125,24 +125,16 @@ func dataSourceCloudBackupPlanV2() *schema.Resource {
 }
 
 func dataSourceCloudBackupPlanV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, diagErr := getScheduledBackupClient(d, meta)
-	if diagErr != nil {
-		return diagErr
-	}
-
 	filter := expandCloudBackupPlansSearchFilter(d)
 
 	log.Printf("[DEBUG] Getting %s '%#v'", objectCloudBackupPlan, filter)
 
-	resp, _, err := client.Plans(ctx, &cloudbackup.PlansQuery{
-		Name:       filter.name,
-		VolumeName: filter.volumeName,
-	})
-	if err != nil {
-		return diag.FromErr(errGettingObjects(objectCloudBackupPlan, err))
+	plans, diagErr := dataSourceCloudBackupPlanV2LoadPlans(ctx, d, meta, filter)
+	if diagErr != nil {
+		return diagErr
 	}
 
-	filteredPlans := filterCloudBackupPlans(resp.Plans, filter)
+	filteredPlans := filterCloudBackupPlans(plans, filter)
 
 	plansFlatten := flattenCloudBackupPlans(filteredPlans, len(filteredPlans))
 	if err := d.Set("plans", plansFlatten); err != nil {
@@ -164,6 +156,43 @@ func dataSourceCloudBackupPlanV2Read(ctx context.Context, d *schema.ResourceData
 	d.SetId(checksum)
 
 	return nil
+}
+
+func dataSourceCloudBackupPlanV2LoadPlans(
+	ctx context.Context, d *schema.ResourceData, meta interface{}, filter cloudBackupPlansFilter,
+) ([]*cloudbackup.Plan, diag.Diagnostics) {
+	client, diagErr := getScheduledBackupClient(d, meta)
+	if diagErr != nil {
+		return nil, diagErr
+	}
+
+	var (
+		marker string
+
+		plans []*cloudbackup.Plan
+	)
+
+	for {
+		resp, _, err := client.Plans(ctx, &cloudbackup.PlansQuery{
+			Name:       filter.name,
+			VolumeName: filter.volumeName,
+			Limit:      500,
+			Marker:     marker,
+		})
+		if err != nil {
+			return nil, diag.FromErr(errGettingObjects(objectCloudBackupPlan, err))
+		}
+
+		if len(resp.Plans) == 0 {
+			break
+		}
+
+		plans = append(plans, resp.Plans...)
+
+		marker = resp.Plans[len(resp.Plans)-1].ID
+	}
+
+	return plans, nil
 }
 
 type cloudBackupPlansFilter struct {

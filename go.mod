@@ -5,7 +5,7 @@ go 1.23.0
 require (
 	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.1
-	github.com/selectel/cloudbackup-go v0.0.0-20251014130101-5f2aabb9115d
+	github.com/selectel/cloudbackup-go v0.0.0-20251016075548-88841fdb9e86
 	github.com/selectel/craas-go v0.4.1
 	github.com/selectel/dbaas-go v0.18.0
 	github.com/selectel/domains-go v1.0.2

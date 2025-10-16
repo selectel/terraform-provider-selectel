@@ -141,30 +141,22 @@ func dataSourceCloudBackupCheckpointV2() *schema.Resource {
 }
 
 func dataSourceCloudBackupCheckpointV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, diagErr := getScheduledBackupClient(d, meta)
-	if diagErr != nil {
-		return diagErr
-	}
-
 	filter := expandCloudBlockStorageBackupCheckpointsSearchFilter(d)
 
 	log.Printf("[DEBUG] Getting %s '%#v'", objectCloudBackupCheckpoint, filter)
 
-	resp, _, err := client.Checkpoints(ctx, &cloudbackup.CheckpointsQuery{
-		PlanName:   filter.planName,
-		VolumeName: filter.volumeName,
-	})
-	if err != nil {
-		return diag.FromErr(errGettingObjects(objectCloudBackupCheckpoint, err))
+	checkpoints, diagErr := dataSourceCloudBackupCheckpointV2LoadCheckpoints(ctx, d, meta, filter)
+	if diagErr != nil {
+		return diagErr
 	}
 
-	checkpointsFlatten := flattenCloudBlockStorageBackupCheckpoints(resp)
+	checkpointsFlatten := flattenCloudBlockStorageBackupCheckpoints(checkpoints)
 	if err := d.Set("checkpoints", checkpointsFlatten); err != nil {
 		return diag.FromErr(err)
 	}
 
-	ids := make([]string, 0, len(resp.Checkpoints))
-	for _, e := range resp.Checkpoints {
+	ids := make([]string, 0, len(checkpoints))
+	for _, e := range checkpoints {
 		ids = append(ids, e.ID)
 	}
 
@@ -178,6 +170,43 @@ func dataSourceCloudBackupCheckpointV2Read(ctx context.Context, d *schema.Resour
 	d.SetId(checksum)
 
 	return nil
+}
+
+func dataSourceCloudBackupCheckpointV2LoadCheckpoints(
+	ctx context.Context, d *schema.ResourceData, meta interface{}, filter cloudBackupCheckpointsFilter,
+) ([]*cloudbackup.Checkpoint, diag.Diagnostics) {
+	client, diagErr := getScheduledBackupClient(d, meta)
+	if diagErr != nil {
+		return nil, diagErr
+	}
+
+	var (
+		marker string
+
+		checkpoints []*cloudbackup.Checkpoint
+	)
+
+	for {
+		resp, _, err := client.Checkpoints(ctx, &cloudbackup.CheckpointsQuery{
+			PlanName:   filter.planName,
+			VolumeName: filter.volumeName,
+			Limit:      500,
+			Marker:     marker,
+		})
+		if err != nil {
+			return nil, diag.FromErr(errGettingObjects(objectCloudBackupCheckpoint, err))
+		}
+
+		if len(resp.Checkpoints) == 0 {
+			break
+		}
+
+		checkpoints = append(checkpoints, resp.Checkpoints...)
+
+		marker = resp.Checkpoints[len(resp.Checkpoints)-1].ID
+	}
+
+	return checkpoints, nil
 }
 
 type cloudBackupCheckpointsFilter struct {
@@ -212,9 +241,9 @@ func expandCloudBlockStorageBackupCheckpointsSearchFilter(d *schema.ResourceData
 	return filter
 }
 
-func flattenCloudBlockStorageBackupCheckpoints(resp *cloudbackup.CheckpointsResponse) []interface{} {
-	checkpoints := make([]interface{}, len(resp.Checkpoints))
-	for i, e := range resp.Checkpoints {
+func flattenCloudBlockStorageBackupCheckpoints(list []*cloudbackup.Checkpoint) []interface{} {
+	checkpoints := make([]interface{}, len(list))
+	for i, e := range list {
 		sMap := make(map[string]interface{})
 		sMap["id"] = e.ID
 		sMap["plan_id"] = e.PlanID
@@ -251,7 +280,7 @@ func flattenCloudBlockStorageBackupCheckpoints(resp *cloudbackup.CheckpointsResp
 	return []interface{}{
 		map[string]interface{}{
 			"list":  checkpoints,
-			"total": resp.Total,
+			"total": len(checkpoints),
 		},
 	}
 }
