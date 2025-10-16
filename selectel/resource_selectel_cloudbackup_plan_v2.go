@@ -99,10 +99,6 @@ func resourceCloudBackupPlanV2() *schema.Resource {
 				},
 			},
 		},
-		CustomizeDiff: func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
-			_ = d.Clear("resources")
-			return nil
-		},
 	}
 }
 
@@ -245,9 +241,9 @@ func resourceCloudBackupPlanV2Update(ctx context.Context, d *schema.ResourceData
 		return diagErr
 	}
 
-	currentPlan, _, err := client.Plan(ctx, d.Id())
-	if err != nil {
-		return diag.Errorf("can't get plan %q: %v", d.Id(), err)
+	resources, diagErr := readCloudBackupPlanV2Resource(d)
+	if diagErr != nil {
+		return diagErr
 	}
 
 	var (
@@ -264,12 +260,12 @@ func resourceCloudBackupPlanV2Update(ctx context.Context, d *schema.ResourceData
 		Description:       description,
 		FullBackupsAmount: fullBackupsAmount,
 		Name:              name,
-		Resources:         currentPlan.Resources,
+		Resources:         resources,
 		SchedulePattern:   schedulePattern,
 		ScheduleType:      scheduleType,
 	}
 
-	_, _, err = client.PlanUpdate(ctx, d.Id(), &plan)
+	_, _, err := client.PlanUpdate(ctx, d.Id(), &plan)
 	if err != nil {
 		return diag.FromErr(errUpdatingObject(objectCloudBackupPlan, d.Id(), err))
 	}
