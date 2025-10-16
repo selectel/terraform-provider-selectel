@@ -22,6 +22,7 @@ resource "selectel_dbaas_redis_datastore_v1" "datastore_1" {
   node_count     = 3
   flavor_id      = data.selectel_dbaas_flavor_v1.flavor.flavors[0].id
   redis_password = "secret"
+  security_groups = ["796f1f0a-d97d-4a8e-904e-4fd5ef57465c", "b9c2e73d-a6c5-4def-994d-ce85e3ce98d3"]
 }
 ```
 
@@ -60,7 +61,9 @@ resource "selectel_dbaas_redis_datastore_v1" "datastore_1" {
 
 * `backup_retention_days` - (Optional) Number of days to retain backups.
 
-`logs` - (Optional) Name of an existing or a new log group in the [Logs](https://docs.selectel.ru/en/logs/about-logs/) service. The name must start with the prefix 's/dbaas/'. It can contain uppercase and lowercase letters, digits and symbols (underscore, hyphen, forward slash, period and hash). The name cannot exceed 512 symbols.  For example, s/dbaas/My-first-group. Learn more  about [Logs](https://docs.selectel.ru/en/managed-databases/redis/logs/).
+* `logs` - (Optional) Name of an existing or a new log group in the [Logs](https://docs.selectel.ru/en/logs/about-logs/) service. The name must start with the prefix 's/dbaas/'. It can contain uppercase and lowercase letters, digits and symbols (underscore, hyphen, forward slash, period and hash). The name cannot exceed 512 symbols.  For example, s/dbaas/My-first-group. Learn more  about [Logs](https://docs.selectel.ru/en/managed-databases/redis/logs/).
+
+* `security_groups` - (Optional) List of security groups. If no security group UUIDs are specified when creating the datastore, a default security group will be created and its UUID will be assigned automatically. A datastore must have at least one security group. Learn more about security groups for [Redis](https://docs.selectel.ru/en/managed-databases/redis/network-access-control/#security-groups-in-managed-databases).
 
 ## Attributes Reference
 

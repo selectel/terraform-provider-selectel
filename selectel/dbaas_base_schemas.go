@@ -132,6 +132,14 @@ func resourceDBaaSDatastoreV1BaseSchema() map[string]*schema.Schema {
 				},
 			},
 		},
+		"security_groups": {
+			Type:     schema.TypeSet,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type:         schema.TypeString,
+				ValidateFunc: validation.IsUUID,
+			},
+		},
 	}
 }
 

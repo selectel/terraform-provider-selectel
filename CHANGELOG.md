@@ -1,3 +1,10 @@
+## 6.9.0 (October 17, 2025)
+
+FEATURES:
+* Added supporting security groups ([#346] (https://github.com/selectel/terraform-provider-selectel/pull/346))
+
+IMPROVEMENTS:
+* Update documentation for dbaas datastores ([#346] (https://github.com/selectel/terraform-provider-selectel/pull/346))
 ## 6.8.0 (October 6, 2025)
 
 FEATURES:
