@@ -47,7 +47,7 @@ resource "selectel_iam_serviceuser_v1" "serviceuser_1" {
 
     * `project_id` - (Optional) Unique identifier of the associated project. Changing this creates a new service user. If `scope` is `project`, the `project_id` argument is required. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
-* `enabled` - (Optional) Specifies if you can create a Keystone token for the service user. Boolean flag, the default value is `true`. Learn more about [Keystone tokens](https://developers.selectel.ru/docs/control-panel/authorization/).
+* `enabled` - (Optional) Specifies if you can create a IAM token for the service user. Boolean flag, the default value is `true`. Learn more about [IAM tokens](https://docs.selectel.ru/en/api/authorization/).
 
 ### Roles
 

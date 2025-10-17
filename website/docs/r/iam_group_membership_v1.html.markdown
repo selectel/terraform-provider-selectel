@@ -10,7 +10,7 @@ description: |-
 
 Manages group membership for Selectel products using public API v1.
 Selectel products support Identity and Access Management (IAM).
-For more information about groups, see the [official Selectel documentation](https://docs.selectel.ru/control-panel-actions/users-and-roles/groups/).
+For more information about groups, see the [official Selectel documentation](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/groups/).
 
 ## Example Usage
 

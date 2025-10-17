@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_dbaas\_postgresql\_logical\_replication\_slot\_v1
 
-Creates and manages a logical replication slot for Managed Databases using public API v1. Applicable to PostgreSQL and PostgreSQL TimescaleDB datastores. For more information about replication slots in Managed Databases, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/replication-slots/) and [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/replication-slots/).
+Creates and manages a logical replication slot for Managed Databases using public API v1. Applicable to PostgreSQL and PostgreSQL TimescaleDB clusters. For more information about replication slots in Managed Databases, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/replication-slots/) and [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/replication-slots/).
 
 ## Example usage
 
@@ -16,7 +16,7 @@ Creates and manages a logical replication slot for Managed Databases using publi
 resource "selectel_dbaas_postgresql_logical_replication_slot_v1" "slot_1" {
   project_id   = selectel_vpc_project_v2.project_1.id
   region       = "ru-3"
-  datastore_id = selectel_dbaas_postgresql_datastore_v1.datastore_1.id
+  datastore_id = selectel_dbaas_postgresql_datastore_v1.cluster_1.id
   database_id  = selectel_dbaas_postgresql_database_v1.database_1.id
   name         = "test_slot"
 }
@@ -28,9 +28,9 @@ resource "selectel_dbaas_postgresql_logical_replication_slot_v1" "slot_1" {
 
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new replication slot. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-databases).
 
-* `datastore_id` - (Required) Unique identifier of the associated datastore. Changing this creates a new replication slot. Retrieved from the [selectel_dbaas_postgresql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_datastore_v1)
+* `datastore_id` - (Required) Unique identifier of the associated cluster. Changing this creates a new replication slot. Retrieved from the [selectel_dbaas_postgresql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_datastore_v1)
 
-* `database_id` - (Required) Unique identifier of the associated database. Changing this creates a new replication slot. Not applicable to a Redis datastore. Retrieved from the [selectel_dbaas_postgresql_database_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_database_v1) resource.
+* `database_id` - (Required) Unique identifier of the associated database. Changing this creates a new replication slot. Not applicable to a Redis cluster. Retrieved from the [selectel_dbaas_postgresql_database_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_database_v1) resource.
 
 * `name` - (Required) Slot name. Can contain only lowercase letters, numbers, and an underscore. Changing this creates a new replication slot.
 
