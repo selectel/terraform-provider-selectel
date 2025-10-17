@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -18,6 +19,9 @@ func resourceCloudBackupPlanV2() *schema.Resource {
 		ReadContext:   resourceCloudBackupPlanV2Read,
 		UpdateContext: resourceCloudBackupPlanV2Update,
 		DeleteContext: resourceCloudBackupPlanV2Delete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceCloudBackupPlanV2ImportState,
+		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(5 * time.Minute),
 			Update: schema.DefaultTimeout(5 * time.Minute),
@@ -299,4 +303,21 @@ func resourceCloudBackupPlanV2Delete(ctx context.Context, d *schema.ResourceData
 	d.SetId("")
 
 	return nil
+}
+
+func resourceCloudBackupPlanV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	config := meta.(*Config)
+	if config.ProjectID == "" {
+		return nil, errors.New("project_id must be set for the resource import")
+	}
+
+	_ = d.Set("project_id", config.ProjectID)
+
+	if config.Region == "" {
+		return nil, errors.New("region must be set for the resource import")
+	}
+
+	_ = d.Set("region", config.Region)
+
+	return []*schema.ResourceData{d}, nil
 }
