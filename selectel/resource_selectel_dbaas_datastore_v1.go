@@ -81,6 +81,16 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 		FloatingIPs: floatingIPsSchema,
 	}
 
+	sgRaw, sgOk := d.GetOk("security_groups")
+	if sgOk {
+		sgSet := sgRaw.(*schema.Set)
+		sg, err := resourceDBaaSDatastoreV1SecurityGroupsFromSet(sgSet)
+		if err != nil {
+			return diag.FromErr(errParseDatastoreV1SecurityGroups(err))
+		}
+		datastoreCreateOpts.SecurityGroups = sg
+	}
+
 	if flavorOk {
 		flavorSet := flavorRaw.(*schema.Set)
 		flavor, err := resourceDBaaSDatastoreV1FlavorFromSet(flavorSet)
@@ -139,6 +149,7 @@ func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(errGettingObject(objectDatastore, d.Id(), err))
 	}
+
 	d.Set("name", datastore.Name)
 	d.Set("status", datastore.Status)
 	d.Set("project_id", datastore.ProjectID)
@@ -148,6 +159,7 @@ func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, m
 	d.Set("enabled", datastore.Enabled)
 	d.Set("flavor_id", datastore.FlavorID)
 	d.Set("backup_retention_days", datastore.BackupRetentionDays)
+	d.Set("security_groups", datastore.SecurityGroups)
 	d.Set("logs", datastore.LogPlatform.LogGroup)
 
 	flavor := resourceDBaaSDatastoreV1FlavorToSet(datastore.Flavor)
@@ -175,6 +187,7 @@ func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
+//nolint:gocognit
 func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
@@ -225,6 +238,12 @@ func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData,
 	}
 	if d.HasChange("floating_ips") {
 		err := updateDatastoreFloatingIPs(ctx, d, dbaasClient)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("security_groups") {
+		err := updateDatastoreSecurityGroups(ctx, d, dbaasClient)
 		if err != nil {
 			return diag.FromErr(err)
 		}

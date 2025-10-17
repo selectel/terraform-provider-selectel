@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages a user group for Selectel products using public API v1.
 Selectel products support Identity and Access Management (IAM).
-For more information about user groups, see the [official Selectel documentation](https://docs.selectel.ru/control-panel-actions/users-and-roles/groups/).
+For more information about user groups, see the [official Selectel documentation](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/groups/).
 
 ## Example Usage
 

@@ -37,6 +37,6 @@ data "selectel_dbaas_available_extension_v1" "available_extension_1" {
 
   * `name` - Extension name.
 
-  * `datastore_type_ids` - List of datastore types that support the extension.
+  * `datastore_type_ids` - List of cluster types that support the extension.
 
   * `dependency_ids` - List of extensions that depend on this extension.
