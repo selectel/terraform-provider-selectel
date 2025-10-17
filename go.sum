@@ -183,8 +183,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=
 github.com/sebdah/goldie v1.0.0/go.mod h1:jXP4hmWywNEwZzhMuv2ccnqTSFpuq8iyQhtQdkkZBH4=
-github.com/selectel/cloudbackup-go v0.0.0-20251016075548-88841fdb9e86 h1:Zdm9sTS6o+k52cpcFDq/b9I89uyQdUQOHvMfxcbRq10=
-github.com/selectel/cloudbackup-go v0.0.0-20251016075548-88841fdb9e86/go.mod h1:vkqlT8omyhli5fWz7aFNL3PvGWiU6EY1W9XPQuiMrVc=
+github.com/selectel/cloudbackup-go v1.0.0 h1:ew96RX4pFYfYCw2Pb0ijQxfhojrwUbQQyn/FGHkMg4w=
+github.com/selectel/cloudbackup-go v1.0.0/go.mod h1:vkqlT8omyhli5fWz7aFNL3PvGWiU6EY1W9XPQuiMrVc=
 github.com/selectel/craas-go v0.4.1 h1:s5P9etiHzQGr1TKdvc92aU88Y0ZROun1xwiqr25KmhE=
 github.com/selectel/craas-go v0.4.1/go.mod h1:9RAUn9PdMITP4I3GAade6v2hjB2j3lo3J2dDlG5SLYE=
 github.com/selectel/dbaas-go v0.18.0 h1:IrnEt/6ETx6oKvV4est6RGei4AebrUPN/njczZfbVL0=
