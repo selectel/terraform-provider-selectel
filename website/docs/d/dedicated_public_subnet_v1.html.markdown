@@ -16,7 +16,7 @@ Provides a list of available public subnets.
 data "selectel_dedicated_location_v1" "server_location" {
   project_id = selectel_vpc_project_v2.project_1.id
   filter {
-    name = "some-subnet"
+    name = "some-location"
   }
 }
 
