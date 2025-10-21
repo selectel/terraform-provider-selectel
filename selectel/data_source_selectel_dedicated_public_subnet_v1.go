@@ -164,23 +164,20 @@ func expandDedicatedPublicSubnetsSearchFilter(d *schema.ResourceData) dedicatedP
 func filterDedicatedPublicSubnets(subnets dedicated.Subnets, filter dedicatedPublicSubnetsSearchFilter) (dedicated.Subnets, error) {
 	var filteredSubnets dedicated.Subnets
 	for _, subnet := range subnets {
-		switch {
-		case filter.ip == "" && filter.subnet == "":
-			filteredSubnets = append(filteredSubnets, subnet)
-			continue
-
-		case filter.subnet != "" && filter.subnet == subnet.Subnet:
-			filteredSubnets = append(filteredSubnets, subnet)
-			continue
+		isIPIncluded := false
+		if filter.ip != "" {
+			var err error
+			isIPIncluded, err = subnet.IsIncluding(filter.ip)
+			if err != nil {
+				return nil, fmt.Errorf("error checking if subnet %s includes IP %s: %w", subnet.UUID, filter.ip, err)
+			}
 		}
 
-		isIncluding, err := subnet.IsIncluding(filter.ip)
-		if err != nil {
-			return nil, fmt.Errorf("error checking if subnet %s includes IP %s: %w", subnet.UUID, filter.ip, err)
-		}
-
-		if isIncluding {
+		if (filter.subnet == "" || filter.subnet == subnet.Subnet) &&
+			(filter.ip == "" || isIPIncluded) {
 			filteredSubnets = append(filteredSubnets, subnet)
+
+			continue
 		}
 	}
 
