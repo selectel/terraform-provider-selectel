@@ -54,11 +54,12 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 		password, _     = d.Get(dedicatedServerSchemaKeyOSPassword).(string)
 
 		publicSubnetID, _ = d.Get(dedicatedServerSchemaKeyPublicSubnetID).(string)
+		publicSubnetIP, _ = d.Get(dedicatedServerSchemaKeyPublicSubnetIP).(string)
 		privateSubnet, _  = d.Get(dedicatedServerSchemaKeyPrivateSubnet).(string)
 	)
 
 	data, err := resourceDedicatedServerV1CreateLoadData(
-		ctx, dsClient, locationID, osID, configurationID, publicSubnetID, privateSubnet,
+		ctx, dsClient, locationID, osID, configurationID, publicSubnetID, publicSubnetIP, privateSubnet,
 		sshKeyName, pricePlanName, partitionsConfigFromSchema,
 	)
 	if err != nil {
@@ -160,7 +161,7 @@ type serversDedicatedServerV1CreateData struct {
 
 func resourceDedicatedServerV1CreateLoadData(
 	ctx context.Context, dsClient *dedicated.ServiceClient,
-	locationID, osID, configurationID, publicSubnetID, privateSubnet, sshKeyName, pricePlanName string,
+	locationID, osID, configurationID, publicSubnetID, publicSubnetIP, privateSubnet, sshKeyName, pricePlanName string,
 	partitionsConfigFromSchema *PartitionsConfig,
 ) (*serversDedicatedServerV1CreateData, error) {
 	operatingSystems, _, err := dsClient.OperatingSystems(ctx, &dedicated.OperatingSystemsQuery{
@@ -200,7 +201,16 @@ func resourceDedicatedServerV1CreateLoadData(
 	}
 
 	var publicIPs []net.IP
-	if publicSubnetID != "" {
+	switch {
+	case publicSubnetIP != "":
+		ip := net.ParseIP(publicSubnetIP)
+		if ip == nil {
+			return nil, fmt.Errorf("failed to parse public IP %q", publicSubnetIP)
+		}
+
+		publicIPs = append(publicIPs, ip)
+
+	case publicSubnetID != "":
 		// also validating the sufficiency of free addresses
 		publicIP, err := resourceDedicatedServerV1GetFreePublicIPs(ctx, dsClient, locationID, publicSubnetID)
 		if err != nil {

@@ -72,6 +72,10 @@ func dataSourceDedicatedPublicSubnetV1() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
+						"ip": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -97,7 +101,7 @@ func dataSourceDedicatedPublicSubnetV1Read(ctx context.Context, d *schema.Resour
 		return diag.FromErr(fmt.Errorf("error filtering subnets: %w", err))
 	}
 
-	subnetsFlatten := flattenDedicatedPublicSubnets(filteredSubnets)
+	subnetsFlatten := flattenDedicatedPublicSubnets(filteredSubnets, filter)
 	if err := d.Set("subnets", subnetsFlatten); err != nil {
 		return diag.FromErr(err)
 	}
@@ -183,18 +187,22 @@ func filterDedicatedPublicSubnets(subnets dedicated.Subnets, filter dedicatedPub
 	return filteredSubnets, nil
 }
 
-func flattenDedicatedPublicSubnets(subnets dedicated.Subnets) []interface{} {
+func flattenDedicatedPublicSubnets(subnets dedicated.Subnets, filter dedicatedPublicSubnetsSearchFilter) []interface{} {
 	subnetsList := make([]interface{}, len(subnets))
 	for i, subnet := range subnets {
-		subnetsMap := make(map[string]interface{})
-		subnetsMap["id"] = subnet.UUID
-		subnetsMap["network_id"] = subnet.NetworkUUID
-		subnetsMap["subnet"] = subnet.Subnet
-		subnetsMap["broadcast"] = subnet.Broadcast.String()
-		subnetsMap["gateway"] = subnet.Gateway.String()
-		subnetsMap["reserved_vrrp_ips"] = subnet.ReservedVRRPIPAsStrings()
+		subnetMap := make(map[string]interface{})
+		subnetMap["id"] = subnet.UUID
+		subnetMap["network_id"] = subnet.NetworkUUID
+		subnetMap["subnet"] = subnet.Subnet
+		subnetMap["broadcast"] = subnet.Broadcast.String()
+		subnetMap["gateway"] = subnet.Gateway.String()
+		subnetMap["reserved_vrrp_ips"] = subnet.ReservedVRRPIPAsStrings()
 
-		subnetsList[i] = subnetsMap
+		if filter.ip != "" {
+			subnetMap["ip"] = filter.ip
+		}
+
+		subnetsList[i] = subnetMap
 	}
 
 	return subnetsList

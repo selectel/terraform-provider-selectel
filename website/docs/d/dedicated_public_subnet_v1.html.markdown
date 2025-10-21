@@ -50,3 +50,4 @@ data "selectel_dedicated_public_subnet_v1" "public_subnets" {
   * `broadcast` - Broadcast address.
   * `gateway` - Gateway address.
   * `reserved_vrrp_ips` - List of reserved VRRP IPs.
+  * `ip` - IP address from the filter. Can be used to pass forward.
