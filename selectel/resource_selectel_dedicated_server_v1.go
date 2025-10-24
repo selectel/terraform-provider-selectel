@@ -10,7 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/api/dedicated"
+	dedicated "github.com/selectel/dedicated-go/pkg/v2"
 	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/servers"
 )
 
@@ -407,7 +407,22 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 
 	_ = d.Set("location_id", rd.LocationUUID)
 	_ = d.Set("configuration_id", rd.ServiceUUID)
-	_ = d.Set("price_plan_name", rd.Billing.CurrentPricePlan.Name)
+
+	plans, _, err := dsClient.PricePlans(ctx)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf(
+			"error getting price plans: %w", err,
+		))
+	}
+
+	pricePlan := plans.FindOneID(rd.Billing.CurrentPricePlan.UUID)
+	if pricePlan == nil {
+		return diag.FromErr(fmt.Errorf(
+			"error finding price plan by id %s", rd.Billing.CurrentPricePlan.UUID,
+		))
+	}
+
+	_ = d.Set("price_plan_name", pricePlan.Name)
 
 	resourceOS, _, err := dsClient.OperatingSystemByResource(ctx, d.Id())
 	if err != nil {
