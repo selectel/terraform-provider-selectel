@@ -72,6 +72,10 @@ func dataSourceDedicatedPublicSubnetV1() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
+						"ip": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -97,7 +101,7 @@ func dataSourceDedicatedPublicSubnetV1Read(ctx context.Context, d *schema.Resour
 		return diag.FromErr(fmt.Errorf("error filtering subnets: %w", err))
 	}
 
-	subnetsFlatten := flattenDedicatedPublicSubnets(filteredSubnets)
+	subnetsFlatten := flattenDedicatedPublicSubnets(filteredSubnets, filter)
 	if err := d.Set("subnets", subnetsFlatten); err != nil {
 		return diag.FromErr(err)
 	}
@@ -160,41 +164,42 @@ func expandDedicatedPublicSubnetsSearchFilter(d *schema.ResourceData) dedicatedP
 func filterDedicatedPublicSubnets(subnets dedicated.Subnets, filter dedicatedPublicSubnetsSearchFilter) (dedicated.Subnets, error) {
 	var filteredSubnets dedicated.Subnets
 	for _, subnet := range subnets {
-		switch {
-		case filter.ip == "" && filter.subnet == "":
-			filteredSubnets = append(filteredSubnets, subnet)
-			continue
-
-		case filter.subnet != "" && filter.subnet == subnet.Subnet:
-			filteredSubnets = append(filteredSubnets, subnet)
-			continue
+		isIPIncluded := false
+		if filter.ip != "" {
+			var err error
+			isIPIncluded, err = subnet.IsIncluding(filter.ip)
+			if err != nil {
+				return nil, fmt.Errorf("error checking if subnet %s includes IP %s: %w", subnet.UUID, filter.ip, err)
+			}
 		}
 
-		isIncluding, err := subnet.IsIncluding(filter.ip)
-		if err != nil {
-			return nil, fmt.Errorf("error checking if subnet %s includes IP %s: %w", subnet.UUID, filter.ip, err)
-		}
-
-		if isIncluding {
+		if (filter.subnet == "" || filter.subnet == subnet.Subnet) &&
+			(filter.ip == "" || isIPIncluded) {
 			filteredSubnets = append(filteredSubnets, subnet)
+
+			continue
 		}
 	}
 
 	return filteredSubnets, nil
 }
 
-func flattenDedicatedPublicSubnets(subnets dedicated.Subnets) []interface{} {
+func flattenDedicatedPublicSubnets(subnets dedicated.Subnets, filter dedicatedPublicSubnetsSearchFilter) []interface{} {
 	subnetsList := make([]interface{}, len(subnets))
 	for i, subnet := range subnets {
-		subnetsMap := make(map[string]interface{})
-		subnetsMap["id"] = subnet.UUID
-		subnetsMap["network_id"] = subnet.NetworkUUID
-		subnetsMap["subnet"] = subnet.Subnet
-		subnetsMap["broadcast"] = subnet.Broadcast.String()
-		subnetsMap["gateway"] = subnet.Gateway.String()
-		subnetsMap["reserved_vrrp_ips"] = subnet.ReservedVRRPIPAsStrings()
+		subnetMap := make(map[string]interface{})
+		subnetMap["id"] = subnet.UUID
+		subnetMap["network_id"] = subnet.NetworkUUID
+		subnetMap["subnet"] = subnet.Subnet
+		subnetMap["broadcast"] = subnet.Broadcast.String()
+		subnetMap["gateway"] = subnet.Gateway.String()
+		subnetMap["reserved_vrrp_ips"] = subnet.ReservedVRRPIPAsStrings()
 
-		subnetsList[i] = subnetsMap
+		if filter.ip != "" {
+			subnetMap["ip"] = filter.ip
+		}
+
+		subnetsList[i] = subnetMap
 	}
 
 	return subnetsList

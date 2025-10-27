@@ -11,6 +11,7 @@ const (
 	dedicatedServerSchemaKeyOSID                     = "os_id"
 	dedicatedServerSchemaKeyPricePlanName            = "price_plan_name"
 	dedicatedServerSchemaKeyPublicSubnetID           = "public_subnet_id"
+	dedicatedServerSchemaKeyPublicSubnetIP           = "public_subnet_ip"
 	dedicatedServerSchemaKeyPrivateSubnet            = "private_subnet"
 	dedicatedServerSchemaKeyOSUserData               = "user_data"
 	dedicatedServerSchemaKeyOSHostName               = "os_host_name"
@@ -132,6 +133,10 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 
 		// optional network params
 		dedicatedServerSchemaKeyPublicSubnetID: {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		dedicatedServerSchemaKeyPublicSubnetIP: {
 			Type:     schema.TypeString,
 			Optional: true,
 		},

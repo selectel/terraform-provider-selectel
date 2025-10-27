@@ -16,7 +16,7 @@ Provides a list of available public subnets.
 data "selectel_dedicated_location_v1" "server_location" {
   project_id = selectel_vpc_project_v2.project_1.id
   filter {
-    name = "some-subnet"
+    name = "some-location"
   }
 }
 
@@ -50,3 +50,4 @@ data "selectel_dedicated_public_subnet_v1" "public_subnets" {
   * `broadcast` - Broadcast address.
   * `gateway` - Gateway address.
   * `reserved_vrrp_ips` - List of reserved VRRP IPs.
+  * `ip` - IP address from the filter. Can be used to pass forward.

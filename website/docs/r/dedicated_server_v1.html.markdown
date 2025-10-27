@@ -23,6 +23,7 @@ resource "selectel_dedicated_server_v1" "server_1" {
 
   os_host_name     = "Turing"
   public_subnet_id = data.selectel_dedicated_public_subnet_v1.subnets.subnets[0].id
+  # public_subnet_ip = data.selectel_dedicated_public_subnet_v1.subnets.subnets[0].ip
   private_subnet   = "192.168.0.0/16"
   ssh_key_name     = "deploy-ed25519"
   os_password      = "Passw0rd!"
@@ -101,7 +102,9 @@ resource "selectel_dedicated_server_v1" "server_1" {
     * `raid` - (Required) The RAID array name to create the partition on.
     * `fs_type` - (Optional) Filesystem type for the partition.
 
-* `public_subnet_id` - (Optional) ID of the public subnet to connect the server to. 
+* `public_subnet_id` - (Optional) ID of the public subnet to connect the server to. If id is set, the first free subnet address wil be used.
+
+* `public_subnet_ip` - (Optional) Public IP to use. Can be set instead of `public_subnet_id`.
 
 * `private_subnet` - (Optional) Private subnet to connect the server to. 
 

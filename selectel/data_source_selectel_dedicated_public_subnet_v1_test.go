@@ -6,7 +6,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	dedicated "github.com/selectel/dedicated-go/pkg/v2"
 	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/projects"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAccDedicatedPublicSubnetV1Basic(t *testing.T) {
@@ -52,4 +54,113 @@ data "selectel_dedicated_public_subnet_v1" "public_subnet_tf_acc_test_1" {
   }
 }
 `, projectName, locationName)
+}
+
+func Test_filterDedicatedPublicSubnets(t *testing.T) {
+	unfilteredList := dedicated.Subnets{
+		{
+			UUID:   "1",
+			Subnet: "192.168.1.0/24",
+		},
+		{
+			UUID:   "2",
+			Subnet: "10.0.0.0/16",
+		},
+	}
+
+	type args struct {
+		subnets dedicated.Subnets
+		filter  dedicatedPublicSubnetsSearchFilter
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    dedicated.Subnets
+		wantErr bool
+	}{
+		{
+			name: "EmptyFilter",
+			args: args{
+				subnets: unfilteredList,
+				filter:  dedicatedPublicSubnetsSearchFilter{},
+			},
+			want: unfilteredList,
+		},
+		{
+			name: "IncludeSubnet",
+			args: args{
+				subnets: unfilteredList,
+				filter: dedicatedPublicSubnetsSearchFilter{
+					subnet: unfilteredList[0].Subnet,
+				},
+			},
+			want: dedicated.Subnets{
+				unfilteredList[0],
+			},
+		},
+		{
+			name: "IncludeIP",
+			args: args{
+				subnets: unfilteredList,
+				filter: dedicatedPublicSubnetsSearchFilter{
+					ip: "10.0.0.1",
+				},
+			},
+			want: dedicated.Subnets{
+				unfilteredList[1],
+			},
+		},
+		{
+			name: "IncludeIPAndSubnet",
+			args: args{
+				subnets: unfilteredList,
+				filter: dedicatedPublicSubnetsSearchFilter{
+					ip:     "10.0.0.1",
+					subnet: unfilteredList[1].Subnet,
+				},
+			},
+			want: dedicated.Subnets{
+				unfilteredList[1],
+			},
+		},
+		{
+			name: "NoMatches",
+			args: args{
+				subnets: unfilteredList,
+				filter: dedicatedPublicSubnetsSearchFilter{
+					ip:     "10.0.0.1",
+					subnet: unfilteredList[0].Subnet,
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "NoMatches2",
+			args: args{
+				subnets: unfilteredList,
+				filter: dedicatedPublicSubnetsSearchFilter{
+					ip:     "8.0.0.1",
+					subnet: "8.0.0.0/24",
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "InvalidIPErr",
+			args: args{
+				subnets: unfilteredList,
+				filter: dedicatedPublicSubnetsSearchFilter{
+					ip: "invalid",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := filterDedicatedPublicSubnets(tt.args.subnets, tt.args.filter)
+			assert.Equal(t, tt.wantErr, err != nil)
+			assert.Equalf(t, tt.want, got, "filterDedicatedPublicSubnets(%v, %v)", tt.args.subnets, tt.args.filter)
+		})
+	}
 }
