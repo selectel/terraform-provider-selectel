@@ -49,11 +49,6 @@ func resourceCloudBackupPlanV2() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{"full", "frequency"}, true),
 				Description:  `Backup mode used for this plan. Allowed values: "full", "frequency"`,
 			},
-			"description": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Detailed plan description",
-			},
 			"full_backups_amount": {
 				Type:        schema.TypeInt,
 				Required:    true,
@@ -120,7 +115,6 @@ func resourceCloudBackupPlanV2Create(ctx context.Context, d *schema.ResourceData
 	var (
 		name               = d.Get("name").(string)
 		backupMode, _      = d.Get("backup_mode").(string)
-		description, _     = d.Get("description").(string)
 		fullBackupsAmount  = d.Get("full_backups_amount").(int)
 		scheduleType, _    = d.Get("schedule_type").(string)
 		schedulePattern, _ = d.Get("schedule_pattern").(string)
@@ -128,7 +122,6 @@ func resourceCloudBackupPlanV2Create(ctx context.Context, d *schema.ResourceData
 
 	plan := cloudbackup.Plan{
 		BackupMode:        backupMode,
-		Description:       description,
 		FullBackupsAmount: fullBackupsAmount,
 		Name:              name,
 		Resources:         resources,
@@ -218,7 +211,6 @@ func resourceCloudBackupPlanV2Read(ctx context.Context, d *schema.ResourceData, 
 
 	d.Set("name", res.Name)
 	d.Set("backup_mode", res.BackupMode)
-	d.Set("description", res.Description)
 	d.Set("full_backups_amount", res.FullBackupsAmount)
 	d.Set("schedule_type", res.ScheduleType)
 	d.Set("schedule_pattern", res.SchedulePattern)
@@ -250,18 +242,24 @@ func resourceCloudBackupPlanV2Update(ctx context.Context, d *schema.ResourceData
 		return diagErr
 	}
 
+	d.Partial(true)
+
+	backupModeChanges := d.HasChange("backup_mode")
+
+	if backupModeChanges {
+		return diag.Errorf("backup_mode cannot be changed for existing plan")
+	}
+
+	d.Partial(false)
+
 	var (
 		name               = d.Get("name").(string)
-		backupMode, _      = d.Get("backup_mode").(string)
-		description, _     = d.Get("description").(string)
 		fullBackupsAmount  = d.Get("full_backups_amount").(int)
 		scheduleType, _    = d.Get("schedule_type").(string)
 		schedulePattern, _ = d.Get("schedule_pattern").(string)
 	)
 
-	plan := cloudbackup.Plan{
-		BackupMode:        backupMode,
-		Description:       description,
+	plan := cloudbackup.PlanUpdateRequest{
 		FullBackupsAmount: fullBackupsAmount,
 		Name:              name,
 		Resources:         resources,

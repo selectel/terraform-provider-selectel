@@ -62,10 +62,6 @@ func dataSourceCloudBackupPlanV2() *schema.Resource {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
-									"description": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
 									"id": {
 										Type:     schema.TypeString,
 										Computed: true,
@@ -252,7 +248,6 @@ func flattenCloudBackupPlans(list []*cloudbackup.Plan, total int) []interface{} 
 		sMap := make(map[string]interface{})
 		sMap["backup_mode"] = e.BackupMode
 		sMap["created_at"] = e.CreatedAt
-		sMap["description"] = e.Description
 		sMap["id"] = e.ID
 		sMap["full_backups_amount"] = e.FullBackupsAmount
 		sMap["name"] = e.Name

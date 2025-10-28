@@ -18,7 +18,6 @@ func TestAccCloudBackupPlanV2(t *testing.T) {
 
 		name                                        = "tf-backup-plan"
 		backupMode                                  = "full"
-		description, descriptionUpdated             = "Weekly full at 04:00 on Sunday", "Daily full at 06:30"
 		fullBackupsAmount, fullBackupsAmountUpdated = 4, 2
 		scheduleType                                = "crontab"
 		schedulePattern, schedulePatternUpdated     = "0 4 * * 0", "30 4 * * 0"
@@ -31,12 +30,11 @@ func TestAccCloudBackupPlanV2(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create case
 			{
-				Config: testAccCloudBackupPlanV2(projectName, name, backupMode, description, scheduleType, schedulePattern, fullBackupsAmount),
+				Config: testAccCloudBackupPlanV2(projectName, name, backupMode, scheduleType, schedulePattern, fullBackupsAmount),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					resource.TestCheckResourceAttr("data.selectel_cloudbackup_plan_v2.plans", "plans.0.list.0.name", name),
 					resource.TestCheckResourceAttr("data.selectel_cloudbackup_plan_v2.plans", "plans.0.list.0.backup_mode", backupMode),
-					resource.TestCheckResourceAttr("data.selectel_cloudbackup_plan_v2.plans", "plans.0.list.0.description", description),
 					resource.TestCheckResourceAttr("data.selectel_cloudbackup_plan_v2.plans", "plans.0.list.0.full_backups_amount", strconv.Itoa(fullBackupsAmount)),
 					resource.TestCheckResourceAttr("data.selectel_cloudbackup_plan_v2.plans", "plans.0.list.0.schedule_type", scheduleType),
 					resource.TestCheckResourceAttr("data.selectel_cloudbackup_plan_v2.plans", "plans.0.list.0.schedule_pattern", schedulePattern),
@@ -44,12 +42,11 @@ func TestAccCloudBackupPlanV2(t *testing.T) {
 			},
 			// update cases
 			{
-				Config: testAccCloudBackupPlanV2(projectName, name, backupMode, descriptionUpdated, scheduleType, schedulePatternUpdated, fullBackupsAmountUpdated),
+				Config: testAccCloudBackupPlanV2(projectName, name, backupMode, scheduleType, schedulePatternUpdated, fullBackupsAmountUpdated),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					resource.TestCheckResourceAttr("data.selectel_cloudbackup_plan_v2.plans", "plans.0.list.0.name", name),
 					resource.TestCheckResourceAttr("data.selectel_cloudbackup_plan_v2.plans", "plans.0.list.0.backup_mode", backupMode),
-					resource.TestCheckResourceAttr("data.selectel_cloudbackup_plan_v2.plans", "plans.0.list.0.description", descriptionUpdated),
 					resource.TestCheckResourceAttr("data.selectel_cloudbackup_plan_v2.plans", "plans.0.list.0.full_backups_amount", strconv.Itoa(fullBackupsAmountUpdated)),
 					resource.TestCheckResourceAttr("data.selectel_cloudbackup_plan_v2.plans", "plans.0.list.0.schedule_type", scheduleType),
 					resource.TestCheckResourceAttr("data.selectel_cloudbackup_plan_v2.plans", "plans.0.list.0.schedule_pattern", schedulePatternUpdated),
@@ -60,7 +57,7 @@ func TestAccCloudBackupPlanV2(t *testing.T) {
 }
 
 func testAccCloudBackupPlanV2(
-	projectName, name, backupMode, description, scheduleType, schedulePattern string, maxBackups int,
+	projectName, name, backupMode, scheduleType, schedulePattern string, maxBackups int,
 ) string {
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
@@ -83,7 +80,6 @@ resource "selectel_cloudbackup_plan_v2" "backupplan_1" {
 
 	name = "%s"
 	backup_mode = "%s"
-	description = "%s"
 	full_backups_amount = %d
 	schedule_type = "%s"
 	schedule_pattern = "%s"
@@ -107,5 +103,5 @@ data "selectel_cloudbackup_plan_v2" "plans" {
 
 	depends_on = [selectel_cloudbackup_plan_v2.backupplan_1]
 }
-`, projectName, name, backupMode, description, maxBackups, scheduleType, schedulePattern, name)
+`, projectName, name, backupMode, maxBackups, scheduleType, schedulePattern, name)
 }

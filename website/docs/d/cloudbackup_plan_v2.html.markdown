@@ -44,7 +44,6 @@ data "selectel_cloudbackup_plan_v2" "plan_1" {
 
     * `id` - Unique identifier of the backup plan.
     * `name` - Name of the backup plan.
-    * `description` - Description of the backup plan.
     * `status` - Status of the backup plan.
     * `backup_mode` - Backup mode.
     * `created_at` - Time when the backup plan was created.

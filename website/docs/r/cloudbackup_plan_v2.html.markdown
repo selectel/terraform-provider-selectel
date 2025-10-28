@@ -18,7 +18,6 @@ resource "selectel_cloudbackup_plan_v2" "plan_1" {
   region              = "ru-3"
   name                = "my-backup-plan"
   backup_mode         = "full"
-  description         = "Nightly backup plan"
   full_backups_amount = 7
   schedule_type       = "crontab"
   schedule_pattern    = "0 0 * * *"
@@ -40,9 +39,7 @@ resource "selectel_cloudbackup_plan_v2" "plan_1" {
 
 * `name` - (Required) Name of the backup plan.
 
-* `backup_mode` - (Optional) Backup mode used for the plan. Available values are `full` and `frequency`. The default value is `full`. Learn more about [backup modes](https://docs.selectel.ru/en/cloud-servers/backups/about-backups/). 
-
-* `description` - (Optional) Description of the backup plan.
+* `backup_mode` - (Optional) Backup mode used for the plan. Available values are `full` and `frequency`. The default value is `full`. Learn more about [backup modes](https://docs.selectel.ru/en/cloud-servers/backups/about-backups/).
 
 * `full_backups_amount` - (Required) Maximum number of backups to save in a full plan or full backups in a frequency plan.
 
