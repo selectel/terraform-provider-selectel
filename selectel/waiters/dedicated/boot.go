@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/api/dedicated"
+	dedicated "github.com/selectel/dedicated-go/pkg/v2"
 )
 
 func WaitForServersServerInstallNewOSV1ActiveState(
