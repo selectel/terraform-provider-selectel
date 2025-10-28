@@ -29,7 +29,7 @@ func TestAccDedicatedOSV1Basic(t *testing.T) {
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccDedicatedOSV1Exists("data.selectel_dedicated_os_v1.os_tf_acc_test_1", osName, osVersion),
 					resource.TestCheckResourceAttr("data.selectel_dedicated_os_v1.os_tf_acc_test_1", "os.0.name", osName),
-					resource.TestCheckResourceAttr("data.selectel_dedicated_os_v1.os_tf_acc_test_1", "os.0.version", osVersion),
+					resource.TestCheckResourceAttr("data.selectel_dedicated_os_v1.os_tf_acc_test_1", "os.0.version_value", osVersion),
 				),
 			},
 		},
@@ -75,7 +75,7 @@ data "selectel_dedicated_os_v1" "os_tf_acc_test_1" {
 
   filter {
     name             = "%s"
-    version          = "%s"
+    version_value    = "%s"
   }
 }
 `, projectName, osName, osVersion)

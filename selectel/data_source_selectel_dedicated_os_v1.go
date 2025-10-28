@@ -2,8 +2,11 @@ package selectel
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"regexp"
 	"slices"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -28,7 +31,15 @@ func dataSourceDedicatedOSV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
-						"version": {
+						"version_value": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"version_name": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"version_name_regex": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
@@ -65,7 +76,11 @@ func dataSourceDedicatedOSV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"version": {
+						"version_value": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"version_name": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -106,7 +121,10 @@ func dataSourceDedicatedOSV1Read(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(errGettingObjects(objectOS, err))
 	}
 
-	filteredOS := filterDedicatedOperatingSystems(opSystems, filter)
+	filteredOS, err := filterDedicatedOperatingSystems(opSystems, filter)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	osFlatten := flattenDedicatedOperatingSystems(filteredOS)
 	if err := d.Set("os", osFlatten); err != nil {
@@ -131,10 +149,12 @@ func dataSourceDedicatedOSV1Read(ctx context.Context, d *schema.ResourceData, me
 }
 
 type dedicatedOperatingSystemsFilter struct {
-	name            string
-	version         string
-	configurationID string
-	locationID      string
+	name             string
+	versionValue     string
+	versionName      string
+	versionNameRegex string
+	configurationID  string
+	locationID       string
 }
 
 func expandDedicatedOperatingSystemsSearchFilter(d *schema.ResourceData) dedicatedOperatingSystemsFilter {
@@ -166,24 +186,50 @@ func expandDedicatedOperatingSystemsSearchFilter(d *schema.ResourceData) dedicat
 		filter.locationID = locationID.(string)
 	}
 
-	version, ok := resourceFilterMap["version"]
+	versionValue, ok := resourceFilterMap["version_value"]
 	if ok {
-		filter.version = version.(string)
+		filter.versionValue = versionValue.(string)
+	}
+
+	versionName, ok := resourceFilterMap["version_name"]
+	if ok {
+		filter.versionName = versionName.(string)
+	}
+
+	versionNameRegex, ok := resourceFilterMap["version_name_regex"]
+	if ok {
+		filter.versionNameRegex = versionNameRegex.(string)
 	}
 
 	return filter
 }
 
-func filterDedicatedOperatingSystems(list dedicated.OperatingSystems, filter dedicatedOperatingSystemsFilter) dedicated.OperatingSystems {
+func filterDedicatedOperatingSystems(list dedicated.OperatingSystems, filter dedicatedOperatingSystemsFilter) (dedicated.OperatingSystems, error) {
 	var filtered dedicated.OperatingSystems
 	for _, entry := range list {
-		if (filter.name == "" || entry.Name == filter.name) &&
-			(filter.version == "" || entry.VersionValue == filter.version) {
+		isVersionNameRegexMatches := true
+		if filter.versionNameRegex != "" {
+			matches, err := regexp.MatchString(filter.versionNameRegex, entry.VersionName)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing version name regex: %s", err)
+			}
+
+			isVersionNameRegexMatches = matches
+		}
+
+		isVersionNameMatches := filter.versionName == "" ||
+			strings.Contains(strings.ToLower(entry.VersionName), strings.ToLower(filter.versionName))
+
+		isNameMatches := filter.name == "" || entry.Name == filter.name
+
+		isVersionValueMatches := filter.versionValue == "" || entry.VersionValue == filter.versionValue
+
+		if isNameMatches && isVersionNameMatches && isVersionNameRegexMatches && isVersionValueMatches {
 			filtered = append(filtered, entry)
 		}
 	}
 
-	return filtered
+	return filtered, nil
 }
 
 func flattenDedicatedOperatingSystems(list dedicated.OperatingSystems) []interface{} {
@@ -194,7 +240,8 @@ func flattenDedicatedOperatingSystems(list dedicated.OperatingSystems) []interfa
 		sMap["name"] = e.Name
 		sMap["arch"] = e.Arch
 		sMap["os"] = e.OSValue
-		sMap["version"] = e.VersionValue
+		sMap["version_value"] = e.VersionValue
+		sMap["version_name"] = e.VersionName
 		sMap["scripts_allowed"] = e.ScriptAllowed
 		sMap["ssh_key_allowed"] = e.IsSSHKeyAllowed
 		sMap["partitioning"] = e.Partitioning
