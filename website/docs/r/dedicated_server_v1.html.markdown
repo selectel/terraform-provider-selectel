@@ -24,7 +24,6 @@ resource "selectel_dedicated_server_v1" "server_1" {
   os_host_name     = "Turing"
   public_subnet_id = data.selectel_dedicated_public_subnet_v1.subnets.subnets[0].id
   # public_subnet_ip = data.selectel_dedicated_public_subnet_v1.subnets.subnets[0].ip
-  private_subnet   = "192.168.0.0/16"
   ssh_key_name     = "deploy-ed25519"
   os_password      = "Passw0rd!"
   user_data        = file("init-script-dir/init.sh")
@@ -60,7 +59,7 @@ resource "selectel_dedicated_server_v1" "server_1" {
   }
 
   # Optional: You can choose your own timeout values or remove them.
-  # 
+  #
   # Current values represent default values.
   timeouts {
     create = "80m"
@@ -74,23 +73,23 @@ resource "selectel_dedicated_server_v1" "server_1" {
 
 * `project_id` - (Required) Unique identifier of the associated project.  Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
-* `configuration_id` - (Required) Unique identifier of the server configuration. 
+* `configuration_id` - (Required) Unique identifier of the server configuration. Retrieved from the [dedicated_configuration_v1]((https://registry.terraform.io/providers/selectel/selectel/latest/docs/dedicated_configuration_v1) data source.
 
-* `location_id` - (Required) Pool where the server is located. 
+* `location_id` - (Required) Pool where the server is located. Retrieved from the [dedicated_location_v1]((https://registry.terraform.io/providers/selectel/selectel/latest/docs/dedicated_location_v1) data source.
 
-* `os_id` - (Required) Unique identifier of the operating system to install. Changing this installs new os on a new server. NOTE: installing new os will delete all data on the server.
+* `os_id` - (Required) Unique identifier of the operating system to install. Changing this installs new os on a new server.  Installing new os will delete all data on the server.  Retrieved from the [dedicated_os_v1]((https://registry.terraform.io/providers/selectel/selectel/latest/docs/dedicated_os_v1) data source.
 
-* `price_plan_name` - (Required) The name of the price plan.
+* `price_plan_name` - (Required) The name of the price plan. Available tariff plans are `1 day`, `1 month`, `3 months`, `6 months`, `12 months`, and `12 months • monthly payment`. Learn more about tariff plans in the [Payment model and prices of a dedicated server]((https://docs.selectel.ru/en/dedicated/about/payment/).
 
 * `os_password` - (Optional) Password for the OS user.
 
-* `user_data` - (Optional) These are custom configuration settings that automatically perform common tasks or run server setup scripts, reducing the time it takes to configure and deploy your infrastructure.
+* `user_data` - (Optional) These are custom configuration settings that automatically perform common tasks or run server setup scripts, reducing the time it takes to configure and deploy your infrastructure. Learn more about user data in the [User data on a dedicated server]((https://docs.selectel.ru/en/dedicated/manage/user-data/).
 
-* `ssh_key` - (Optional) The public SSH key to be added to the server. 
+* `ssh_key` - (Optional) The public SSH key to be added to the server.
 
-* `ssh_key_name` - (Optional) The name of an existing SSH key to be added to the server. 
+* `ssh_key_name` - (Optional) The name of an existing SSH key to be added to the server. Learn more about add a public SSH key to the SSH key repository in the [Create and host an SSH key on a dedicated server]((https://docs.selectel.ru/en/dedicated/manage/create-and-place-ssh-key/).
 
-* `partitions_config` - (Optional) Configuration for disk partitions.
+* `partitions_config` - (Optional) Configuration for disk partitions. Learn more about disk partitioning in the [Install the OS by auto-installation]((https://docs.selectel.ru/en/dedicated/manage/autoinstall-os/#partition-disks).
   * `soft_raid_config` - (Optional) Configuration for software RAID.
     * `name` - (Required) Name of the RAID array.
     * `level` - (Required) RAID level.
@@ -100,17 +99,15 @@ resource "selectel_dedicated_server_v1" "server_1" {
     * `size` - (Optional) Size of the partition in GB. Use only size or size_percent.
     * `size_percent` - (Optional) Size of the partition in percent. Use only size or size_percent.
     * `raid` - (Required) The RAID array name to create the partition on.
-    * `fs_type` - (Optional) Filesystem type for the partition.
+    * `fs_type` - (Optional) Filesystem type for the partition. Available file system types are `swap`, `ext4`, `ext3`, and `xfs`.
 
 * `public_subnet_id` - (Optional) ID of the public subnet to connect the server to. If id is set, the first free subnet address wil be used.
 
 * `public_subnet_ip` - (Optional) Public IP to use. Can be set instead of `public_subnet_id`.
 
-* `private_subnet` - (Optional) Private subnet to connect the server to. 
-
 * `os_host_name` - (Optional) Hostname for the server.
 
-* `force_update_additional_params` - (Optional) Enables update for additional os params (os_password, user_data, ssh_key, ssh_key_name, partitions_config, os_host_name) without changing os_id. NOTE: installing new os will delete all data on the server.
+* `force_update_additional_params` - (Optional) Enable or disable update for additional os params (os_password, user_data, ssh_key, ssh_key_name, partitions_config, os_host_name) without changing os_id. NOTE: installing new os will delete all data on the server.
 
 ## Attributes Reference
 

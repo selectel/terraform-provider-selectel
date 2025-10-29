@@ -8,18 +8,11 @@ description: |-
 
 # selectel\_dedicated\_public\_subnet\_v1
 
-Provides a list of available public subnets.
+Provides a list of available additional public subnets. Learn more about [Additional public subnets](https://docs.selectel.ru/en/dedicated/networks/ip-addresses/#add-additional-ips)
 
 ## Example Usage
 
 ```hcl
-data "selectel_dedicated_location_v1" "server_location" {
-  project_id = selectel_vpc_project_v2.project_1.id
-  filter {
-    name = "some-location"
-  }
-}
-
 data "selectel_dedicated_public_subnet_v1" "public_subnets" {
   project_id = selectel_vpc_project_v2.project_1.id
   filter {
@@ -38,7 +31,7 @@ data "selectel_dedicated_public_subnet_v1" "public_subnets" {
 
   * `ip` - (Optional) IP address to search included in a subnet.
   * `subnet` - (Optional) Subnet in CIDR notation to search.
-  * `location_id` - (Optional) Unique identifier of the location.
+  * `location_id` - (Optional) Unique identifier of the location. Retrieved from the [selectel_dedicated_location_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dedicated_location_v1) data source. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/availability-matrix/#dedicated-servers).
 
 ## Attributes Reference
 
