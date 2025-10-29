@@ -13,6 +13,8 @@ Provides a list of available operating systems.
 ## Example Usage
 
 ```hcl
+data "selectel_dedicated_os_v1" "server_os" {
+  project_id = selectel_vpc_project_v2.project_1.id
   filter {
     name             = "Ubuntu"
     version_value          = "22.04"
