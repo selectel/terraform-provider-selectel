@@ -16,7 +16,7 @@ Provides a list of available locations.
 data "selectel_dedicated_location_v1" "server_location" {
   project_id = selectel_vpc_project_v2.project_1.id
   filter {
-    name = "MSK-2"
+    name = "SPB-2"
   }
 }
 ```
@@ -27,7 +27,7 @@ data "selectel_dedicated_location_v1" "server_location" {
 
 * `filter` - (Optional) Values to filter available locations.
 
-  * `name` - (Optional) Name of the location to search.
+  * `name` - (Optional) Name of the location to search. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/availability-matrix/#dedicated-servers).
 
 ## Attributes Reference
 
@@ -40,4 +40,3 @@ data "selectel_dedicated_location_v1" "server_location" {
   * `description` - Location description.
 
   * `visibility` - Location visibility.
-
