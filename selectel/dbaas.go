@@ -687,7 +687,47 @@ func removeReplicasFloatingIPs(ctx context.Context, d *schema.ResourceData, clie
 	return nil
 }
 
-// Logs
+func resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet *schema.Set) ([]string, error) {
+	if securityGroupsSet.Len() == 0 {
+		return nil, fmt.Errorf("security group must include at least one value")
+	}
+
+	securityGroups := make([]string, securityGroupsSet.Len())
+
+	for index, uuidVal := range securityGroupsSet.List() {
+		value, ok := uuidVal.(string)
+		if ok {
+			securityGroups[index] = value
+		} else {
+			return securityGroups, fmt.Errorf("string cast error %q", value)
+		}
+	}
+
+	return securityGroups, nil
+}
+
+func updateDatastoreSecurityGroups(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	sgInterface := d.Get("security_groups")
+
+	securityGroupsSet := sgInterface.(*schema.Set)
+
+	securityGroups, err := resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet)
+	if err != nil {
+		return errParseDatastoreV1SecurityGroups(err)
+	}
+
+	securityGroupsOpts := dbaas.DatastoreSecurityGroupOpts{
+		SecurityGroups: securityGroups,
+	}
+
+	log.Printf("[DEBUG] updating datastore %q security groups %+v", d.Id(), securityGroupsOpts)
+
+	if _, updateErr := client.UpdateSecurityGroup(ctx, d.Id(), securityGroupsOpts); updateErr != nil {
+		return updateErr
+	}
+
+	return nil
+}
 
 func dbaasLogsEnable(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
 	var logsOpts dbaas.LogPlatformOpts

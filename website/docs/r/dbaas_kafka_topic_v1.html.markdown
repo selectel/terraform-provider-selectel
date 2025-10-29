@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_dbaas\_kafka\_topic\_v1
 
-Creates and manages a topic in a Kafka datastore using public API v1. For more information about managing topics in Kafka, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/managed-databases/kafka/manage-topics/).
+Creates and manages a topic in a Kafka cluster using public API v1. For more information about managing topics in Kafka, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/managed-databases/kafka/manage-topics/).
 
 ## Example usage
 
@@ -16,7 +16,7 @@ Creates and manages a topic in a Kafka datastore using public API v1. For more i
 resource "selectel_dbaas_kafka_topic_v1" "topic_1" {
   project_id   = selectel_vpc_project_v2.project_1.id
   region       = "ru-3"
-  datastore_id = selectel_dbaas_kafka_datastore_v1.datastore_1.id
+  datastore_id = selectel_dbaas_kafka_datastore_v1.cluster_1.id
   name         = "topic"
   partitions   = 1
 }
@@ -32,7 +32,7 @@ resource "selectel_dbaas_kafka_topic_v1" "topic_1" {
 
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new topic. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-databases).
 
-* `datastore_id` - (Required) Unique identifier of the associated datastore. Changing this creates a new topic. Retrieved from the [selectel_dbaas_kafka_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_kafka_datastore_v1).
+* `datastore_id` - (Required) Unique identifier of the associated cluster. Changing this creates a new topic. Retrieved from the [selectel_dbaas_kafka_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_kafka_datastore_v1).
 
 ## Attributes Reference
 

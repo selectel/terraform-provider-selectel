@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages a PostgreSQL extension in Selectel Managed Databases using public API v1.
 
-Creates and manages a PostgreSQL extension using public API v1. Applicable to PostgreSQL, PostgreSQL for 1C, and PostgreSQL TimescaleDB datastores. For more information about extensions, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/), [PostgreSQL for 1C](https://docs.selectel.ru/en/cloud/managed-databases/postgresql-for-1c/), and [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/).
+Creates and manages a PostgreSQL extension using public API v1. Applicable to PostgreSQL, PostgreSQL for 1C, and PostgreSQL TimescaleDB clusters. For more information about extensions, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/), [PostgreSQL for 1C](https://docs.selectel.ru/en/cloud/managed-databases/postgresql-for-1c/), and [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/).
 
 ## Example usage
 
@@ -18,7 +18,7 @@ Creates and manages a PostgreSQL extension using public API v1. Applicable to Po
 resource "selectel_dbaas_postgresql_extension_v1" "extension_1" {
   project_id                  = selectel_vpc_project_v2.project_1.id
   region                      = "ru-3"
-  datastore_id                = selectel_dbaas_postgresql_datastore_v1.datastore_1.id
+  datastore_id                = selectel_dbaas_postgresql_datastore_v1.cluster_1.id
   database_id                 = selectel_dbaas_postgresql_database_v1.database_1.id
   available_extension_id      = data.selectel_dbaas_available_extension_v1.ae.available_extensions[0].id
 }
@@ -30,7 +30,7 @@ resource "selectel_dbaas_postgresql_extension_v1" "extension_1" {
 
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new extension. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-databases).
 
-* `datastore_id` - (Required) Unique identifier of the associated datastore. Changing this creates a new extension. Retrieved from the [selectel_dbaas_postgresql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_datastore_v1)
+* `datastore_id` - (Required) Unique identifier of the associated cluster. Changing this creates a new extension. Retrieved from the [selectel_dbaas_postgresql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_datastore_v1)
 
 * `database_id` - (Required) Unique identifier of the associated database. Changing this creates a new extension. Retrieved from the [selectel_dbaas_postgresql_database_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_database_v1) resource.
 

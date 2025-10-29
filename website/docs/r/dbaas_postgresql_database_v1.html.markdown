@@ -16,7 +16,7 @@ Creates and manages a PostgreSQL database using public API v1. Applicable to Pos
 resource "selectel_dbaas_postgresql_database_v1" "database_1" {
   project_id   = selectel_vpc_project_v2.project_1.id
   region       = "ru-3"
-  datastore_id = selectel_dbaas_postgresql_datastore_v1.datastore_1.id
+  datastore_id = selectel_dbaas_postgresql_datastore_v1.cluster_1.id
   owner_id     = selectel_dbaas_user_v1.user_1.id
   name         = "database_1"
 }
@@ -30,15 +30,15 @@ resource "selectel_dbaas_postgresql_database_v1" "database_1" {
 
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new database. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-databases).
 
-* `datastore_id` - (Required) Unique identifier of the associated datastore. Changing this creates a new database. Retrieved from the [selectel_dbaas_mysql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_mysql_datastore_v1) resource.
+* `datastore_id` - (Required) Unique identifier of the associated cluster. Changing this creates a new database. Retrieved from the [selectel_dbaas_mysql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_mysql_datastore_v1) resource.
 
 * `owner_id` - (Required) Unique identifier of the database owner. Retrieved from the [selectel_dbaas_user_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_user_v1) resource.
 
-* `lc_collate` - (Optional) LC_COLLATE setting for the PostgreSQL datastore. Determined when you create a database and you cannot change it afterwards. The default value is `C`.
+* `lc_collate` - (Optional) LC_COLLATE setting for the PostgreSQL cluster. Determined when you create a database and you cannot change it afterwards. The default value is `C`.
   
   To get a list of available values, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases**⟶ the cluster page ⟶ the **Databases** tab ⟶ **Create** ⟶ the **LC_COLLATE** field. The list of appropriate values is in the drop-down list.
 
-* `lc_ctype` - (Optional) LC_CTYPE setting for the PostgreSQL datastore. Determined when you create a database and you cannot change it afterwards. The default value is `C`.
+* `lc_ctype` - (Optional) LC_CTYPE setting for the PostgreSQL cluster. Determined when you create a database and you cannot change it afterwards. The default value is `C`.
 
   To get a list of available values, in the [Control panel](https://my.selectel.ru/vpc/dbaas/), go to **Cloud Platform** ⟶ **Managed Databases** ⟶ the cluster page ⟶ the **Databases** tab ⟶ **Create** ⟶ the **LC_CTYPE** field. The list of appropriate values is in the drop-down list.
 

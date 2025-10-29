@@ -3,12 +3,12 @@ layout: "selectel"
 page_title: "Selectel: selectel_dbaas_datastore_type_v1"
 sidebar_current: "docs-selectel-datasource-dbaas-datastore-type-v1"
 description: |-
-  Provides a list of available datastore types in Selectel Managed Databases.
+  Provides a list of available cluster types in Selectel Managed Databases.
 ---
 
 # selectel\_dbaas\_datastore_type_v1
 
-Provides a list of available datastore types in Managed Databases. For more information about available datastore types, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/managed-databases/about/about-managed-databases/#supported-databases).
+Provides a list of available cluster types in Managed Databases. For more information about available cluster types, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/managed-databases/about/about-managed-databases/#supported-databases).
 
 ## Example Usage for PostgreSQL
 
@@ -107,18 +107,19 @@ data "selectel_dbaas_datastore_type_v1" "datastore_type_1" {
 
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-databases).
 
-* `filter` - (Optional) Values to filter available datastore types:
+* `filter` - (Optional) Values to filter available cluster types:
 
-  * `engine` - (Optional) Engine of the datastore type to search. Available values are `postgresql` (for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/), [PostgreSQL for 1C](https://docs.selectel.ru/en/cloud/managed-databases/postgresql-for-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/)), `mysql` (for [MySQL sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-sync/)), `mysql_native` (for [MySQL semi-sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-semi-sync/)), `redis` (for [Redis](https://docs.selectel.ru/en/cloud/managed-databases/redis/)), and `kafka` (for [Kafka](https://docs.selectel.ru/en/cloud/managed-databases/kafka/)).
+  * `engine` - (Optional) Engine of the cluster type to search. Available values are `postgresql` (for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/), [PostgreSQL for 1C](https://docs.selectel.ru/en/cloud/managed-databases/postgresql-for-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/)), `mysql` (for [MySQL sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-sync/)), `mysql_native` (for [MySQL semi-sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-semi-sync/)), `redis` (for [Redis](https://docs.selectel.ru/en/cloud/managed-databases/redis/)), and `kafka` (for [Kafka](https://docs.selectel.ru/en/cloud/managed-databases/kafka/)).
 
-  * `version` - (Optional) Version of the datastore type to search. For PostgreSQL for 1C, the versions are in the format `<version_number>-1C`. For PostgreSQL TimescaleDB, the versions are in the format `<version_number>-TimescaleDB`. Learn more about available versions for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/configurations/), [PostgreSQL for 1C](https://docs.selectel.ru/en/cloud/managed-databases/postgresql-for-1c/configurations-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/configurations/), [MySQL semi-sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-semi-sync/configurations/), [MySQL sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-sync/configurations/), [Redis](https://docs.selectel.ru/en/cloud/managed-databases/redis/configurations/), and [Kafka](https://docs.selectel.ru/en/cloud/managed-databases/kafka/configurations/).
+  * `version` - (Optional) Version of the cluster type to search. For PostgreSQL for 1C, the versions are in the format `<version_number>-1C`. For PostgreSQL TimescaleDB, the versions are in the format `<version_number>-TimescaleDB`. Learn more about available versions for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/configurations/), [PostgreSQL for 1C](https://docs.selectel.ru/en/cloud/managed-databases/postgresql-for-1c/configurations-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/configurations/), [MySQL semi-sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-semi-sync/configurations/), [MySQL sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-sync/configurations/), [Redis](https://docs.selectel.ru/en/cloud/managed-databases/redis/configurations/), and [Kafka](https://docs.selectel.ru/en/cloud/managed-databases/kafka/configurations/).
 
 ## Attributes Reference
 
-* `datastore_types` - List of available datastore types.
+* `datastore_types` - List of available cluster types.
 
-  * `id` - ID of the datastore type.
+  * `id` - ID of the cluster type.
 
-  * `engine` - Engine of the datastore type.
+  * `engine` - Engine of the cluster type.
 
-  * `version` - Version of the datastore type.
+  * `version` - Version of the cluster type.
+  
