@@ -658,7 +658,7 @@ func resourceDedicatedServerV1UpdateValidatePreconditions(
 	)
 
 	switch {
-	case !(d.HasChange(dedicatedServerSchemaKeyOSID) || (forceUpdateAdditionalParams && isAdditionalParamsChanged)):
+	case !(d.HasChange(dedicatedServerSchemaKeyOSID) || (forceUpdateAdditionalParams && isAdditionalParamsChanged)): //nolint:staticcheck
 		return fmt.Errorf("can't update cause os configuration has not changed")
 
 	case d.HasChange(dedicatedServerSchemaKeyProjectID):
