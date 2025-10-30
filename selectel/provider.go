@@ -53,6 +53,8 @@ const (
 	objectDedicatedServer           = "dedicated-server"
 	objectOS                        = "os"
 	objectLocation                  = "location"
+	objectCloudBackupPlan           = "cloud-backup-plan"
+	objectCloudBackupCheckpoint     = "cloud-backup-checkpoint"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -128,6 +130,8 @@ func Provider() *schema.Provider {
 			"selectel_dedicated_os_v1":                  dataSourceDedicatedOSV1(),
 			"selectel_dedicated_location_v1":            dataSourceDedicatedLocationV1(),
 			"selectel_dedicated_public_subnet_v1":       dataSourceDedicatedPublicSubnetV1(),
+			"selectel_cloudbackup_plan_v2":              dataSourceCloudBackupPlanV2(),
+			"selectel_cloudbackup_checkpoint_v2":        dataSourceCloudBackupCheckpointV2(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"selectel_vpc_floatingip_v2":                            resourceVPCFloatingIPV2(),
@@ -171,6 +175,7 @@ func Provider() *schema.Provider {
 			"selectel_secretsmanager_secret_v1":                     resourceSecretsManagerSecretV1(),
 			"selectel_secretsmanager_certificate_v1":                resourceSecretsManagerCertificateV1(),
 			"selectel_dedicated_server_v1":                          resourceDedicatedServerV1(),
+			"selectel_cloudbackup_plan_v2":                          resourceCloudBackupPlanV2(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}
