@@ -9,7 +9,7 @@ description: |-
 # selectel\_craas\_token\_v1
 
 
-**WARNING**: This resource is deprecated and is going to be removed soon. You should use craas token v2 resource.
+**WARNING**: This resource is deprecated and is going to be removed soon. You should use the [selectel_craas_token_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/craas_token_v2) resource
 
 
 Creates and manages tokens in Container Registry using public API v1. For more information about Container Registry, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/craas/).
