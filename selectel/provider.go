@@ -50,6 +50,9 @@ const (
 	objectRegistryToken             = "registry token"
 	objectSecret                    = "secret"
 	objectCertificate               = "certificate"
+	objectDedicatedServer           = "dedicated-server"
+	objectOS                        = "os"
+	objectLocation                  = "location"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -121,6 +124,10 @@ func Provider() *schema.Provider {
 			"selectel_mks_kube_versions_v1":             dataSourceMKSKubeVersionsV1(),
 			"selectel_mks_feature_gates_v1":             dataSourceMKSFeatureGatesV1(),
 			"selectel_mks_admission_controllers_v1":     dataSourceMKSAdmissionControllersV1(),
+			"selectel_dedicated_configuration_v1":       dataSourceDedicatedConfigurationV1(),
+			"selectel_dedicated_os_v1":                  dataSourceDedicatedOSV1(),
+			"selectel_dedicated_location_v1":            dataSourceDedicatedLocationV1(),
+			"selectel_dedicated_public_subnet_v1":       dataSourceDedicatedPublicSubnetV1(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"selectel_vpc_floatingip_v2":                            resourceVPCFloatingIPV2(),
@@ -163,6 +170,7 @@ func Provider() *schema.Provider {
 			"selectel_craas_token_v2":                               resourceCRaaSTokenV2(),
 			"selectel_secretsmanager_secret_v1":                     resourceSecretsManagerSecretV1(),
 			"selectel_secretsmanager_certificate_v1":                resourceSecretsManagerCertificateV1(),
+			"selectel_dedicated_server_v1":                          resourceDedicatedServerV1(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}
