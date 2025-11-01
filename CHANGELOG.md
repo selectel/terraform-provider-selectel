@@ -1,44 +1,51 @@
 ## 6.9.0 (October 17, 2025)
 
 FEATURES:
+
 * Added supporting security groups ([#346](https://github.com/selectel/terraform-provider-selectel/pull/346))
 
 IMPROVEMENTS:
+
 * Update documentation for dbaas datastores ([#346](https://github.com/selectel/terraform-provider-selectel/pull/346))
 ## 6.8.0 (October 6, 2025)
 
 FEATURES:
+
 * Add selectel_craas_token_v2 resource ([#343](https://github.com/selectel/terraform-provider-selectel/pull/343))
 * Add documentation for selectel_craas_token_v2 resource ([#343](https://github.com/selectel/terraform-provider-selectel/pull/343))
+
 IMPROVEMENTS:
 
 * Bump `craas-go` to v0.4.1 ([#343](https://github.com/selectel/terraform-provider-selectel/pull/343))
 
-
 ## 6.7.0 (September 4, 2025)
 
 FEATURES:
+
 * Add new field `logs` for all datastores in DBaaS ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344)
 
 BUG FIXES:
+
 * Fix updating datastore `connections` after change `node_count` field ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344)
 * Fix `selectel_dbaas_prometheus_metric_token_v1` reading ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344)
 
 IMPROVEMENTS:
-* Update documentation for dbaas datastores ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344)
 
+* Update documentation for dbaas datastores ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344)
 
 ## 6.6.0 (July 8, 2025)
 
 FEATURES:
-* Support dbaas flavor disktype to create and resize cluster with local and network-ultra disk type ([#340] (https://github.com/selectel/terraform-provider-selectel/pull/340))
+
+* Support dbaas flavor disktype to create and resize cluster with local and network-ultra disk type ([#340](https://github.com/selectel/terraform-provider-selectel/pull/340))
 
 BUG FIXES:
+
 * Fix datastore resize to change flavor to flavor_id or the other way ([#340](https://github.com/selectel/terraform-provider-selectel/pull/340))
 
 IMPROVEMENTS:
-* Update documentation for dbaas datastores ([#340](https://github.com/selectel/terraform-provider-selectel/pull/340))
 
+* Update documentation for dbaas datastores ([#340](https://github.com/selectel/terraform-provider-selectel/pull/340))
 
 ## 6.5.0 (June 5, 2025)
 
@@ -55,16 +62,16 @@ IMPROVEMENTS:
 * Bump `mks-go` to v0.20.0 ([#337](https://github.com/selectel/terraform-provider-selectel/pull/337))
 * Bump `golang.org/x/net` to v0.38.0 ([#337](https://github.com/selectel/terraform-provider-selectel/pull/337))
 
-
 ## 6.4.1 (May 6, 2025)
 
 BUG FIXES:
+
 * Request only the specified disk quota for mks nodegroup ([#338](https://github.com/selectel/terraform-provider-selectel/pull/338))
 
 IMPROVEMENTS:
+
 * Update documentation for subnet ([#336](https://github.com/selectel/terraform-provider-selectel/pull/336))
 * Update documentation for mks nodegroup ([#334](https://github.com/selectel/terraform-provider-selectel/pull/334))
-
 
 ## 6.4.0 (March 24, 2025)
 
@@ -80,25 +87,29 @@ BUG FIXES:
 ## 6.3.0 (March 12, 2025)
 
 BUG FIXES:
+
 * Added filters to `quotas.GetProjectQuotas` calls to avoid errors ([#330](https://github.com/selectel/terraform-provider-selectel/pull/330))
 
-## 6.2.0 (Feb 24, 2025)
+## 6.2.0 (February 24, 2025)
 
 FEATURES:
+
 * Added new field `status` at `selectel_mks_nodegroup_v1` ([#327](https://github.com/selectel/terraform-provider-selectel/pull/327))
 
 BUG FIXES:
+
 * Fixed wrong behavior causing cluster creation failed due to conflict of values `zonal` and `enable_patch_version_auto_upgrade` ([#326](https://github.com/selectel/terraform-provider-selectel/pull/326))
 
 BREAKING CHANGES:
 * Due to API changes, older versions of the provider will incorrectly display node group resizing as instant, even though the operation is still in progress. The latest version correctly reflects the actual state of the resize process.
-## 6.1.1 (Jan 28, 2025)
+
+## 6.1.1 (January 28, 2025)
 
 BUG FIXES:
 
 * Fixed creating nodegroup after changes ([#324](https://github.com/selectel/terraform-provider-selectel/pull/324))
 
-## 6.1.0 (Jan 16, 2025)
+## 6.1.0 (January 16, 2025)
 
 FEATURES:
 
@@ -116,7 +127,7 @@ BUG FIXES:
 
 * Fixed validation of autoscale_min_nodes MKS parameter ([#320](https://github.com/selectel/terraform-provider-selectel/pull/320))
 
-## 6.0.1 (Dec 2, 2024)
+## 6.0.1 (December 2, 2024)
 
 IMPROVEMENTS:
 
@@ -124,7 +135,7 @@ IMPROVEMENTS:
   * `selectel_vpc_role_v2`
   * `selectel_vpc_user_v2`
 
-## 6.0.0 (Dec 2, 2024)
+## 6.0.0 (December 2, 2024)
 
 BREAKING CHANGES:
 
@@ -145,14 +156,16 @@ IMPROVEMENTS:
 * Added migration guide to upgrade to new major v6 version ([#313](https://github.com/selectel/terraform-provider-selectel/pull/313))
 * Updated docs ([#313](https://github.com/selectel/terraform-provider-selectel/pull/313))
 
-## 5.5.0 (Dec 2, 2024)
+## 5.5.0 (December 2, 2024)
 
 FEATURES:
+
 * Added `enable_audit_logs` argument to `selectel_mks_cluster_v1` resource
 * Added the preemptible argument to the `selectel_mks_nodegroup_v1` resource.
 * Upgraded the `mks-go` dependency to version v0.17.0.
 
 IMPROVEMENTS:
+
 * Added `enable_audit_logs` option to docs
 * Fixed semgrep configuration
 * Fixed documentation for the `selectel_mks_kubeconfig_v1` data source.
@@ -161,37 +174,44 @@ IMPROVEMENTS:
 ## 5.4.0 (September 09, 2024)
 
 IMPROVEMENTS:
+
 * Added default value for `backup_retention_days` field ([#297](https://github.com/selectel/terraform-provider-selectel/pull/297))
 * Updated docs for `mks_nodegroup_v1` and `mks_cluster_v1` resources ([#295](https://github.com/selectel/terraform-provider-selectel/pull/295))
 * Updated Go version to `1.22` ([#298](https://github.com/selectel/terraform-provider-selectel/pull/298))
 
-## 5.3.0 (Aug 13, 2024)
+## 5.3.0 (August 13, 2024)
 
 FEATURES:
+
 * __New Resource:__ `selectel_dbaas_firewall_v1` ([#278](https://github.com/selectel/terraform-provider-selectel/pull/278))
 * __Schema Updates:__ Deprecate `firewall` argument for the `selectel_dbaas_datastore_v1` resource ([#278](https://github.com/selectel/terraform-provider-selectel/pull/278))
 
-## 5.2.0 (Aug 8, 2024)
+## 5.2.0 (August 8, 2024)
 
 FEATURES:
+
 * Schema updates for the resource `selectel_mks_nodegroup_v1`  ([#285](https://github.com/selectel/terraform-provider-selectel/pull/285))
 * Added `selectel_iam_saml_federation_v1` resource ([#286](https://github.com/selectel/terraform-provider-selectel/pull/286))
-* Added `selectel_iam_saml_federation_certificate_v1` resource ([#286](https://github.com/selectel/terraform-provider-selectel/pull/286))
+* Added `seNovemberlectel_iam_saml_federation_certificate_v1` resource ([#286](https://github.com/selectel/terraform-provider-selectel/pull/286))
 * Added `selectel_iam_group_v1` resource ([#283](https://github.com/selectel/terraform-provider-selectel/pull/283))
 * Added `selectel_iam_group_membership_v1` resource ([#283](https://github.com/selectel/terraform-provider-selectel/pull/283))
 
 IMPROVEMENTS:
+
 * Docs updates for `selectel_secretsmanager_certificate_v1` resource ([#284](https://github.com/selectel/terraform-provider-selectel/pull/284))
 * Docs updates for `selectel_dbaas_*` resource ([#282](https://github.com/selectel/terraform-provider-selectel/pull/282))
 * Bump github.com/hashicorp/go-retryablehttp from 0.6.6 to 0.7.7 ([#280](https://github.com/selectel/terraform-provider-selectel/pull/280))
 
 ## 5.1.1 (May 21, 2024)
+
 IMPROVEMENTS:
+
 * Fixed schema for `schema_selectel_dbaas_postgresql_database_v1` ([#276](https://github.com/selectel/terraform-provider-selectel/pull/276))
 
 ## 5.1.0 (May 16, 2024)
 
 IMPROVEMENTS:
+
 * Updated docs for the resource `selectel_iam_s3_credentials_v1` ([#272](https://github.com/selectel/terraform-provider-selectel/pull/272))
 * Updated docs for the resource `selectel_mks_nodegroup_v1` ([#275](https://github.com/selectel/terraform-provider-selectel/pull/275))
 * Code refactoring for `selectel_dbaas_*` resources ([#251](https://github.com/selectel/terraform-provider-selectel/pull/251))
@@ -200,20 +220,23 @@ IMPROVEMENTS:
 ## 5.0.2 (April 23, 2024)
 
 IMPROVEMENTS:
+
 * Fixed bug that prevent using flavors for `selectel_mks_nodegroup creation` ([#273](https://github.com/selectel/terraform-provider-selectel/issues/273))
 
 ## 5.0.1 (April 19, 2024)
 
 IMPROVEMENTS:
+
 * Update docs for IAM resources ([#259](https://github.com/selectel/terraform-provider-selectel/pull/259))
 
 ## 5.0.0 (April 17, 2024)
 
 IMPROVEMENTS:
+
 * Bump google.golang.org/protobuf from 1.30.0 to 1.33.0 ([#259](https://github.com/selectel/terraform-provider-selectel/pull/259))
 
-
 FEATURES:
+
 * Added selectel_iam_user_v1 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
 * Added selectel_iam_serviceuser_v1 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
 * Added selectel_iam_s3_credentials_v1 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
@@ -221,6 +244,7 @@ FEATURES:
 * Added selectel_secretsmanager_certificate_v1 resource ([#264](https://github.com/selectel/terraform-provider-selectel/pull/264))
 
 DEPRECATED:
+
 * Deprecated selectel_vpc_user_v2 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
 * Deprecated selectel_vpc_role_v2 resource ([#258](https://github.com/selectel/terraform-provider-selectel/pull/258))
 
@@ -231,6 +255,7 @@ IMPROVEMENTS:
 * Added NS RRSet example in docs ([#262](https://github.com/selectel/terraform-provider-selectel/pull/262))
 
 FEATURES:
+
 * Added datasources rrset and zone for domains_v2 with docs ([#266](https://github.com/selectel/terraform-provider-selectel/pull/266))
 * Add 'floating_ips' to datastore ([#253](https://github.com/selectel/terraform-provider-selectel/pull/253))
 
@@ -244,17 +269,23 @@ IMPROVEMENTS:
 * Updated `golangci-lint` in CI to `v1.56.2` ([#257](https://github.com/selectel/terraform-provider-selectel/pull/257))
 
 ## 4.1.0 (February 26, 2024)
+
 FEATURES:
+
 * Added entities for work with DNS v2 API ([#249](https://github.com/selectel/terraform-provider-selectel/pull/249))
 
 IMPROVEMENTS:
+
 * Fix extensions for kafka resource docs ([#250](https://github.com/selectel/terraform-provider-selectel/pull/250))
 
 ## 4.0.3 (February 6, 2024)
+
 FEATURES:
+
 * Add kafka support ([#248](https://github.com/selectel/terraform-provider-selectel/pull/248))
 
 ## 4.0.2 (December 21, 2023)
+
 IMPROVEMENTS:
 
 * Add auth_region optional parameter ([#244](https://github.com/selectel/terraform-provider-selectel/pull/244))
@@ -262,11 +293,13 @@ IMPROVEMENTS:
 * Bump golang.org/x/net from 0.7.0 to 0.17.0 by @dependabot in ([#240](https://github.com/selectel/terraform-provider-selectel/pull/240))
 
 ## 4.0.1 (October 3, 2023)
+
 IMPROVEMENTS:
 
 * Update docs to upgrade to new major v4 version ([#239](https://github.com/selectel/terraform-provider-selectel/pull/239))
 
 ## 4.0.0 (September 27, 2023)
+
 FEATURES:
 
 * Added new authorization method via keystone users instead of x-token ([#236](https://github.com/selectel/terraform-provider-selectel/pull/236))
@@ -306,7 +339,7 @@ BUG FIXES:
 
 * Fixed an issue with failing creation of the `selectel_vpc_project_v2` resource with specified quotas ([#227](https://github.com/selectel/terraform-provider-selectel/pull/227))
 
-## 3.9.1 (Feb 8, 2023)
+## 3.9.1 (February 8, 2023)
 
 IMPROVEMENTS:
 
@@ -314,7 +347,7 @@ IMPROVEMENTS:
 * Updated `go-selvpcclient` to `v2.1.0` ([#216](https://github.com/selectel/terraform-provider-selectel/pull/216))
 * Added `uz-1` region for DBaaS ([#217](https://github.com/selectel/terraform-provider-selectel/pull/217))
 
-## 3.9.0 (Nov 17, 2022)
+## 3.9.0 (November 17, 2022)
 
 FEATURES:
 
@@ -335,7 +368,7 @@ DEPRECATED:
 * `selectel_dbaas_database_v1` resource marked as deprecated and is going to be removed ([#206](https://github.com/selectel/terraform-provider-selectel/pull/206))
 * `selectel_dbaas_extension_v1` resource marked as deprecated and is going to be removed ([#206](https://github.com/selectel/terraform-provider-selectel/pull/206))
 
-## 3.8.5 (Oct 14, 2022)
+## 3.8.5 (October 14, 2022)
 
 IMPROVEMENTS:
 
@@ -364,7 +397,7 @@ IMPROVEMENTS:
 
 * Added ability to upgrade unsupported kubernetes versions for the `selectel_mks_cluster_v1` resource ([#193](https://github.com/selectel/terraform-provider-selectel/issues/193))
 
-## 3.8.1 (Apr 15, 2022)
+## 3.8.1 (April 15, 2022)
 
 IMPROVEMENTS:
 
@@ -372,7 +405,7 @@ IMPROVEMENTS:
 * Updated `dbaas-go` dependency to `v0.5.0` ([#188](https://github.com/selectel/terraform-provider-selectel/pull/188))
 * Updated `golangci-lint` in CI to `v1.44.0` ([#192](https://github.com/selectel/terraform-provider-selectel/pull/192))
 
-## 3.8.0 (Jan 27, 2022)
+## 3.8.0 (January 27, 2022)
 
 FEATURES:
 
@@ -388,14 +421,14 @@ IMPROVEMENTS:
 * Added useful links to the documentation ([#186](https://github.com/selectel/terraform-provider-selectel/pull/186))
 * Updated Go version to `1.17` ([#187](https://github.com/selectel/terraform-provider-selectel/pull/187))
 
-## 3.7.1 (Nov 26, 2021)
+## 3.7.1 (November 26, 2021)
 
 IMPROVEMENTS:
 
 * Added `redis_password` argument for the `selectel_dbaas_datastore_v1` resource ([#173](https://github.com/selectel/terraform-provider-selectel/issues/173))
 * Added `datastore_type_ids` attribute for the `selectel_dbaas_flavor_v1` data source ([#173](https://github.com/selectel/terraform-provider-selectel/issues/173))
 
-## 3.7.0 (Oct 1, 2021)
+## 3.7.0 (October 1, 2021)
 
 FEATURES:
 
@@ -445,7 +478,7 @@ BUG FIXES:
 
 * Fixed an issue with failing MKS acceptance tests when cluster maintenance could start during the tests ([#146](https://github.com/selectel/terraform-provider-selectel/issues/146))
 
-## 3.5.0 (Nov 19, 2020)
+## 3.5.0 (November 19, 2020)
 
 FEATURES:
 
@@ -457,7 +490,7 @@ IMPROVEMENTS:
 * Allowed using `ru-9` region as `region` argument for the `selectel_mks_cluster_v1` resource ([#141](https://github.com/selectel/terraform-provider-selectel/pull/141))
 * Updated `domains-go` dependency to `v0.3.0` ([#142](https://github.com/selectel/terraform-provider-selectel/pull/142))
 
-## 3.4.0 (Aug 28, 2020)
+## 3.4.0 (August 28, 2020)
 
 IMPROVEMENTS:
 
@@ -465,7 +498,7 @@ IMPROVEMENTS:
 * Added `zonal` argument for the `selectel_mks_cluster_v1` resource ([#125](https://github.com/selectel/terraform-provider-selectel/pull/125))
 * Upgraded Terraform SDK to `v2.0.1` ([#129](https://github.com/selectel/terraform-provider-selectel/pull/129))
 
-## 3.3.3 (Aug 20, 2020)
+## 3.3.3 (August 20, 2020)
 
 IMPROVEMENTS:
 
@@ -642,7 +675,7 @@ BUG FIXES:
 * Fixed quotas in the created project of the `selvpc_resell_floatingip_v2` resource ([#58](https://github.com/selectel/terraform-provider-selvpc/issues/58))
 * Fixed `structLitKeyOrder` errors in the CI ([#60](https://github.com/selectel/terraform-provider-selvpc/issues/60))
 
-## 0.2.0 (Oct 3, 2018)
+## 0.2.0 (October 3, 2018)
 
 FEATURES:
 
