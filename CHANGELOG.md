@@ -1,15 +1,15 @@
 ## 6.9.0 (October 17, 2025)
 
 FEATURES:
-* Added supporting security groups ([#346] (https://github.com/selectel/terraform-provider-selectel/pull/346))
+* Added supporting security groups ([#346](https://github.com/selectel/terraform-provider-selectel/pull/346))
 
 IMPROVEMENTS:
-* Update documentation for dbaas datastores ([#346] (https://github.com/selectel/terraform-provider-selectel/pull/346))
+* Update documentation for dbaas datastores ([#346](https://github.com/selectel/terraform-provider-selectel/pull/346))
 ## 6.8.0 (October 6, 2025)
 
 FEATURES:
-* Add selectel_craas_token_v2 resource ([#343] (https://github.com/selectel/terraform-provider-selectel/pull/343))
-* Add documentation for selectel_craas_token_v2 resource ([#343] (https://github.com/selectel/terraform-provider-selectel/pull/343))
+* Add selectel_craas_token_v2 resource ([#343](https://github.com/selectel/terraform-provider-selectel/pull/343))
+* Add documentation for selectel_craas_token_v2 resource ([#343](https://github.com/selectel/terraform-provider-selectel/pull/343))
 IMPROVEMENTS:
 
 * Bump `craas-go` to v0.4.1 ([#343](https://github.com/selectel/terraform-provider-selectel/pull/343))
