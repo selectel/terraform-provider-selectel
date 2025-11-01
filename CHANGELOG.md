@@ -22,16 +22,16 @@ IMPROVEMENTS:
 
 FEATURES:
 
-* Add new field `logs` for all datastores in DBaaS ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344)
+* Add new field `logs` for all datastores in DBaaS ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344))
 
 BUG FIXES:
 
-* Fix updating datastore `connections` after change `node_count` field ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344)
-* Fix `selectel_dbaas_prometheus_metric_token_v1` reading ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344)
+* Fix updating datastore `connections` after change `node_count` field ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344))
+* Fix `selectel_dbaas_prometheus_metric_token_v1` reading ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344))
 
 IMPROVEMENTS:
 
-* Update documentation for dbaas datastores ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344)
+* Update documentation for dbaas datastores ([#344](https://github.com/selectel/terraform-provider-selectel/pull/344))
 
 ## 6.6.0 (July 8, 2025)
 
@@ -215,7 +215,7 @@ IMPROVEMENTS:
 * Updated docs for the resource `selectel_iam_s3_credentials_v1` ([#272](https://github.com/selectel/terraform-provider-selectel/pull/272))
 * Updated docs for the resource `selectel_mks_nodegroup_v1` ([#275](https://github.com/selectel/terraform-provider-selectel/pull/275))
 * Code refactoring for `selectel_dbaas_*` resources ([#251](https://github.com/selectel/terraform-provider-selectel/pull/251))
-* Schema updates for `selectel_dbaas_postgresql_database_v1` resource ([#260](https://github.com/selectel/terraform-provider-selectel/pull/260)
+* Schema updates for `selectel_dbaas_postgresql_database_v1` resource ([#260](https://github.com/selectel/terraform-provider-selectel/pull/260))
 
 ## 5.0.2 (April 23, 2024)
 
