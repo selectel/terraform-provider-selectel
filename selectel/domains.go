@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	domainsV1DefaultRetryWaitMin = time.Second //nolint:revive
+	domainsV1DefaultRetryWaitMin = time.Second
 	domainsV1DefaultRetryWaitMax = 5 * time.Second
 	domainsV1DefaultRetry        = 5
 )
