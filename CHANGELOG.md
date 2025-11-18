@@ -1,3 +1,16 @@
+## 7.2.0 (November 18, 2025)
+
+FEATURES:
+
+* Add `selectel_cloudbackup_plan_v2`, `selectel_cloudbackup_checkpoint_v2` datasources ([#350](https://github.com/selectel/terraform-provider-selectel/pull/350))
+* Add `selectel_cloudbackup_plan_v2` resource ([#350](https://github.com/selectel/terraform-provider-selectel/pull/350))
+* Add documentation for datasources and resource above ([#350](https://github.com/selectel/terraform-provider-selectel/pull/350))
+* Add Cloud Backup API SDK — [cloudbackup-go](https://github.com/selectel/cloudbackup-go) ([#350](https://github.com/selectel/terraform-provider-selectel/pull/350))
+
+IMPROVEMENTS:
+
+* Bump `golangci-lint` to v2.1.6 ([#350](https://github.com/selectel/terraform-provider-selectel/pull/350))
+
 ## 6.9.0 (October 17, 2025)
 
 FEATURES:
