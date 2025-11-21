@@ -169,51 +169,6 @@ func convertIAMFederationToList(federation *users.Federation) []interface{} {
 	}
 }
 
-const iamRolesCatalogPath = "iam/v1/roles"
-
-var iamRolesHTTPClient = &http.Client{
-	Timeout: 30 * time.Second,
-}
-
-type iamRoleCatalogEntry struct {
-	Deprecated bool
-}
-
-type iamRoleCatalog struct {
-	roles map[string]iamRoleCatalogEntry
-}
-
-func (c *iamRoleCatalog) isDeprecated(roleName string) bool {
-	if roleName == "" {
-		return false
-	}
-	role, ok := c.roles[roleName]
-	return ok && role.Deprecated
-}
-
-type iamRoleCatalogCache struct {
-	mu     sync.RWMutex
-	values map[string]*iamRoleCatalog
-}
-
-func (c *iamRoleCatalogCache) get(key string) (*iamRoleCatalog, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	roleCatalog, ok := c.values[key]
-	return roleCatalog, ok
-}
-
-func (c *iamRoleCatalogCache) set(key string, value *iamRoleCatalog) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.values == nil {
-		c.values = make(map[string]*iamRoleCatalog)
-	}
-	c.values[key] = value
-}
-
-var rolesCatalogCache iamRoleCatalogCache
-
 func warnAboutDeprecatedRoles(ctx context.Context, meta interface{}, assignedRoles []roles.Role) {
 	if len(assignedRoles) == 0 {
 		return
