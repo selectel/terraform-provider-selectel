@@ -1,9 +1,14 @@
 package selectel
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
 	"slices"
+	"sync"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -34,6 +39,7 @@ func getIAMClient(meta interface{}) (*iam.Client, diag.Diagnostics) {
 			KeystoneToken: selvpcClient.GetXAuthToken(),
 		}),
 		iam.WithAPIUrl(apiURL),
+		iam.WithUserAgentPrefix("terraform-provider"),
 	)
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't create iam client: %w", err))
@@ -118,18 +124,18 @@ func convertIAMSetToRoles(rolesSet *schema.Set) ([]roles.Role, error) {
 		roleName = roleNameRaw.(string)
 		scope = scopeRaw.(string)
 
-		if projectIDRaw = resourceRoleMap["project_id"]; projectIDRaw == "" && scope == string(roles.Project) {
+		if projectIDRaw = resourceRoleMap["project_id"]; projectIDRaw == "" && scope == "project" {
 			return nil, errors.New("project_id must be set for project scope")
 		} else if projectIDRaw != "" {
-			if scope != string(roles.Project) {
+			if scope != "project" {
 				return nil, errors.New("project_id can be set only for project scope")
 			}
 			projectID = projectIDRaw.(string)
 		}
 
 		output[i] = roles.Role{
-			RoleName:  roles.Name(roleName),
-			Scope:     roles.Scope(scope),
+			RoleName:  roleName,
+			Scope:     scope,
 			ProjectID: projectID,
 		}
 	}
@@ -160,5 +166,32 @@ func convertIAMFederationToList(federation *users.Federation) []interface{} {
 			"id":          federation.ID,
 			"external_id": federation.ExternalID,
 		},
+	}
+}
+
+func warnAboutDeprecatedRoles(ctx context.Context, meta interface{}, assignedRoles []roles.Role) {
+	if len(assignedRoles) == 0 {
+		return
+	}
+
+	config, ok := meta.(*Config)
+	if !ok || config == nil {
+		return
+	}
+
+	iamClient, diagErr := getIAMClient(meta)
+	if diagErr != nil {
+		return
+	}
+
+	rolesCatalog, err := iamClient.Roles.List(ctx)
+	if err != nil {
+		return
+	}
+
+	for _, role := range rolesCatalog.Roles {
+		if role.Deprecated {
+			log.Printf("Warning: Deprecated permission %s in use. See documentation for the updated replacement.", role.ID)
+		}
 	}
 }

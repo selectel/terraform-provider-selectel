@@ -78,6 +78,8 @@ func resourceIAMServiceUserV1Create(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
+	warnAboutDeprecatedRoles(ctx, meta, roles)
+
 	log.Print(msgCreate(objectServiceUser, d.Id()))
 	user, err := iamClient.ServiceUsers.Create(ctx, serviceusers.CreateRequest{
 		Enabled:  d.Get("enabled").(bool),
@@ -149,6 +151,8 @@ func resourceIAMServiceUserV1Update(ctx context.Context, d *schema.ResourceData,
 		if err != nil {
 			return diag.FromErr(err)
 		}
+
+		warnAboutDeprecatedRoles(ctx, meta, newRoles)
 
 		rolesToUnassign, rolesToAssign := diffRoles(oldRoles, newRoles)
 
