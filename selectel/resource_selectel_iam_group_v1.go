@@ -71,6 +71,8 @@ func resourceIAMGroupV1Create(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(err)
 	}
 
+	warnAboutDeprecatedRoles(ctx, meta, roles)
+
 	opts := groups.CreateRequest{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
@@ -139,6 +141,8 @@ func resourceIAMGroupV1Update(ctx context.Context, d *schema.ResourceData, meta 
 		if err != nil {
 			return diag.FromErr(err)
 		}
+
+		warnAboutDeprecatedRoles(ctx, meta, newRoles)
 
 		rolesToUnassign, rolesToAssign := diffRoles(oldRoles, newRoles)
 
