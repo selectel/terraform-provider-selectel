@@ -1,6 +1,7 @@
 package selectel
 
 const (
+	PrivateDNS         = "private-dns"
 	DBaaS              = "managed-database"
 	MKS                = "managed-kubernetes"
 	CRaaS              = "container-registry"

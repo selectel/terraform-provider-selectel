@@ -56,6 +56,8 @@ const (
 	objectLocation                  = "location"
 	objectCloudBackupPlan           = "cloud-backup-plan"
 	objectCloudBackupCheckpoint     = "cloud-backup-checkpoint"
+	objectPrivateDNSService         = "private-dns-service"
+	objectPrivateDNSZone            = "private-dns-zone"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -177,6 +179,8 @@ func Provider(providerVersion string) *schema.Provider {
 			"selectel_secretsmanager_certificate_v1":                resourceSecretsManagerCertificateV1(),
 			"selectel_dedicated_server_v1":                          resourceDedicatedServerV1(),
 			"selectel_cloudbackup_plan_v2":                          resourceCloudBackupPlanV2(),
+			"selectel_private_dns_service_v1":                       resourcePrivateDNSServiceV1(),
+			"selectel_private_dns_zone_v1":                          resourcePrivateDNSZoneV1(),
 		},
 	}
 

@@ -1,3 +1,11 @@
+## 7.3.0 (December 12, 2025)
+
+FEATURES:
+
+* Add `selectel_private_dns_service_v1` resource ([#350](https://github.com/selectel/terraform-provider-selectel/pull/350))
+* Add documentation for datasources and resource above ([#350](https://github.com/selectel/terraform-provider-selectel/pull/350))
+* Add Cloud Private DNS API SDK — [private-dns-go](https://github.com/selectel/cloudbackup-go) ([#350](https://github.com/selectel/terraform-provider-selectel/pull/350))
+
 ## 7.2.0 (November 18, 2025)
 
 FEATURES:
