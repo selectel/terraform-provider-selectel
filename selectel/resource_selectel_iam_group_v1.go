@@ -61,6 +61,8 @@ func resourceIAMGroupV1() *schema.Resource {
 }
 
 func resourceIAMGroupV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -71,7 +73,7 @@ func resourceIAMGroupV1Create(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(err)
 	}
 
-	warnAboutDeprecatedRoles(ctx, meta, roles)
+	diags = warnAboutDeprecatedRoles(ctx, meta, roles)
 
 	opts := groups.CreateRequest{
 		Name:        d.Get("name").(string),
@@ -92,7 +94,11 @@ func resourceIAMGroupV1Create(ctx context.Context, d *schema.ResourceData, meta 
 		}
 	}
 
-	return resourceIAMGroupV1Read(ctx, d, meta)
+	readDiags := resourceIAMGroupV1Read(ctx, d, meta)
+
+	diags = append(diags, readDiags...)
+
+	return diags
 }
 
 func resourceIAMGroupV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -113,6 +119,8 @@ func resourceIAMGroupV1Read(ctx context.Context, d *schema.ResourceData, meta in
 }
 
 func resourceIAMGroupV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -142,9 +150,9 @@ func resourceIAMGroupV1Update(ctx context.Context, d *schema.ResourceData, meta 
 			return diag.FromErr(err)
 		}
 
-		warnAboutDeprecatedRoles(ctx, meta, newRoles)
-
 		rolesToUnassign, rolesToAssign := diffRoles(oldRoles, newRoles)
+		
+		diags = warnAboutDeprecatedRoles(ctx, meta, rolesToAssign)
 
 		log.Print(msgUpdate(objectGroup, d.Id(), fmt.Sprintf("Roles to unassign: %+v, roles to assign: %+v", rolesToUnassign, rolesToAssign)))
 		err = applyGroupRoles(ctx, d, iamClient, rolesToUnassign, rolesToAssign)
@@ -152,10 +160,14 @@ func resourceIAMGroupV1Update(ctx context.Context, d *schema.ResourceData, meta 
 			return diag.FromErr(errUpdatingObject(objectGroup, d.Id(), err))
 		}
 
-		return nil
+		return diags
 	}
 
-	return resourceIAMGroupV1Read(ctx, d, meta)
+	readDiags := resourceIAMGroupV1Read(ctx, d, meta)
+
+	diags = append(diags, readDiags...)
+
+	return diags
 }
 
 func resourceIAMGroupV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

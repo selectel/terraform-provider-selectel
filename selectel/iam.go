@@ -4,11 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
-	"net/http"
 	"slices"
-	"sync"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -169,29 +165,39 @@ func convertIAMFederationToList(federation *users.Federation) []interface{} {
 	}
 }
 
-func warnAboutDeprecatedRoles(ctx context.Context, meta interface{}, assignedRoles []roles.Role) {
-	if len(assignedRoles) == 0 {
-		return
-	}
+func warnAboutDeprecatedRoles(ctx context.Context, meta interface{}, assignedRoles []roles.Role) diag.Diagnostics {
+	var diags diag.Diagnostics
 
-	config, ok := meta.(*Config)
-	if !ok || config == nil {
-		return
+	if len(assignedRoles) == 0 {
+		return diags
 	}
 
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
-		return
+		return diags
 	}
 
 	rolesCatalog, err := iamClient.Roles.List(ctx)
 	if err != nil {
-		return
+		return diags
 	}
 
-	for _, role := range rolesCatalog.Roles {
-		if role.Deprecated {
-			log.Printf("Warning: Deprecated permission %s in use. See documentation for the updated replacement.", role.ID)
+	deprecatedRoles := make(map[string]bool)
+	for _, catalogRole := range rolesCatalog.Roles {
+		if catalogRole.Deprecated {
+			deprecatedRoles[catalogRole.ID] = true
 		}
 	}
+
+	for _, assignedRole := range assignedRoles {
+		if deprecatedRoles[assignedRole.RoleName] {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Deprecated permission in use",
+				Detail:   fmt.Sprintf("Deprecated permission %q is in use. See documentation for the updated replacement.", assignedRole.RoleName),
+			})
+		}
+	}
+
+	return diags
 }
