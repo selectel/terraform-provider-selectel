@@ -151,7 +151,7 @@ func resourceIAMGroupV1Update(ctx context.Context, d *schema.ResourceData, meta 
 		}
 
 		rolesToUnassign, rolesToAssign := diffRoles(oldRoles, newRoles)
-		
+
 		diags = warnAboutDeprecatedRoles(ctx, meta, rolesToAssign)
 
 		log.Print(msgUpdate(objectGroup, d.Id(), fmt.Sprintf("Roles to unassign: %+v, roles to assign: %+v", rolesToUnassign, rolesToAssign)))
