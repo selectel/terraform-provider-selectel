@@ -120,10 +120,10 @@ func convertIAMSetToRoles(rolesSet *schema.Set) ([]roles.Role, error) {
 		roleName = roleNameRaw.(string)
 		scope = scopeRaw.(string)
 
-		if projectIDRaw = resourceRoleMap["project_id"]; projectIDRaw == "" && scope == "project" {
+		if projectIDRaw = resourceRoleMap["project_id"]; projectIDRaw == "" && scope == objectProject {
 			return nil, errors.New("project_id must be set for project scope")
 		} else if projectIDRaw != "" {
-			if scope != "project" {
+			if scope != objectProject {
 				return nil, errors.New("project_id can be set only for project scope")
 			}
 			projectID = projectIDRaw.(string)
