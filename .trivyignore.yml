@@ -3,3 +3,15 @@ secrets:
     statement: false-positive in description field
     paths:
       - selectel/resourse_selectel_secretsmanager_certificate_v1.go
+
+vulnerabilities:
+  - id: CVE-2025-47914
+    statement: >
+      See https://avd.aquasec.com/nvd/cve-2025-47914 (golang.org/x/crypto, fixed in v0.45.0+).
+      The current Go/toolchain version in this project does not yet allow upgrading x/crypto
+      to the fixed version; this will be addressed in a separate toolchain/dependency update MR.
+  - id: CVE-2025-58181
+    statement: >
+      See https://avd.aquasec.com/nvd/cve-2025-58181 (golang.org/x/crypto, fixed in v0.45.0+).
+      The current Go/toolchain version in this project does not yet allow upgrading x/crypto
+      to the fixed version; this will be addressed in a separate toolchain/dependency update MR.
