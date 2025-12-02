@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sync"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -16,6 +17,11 @@ import (
 
 const (
 	importIAMUndefined = "UNDEFINED_WHILE_IMPORTING"
+)
+
+var (
+	deprecatedRolesCache     map[string]bool
+	deprecatedRolesCacheOnce sync.Once
 )
 
 func getIAMClient(meta interface{}) (*iam.Client, diag.Diagnostics) {
@@ -172,21 +178,9 @@ func warnAboutDeprecatedRoles(ctx context.Context, meta interface{}, assignedRol
 		return diags
 	}
 
-	iamClient, diagErr := getIAMClient(meta)
-	if diagErr != nil {
+	deprecatedRoles := getDeprecatedRolesCache(ctx, meta)
+	if deprecatedRoles == nil {
 		return diags
-	}
-
-	rolesCatalog, err := iamClient.Roles.List(ctx)
-	if err != nil {
-		return diags
-	}
-
-	deprecatedRoles := make(map[string]bool)
-	for _, catalogRole := range rolesCatalog.Roles {
-		if catalogRole.Deprecated {
-			deprecatedRoles[catalogRole.ID] = true
-		}
 	}
 
 	for _, assignedRole := range assignedRoles {
@@ -200,4 +194,27 @@ func warnAboutDeprecatedRoles(ctx context.Context, meta interface{}, assignedRol
 	}
 
 	return diags
+}
+
+func getDeprecatedRolesCache(ctx context.Context, meta interface{}) map[string]bool {
+	deprecatedRolesCacheOnce.Do(func() {
+		iamClient, diagErr := getIAMClient(meta)
+		if diagErr != nil {
+			return
+		}
+
+		rolesCatalog, err := iamClient.Roles.List(ctx)
+		if err != nil {
+			return
+		}
+
+		deprecatedRolesCache = make(map[string]bool)
+		for _, catalogRole := range rolesCatalog.Roles {
+			if catalogRole.Deprecated {
+				deprecatedRolesCache[catalogRole.ID] = true
+			}
+		}
+	})
+
+	return deprecatedRolesCache
 }
