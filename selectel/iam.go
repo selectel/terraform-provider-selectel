@@ -21,6 +21,7 @@ const (
 
 var (
 	deprecatedRolesCache     map[string]bool
+	deprecatedRolesCacheErr  diag.Diagnostics
 	deprecatedRolesCacheOnce sync.Once
 )
 
@@ -197,17 +198,16 @@ func warnAboutDeprecatedRoles(ctx context.Context, meta interface{}, assignedRol
 }
 
 func getDeprecatedRolesCache(ctx context.Context, meta interface{}) (map[string]bool, diag.Diagnostics) {
-	var diags diag.Diagnostics
 	deprecatedRolesCacheOnce.Do(func() {
 		iamClient, diagErr := getIAMClient(meta)
 		if diagErr != nil {
-			diags = append(diags, diagErr...)
+			deprecatedRolesCacheErr = diagErr
 			return
 		}
 
 		rolesCatalog, err := iamClient.Roles.List(ctx)
 		if err != nil {
-			diags = append(diags, diag.FromErr(err)...)
+			deprecatedRolesCacheErr = diag.FromErr(err)
 			return
 		}
 
@@ -219,5 +219,5 @@ func getDeprecatedRolesCache(ctx context.Context, meta interface{}) (map[string]
 		}
 	})
 
-	return deprecatedRolesCache, diags
+	return deprecatedRolesCache, deprecatedRolesCacheErr
 }
