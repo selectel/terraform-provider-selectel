@@ -42,7 +42,7 @@ func getIAMClient(meta interface{}) (*iam.Client, diag.Diagnostics) {
 			KeystoneToken: selvpcClient.GetXAuthToken(),
 		}),
 		iam.WithAPIUrl(apiURL),
-		iam.WithUserAgentPrefix("terraform-provider"),
+		iam.WithUserAgentPostfix("terraform-provider/"+config.TerraformVersion),
 	)
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't create iam client: %w", err))
