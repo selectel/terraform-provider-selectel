@@ -62,7 +62,7 @@ var selMutexKV = mutexkv.NewMutexKV()
 
 // Provider returns the Selectel terraform provider.
 func Provider() *schema.Provider {
-	return &schema.Provider{
+	p := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"project_id": {
 				Type:        schema.TypeString,
@@ -177,12 +177,28 @@ func Provider() *schema.Provider {
 			"selectel_dedicated_server_v1":                          resourceDedicatedServerV1(),
 			"selectel_cloudbackup_plan_v2":                          resourceCloudBackupPlanV2(),
 		},
-		ConfigureContextFunc: configureProvider,
 	}
+
+	p.ConfigureContextFunc = func(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		terraformVersion := p.TerraformVersion
+		if terraformVersion == "" {
+			// Terraform 0.12 introduced this field to the protocol
+			// We can therefore assume that if it's missing it's 0.10 or 0.11
+			terraformVersion = "0.11+compatible"
+		}
+		client, diagErr := configureProvider(d, terraformVersion)
+		if diagErr != nil {
+			return nil, diagErr
+		}
+
+		return client, nil
+	}
+
+	return p
 }
 
-func configureProvider(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	config, diagError := getConfig(d)
+func configureProvider(d *schema.ResourceData, terraformVersion string) (interface{}, diag.Diagnostics) {
+	config, diagError := getConfig(d, terraformVersion)
 	if diagError != nil {
 		return nil, diagError
 	}
