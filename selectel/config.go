@@ -31,9 +31,10 @@ type Config struct {
 	lock           sync.Mutex
 
 	TerraformVersion string
+	ProviderVersion  string
 }
 
-func getConfig(d *schema.ResourceData, terraformVersion string) (*Config, diag.Diagnostics) {
+func getConfig(d *schema.ResourceData, terraformVersion, providerVersion string) (*Config, diag.Diagnostics) {
 	once.Do(func() {
 		cfgSingletone = &Config{
 			Username:         d.Get("username").(string),
@@ -42,6 +43,7 @@ func getConfig(d *schema.ResourceData, terraformVersion string) (*Config, diag.D
 			AuthURL:          d.Get("auth_url").(string),
 			AuthRegion:       d.Get("auth_region").(string),
 			TerraformVersion: terraformVersion,
+			ProviderVersion:  providerVersion,
 		}
 		if v, ok := d.GetOk("user_domain_name"); ok {
 			cfgSingletone.UserDomainName = v.(string)
