@@ -42,7 +42,7 @@ func getIAMClient(meta interface{}) (*iam.Client, diag.Diagnostics) {
 			KeystoneToken: selvpcClient.GetXAuthToken(),
 		}),
 		iam.WithAPIUrl(apiURL),
-		iam.WithUserAgentPostfix(fmt.Sprintf(
+		iam.WithClientUserAgent(fmt.Sprintf(
 			"terraform-provider-selectel/%s terraform/%s",
 			config.ProviderVersion,
 			config.TerraformVersion,
