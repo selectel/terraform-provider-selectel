@@ -6,9 +6,7 @@ import (
 	"github.com/terraform-providers/terraform-provider-selectel/selectel"
 )
 
-var (
-	version = "dev"
-)
+var version = "dev"
 
 func main() {
 	plugin.Serve(&plugin.ServeOpts{
