@@ -42,7 +42,7 @@ func getIAMClient(meta interface{}) (*iam.Client, diag.Diagnostics) {
 			KeystoneToken: selvpcClient.GetXAuthToken(),
 		}),
 		iam.WithAPIUrl(apiURL),
-		iam.WithClientUserAgent(config.UserAgent),
+		iam.WithUserAgentPrefix(config.UserAgent),
 	)
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't create iam client: %w", err))
