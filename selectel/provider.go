@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/mutexkv"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/version"
+	"github.com/terraform-providers/terraform-provider-selectel/version"
 )
 
 const (
