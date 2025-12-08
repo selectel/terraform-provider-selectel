@@ -80,7 +80,7 @@ func resourceIAMServiceUserV1Create(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	diags = warnAboutDeprecatedRoles(ctx, meta, roles)
+	diags = checkDeprecatedRoles(ctx, meta, roles)
 
 	log.Print(msgCreate(objectServiceUser, d.Id()))
 	user, err := iamClient.ServiceUsers.Create(ctx, serviceusers.CreateRequest{
@@ -162,7 +162,7 @@ func resourceIAMServiceUserV1Update(ctx context.Context, d *schema.ResourceData,
 
 		rolesToUnassign, rolesToAssign := diffRoles(oldRoles, newRoles)
 
-		diags = warnAboutDeprecatedRoles(ctx, meta, rolesToAssign)
+		diags = checkDeprecatedRoles(ctx, meta, rolesToAssign)
 
 		log.Print(msgUpdate(objectServiceUser, d.Id(), fmt.Sprintf("Roles to unassign: %+v, roles to assign: %+v", rolesToUnassign, rolesToAssign)))
 		err = applyServiceUserRoles(ctx, d, iamClient, rolesToUnassign, rolesToAssign)

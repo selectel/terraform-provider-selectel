@@ -172,14 +172,14 @@ func convertIAMFederationToList(federation *users.Federation) []interface{} {
 	}
 }
 
-func warnAboutDeprecatedRoles(ctx context.Context, meta interface{}, assignedRoles []roles.Role) diag.Diagnostics {
+func checkDeprecatedRoles(ctx context.Context, meta interface{}, assignedRoles []roles.Role) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if len(assignedRoles) == 0 {
 		return diags
 	}
 
-	deprecatedRoles, diagsErr := getDeprecatedRolesCache(ctx, meta)
+	deprecatedRoles, diagsErr := getDeprecatedRoles(ctx, meta)
 	if diagsErr != nil {
 		return diagsErr
 	}
@@ -197,7 +197,7 @@ func warnAboutDeprecatedRoles(ctx context.Context, meta interface{}, assignedRol
 	return diags
 }
 
-func getDeprecatedRolesCache(ctx context.Context, meta interface{}) (map[string]bool, diag.Diagnostics) {
+func getDeprecatedRoles(ctx context.Context, meta interface{}) (map[string]bool, diag.Diagnostics) {
 	deprecatedRolesCacheOnce.Do(func() {
 		iamClient, diagErr := getIAMClient(meta)
 		if diagErr != nil {

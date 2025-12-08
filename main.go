@@ -8,11 +8,9 @@ import (
 
 var (
 	version = "dev"
-	commit  = "none"
 )
 
 func main() {
-	_ = commit
 	plugin.Serve(&plugin.ServeOpts{
 		ProviderFunc: func() *schema.Provider {
 			return selectel.Provider(version)

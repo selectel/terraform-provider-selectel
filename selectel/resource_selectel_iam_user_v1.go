@@ -94,7 +94,7 @@ func resourceIAMUserV1Create(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
-	diags = warnAboutDeprecatedRoles(ctx, meta, roles)
+	diags = checkDeprecatedRoles(ctx, meta, roles)
 
 	federation, err := convertIAMListToUserFederation(d.Get("federation").([]interface{}))
 	if err != nil {
@@ -170,7 +170,7 @@ func resourceIAMUserV1Update(ctx context.Context, d *schema.ResourceData, meta i
 
 		rolesToUnassign, rolesToAssign := diffRoles(oldRoles, newRoles)
 
-		diags = warnAboutDeprecatedRoles(ctx, meta, rolesToAssign)
+		diags = checkDeprecatedRoles(ctx, meta, rolesToAssign)
 
 		log.Print(msgUpdate(objectUser, d.Id(), fmt.Sprintf("Roles to unassign: %+v, roles to assign: %+v", rolesToUnassign, rolesToAssign)))
 		err = applyUserRoles(ctx, d, iamClient, rolesToUnassign, rolesToAssign)
