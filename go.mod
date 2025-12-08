@@ -3,7 +3,7 @@ module github.com/terraform-providers/terraform-provider-selectel
 go 1.24.0
 
 require (
-	git.selectel.org/bykov.e/private-dns-go v0.1.6
+	git.selectel.org/bykov.e/private-dns-go v0.1.7
 	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/hashicorp/go-uuid v1.0.3
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.1
