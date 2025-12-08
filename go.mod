@@ -12,7 +12,7 @@ require (
 	github.com/selectel/dedicated-go v1.0.0
 	github.com/selectel/domains-go v1.0.2
 	github.com/selectel/go-selvpcclient/v4 v4.1.0
-	github.com/selectel/iam-go v0.6.1-0.20251205153608-3be0a9413228
+	github.com/selectel/iam-go v0.7.0
 	github.com/selectel/mks-go v0.20.0
 	github.com/selectel/secretsmanager-go v0.2.1
 	github.com/stretchr/testify v1.11.1

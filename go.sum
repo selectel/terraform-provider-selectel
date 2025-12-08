@@ -195,8 +195,8 @@ github.com/selectel/domains-go v1.0.2 h1:Si6iGaMnTFJxwiJVI50DOdZnwcxc87kqaWrVQYW
 github.com/selectel/domains-go v1.0.2/go.mod h1:SugRKfq4sTpnOHquslCpzda72wV8u0cMBHx0C0l+bzA=
 github.com/selectel/go-selvpcclient/v4 v4.1.0 h1:22lBp+rzg9g2MP4iiGhpVAcCt0kMv7I7uV1W3taLSvQ=
 github.com/selectel/go-selvpcclient/v4 v4.1.0/go.mod h1:eFhL1KUW159KOJVeGO7k/Uxl0TYd/sBkWXjuF5WxmYk=
-github.com/selectel/iam-go v0.6.1-0.20251205153608-3be0a9413228 h1:lOXj0HREc+P1rBQ3F3+9iPy5fqbdSIJK3TFUM6hquvI=
-github.com/selectel/iam-go v0.6.1-0.20251205153608-3be0a9413228/go.mod h1:OIAkW7MZK97YUm+uvUgYbgDhkI9SdzTCxwd4yZoOR1o=
+github.com/selectel/iam-go v0.7.0 h1:T0k2jnV/IVpFvbxRlLCoUuQacKltuhFc0aBJjelE2do=
+github.com/selectel/iam-go v0.7.0/go.mod h1:OIAkW7MZK97YUm+uvUgYbgDhkI9SdzTCxwd4yZoOR1o=
 github.com/selectel/mks-go v0.20.0 h1:4GCekG3qkBfl7HADlVcjpIAHJDZFjclY8rLFhuEHqHI=
 github.com/selectel/mks-go v0.20.0/go.mod h1:VxtV3dzwgOEzZc+9VMQb9DvxfSlej2ZQ8jnT8kqIGgU=
 github.com/selectel/secretsmanager-go v0.2.1 h1:OSBrA/07lm/Ecpwg59IJHFAoUHZR29oyfwUgTpr/dos=
