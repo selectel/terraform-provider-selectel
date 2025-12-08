@@ -15,7 +15,7 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - '-s -w -X github.com/terraform-providers/terraform-provider-selectel/version.Version={{.Version}} -X github.com/terraform-providers/terraform-provider-selectel/version.Commit={{.Commit}}'
+      - '-s -w -X github.com/terraform-providers/terraform-provider-selectel/selectel/version.Version={{.Version}} -X github.com/terraform-providers/terraform-provider-selectel/selectel/version.Commit={{.Commit}}'
     goos:
       - freebsd
       - windows
