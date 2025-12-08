@@ -30,20 +30,18 @@ type Config struct {
 	clientsCache   map[string]*selvpcclient.Client
 	lock           sync.Mutex
 
-	TerraformVersion string
-	ProviderVersion  string
+	UserAgent string
 }
 
-func getConfig(d *schema.ResourceData, terraformVersion, providerVersion string) (*Config, diag.Diagnostics) {
+func getConfig(d *schema.ResourceData, userAgent string) (*Config, diag.Diagnostics) {
 	once.Do(func() {
 		cfgSingletone = &Config{
-			Username:         d.Get("username").(string),
-			Password:         d.Get("password").(string),
-			DomainName:       d.Get("domain_name").(string),
-			AuthURL:          d.Get("auth_url").(string),
-			AuthRegion:       d.Get("auth_region").(string),
-			TerraformVersion: terraformVersion,
-			ProviderVersion:  providerVersion,
+			Username:   d.Get("username").(string),
+			Password:   d.Get("password").(string),
+			DomainName: d.Get("domain_name").(string),
+			AuthURL:    d.Get("auth_url").(string),
+			AuthRegion: d.Get("auth_region").(string),
+			UserAgent:  userAgent,
 		}
 		if v, ok := d.GetOk("user_domain_name"); ok {
 			cfgSingletone.UserDomainName = v.(string)

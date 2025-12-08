@@ -180,13 +180,8 @@ func Provider(providerVersion string) *schema.Provider {
 	}
 
 	p.ConfigureContextFunc = func(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-		terraformVersion := p.TerraformVersion
-		if terraformVersion == "" {
-			// Terraform 0.12 introduced this field to the protocol
-			// We can therefore assume that if it's missing it's 0.10 or 0.11
-			terraformVersion = "0.11+compatible"
-		}
-		client, diagErr := configureProvider(d, terraformVersion, providerVersion)
+		userAgent := p.UserAgent("terraform-provider-selectel", providerVersion)
+		client, diagErr := configureProvider(d, userAgent)
 		if diagErr != nil {
 			return nil, diagErr
 		}
@@ -197,8 +192,8 @@ func Provider(providerVersion string) *schema.Provider {
 	return p
 }
 
-func configureProvider(d *schema.ResourceData, terraformVersion, providerVersion string) (interface{}, diag.Diagnostics) {
-	config, diagError := getConfig(d, terraformVersion, providerVersion)
+func configureProvider(d *schema.ResourceData, userAgent string) (interface{}, diag.Diagnostics) {
+	config, diagError := getConfig(d, userAgent)
 	if diagError != nil {
 		return nil, diagError
 	}
