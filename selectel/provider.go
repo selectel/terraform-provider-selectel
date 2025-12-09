@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/mutexkv"
+	"github.com/terraform-providers/terraform-provider-selectel/version"
 )
 
 const (
@@ -61,8 +62,8 @@ const (
 var selMutexKV = mutexkv.NewMutexKV()
 
 // Provider returns the Selectel terraform provider.
-func Provider() *schema.Provider {
-	return &schema.Provider{
+func Provider(providerVersion string) *schema.Provider {
+	p := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"project_id": {
 				Type:        schema.TypeString,
@@ -177,12 +178,23 @@ func Provider() *schema.Provider {
 			"selectel_dedicated_server_v1":                          resourceDedicatedServerV1(),
 			"selectel_cloudbackup_plan_v2":                          resourceCloudBackupPlanV2(),
 		},
-		ConfigureContextFunc: configureProvider,
 	}
+
+	p.ConfigureContextFunc = func(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		userAgent := p.UserAgent(version.ProviderName, providerVersion)
+		client, diagErr := configureProvider(d, userAgent)
+		if diagErr != nil {
+			return nil, diagErr
+		}
+
+		return client, nil
+	}
+
+	return p
 }
 
-func configureProvider(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	config, diagError := getConfig(d)
+func configureProvider(d *schema.ResourceData, userAgent string) (interface{}, diag.Diagnostics) {
+	config, diagError := getConfig(d, userAgent)
 	if diagError != nil {
 		return nil, diagError
 	}

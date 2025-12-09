@@ -19,7 +19,7 @@ var (
 )
 
 func init() {
-	testAccProvider = Provider()
+	testAccProvider = Provider("test")
 	testAccProviders = map[string]func() (*schema.Provider, error){
 		"selectel": func() (*schema.Provider, error) {
 			return testAccProvider, nil
@@ -36,7 +36,7 @@ func init() {
 }
 
 func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
+	if err := Provider("test").InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }

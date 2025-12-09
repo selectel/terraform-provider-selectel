@@ -68,6 +68,8 @@ func resourceIAMServiceUserV1() *schema.Resource {
 }
 
 func resourceIAMServiceUserV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -77,6 +79,8 @@ func resourceIAMServiceUserV1Create(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	diags = checkDeprecatedRoles(ctx, meta, roles)
 
 	log.Print(msgCreate(objectServiceUser, d.Id()))
 	user, err := iamClient.ServiceUsers.Create(ctx, serviceusers.CreateRequest{
@@ -91,7 +95,11 @@ func resourceIAMServiceUserV1Create(ctx context.Context, d *schema.ResourceData,
 
 	d.SetId(user.ID)
 
-	return resourceIAMServiceUserV1Read(ctx, d, meta)
+	readDiags := resourceIAMServiceUserV1Read(ctx, d, meta)
+
+	diags = append(diags, readDiags...)
+
+	return diags
 }
 
 func resourceIAMServiceUserV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -117,6 +125,8 @@ func resourceIAMServiceUserV1Read(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceIAMServiceUserV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -152,16 +162,22 @@ func resourceIAMServiceUserV1Update(ctx context.Context, d *schema.ResourceData,
 
 		rolesToUnassign, rolesToAssign := diffRoles(oldRoles, newRoles)
 
+		diags = checkDeprecatedRoles(ctx, meta, rolesToAssign)
+
 		log.Print(msgUpdate(objectServiceUser, d.Id(), fmt.Sprintf("Roles to unassign: %+v, roles to assign: %+v", rolesToUnassign, rolesToAssign)))
 		err = applyServiceUserRoles(ctx, d, iamClient, rolesToUnassign, rolesToAssign)
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectServiceUser, d.Id(), err))
 		}
 
-		return nil
+		return diags
 	}
 
-	return resourceIAMServiceUserV1Read(ctx, d, meta)
+	readDiags := resourceIAMServiceUserV1Read(ctx, d, meta)
+
+	diags = append(diags, readDiags...)
+
+	return diags
 }
 
 func resourceIAMServiceUserV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

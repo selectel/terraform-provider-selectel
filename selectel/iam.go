@@ -1,9 +1,11 @@
 package selectel
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"slices"
+	"sync"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -15,6 +17,12 @@ import (
 
 const (
 	importIAMUndefined = "UNDEFINED_WHILE_IMPORTING"
+)
+
+var (
+	deprecatedRolesCache     map[string]bool
+	deprecatedRolesCacheErr  diag.Diagnostics
+	deprecatedRolesCacheOnce sync.Once
 )
 
 func getIAMClient(meta interface{}) (*iam.Client, diag.Diagnostics) {
@@ -34,6 +42,7 @@ func getIAMClient(meta interface{}) (*iam.Client, diag.Diagnostics) {
 			KeystoneToken: selvpcClient.GetXAuthToken(),
 		}),
 		iam.WithAPIUrl(apiURL),
+		iam.WithUserAgentPrefix(config.UserAgent),
 	)
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't create iam client: %w", err))
@@ -118,18 +127,18 @@ func convertIAMSetToRoles(rolesSet *schema.Set) ([]roles.Role, error) {
 		roleName = roleNameRaw.(string)
 		scope = scopeRaw.(string)
 
-		if projectIDRaw = resourceRoleMap["project_id"]; projectIDRaw == "" && scope == string(roles.Project) {
+		if projectIDRaw = resourceRoleMap["project_id"]; projectIDRaw == "" && scope == objectProject {
 			return nil, errors.New("project_id must be set for project scope")
 		} else if projectIDRaw != "" {
-			if scope != string(roles.Project) {
+			if scope != objectProject {
 				return nil, errors.New("project_id can be set only for project scope")
 			}
 			projectID = projectIDRaw.(string)
 		}
 
 		output[i] = roles.Role{
-			RoleName:  roles.Name(roleName),
-			Scope:     roles.Scope(scope),
+			RoleName:  roleName,
+			Scope:     scope,
 			ProjectID: projectID,
 		}
 	}
@@ -161,4 +170,54 @@ func convertIAMFederationToList(federation *users.Federation) []interface{} {
 			"external_id": federation.ExternalID,
 		},
 	}
+}
+
+func checkDeprecatedRoles(ctx context.Context, meta interface{}, assignedRoles []roles.Role) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if len(assignedRoles) == 0 {
+		return diags
+	}
+
+	deprecatedRoles, diagsErr := getDeprecatedRoles(ctx, meta)
+	if diagsErr != nil {
+		return diagsErr
+	}
+
+	for _, assignedRole := range assignedRoles {
+		if deprecatedRoles[assignedRole.RoleName] {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Deprecated permission in use",
+				Detail:   fmt.Sprintf("Deprecated permission %q is in use. See documentation for the updated replacement.", assignedRole.RoleName),
+			})
+		}
+	}
+
+	return diags
+}
+
+func getDeprecatedRoles(ctx context.Context, meta interface{}) (map[string]bool, diag.Diagnostics) {
+	deprecatedRolesCacheOnce.Do(func() {
+		iamClient, diagErr := getIAMClient(meta)
+		if diagErr != nil {
+			deprecatedRolesCacheErr = diagErr
+			return
+		}
+
+		rolesCatalog, err := iamClient.Roles.List(ctx)
+		if err != nil {
+			deprecatedRolesCacheErr = diag.FromErr(err)
+			return
+		}
+
+		deprecatedRolesCache = make(map[string]bool)
+		for _, catalogRole := range rolesCatalog.Roles {
+			if catalogRole.Deprecated {
+				deprecatedRolesCache[catalogRole.ID] = true
+			}
+		}
+	})
+
+	return deprecatedRolesCache, deprecatedRolesCacheErr
 }
