@@ -15,7 +15,7 @@ import (
 func TestAccIAMV1ServiceUserBasic(t *testing.T) {
 	var serviceUser serviceusers.ServiceUser
 	serviceUserName := acctest.RandomWithPrefix("tf-acc")
-	serviceUserPassword := "A" + acctest.RandString(8) + "1"
+	serviceUserPassword := "A" + acctest.RandString(25) + "1!"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -41,7 +41,7 @@ func TestAccIAMV1ServiceUserBasic(t *testing.T) {
 func TestAccIAMV1ServiceUserUpdateRoles(t *testing.T) {
 	var serviceUser serviceusers.ServiceUser
 	serviceUserName := acctest.RandomWithPrefix("tf-acc")
-	serviceUserPassword := "A" + acctest.RandString(8) + "1"
+	serviceUserPassword := "A" + acctest.RandString(25) + "1!"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -95,7 +95,7 @@ func TestAccIAMV1ServiceUserUpdateRoles(t *testing.T) {
 func TestAccIAMV1ServiceUserUpdateName(t *testing.T) {
 	var serviceUser serviceusers.ServiceUser
 	serviceUserName := acctest.RandomWithPrefix("tf-acc")
-	serviceUserPassword := "A" + acctest.RandString(8)
+	serviceUserPassword := "A" + acctest.RandString(25) + "1!"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },

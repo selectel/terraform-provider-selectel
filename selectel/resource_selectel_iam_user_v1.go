@@ -82,6 +82,8 @@ func resourceIAMUserV1() *schema.Resource {
 }
 
 func resourceIAMUserV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -91,6 +93,8 @@ func resourceIAMUserV1Create(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	diags = checkDeprecatedRoles(ctx, meta, roles)
 
 	federation, err := convertIAMListToUserFederation(d.Get("federation").([]interface{}))
 	if err != nil {
@@ -114,7 +118,11 @@ func resourceIAMUserV1Create(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	d.SetId(user.ID)
 
-	return resourceIAMUserV1Read(ctx, d, meta)
+	readDiags := resourceIAMUserV1Read(ctx, d, meta)
+
+	diags = append(diags, readDiags...)
+
+	return diags
 }
 
 func resourceIAMUserV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -142,6 +150,8 @@ func resourceIAMUserV1Read(ctx context.Context, d *schema.ResourceData, meta int
 }
 
 func resourceIAMUserV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -160,16 +170,22 @@ func resourceIAMUserV1Update(ctx context.Context, d *schema.ResourceData, meta i
 
 		rolesToUnassign, rolesToAssign := diffRoles(oldRoles, newRoles)
 
+		diags = checkDeprecatedRoles(ctx, meta, rolesToAssign)
+
 		log.Print(msgUpdate(objectUser, d.Id(), fmt.Sprintf("Roles to unassign: %+v, roles to assign: %+v", rolesToUnassign, rolesToAssign)))
 		err = applyUserRoles(ctx, d, iamClient, rolesToUnassign, rolesToAssign)
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
 		}
 
-		return nil
+		return diags
 	}
 
-	return resourceIAMUserV1Read(ctx, d, meta)
+	readDiags := resourceIAMUserV1Read(ctx, d, meta)
+
+	diags = append(diags, readDiags...)
+
+	return diags
 }
 
 func resourceIAMUserV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
