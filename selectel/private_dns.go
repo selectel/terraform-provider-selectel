@@ -46,6 +46,7 @@ func getPrivateDNSClient(d *schema.ResourceData, meta interface{}) (*privatedns.
 		URL:        endpoint.URL,
 		AuthToken:  selvpcClient.GetXAuthToken(),
 		HTTPClient: retryClient.StandardClient(),
+		UserAgent:  config.UserAgent,
 	}
 	client := privatedns.NewPrivateDNSClient(cfg)
 
