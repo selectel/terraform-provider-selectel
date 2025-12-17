@@ -3,9 +3,9 @@ package selectel
 import (
 	"fmt"
 
-	privatedns "git.selectel.org/bykov.e/private-dns-go/pkg/v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	privatedns "github.com/selectel/private-dns-go/pkg/v1"
 )
 
 func newTestPrivateDNSClient(rs *terraform.ResourceState, testAccProvider *schema.Provider) (*privatedns.PrivateDNSClient, error) {

@@ -54,20 +54,12 @@ resource "openstack_networking_subnet_v2" "subnet" {
   ip_version = 4
   enable_dhcp = false
   name = "subnet"
-
-  depends_on = [
-		openstack_networking_network_v2.network_one
-  ]
 }
 
 resource "selectel_private_dns_service_v1" "service" {
     region = "%s"
     project_id = "%s"
     network_id = openstack_networking_network_v2.network_one.id
-
-    depends_on = [
-		openstack_networking_subnet_v2.subnet
-    ]
 }
 `, projectID, region, region, projectID)
 }

@@ -1,6 +1,4 @@
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
-git.selectel.org/bykov.e/private-dns-go v0.1.7 h1:/1sKn9RV7l7JvF15XMtuLW8ubAOmbbt4VsgQkwzqlLI=
-git.selectel.org/bykov.e/private-dns-go v0.1.7/go.mod h1:49Rxh7+P7vROdJChjSyabQX8Q2Nw8OW+BXX/Wy9qZ14=
 github.com/Masterminds/goutils v1.1.1/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
 github.com/Masterminds/sprig/v3 v3.2.1/go.mod h1:UoaO7Yp8KlPnJIYWTFkMaqPUYKTfGFPhxNuwnnxkKlk=
@@ -203,6 +201,8 @@ github.com/selectel/iam-go v0.7.0 h1:T0k2jnV/IVpFvbxRlLCoUuQacKltuhFc0aBJjelE2do
 github.com/selectel/iam-go v0.7.0/go.mod h1:OIAkW7MZK97YUm+uvUgYbgDhkI9SdzTCxwd4yZoOR1o=
 github.com/selectel/mks-go v0.20.0 h1:4GCekG3qkBfl7HADlVcjpIAHJDZFjclY8rLFhuEHqHI=
 github.com/selectel/mks-go v0.20.0/go.mod h1:VxtV3dzwgOEzZc+9VMQb9DvxfSlej2ZQ8jnT8kqIGgU=
+github.com/selectel/private-dns-go v1.0.0 h1:gCi1fAxJ5aRiaSLR6xsIdYTFHGkG29vCZVmaXSWYbKw=
+github.com/selectel/private-dns-go v1.0.0/go.mod h1:cLVpLbPIJTqP/Wnp/nyTRBP9MTSqoyLvonrjrxbRiYE=
 github.com/selectel/secretsmanager-go v0.2.1 h1:OSBrA/07lm/Ecpwg59IJHFAoUHZR29oyfwUgTpr/dos=
 github.com/selectel/secretsmanager-go v0.2.1/go.mod h1:DUPexhiJWLTyZEvse7grJWdcA8p8TEI93gNu1dDu7Yg=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
