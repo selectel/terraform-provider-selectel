@@ -10,4 +10,5 @@ const (
 	DNSv2              = "dnsv2"
 	CRaaSV2            = "container-registry-v2"
 	DataProtectV2      = "data-protectv2"
+	GlobalRouter       = "global-router"
 )

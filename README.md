@@ -66,6 +66,8 @@ _Note:_ Acceptance tests create real resources, and often cost money to run.
 make testacc
 ```
 
+Running acceptance tests requires definition specific environment variables more information read in [Acceptance Tests Documentation](docs/acc-tests.md)
+
 ## Releasing the Provider
 
 This repository contains a GitHub Action configured to automatically build and
