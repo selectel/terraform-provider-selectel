@@ -11,6 +11,7 @@ require (
 	github.com/selectel/dbaas-go v0.18.0
 	github.com/selectel/dedicated-go v1.0.0
 	github.com/selectel/domains-go v1.0.2
+	github.com/selectel/globalrouter-go v1.2.0
 	github.com/selectel/go-selvpcclient/v4 v4.1.0
 	github.com/selectel/iam-go v0.7.0
 	github.com/selectel/mks-go v0.20.0

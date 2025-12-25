@@ -10,52 +10,62 @@ import (
 )
 
 const (
-	objectACL                       = "acl"
-	objectFloatingIP                = "floating IP"
-	objectKeypair                   = "keypair"
-	objectLicense                   = "license"
-	objectProject                   = "project"
-	objectProjectQuotas             = "quotas for project"
-	objectRole                      = "role"
-	objectSubnet                    = "subnet"
-	objectToken                     = "token"
-	objectTopic                     = "topic"
-	objectUser                      = "user"
-	objectServiceUser               = "service user"
-	objectS3Credentials             = "s3 credentials"
-	objectSAMLFederation            = "saml federation"
-	objectSAMLFederationCertificate = "saml federation certificate"
-	objectGroup                     = "group"
-	objectGroupMembership           = "group-membership"
-	objectCluster                   = "cluster"
-	objectKubeConfig                = "kubeconfig"
-	objectKubeVersions              = "kube-versions"
-	objectNodegroup                 = "nodegroup"
-	objectDomain                    = "domain"
-	objectRecord                    = "record"
-	objectZone                      = "zone"
-	objectRRSet                     = "rrset"
-	objectDatastore                 = "datastore"
-	objectDatabase                  = "database"
-	objectGrant                     = "grant"
-	objectExtension                 = "extension"
-	objectDatastoreTypes            = "datastore-types"
-	objectAvailableExtensions       = "available-extensions"
-	objectFlavors                   = "flavors"
-	objectConfigurationParameters   = "configuration-parameters"
-	objectPrometheusMetricToken     = "prometheus-metric-token"
-	objectFeatureGates              = "feature-gates"
-	objectAdmissionControllers      = "admission-controllers"
-	objectLogicalReplicationSlot    = "logical-replication-slot"
-	objectRegistry                  = "registry"
-	objectRegistryToken             = "registry token"
-	objectSecret                    = "secret"
-	objectCertificate               = "certificate"
-	objectDedicatedServer           = "dedicated-server"
-	objectOS                        = "os"
-	objectLocation                  = "location"
-	objectCloudBackupPlan           = "cloud-backup-plan"
-	objectCloudBackupCheckpoint     = "cloud-backup-checkpoint"
+	objectACL                          = "acl"
+	objectFloatingIP                   = "floating IP"
+	objectKeypair                      = "keypair"
+	objectLicense                      = "license"
+	objectProject                      = "project"
+	objectProjectQuotas                = "quotas for project"
+	objectRole                         = "role"
+	objectSubnet                       = "subnet"
+	objectToken                        = "token"
+	objectTopic                        = "topic"
+	objectUser                         = "user"
+	objectServiceUser                  = "service user"
+	objectS3Credentials                = "s3 credentials"
+	objectSAMLFederation               = "saml federation"
+	objectSAMLFederationCertificate    = "saml federation certificate"
+	objectGroup                        = "group"
+	objectGroupMembership              = "group-membership"
+	objectCluster                      = "cluster"
+	objectKubeConfig                   = "kubeconfig"
+	objectKubeVersions                 = "kube-versions"
+	objectNodegroup                    = "nodegroup"
+	objectDomain                       = "domain"
+	objectRecord                       = "record"
+	objectZone                         = "zone"
+	objectRRSet                        = "rrset"
+	objectDatastore                    = "datastore"
+	objectDatabase                     = "database"
+	objectGrant                        = "grant"
+	objectExtension                    = "extension"
+	objectDatastoreTypes               = "datastore-types"
+	objectAvailableExtensions          = "available-extensions"
+	objectFlavors                      = "flavors"
+	objectConfigurationParameters      = "configuration-parameters"
+	objectPrometheusMetricToken        = "prometheus-metric-token"
+	objectFeatureGates                 = "feature-gates"
+	objectAdmissionControllers         = "admission-controllers"
+	objectLogicalReplicationSlot       = "logical-replication-slot"
+	objectRegistry                     = "registry"
+	objectRegistryToken                = "registry token"
+	objectSecret                       = "secret"
+	objectCertificate                  = "certificate"
+	objectDedicatedServer              = "dedicated-server"
+	objectOS                           = "os"
+	objectLocation                     = "location"
+	objectCloudBackupPlan              = "cloud-backup-plan"
+	objectCloudBackupCheckpoint        = "cloud-backup-checkpoint"
+	objectGlobalRouterZone             = "global-router-zone"
+	objectGlobalRouterService          = "global-router-service"
+	objectGlobalRouterQuota            = "global-router-quota"
+	objectGlobalRouterZoneGroup        = "global-router-zone-group"
+	objectGlobalRouterRouter           = "global-router-router"
+	objectGlobalRouterVPCNetwork       = "global-router-vpc-network"
+	objectGlobalRouterDedicatedNetwork = "global-router-dedicated-network"
+	objectGlobalRouterVPCSubnet        = "global-router-vpc-subnet"
+	objectGlobalRouterDedicatedSubnet  = "global-router-dedicated-subnet"
+	objectGlobalRouterStaticRoute      = "global-router-static-route"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -133,6 +143,10 @@ func Provider(providerVersion string) *schema.Provider {
 			"selectel_dedicated_public_subnet_v1":       dataSourceDedicatedPublicSubnetV1(),
 			"selectel_cloudbackup_plan_v2":              dataSourceCloudBackupPlanV2(),
 			"selectel_cloudbackup_checkpoint_v2":        dataSourceCloudBackupCheckpointV2(),
+			"selectel_global_router_service_v1":         dataSourceGlobalRouterServiceV1(),
+			"selectel_global_router_zone_v1":            dataSourceGlobalRouterZoneV1(),
+			"selectel_global_router_quota_v1":           dataSourceGlobalRouterQuotaV1(),
+			"selectel_global_router_zone_group_v1":      dataSourceGlobalRouterZoneGroupV1(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"selectel_vpc_floatingip_v2":                            resourceVPCFloatingIPV2(),
@@ -177,6 +191,12 @@ func Provider(providerVersion string) *schema.Provider {
 			"selectel_secretsmanager_certificate_v1":                resourceSecretsManagerCertificateV1(),
 			"selectel_dedicated_server_v1":                          resourceDedicatedServerV1(),
 			"selectel_cloudbackup_plan_v2":                          resourceCloudBackupPlanV2(),
+			"selectel_global_router_router_v1":                      resourceGlobalRouterRouterV1(),
+			"selectel_global_router_vpc_network_v1":                 resourceGlobalRouterVPCNetworkV1(),
+			"selectel_global_router_dedicated_network_v1":           resourceGlobalRouterDedicatedNetworkV1(),
+			"selectel_global_router_vpc_subnet_v1":                  resourceGlobalRouterVPCSubnetV1(),
+			"selectel_global_router_dedicated_subnet_v1":            resourceGlobalRouterDedicatedSubnetV1(),
+			"selectel_global_router_static_route_v1":                resourceGlobalRouterStaticRouteV1(),
 		},
 	}
 
