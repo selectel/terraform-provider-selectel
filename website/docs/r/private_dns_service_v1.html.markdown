@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_private\_dns\_service\_v1
 
-Creates and manages a private DNS service for connecting a network to private DNS using public API v1. For more information about private DNS, see the [official Selectel documentation](https://docs.selectel.ru/cloud-servers/private-dns/).
+Creates and manages a private DNS service for connecting a network to private DNS using public API v1. For more information about private DNS, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/private-dns/).
 
 ## Example usage
 
@@ -26,11 +26,11 @@ resource "selectel_private_dns_service_v1" "service" {
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
-* `region` - (Required) Pool where the network is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/).
+* `region` - (Required) Pool where the network is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
 
-* `network_id` - (Required) The ID of the network you want to connect to the DNS service. Retrieved from the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_network_v2) resource. Learn more about [Networks](https://docs.selectel.ru/cloud-networks/private-networks-and-subnets/).
+* `network_id` - (Required) The ID of the network you want to connect to the DNS service. Retrieved from the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_network_v2) resource. Learn more about [Networks](https://docs.selectel.ru/en/cloud-networks/private-networks-and-subnets/).
 
 ## Attributes Reference
 

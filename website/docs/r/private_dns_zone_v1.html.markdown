@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_private\_dns\_zone\_v1
 
-Creates and manages a private DNS zone and its record sets using public API v1. For more information about private DNS, see the [official Selectel documentation](https://docs.selectel.ru/cloud-servers/private-dns/).
+Creates and manages a private DNS zone and its record sets using public API v1. For more information about private DNS, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/private-dns/).
 
 ## Example usage
 
@@ -29,9 +29,9 @@ resource "selectel_private_dns_zone_v1" "zone" {
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/control-panel-actions/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
-* `region` - (Required) Pool where the DNS zone is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/control-panel-actions/availability-matrix/).
+* `region` - (Required) Pool where the DNS zone is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
 
 * `domain` - (Required) DNS zone domain (domain name), must be an FQDN.
 
