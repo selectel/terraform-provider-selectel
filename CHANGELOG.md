@@ -1,3 +1,12 @@
+
+## 7.4.0 (January 12, 2026)
+
+FEATURES:
+
+* Add `selectel_private_dns_service_v1`, `selectel_private_dns_zone_v1` resources ([#367](https://github.com/selectel/terraform-provider-selectel/pull/367))
+* Add documentation for datasources and resource above ([#367](https://github.com/selectel/terraform-provider-selectel/pull/367))
+* Add Cloud Private DNS API SDK — [private-dns-go](https://github.com/selectel/private-dns-go) ([#367](https://github.com/selectel/terraform-provider-selectel/pull/367))
+
 ## 7.3.0 (December 25, 2025)
 
 FEATURES:
@@ -6,7 +15,6 @@ FEATURES:
 * Add `selectel_global_router_vpc_network_v1`, `selectel_global_router_vpc_subnet_v1`, `selectel_global_router_dedicated_network_v1`, `selectel_global_router_dedicated_subnet_v1`, `selectel_global_router_router_v1`, `selectel_global_router_static_route_v1` resources ([#366](https://github.com/selectel/terraform-provider-selectel/pull/366))
 * Add documentation for datasources and resources above ([#366](https://github.com/selectel/terraform-provider-selectel/pull/366))
 * Add Global router API SDK — [globalrouter-go](https://github.com/selectel/globalrouter-go) ([#366](https://github.com/selectel/terraform-provider-selectel/pull/366))
-
 
 ## 7.2.0 (November 18, 2025)
 
