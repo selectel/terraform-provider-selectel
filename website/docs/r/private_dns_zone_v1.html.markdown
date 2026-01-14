@@ -13,7 +13,7 @@ Creates and manages a private DNS zone and its record sets using public API v1. 
 ## Example usage
 
 ```hcl
-resource "selectel_private_dns_zone_v1" "zone" {
+resource "selectel_private_dns_zone_v1" "zone_1" {
 	region     = "ru-1"
 	project_id = selectel_vpc_project_v2.project_1.id
 	domain     = "example.com."

@@ -1,3 +1,8 @@
+## 7.4.1 (January 14, 2026)
+
+IMPROVEMENTS:
+
+Fix private dns documentation ([#370](https://github.com/selectel/terraform-provider-selectel/pull/370))
 
 ## 7.4.0 (January 12, 2026)
 
