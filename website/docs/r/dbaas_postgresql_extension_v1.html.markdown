@@ -6,7 +6,7 @@ description: |-
   Creates and manages a PostgreSQL extension in Selectel Managed Databases using public API v1.
 ---
 
-# selectel\_dbaas\_extension\_v1
+# selectel\_dbaas\_postgresql\_extension\_v1
 
 Creates and manages a PostgreSQL extension in Selectel Managed Databases using public API v1.
 
