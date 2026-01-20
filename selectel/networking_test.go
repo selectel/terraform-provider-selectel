@@ -87,3 +87,79 @@ func TestSubnetsMapsFromStructs(t *testing.T) {
 
 	assert.ElementsMatch(t, expectedSubnetsMaps, actualSubnetsMaps)
 }
+
+func TestValidatePrivateSubnet(t *testing.T) {
+	type testCase struct {
+		cidr          string
+		expectedError bool
+	}
+	testCases := []testCase{
+		// Valid private subnets
+		{"10.0.0.0/8", false},
+		{"10.100.123.0/24", false},
+		{"10.255.255.255/32", false},
+		{"172.16.0.0/12", false},
+		{"172.20.100.0/24", false},
+		{"172.31.255.255/32", false},
+		{"192.168.0.0/16", false},
+		{"192.168.100.0/24", false},
+		{"192.168.255.255/32", false},
+
+		// Invalid private subnets (public addresses)
+		{"8.8.8.8/32", true},
+		{"1.1.1.1/32", true},
+		{"11.0.0.0/8", true},
+		{"172.32.0.0/12", true},
+		{"192.169.0.0/16", true},
+		{"172.15.0.0/12", true},
+
+		// Invalid CIDR formats
+		{"invalid-cidr", true},
+		{"10.0.0.0", true},
+		{"10.0.0.0/", true},
+		{"/8", true},
+		{"", true},
+	}
+
+	for _, tc := range testCases {
+		err := validatePrivateSubnet(tc.cidr)
+		if tc.expectedError {
+			assert.Error(t, err, "Expected error for CIDR: %s", tc.cidr)
+		} else {
+			assert.NoError(t, err, "Unexpected error for CIDR: %s", tc.cidr)
+		}
+	}
+}
+
+func TestIsPrivateSubnet(t *testing.T) {
+	testCases := map[string]bool{
+		// Should return true (valid private subnets)
+		"10.0.0.0/8":         true,
+		"10.100.123.0/24":    true,
+		"10.255.255.255/32":  true,
+		"172.16.0.0/12":      true,
+		"172.20.100.0/24":    true,
+		"172.31.255.255/32":  true,
+		"192.168.0.0/16":     true,
+		"192.168.100.0/24":   true,
+		"192.168.255.255/32": true,
+
+		// Should return false (public addresses or invalid formats)
+		"8.8.8.8/32":     false,
+		"1.1.1.1/32":     false,
+		"11.0.0.0/8":     false,
+		"172.32.0.0/12":  false,
+		"192.169.0.0/16": false,
+		"172.15.0.0/12":  false,
+		"invalid-cidr":   false,
+		"10.0.0.0":       false,
+		"10.0.0.0/":      false,
+		"/8":             false,
+		"":               false,
+	}
+
+	for cidr, expected := range testCases {
+		result := IsPrivateSubnet(cidr)
+		assert.Equal(t, expected, result, "IsPrivateSubnet returned wrong value for CIDR: %s", cidr)
+	}
+}

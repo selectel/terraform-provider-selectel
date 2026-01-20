@@ -4,15 +4,16 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	dedicated "github.com/selectel/dedicated-go/pkg/v2"
 )
 
-func dataSourceDedicatedPublicSubnetV1() *schema.Resource {
+func dataSourceDedicatedPrivateSubnetV1() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceDedicatedPublicSubnetV1Read,
+		ReadContext: dataSourceDedicatedPrivateSubnetV1Read,
 		Schema: map[string]*schema.Schema{
 			"project_id": {
 				Type:     schema.TypeString,
@@ -24,6 +25,10 @@ func dataSourceDedicatedPublicSubnetV1() *schema.Resource {
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"location_id": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
 						"ip": {
 							Type:     schema.TypeString,
 							Optional: true,
@@ -32,7 +37,7 @@ func dataSourceDedicatedPublicSubnetV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
-						"location_id": {
+						"vlan": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
@@ -49,7 +54,7 @@ func dataSourceDedicatedPublicSubnetV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"network_id": {
+						"vlan": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -57,24 +62,12 @@ func dataSourceDedicatedPublicSubnetV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"broadcast": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"gateway": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"reserved_vrrp_ips": {
+						"reserved_ip": {
 							Type:     schema.TypeList,
 							Computed: true,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
-						},
-						"ip": {
-							Type:     schema.TypeString,
-							Computed: true,
 						},
 					},
 				},
@@ -83,25 +76,39 @@ func dataSourceDedicatedPublicSubnetV1() *schema.Resource {
 	}
 }
 
-func dataSourceDedicatedPublicSubnetV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceDedicatedPrivateSubnetV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}
 
-	filter := expandDedicatedPublicSubnetsSearchFilter(d)
+	filter := expandDedicatedPrivateSubnetsSearchFilter(d)
 
-	subnets, _, err := dsClient.NetworkSubnets(ctx, filter.locationID)
+	var allSubnets dedicated.Subnets
+
+	nets, _, err := dsClient.Networks(ctx, filter.locationID, dedicated.NetworkTypeLocal, filter.vlan)
 	if err != nil {
-		return diag.FromErr(errGettingObjects(objectSubnet, err))
+		return diag.FromErr(errGettingObjects(objectNetwork, err))
 	}
 
-	filteredSubnets, err := filterDedicatedPublicSubnets(subnets, filter)
+	// Get subnets for all networks in the location
+	for _, network := range nets {
+		localSubnets, _, err := dsClient.NetworkLocalSubnets(ctx, network.UUID)
+		if err != nil {
+			continue // Continue with other networks if one fails
+		}
+		allSubnets = append(allSubnets, localSubnets...)
+	}
+
+	filteredSubnets, err := filterDedicatedPrivateSubnets(allSubnets, filter)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error filtering subnets: %w", err))
 	}
 
-	subnetsFlatten := flattenDedicatedPublicSubnets(filteredSubnets, filter)
+	subnetsFlatten, err := flattenDedicatedPrivateSubnets(ctx, filteredSubnets, dsClient)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	if err := d.Set("subnets", subnetsFlatten); err != nil {
 		return diag.FromErr(err)
 	}
@@ -123,14 +130,15 @@ func dataSourceDedicatedPublicSubnetV1Read(ctx context.Context, d *schema.Resour
 	return nil
 }
 
-type dedicatedPublicSubnetsSearchFilter struct {
+type dedicatedPrivateSubnetsSearchFilter struct {
+	locationID string
 	ip         string
 	subnet     string
-	locationID string
+	vlan       string
 }
 
-func expandDedicatedPublicSubnetsSearchFilter(d *schema.ResourceData) dedicatedPublicSubnetsSearchFilter {
-	filter := dedicatedPublicSubnetsSearchFilter{}
+func expandDedicatedPrivateSubnetsSearchFilter(d *schema.ResourceData) dedicatedPrivateSubnetsSearchFilter {
+	filter := dedicatedPrivateSubnetsSearchFilter{}
 
 	filterSet, ok := d.Get("filter").(*schema.Set)
 	if !ok {
@@ -141,7 +149,12 @@ func expandDedicatedPublicSubnetsSearchFilter(d *schema.ResourceData) dedicatedP
 		return filter
 	}
 
-	resourceFilterMap := filterSet.List()[0].(map[string]interface{})
+	resourceFilterMap := filterSet.List()[0].(map[string]any)
+
+	locationID, ok := resourceFilterMap["location_id"]
+	if ok {
+		filter.locationID = locationID.(string)
+	}
 
 	ip, ok := resourceFilterMap["ip"]
 	if ok {
@@ -153,15 +166,15 @@ func expandDedicatedPublicSubnetsSearchFilter(d *schema.ResourceData) dedicatedP
 		filter.subnet = subnet.(string)
 	}
 
-	locationID, ok := resourceFilterMap["location_id"]
+	vlan, ok := resourceFilterMap["vlan"]
 	if ok {
-		filter.locationID = locationID.(string)
+		filter.vlan = vlan.(string)
 	}
 
 	return filter
 }
 
-func filterDedicatedPublicSubnets(subnets dedicated.Subnets, filter dedicatedPublicSubnetsSearchFilter) (dedicated.Subnets, error) {
+func filterDedicatedPrivateSubnets(subnets dedicated.Subnets, filter dedicatedPrivateSubnetsSearchFilter) (dedicated.Subnets, error) {
 	var filteredSubnets dedicated.Subnets
 	for _, subnet := range subnets {
 		isIPIncluded := false
@@ -173,8 +186,7 @@ func filterDedicatedPublicSubnets(subnets dedicated.Subnets, filter dedicatedPub
 			}
 		}
 
-		if (filter.subnet == "" || filter.subnet == subnet.Subnet) &&
-			(filter.ip == "" || isIPIncluded) {
+		if (filter.subnet == "" || filter.subnet == subnet.Subnet) && (filter.ip == "" || isIPIncluded) {
 			filteredSubnets = append(filteredSubnets, subnet)
 
 			continue
@@ -184,23 +196,30 @@ func filterDedicatedPublicSubnets(subnets dedicated.Subnets, filter dedicatedPub
 	return filteredSubnets, nil
 }
 
-func flattenDedicatedPublicSubnets(subnets dedicated.Subnets, filter dedicatedPublicSubnetsSearchFilter) []interface{} {
-	subnetsList := make([]interface{}, len(subnets))
-	for i, subnet := range subnets {
-		subnetMap := make(map[string]interface{})
-		subnetMap["id"] = subnet.UUID
-		subnetMap["network_id"] = subnet.NetworkUUID
-		subnetMap["subnet"] = subnet.Subnet
-		subnetMap["broadcast"] = subnet.Broadcast.String()
-		subnetMap["gateway"] = subnet.Gateway.String()
-		subnetMap["reserved_vrrp_ips"] = subnet.ReservedVRRPIPAsStrings()
+func flattenDedicatedPrivateSubnets(ctx context.Context, subnets dedicated.Subnets, dsClient *dedicated.ServiceClient) ([]map[string]any, error) {
+	subnetsList := make([]map[string]any, 0, len(subnets))
 
-		if filter.ip != "" {
-			subnetMap["ip"] = filter.ip
+	for _, subnet := range subnets {
+		subnetMap := make(map[string]any)
+
+		subnetMap["id"] = subnet.UUID
+		subnetMap["vlan"] = strconv.Itoa(subnet.Network)
+		subnetMap["subnet"] = subnet.Subnet
+
+		reservedIPs, _, err := dsClient.NetworkSubnetLocalReservedIPs(ctx, subnet.UUID)
+		if err != nil {
+			return nil, err
 		}
 
-		subnetsList[i] = subnetMap
+		var ips []string
+		for _, reservedIP := range reservedIPs {
+			ips = append(ips, reservedIP.IP.String())
+		}
+
+		subnetMap["reserved_ip"] = ips
+
+		subnetsList = append(subnetsList, subnetMap)
 	}
 
-	return subnetsList
+	return subnetsList, nil
 }

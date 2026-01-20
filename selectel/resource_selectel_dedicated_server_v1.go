@@ -33,7 +33,7 @@ func resourceDedicatedServerV1() *schema.Resource {
 }
 
 func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -55,12 +55,21 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 
 		publicSubnetID, _ = d.Get(dedicatedServerSchemaKeyPublicSubnetID).(string)
 		publicSubnetIP, _ = d.Get(dedicatedServerSchemaKeyPublicSubnetIP).(string)
-		privateSubnet, _  = d.Get(dedicatedServerSchemaKeyPrivateSubnet).(string)
+
+		privateSubnetID, _ = d.Get(dedicatedServerSchemaKeyPrivateSubnetID).(string)
+		privateSubnetIP, _ = d.Get(dedicatedServerSchemaKeyPrivateSubnetIP).(string)
+
+		addPrivateVlan, _ = d.Get(dedicatedServerSchemaAddPrivateVlan).(bool)
 	)
 
+	// Validate that private_subnet_ip cannot be used without private_subnet_id
+	if privateSubnetIP != "" && privateSubnetID == "" {
+		return diag.FromErr(errors.New("private_subnet_ip cannot be used without private_subnet_id"))
+	}
+
 	data, err := resourceDedicatedServerV1CreateLoadData(
-		ctx, dsClient, locationID, osID, configurationID, publicSubnetID, publicSubnetIP, privateSubnet,
-		sshKeyName, pricePlanName, partitionsConfigFromSchema,
+		ctx, dsClient, locationID, osID, configurationID, publicSubnetID, publicSubnetIP,
+		privateSubnetID, privateSubnetIP, sshKeyName, pricePlanName, partitionsConfigFromSchema,
 	)
 	if err != nil {
 		return diag.FromErr(err)
@@ -79,7 +88,7 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 
 	err = resourceDedicatedServerV1CreateValidatePreconditions(
 		ctx, dsClient, data, locationID, data.pricePlan.UUID, configurationID, osID, userData != "",
-		sshKeyPK != "" || data.sshKeyByName != nil, password != "", privateSubnet != "",
+		sshKeyPK != "" || data.sshKeyByName != nil, password != "", privateSubnetID != "",
 	)
 	if err != nil {
 		return diag.FromErr(err)
@@ -91,24 +100,25 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 		hostName = resourceDedicatedServerV1GenerateHostNameIfNotPresented(d)
 
 		req = &dedicated.ServerBillingPostPayload{
-			ServiceUUID:      configurationID,
-			PricePlanUUID:    data.pricePlan.UUID,
-			PayCurrency:      data.billingPayCurrency,
-			LocationUUID:     locationID,
-			Quantity:         1,
-			IPList:           data.ipsPublic,
-			LocalIPList:      data.ipsPrivate,
-			LocalSubnetUUID:  data.localSubnetUUID,
-			ProjectUUID:      d.Get(dedicatedServerSchemaKeyProjectID).(string),
-			PartitionsConfig: data.partitions,
-			OSVersion:        data.os.VersionValue,
-			OSTemplate:       data.os.OSValue,
-			OSArch:           data.os.Arch,
-			UserSSHKey:       sshKeyPK,
-			UserHostname:     hostName,
-			UserDesc:         hostName,
-			Password:         password,
-			UserData:         userData,
+			ServiceUUID:          configurationID,
+			PricePlanUUID:        data.pricePlan.UUID,
+			PayCurrency:          data.billingPayCurrency,
+			LocationUUID:         locationID,
+			Quantity:             1,
+			IPList:               data.ipsPublic,
+			LocalIPList:          data.ipsPrivate,
+			LocalSubnetUUID:      data.localSubnetUUID,
+			ProjectUUID:          d.Get(dedicatedServerSchemaKeyProjectID).(string),
+			PartitionsConfig:     data.partitions,
+			OSVersion:            data.os.VersionValue,
+			OSTemplate:           data.os.OSValue,
+			OSArch:               data.os.Arch,
+			UserSSHKey:           sshKeyPK,
+			UserHostname:         hostName,
+			UserDesc:             hostName,
+			Password:             password,
+			UserData:             userData,
+			LocalNetworkRequired: addPrivateVlan,
 		}
 	)
 
@@ -143,6 +153,15 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(errCreatingObject(objectDedicatedServer, err))
 	}
 
+	reservedIP, err := resourceDedicatedServerGetReservedIPs(ctx, dsClient, d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	_ = d.Set(dedicatedServerSchemaPublicIP, reservedIP.publicIP)
+	_ = d.Set(dedicatedServerSchemaPrivateIP, reservedIP.privateIP)
+	_ = d.Set(dedicatedServerSchemaPrivateVlan, reservedIP.privateVLAN)
+
 	return nil
 }
 
@@ -159,9 +178,40 @@ type serversDedicatedServerV1CreateData struct {
 	pricePlan          *dedicated.PricePlan
 }
 
+type reservedIP struct {
+	publicIP    string
+	privateIP   string
+	privateVLAN string
+}
+
+func resourceDedicatedServerGetReservedIPs(
+	ctx context.Context, dsClient *dedicated.ServiceClient, resourceID string,
+) (*reservedIP, error) {
+	result := &reservedIP{}
+
+	reservedPublicIPs, _, err := dsClient.NetworkReservedIPs(ctx, "", resourceID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting reserved public IPs: %w", err)
+	}
+	if len(reservedPublicIPs) > 0 {
+		result.publicIP = reservedPublicIPs[0].IP.String()
+	}
+
+	reservedPrivateIPs, _, err := dsClient.NetworkReservedLocalIPs(ctx, resourceID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting reserved private IPs: %w", err)
+	}
+	if len(reservedPrivateIPs) > 0 {
+		result.privateIP = reservedPrivateIPs[0].IP.String()
+		result.privateVLAN = reservedPrivateIPs[0].Network
+	}
+
+	return result, nil
+}
+
 func resourceDedicatedServerV1CreateLoadData(
 	ctx context.Context, dsClient *dedicated.ServiceClient,
-	locationID, osID, configurationID, publicSubnetID, publicSubnetIP, privateSubnet, sshKeyName, pricePlanName string,
+	locationID, osID, configurationID, publicSubnetID, publicSubnetIP, privateSubnetID, privateSubnetIP, sshKeyName, pricePlanName string,
 	partitionsConfigFromSchema *PartitionsConfig,
 ) (*serversDedicatedServerV1CreateData, error) {
 	operatingSystems, _, err := dsClient.OperatingSystems(ctx, &dedicated.OperatingSystemsQuery{
@@ -220,20 +270,15 @@ func resourceDedicatedServerV1CreateLoadData(
 		publicIPs = append(publicIPs, publicIP)
 	}
 
-	var (
-		privateIPs      []net.IP
-		localSubnetUUID string
-	)
-	if privateSubnet != "" {
-		// also validating the sufficiency of free addresses
-		var privateIP net.IP
+	var privateIPs []net.IP
 
-		privateIP, localSubnetUUID, err = resourceDedicatedServerV1GetFreePrivateIPs(ctx, dsClient, locationID, privateSubnet)
-		if err != nil {
-			return nil, err
+	if privateSubnetIP != "" {
+		ip := net.ParseIP(privateSubnetIP)
+		if ip == nil {
+			return nil, fmt.Errorf("failed to parse private IP %q", privateSubnetIP)
 		}
 
-		privateIPs = append(privateIPs, privateIP)
+		privateIPs = append(privateIPs, ip)
 	}
 
 	var sshKey *dedicated.SSHKey
@@ -281,7 +326,7 @@ func resourceDedicatedServerV1CreateLoadData(
 		partitions:         partitionsConfig,
 		ipsPublic:          publicIPs,
 		ipsPrivate:         privateIPs,
-		localSubnetUUID:    localSubnetUUID,
+		localSubnetUUID:    privateSubnetID,
 		sshKeyByName:       sshKey,
 		billing:            billing,
 		billingPayCurrency: billingPayCurrency,
@@ -393,7 +438,7 @@ func resourceDedicatedServerV1CreateValidatePreconditions(
 }
 
 func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -471,11 +516,20 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 
 	_ = d.Set("os_id", os.UUID)
 
+	reservedIP, err := resourceDedicatedServerGetReservedIPs(ctx, dsClient, d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	_ = d.Set(dedicatedServerSchemaPublicIP, reservedIP.publicIP)
+	_ = d.Set(dedicatedServerSchemaPrivateIP, reservedIP.privateIP)
+	_ = d.Set(dedicatedServerSchemaPrivateVlan, reservedIP.privateVLAN)
+
 	return nil
 }
 
 func resourceDedicatedServerV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -501,7 +555,7 @@ func resourceDedicatedServerV1Delete(ctx context.Context, d *schema.ResourceData
 func resourceDedicatedServerV1UpdateWithStateRollback(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	d.Partial(true)
 
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}

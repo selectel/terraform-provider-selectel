@@ -61,7 +61,7 @@ func dataSourceDedicatedLocationV1() *schema.Resource {
 }
 
 func dataSourceDedicatedLocationV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -128,6 +128,9 @@ func expandDedicatedLocationsSearchFilter(d *schema.ResourceData) dedicatedLocat
 func filterDedicatedLocations(list dedicated.Locations, filter dedicatedLocationsFilter) dedicated.Locations {
 	var filtered dedicated.Locations
 	for _, entry := range list {
+		if entry.Visibility == "admin_only" {
+			continue // filter by visibility admin_only
+		}
 		if filter.name == "" || entry.Name == filter.name {
 			filtered = append(filtered, entry)
 		}

@@ -12,7 +12,8 @@ const (
 	dedicatedServerSchemaKeyPricePlanName            = "price_plan_name"
 	dedicatedServerSchemaKeyPublicSubnetID           = "public_subnet_id"
 	dedicatedServerSchemaKeyPublicSubnetIP           = "public_subnet_ip"
-	dedicatedServerSchemaKeyPrivateSubnet            = "private_subnet"
+	dedicatedServerSchemaKeyPrivateSubnetID          = "private_subnet_id"
+	dedicatedServerSchemaKeyPrivateSubnetIP          = "private_subnet_ip"
 	dedicatedServerSchemaKeyOSUserData               = "user_data"
 	dedicatedServerSchemaKeyOSHostName               = "os_host_name"
 	dedicatedServerSchemaKeyOSSSHKey                 = "ssh_key"
@@ -30,6 +31,10 @@ const (
 	dedicatedServerSchemaKeyFSType                   = "fs_type"
 	dedicatedServerSchemaKeyOSPassword               = "os_password"
 	dedicatedServerSchemaForceUpdateAdditionalParams = "force_update_additional_params"
+	dedicatedServerSchemaPublicIP                    = "public_ip"
+	dedicatedServerSchemaPrivateIP                   = "private_ip"
+	dedicatedServerSchemaAddPrivateVlan              = "add_private_vlan"
+	dedicatedServerSchemaPrivateVlan                 = "private_vlan"
 )
 
 func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
@@ -140,9 +145,20 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Optional: true,
 		},
-		dedicatedServerSchemaKeyPrivateSubnet: {
+		dedicatedServerSchemaKeyPrivateSubnetID: {
 			Type:     schema.TypeString,
 			Optional: true,
+			ForceNew: true,
+		},
+		dedicatedServerSchemaKeyPrivateSubnetIP: {
+			Type:     schema.TypeString,
+			Optional: true,
+			ForceNew: true,
+		},
+		dedicatedServerSchemaAddPrivateVlan: {
+			Type:     schema.TypeBool,
+			Optional: true,
+			Default:  false,
 		},
 
 		// optional misc
@@ -153,6 +169,20 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 		dedicatedServerSchemaForceUpdateAdditionalParams: {
 			Type:     schema.TypeBool,
 			Optional: true,
+		},
+
+		// computed attributes
+		dedicatedServerSchemaPublicIP: {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		dedicatedServerSchemaPrivateIP: {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		dedicatedServerSchemaPrivateVlan: {
+			Type:     schema.TypeString,
+			Computed: true,
 		},
 	}
 }

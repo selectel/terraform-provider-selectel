@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 
@@ -51,4 +52,46 @@ func subnetsMapsFromStructs(subnetsStructs []subnets.Subnet) []map[string]interf
 	}
 
 	return associatedSubnets
+}
+
+// validatePrivateSubnet checks if the provided CIDR belongs to private IP ranges:
+// 10.0.0.0/8, 172.16.0.0/12, or 192.168.0.0/16.
+func validatePrivateSubnet(cidr string) error {
+	_, network, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return fmt.Errorf("invalid CIDR format: %s", err)
+	}
+
+	// Define private IP ranges
+	privateRanges := []struct {
+		Name string
+		Net  *net.IPNet
+	}{
+		{
+			Name: "10.0.0.0/8",
+			Net:  &net.IPNet{IP: net.ParseIP("10.0.0.0"), Mask: net.CIDRMask(8, 32)},
+		},
+		{
+			Name: "172.16.0.0/12",
+			Net:  &net.IPNet{IP: net.ParseIP("172.16.0.0"), Mask: net.CIDRMask(12, 32)},
+		},
+		{
+			Name: "192.168.0.0/16",
+			Net:  &net.IPNet{IP: net.ParseIP("192.168.0.0"), Mask: net.CIDRMask(16, 32)},
+		},
+	}
+
+	// Check if the network is within any of the private ranges
+	for _, privateRange := range privateRanges {
+		if privateRange.Net.Contains(network.IP) {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("subnet %s does not belong to private IP ranges: 10.0.0.0/8, 172.16.0.0/12, or 192.168.0.0/16", cidr)
+}
+
+// IsPrivateSubnet validates if the provided CIDR belongs to private IP ranges.
+func IsPrivateSubnet(cidr string) bool {
+	return validatePrivateSubnet(cidr) == nil
 }

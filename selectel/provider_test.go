@@ -73,6 +73,18 @@ func testAccSelectelPreCheckWithProjectID(t *testing.T) {
 	}
 }
 
+func testAccSelectelPreCheckWithAuth(t *testing.T) {
+	testAccSelectelPreCheck(t)
+
+	if v := os.Getenv("OS_AUTH_URL"); v == "" {
+		t.Fatal("OS_AUTH_URL must be set for acceptance tests")
+	}
+
+	if v := os.Getenv("OS_REGION_NAME"); v == "" {
+		t.Fatal("OS_REGION_NAME must be set for acceptance tests")
+	}
+}
+
 func testAccCheckSelectelImportEnv(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
