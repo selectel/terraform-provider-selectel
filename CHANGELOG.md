@@ -1,3 +1,14 @@
+## 7.5.0 (January 28, 2026)
+
+FEATURES:
+* Add new volume types for MKS node group ([#365](https://github.com/selectel/terraform-provider-selectel/pull/365)):
+  * volume_gigabytes_universal2
+  * volume_gigabytes_basicssd
+
+IMPROVEMENTS:
+
+* Update documentation for DBaaS resources ([#368](https://github.com/selectel/terraform-provider-selectel/pull/368))
+
 ## 7.4.1 (January 14, 2026)
 
 IMPROVEMENTS:
