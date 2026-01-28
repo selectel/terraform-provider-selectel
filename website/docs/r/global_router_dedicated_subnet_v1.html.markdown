@@ -32,7 +32,7 @@ resource "selectel_global_router_dedicated_subnet_v1" "global_router_dedicated_s
 * `network_id` - (Required) Unique identifier of the global router network, that was created for the dedicated server network to which the subnet belongs. Retrieved from the [selectel_global_router_dedicated_network_v1](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/global_router_dedicated_network_v1) resource. Changing this deletes the global router subnet and connected static routes and recreates them with the new argument value.
 * `cidr` - (Required) Subnet IP address range in CIDR notation. To get subnet CIDR, in the [Control panel](https://my.selectel.ru/servers/network/networks), go to **Dedicated servers** ⟶ the **Private subnets** tab ⟶ copy the subnet CIDR. Changing this deletes the global router subnet and connected static routes and recreates them with the new argument value.
 * `gateway` - (Optional) Subnet IP address that will be used as gateway on the global router. This IP address must be available. If not specified, the first IP address in the subnet range will be used. Changing this deletes the global router subnet and connected static routes and recreates them with the new argument value.
-* `service_addresses` - (Optional) Two of the subnet IP addresses that will be reserved as service ones. These IP addresses must be available. If not specified, the last two IP addresses in subnet range will be reserved. Changing this deletes the global router subnet and connected static routes and recreates them with the new argument value.
+* `service_addresses` - (Optional) Two subnet IP addresses that will be reserved as service ones. These IP addresses must be available. If not specified, the last two IP addresses in subnet range will be reserved. Changing this deletes the global router subnet and connected static routes and recreates them with the new argument value.
 * `tags` — (Optional) List of global router subnet tags.
 ## Attributes Reference
 
@@ -41,7 +41,7 @@ resource "selectel_global_router_dedicated_subnet_v1" "global_router_dedicated_s
 * `network_id` - Unique identifier of the global router network to which the subnet belongs.
 * `cidr` - Subnet IP address range in CIDR notation.
 * `gateway` - Subnet IP address that is used as gateway on the global router.
-* `service_addresses` - Two of the subnet IP addresses that are reserved as service ones.
+* `service_addresses` - Two subnet IP addresses that are reserved as service ones.
 * `tags` - List of subnet tags.
 * `created_at` - Time when the global router subnet was created.
 * `updated_at` - Time when the global router subnet was updated.

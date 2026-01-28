@@ -33,7 +33,7 @@ resource "selectel_global_router_vpc_subnet_v1" "global_router_vpc_subnet_1" {
 * `cidr` - (Required) Subnet IP address range in CIDR notation. Retrieved from the [openstack_networking_subnet_v2](https://docs.selectel.ru/en/terraform/openstack-provider-reference/networking-neutron/data-sources/openstack_networking_subnet_v2/) data source. Changing this deletes the global router subnet and connected static routes and recreates them with the new argument value.
 * `os_subnet_id` - (Required) Unique identifier of the cloud platform subnet. Retrieved from the [openstack_networking_subnet_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/data-sources/networking_subnet_v2) data source. Changing this deletes the global router subnet and connected static routes and recreates them with the new argument value.
 * `gateway` - (Optional) Subnet IP address that will be used as gateway on the global router. This IP address must be available. If not specified, the first IP address in the subnet range will be used. Changing this deletes the global router subnet and connected static routes and recreates them with the new argument value.
-* `service_addresses` - (Optional) Two of the subnet IP addresses that will be reserved as service ones. These IP addresses must be available. If not specified, the last two IP addresses in subnet range will be reserved. Changing this deletes the global router subnet and connected static routes and recreates them with the new argument value.
+* `service_addresses` - (Optional) Two subnet IP addresses that will be reserved as service ones. These IP addresses must be available. If not specified, the last two IP addresses in subnet range will be reserved. Changing this deletes the global router subnet and connected static routes and recreates them with the new argument value.
 
 
 ## Attributes Reference
@@ -44,7 +44,7 @@ resource "selectel_global_router_vpc_subnet_v1" "global_router_vpc_subnet_1" {
 * `cidr` - Subnet IP address range in CIDR notation.
 * `os_subnet_id` - Unique identifier of the connected cloud platform subnet.
 * `gateway` - Subnet IP address that is used as gateway on the global router.
-* `service_addresses` - Two of the subnet IP addresses that are reserved as service ones.
+* `service_addresses` - Two subnet IP addresses that are reserved as service ones.
 * `project_id` - Unique identifier of the associated project. 
 * `tags` - List of global router subnet tags.
 * `created_at` - Time when the global router subnet was created.
