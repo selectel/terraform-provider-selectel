@@ -27,7 +27,7 @@ resource "selectel_iam_serviceuser_v1" "serviceuser_1" {
     scope     = "account"
   }
   role {
-    role_name = "iam_admin"
+    role_name = "iam.admin"
     scope     = "account"
   }
 }
@@ -41,7 +41,7 @@ resource "selectel_iam_serviceuser_v1" "serviceuser_1" {
 
 * `role` - (Optional) Manages service user roles. You can add multiple roles – each role in a separate block. For more information about roles, see the [Roles](#roles) section.
 
-    * `role_name` - (Required) Role name. Available role names are `iam_admin`, `member`, `reader`, `billing`, `object_storage:admin`, and `object_storage_user`.
+    * `role_name` - (Required) Role name. Available role names are `iam.admin`, `member`, `reader`, `billing`, `object_storage:admin`, and `object_storage_user`.
 
     * `scope` - (Required) Scope of the role. Available scopes are `account` and `project`. If `scope` is `project`, the `project_id` argument is required.
 
@@ -57,7 +57,7 @@ To assign roles, use the following values for `scope` and `role_name`:
 
 * Billing administrator - `scope` is `account`, `role_name` is `billing`.
 
-* User administrator - `scope` is `account`, `role_name` is `iam_admin`.
+* User administrator - `scope` is `account`, `role_name` is `iam.admin`.
 
 * Project administrator - `scope` is `project`, `role_name` is `member`.
 
