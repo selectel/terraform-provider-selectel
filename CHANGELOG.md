@@ -1,3 +1,9 @@
+## 7.5.1 (January 29, 2026)
+
+IMPROVEMENTS:
+
+* Update documentation for Global Router resources ([#372](https://github.com/selectel/terraform-provider-selectel/pull/372))
+
 ## 7.5.0 (January 28, 2026)
 
 FEATURES:
