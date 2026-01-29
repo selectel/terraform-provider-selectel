@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_global\_router\_quota\_v1
 
-Provides a list of quotas in the Global Router service using public API v1.
+Provides a list of quotas in the Global Router service using public API v1. For more information about global routers, see the [official Selectel documentation](https://docs.selectel.ru/en/global-router/about-global-router/#limits).
 
 ## Example Usage
 
