@@ -6,7 +6,7 @@ description: |-
   Creates and manages a global router network that connects a cloud platform private network to a global router in the Global Router service using public API v1.
 ---
 
-# selectel\_global\_router\_cloud\_network\_v1
+# selectel\_global\_router\_vpc\_network\_v1
 
 Creates and manages a global router network that connects an existing  cloud platform private network to a global router in the Global Router service using public API v1. To create a cloud platform network, use the [openstack_networking_network_v2](https://docs.selectel.ru/en/terraform/openstack-provider-reference/networking-neutron/resources/openstack_networking_network_v2/) resource. 
 
