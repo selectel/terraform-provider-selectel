@@ -10,7 +10,7 @@ description: |-
 
 Provides a list of services in the Global Router service using public API v1.
 A service represents a scope of products and services using the same network infrastructure.
-For example, the `vpc` service represents cloud servers, load balancers, file storage, Managed Kubernetes, and Managed Databases.
+For example, the `vpc` service represents cloud servers, file storage, Managed Kubernetes, and Managed Databases.
 For more information about global routers, see the [official Selectel documentation](https://docs.selectel.ru/en/global-router/).
 
 ## Example Usage
@@ -29,5 +29,5 @@ data "selectel_global_router_service_v1" "service_1" {
 
 * `id` - Unique identifier of the service.
 * `name` - Service name.
-* `extension` - Extension which global router uses to work with the service. Usually matches the service name.
+* `extension` - Extension which the Global Router service uses to work with the service. Usually matches the service name.
 * `created_at` - Time when the service was created.

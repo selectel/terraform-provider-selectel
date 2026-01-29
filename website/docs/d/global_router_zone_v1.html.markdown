@@ -14,7 +14,7 @@ Provides a list of zones in the Global Router service using public API v1. A zon
 
 ```hcl
 data "selectel_global_router_zone_v1" "zone_1" {
-  name    = "ru-1"
+  name    = "ru-3"
   service = "vpc"
 }
 ```
