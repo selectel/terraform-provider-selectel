@@ -3,32 +3,28 @@ layout: "selectel"
 page_title: "Selectel: selectel_global_router_zone_v1"
 sidebar_current: "docs-selectel-datasource-global-router-zone-v1"
 description: |-
-  Provides a list of zones in the Selectel Global Router service using public API v1.
+  Provides a list of zones in the Global Router service using public API v1.
 ---
 
 # selectel\_global\_router\_zone\_v1
 
-Provides a list of zones in the Selectel Global Router service using public API v1. A zone represents a logical grouping of network resources that are used by a service or a product within one pool.
-
-For more information about global router, see the [official Selectel documentation](https://docs.selectel.ru/en/global-router/).
-For example, cloud platform networks in the `ru-3` pool belong to the `ru-3` zone.
-Zones are logically aggregated into [Zone Groups](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/global_router_zone_group_v1).
+Provides a list of zones in the Global Router service using public API v1. A zone represents a logical grouping of network resources that are used by a service or a product within one pool. Zones are logically aggregated into [zone groups](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/global_router_zone_group_v1). For example, cloud platform networks in the `ru-3` pool belong to the `ru-3` zone. For more information about global routers, see the [official Selectel documentation](https://docs.selectel.ru/en/global-router/).
 
 ## Example Usage
 
 ```hcl
 data "selectel_global_router_zone_v1" "zone_1" {
-  name    = "ru-1"
+  name    = "ru-3"
   service = "vpc"
 }
 ```
 
 ## Argument Reference
 
-* `name` - (Required) Pool name, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
+* `name` - (Required) Pool, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
 
 * `service` - (Optional) Name of the service.
-                         Available names are: `vpc`, `dedicated`, `vmware`, `infra`.
+                         Available names are `vpc`, `dedicated`, `vmware`, and `infra`.
 
 ## Attributes Reference
 
@@ -46,6 +42,6 @@ data "selectel_global_router_zone_v1" "zone_1" {
 * `groups` - List of zone groups that include this zone.
   * `id` - Unique identifier of the zone group.
   * `name` - Zone group name.
-  * `description` - Optional description for the zone group.
+  * `description` - Optional description of the zone group.
   * `created_at` - Time when the zone group was created.
   * `updated_at` - Time when the zone group was updated.
