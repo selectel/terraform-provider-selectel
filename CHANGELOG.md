@@ -1,3 +1,9 @@
+## 7.5.2 (January 31, 2026)
+
+IMPROVEMENTS:
+
+* Update README.md ([#374](https://github.com/selectel/terraform-provider-selectel/pull/374))
+
 ## 7.5.1 (January 29, 2026)
 
 IMPROVEMENTS:
