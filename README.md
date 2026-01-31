@@ -17,8 +17,8 @@ This provider plugin is maintained by:
 
 ## Requirements
 
-* [Terraform](https://www.terraform.io/downloads.html) 0.12.x
-* [Go](https://golang.org/doc/install) 1.23 (to build the provider plugin)
+* [Terraform](https://www.terraform.io/downloads.html) 1.x
+* [Go](https://golang.org/doc/install) 1.24 (to build the provider plugin)
 
 ## Building The Provider
 
@@ -39,12 +39,11 @@ make build
 
 Getting Started with Terraform at Selectel: [kb.selectel.com](https://kb.selectel.com/docs/selectel-cloud-platform/main-services/instructions/how_to_use_terraform/).
 Documentation is available at: [docs/providers/selectel](https://www.terraform.io/docs/providers/selectel/index.html).  
-You can find examples in this repository: [examples](https://github.com/terraform-providers/terraform-provider-selectel/tree/master/examples).  
-Also there are lots of examples in the [selectel/terraform-examples](https://github.com/selectel/terraform-examples).
+You can find examples in this repository: [selectel/terraform-examples](https://github.com/selectel/terraform-examples).
 
 ## Developing the Provider
 
-If you wish to work on the provider, you'll first need [Go](https://golang.org) installed on your machine (version 1.17+ is _required_).
+If you wish to work on the provider, you'll first need [Go](https://golang.org) installed on your machine (version 1.24+ is _required_).
 
 To compile the provider, run `make build`. This will build the provider and put the provider binary in the current directory.
 
