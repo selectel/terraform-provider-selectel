@@ -1,3 +1,9 @@
+## 7.5.3 (February 2, 2026)
+
+IMPROVEMENTS:
+
+* Update documentation for Private DNS resources ([#375](https://github.com/selectel/terraform-provider-selectel/pull/375))
+  
 ## 7.5.2 (January 31, 2026)
 
 IMPROVEMENTS:
