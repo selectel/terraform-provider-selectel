@@ -64,7 +64,7 @@ Before upgrading to version 5.0.0, [upgrade to the most recent 4.X version of th
         scope     = "account"
       }
       role {
-        role_name = "iam_admin"
+        role_name = "iam.admin"
         scope     = "account"
       }
     }

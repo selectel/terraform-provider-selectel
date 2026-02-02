@@ -199,7 +199,7 @@ resource "selectel_iam_serviceuser_v1" "serviceuser_tf_acc_test_1" {
     scope = "account"
   }
   role {
-    role_name = "iam_admin"
+    role_name = "iam.admin"
     scope = "account"
   }
 }`, userName, userPassword)
