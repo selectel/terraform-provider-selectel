@@ -125,7 +125,7 @@ func resourceCRaaSTokenV2Read(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	log.Print(msgGet(objectRegistryToken, d.Id()))
-	_, response, err := tokenv2.GetByID(ctx, craasClient, d.Id())
+	tokenObj, response, err := tokenv2.GetByID(ctx, craasClient, d.Id())
 	if err != nil {
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
@@ -135,6 +135,23 @@ func resourceCRaaSTokenV2Read(ctx context.Context, d *schema.ResourceData, meta 
 		}
 
 		return diag.FromErr(errGettingObject(objectRegistryToken, d.Id(), err))
+	}
+
+	// if the token has been revoked or is in any non-active state,
+	// remove it from the state so Terraform will recreate it on next apply
+	if tokenObj.Status != tokenv2.StatusActive {
+		log.Printf("[WARN] CRaaS token %s has status %q, removing from state", d.Id(), tokenObj.Status)
+		d.SetId("")
+		return nil
+	}
+
+	// if the token has a set expiration and it has already expired,
+	// remove it from the state so Terraform will recreate it on next apply
+	if tokenObj.Expiration.IsSet && tokenObj.Expiration.ExpiresAt.Before(time.Now()) {
+		log.Printf("[WARN] CRaaS token %s expired at %s, removing from state",
+			d.Id(), tokenObj.Expiration.ExpiresAt.Format(time.RFC3339))
+		d.SetId("")
+		return nil
 	}
 
 	d.Set("username", craasV1TokenUsername)
@@ -150,8 +167,12 @@ func resourceCRaaSTokenV2Delete(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	log.Print(msgDelete(objectRegistryToken, d.Id()))
-	_, err := tokenv2.Delete(ctx, craasClient, d.Id())
+	response, err := tokenv2.Delete(ctx, craasClient, d.Id())
 	if err != nil {
+		// if the token is already gone (e.g. revoked and cleaned up), treat delete as successful
+		if response != nil && response.StatusCode == http.StatusNotFound {
+			return nil
+		}
 		return diag.FromErr(errDeletingObject(objectRegistryToken, d.Id(), err))
 	}
 
