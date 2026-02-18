@@ -163,6 +163,7 @@ func resourceCRaaSTokenV2Delete(ctx context.Context, d *schema.ResourceData, met
 		if isCRaaSTokenV2DeleteNotFound(response) {
 			return nil
 		}
+
 		return diag.FromErr(errDeletingObject(objectRegistryToken, d.Id(), err))
 	}
 
