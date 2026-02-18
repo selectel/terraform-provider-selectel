@@ -1,3 +1,10 @@
+## 7.5.4 (February 18, 2026)
+
+BUG FIXES:
+
+* Fixed `selectel_craas_token_v2` resource to recreate expired/revoked tokens instead of failing (#351)
+* Updated `craas-go` to v0.4.2
+
 ## 7.5.3 (February 2, 2026)
 
 IMPROVEMENTS:
