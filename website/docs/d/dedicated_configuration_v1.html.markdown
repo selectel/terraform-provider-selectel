@@ -48,6 +48,19 @@ data "selectel_dedicated_configuration_v1" "server_config" {
 }
 ```
 
+### Search available configurations using filter block
+
+```hcl
+data "selectel_dedicated_configuration_v1" "server_config" {
+  project_id = selectel_vpc_project_v2.project_1.id
+
+  filter {
+    name        = "CL25-NVMe"
+    location_id = data.selectel_dedicated_location_v1.server_location.locations[0].id
+  }
+}
+```
+
 ## Argument Reference
 
 * `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
@@ -56,6 +69,10 @@ data "selectel_dedicated_configuration_v1" "server_config" {
   * You can use only the name of the configuration to get the results.To get the name of the configuration, in the [Selectel site](https://selectel.ru/en/services/dedicated/).
   * You can use [additional parameters](#search-available-configurations-with-additional-parameters) or their combinations to filter available configurations. You can set them in place or use another [file](#search-available-configurations-with-additional-parameters-from-file). See an example of the filter values in the [API documentation](https://docs.selectel.ru/en/api/dedicated/#tag/Services/operation/get_server_list)
 
+* `filter` — (Optional) Block filter for configurations:
+    * `name` - Filter by configuration name.
+    * `location_id` - Filter by location ID.
+  
 ## Attributes Reference
 
 * `configurations` - List of the available configurations:

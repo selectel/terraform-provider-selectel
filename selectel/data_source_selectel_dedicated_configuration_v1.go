@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	dedicated "github.com/selectel/dedicated-go/pkg/v2"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/reflect"
 )
 
@@ -23,6 +24,23 @@ func dataSourceDedicatedConfigurationV1() *schema.Resource {
 			"deep_filter": {
 				Type:     schema.TypeString,
 				Optional: true,
+			},
+			"filter": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"location_id": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+					},
+				},
 			},
 			// computed
 			"configurations": {
@@ -62,14 +80,14 @@ func dataSourceDedicatedConfigurationV1Read(ctx context.Context, d *schema.Resou
 
 	log.Printf("[DEBUG] Getting server configurations")
 
-	serversList, _, err := dsClient.ServersRaw(ctx)
+	serversList, _, err := dsClient.Servers(ctx)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf(
 			"error getting list of servers configurations (without chips): %w", err,
 		))
 	}
 
-	serverChipsList, _, err := dsClient.ServerChipsRaw(ctx)
+	serverChipsList, _, err := dsClient.ServerChips(ctx)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf(
 			"error getting list of servers configurations (with chips): %w", err))
@@ -86,8 +104,7 @@ func dataSourceDedicatedConfigurationV1Read(ctx context.Context, d *schema.Resou
 
 	ids := make([]string, 0, len(filteredServers))
 	for _, e := range filteredServers {
-		id, _ := e["uuid"].(string)
-		ids = append(ids, id)
+		ids = append(ids, e.ID)
 	}
 
 	slices.Sort(ids)
@@ -104,44 +121,67 @@ func dataSourceDedicatedConfigurationV1Read(ctx context.Context, d *schema.Resou
 
 type dedicatedConfigurationsFilter struct {
 	deepFilter map[string]any
+	name       string
+	locationID string
 }
 
 func expandDedicatedConfigurationsSearchFilter(d *schema.ResourceData) (*dedicatedConfigurationsFilter, error) {
-	filter := &dedicatedConfigurationsFilter{
-		deepFilter: make(map[string]any),
-	}
+	filter := &dedicatedConfigurationsFilter{}
 
 	filterRaw, ok := d.Get("deep_filter").(string)
-	if !ok {
+	if ok && len(filterRaw) > 0 {
+		filter.deepFilter = make(map[string]any)
+
+		err := json.Unmarshal([]byte(filterRaw), &filter.deepFilter)
+		if err != nil {
+			return nil, fmt.Errorf("error unmarshalling deep_filter: %w", err)
+		}
+	}
+
+	filterSet := d.Get("filter").(*schema.Set)
+	if filterSet.Len() == 0 {
 		return filter, nil
 	}
 
-	err := json.Unmarshal([]byte(filterRaw), &filter.deepFilter)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling deep_filter: %w", err)
+	configurationFilterMap := filterSet.List()[0].(map[string]any)
+
+	if v, ok := configurationFilterMap["name"].(string); ok {
+		filter.name = v
+	}
+
+	if v, ok := configurationFilterMap["location_id"].(string); ok {
+		filter.locationID = v
 	}
 
 	return filter, nil
 }
 
-func filterDedicatedConfigurations(list []map[string]any, filter *dedicatedConfigurationsFilter) []map[string]any {
-	var filteredRaw []map[string]any
+func filterDedicatedConfigurations(list []dedicated.Server, filter *dedicatedConfigurationsFilter) []dedicated.Server {
+	var filtered []dedicated.Server
 	for _, entry := range list {
-		if reflect.IsSetContainsSubset(filter.deepFilter, entry) {
-			filteredRaw = append(filteredRaw, entry)
+		switch {
+		case len(filter.deepFilter) > 0:
+			entryMap, err := reflect.StructToMap(entry)
+			if err == nil && reflect.IsSetContainsSubset(filter.deepFilter, entryMap) {
+				filtered = append(filtered, entry)
+			}
+		case entry.Name == filter.name:
+			filtered = append(filtered, entry)
+		case entry.IsLocationAvailable(filter.locationID):
+			filtered = append(filtered, entry)
 		}
 	}
 
-	return filteredRaw
+	return filtered
 }
 
-func flattenDedicatedConfigurations(list []map[string]any) []interface{} {
+func flattenDedicatedConfigurations(list []dedicated.Server) []interface{} {
 	res := make([]interface{}, len(list))
 	for i, e := range list {
 		sMap := make(map[string]interface{})
-		sMap["id"] = e["uuid"]
-		sMap["name"] = e["name"]
-		sMap["config_name"] = e["config_name"]
+		sMap["id"] = e.ID
+		sMap["name"] = e.Name
+		sMap["config_name"] = e.ConfigName
 
 		res[i] = sMap
 	}
