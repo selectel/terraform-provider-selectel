@@ -28,6 +28,7 @@ func TestAccDedicatedConfigurationV1Basic(t *testing.T) {
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccDedicatedConfigurationV1Exists("data.selectel_dedicated_configuration_v1.server_configuration_tf_acc_test_1", configurationName),
 					resource.TestCheckResourceAttr("data.selectel_dedicated_configuration_v1.server_configuration_tf_acc_test_1", "configurations.0.name", configurationName),
+					resource.TestCheckResourceAttrSet("data.selectel_dedicated_configuration_v1.server_configuration_tf_acc_test_1", "configurations.0.config_name"),
 				),
 			},
 		},

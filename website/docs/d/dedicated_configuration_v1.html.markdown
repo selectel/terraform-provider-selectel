@@ -63,3 +63,5 @@ data "selectel_dedicated_configuration_v1" "server_config" {
   * `id` - Unique identifier of the configuration.
 
   * `name` - Configuration name.
+
+  * `config_name` - Config name.

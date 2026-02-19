@@ -38,6 +38,10 @@ func dataSourceDedicatedConfigurationV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"config_name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -137,6 +141,7 @@ func flattenDedicatedConfigurations(list []map[string]any) []interface{} {
 		sMap := make(map[string]interface{})
 		sMap["id"] = e["uuid"]
 		sMap["name"] = e["name"]
+		sMap["config_name"] = e["config_name"]
 
 		res[i] = sMap
 	}
