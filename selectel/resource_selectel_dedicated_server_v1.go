@@ -10,7 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	dedicated "github.com/selectel/dedicated-go/pkg/v2"
+	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
 	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dedicated"
 )
 

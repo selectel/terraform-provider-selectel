@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	dedicated "github.com/selectel/dedicated-go/pkg/v2"
+	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
 	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/projects"
 )
 

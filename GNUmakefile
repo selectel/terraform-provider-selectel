@@ -31,6 +31,19 @@ test-compile:
 	fi
 	go test -c $(TEST) $(TESTARGS)
 
+all: fmt golangci-lint test testacc semgrep test-compile
+
+build-dev:
+	go build -gcflags="all=-N -l" -o terraform-provider-selectel
+
+debug:
+	dlv exec ./terraform-provider-selectel \
+        --listen=127.0.0.1:40000 \
+        --headless=true \
+        --api-version=2 \
+        --accept-multiclient \
+        --continue
+
 website:
 ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 	echo "$(WEBSITE_REPO) not found in your GOPATH (necessary for layouts and assets), get-ting..."

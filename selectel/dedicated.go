@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	dedicated "github.com/selectel/dedicated-go/pkg/v2"
+	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
 	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/servers"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/hashcode"
 )
@@ -499,7 +499,7 @@ func resourceDedicatedServerV1GetFreePublicIPs(
 		)
 	}
 
-	nets, _, err := cl.Networks(ctx, locationID, dedicated.NetworkTypeInet)
+	nets, _, err := cl.Networks(ctx, locationID, dedicated.NetworkTypeInet, "")
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get %s networks for %s %s: %w", dedicated.NetworkTypeInet, objectLocation, locationID, err,
@@ -518,7 +518,7 @@ func resourceDedicatedServerV1GetFreePublicIPs(
 		)
 	}
 
-	reservedIPs, _, err := cl.NetworkReservedIPs(ctx, locationID)
+	reservedIPs, _, err := cl.NetworkReservedIPs(ctx, locationID, "")
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to get reserved ips for %s %s: %w", objectLocation, locationID, err,
@@ -538,7 +538,7 @@ func resourceDedicatedServerV1GetFreePublicIPs(
 func resourceDedicatedServerV1GetFreePrivateIPs(
 	ctx context.Context, cl *dedicated.ServiceClient, locationID, subnetStr string,
 ) (ip net.IP, subnetID string, err error) {
-	nets, _, err := cl.Networks(ctx, locationID, dedicated.NetworkTypeLocal)
+	nets, _, err := cl.Networks(ctx, locationID, dedicated.NetworkTypeLocal, "")
 	if err != nil {
 		return nil, "", fmt.Errorf(
 			"failed to get %s networks for %s %s: %w", dedicated.NetworkTypeInet, objectLocation, locationID, err,
