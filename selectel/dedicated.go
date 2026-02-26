@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	dedicated "github.com/selectel/dedicated-go/pkg/v2"
+	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
 	"github.com/selectel/go-selvpcclient/v4/selvpcclient"
 	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/servers"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/hashcode"
