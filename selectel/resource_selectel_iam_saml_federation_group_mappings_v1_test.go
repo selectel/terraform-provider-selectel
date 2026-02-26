@@ -140,4 +140,3 @@ resource "selectel_iam_saml_federation_group_mappings_v1" "group_mappings_tf_acc
 }
 `
 }
-
