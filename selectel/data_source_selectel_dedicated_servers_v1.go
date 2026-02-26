@@ -117,7 +117,7 @@ func dataSourceDedicatedServersV1Read(ctx context.Context, d *schema.ResourceDat
 		reservedIPs = append(reservedIPs, reservedPublicIPs...)
 	}
 
-	reservedPrivateIPs, _, err := dsClient.NetworkReservedLocalIPs(ctx, filter.locationID, "")
+	reservedPrivateIPs, _, err := dsClient.NetworkReservedLocalIPs(ctx, "")
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting reserved private IPs: %w", err))
 	}
@@ -131,7 +131,7 @@ func dataSourceDedicatedServersV1Read(ctx context.Context, d *schema.ResourceDat
 	}
 
 	serversFlatten := flattenDedicatedServers(filteredServers, reservedPublicIPs, reservedPrivateIPs)
-	if err := d.Set("servers", serversFlatten); err != nil {
+	if err = d.Set("servers", serversFlatten); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -159,6 +159,13 @@ type dedicatedServersSearchFilter struct {
 	configurationID string
 	publicSubnet    string
 	privateSubnet   string
+}
+
+func (f dedicatedServersSearchFilter) IsEmpty() bool {
+	return f.name == "" &&
+		f.ip == "" &&
+		f.publicSubnet == "" &&
+		f.privateSubnet == ""
 }
 
 func expandDedicatedServersSearchFilter(d *schema.ResourceData) dedicatedServersSearchFilter {
@@ -212,16 +219,22 @@ func filterDedicatedServers(
 	servers []dedicated.ResourceDetails, filter dedicatedServersSearchFilter, reservedIPs dedicated.ReservedIPs,
 ) ([]dedicated.ResourceDetails, error) {
 	var filteredServers []dedicated.ResourceDetails
+
+	if filter.IsEmpty() {
+		return servers, nil
+	}
+
 	for _, server := range servers {
 		if filter.name != "" && filter.name == server.Info {
 			filteredServers = append(filteredServers, server)
 		}
 
-		if filter.ip != "" {
+		if filter.ip != "" || filter.publicSubnet != "" || filter.privateSubnet != "" {
 			for _, reserverIP := range reservedIPs {
-				if filter.ip == reserverIP.IP.String() ||
-					filter.privateSubnet == reserverIP.Subnet ||
-					filter.publicSubnet == reserverIP.Subnet {
+				if server.UUID == reserverIP.ResourceUUID &&
+					(filter.ip == reserverIP.IP.String() ||
+						filter.privateSubnet == reserverIP.Subnet ||
+						filter.publicSubnet == reserverIP.Subnet) {
 					filteredServers = append(filteredServers, server)
 				}
 			}
@@ -232,33 +245,34 @@ func filterDedicatedServers(
 }
 
 func flattenDedicatedServers(
-	servers []dedicated.ResourceDetails, reservedPublicIPs, reservedPrivateIPs dedicated.ReservedIPs,
+	servers []dedicated.ResourceDetails,
+	reservedPublicIPs, reservedPrivateIPs dedicated.ReservedIPs,
 ) []any {
-	serversList := make([]interface{}, len(servers))
-	reservedPublicIPsStrings := make([]string, len(reservedPublicIPs))
-	reservedPrivateIPsStrings := make([]string, len(reservedPrivateIPs))
+	serversList := make([]any, len(servers))
 
 	for i, server := range servers {
-		serverMap := make(map[string]interface{})
+		serverMap := make(map[string]any)
 		serverMap["id"] = server.UUID
 		serverMap["name"] = server.Info
 		serverMap["configuration_id"] = server.ServiceUUID
 		serverMap["location_id"] = server.LocationUUID
 
-		if len(reservedPublicIPs) > 0 {
-			for _, ip := range reservedPublicIPs {
-				reservedPublicIPsStrings = append(reservedPublicIPsStrings, ip.IP.String())
+		publicIPs := make([]string, 0, len(reservedPublicIPs))
+		for _, ip := range reservedPublicIPs {
+			if ip.ResourceUUID == server.UUID {
+				publicIPs = append(publicIPs, ip.IP.String())
 			}
 		}
 
-		if len(reservedPrivateIPs) > 0 {
-			for _, ip := range reservedPrivateIPs {
-				reservedPrivateIPsStrings = append(reservedPrivateIPsStrings, ip.IP.String())
+		privateIPs := make([]string, 0, len(reservedPrivateIPs))
+		for _, ip := range reservedPrivateIPs {
+			if ip.ResourceUUID == server.UUID {
+				privateIPs = append(privateIPs, ip.IP.String())
 			}
 		}
 
-		serverMap["reserved_public_ips"] = reservedPublicIPsStrings
-		serverMap["reserved_private_ips"] = reservedPrivateIPsStrings
+		serverMap["reserved_public_ips"] = publicIPs
+		serverMap["reserved_private_ips"] = privateIPs
 
 		serversList[i] = serverMap
 	}
