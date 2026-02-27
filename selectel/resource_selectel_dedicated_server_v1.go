@@ -18,7 +18,7 @@ func resourceDedicatedServerV1() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceDedicatedServerV1Create,
 		ReadContext:   resourceDedicatedServerV1Read,
-		UpdateContext: resourceDedicatedServerV1UpdateWithStateRollback,
+		UpdateContext: resourceDedicatedServerV1UpdateWithPowerControl,
 		DeleteContext: resourceDedicatedServerV1Delete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceDedicatedServerV1ImportState,
@@ -31,6 +31,12 @@ func resourceDedicatedServerV1() *schema.Resource {
 		Schema: resourceDedicatedServerV1Schema(),
 	}
 }
+
+const (
+	powerStateOn      = "on"
+	powerStateOff     = "off"
+	powerActionReboot = "reboot"
+)
 
 func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dsClient, diagErr := getDedicatedClient(d, meta)
@@ -471,6 +477,26 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 
 	_ = d.Set("os_id", os.UUID)
 
+	driverStatus, _, err := dsClient.ShowPowerState(ctx, d.Id())
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to get power state: %w", err))
+	}
+
+	if driverStatus != nil {
+		var state string
+		switch {
+		case driverStatus.IsReboot():
+			state = powerActionReboot
+		case driverStatus.IsOff():
+			state = powerStateOff
+		case driverStatus.IsOn():
+			state = powerStateOn
+		default:
+			state = string(driverStatus.PowerState)
+		}
+		_ = d.Set("power_state", state)
+	}
+
 	return nil
 }
 
@@ -498,15 +524,12 @@ func resourceDedicatedServerV1Delete(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func resourceDedicatedServerV1UpdateWithStateRollback(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDedicatedServerV1UpdateWithStateRollback(
+	ctx context.Context, d *schema.ResourceData, dsClient *dedicated.ServiceClient,
+) diag.Diagnostics {
 	d.Partial(true)
 
-	dsClient, diagErr := getDedicatedClient(d, meta)
-	if diagErr != nil {
-		return diagErr
-	}
-
-	diagErr = resourceDedicatedServerV1Update(ctx, d, dsClient)
+	diagErr := resourceDedicatedServerV1Update(ctx, d, dsClient)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -638,6 +661,118 @@ func resourceDedicatedServerV1UpdateLoadData(
 		partitions:   partitionsConfig,
 		sshKeyByName: sshKey,
 	}, nil
+}
+
+func resourceDedicatedServerV1UpdatePowerState(
+	ctx context.Context, d *schema.ResourceData, dsClient *dedicated.ServiceClient, desiredState string, meta any,
+) diag.Diagnostics {
+	driverStatus, _, err := dsClient.ShowPowerState(ctx, d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if desiredState == powerActionReboot && driverStatus.IsOff() {
+		return diag.FromErr(fmt.Errorf("server is shutdown cannot reboot %s", d.Id()))
+	}
+
+	if desiredState == powerActionReboot && driverStatus.IsReboot() {
+		return diag.FromErr(fmt.Errorf("server is already rebooting %s", d.Id()))
+	}
+
+	if desiredState == powerStateOff && driverStatus.IsOff() {
+		return diag.FromErr(fmt.Errorf("server is already shutdown %s", d.Id()))
+	}
+
+	if desiredState == powerStateOff && driverStatus.IsReboot() {
+		return diag.FromErr(fmt.Errorf("server is rebooting %s", d.Id()))
+	}
+
+	if desiredState == powerStateOn && driverStatus.IsOn() {
+		return diag.FromErr(fmt.Errorf("server is already running %s", d.Id()))
+	}
+
+	if desiredState == powerStateOn && driverStatus.IsReboot() {
+		return diag.FromErr(fmt.Errorf("server is rebooting %s", d.Id()))
+	}
+
+	if desiredState == powerStateOff {
+		if err = setResourcePowerState(ctx, dsClient, d.Id(), powerStateOff); err != nil {
+			return diag.FromErr(fmt.Errorf("error powering off: %w", err))
+		}
+
+		timeout := d.Timeout(schema.TimeoutUpdate)
+		if err = waiters.WaitForServersV1PowerShutdown(ctx, dsClient, d.Id(), timeout); err != nil {
+			return diag.FromErr(fmt.Errorf("server did not become shutdown after power off: %w", err))
+		}
+
+		return resourceDedicatedServerV1Read(ctx, d, meta)
+	}
+
+	if desiredState == powerActionReboot {
+		if err = setResourcePowerState(ctx, dsClient, d.Id(), powerActionReboot); err != nil {
+			return diag.FromErr(fmt.Errorf("error rebooting: %w", err))
+		}
+
+		timeout := d.Timeout(schema.TimeoutUpdate)
+		if err = waiters.WaitForServersV1PowerRunningAfterReboot(ctx, dsClient, d.Id(), timeout); err != nil {
+			return diag.FromErr(fmt.Errorf("server did not become active after reboot: %w", err))
+		}
+
+		return resourceDedicatedServerV1Read(ctx, d, meta)
+	}
+
+	if desiredState == powerStateOn {
+		if err = setResourcePowerState(ctx, dsClient, d.Id(), powerStateOn); err != nil {
+			return diag.FromErr(fmt.Errorf("error powering on: %w", err))
+		}
+
+		timeout := d.Timeout(schema.TimeoutUpdate)
+		if err = waiters.WaitForServersV1PowerRunning(ctx, dsClient, d.Id(), timeout); err != nil {
+			return diag.FromErr(fmt.Errorf("server did not become running after power on: %w", err))
+		}
+
+		return resourceDedicatedServerV1Read(ctx, d, meta)
+	}
+
+	return diag.Errorf("unknown power_state: %s", desiredState)
+}
+
+func resourceDedicatedServerV1UpdateWithPowerControl(
+	ctx context.Context, d *schema.ResourceData, meta any,
+) diag.Diagnostics {
+	dsClient, diagErr := getDedicatedClient(d, meta)
+	if diagErr != nil {
+		return diagErr
+	}
+
+	powerStateRaw, ok := d.GetOk(dedicatedServerSchemaKeyPowerState)
+	if !ok {
+		return resourceDedicatedServerV1UpdateWithStateRollback(ctx, d, dsClient)
+	}
+
+	if !d.HasChange(dedicatedServerSchemaKeyPowerState) {
+		return resourceDedicatedServerV1UpdateWithStateRollback(ctx, d, dsClient)
+	}
+
+	desiredState, _ := powerStateRaw.(string)
+
+	return resourceDedicatedServerV1UpdatePowerState(ctx, d, dsClient, desiredState, meta)
+}
+
+func setResourcePowerState(ctx context.Context, dsClient *dedicated.ServiceClient, resourceUUID, powerState string) error {
+	switch powerState {
+	case powerStateOn:
+		_, err := dsClient.SetPowerState(ctx, resourceUUID, true)
+		return err
+	case powerStateOff:
+		_, err := dsClient.SetPowerState(ctx, resourceUUID, false)
+		return err
+	case powerActionReboot:
+		_, err := dsClient.RebootServer(ctx, resourceUUID)
+		return err
+	default:
+		return fmt.Errorf("unknown power state: %s", powerState)
+	}
 }
 
 func resourceDedicatedServerV1UpdateValidatePreconditions(

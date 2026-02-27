@@ -30,6 +30,7 @@ const (
 	dedicatedServerSchemaKeyFSType                   = "fs_type"
 	dedicatedServerSchemaKeyOSPassword               = "os_password"
 	dedicatedServerSchemaForceUpdateAdditionalParams = "force_update_additional_params"
+	dedicatedServerSchemaKeyPowerState               = "power_state"
 )
 
 func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
@@ -143,6 +144,13 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 		dedicatedServerSchemaKeyPrivateSubnet: {
 			Type:     schema.TypeString,
 			Optional: true,
+		},
+
+		// optional power params
+		dedicatedServerSchemaKeyPowerState: {
+			Type:     schema.TypeString,
+			Optional: true,
+			Computed: true,
 		},
 
 		// optional misc
