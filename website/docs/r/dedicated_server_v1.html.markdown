@@ -67,6 +67,19 @@ resource "selectel_dedicated_server_v1" "server_1" {
     delete = "5m"
   }
 }
+
+# Power management example
+resource "selectel_dedicated_server_v1" "server_power" {
+  project_id = selectel_vpc_project_v2.project_1.id
+
+  configuration_id = data.selectel_dedicated_configuration_v1.server_config.configurations[0].id
+  location_id      = data.selectel_dedicated_location_v1.server_location.locations[0].id
+  os_id            = data.selectel_dedicated_os_v1.server_os.os[0].id
+  price_plan_name  = "1 day"
+
+  # Power management only
+  power_state = "on"
+}
 ```
 
 ## Argument Reference
@@ -106,6 +119,8 @@ resource "selectel_dedicated_server_v1" "server_1" {
 * `public_subnet_ip` - (Optional) Public IP to use. Can be set instead of `public_subnet_id`.
 
 * `os_host_name` - (Optional) Hostname for the server.
+
+* `power_state` - (Optional) Power state of the server. If specified, only power management is performed. Valid values are `on`, `off`, and `reboot`.
 
 * `force_update_additional_params` - (Optional) Enable or disable update for additional os params (os_password, user_data, ssh_key, ssh_key_name, partitions_config, os_host_name) without changing os_id. NOTE: installing new os will delete all data on the server.
 

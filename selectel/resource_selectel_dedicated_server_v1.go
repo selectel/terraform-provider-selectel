@@ -8,6 +8,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
@@ -31,12 +32,6 @@ func resourceDedicatedServerV1() *schema.Resource {
 		Schema: resourceDedicatedServerV1Schema(),
 	}
 }
-
-const (
-	powerStateOn      = "on"
-	powerStateOff     = "off"
-	powerActionReboot = "reboot"
-)
 
 func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dsClient, diagErr := getDedicatedClient(d, meta)
@@ -486,11 +481,11 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 		var state string
 		switch {
 		case driverStatus.IsReboot():
-			state = powerActionReboot
+			state = dedicatedServerPowerActionReboot
 		case driverStatus.IsOff():
-			state = powerStateOff
+			state = dedicatedServerPowerStateOff
 		case driverStatus.IsOn():
-			state = powerStateOn
+			state = dedicatedServerPowerStateOn
 		default:
 			state = string(driverStatus.PowerState)
 		}
@@ -671,32 +666,32 @@ func resourceDedicatedServerV1UpdatePowerState(
 		return diag.FromErr(err)
 	}
 
-	if desiredState == powerActionReboot && driverStatus.IsOff() {
+	if desiredState == dedicatedServerPowerActionReboot && driverStatus.IsOff() {
 		return diag.FromErr(fmt.Errorf("server is shutdown cannot reboot %s", d.Id()))
 	}
 
-	if desiredState == powerActionReboot && driverStatus.IsReboot() {
+	if desiredState == dedicatedServerPowerActionReboot && driverStatus.IsReboot() {
 		return diag.FromErr(fmt.Errorf("server is already rebooting %s", d.Id()))
 	}
 
-	if desiredState == powerStateOff && driverStatus.IsOff() {
+	if desiredState == dedicatedServerPowerStateOff && driverStatus.IsOff() {
 		return diag.FromErr(fmt.Errorf("server is already shutdown %s", d.Id()))
 	}
 
-	if desiredState == powerStateOff && driverStatus.IsReboot() {
+	if desiredState == dedicatedServerPowerStateOff && driverStatus.IsReboot() {
 		return diag.FromErr(fmt.Errorf("server is rebooting %s", d.Id()))
 	}
 
-	if desiredState == powerStateOn && driverStatus.IsOn() {
+	if desiredState == dedicatedServerPowerStateOn && driverStatus.IsOn() {
 		return diag.FromErr(fmt.Errorf("server is already running %s", d.Id()))
 	}
 
-	if desiredState == powerStateOn && driverStatus.IsReboot() {
+	if desiredState == dedicatedServerPowerStateOn && driverStatus.IsReboot() {
 		return diag.FromErr(fmt.Errorf("server is rebooting %s", d.Id()))
 	}
 
-	if desiredState == powerStateOff {
-		if err = setResourcePowerState(ctx, dsClient, d.Id(), powerStateOff); err != nil {
+	if desiredState == dedicatedServerPowerStateOff {
+		if err = setResourcePowerState(ctx, dsClient, d.Id(), dedicatedServerPowerStateOff); err != nil {
 			return diag.FromErr(fmt.Errorf("error powering off: %w", err))
 		}
 
@@ -708,8 +703,8 @@ func resourceDedicatedServerV1UpdatePowerState(
 		return resourceDedicatedServerV1Read(ctx, d, meta)
 	}
 
-	if desiredState == powerActionReboot {
-		if err = setResourcePowerState(ctx, dsClient, d.Id(), powerActionReboot); err != nil {
+	if desiredState == dedicatedServerPowerActionReboot {
+		if err = setResourcePowerState(ctx, dsClient, d.Id(), dedicatedServerPowerActionReboot); err != nil {
 			return diag.FromErr(fmt.Errorf("error rebooting: %w", err))
 		}
 
@@ -721,8 +716,8 @@ func resourceDedicatedServerV1UpdatePowerState(
 		return resourceDedicatedServerV1Read(ctx, d, meta)
 	}
 
-	if desiredState == powerStateOn {
-		if err = setResourcePowerState(ctx, dsClient, d.Id(), powerStateOn); err != nil {
+	if desiredState == dedicatedServerPowerStateOn {
+		if err = setResourcePowerState(ctx, dsClient, d.Id(), dedicatedServerPowerStateOn); err != nil {
 			return diag.FromErr(fmt.Errorf("error powering on: %w", err))
 		}
 
@@ -761,13 +756,13 @@ func resourceDedicatedServerV1UpdateWithPowerControl(
 
 func setResourcePowerState(ctx context.Context, dsClient *dedicated.ServiceClient, resourceUUID, powerState string) error {
 	switch powerState {
-	case powerStateOn:
+	case dedicatedServerPowerStateOn:
 		_, err := dsClient.SetPowerState(ctx, resourceUUID, true)
 		return err
-	case powerStateOff:
+	case dedicatedServerPowerStateOff:
 		_, err := dsClient.SetPowerState(ctx, resourceUUID, false)
 		return err
-	case powerActionReboot:
+	case dedicatedServerPowerActionReboot:
 		_, err := dsClient.RebootServer(ctx, resourceUUID)
 		return err
 	default:
@@ -835,7 +830,9 @@ func resourceDedicatedServerV1UpdateValidatePreconditions(
 		return errors.New("noos configuration does not support password")
 	}
 
-	diagErr := resourceDedicatedServerV1UpdateValidatePreconditionsAdditionalOSParams(d, forceUpdateAdditionalParams || d.HasChange(dedicatedServerSchemaKeyOSID))
+	diagErr := resourceDedicatedServerV1UpdateValidatePreconditionsAdditionalOSParams(
+		d, forceUpdateAdditionalParams || d.HasChange(dedicatedServerSchemaKeyOSID),
+	)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -897,4 +894,24 @@ func resourceDedicatedServerV1ImportState(_ context.Context, d *schema.ResourceD
 	_ = d.Set("project_id", config.ProjectID)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourceDedicatedServerV1PowerStateValidate(v any, _ cty.Path) diag.Diagnostics {
+	value := v.(string)
+
+	switch value {
+	case dedicatedServerPowerStateOn, dedicatedServerPowerStateOff, dedicatedServerPowerActionReboot:
+		return nil
+	default:
+		return diag.Diagnostics{
+			diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Invalid power_state value",
+				Detail: fmt.Sprintf(
+					"invalid power_state: %s. Must be one of: %s, %s, %s",
+					value, dedicatedServerPowerStateOn, dedicatedServerPowerStateOff, dedicatedServerPowerActionReboot,
+				),
+			},
+		}
+	}
 }

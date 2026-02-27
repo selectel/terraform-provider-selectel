@@ -31,6 +31,10 @@ const (
 	dedicatedServerSchemaKeyOSPassword               = "os_password"
 	dedicatedServerSchemaForceUpdateAdditionalParams = "force_update_additional_params"
 	dedicatedServerSchemaKeyPowerState               = "power_state"
+
+	dedicatedServerPowerStateOn      = "on"
+	dedicatedServerPowerStateOff     = "off"
+	dedicatedServerPowerActionReboot = "reboot"
 )
 
 func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
@@ -148,9 +152,10 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 
 		// optional power params
 		dedicatedServerSchemaKeyPowerState: {
-			Type:     schema.TypeString,
-			Optional: true,
-			Computed: true,
+			Type:             schema.TypeString,
+			Optional:         true,
+			Computed:         true,
+			ValidateDiagFunc: resourceDedicatedServerV1PowerStateValidate,
 		},
 
 		// optional misc
