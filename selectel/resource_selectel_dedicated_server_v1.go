@@ -34,7 +34,7 @@ func resourceDedicatedServerV1() *schema.Resource {
 }
 
 func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -394,7 +394,7 @@ func resourceDedicatedServerV1CreateValidatePreconditions(
 }
 
 func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -496,7 +496,7 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceDedicatedServerV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -735,7 +735,7 @@ func resourceDedicatedServerV1UpdatePowerState(
 func resourceDedicatedServerV1UpdateWithPowerControl(
 	ctx context.Context, d *schema.ResourceData, meta any,
 ) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}

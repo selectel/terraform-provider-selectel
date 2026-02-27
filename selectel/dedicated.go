@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient"
 	"math"
 	"math/rand/v2" // nosemgrep: go.lang.security.audit.crypto.math_random.math-random-used
 	"net"
@@ -39,13 +40,25 @@ func hashServers(v interface{}) int {
 	return hashcode.String(fmt.Sprintf("%s-", m["id"].(string)))
 }
 
-func getDedicatedClient(d *schema.ResourceData, meta interface{}) (*dedicated.ServiceClient, diag.Diagnostics) {
+func getDedicatedClient(d *schema.ResourceData, meta interface{}, withProjectScope bool) (*dedicated.ServiceClient, diag.Diagnostics) {
 	config := meta.(*Config)
-	projectID := d.Get(dedicatedServerSchemaKeyProjectID).(string)
 
-	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
-	if err != nil {
-		return nil, diag.FromErr(fmt.Errorf("can't get project-scope selvpc client for dedicated servers api: %w", err))
+	var (
+		selvpcClient *selvpcclient.Client
+		err          error
+	)
+
+	if withProjectScope {
+		projectID := d.Get(dedicatedServerSchemaKeyProjectID).(string)
+		selvpcClient, err = config.GetSelVPCClientWithProjectScope(projectID)
+		if err != nil {
+			return nil, diag.FromErr(fmt.Errorf("can't get project-scope selvpc client for dedicated servers api: %w", err))
+		}
+	} else {
+		selvpcClient, err = config.GetSelVPCClient()
+		if err != nil {
+			return nil, diag.FromErr(fmt.Errorf("can't get selvpc client for dedicated servers api: %w", err))
+		}
 	}
 
 	url := "https://api.selectel.ru/servers/v2"

@@ -95,7 +95,7 @@ func dataSourceDedicatedServersV1() *schema.Resource {
 }
 
 func dataSourceDedicatedServersV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}

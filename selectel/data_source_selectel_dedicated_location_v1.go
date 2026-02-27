@@ -61,7 +61,7 @@ func dataSourceDedicatedLocationV1() *schema.Resource {
 }
 
 func dataSourceDedicatedLocationV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}

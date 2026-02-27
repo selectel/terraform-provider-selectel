@@ -154,6 +154,7 @@ func Provider(providerVersion string) *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"selectel_vpc_floatingip_v2":                            resourceVPCFloatingIPV2(),
 			"selectel_vpc_keypair_v2":                               resourceVPCKeypairV2(),
+			"selectel_dedicated_ssh_keys_v1":                        resourceDedicatedSSHKeysV1(),
 			"selectel_vpc_license_v2":                               resourceVPCLicenseV2(),
 			"selectel_vpc_project_v2":                               resourceVPCProjectV2(),
 			"selectel_vpc_subnet_v2":                                resourceVPCSubnetV2(),
