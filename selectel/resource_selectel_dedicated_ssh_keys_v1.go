@@ -3,9 +3,10 @@ package selectel
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"log"
 )
 
 func resourceDedicatedSSHKeysV1() *schema.Resource {
@@ -14,7 +15,7 @@ func resourceDedicatedSSHKeysV1() *schema.Resource {
 		ReadContext:   resourceDedicatedSSHKeysV1Read,
 		DeleteContext: resourceDedicatedSSHKeysV1Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceDedicatedSSHKeysV1Import,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -32,7 +33,6 @@ func resourceDedicatedSSHKeysV1() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
-			//computed
 			"id": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -102,4 +102,33 @@ func resourceDedicatedSSHKeysV1Delete(ctx context.Context, d *schema.ResourceDat
 	d.SetId("")
 
 	return nil
+}
+
+func resourceDedicatedSSHKeysV1Import(
+	ctx context.Context,
+	d *schema.ResourceData,
+	meta any,
+) ([]*schema.ResourceData, error) {
+	client, diagErr := getDedicatedClient(d, meta, false)
+	if diagErr != nil {
+		return nil, fmt.Errorf("failed to get dedicated client")
+	}
+
+	keys, _, err := client.SSHKeys(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list SSH keys: %w", err)
+	}
+
+	for _, k := range keys {
+		if k.Name == d.Id() {
+			d.SetId(k.ID)
+			_ = d.Set("name", k.Name)
+			_ = d.Set("public_key", k.PublicKey)
+			_ = d.Set("user_id", k.SubUserID)
+
+			return []*schema.ResourceData{d}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("SSH key with name %q not found", d.Id())
 }

@@ -38,7 +38,7 @@ The following arguments are supported:
 
 * `public_key` - (Required) The public SSH key string. Changing this creates a new SSH key.
 
-* `user_id` - (Required) The UUID of the user for whom the SSH key is created. Changing this creates a new SSH key.
+* `user_id` - (Optional) The UUID of the user for whom the SSH key is created.
 
 ## Attributes Reference
 
@@ -48,3 +48,12 @@ The following attributes are exported:
 * `name` - The name of the SSH key.
 * `public_key` - The public SSH key string.
 * `user_id` - The UUID of the user for whom the SSH key is created.
+
+## Import
+
+SSH keys can be imported into Terraform state by their name.
+
+### Import by name
+
+```bash
+terraform import selectel_dedicated_ssh_keys_v1.ssh_key_1 <ssh_key_name>
