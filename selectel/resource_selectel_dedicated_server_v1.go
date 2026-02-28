@@ -70,16 +70,21 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 	// validating availability of the server, OS, price plan and balance, partitions config
 
 	var (
-		userData, _ = d.Get(dedicatedServerSchemaKeyOSUserData).(string)
-		sshKeyPK, _ = d.Get(dedicatedServerSchemaKeyOSSSHKey).(string)
+		sshKeyPK, _              = d.Get(dedicatedServerSchemaKeyOSSSHKey).(string)
+		userDataRaw, hasUserData = d.GetOk(dedicatedServerSchemaKeyOSUserData)
+		userData                 = ""
 	)
+
+	if hasUserData {
+		userData, _ = userDataRaw.(string)
+	}
 
 	if data.sshKeyByName != nil {
 		sshKeyPK = data.sshKeyByName.PublicKey
 	}
 
 	err = resourceDedicatedServerV1CreateValidatePreconditions(
-		ctx, dsClient, data, locationID, data.pricePlan.UUID, configurationID, osID, userData != "",
+		ctx, dsClient, data, locationID, data.pricePlan.UUID, configurationID, osID, hasUserData,
 		sshKeyPK != "" || data.sshKeyByName != nil, password != "", privateSubnet != "",
 	)
 	if err != nil {
@@ -557,16 +562,22 @@ func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData
 	}
 
 	var (
-		userData, _ = d.Get(dedicatedServerSchemaKeyOSUserData).(string)
-		sshKeyPK, _ = d.Get(dedicatedServerSchemaKeyOSSSHKey).(string)
+		sshKeyPK, _              = d.Get(dedicatedServerSchemaKeyOSSSHKey).(string)
+		userDataRaw, hasUserData = d.GetOk(dedicatedServerSchemaKeyOSUserData)
+		userData                 *string
 	)
+
+	if hasUserData {
+		v := userDataRaw.(string)
+		userData = &v
+	}
 
 	if data.sshKeyByName != nil {
 		sshKeyPK = data.sshKeyByName.PublicKey
 	}
 
 	err = resourceDedicatedServerV1UpdateValidatePreconditions(
-		ctx, d, dsClient, data.os, data.partitions, userData != "",
+		ctx, d, dsClient, data.os, data.partitions, hasUserData,
 		sshKeyPK != "" || data.sshKeyByName != nil, password != "",
 	)
 	if err != nil {
