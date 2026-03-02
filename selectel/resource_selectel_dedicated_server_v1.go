@@ -8,7 +8,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
@@ -905,24 +904,4 @@ func resourceDedicatedServerV1ImportState(_ context.Context, d *schema.ResourceD
 	_ = d.Set("project_id", config.ProjectID)
 
 	return []*schema.ResourceData{d}, nil
-}
-
-func resourceDedicatedServerV1PowerStateValidate(v any, _ cty.Path) diag.Diagnostics {
-	value := v.(string)
-
-	switch value {
-	case dedicatedServerPowerStateOn, dedicatedServerPowerStateOff, dedicatedServerPowerActionReboot:
-		return nil
-	default:
-		return diag.Diagnostics{
-			diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "Invalid power_state value",
-				Detail: fmt.Sprintf(
-					"invalid power_state: %s. Must be one of: %s, %s, %s",
-					value, dedicatedServerPowerStateOn, dedicatedServerPowerStateOff, dedicatedServerPowerActionReboot,
-				),
-			},
-		}
-	}
 }

@@ -77,6 +77,7 @@ type (
 		Name     string
 		Level    string
 		DiskType string
+		Count    int
 	}
 
 	DiskPartitionsItem struct {
@@ -105,9 +106,9 @@ const (
 )
 
 func (pc *PartitionsConfig) CastToAPIPartitionsConfig(
-	localDrives dedicated.LocalDrives, defaultPartitions []*dedicated.PartitionConfigItem,
+	localDrives dedicated.LocalDrives,
+	defaultPartitions []*dedicated.PartitionConfigItem,
 ) (dedicated.PartitionsConfig, error) {
-	// if empty and partitioning is on - filling with default values
 	if pc.IsEmpty() {
 		if len(localDrives) == 0 {
 			return nil, errors.New("local drives are required for automatic partitioning")
@@ -136,11 +137,9 @@ func (pc *PartitionsConfig) CastToAPIPartitionsConfig(
 		}
 	}
 
-	// starting to build api config
-
 	res := make(dedicated.PartitionsConfig)
 
-	// adding local drives
+	// add physical drives
 	for ldID, ld := range localDrives {
 		res[ldID] = &dedicated.PartitionConfigItem{
 			Type: ld.Type,
@@ -151,8 +150,62 @@ func (pc *PartitionsConfig) CastToAPIPartitionsConfig(
 		}
 	}
 
-	// adding boot partition if not presented
+	// allocation state
+	usedDrives := make(map[string]bool)
+	raidMembers := make(map[string][]string)
+	diskNameToDrive := make(map[string]string)
 
+	// allocate soft raids
+	for _, sr := range pc.SoftRaidConfig {
+		var candidates []string
+
+		for ldID, ld := range localDrives {
+			if usedDrives[ldID] {
+				continue
+			}
+			if ld.Match.Type != sr.DiskType {
+				continue
+			}
+			candidates = append(candidates, ldID)
+		}
+
+		if sr.Count > 0 && len(candidates) > sr.Count {
+			candidates = candidates[:sr.Count]
+		}
+
+		if len(candidates) == 0 {
+			return nil, fmt.Errorf("no drives for raid %s", sr.Name)
+		}
+
+		for _, id := range candidates {
+			usedDrives[id] = true
+		}
+
+		raidMembers[sr.Name] = candidates
+	}
+
+	// allocate disk config
+	for _, dc := range pc.DiskConfig {
+		for ldID, ld := range localDrives {
+			if usedDrives[ldID] {
+				continue
+			}
+			if ld.Match.Type != dc.DiskType {
+				continue
+			}
+
+			diskNameToDrive[dc.Name] = ldID
+			usedDrives[ldID] = true
+
+			break
+		}
+
+		if diskNameToDrive[dc.Name] == "" {
+			return nil, fmt.Errorf("no free drive for disk_config %s", dc.Name)
+		}
+	}
+
+	// boot partition fallback
 	if !pc.ContainsBootPartition() {
 		found := false
 		for _, dp := range defaultPartitions {
@@ -163,33 +216,31 @@ func (pc *PartitionsConfig) CastToAPIPartitionsConfig(
 					Size:   dp.Size,
 					FSType: dp.FSType,
 				})
-
 				found = true
 
 				break
 			}
 		}
-
 		if !found {
 			return nil, errors.New("can't find default partition for boot partition")
 		}
 	}
 
 	var (
-		diskPartitions = make([]*DiskPartitionsItem, 0, len(pc.DiskPartitions))
-
+		diskPartitions      = make([]*DiskPartitionsItem, 0, len(pc.DiskPartitions))
 		nextPriorityByDrive = make(map[string]int)
 	)
 
-	// adding non base partitions, soft raids and filesystems
-
-	for _, diskPartition := range pc.DiskPartitions {
-		isBasePartition := slices.Contains([]string{
+	for _, dp := range pc.DiskPartitions {
+		isBase := slices.Contains([]string{
 			mountBaseSwap, mountBaseRoot, mountBaseBoot,
-		}, diskPartition.Mount)
+		}, dp.Mount)
 
-		if !isBasePartition {
-			err := pc.addDiskPartitionToAPIConfig(diskPartition, localDrives, nextPriorityByDrive, res)
+		if !isBase {
+			err := pc.addDiskPartitionToAPIConfig(
+				dp, localDrives, nextPriorityByDrive, res,
+				raidMembers, diskNameToDrive,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -197,13 +248,14 @@ func (pc *PartitionsConfig) CastToAPIPartitionsConfig(
 			continue
 		}
 
-		diskPartitions = append(diskPartitions, diskPartition)
+		diskPartitions = append(diskPartitions, dp)
 	}
 
-	// adding base partitions, soft raids and filesystems
-
-	for _, diskPartition := range diskPartitions {
-		err := pc.addDiskPartitionToAPIConfig(diskPartition, localDrives, nextPriorityByDrive, res)
+	for _, dp := range diskPartitions {
+		err := pc.addDiskPartitionToAPIConfig(
+			dp, localDrives, nextPriorityByDrive, res,
+			raidMembers, diskNameToDrive,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -213,48 +265,70 @@ func (pc *PartitionsConfig) CastToAPIPartitionsConfig(
 }
 
 func (pc *PartitionsConfig) addDiskPartitionToAPIConfig(
-	diskPartition *DiskPartitionsItem, localDrives dedicated.LocalDrives, nextPriorityByDrive map[string]int,
+	diskPartition *DiskPartitionsItem,
+	localDrives dedicated.LocalDrives,
+	nextPriorityByDrive map[string]int,
 	cfg dedicated.PartitionsConfig,
+	raidMembers map[string][]string,
+	diskNameToDrive map[string]string,
 ) error {
-	var diskType, raidLevel string
+	var devices []string
+	var raidLevel string
 
-	for _, srCfg := range pc.SoftRaidConfig {
-		if srCfg.Name == diskPartition.Raid {
-			diskType = srCfg.DiskType
-			raidLevel = srCfg.Level
+	// RAID source
+	if diskPartition.Raid != "" {
+		members := raidMembers[diskPartition.Raid]
+		if len(members) == 0 {
+			return fmt.Errorf("raid %s has no devices", diskPartition.Raid)
+		}
+		devices = members
+
+		for _, sr := range pc.SoftRaidConfig {
+			if sr.Name == diskPartition.Raid {
+				raidLevel = sr.Level
+
+				break
+			}
+		}
+	}
+
+	// disk_config source
+	if diskPartition.DiskName != "" {
+		d := diskNameToDrive[diskPartition.DiskName]
+		if d == "" {
+			return fmt.Errorf("disk %s not allocated", diskPartition.DiskName)
+		}
+		devices = []string{d}
+	}
+
+	// fallback
+	if len(devices) == 0 {
+		for ldID := range localDrives {
+			devices = []string{ldID}
 
 			break
 		}
 	}
 
-	if diskType == "" {
-		return errors.New("can't find disk type for " + diskPartition.Raid)
-	}
+	members := make([]string, 0, len(devices))
 
-	// adding partitions
-
-	members := make([]string, 0)
-
-	for ldID, ld := range localDrives {
-		if ld.Match.Type != diskType {
-			continue
-		}
+	for _, ldID := range devices {
+		ld := localDrives[ldID]
 
 		id, err := uuid.GenerateUUID()
 		if err != nil {
-			return fmt.Errorf("failed to generate uuid for partition %s local drive %s: %w", diskPartition.Mount, ldID, err)
+			return fmt.Errorf("failed to generate uuid for partition %s local drive %s: %w",
+				diskPartition.Mount, ldID, err)
 		}
 
 		size := diskPartition.Size
 		if diskPartition.SizePercent > 0 {
 			baseSize := float64(ld.Match.Size)
 			if baseSize <= 0 {
-				return fmt.Errorf("invalid local drive %s size: %d", ld.Match.Type, ld.Match.Size)
+				return fmt.Errorf("invalid local drive %s size: %d",
+					ld.Match.Type, ld.Match.Size)
 			}
-
-			percent := diskPartition.SizePercent
-
-			size = math.Round(baseSize * percent / 100.0)
+			size = math.Round(baseSize * diskPartition.SizePercent / 100.0)
 		}
 
 		priority := nextPriorityByDrive[ldID]
@@ -267,25 +341,20 @@ func (pc *PartitionsConfig) addDiskPartitionToAPIConfig(
 		}
 
 		nextPriorityByDrive[ldID] = priority + 1
-
 		members = append(members, id)
 	}
 
-	// adding soft raid
-
-	fsPartitionDeviceID := ""
+	var fsPartitionDeviceID string
 
 	switch {
-	case len(members) == 0:
-		return errors.New("can't find disk for " + diskPartition.Mount)
-
 	case len(members) == 1:
 		fsPartitionDeviceID = members[0]
 
-	default:
+	case len(members) > 1:
 		srID, err := uuid.GenerateUUID()
 		if err != nil {
-			return fmt.Errorf("failed to generate uuid for soft_raid %s: %w", diskPartition.Mount, err)
+			return fmt.Errorf("failed to generate uuid for soft_raid %s: %w",
+				diskPartition.Mount, err)
 		}
 
 		cfg[srID] = &dedicated.PartitionConfigItem{
@@ -295,13 +364,15 @@ func (pc *PartitionsConfig) addDiskPartitionToAPIConfig(
 		}
 
 		fsPartitionDeviceID = srID
-	}
 
-	// adding filesystem
+	default:
+		return errors.New("no devices for " + diskPartition.Mount)
+	}
 
 	id, err := uuid.GenerateUUID()
 	if err != nil {
-		return fmt.Errorf("failed to generate uuid for filesystem partition %s: %w", diskPartition.Mount, err)
+		return fmt.Errorf("failed to generate uuid for filesystem partition %s: %w",
+			diskPartition.Mount, err)
 	}
 
 	fsType := "ext4"
@@ -309,10 +380,8 @@ func (pc *PartitionsConfig) addDiskPartitionToAPIConfig(
 	switch {
 	case diskPartition.Mount == mountBaseBoot:
 		fsType = "ext3"
-
 	case diskPartition.Mount == mountBaseSwap:
 		fsType = "swap"
-
 	case diskPartition.FSType != "":
 		fsType = diskPartition.FSType
 	}
@@ -405,6 +474,25 @@ func resourceDedicatedServerV1ReadPartitionsConfig(d *schema.ResourceData) (*Par
 	return res, nil
 }
 
+type RAIDLevel string
+
+const (
+	dedicatedServerRaid0Level  RAIDLevel = "raid0"
+	dedicatedServerRaid1Level  RAIDLevel = "raid1"
+	dedicatedServerRaid10Level RAIDLevel = "raid10"
+)
+
+func (rl RAIDLevel) MinDiskCount() (int, error) {
+	switch rl {
+	case dedicatedServerRaid0Level, dedicatedServerRaid1Level:
+		return 2, nil
+	case dedicatedServerRaid10Level:
+		return 4, nil
+	default:
+		return 0, fmt.Errorf("unsupported raid level %s", rl)
+	}
+}
+
 func resourceDedicatedServerV1ReadPartitionsConfigSoftRaid(partitionsConfig map[string]interface{}) ([]*SoftRaidConfigItem, error) {
 	srCfgRaw, ok := partitionsConfig[dedicatedServerSchemaKeySoftRaidConfig].([]interface{})
 	if !ok {
@@ -424,7 +512,7 @@ func resourceDedicatedServerV1ReadPartitionsConfigSoftRaid(partitionsConfig map[
 			return nil, fmt.Errorf("partitions_config.soft_raid_config[%d].name has unexpected type", idx)
 		}
 
-		level, ok := item[dedicatedServerSchemaKeyLevel].(string)
+		levelRaw, ok := item[dedicatedServerSchemaKeyLevel].(string)
 		if !ok {
 			return nil, fmt.Errorf("partitions_config.soft_raid_config[%d].level has unexpected type", idx)
 		}
@@ -434,10 +522,35 @@ func resourceDedicatedServerV1ReadPartitionsConfigSoftRaid(partitionsConfig map[
 			return nil, fmt.Errorf("partitions_config.soft_raid_config[%d].disk_type has unexpected type", idx)
 		}
 
+		count, ok := item[dedicatedServerSchemaKeyDiskCount].(int)
+		if !ok {
+			return nil, fmt.Errorf("partitions_config.soft_raid_config[%d].count has unexpected type", idx)
+		}
+
+		level := RAIDLevel(levelRaw)
+
+		minCount, err := level.MinDiskCount()
+		if err != nil {
+			return nil, fmt.Errorf(
+				"partitions_config.soft_raid_config[%d]: %w",
+				idx, err,
+			)
+		}
+
+		if count == 0 {
+			count = minCount
+		} else if count < minCount {
+			return nil, fmt.Errorf(
+				"partitions_config.soft_raid_config[%d].count must be >= %d for %s, got %d",
+				idx, minCount, level, count,
+			)
+		}
+
 		res = append(res, &SoftRaidConfigItem{
 			Name:     name,
-			Level:    level,
+			Level:    string(level),
 			DiskType: diskType,
+			Count:    count,
 		})
 	}
 

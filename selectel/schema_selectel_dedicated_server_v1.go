@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const (
@@ -24,7 +25,7 @@ const (
 	dedicatedServerSchemaKeyName                     = "name"
 	dedicatedServerSchemaKeyLevel                    = "level"
 	dedicatedServerSchemaKeyDiskType                 = "disk_type"
-	dedicatedServerSchemaKeyDiskCount                = "dick_count"
+	dedicatedServerSchemaKeyDiskCount                = "count"
 	dedicatedServerSchemaKeyDiskName                 = "disk_name"
 	dedicatedServerSchemaKeyMount                    = "mount"
 	dedicatedServerSchemaKeySize                     = "size"
@@ -99,13 +100,18 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 								dedicatedServerSchemaKeyLevel: {
 									Type:     schema.TypeString,
 									Required: true,
+									ValidateFunc: validation.StringInSlice([]string{
+										string(dedicatedServerRaid0Level),
+										string(dedicatedServerRaid1Level),
+										string(dedicatedServerRaid10Level),
+									}, false),
 								},
 								dedicatedServerSchemaKeyDiskType: {
 									Type:     schema.TypeString,
 									Required: true,
 								},
 								dedicatedServerSchemaKeyDiskCount: {
-									Type:     schema.TypeString,
+									Type:     schema.TypeInt,
 									Optional: true,
 								},
 							},
@@ -118,7 +124,7 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 							Schema: map[string]*schema.Schema{
 								dedicatedServerSchemaKeyDiskName: {
 									Type:     schema.TypeString,
-									Required: true,
+									Optional: true,
 								},
 								dedicatedServerSchemaKeyMount: {
 									Type:     schema.TypeString,
@@ -179,10 +185,14 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 
 		// optional power params
 		dedicatedServerSchemaKeyPowerState: {
-			Type:             schema.TypeString,
-			Optional:         true,
-			Computed:         true,
-			ValidateDiagFunc: resourceDedicatedServerV1PowerStateValidate,
+			Type:     schema.TypeString,
+			Optional: true,
+			Computed: true,
+			ValidateFunc: validation.StringInSlice([]string{
+				dedicatedServerPowerStateOn,
+				dedicatedServerPowerStateOff,
+				dedicatedServerPowerActionReboot,
+			}, false),
 		},
 
 		// optional misc

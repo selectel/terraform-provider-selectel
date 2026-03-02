@@ -23,6 +23,9 @@ fmt:
 	@echo "==> Fixing source code with gofmt..."
 	gofmt -w $(GOFMT_FILES)
 
+import:
+	goimports -w $(GOFMT_FILES)
+
 test-compile:
 	@if [ "$(TEST)" = "./..." ]; then \
 		echo "ERROR: Set TEST to a specific package. For example,"; \
@@ -31,18 +34,35 @@ test-compile:
 	fi
 	go test -c $(TEST) $(TESTARGS)
 
-all: fmt golangci-lint test testacc semgrep test-compile
+all: fmt import golangci-lint test testacc semgrep test-compile
 
 build-dev:
 	go build -gcflags="all=-N -l" -o terraform-provider-selectel
 
-debug:
-	dlv exec ./terraform-provider-selectel \
-        --listen=127.0.0.1:40000 \
-        --headless=true \
-        --api-version=2 \
-        --accept-multiclient \
-        --continue
+debug-tf:
+	@echo "Cleaning old provider processes..."
+	@rm -f .provider.log
+
+	@echo "Starting provider..."
+	@TF_LOG=TRACE \
+	TF_DEBUG=1 dlv exec ./terraform-provider-selectel \
+		--listen=127.0.0.1:40000 \
+		--headless=true \
+		--api-version=2 \
+		--accept-multiclient \
+		--continue 2>&1 | tee .provider.log &
+
+	@echo "Waiting for provider to start..."
+	@while [ ! -f .provider.log ] || ! grep -q "TF_REATTACH_PROVIDERS=" .provider.log; do sleep 0.2; done
+
+	@REATTACH_JSON=$$(grep "TF_REATTACH_PROVIDERS=" .provider.log \
+		| sed "s/.*TF_REATTACH_PROVIDERS='\(.*\)'/\1/" \
+		| tr -d '\r\n' \
+		| sed 's/"provider"/"registry.terraform.io\/selectel\/selectel"/'); \
+	echo "TF_REATTACH_PROVIDERS='"$$REATTACH_JSON"'" terraform apply
+
+debug-kill:
+	pkill -f "dlv exec ./terraform-provider-selectel"
 
 website:
 ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))

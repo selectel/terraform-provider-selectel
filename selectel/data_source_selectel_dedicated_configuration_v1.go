@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/reflect"
 )
@@ -36,8 +37,9 @@ func dataSourceDedicatedConfigurationV1() *schema.Resource {
 							Optional: true,
 						},
 						"location_id": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.IsUUID,
 						},
 					},
 				},
