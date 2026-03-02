@@ -109,37 +109,106 @@ func (pc *PartitionsConfig) CastToAPIPartitionsConfig(
 	localDrives dedicated.LocalDrives,
 	defaultPartitions []*dedicated.PartitionConfigItem,
 ) (dedicated.PartitionsConfig, error) {
-	if pc.IsEmpty() {
-		if len(localDrives) == 0 {
-			return nil, errors.New("local drives are required for automatic partitioning")
-		}
+	if err := pc.ensureDefaultConfig(localDrives, defaultPartitions); err != nil {
+		return nil, err
+	}
 
-		raidName := "first-raid"
+	res := buildBaseAPIConfig(localDrives)
 
-		pc.SoftRaidConfig = append(pc.SoftRaidConfig, &SoftRaidConfigItem{
-			Name:     raidName,
-			Level:    "raid1",
-			DiskType: localDrives.GetDefaultType(),
-		})
+	usedDrives := make(map[string]bool)
 
-		for _, p := range defaultPartitions {
-			size := p.Size
-			if p.Mount == "/" {
-				size = -1
+	raidMembers, err := pc.allocateSoftRaids(localDrives, usedDrives)
+	if err != nil {
+		return nil, err
+	}
+
+	diskNameToDrive, err := pc.allocateDiskConfigs(localDrives, usedDrives)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = pc.ensureBootPartition(localDrives, defaultPartitions); err != nil {
+		return nil, err
+	}
+
+	var (
+		diskPartitions      = make([]*DiskPartitionsItem, 0, len(pc.DiskPartitions))
+		nextPriorityByDrive = make(map[string]int)
+	)
+
+	for _, dp := range pc.DiskPartitions {
+		isBase := slices.Contains([]string{
+			mountBaseSwap, mountBaseRoot, mountBaseBoot,
+		}, dp.Mount)
+
+		if !isBase {
+			err = pc.addDiskPartitionToAPIConfig(
+				dp, localDrives, nextPriorityByDrive, res,
+				raidMembers, diskNameToDrive,
+			)
+			if err != nil {
+				return nil, err
 			}
 
-			pc.DiskPartitions = append(pc.DiskPartitions, &DiskPartitionsItem{
-				Mount:  p.Mount,
-				Size:   size,
-				Raid:   raidName,
-				FSType: p.FSType,
-			})
+			continue
+		}
+
+		diskPartitions = append(diskPartitions, dp)
+	}
+
+	for _, dp := range diskPartitions {
+		err = pc.addDiskPartitionToAPIConfig(
+			dp, localDrives, nextPriorityByDrive, res,
+			raidMembers, diskNameToDrive,
+		)
+		if err != nil {
+			return nil, err
 		}
 	}
 
+	return res, nil
+}
+
+func (pc *PartitionsConfig) ensureDefaultConfig(
+	localDrives dedicated.LocalDrives,
+	defaultPartitions []*dedicated.PartitionConfigItem,
+) error {
+	if !pc.IsEmpty() {
+		return nil
+	}
+
+	if len(localDrives) == 0 {
+		return errors.New("local drives are required for automatic partitioning")
+	}
+
+	raidName := "first-raid"
+
+	pc.SoftRaidConfig = append(pc.SoftRaidConfig, &SoftRaidConfigItem{
+		Name:     raidName,
+		Level:    "raid1",
+		DiskType: localDrives.GetDefaultType(),
+	})
+
+	for _, p := range defaultPartitions {
+		size := p.Size
+		if p.Mount == "/" {
+			size = -1
+		}
+
+		pc.DiskPartitions = append(pc.DiskPartitions, &DiskPartitionsItem{
+			Mount:  p.Mount,
+			Size:   size,
+			Raid:   raidName,
+			FSType: p.FSType,
+		})
+	}
+
+	return nil
+}
+
+func buildBaseAPIConfig(localDrives dedicated.LocalDrives) dedicated.PartitionsConfig {
 	res := make(dedicated.PartitionsConfig)
 
-	// add physical drives
 	for ldID, ld := range localDrives {
 		res[ldID] = &dedicated.PartitionConfigItem{
 			Type: ld.Type,
@@ -150,12 +219,15 @@ func (pc *PartitionsConfig) CastToAPIPartitionsConfig(
 		}
 	}
 
-	// allocation state
-	usedDrives := make(map[string]bool)
-	raidMembers := make(map[string][]string)
-	diskNameToDrive := make(map[string]string)
+	return res
+}
 
-	// allocate soft raids
+func (pc *PartitionsConfig) allocateSoftRaids(
+	localDrives dedicated.LocalDrives,
+	usedDrives map[string]bool,
+) (map[string][]string, error) {
+	raidMembers := make(map[string][]string)
+
 	for _, sr := range pc.SoftRaidConfig {
 		var candidates []string
 
@@ -184,7 +256,15 @@ func (pc *PartitionsConfig) CastToAPIPartitionsConfig(
 		raidMembers[sr.Name] = candidates
 	}
 
-	// allocate disk config
+	return raidMembers, nil
+}
+
+func (pc *PartitionsConfig) allocateDiskConfigs(
+	localDrives dedicated.LocalDrives,
+	usedDrives map[string]bool,
+) (map[string]string, error) {
+	result := make(map[string]string)
+
 	for _, dc := range pc.DiskConfig {
 		for ldID, ld := range localDrives {
 			if usedDrives[ldID] {
@@ -194,74 +274,42 @@ func (pc *PartitionsConfig) CastToAPIPartitionsConfig(
 				continue
 			}
 
-			diskNameToDrive[dc.Name] = ldID
+			result[dc.Name] = ldID
 			usedDrives[ldID] = true
 
 			break
 		}
 
-		if diskNameToDrive[dc.Name] == "" {
+		if result[dc.Name] == "" {
 			return nil, fmt.Errorf("no free drive for disk_config %s", dc.Name)
 		}
 	}
 
-	// boot partition fallback
-	if !pc.ContainsBootPartition() {
-		found := false
-		for _, dp := range defaultPartitions {
-			if dp.Mount == mountBaseBoot {
-				pc.DiskPartitions = append(pc.DiskPartitions, &DiskPartitionsItem{
-					Raid:   pc.PickDefaultBootRaidName(localDrives),
-					Mount:  dp.Mount,
-					Size:   dp.Size,
-					FSType: dp.FSType,
-				})
-				found = true
+	return result, nil
+}
 
-				break
-			}
-		}
-		if !found {
-			return nil, errors.New("can't find default partition for boot partition")
+func (pc *PartitionsConfig) ensureBootPartition(
+	localDrives dedicated.LocalDrives,
+	defaultPartitions []*dedicated.PartitionConfigItem,
+) error {
+	if pc.ContainsBootPartition() {
+		return nil
+	}
+
+	for _, dp := range defaultPartitions {
+		if dp.Mount == mountBaseBoot {
+			pc.DiskPartitions = append(pc.DiskPartitions, &DiskPartitionsItem{
+				Raid:   pc.PickDefaultBootRaidName(localDrives),
+				Mount:  dp.Mount,
+				Size:   dp.Size,
+				FSType: dp.FSType,
+			})
+
+			return nil
 		}
 	}
 
-	var (
-		diskPartitions      = make([]*DiskPartitionsItem, 0, len(pc.DiskPartitions))
-		nextPriorityByDrive = make(map[string]int)
-	)
-
-	for _, dp := range pc.DiskPartitions {
-		isBase := slices.Contains([]string{
-			mountBaseSwap, mountBaseRoot, mountBaseBoot,
-		}, dp.Mount)
-
-		if !isBase {
-			err := pc.addDiskPartitionToAPIConfig(
-				dp, localDrives, nextPriorityByDrive, res,
-				raidMembers, diskNameToDrive,
-			)
-			if err != nil {
-				return nil, err
-			}
-
-			continue
-		}
-
-		diskPartitions = append(diskPartitions, dp)
-	}
-
-	for _, dp := range diskPartitions {
-		err := pc.addDiskPartitionToAPIConfig(
-			dp, localDrives, nextPriorityByDrive, res,
-			raidMembers, diskNameToDrive,
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return res, nil
+	return errors.New("can't find default partition for boot partition")
 }
 
 func (pc *PartitionsConfig) addDiskPartitionToAPIConfig(

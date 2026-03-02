@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	privateDNSDefaultRetryWaitMin = time.Second
-	privateDNSDefaultRetryWaitMax = 5 * time.Second
+	privateDNSDefaultMinRetryWait = time.Second
+	privateDNSDefaultMaxRetryWait = 5 * time.Second
 	privateDNSDefaultRetry        = 5
 )
 
@@ -38,8 +38,8 @@ func getPrivateDNSClient(d *schema.ResourceData, meta interface{}) (*privatedns.
 
 	retryClient := retryablehttp.NewClient()
 	retryClient.Logger = nil
-	retryClient.RetryWaitMin = privateDNSDefaultRetryWaitMin
-	retryClient.RetryWaitMax = privateDNSDefaultRetryWaitMax
+	retryClient.RetryWaitMin = privateDNSDefaultMinRetryWait
+	retryClient.RetryWaitMax = privateDNSDefaultMaxRetryWait
 	retryClient.RetryMax = privateDNSDefaultRetry
 
 	cfg := &privatedns.Config{
