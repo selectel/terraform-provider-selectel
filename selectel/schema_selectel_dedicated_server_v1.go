@@ -20,9 +20,12 @@ const (
 	dedicatedServerSchemaKeyOSPartitionsConfig       = "partitions_config"
 	dedicatedServerSchemaKeySoftRaidConfig           = "soft_raid_config"
 	dedicatedServerSchemaKeyDiskPartitions           = "disk_partitions"
+	dedicatedServerSchemaKeyDiskConfig               = "disk_config"
 	dedicatedServerSchemaKeyName                     = "name"
 	dedicatedServerSchemaKeyLevel                    = "level"
 	dedicatedServerSchemaKeyDiskType                 = "disk_type"
+	dedicatedServerSchemaKeyDiskCount                = "dick_count"
+	dedicatedServerSchemaKeyDiskName                 = "disk_name"
 	dedicatedServerSchemaKeyMount                    = "mount"
 	dedicatedServerSchemaKeySize                     = "size"
 	dedicatedServerSchemaKeySizePercent              = "size_percent"
@@ -101,6 +104,10 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 									Type:     schema.TypeString,
 									Required: true,
 								},
+								dedicatedServerSchemaKeyDiskCount: {
+									Type:     schema.TypeString,
+									Optional: true,
+								},
 							},
 						},
 					},
@@ -109,6 +116,10 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 						Optional: true,
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
+								dedicatedServerSchemaKeyDiskName: {
+									Type:     schema.TypeString,
+									Required: true,
+								},
 								dedicatedServerSchemaKeyMount: {
 									Type:     schema.TypeString,
 									Required: true,
@@ -123,11 +134,27 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 								},
 								dedicatedServerSchemaKeyRaid: {
 									Type:     schema.TypeString,
-									Required: true,
+									Optional: true,
 								},
 								dedicatedServerSchemaKeyFSType: {
 									Type:     schema.TypeString,
 									Optional: true,
+								},
+							},
+						},
+					},
+					dedicatedServerSchemaKeyDiskConfig: {
+						Type:     schema.TypeList,
+						Optional: true,
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								dedicatedServerSchemaKeyName: {
+									Type:     schema.TypeString,
+									Required: true,
+								},
+								dedicatedServerSchemaKeyDiskType: {
+									Type:     schema.TypeString,
+									Required: true,
 								},
 							},
 						},

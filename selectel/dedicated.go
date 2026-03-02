@@ -70,6 +70,7 @@ type (
 	PartitionsConfig struct {
 		SoftRaidConfig []*SoftRaidConfigItem
 		DiskPartitions []*DiskPartitionsItem
+		DiskConfig     []*DiskConfigItem
 	}
 
 	SoftRaidConfigItem struct {
@@ -79,16 +80,22 @@ type (
 	}
 
 	DiskPartitionsItem struct {
+		DiskName    string
 		Mount       string
 		Size        float64
 		SizePercent float64
 		Raid        string
 		FSType      string
 	}
+
+	DiskConfigItem struct {
+		Name     string
+		DiskType string
+	}
 )
 
 func (pc *PartitionsConfig) IsEmpty() bool {
-	return len(pc.SoftRaidConfig) == 0 && len(pc.DiskPartitions) == 0
+	return len(pc.SoftRaidConfig) == 0 && len(pc.DiskPartitions) == 0 && len(pc.DiskConfig) == 0
 }
 
 const (
@@ -390,6 +397,11 @@ func resourceDedicatedServerV1ReadPartitionsConfig(d *schema.ResourceData) (*Par
 		return nil, fmt.Errorf("failed to read disk partitions configuration: %w", err)
 	}
 
+	res.DiskConfig, err = resourceDedicatedServerV1ReadPartitionsConfigDiskConfig(partitionsConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read disk configuration: %w", err)
+	}
+
 	return res, nil
 }
 
@@ -446,6 +458,11 @@ func resourceDedicatedServerV1ReadPartitionsConfigDiskPartitions(partitionsConfi
 			return nil, fmt.Errorf("partitions_config.disk_partitions[%d] has unexpected type", idx)
 		}
 
+		diskName, ok := item[dedicatedServerSchemaKeyDiskName].(string)
+		if !ok {
+			return nil, fmt.Errorf("partitions_config.disk_partitions[%d].disk_name has unexpected type", idx)
+		}
+
 		mount, ok := item[dedicatedServerSchemaKeyMount].(string)
 		if !ok {
 			return nil, fmt.Errorf("partitions_config.disk_partitions[%d].mount has unexpected type", idx)
@@ -491,11 +508,45 @@ func resourceDedicatedServerV1ReadPartitionsConfigDiskPartitions(partitionsConfi
 		}
 
 		res = append(res, &DiskPartitionsItem{
+			DiskName:    diskName,
 			Mount:       mount,
 			Size:        size,
 			SizePercent: sizePercent,
 			Raid:        raid,
 			FSType:      fsType,
+		})
+	}
+
+	return res, nil
+}
+
+func resourceDedicatedServerV1ReadPartitionsConfigDiskConfig(partitionsConfig map[string]any) ([]*DiskConfigItem, error) {
+	dcCfgRaw, ok := partitionsConfig[dedicatedServerSchemaKeyDiskConfig].([]interface{})
+	if !ok {
+		dcCfgRaw = make([]any, 0)
+	}
+
+	res := make([]*DiskConfigItem, 0, len(dcCfgRaw))
+
+	for idx, itemRaw := range dcCfgRaw {
+		item, ok := itemRaw.(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("partitions_config.disk_config[%d] has unexpected type", idx)
+		}
+
+		name, ok := item[dedicatedServerSchemaKeyName].(string)
+		if !ok {
+			return nil, fmt.Errorf("partitions_config.disk_config[%d].name has unexpected type", idx)
+		}
+
+		diskType, ok := item[dedicatedServerSchemaKeyDiskType].(string)
+		if !ok {
+			return nil, fmt.Errorf("partitions_config.disk_config[%d].disk_type has unexpected type", idx)
+		}
+
+		res = append(res, &DiskConfigItem{
+			Name:     name,
+			DiskType: diskType,
 		})
 	}
 
