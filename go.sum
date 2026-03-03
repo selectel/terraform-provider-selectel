@@ -177,6 +177,8 @@ github.com/mitchellh/reflectwalk v1.0.2/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/oklog/run v1.1.0 h1:GEenZ1cK0+q0+wsJew9qUg/DyD8k3JzYsZAi5gYi2mA=
 github.com/oklog/run v1.1.0/go.mod h1:sVPdnTZT1zYwAJeCMu2Th4T21pA3FPOQRfWjQlk7DVU=
+github.com/ormequ/mks-go v0.0.0-20260303104740-7b81eeb15011 h1:d0IzJK+PoYt0krG9KdA+633Y5ZYE+fkFWoiTH0RH/EI=
+github.com/ormequ/mks-go v0.0.0-20260303104740-7b81eeb15011/go.mod h1:zeVaieyqvXaj2fekZJIeSWmwFWEe+uwD+O4kXZjP7eY=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
@@ -199,8 +201,6 @@ github.com/selectel/go-selvpcclient/v4 v4.1.0 h1:22lBp+rzg9g2MP4iiGhpVAcCt0kMv7I
 github.com/selectel/go-selvpcclient/v4 v4.1.0/go.mod h1:eFhL1KUW159KOJVeGO7k/Uxl0TYd/sBkWXjuF5WxmYk=
 github.com/selectel/iam-go v0.7.0 h1:T0k2jnV/IVpFvbxRlLCoUuQacKltuhFc0aBJjelE2do=
 github.com/selectel/iam-go v0.7.0/go.mod h1:OIAkW7MZK97YUm+uvUgYbgDhkI9SdzTCxwd4yZoOR1o=
-github.com/selectel/mks-go v0.20.0 h1:4GCekG3qkBfl7HADlVcjpIAHJDZFjclY8rLFhuEHqHI=
-github.com/selectel/mks-go v0.20.0/go.mod h1:VxtV3dzwgOEzZc+9VMQb9DvxfSlej2ZQ8jnT8kqIGgU=
 github.com/selectel/private-dns-go v1.0.0 h1:gCi1fAxJ5aRiaSLR6xsIdYTFHGkG29vCZVmaXSWYbKw=
 github.com/selectel/private-dns-go v1.0.0/go.mod h1:cLVpLbPIJTqP/Wnp/nyTRBP9MTSqoyLvonrjrxbRiYE=
 github.com/selectel/secretsmanager-go v0.2.1 h1:OSBrA/07lm/Ecpwg59IJHFAoUHZR29oyfwUgTpr/dos=

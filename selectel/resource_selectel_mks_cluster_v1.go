@@ -14,8 +14,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/ormequ/mks-go/pkg/v1/cluster"
 	"github.com/selectel/go-selvpcclient/v4/selvpcclient/quotamanager/quotas"
-	"github.com/selectel/mks-go/pkg/v1/cluster"
 )
 
 func resourceMKSClusterV1() *schema.Resource {
@@ -145,6 +146,42 @@ func resourceMKSClusterV1() *schema.Resource {
 				Default:  false,
 				ForceNew: true,
 			},
+			"cni_type": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+				StateFunc: func(v interface{}) string {
+					return strings.ToUpper(v.(string))
+				},
+				ValidateFunc: validation.StringInSlice([]string{
+					string(cluster.CNITypeCalico),
+					string(cluster.CNITypeCilium),
+				}, true),
+			},
+			"cni_cilium_settings": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"envoy_daemonset": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  true,
+							ForceNew: true,
+						},
+						"hubble_relay": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  true,
+							ForceNew: true,
+						},
+					},
+				},
+			},
 			"enable_audit_logs": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -265,6 +302,12 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 		return diag.FromErr(err)
 	}
 
+	cniType := cluster.CNIType(strings.ToUpper(d.Get("cni_type").(string)))
+	cniCiliumSettings, err := expandAndValidateMKSClusterV1CNICiliumSettings(d, cniType)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	createOpts := &cluster.CreateOpts{
 		Name:                          d.Get("name").(string),
 		NetworkID:                     d.Get("network_id").(string),
@@ -283,8 +326,10 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 			},
 			OIDC: oidc,
 		},
-		Zonal:          &zonal,
-		PrivateKubeAPI: &privateKubeAPI,
+		Zonal:             &zonal,
+		PrivateKubeAPI:    &privateKubeAPI,
+		CNIType:           cniType,
+		CNICiliumSettings: cniCiliumSettings,
 	}
 
 	projectQuotas, _, err := quotas.GetProjectQuotas(
@@ -354,6 +399,8 @@ func resourceMKSClusterV1Read(ctx context.Context, d *schema.ResourceData, meta 
 	d.Set("enable_pod_security_policy", mksCluster.KubernetesOptions.EnablePodSecurityPolicy)
 	d.Set("zonal", mksCluster.Zonal)
 	d.Set("private_kube_api", mksCluster.PrivateKubeAPI)
+	d.Set("cni_type", mksCluster.CNIType)
+	d.Set("cni_cilium_settings", flattenMKSClusterV1CNICiliumSettings(mksCluster))
 	d.Set("enable_audit_logs", mksCluster.KubernetesOptions.AuditLogs.Enabled)
 	d.Set("oidc", flattenMKSClusterV1OIDC(mksCluster))
 

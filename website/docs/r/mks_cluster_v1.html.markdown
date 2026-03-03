@@ -20,6 +20,11 @@ resource "selectel_mks_cluster_v1" "ha_cluster" {
   project_id   = selectel_vpc_project_v2.project_1.id
   region       = "ru-7"
   kube_version = data.selectel_mks_kube_versions_v1.versions.latest_version
+  cni_type     = "CILIUM"
+  cni_cilium_settings {
+    envoy_daemonset = false
+    hubble_relay    = true
+  }
 }
 ```
 
@@ -31,6 +36,7 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
   project_id                        = selectel_vpc_project_v2.project_1.id
   region                            = "ru-7"
   kube_version                      = data.selectel_mks_kube_versions_v1.versions.latest_version
+  cni_type                          = "CALICO"
   zonal                             = true
   enable_patch_version_auto_upgrade = false
 }
@@ -81,6 +87,15 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
   * `false` (default) - Kube API is available from the Internet;
 
   * `true` - Kube API is available only from the cluster network.
+
+* `cni_type` - (Optional) Type of CNI used by the cluster. Changing this creates a new cluster. Supported values are `CALICO` and `CILIUM`.
+
+* `cni_cilium_settings` - (Optional) Settings for the Cilium CNI. Changing this creates a new cluster. Can be set only when `cni_type = "CILIUM"`.
+
+  The block supports the following arguments:
+
+  * `envoy_daemonset` - (Optional) Enables Envoy DaemonSet for Cilium CNI. Boolean flag, default is `true`.
+  * `hubble_relay` - (Optional) Enables Hubble Relay for Cilium CNI. Boolean flag, default is `true`.
 
 * `enable_audit_logs` - (Optional) Enables or disables collection of audit logs. Learn how to [configure export of audit logs to a logging system](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/logs/#configure-export-of-audit-logs).
 
