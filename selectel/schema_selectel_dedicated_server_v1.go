@@ -49,16 +49,19 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 			Required: true,
 		},
 		dedicatedServerSchemaKeyConfigurationID: {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:         schema.TypeString,
+			Required:     true,
+			ValidateFunc: validation.IsUUID,
 		},
 		dedicatedServerSchemaKeyLocationID: {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:         schema.TypeString,
+			Required:     true,
+			ValidateFunc: validation.IsUUID,
 		},
 		dedicatedServerSchemaKeyOSID: {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:         schema.TypeString,
+			Required:     true,
+			ValidateFunc: validation.IsUUID,
 		},
 		dedicatedServerSchemaKeyPricePlanName: {
 			Type:     schema.TypeString,
@@ -174,12 +177,14 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 
 		// optional network params
 		dedicatedServerSchemaKeyPublicSubnetID: {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:         schema.TypeString,
+			Optional:     true,
+			ValidateFunc: validation.IsUUID,
 		},
 		dedicatedServerSchemaKeyPublicSubnetIP: {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:         schema.TypeString,
+			Optional:     true,
+			ValidateFunc: validation.IsIPAddress,
 		},
 		dedicatedServerSchemaKeyPrivateSubnet: {
 			Type:     schema.TypeString,

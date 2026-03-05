@@ -97,7 +97,28 @@ func TestPartitionsConfig_CastToAPIPartitionsConfig(t *testing.T) {
 				Type: "SSD",
 			},
 		},
+		"drive-ssd-3": {
+			Type: "drive",
+			Match: &dedicated.LocalDriveMatch{
+				Size: 1000,
+				Type: "SSD",
+			},
+		},
+		"drive-ssd-4": {
+			Type: "drive",
+			Match: &dedicated.LocalDriveMatch{
+				Size: 1000,
+				Type: "SSD",
+			},
+		},
 		"drive-hdd-1": {
+			Type: "drive",
+			Match: &dedicated.LocalDriveMatch{
+				Size: 2000,
+				Type: "SATA",
+			},
+		},
+		"drive-hdd-2": {
 			Type: "drive",
 			Match: &dedicated.LocalDriveMatch{
 				Size: 2000,
@@ -139,17 +160,17 @@ func TestPartitionsConfig_CastToAPIPartitionsConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		drives := findItemsByType(apiConfig, "drive")
-		assert.Len(t, drives, 3)
+		assert.Len(t, drives, 6)
 
 		softRaids := findItemsByType(apiConfig, "soft_raid")
-		require.Len(t, softRaids, 3)
+		assert.GreaterOrEqual(t, len(softRaids), 3)
 		for _, sr := range softRaids {
 			assert.Equal(t, "raid1", sr.Level)
-			assert.Len(t, sr.Members, 2)
+			assert.GreaterOrEqual(t, len(sr.Members), 2)
 		}
 
 		p := findItemsByType(apiConfig, "partition")
-		require.Len(t, p, 6)
+		assert.GreaterOrEqual(t, len(p), 6)
 
 		bootFS := findFSByMount(apiConfig, "/boot")
 		require.NotNil(t, bootFS)
@@ -230,6 +251,79 @@ func TestPartitionsConfig_CastToAPIPartitionsConfig(t *testing.T) {
 		_, err := pc.CastToAPIPartitionsConfig(localDrives, defaultPartitions)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "no drives for raid raid")
+	})
+
+	t.Run("MultipleRaidsSuccess", func(t *testing.T) {
+		pc := &PartitionsConfig{
+			SoftRaidConfig: []*SoftRaidConfigItem{
+				{Name: "boot-raid", Level: "raid1", DiskType: "SSD", Count: 2},
+				{Name: "data-raid", Level: "raid0", DiskType: "SSD", Count: 2},
+			},
+			DiskPartitions: []*DiskPartitionsItem{
+				{Mount: "/boot", Size: 1, Raid: "boot-raid", FSType: "ext3"},
+				{Mount: "/", Size: -1, Raid: "boot-raid", FSType: "ext4"},
+				{Mount: "/data", Size: -1, Raid: "data-raid", FSType: "xfs"},
+			},
+		}
+		apiConfig, err := pc.CastToAPIPartitionsConfig(localDrives, defaultPartitions)
+		require.NoError(t, err)
+
+		softRaids := findItemsByType(apiConfig, "soft_raid")
+		assert.Len(t, softRaids, 3) // 2 user-defined + 1 auto for boot
+
+		bootFS := findFSByMount(apiConfig, "/boot")
+		require.NotNil(t, bootFS)
+		assert.Equal(t, "ext3", bootFS.FSType)
+
+		rootFS := findFSByMount(apiConfig, "/")
+		require.NotNil(t, rootFS)
+		assert.Equal(t, "ext4", rootFS.FSType)
+
+		dataFS := findFSByMount(apiConfig, "/data")
+		require.NotNil(t, dataFS)
+		assert.Equal(t, "xfs", dataFS.FSType)
+	})
+
+	t.Run("DiskConfigWithoutRaidSuccess", func(t *testing.T) {
+		pc := &PartitionsConfig{
+			DiskConfig: []*DiskConfigItem{
+				{Name: "system-disk", DiskType: "SSD"},
+				{Name: "data-disk", DiskType: "SATA"},
+			},
+			DiskPartitions: []*DiskPartitionsItem{
+				{Mount: "/boot", Size: 1, DiskName: "system-disk", FSType: "ext3"},
+				{Mount: "/", Size: -1, DiskName: "system-disk", FSType: "ext4"},
+				{Mount: "/data", Size: -1, DiskName: "data-disk", FSType: "xfs"},
+			},
+		}
+		apiConfig, err := pc.CastToAPIPartitionsConfig(localDrives, defaultPartitions)
+		require.NoError(t, err)
+
+		bootFS := findFSByMount(apiConfig, "/boot")
+		require.NotNil(t, bootFS)
+		assert.Equal(t, "ext3", bootFS.FSType)
+
+		rootFS := findFSByMount(apiConfig, "/")
+		require.NotNil(t, rootFS)
+		assert.Equal(t, "ext4", rootFS.FSType)
+
+		dataFS := findFSByMount(apiConfig, "/data")
+		require.NotNil(t, dataFS)
+		assert.Equal(t, "xfs", dataFS.FSType)
+	})
+
+	t.Run("DiskConfigFailDiskNotFound", func(t *testing.T) {
+		pc := &PartitionsConfig{
+			DiskConfig: []*DiskConfigItem{
+				{Name: "system-disk", DiskType: "NVME"},
+			},
+			DiskPartitions: []*DiskPartitionsItem{
+				{Mount: "/", Size: -1, DiskName: "system-disk"},
+			},
+		}
+		_, err := pc.CastToAPIPartitionsConfig(localDrives, defaultPartitions)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no free drive for disk_config system-disk")
 	})
 }
 

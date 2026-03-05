@@ -12,6 +12,17 @@ Use this resource to create and manage SSH keys specifically intended for use wi
 
 ## Example Usage
 
+### Basic SSH Key
+
+```hcl
+resource "selectel_dedicated_ssh_keys_v1" "ssh_key_1" {
+  name       = "my-dedicated-ssh-key"
+  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQD..."
+}
+```
+
+### SSH Key with Service User
+
 ```hcl
 resource "selectel_iam_serviceuser_v1" "user_1" {
   name     = "tf-user"
@@ -34,11 +45,11 @@ resource "selectel_dedicated_ssh_keys_v1" "ssh_key_1" {
 
 The following arguments are supported:
 
-* `name` - (Required) The name of the SSH key. Changing this creates a new SSH key.
+* `name` - (Required) The name of the SSH key. Must be non-empty. Changing this creates a new SSH key.
 
-* `public_key` - (Required) The public SSH key string. Changing this creates a new SSH key.
+* `public_key` - (Required) The public SSH key string. Changing this creates a new SSH key. Leading and trailing whitespace is ignored.
 
-* `user_id` - (Optional) The UUID of the user for whom the SSH key is created.
+* `user_id` - (Optional) The UUID of the user for whom the SSH key is created. Changing this creates a new SSH key.
 
 ## Attributes Reference
 
@@ -51,9 +62,18 @@ The following attributes are exported:
 
 ## Import
 
-SSH keys can be imported into Terraform state by their name.
+SSH keys can be imported into Terraform state by their **name** (not ID). The resource will search for the SSH key by name and import it.
 
 ### Import by name
 
 ```bash
 terraform import selectel_dedicated_ssh_keys_v1.ssh_key_1 <ssh_key_name>
+```
+
+For example, to import an SSH key named "my-deploy-key":
+
+```bash
+terraform import selectel_dedicated_ssh_keys_v1.ssh_key_1 my-deploy-key
+```
+
+> **Note:** If multiple SSH keys with the same name exist, the first one found will be imported. It is recommended to use unique names for SSH keys.

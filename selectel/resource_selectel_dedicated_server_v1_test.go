@@ -556,3 +556,77 @@ func Test_resourceDedicatedServerV1UpdateValidatePreconditions(t *testing.T) {
 		})
 	}
 }
+
+func TestAccDedicatedServerV1ImportState(t *testing.T) {
+	var (
+		project projects.Project
+
+		projectName = acctest.RandomWithPrefix("tf-acc")
+
+		osName        = "Ubuntu"
+		osVersion     = "2404"
+		locationName  = "MSK-2"
+		cfgName       = "CL25-NVMe"
+		pricePlanName = "1 day"
+		osHostName    = "hostname"
+		sshKey        = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCOIWeVNMRC7Y9jeBoG5GP3irOf/u5EbuHYixuZEmtHDtmtlnmzdcBEnpPY5OlFhjSySlUC1clCIShMXgWBfdnvk7Dbp5hgCP3Lh9pS/d3e3kxstIiGF9d7IX04DfVTOF424LlMAFbHNsrmX+uU3lizO20DljFIJNML0OdUO7eKg0XOK1OWVQlSzvZbFj39oYTSqCtoI92czQf4DdJ+0IF1/ZNewE6xPohfnZp5cl82UjYs8vxmcaiifVf7kUyQe/ilv/fZYpt59KCJBJDrTU/ko9hNxCVXrCOw7pPOQayoQ2Vir3M1AnhDMunoxFBocndgffNXVQYtA/3TXLVB7feb"
+		osPassword    = "Passw0rd!"
+		userData      = "#!/bin/bash"
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDedicatedServerV1(projectName, osName, osVersion, locationName, cfgName, pricePlanName, osHostName, sshKey, osPassword, userData),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccCheckDedicatedServerV1Exists("selectel_dedicated_server_v1.server_tf_acc_test_1"),
+				),
+			},
+			{
+				ResourceName:            "selectel_dedicated_server_v1.server_tf_acc_test_1",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"os_password", "ssh_key", "user_data", "partitions_config"},
+			},
+		},
+	})
+}
+
+func TestDedicatedServerV1ImportState_WithProjectID(t *testing.T) {
+	d := resourceDedicatedServerV1().TestResourceData()
+	d.SetId("test-server-id")
+
+	config := &Config{
+		ProjectID: "test-project-id",
+	}
+
+	meta := interface{}(config)
+
+	result, err := resourceDedicatedServerV1ImportState(context.Background(), d, meta)
+
+	assert.NoError(t, err)
+	assert.Len(t, result, 1)
+	assert.Equal(t, "test-project-id", d.Get("project_id"))
+	assert.Equal(t, "test-server-id", d.Id())
+}
+
+func TestDedicatedServerV1ImportState_WithoutProjectID(t *testing.T) {
+	d := resourceDedicatedServerV1().TestResourceData()
+	d.SetId("test-server-id")
+
+	config := &Config{
+		ProjectID: "",
+	}
+
+	meta := interface{}(config)
+
+	result, err := resourceDedicatedServerV1ImportState(context.Background(), d, meta)
+
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "project_id must be set for the resource import")
+	assert.Nil(t, result)
+}
