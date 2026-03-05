@@ -70,8 +70,8 @@ data "selectel_dedicated_configuration_v1" "server_config" {
   * You can use [additional parameters](#search-available-configurations-with-additional-parameters) or their combinations to filter available configurations. You can set them in place or use another [file](#search-available-configurations-with-additional-parameters-from-file). See an example of the filter values in the [API documentation](https://docs.selectel.ru/en/api/dedicated/#tag/Services/operation/get_server_list)
 
 * `filter` — (Optional) Block filter for configurations:
-    * `name` - Filter by configuration name.
-    * `location_id` - Filter by location ID.
+    * `name` - Filter by configuration name. Supports partial match (case-insensitive).
+    * `location_id` - Filter by location UUID.
   
 ## Attributes Reference
 

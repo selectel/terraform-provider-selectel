@@ -630,3 +630,43 @@ func TestDedicatedServerV1ImportState_WithoutProjectID(t *testing.T) {
 	assert.ErrorContains(t, err, "project_id must be set for the resource import")
 	assert.Nil(t, result)
 }
+
+func TestDedicatedServerV1PowerStateSchema(t *testing.T) {
+	resource := resourceDedicatedServerV1()
+	powerStateSchema := resource.Schema["power_state"]
+
+	assert.NotNil(t, powerStateSchema, "power_state schema should exist")
+	assert.Equal(t, schema.TypeString, powerStateSchema.Type, "power_state should be TypeString")
+	assert.True(t, powerStateSchema.Optional, "power_state should be Optional")
+	assert.True(t, powerStateSchema.Computed, "power_state should be Computed")
+	assert.NotNil(t, powerStateSchema.ValidateFunc, "power_state should have ValidateFunc")
+
+	// Test valid values
+	validValues := []string{"on", "off", "reboot"}
+	for _, val := range validValues {
+		_, errs := powerStateSchema.ValidateFunc(val, "power_state")
+		assert.Empty(t, errs, "value %q should be valid", val)
+	}
+
+	// Test invalid values
+	invalidValues := []string{"ON", "OFF", "start", "stop", ""}
+	for _, val := range invalidValues {
+		_, errs := powerStateSchema.ValidateFunc(val, "power_state")
+		assert.NotEmpty(t, errs, "value %q should be invalid", val)
+	}
+}
+
+func TestDedicatedServerV1UpdatePowerStateLogic(t *testing.T) {
+	d := resourceDedicatedServerV1().TestResourceData()
+	d.SetId("test-server-id")
+	_ = d.Set("project_id", "test-project-id")
+	_ = d.Set("configuration_id", "test-config-id")
+	_ = d.Set("location_id", "test-location-id")
+	_ = d.Set("os_id", "test-os-id")
+	_ = d.Set("price_plan_name", "1 day")
+
+	// Test power_state is settable
+	_ = d.Set("power_state", "on")
+	powerState := d.Get("power_state").(string)
+	assert.Equal(t, "on", powerState, "power_state should be settable")
+}

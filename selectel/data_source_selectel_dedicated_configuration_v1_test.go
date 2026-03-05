@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
 	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/projects"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAccDedicatedConfigurationV1Basic(t *testing.T) {
@@ -121,18 +122,18 @@ func TestFilterDedicatedConfigurations(t *testing.T) {
 			expected: 1,
 		},
 		{
-			name: "Name filter",
+			name: "Name filter (partial match)",
 			list: servers,
 			filter: &dedicatedConfigurationsFilter{
-				name: "EL100-HDD",
+				name: "EL50",
 			},
-			expected: 1,
+			expected: 2, // Matches EL50-SSD and EL50-HDD (partial match)
 		},
 		{
-			name:     "Empty filter returns none (because Name != empty string)",
+			name:     "Empty filter returns all (no filtering)",
 			list:     servers,
 			filter:   &dedicatedConfigurationsFilter{},
-			expected: 0,
+			expected: len(servers), // Empty filter returns all servers
 		},
 		{
 			name: "Non-matching filter",
@@ -254,4 +255,120 @@ func TestExpandDedicatedConfigurationsSearchFilter(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFilterDedicatedConfigurations_PartialNameMatch(t *testing.T) {
+	servers := []dedicated.Server{
+		{ID: "1", Name: "CL25-NVMe", ConfigName: "cl25-nvme-config"},
+		{ID: "2", Name: "CL25-SSD", ConfigName: "cl25-ssd-config"},
+		{ID: "3", Name: "CL100-HDD", ConfigName: "cl100-hdd-config"},
+		{ID: "4", Name: "cl25-nvme-premium", ConfigName: "cl25-nvme-premium-config"},
+	}
+
+	t.Run("Partial match case-insensitive", func(t *testing.T) {
+		filter := &dedicatedConfigurationsFilter{name: "cl25"}
+		result := filterDedicatedConfigurations(servers, filter)
+		assert.Len(t, result, 3, "should match 'CL25-NVMe', 'CL25-SSD', and 'cl25-nvme-premium'")
+	})
+
+	t.Run("Partial match middle of string", func(t *testing.T) {
+		filter := &dedicatedConfigurationsFilter{name: "nvme"}
+		result := filterDedicatedConfigurations(servers, filter)
+		assert.Len(t, result, 2, "should match 'CL25-NVMe' and 'cl25-nvme-premium'")
+	})
+
+	t.Run("Exact match", func(t *testing.T) {
+		filter := &dedicatedConfigurationsFilter{name: "CL25-NVMe"}
+		result := filterDedicatedConfigurations(servers, filter)
+		// Partial match also matches "cl25-nvme-premium" because it contains "CL25-NVMe" substring (case-insensitive)
+		assert.Len(t, result, 2, "should match 'CL25-NVMe' and 'cl25-nvme-premium'")
+	})
+
+	t.Run("Empty name filter", func(t *testing.T) {
+		filter := &dedicatedConfigurationsFilter{name: ""}
+		result := filterDedicatedConfigurations(servers, filter)
+		assert.Len(t, result, len(servers), "empty filter should return all servers")
+	})
+}
+
+func TestFilterDedicatedConfigurations_ByLocation(t *testing.T) {
+	servers := []dedicated.Server{
+		{
+			ID:         "1",
+			Name:       "CL25-NVMe",
+			ConfigName: "cl25-nvme-config",
+			Available: []*dedicated.ServerAvailable{
+				{LocationID: "loc-1"},
+			},
+		},
+		{
+			ID:         "2",
+			Name:       "CL25-SSD",
+			ConfigName: "cl25-ssd-config",
+			Available: []*dedicated.ServerAvailable{
+				{LocationID: "loc-1"},
+			},
+		},
+		{
+			ID:         "3",
+			Name:       "CL100-HDD",
+			ConfigName: "cl100-hdd-config",
+			Available: []*dedicated.ServerAvailable{
+				{LocationID: "loc-2"},
+			},
+		},
+	}
+
+	t.Run("Filter by location_id", func(t *testing.T) {
+		filter := &dedicatedConfigurationsFilter{locationID: "loc-1"}
+		result := filterDedicatedConfigurations(servers, filter)
+		assert.Len(t, result, 2, "should match configurations available in loc-1")
+	})
+
+	t.Run("Filter by non-existent location", func(t *testing.T) {
+		filter := &dedicatedConfigurationsFilter{locationID: "loc-999"}
+		result := filterDedicatedConfigurations(servers, filter)
+		assert.Len(t, result, 0, "should not match any configuration")
+	})
+}
+
+func TestFilterDedicatedConfigurations_CombinedFilters(t *testing.T) {
+	servers := []dedicated.Server{
+		{
+			ID:         "1",
+			Name:       "CL25-NVMe",
+			ConfigName: "cl25-nvme-config",
+			Available: []*dedicated.ServerAvailable{
+				{LocationID: "loc-1"},
+			},
+		},
+		{
+			ID:         "2",
+			Name:       "CL25-SSD",
+			ConfigName: "cl25-ssd-config",
+			Available: []*dedicated.ServerAvailable{
+				{LocationID: "loc-1"},
+			},
+		},
+		{
+			ID:         "3",
+			Name:       "CL100-HDD",
+			ConfigName: "cl100-hdd-config",
+			Available: []*dedicated.ServerAvailable{
+				{LocationID: "loc-2"},
+			},
+		},
+	}
+
+	t.Run("Name and location filter", func(t *testing.T) {
+		filter := &dedicatedConfigurationsFilter{name: "cl25", locationID: "loc-1"}
+		result := filterDedicatedConfigurations(servers, filter)
+		assert.Len(t, result, 2, "should match both CL25 configurations in loc-1")
+	})
+
+	t.Run("Name and location no match", func(t *testing.T) {
+		filter := &dedicatedConfigurationsFilter{name: "cl25", locationID: "loc-2"}
+		result := filterDedicatedConfigurations(servers, filter)
+		assert.Len(t, result, 0, "should not match CL25 in loc-2")
+	})
 }

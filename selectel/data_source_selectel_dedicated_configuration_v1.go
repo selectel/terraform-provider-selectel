@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"slices"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -160,16 +161,29 @@ func expandDedicatedConfigurationsSearchFilter(d *schema.ResourceData) (*dedicat
 
 func filterDedicatedConfigurations(list []dedicated.Server, filter *dedicatedConfigurationsFilter) []dedicated.Server {
 	var filtered []dedicated.Server
+
 	for _, entry := range list {
-		switch {
-		case len(filter.deepFilter) > 0:
+		match := true
+
+		// Filter by name (partial match, case-insensitive)
+		if filter.name != "" && !strings.Contains(strings.ToLower(entry.Name), strings.ToLower(filter.name)) {
+			match = false
+		}
+
+		// Filter by location_id
+		if match && filter.locationID != "" && !entry.IsLocationAvailable(filter.locationID) {
+			match = false
+		}
+
+		// Filter by deep_filter
+		if match && len(filter.deepFilter) > 0 {
 			entryMap, err := reflect.StructToMap(entry)
-			if err == nil && reflect.IsSetContainsSubset(filter.deepFilter, entryMap) {
-				filtered = append(filtered, entry)
+			if err != nil || !reflect.IsSetContainsSubset(filter.deepFilter, entryMap) {
+				match = false
 			}
-		case entry.Name == filter.name:
-			filtered = append(filtered, entry)
-		case entry.IsLocationAvailable(filter.locationID):
+		}
+
+		if match {
 			filtered = append(filtered, entry)
 		}
 	}

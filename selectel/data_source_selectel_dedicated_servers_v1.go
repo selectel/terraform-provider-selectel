@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -218,30 +219,58 @@ func expandDedicatedServersSearchFilter(d *schema.ResourceData) dedicatedServers
 func filterDedicatedServers(
 	servers []dedicated.ResourceDetails, filter dedicatedServersSearchFilter, reservedIPs dedicated.ReservedIPs,
 ) ([]dedicated.ResourceDetails, error) {
-	var filteredServers []dedicated.ResourceDetails
+	filteredServers := make([]dedicated.ResourceDetails, 0, len(servers))
 
 	if filter.IsEmpty() {
 		return servers, nil
 	}
 
 	for _, server := range servers {
-		if filter.name != "" && filter.name == server.Info {
-			filteredServers = append(filteredServers, server)
+		if !serverMatchesFilter(server, filter, reservedIPs) {
+			continue
 		}
-
-		if filter.ip != "" || filter.publicSubnet != "" || filter.privateSubnet != "" {
-			for _, reserverIP := range reservedIPs {
-				if server.UUID == reserverIP.ResourceUUID &&
-					(filter.ip == reserverIP.IP.String() ||
-						filter.privateSubnet == reserverIP.Subnet ||
-						filter.publicSubnet == reserverIP.Subnet) {
-					filteredServers = append(filteredServers, server)
-				}
-			}
-		}
+		filteredServers = append(filteredServers, server)
 	}
 
 	return filteredServers, nil
+}
+
+func serverMatchesFilter(
+	server dedicated.ResourceDetails, filter dedicatedServersSearchFilter, reservedIPs dedicated.ReservedIPs,
+) bool {
+	// Filter by name (partial match, case-insensitive)
+	if filter.name != "" && !strings.Contains(strings.ToLower(server.Info), strings.ToLower(filter.name)) {
+		return false
+	}
+
+	// Filter by IP or subnet
+	if filter.ip != "" || filter.publicSubnet != "" || filter.privateSubnet != "" {
+		return serverIPMatchesFilter(server, filter, reservedIPs)
+	}
+
+	return true
+}
+
+func serverIPMatchesFilter(
+	server dedicated.ResourceDetails, filter dedicatedServersSearchFilter, reservedIPs dedicated.ReservedIPs,
+) bool {
+	for _, reserverIP := range reservedIPs {
+		if server.UUID != reserverIP.ResourceUUID {
+			continue
+		}
+
+		if filter.ip != "" && filter.ip == reserverIP.IP.String() {
+			return true
+		}
+		if filter.publicSubnet != "" && filter.publicSubnet == reserverIP.Subnet {
+			return true
+		}
+		if filter.privateSubnet != "" && filter.privateSubnet == reserverIP.Subnet {
+			return true
+		}
+	}
+
+	return false
 }
 
 func flattenDedicatedServers(

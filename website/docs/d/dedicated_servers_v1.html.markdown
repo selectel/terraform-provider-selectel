@@ -75,16 +75,16 @@ data "selectel_dedicated_servers_v1" "servers_by_subnet" {
 
 * `filter` - (Optional) Block filter for servers:
 
-  * `name` - (Optional) Name of the server to filter.
-  
+  * `name` - (Optional) Name of the server to filter. Supports partial match (case-insensitive).
+
   * `ip` - (Optional) IP address of the server to filter.
-  
+
   * `location_id` - (Optional) Unique identifier of the location. Retrieved from the [selectel_dedicated_location_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dedicated_location_v1) data source. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/availability-matrix/#dedicated-servers).
-  
-  * `configuration_id` - (Optional) Unique identifier of the server configuration. Retrieved from the [selectel_dedicated_configuration_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data_source/dedicated_configuration_v1)
-  
+
+  * `configuration_id` - (Optional) Unique identifier of the server configuration (UUID). Retrieved from the [selectel_dedicated_configuration_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data_source/dedicated_configuration_v1)
+
   * `public_subnet` - (Optional) Public subnet ID of the server to filter.
-  
+
   * `private_subnet` - (Optional) Private subnet ID of the server to filter.
 
 ## Attributes Reference
