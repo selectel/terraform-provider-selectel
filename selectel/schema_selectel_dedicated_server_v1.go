@@ -113,6 +113,7 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 								dedicatedServerSchemaKeyDiskCount: {
 									Type:     schema.TypeInt,
 									Optional: true,
+									Computed: true,
 								},
 							},
 						},
@@ -137,6 +138,7 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 								dedicatedServerSchemaKeySizePercent: {
 									Type:     schema.TypeFloat,
 									Optional: true,
+									Computed: true,
 								},
 								dedicatedServerSchemaKeyRaid: {
 									Type:     schema.TypeString,
@@ -145,6 +147,7 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 								dedicatedServerSchemaKeyFSType: {
 									Type:     schema.TypeString,
 									Optional: true,
+									Computed: true,
 								},
 							},
 						},

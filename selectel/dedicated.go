@@ -8,6 +8,7 @@ import (
 	"math/rand/v2" // nosemgrep: go.lang.security.audit.crypto.math_random.math-random-used
 	"net"
 	"slices"
+	"strings"
 
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -65,6 +66,14 @@ func getDedicatedClient(d *schema.ResourceData, meta interface{}, withProjectSco
 
 	return dedicated.NewClientV2(selvpcClient.GetXAuthToken(), url), nil
 }
+
+// Partition config item types (API).
+const (
+	partitionTypeSoftRaid   = "soft_raid"
+	partitionTypePartition  = "partition"
+	partitionTypeLocalDrive = "local_drive"
+	partitionTypeFilesystem = "filesystem"
+)
 
 type (
 	PartitionsConfig struct {
@@ -867,4 +876,425 @@ func resourceDedicatedServerV1GenerateHostNameIfNotPresented(schema *schema.Reso
 	}
 
 	return osHostName
+}
+
+// apiPartitionsConfigToSchema converts API PartitionsConfig to Terraform schema format.
+// The API returns a flat map of partition items with references between them.
+// We need to reconstruct it into the structured format: soft_raid_config, disk_partitions, disk_config.
+func apiPartitionsConfigToSchema(apiCfg dedicated.PartitionsConfig) ([]map[string]any, error) {
+	if len(apiCfg) == 0 {
+		return nil, nil
+	}
+
+	var (
+		raidNamesByID = make(map[string]string)
+		diskNamesByID = make(map[string]string)
+		diskInRaid    = make(map[string]bool)
+	)
+
+	// Build RAID configs
+	softRaids := buildSoftRaids(apiCfg, raidNamesByID, diskInRaid)
+
+	// Build disk configs
+	diskConfigs := buildDiskConfigs(apiCfg, diskNamesByID, diskInRaid)
+
+	// Build partitions
+	diskPartitions := buildDiskPartitions(apiCfg, raidNamesByID, diskNamesByID)
+
+	// Build the result
+	result := map[string]any{
+		dedicatedServerSchemaKeySoftRaidConfig: softRaids,
+		dedicatedServerSchemaKeyDiskPartitions: diskPartitions,
+	}
+
+	// Only add disk_config if there are disks not in RAID
+	if len(diskConfigs) > 0 {
+		result[dedicatedServerSchemaKeyDiskConfig] = diskConfigs
+	}
+
+	return []map[string]any{result}, nil
+}
+
+// buildSoftRaids creates soft_raid_config entries from API config.
+func buildSoftRaids( //nolint:gocognit
+	apiCfg dedicated.PartitionsConfig, raidNamesByID map[string]string, diskInRaid map[string]bool,
+) []map[string]any {
+	softRaids := make([]map[string]any, 0)
+
+	// First pass: group RAID arrays by disk type and level
+	raidKeyInfo := make(map[string]struct {
+		level       string
+		diskType    string
+		uniqueDisks int
+		diskSet     map[string]bool
+		members     int
+	})
+
+	for _, item := range apiCfg {
+		if item.Type != partitionTypeSoftRaid {
+			continue
+		}
+
+		diskType := getDiskTypeForRaid(apiCfg, item.Members)
+		key := diskType + "|" + item.Level
+
+		// Count unique physical disks for this RAID
+		diskSet := make(map[string]bool)
+		for _, memberID := range item.Members {
+			member, exists := apiCfg[memberID]
+			if exists && member.Type == partitionTypePartition && member.Device != "" {
+				device, exists := apiCfg[member.Device]
+				if exists && device.Type == partitionTypeLocalDrive {
+					diskSet[member.Device] = true
+				}
+			}
+		}
+
+		info := raidKeyInfo[key]
+		info.level = item.Level
+		info.diskType = diskType
+		info.members += len(item.Members)
+		if info.diskSet == nil {
+			info.diskSet = make(map[string]bool)
+		}
+		for diskID := range diskSet {
+			info.diskSet[diskID] = true
+		}
+		info.uniqueDisks = len(info.diskSet)
+		raidKeyInfo[key] = info
+	}
+
+	// Second pass: create RAID configs
+	raidLevelIndex := make(map[string]int)
+	for _, info := range raidKeyInfo {
+		raidName := "new-" + info.level
+		if len(raidKeyInfo) > 1 {
+			idx := raidLevelIndex[info.level]
+			raidName = fmt.Sprintf("new-%s-%d", info.level, idx)
+			raidLevelIndex[info.level] = idx + 1
+		}
+
+		// Store RAID name for all RAID items with this key
+		for id, item := range apiCfg {
+			if item.Type != partitionTypeSoftRaid {
+				continue
+			}
+
+			itemDiskType := getDiskTypeForRaid(apiCfg, item.Members)
+			if itemDiskType != info.diskType || item.Level != info.level {
+				continue
+			}
+
+			raidNamesByID[id] = raidName
+			// Mark member disks as being in RAID
+			for _, memberID := range item.Members {
+				member, exists := apiCfg[memberID]
+				if exists && member.Type == partitionTypePartition && member.Device != "" {
+					diskInRaid[member.Device] = true
+				}
+			}
+		}
+
+		softRaid := map[string]any{
+			dedicatedServerSchemaKeyName:      raidName,
+			dedicatedServerSchemaKeyLevel:     info.level,
+			dedicatedServerSchemaKeyDiskType:  info.diskType,
+			dedicatedServerSchemaKeyDiskCount: info.uniqueDisks,
+		}
+		softRaids = append(softRaids, softRaid)
+	}
+
+	// Sort soft_raids by name for stable ordering
+	slices.SortFunc(softRaids, func(a, b map[string]any) int {
+		nameA, _ := a[dedicatedServerSchemaKeyName].(string)
+		nameB, _ := b[dedicatedServerSchemaKeyName].(string)
+		return strings.Compare(nameA, nameB)
+	})
+
+	return softRaids
+}
+
+// buildDiskConfigs creates disk_config entries for drives not in RAID.
+func buildDiskConfigs(
+	apiCfg dedicated.PartitionsConfig, diskNamesByID map[string]string, diskInRaid map[string]bool,
+) []map[string]any {
+	diskConfigs := make([]map[string]any, 0)
+	usedDiskTypes := make(map[string]bool)
+
+	for id, item := range apiCfg {
+		if item.Type != partitionTypeLocalDrive || diskInRaid[id] {
+			continue
+		}
+
+		if !usedDiskTypes[item.Match.Type] {
+			usedDiskTypes[item.Match.Type] = true
+			diskName := generateDiskName(item.Match.Type, len(diskConfigs))
+			diskNamesByID[id] = diskName
+
+			diskConfig := map[string]any{
+				dedicatedServerSchemaKeyName:     diskName,
+				dedicatedServerSchemaKeyDiskType: item.Match.Type,
+			}
+			diskConfigs = append(diskConfigs, diskConfig)
+		} else {
+			// Use existing disk name for this type
+			for diskID, name := range diskNamesByID {
+				disk, exists := apiCfg[diskID]
+				if exists && disk.Type == partitionTypeLocalDrive && disk.Match.Type == item.Match.Type {
+					diskNamesByID[id] = name
+					break
+				}
+			}
+		}
+	}
+
+	// Sort disk_configs by name for stable ordering
+	slices.SortFunc(diskConfigs, func(a, b map[string]any) int {
+		nameA, _ := a[dedicatedServerSchemaKeyName].(string)
+		nameB, _ := b[dedicatedServerSchemaKeyName].(string)
+		return strings.Compare(nameA, nameB)
+	})
+
+	return diskConfigs
+}
+
+// buildDiskPartitions creates disk_partitions entries from filesystem items.
+func buildDiskPartitions(
+	apiCfg dedicated.PartitionsConfig, raidNamesByID, diskNamesByID map[string]string,
+) []map[string]any {
+	diskPartitions := make([]map[string]any, 0)
+
+	for _, item := range apiCfg {
+		if item.Type != partitionTypeFilesystem {
+			continue
+		}
+
+		partition := map[string]any{
+			dedicatedServerSchemaKeyMount: item.Mount,
+		}
+
+		if item.FSType != "" {
+			partition[dedicatedServerSchemaKeyFSType] = item.FSType
+		}
+
+		if item.Device != "" {
+			applyDeviceConfig(apiCfg, item.Device, partition, raidNamesByID, diskNamesByID)
+		}
+
+		diskPartitions = append(diskPartitions, partition)
+	}
+
+	// Sort disk_partitions by mount point for stable ordering
+	// Special mounts (/boot, swap) come first, then others alphabetically
+	slices.SortFunc(diskPartitions, func(a, b map[string]any) int {
+		mountA, _ := a[dedicatedServerSchemaKeyMount].(string)
+		mountB, _ := b[dedicatedServerSchemaKeyMount].(string)
+
+		priority := func(mount string) int {
+			switch mount {
+			case "/boot":
+				return 0
+			case "swap":
+				return 1
+			case "/":
+				return 2
+			default:
+				return 3
+			}
+		}
+
+		prioA := priority(mountA)
+		prioB := priority(mountB)
+
+		if prioA != prioB {
+			return prioA - prioB
+		}
+
+		return strings.Compare(mountA, mountB)
+	})
+
+	return diskPartitions
+}
+
+// applyDeviceConfig applies disk_name or raid configuration based on device type.
+func applyDeviceConfig(
+	apiCfg dedicated.PartitionsConfig, deviceID string, partition map[string]any,
+	raidNamesByID, diskNamesByID map[string]string,
+) {
+	deviceItem, exists := apiCfg[deviceID]
+	if !exists {
+		return
+	}
+
+	switch deviceItem.Type {
+	case partitionTypeSoftRaid:
+		if raidName, ok := raidNamesByID[deviceID]; ok {
+			partition[dedicatedServerSchemaKeyRaid] = raidName
+			size := findSizeForRaidMember(apiCfg, deviceID)
+			if size != 0 {
+				partition[dedicatedServerSchemaKeySize] = size
+			}
+		}
+
+	case partitionTypeLocalDrive:
+		if diskName, ok := diskNamesByID[deviceID]; ok {
+			partition[dedicatedServerSchemaKeyDiskName] = diskName
+		}
+
+	case partitionTypePartition:
+		rootDiskName := findRootDiskName(apiCfg, deviceID, diskNamesByID)
+		raidName := findRaidForPartition(apiCfg, deviceID, raidNamesByID)
+
+		if raidName != "" {
+			partition[dedicatedServerSchemaKeyRaid] = raidName
+		} else if rootDiskName != "" {
+			partition[dedicatedServerSchemaKeyDiskName] = rootDiskName
+		}
+
+		if deviceItem.Size != 0 {
+			partition[dedicatedServerSchemaKeySize] = deviceItem.Size
+		}
+	}
+}
+
+// findRootDiskName traverses partition chain to find the root disk name.
+func findRootDiskName(apiCfg dedicated.PartitionsConfig, deviceID string, diskNamesByID map[string]string) string {
+	visited := make(map[string]bool)
+	currentID := deviceID
+
+	for !visited[currentID] {
+		visited[currentID] = true
+
+		item, exists := apiCfg[currentID]
+		if !exists {
+			break
+		}
+
+		switch item.Type {
+		case partitionTypeLocalDrive:
+			if diskName, ok := diskNamesByID[currentID]; ok {
+				return diskName
+			}
+
+			return ""
+		case partitionTypePartition:
+			currentID = item.Device
+		default:
+			break
+		}
+	}
+
+	return ""
+}
+
+// findRaidForPartition finds if a partition belongs to a RAID array.
+func findRaidForPartition(apiCfg dedicated.PartitionsConfig, partitionID string, raidNamesByID map[string]string) string {
+	// First check if the partition itself is a member of a RAID
+	for raidID, item := range apiCfg {
+		if item.Type != partitionTypeSoftRaid {
+			continue
+		}
+
+		for _, memberID := range item.Members {
+			if memberID == partitionID {
+				return raidNamesByID[raidID]
+			}
+		}
+	}
+
+	// Then check if the partition's device is a RAID
+	item, exists := apiCfg[partitionID]
+	if exists && item.Type == partitionTypeSoftRaid {
+		return raidNamesByID[partitionID]
+	}
+
+	// Traverse the chain to find RAID
+	visited := make(map[string]bool)
+	currentID := partitionID
+	for !visited[currentID] {
+		visited[currentID] = true
+
+		currItem, exists := apiCfg[currentID]
+		if !exists {
+			break
+		}
+
+		switch currItem.Type {
+		case partitionTypeSoftRaid:
+			return raidNamesByID[currentID]
+		case partitionTypePartition:
+			currentID = currItem.Device
+		default:
+			break
+		}
+	}
+
+	return ""
+}
+
+// findSizeForRaidMember finds the size for a specific filesystem within a RAID.
+// For RAID0/RAID10 sizes are multiplied by member count, for RAID1 size is as-is.
+func findSizeForRaidMember(apiCfg dedicated.PartitionsConfig, raidID string) float64 {
+	raidItem, exists := apiCfg[raidID]
+	if !exists || raidItem.Type != "soft_raid" {
+		return 0
+	}
+
+	// Get size from any partition member
+	var memberSize float64
+	for _, memberID := range raidItem.Members {
+		member, exists := apiCfg[memberID]
+		if exists && member.Type == "partition" && member.Size != 0 {
+			memberSize = member.Size
+			break
+		}
+	}
+
+	// Don't multiply negative sizes (they mean "all remaining space")
+	if memberSize < 0 {
+		return memberSize
+	}
+
+	// Apply RAID multiplier based on level
+	// RAID0: sizes are striped across all disks (total = member_size * count)
+	// RAID1: mirrored (total = member_size)
+	// RAID10: striped mirrors (total = member_size * count / 2)
+	memberCount := len(raidItem.Members)
+	switch RAIDLevel(raidItem.Level) {
+	case dedicatedServerRaid0Level:
+		return memberSize * float64(memberCount)
+	case dedicatedServerRaid1Level, dedicatedServerRaid10Level:
+		return memberSize
+	default:
+		return memberSize
+	}
+}
+
+// generateDiskName generates a name for disk based on type and index.
+func generateDiskName(diskType string, index int) string {
+	diskName := strings.ToLower(strings.ReplaceAll(diskType, " ", "-"))
+	if index > 0 {
+		return fmt.Sprintf("disk-%s-%d", diskName, index)
+	}
+
+	return fmt.Sprintf("disk-%s", diskName)
+}
+
+// getDiskTypeForRaid determines the disk type for a RAID based on its members.
+func getDiskTypeForRaid(apiCfg dedicated.PartitionsConfig, memberIDs []string) string {
+	for _, memberID := range memberIDs {
+		member, exists := apiCfg[memberID]
+		if !exists || member.Type != "partition" || member.Device == "" {
+			continue
+		}
+
+		device, exists := apiCfg[member.Device]
+		if !exists || device.Type != "local_drive" {
+			continue
+		}
+
+		return device.Match.Type
+	}
+
+	return ""
 }

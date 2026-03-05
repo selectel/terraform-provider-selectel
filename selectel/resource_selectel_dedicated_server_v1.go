@@ -476,6 +476,15 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 
 	_ = d.Set("os_id", os.UUID)
 
+	// Reading partitions config from the API response
+	if len(resourceOS.PartitionsConfig) > 0 {
+		partitionsConfig, err := apiPartitionsConfigToSchema(resourceOS.PartitionsConfig)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("failed to convert partitions config: %w", err))
+		}
+		_ = d.Set("partitions_config", partitionsConfig)
+	}
+
 	driverStatus, _, err := dsClient.ShowPowerState(ctx, d.Id())
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get power state: %w", err))
