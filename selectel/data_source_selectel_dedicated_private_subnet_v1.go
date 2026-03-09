@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
@@ -30,16 +32,19 @@ func dataSourceDedicatedPrivateSubnetV1() *schema.Resource {
 							Optional: true,
 						},
 						"ip": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.IsIPv4Range,
 						},
 						"subnet": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.IsCIDR,
 						},
 						"vlan": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.IntBetween(1, 3499),
 						},
 					},
 				},
@@ -62,7 +67,7 @@ func dataSourceDedicatedPrivateSubnetV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"reserved_ip": {
+						"reserved_ips": {
 							Type:     schema.TypeList,
 							Computed: true,
 							Elem: &schema.Schema{
@@ -95,7 +100,7 @@ func dataSourceDedicatedPrivateSubnetV1Read(ctx context.Context, d *schema.Resou
 	for _, network := range nets {
 		localSubnets, _, err := dsClient.NetworkLocalSubnets(ctx, network.UUID)
 		if err != nil {
-			continue // Continue with other networks if one fails
+			return diag.FromErr(fmt.Errorf("error getting local subnets for network %s: %w", network.UUID, err))
 		}
 		allSubnets = append(allSubnets, localSubnets...)
 	}
@@ -109,7 +114,9 @@ func dataSourceDedicatedPrivateSubnetV1Read(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("subnets", subnetsFlatten); err != nil {
+
+	err = d.Set("subnets", subnetsFlatten)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -188,15 +195,15 @@ func filterDedicatedPrivateSubnets(subnets dedicated.Subnets, filter dedicatedPr
 
 		if (filter.subnet == "" || filter.subnet == subnet.Subnet) && (filter.ip == "" || isIPIncluded) {
 			filteredSubnets = append(filteredSubnets, subnet)
-
-			continue
 		}
 	}
 
 	return filteredSubnets, nil
 }
 
-func flattenDedicatedPrivateSubnets(ctx context.Context, subnets dedicated.Subnets, dsClient *dedicated.ServiceClient) ([]map[string]any, error) {
+func flattenDedicatedPrivateSubnets(
+	ctx context.Context, subnets dedicated.Subnets, dsClient *dedicated.ServiceClient,
+) ([]map[string]any, error) {
 	subnetsList := make([]map[string]any, 0, len(subnets))
 
 	for _, subnet := range subnets {
@@ -216,7 +223,7 @@ func flattenDedicatedPrivateSubnets(ctx context.Context, subnets dedicated.Subne
 			ips = append(ips, reservedIP.IP.String())
 		}
 
-		subnetMap["reserved_ip"] = ips
+		subnetMap["reserved_ips"] = ips
 
 		subnetsList = append(subnetsList, subnetMap)
 	}

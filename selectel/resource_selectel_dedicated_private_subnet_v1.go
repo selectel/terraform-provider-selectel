@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
@@ -29,22 +31,25 @@ func resourceDedicatedPrivateSubnetV1() *schema.Resource {
 				Description: "ID of the created private subnet",
 			},
 			"location_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Location ID where the private subnet will be created",
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				Description:  "Location ID where the private subnet will be created",
+				ValidateFunc: validation.IsUUID,
 			},
 			"vlan": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "VLAN TAG for the private subnet",
+				Type:         schema.TypeInt,
+				Required:     true,
+				ForceNew:     true,
+				Description:  "VLAN TAG for the private subnet",
+				ValidateFunc: validation.IntBetween(1, 3499),
 			},
 			"subnet": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "CIDR notation for the private subnet (e.g., 192.168.1.0/24)",
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				Description:  "CIDR notation for the private subnet (e.g., 192.168.1.0/24)",
+				ValidateFunc: validation.IsCIDR,
 			},
 		},
 	}
@@ -57,7 +62,7 @@ func resourceDedicatedPrivateSubnetV1Create(ctx context.Context, d *schema.Resou
 	}
 
 	locationID := d.Get("location_id").(string)
-	vlan := d.Get("vlan").(string)
+	vlan := d.Get("vlan").(int)
 	subnetCIDR := d.Get("subnet").(string)
 
 	// Validate private subnet
@@ -66,7 +71,7 @@ func resourceDedicatedPrivateSubnetV1Create(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	networks, _, err := client.Networks(ctx, locationID, dedicated.NetworkTypeLocal, vlan)
+	networks, _, err := client.Networks(ctx, locationID, dedicated.NetworkTypeLocal, strconv.Itoa(vlan))
 	if err != nil {
 		return diag.Errorf("failed to get networks for location %s: %s", locationID, err)
 	}

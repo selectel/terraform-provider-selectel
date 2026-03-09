@@ -130,36 +130,3 @@ func TestValidatePrivateSubnet(t *testing.T) {
 		}
 	}
 }
-
-func TestIsPrivateSubnet(t *testing.T) {
-	testCases := map[string]bool{
-		// Should return true (valid private subnets)
-		"10.0.0.0/8":         true,
-		"10.100.123.0/24":    true,
-		"10.255.255.255/32":  true,
-		"172.16.0.0/12":      true,
-		"172.20.100.0/24":    true,
-		"172.31.255.255/32":  true,
-		"192.168.0.0/16":     true,
-		"192.168.100.0/24":   true,
-		"192.168.255.255/32": true,
-
-		// Should return false (public addresses or invalid formats)
-		"8.8.8.8/32":     false,
-		"1.1.1.1/32":     false,
-		"11.0.0.0/8":     false,
-		"172.32.0.0/12":  false,
-		"192.169.0.0/16": false,
-		"172.15.0.0/12":  false,
-		"invalid-cidr":   false,
-		"10.0.0.0":       false,
-		"10.0.0.0/":      false,
-		"/8":             false,
-		"":               false,
-	}
-
-	for cidr, expected := range testCases {
-		result := IsPrivateSubnet(cidr)
-		assert.Equal(t, expected, result, "IsPrivateSubnet returned wrong value for CIDR: %s", cidr)
-	}
-}

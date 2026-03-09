@@ -102,7 +102,9 @@ func dataSourceDedicatedPublicSubnetV1Read(ctx context.Context, d *schema.Resour
 	}
 
 	subnetsFlatten := flattenDedicatedPublicSubnets(filteredSubnets, filter)
-	if err := d.Set("subnets", subnetsFlatten); err != nil {
+
+	err = d.Set("subnets", subnetsFlatten)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 

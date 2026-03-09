@@ -44,18 +44,6 @@ data "selectel_dedicated_private_subnet_v1" "subnet_ds" {
   * `vlan` - VLAN ID (tag in API).
   * `reserved_ip` - List of reserved IP addresses in the subnet.
 
-## Import
-
-You can import a subnet data source:
-
-```shell
-export OS_DOMAIN_NAME=<account_id>
-export OS_USERNAME=<username>
-export OS_PASSWORD=<password>
-export INFRA_PROJECT_ID=<selectel_project_id>
-terraform import selectel_dedicated_private_subnet_v1.subnet_ds <subnet_id>
-```
-
 where:
 
 * `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/).

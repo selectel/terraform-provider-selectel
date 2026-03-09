@@ -31,7 +31,7 @@ data "selectel_dedicated_location_v1" "server_location" {
 
 ## Attributes Reference
 
-* `locations` - List of the available locations (excluding locations with `visibility = "admin_only"`):
+* `locations` - List of the available locations:
 
   * `id` - Unique identifier of the location.
 

@@ -2,9 +2,10 @@ package selectel
 
 import (
 	"fmt"
-	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/projects"
 	"regexp"
 	"testing"
+
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/projects"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -34,7 +35,7 @@ func TestAccDedicatedPrivateSubnetV1DataSource(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.selectel_dedicated_private_subnet_v1.subnet_ds", "subnets.0.id"),
 					resource.TestCheckResourceAttrSet("data.selectel_dedicated_private_subnet_v1.subnet_ds", "subnets.0.subnet"),
 					resource.TestCheckResourceAttrSet("data.selectel_dedicated_private_subnet_v1.subnet_ds", "subnets.0.vlan"),
-					resource.TestCheckResourceAttrSet("data.selectel_dedicated_private_subnet_v1.subnet_ds", "subnets.0.reserved_ip.#"),
+					resource.TestCheckResourceAttrSet("data.selectel_dedicated_private_subnet_v1.subnet_ds", "subnets.0.reserved_ips.#"),
 				),
 			},
 			{

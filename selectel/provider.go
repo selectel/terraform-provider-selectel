@@ -55,7 +55,7 @@ const (
 	objectDedicatedServer              = "dedicated-server"
 	objectOS                           = "os"
 	objectLocation                     = "location"
-	objectNetwork                      = "network"
+	objectNetwork                      = "dedicated-network"
 	objectCloudBackupPlan              = "cloud-backup-plan"
 	objectCloudBackupCheckpoint        = "cloud-backup-checkpoint"
 	objectGlobalRouterZone             = "global-router-zone"
