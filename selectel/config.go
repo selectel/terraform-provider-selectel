@@ -79,6 +79,7 @@ func (c *Config) GetSelVPCClientWithProjectScope(projectID string) (*selvpcclien
 		AuthURL:        c.AuthURL,
 		AuthRegion:     c.AuthRegion,
 		UserDomainName: c.UserDomainName,
+		UserAgent:      c.UserAgent,
 	}
 
 	client, err := selvpcclient.NewClient(opts)
