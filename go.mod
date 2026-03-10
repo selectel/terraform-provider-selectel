@@ -6,7 +6,6 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/hashicorp/go-uuid v1.0.3
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.1
-	github.com/ormequ/mks-go v0.0.0-20260303104740-7b81eeb15011
 	github.com/selectel/cloudbackup-go v1.0.1-0.20251028081814-eed36cddb45b
 	github.com/selectel/craas-go v0.4.2
 	github.com/selectel/dbaas-go v0.18.0
@@ -15,6 +14,7 @@ require (
 	github.com/selectel/globalrouter-go v1.2.0
 	github.com/selectel/go-selvpcclient/v4 v4.1.0
 	github.com/selectel/iam-go v0.7.0
+	github.com/selectel/mks-go v1.0.0
 	github.com/selectel/private-dns-go v1.0.0
 	github.com/selectel/secretsmanager-go v0.2.1
 	github.com/stretchr/testify v1.11.1

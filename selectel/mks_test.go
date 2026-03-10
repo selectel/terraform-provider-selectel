@@ -6,10 +6,10 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	v1 "github.com/ormequ/mks-go/pkg/v1"
-	"github.com/ormequ/mks-go/pkg/v1/kubeversion"
-	"github.com/ormequ/mks-go/pkg/v1/node"
-	"github.com/ormequ/mks-go/pkg/v1/nodegroup"
+	v1 "github.com/selectel/mks-go/pkg/v1"
+	"github.com/selectel/mks-go/pkg/v1/kubeversion"
+	"github.com/selectel/mks-go/pkg/v1/node"
+	"github.com/selectel/mks-go/pkg/v1/nodegroup"
 	"github.com/selectel/go-selvpcclient/v4/selvpcclient/quotamanager/quotas"
 	"github.com/stretchr/testify/assert"
 )

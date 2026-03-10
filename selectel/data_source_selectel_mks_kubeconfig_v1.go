@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/ormequ/mks-go/pkg/v1/cluster"
+	"github.com/selectel/mks-go/pkg/v1/cluster"
 )
 
 func dataSourceMKSKubeconfigV1() *schema.Resource {

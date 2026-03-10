@@ -16,8 +16,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/ormequ/mks-go/pkg/v1/nodegroup"
 	"github.com/selectel/go-selvpcclient/v4/selvpcclient/quotamanager/quotas"
+	"github.com/selectel/mks-go/pkg/v1/nodegroup"
 )
 
 func resourceMKSNodegroupV1() *schema.Resource {

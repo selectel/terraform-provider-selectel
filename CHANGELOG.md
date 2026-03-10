@@ -195,7 +195,7 @@ IMPROVEMENTS:
 * Removed unsupported SGX nodegroup type from docs ([#318](https://github.com/selectel/terraform-provider-selectel/pull/318))
 * Bump golang.org/x/crypto to v0.31.0 ([#320](https://github.com/selectel/terraform-provider-selectel/pull/320))
 * Bump golang.org/x/net to v0.33.0 ([#318](https://github.com/selectel/terraform-provider-selectel/pull/318))
-* Bump github.com/ormequ/mks-go to v0.18.0 ([#318](https://github.com/selectel/terraform-provider-selectel/pull/318))
+* Bump github.com/selectel/mks-go to v0.18.0 ([#318](https://github.com/selectel/terraform-provider-selectel/pull/318))
 
 BUG FIXES:
 

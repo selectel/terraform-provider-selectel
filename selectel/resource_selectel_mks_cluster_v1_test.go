@@ -11,10 +11,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	v1 "github.com/ormequ/mks-go/pkg/v1"
-	"github.com/ormequ/mks-go/pkg/v1/cluster"
-	"github.com/ormequ/mks-go/pkg/v1/kubeoptions"
-	"github.com/ormequ/mks-go/pkg/v1/kubeversion"
+	v1 "github.com/selectel/mks-go/pkg/v1"
+	"github.com/selectel/mks-go/pkg/v1/cluster"
+	"github.com/selectel/mks-go/pkg/v1/kubeoptions"
+	"github.com/selectel/mks-go/pkg/v1/kubeversion"
 	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/projects"
 )
 
