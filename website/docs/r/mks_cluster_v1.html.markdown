@@ -88,7 +88,7 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
 
   * `true` - Kube API is available only from the cluster network.
 
-* `cni_type` - (Optional) Type of CNI used by the cluster. Changing this creates a new cluster. Supported values are `CALICO` and `CILIUM`.
+* `cni_type` - (Optional) Type of CNI used by the cluster. Changing this creates a new cluster. Supported values are `CALICO` and `CILIUM`, default is `CALICO`.
 
 * `cni_cilium_settings` - (Optional) Settings for the Cilium CNI. Changing this creates a new cluster. Can be set only when `cni_type = "CILIUM"`.
 

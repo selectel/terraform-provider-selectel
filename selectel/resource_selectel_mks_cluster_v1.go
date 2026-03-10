@@ -149,7 +149,6 @@ func resourceMKSClusterV1() *schema.Resource {
 			"cni_type": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
 				ForceNew: true,
 				StateFunc: func(v interface{}) string {
 					return strings.ToUpper(v.(string))
@@ -158,6 +157,7 @@ func resourceMKSClusterV1() *schema.Resource {
 					string(cluster.CNITypeCalico),
 					string(cluster.CNITypeCilium),
 				}, true),
+				Default: cluster.CNITypeCalico,
 			},
 			"cni_cilium_settings": {
 				Type:     schema.TypeList,
