@@ -94,8 +94,8 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
 
   The block supports the following arguments:
 
-  * `envoy_daemonset` - (Optional) Enables Envoy DaemonSet for Cilium CNI. Boolean flag, default is `true`.
-  * `hubble_relay` - (Optional) Enables Hubble Relay for Cilium CNI. Boolean flag, default is `true`.
+  * `envoy_daemonset` - (Optional) Enables [Envoy DaemonSet for Cilium CNI](https://docs.cilium.io/en/latest/security/network/proxy/envoy/#envoy). Boolean flag, default is `true`.
+  * `hubble_relay` - (Optional) Enables [Hubble Relay for Cilium CNI](https://docs.cilium.io/en/stable/internals/hubble/#hubble-relay). Boolean flag, default is `true`.
 
 * `enable_audit_logs` - (Optional) Enables or disables collection of audit logs. Learn how to [configure export of audit logs to a logging system](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/logs/#configure-export-of-audit-logs).
 
