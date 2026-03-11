@@ -5,10 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
 )
 
@@ -76,7 +75,7 @@ func resourceDedicatedPrivateSubnetV1Create(ctx context.Context, d *schema.Resou
 		return diag.Errorf("failed to get networks for location %s: %s", locationID, err)
 	}
 	if len(networks) == 0 {
-		return diag.Errorf("vlan %s not found in location %s", vlan, locationID)
+		return diag.Errorf("vlan %d not found in location %s", vlan, locationID)
 	}
 
 	localSubnet, _, err := client.CreateNetworkLocalSubnet(ctx, networks[0].UUID, subnetCIDR)

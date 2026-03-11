@@ -1,6 +1,8 @@
 package selectel
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -12,6 +14,7 @@ const (
 	dedicatedServerSchemaKeyPricePlanName            = "price_plan_name"
 	dedicatedServerSchemaKeyPublicSubnetID           = "public_subnet_id"
 	dedicatedServerSchemaKeyPublicSubnetIP           = "public_subnet_ip"
+	dedicatedServerSchemaKeyPrivateSubnet            = "private_subnet"
 	dedicatedServerSchemaKeyPrivateSubnetID          = "private_subnet_id"
 	dedicatedServerSchemaKeyPrivateSubnetIP          = "private_subnet_ip"
 	dedicatedServerSchemaKeyOSUserData               = "user_data"
@@ -145,15 +148,20 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Optional: true,
 		},
+		dedicatedServerSchemaKeyPrivateSubnet: {
+			Type:          schema.TypeString,
+			Optional:      true,
+			Deprecated:    fmt.Sprintf("Use `%s` instead.", dedicatedServerSchemaKeyPrivateSubnetID),
+			ConflictsWith: []string{dedicatedServerSchemaKeyPrivateSubnetID},
+		},
 		dedicatedServerSchemaKeyPrivateSubnetID: {
-			Type:     schema.TypeString,
-			Optional: true,
-			ForceNew: true,
+			Type:          schema.TypeString,
+			Optional:      true,
+			ConflictsWith: []string{dedicatedServerSchemaKeyPrivateSubnet},
 		},
 		dedicatedServerSchemaKeyPrivateSubnetIP: {
 			Type:     schema.TypeString,
 			Optional: true,
-			ForceNew: true,
 		},
 		dedicatedServerSchemaAddPrivateVlan: {
 			Type:     schema.TypeBool,
