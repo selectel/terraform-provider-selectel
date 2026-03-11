@@ -1,9 +1,16 @@
+## 7.5.5 (March 10, 2026)
+
+IMPROVEMENTS:
+
+* Add documentation for `global_router` import ([#379](https://github.com/selectel/terraform-provider-selectel/pull/379))
+* Add user-agent to `selvpcclient-go` ([#381](https://github.com/selectel/terraform-provider-selectel/pull/381))
+
 ## 7.5.4 (February 18, 2026)
 
 BUG FIXES:
 
-* Fixed `selectel_craas_token_v2` resource to recreate expired/revoked tokens instead of failing (#351)
-* Updated `craas-go` to v0.4.2
+* Fix `selectel_craas_token_v2` resource to recreate expired/revoked tokens instead of failing ([#377](https://github.com/selectel/terraform-provider-selectel/pull/377))
+* Update `craas-go` to v0.4.2 ([#377](https://github.com/selectel/terraform-provider-selectel/pull/377))
 
 ## 7.5.3 (February 2, 2026)
 

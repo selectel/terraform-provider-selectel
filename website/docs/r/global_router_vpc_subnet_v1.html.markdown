@@ -53,3 +53,27 @@ resource "selectel_global_router_vpc_subnet_v1" "global_router_vpc_subnet_1" {
 * `account_id` - Selectel account ID.
 * `netops_subnet_id` - Option for internal usage.
 * `sv_subnet_id` - Option for internal usage.
+
+## Import {#import}
+
+You can import a global router subnet:
+
+```shell
+export OS_DOMAIN_NAME=<account_id>
+export OS_USERNAME=<username>
+export OS_PASSWORD=<password>
+export INFRA_REGION=<selectel_pool>
+terraform import selectel_global_router_vpc_subnet_v1.global_router_vpc_subnet_1 <subnet_id>
+```
+
+where:
+
+*   `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](/account/registration/).
+
+*   `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](/access-control/access-management/).
+
+*   `<password>` — Password of the service user.
+
+*   `<selectel_pool>` — Pool where the subnet is located, for example, `ru-3`. To get information about the pool, in the [Control panel](https://my.selectel.ru/network/localnetwork/l3/), go to **Products** ⟶ **Global Router** ⟶ the global router page. The pool is on the subnet's network card.
+
+*   `<subnet_id>` — Unique identifier of the global router subnet, for example, `4784d52d-bc14-4329-af1b-6fa6e81994d2`. To get the subnet ID in the [Control panel](https://my.selectel.ru/network/localnetwork/l3/), go to **Products** ⟶ **Global Router** ⟶ the global router page ⟶ the subnet's network card. The subnet ID is in the **UUID** column.

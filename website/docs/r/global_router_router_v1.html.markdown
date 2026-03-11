@@ -39,3 +39,24 @@ resource "selectel_global_router_router_v1" "global_router_1" {
 * `leak_uuid` - Unique identifier for a group of routers united by a single logical entity.
 * `prefix_pool_id` - Unique identifier of a prefix pool. Can be used to request a list of allowed subnet prefixes that can be connected to the router.
 * `vpn_id` - Option for internal usage.
+
+## Import {#import}
+
+You can import a global router:
+
+```shell
+export OS_DOMAIN_NAME=<account_id>
+export OS_USERNAME=<username>
+export OS_PASSWORD=<password>
+terraform import selectel_global_router_router_v1.global_router_1 <router_id>
+```
+
+where:
+
+*   `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/account/registration/).
+
+*   `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/access-control/access-management/).
+
+*   `<password>` — Password of the service user.
+
+*   `<router_id>` — Unique identifier of the global router, for example, `0b6bcda4-b343-487p-978b-dc28351d77c5`. To get the global router ID in the [Control panel](https://my.selectel.ru/network/localnetwork/l3/), go to **Products** ⟶ **Global Router** ⟶ the global router page. The global router ID is under the router name.
