@@ -95,6 +95,7 @@ func resourceIAMSAMLFederationV1Create(ctx context.Context, d *schema.ResourceDa
 	opts := saml.CreateRequest{
 		Name:               d.Get("name").(string),
 		Description:        d.Get("description").(string),
+		Alias: 				d.Get("alias").(string),
 		Issuer:             d.Get("issuer").(string),
 		SSOUrl:             d.Get("sso_url").(string),
 		SignAuthnRequests:  d.Get("sign_authn_requests").(bool),
@@ -112,18 +113,6 @@ func resourceIAMSAMLFederationV1Create(ctx context.Context, d *schema.ResourceDa
 
 	d.SetId(federation.ID)
 
-	alias := d.Get("alias").(string)
-	if alias != "" {
-		updateOpts := saml.UpdateRequest{
-			Alias: alias,
-		}
-
-		log.Print(msgUpdate(objectSAMLFederation, federation.ID, updateOpts))
-		err = iamClient.SAMLFederations.Update(ctx, federation.ID, updateOpts)
-		if err != nil {
-			return diag.FromErr(errCreatingObject(objectSAMLFederation, err))
-		}
-	}
 
 	return resourceIAMSAMLFederationV1Read(ctx, d, meta)
 }
