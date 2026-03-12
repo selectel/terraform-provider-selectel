@@ -88,14 +88,14 @@ resource "selectel_mks_cluster_v1" "basic_cluster" {
 
   * `true` - Kube API is available only from the cluster network.
 
-* `cni_type` - (Optional) Type of CNI used by the cluster. Changing this creates a new cluster. Supported values are `CALICO` and `CILIUM`, default is `CALICO`.
+* `cni_type` - (Optional) Type of CNI used by the cluster. Changing this creates a new cluster. Available values are `CALICO` and `CILIUM`. The default value is `CALICO`.
 
-* `cni_cilium_settings` - (Optional) Settings for the Cilium CNI. Changing this creates a new cluster. Can be set only when `cni_type = "CILIUM"`.
+* `cni_cilium_settings` - (Optional) Settings for the Cilium CNI. Changing this creates a new cluster. Can be set only when `cni_type` is `CILIUM`.
 
   The block supports the following arguments:
 
-  * `envoy_daemonset` - (Optional) Enables [Envoy DaemonSet for Cilium CNI](https://docs.cilium.io/en/latest/security/network/proxy/envoy/#envoy). Boolean flag, default is `true`.
-  * `hubble_relay` - (Optional) Enables [Hubble Relay for Cilium CNI](https://docs.cilium.io/en/stable/internals/hubble/#hubble-relay). Boolean flag, default is `true`.
+  * `envoy_daemonset` - (Optional) Enables [Envoy DaemonSet for Cilium CNI](https://docs.cilium.io/en/latest/security/network/proxy/envoy/#envoy). Boolean flag. The default value is `true`.
+  * `hubble_relay` - (Optional) Enables [Hubble Relay for Cilium CNI](https://docs.cilium.io/en/stable/internals/hubble/#hubble-relay). Boolean flag. The default value is `true`.
 
 * `enable_audit_logs` - (Optional) Enables or disables collection of audit logs. Learn how to [configure export of audit logs to a logging system](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/logs/#configure-export-of-audit-logs).
 
