@@ -2,7 +2,7 @@
 
 FEATURES:
 * Add cilium CNI parameters support for MKS clusters ([#383](https://github.com/selectel/terraform-provider-selectel/pull/383)):
-  * Added `cni_type` argument for `selectel_mks_cluster_v1`
+  * Add `cni_type` argument for `selectel_mks_cluster_v1`
   * Add nested resource `cilium_cni_settings` with parameters `envoy_daemonset` and `hubble_relay`
 
 ## 7.5.5 (March 10, 2026)
