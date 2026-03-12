@@ -17,8 +17,9 @@ func dataSourceDedicatedPrivateSubnetV1() *schema.Resource {
 		ReadContext: dataSourceDedicatedPrivateSubnetV1Read,
 		Schema: map[string]*schema.Schema{
 			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.IsUUID,
 			},
 			"filter": {
 				Type:     schema.TypeSet,
@@ -27,8 +28,9 @@ func dataSourceDedicatedPrivateSubnetV1() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"location_id": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.IsUUID,
 						},
 						"ip": {
 							Type:         schema.TypeString,

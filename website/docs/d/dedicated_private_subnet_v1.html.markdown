@@ -42,7 +42,7 @@ data "selectel_dedicated_private_subnet_v1" "subnet_ds" {
   * `id` - Unique identifier of the subnet (UUID).
   * `subnet` - Subnet CIDR (e.g., "192.168.100.0/24").
   * `vlan` - VLAN ID (tag in API).
-  * `reserved_ip` - List of reserved IP addresses in the subnet.
+  * `reserved_ips` - List of reserved IP addresses in the subnet.
 
 where:
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const (
@@ -158,10 +159,12 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 			Type:          schema.TypeString,
 			Optional:      true,
 			ConflictsWith: []string{dedicatedServerSchemaKeyPrivateSubnet},
+			ValidateFunc:  validation.IsUUID,
 		},
 		dedicatedServerSchemaKeyPrivateSubnetIP: {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:         schema.TypeString,
+			Optional:     true,
+			ValidateFunc: validation.IsIPv4Address,
 		},
 		dedicatedServerSchemaAddPrivateVlan: {
 			Type:     schema.TypeBool,
