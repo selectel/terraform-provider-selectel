@@ -29,6 +29,15 @@ func resourceMKSClusterV1() *schema.Resource {
 			StateContext: resourceMKSClusterV1ImportState,
 		},
 		CustomizeDiff: customdiff.All(
+			func(_ context.Context, d *schema.ResourceDiff, _ any) error {
+				cniType := strings.ToUpper(d.Get("cni_type").(string))
+				cniCiliumSettings := d.Get("cni_cilium_settings").([]any)
+				if len(cniCiliumSettings) > 0 && cniType != string(cluster.CNITypeCilium) {
+					return errors.New("\"cni_cilium_settings\" can be set only when \"cni_type\" is \"CILIUM\"")
+				}
+
+				return nil
+			},
 			customdiff.ComputedIf(
 				"maintenance_window_end",
 				func(_ context.Context, d *schema.ResourceDiff, _ interface{}) bool {

@@ -684,13 +684,16 @@ func expandAndValidateMKSClusterV1CNICiliumSettings(
 	d *schema.ResourceData, cniType cluster.CNIType,
 ) (*cluster.CNICiliumSettings, error) {
 	cniCiliumSettings := expandMKSClusterV1CNICiliumSettings(d)
+	if cniType != cluster.CNITypeCilium {
+		disabled := false
+		return &cluster.CNICiliumSettings{
+			EnvoyDaemonset: &disabled,
+			HubbleRelay:    &disabled,
+		}, nil
+	}
 
 	if cniCiliumSettings == nil {
 		return nil, nil
-	}
-
-	if cniType != cluster.CNITypeCilium {
-		return nil, errors.New("\"cni_cilium_settings\" can be set only when \"cni_type\" is \"CILIUM\"")
 	}
 
 	return cniCiliumSettings, nil
