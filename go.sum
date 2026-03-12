@@ -199,8 +199,8 @@ github.com/selectel/go-selvpcclient/v4 v4.2.0 h1:tVqSAdmNcdshv3AgfaIwGHs1oLk4jX8
 github.com/selectel/go-selvpcclient/v4 v4.2.0/go.mod h1:eFhL1KUW159KOJVeGO7k/Uxl0TYd/sBkWXjuF5WxmYk=
 github.com/selectel/iam-go v0.7.0 h1:T0k2jnV/IVpFvbxRlLCoUuQacKltuhFc0aBJjelE2do=
 github.com/selectel/iam-go v0.7.0/go.mod h1:OIAkW7MZK97YUm+uvUgYbgDhkI9SdzTCxwd4yZoOR1o=
-github.com/selectel/mks-go v0.20.0 h1:4GCekG3qkBfl7HADlVcjpIAHJDZFjclY8rLFhuEHqHI=
-github.com/selectel/mks-go v0.20.0/go.mod h1:VxtV3dzwgOEzZc+9VMQb9DvxfSlej2ZQ8jnT8kqIGgU=
+github.com/selectel/mks-go v1.0.0 h1:futO/vA+bLM2RyCi0+8u3Xmdvg8HqJouRaOVTmD3Msc=
+github.com/selectel/mks-go v1.0.0/go.mod h1:VxtV3dzwgOEzZc+9VMQb9DvxfSlej2ZQ8jnT8kqIGgU=
 github.com/selectel/private-dns-go v1.0.0 h1:gCi1fAxJ5aRiaSLR6xsIdYTFHGkG29vCZVmaXSWYbKw=
 github.com/selectel/private-dns-go v1.0.0/go.mod h1:cLVpLbPIJTqP/Wnp/nyTRBP9MTSqoyLvonrjrxbRiYE=
 github.com/selectel/secretsmanager-go v0.2.1 h1:OSBrA/07lm/Ecpwg59IJHFAoUHZR29oyfwUgTpr/dos=
