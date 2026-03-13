@@ -128,8 +128,8 @@ func expandDedicatedLocationsSearchFilter(d *schema.ResourceData) dedicatedLocat
 func filterDedicatedLocations(list dedicated.Locations, filter dedicatedLocationsFilter) dedicated.Locations {
 	var filtered dedicated.Locations
 	for _, entry := range list {
-		if entry.Visibility == "admin_only" {
-			continue // filter by visibility admin_only
+		if entry.Visibility == "only_in_admin" {
+			continue // filter by visibility only_in_admin
 		}
 		if filter.name == "" || entry.Name == filter.name {
 			filtered = append(filtered, entry)

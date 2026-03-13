@@ -160,9 +160,43 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 
 	_ = d.Set(dedicatedServerSchemaPublicIP, reservedIP.publicIP)
 	_ = d.Set(dedicatedServerSchemaPrivateIP, reservedIP.privateIP)
-	_ = d.Set(dedicatedServerSchemaPrivateVlan, reservedIP.privateVLAN)
+
+	rd, _, err := dsClient.ResourceDetails(ctx, d.Id())
+	if err != nil {
+		return diag.FromErr(errGettingObject(objectDedicatedServer, d.Id(), err))
+	}
+
+	privateVlan, err := resourceDedicatedServerGetPrivateVlan(ctx, dsClient, rd.HWUUID, rd.LocationUUID)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if privateVlan != nil {
+		_ = d.Set(dedicatedServerSchemaPrivateVlan, *privateVlan)
+	}
 
 	return nil
+}
+
+func resourceDedicatedServerGetPrivateVlan(
+	ctx context.Context, dsClient *dedicated.ServiceClient,
+	hwID, locationID string,
+) (*int, error) {
+	localType := dedicated.NetworkTypeLocal
+
+	ports, _, err := dsClient.GetHardwarePortsList(ctx, hwID, &localType)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, port := range ports {
+		for _, network := range port.Network {
+			if network.LocationUUID == locationID {
+				return &network.Vlan, nil
+			}
+		}
+	}
+
+	return nil, nil
 }
 
 type serversDedicatedServerV1CreateData struct {
@@ -179,9 +213,8 @@ type serversDedicatedServerV1CreateData struct {
 }
 
 type reservedIP struct {
-	publicIP    string
-	privateIP   string
-	privateVLAN string
+	publicIP  string
+	privateIP string
 }
 
 func resourceDedicatedServerGetReservedIPs(
@@ -203,7 +236,6 @@ func resourceDedicatedServerGetReservedIPs(
 	}
 	if len(reservedPrivateIPs) > 0 {
 		result.privateIP = reservedPrivateIPs[0].IP.String()
-		result.privateVLAN = reservedPrivateIPs[0].Network
 	}
 
 	return result, nil
@@ -523,7 +555,14 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 
 	_ = d.Set(dedicatedServerSchemaPublicIP, reservedIP.publicIP)
 	_ = d.Set(dedicatedServerSchemaPrivateIP, reservedIP.privateIP)
-	_ = d.Set(dedicatedServerSchemaPrivateVlan, reservedIP.privateVLAN)
+
+	privateVlan, err := resourceDedicatedServerGetPrivateVlan(ctx, dsClient, rd.HWUUID, rd.LocationUUID)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if privateVlan != nil {
+		_ = d.Set(dedicatedServerSchemaPrivateVlan, *privateVlan)
+	}
 
 	return nil
 }

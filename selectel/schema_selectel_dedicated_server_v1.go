@@ -192,7 +192,7 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 			Computed: true,
 		},
 		dedicatedServerSchemaPrivateVlan: {
-			Type:     schema.TypeString,
+			Type:     schema.TypeInt,
 			Computed: true,
 		},
 	}
