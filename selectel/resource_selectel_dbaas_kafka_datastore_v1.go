@@ -34,7 +34,7 @@ func resourceDBaaSKafkaDatastoreV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSKafkaDatastoreV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSKafkaDatastoreV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -59,7 +59,7 @@ func resourceDBaaSKafkaDatastoreV1Create(ctx context.Context, d *schema.Resource
 		TypeID:    typeID,
 		SubnetID:  d.Get("subnet_id").(string),
 		NodeCount: d.Get("node_count").(int),
-		Config:    d.Get("config").(map[string]interface{}),
+		Config:    d.Get("config").(map[string]any),
 	}
 
 	sgRaw, sgOk := d.GetOk("security_groups")
@@ -109,7 +109,7 @@ func resourceDBaaSKafkaDatastoreV1Create(ctx context.Context, d *schema.Resource
 	return resourceDBaaSKafkaDatastoreV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSKafkaDatastoreV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSKafkaDatastoreV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -156,7 +156,7 @@ func resourceDBaaSKafkaDatastoreV1Read(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func resourceDBaaSKafkaDatastoreV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSKafkaDatastoreV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -201,7 +201,7 @@ func resourceDBaaSKafkaDatastoreV1Update(ctx context.Context, d *schema.Resource
 	return resourceDBaaSKafkaDatastoreV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSKafkaDatastoreV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSKafkaDatastoreV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -231,7 +231,7 @@ func resourceDBaaSKafkaDatastoreV1Delete(ctx context.Context, d *schema.Resource
 	return nil
 }
 
-func resourceDBaaSKafkaDatastoreV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSKafkaDatastoreV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")

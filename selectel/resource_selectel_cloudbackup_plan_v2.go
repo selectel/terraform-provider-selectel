@@ -101,7 +101,7 @@ func resourceCloudBackupPlanV2() *schema.Resource {
 	}
 }
 
-func resourceCloudBackupPlanV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceCloudBackupPlanV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getScheduledBackupClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -147,24 +147,24 @@ func resourceCloudBackupPlanV2Create(ctx context.Context, d *schema.ResourceData
 func readCloudBackupPlanV2Resource(d *schema.ResourceData) ([]*cloudbackup.PlanResource, diag.Diagnostics) {
 	rRaw := d.Get("resources")
 
-	rListRaw, ok := rRaw.([]interface{})
+	rListRaw, ok := rRaw.([]any)
 	if !ok {
 		return nil, diag.Errorf("resources field has unexpected type")
 	}
 
-	resourcesRawMap, ok := rListRaw[0].(map[string]interface{})
+	resourcesRawMap, ok := rListRaw[0].(map[string]any)
 	if !ok {
 		return nil, diag.Errorf("resources list has unexpected type")
 	}
 
-	resourcesRaw, ok := resourcesRawMap["resource"].([]interface{})
+	resourcesRaw, ok := resourcesRawMap["resource"].([]any)
 	if !ok {
 		return nil, diag.Errorf("resources.resource field has unexpected type")
 	}
 
 	resources := make([]*cloudbackup.PlanResource, 0, len(resourcesRaw))
 	for idx, r := range resourcesRaw {
-		item, ok := r.(map[string]interface{})
+		item, ok := r.(map[string]any)
 		if !ok {
 			return nil, diag.Errorf("resources[%d] has unexpected type", idx)
 		}
@@ -194,7 +194,7 @@ func readCloudBackupPlanV2Resource(d *schema.ResourceData) ([]*cloudbackup.PlanR
 	return resources, nil
 }
 
-func resourceCloudBackupPlanV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceCloudBackupPlanV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getScheduledBackupClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -215,23 +215,23 @@ func resourceCloudBackupPlanV2Read(ctx context.Context, d *schema.ResourceData, 
 	d.Set("schedule_type", res.ScheduleType)
 	d.Set("schedule_pattern", res.SchedulePattern)
 
-	resources := make([]map[string]interface{}, 0, len(res.Resources))
+	resources := make([]map[string]any, 0, len(res.Resources))
 	for _, r := range res.Resources {
-		resources = append(resources, map[string]interface{}{
+		resources = append(resources, map[string]any{
 			"id":   r.ID,
 			"name": r.Name,
 			"type": r.Type,
 		})
 	}
 
-	d.Set("resources", []interface{}{map[string]interface{}{
+	d.Set("resources", []any{map[string]any{
 		"resource": resources,
 	}})
 
 	return nil
 }
 
-func resourceCloudBackupPlanV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceCloudBackupPlanV2Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getScheduledBackupClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -280,7 +280,7 @@ func resourceCloudBackupPlanV2Update(ctx context.Context, d *schema.ResourceData
 	return resourceCloudBackupPlanV2Read(ctx, d, meta)
 }
 
-func resourceCloudBackupPlanV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceCloudBackupPlanV2Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getScheduledBackupClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -303,7 +303,7 @@ func resourceCloudBackupPlanV2Delete(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func resourceCloudBackupPlanV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceCloudBackupPlanV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("project_id must be set for the resource import")

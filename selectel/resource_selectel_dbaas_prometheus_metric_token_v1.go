@@ -33,7 +33,7 @@ func resourceDBaaSPrometheusMetricTokenV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSPrometheusMetricTokenV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPrometheusMetricTokenV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -54,7 +54,7 @@ func resourceDBaaSPrometheusMetricTokenV1Create(ctx context.Context, d *schema.R
 	return resourceDBaaSPrometheusMetricTokenV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSPrometheusMetricTokenV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPrometheusMetricTokenV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -71,7 +71,7 @@ func resourceDBaaSPrometheusMetricTokenV1Read(ctx context.Context, d *schema.Res
 	return nil
 }
 
-func resourceDBaaSPrometheusMetricTokenV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPrometheusMetricTokenV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -92,7 +92,7 @@ func resourceDBaaSPrometheusMetricTokenV1Update(ctx context.Context, d *schema.R
 	return resourceDBaaSPrometheusMetricTokenV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSPrometheusMetricTokenV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPrometheusMetricTokenV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -122,7 +122,7 @@ func resourceDBaaSPrometheusMetricTokenV1Delete(ctx context.Context, d *schema.R
 	return nil
 }
 
-func resourceDBaaSPrometheusMetricTokenV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSPrometheusMetricTokenV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")
@@ -138,7 +138,7 @@ func resourceDBaaSPrometheusMetricTokenV1ImportState(_ context.Context, d *schem
 }
 
 func dbaasPrometheusMetricTokenV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, prometheusMetricsTokenID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		d, err := client.PrometheusMetricToken(ctx, prometheusMetricsTokenID)
 		if err != nil {
 			var dbaasError *dbaas.DBaaSAPIError

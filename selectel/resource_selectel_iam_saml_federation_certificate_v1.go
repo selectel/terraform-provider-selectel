@@ -71,7 +71,7 @@ func resourceIAMSAMLFederationCertificateV1() *schema.Resource {
 	}
 }
 
-func resourceIAMSAMLFederationCertificateV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMSAMLFederationCertificateV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -94,7 +94,7 @@ func resourceIAMSAMLFederationCertificateV1Create(ctx context.Context, d *schema
 	return resourceIAMSAMLFederationCertificateV1Read(ctx, d, meta)
 }
 
-func resourceIAMSAMLFederationCertificateV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMSAMLFederationCertificateV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -117,7 +117,7 @@ func resourceIAMSAMLFederationCertificateV1Read(ctx context.Context, d *schema.R
 	return nil
 }
 
-func resourceIAMSAMLFederationCertificateV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMSAMLFederationCertificateV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -139,7 +139,7 @@ func resourceIAMSAMLFederationCertificateV1Update(ctx context.Context, d *schema
 	return resourceIAMSAMLFederationCertificateV1Read(ctx, d, meta)
 }
 
-func resourceIAMSAMLFederationCertificateV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMSAMLFederationCertificateV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -154,7 +154,7 @@ func resourceIAMSAMLFederationCertificateV1Delete(ctx context.Context, d *schema
 	return nil
 }
 
-func resourceIAMS3SAMLFederationCertificateV1ImportState(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+func resourceIAMS3SAMLFederationCertificateV1ImportState(_ context.Context, d *schema.ResourceData, _ any) ([]*schema.ResourceData, error) {
 	var v string
 	if v = os.Getenv("OS_SAML_FEDERATION_ID"); v == "" {
 		return nil, fmt.Errorf("no OS_SAML_FEDERATION_ID environment variable was found, provide one to use import")

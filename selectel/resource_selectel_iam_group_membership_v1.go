@@ -31,13 +31,13 @@ func resourceIAMGroupMembershipV1() *schema.Resource {
 	}
 }
 
-func resourceIAMGroupMembershipV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMGroupMembershipV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
 	}
 
-	userIDsInterface := d.Get("user_ids").([]interface{})
+	userIDsInterface := d.Get("user_ids").([]any)
 	userIDs := make([]string, len(userIDsInterface))
 	for i, v := range userIDsInterface {
 		userIDs[i] = v.(string)
@@ -58,7 +58,7 @@ func resourceIAMGroupMembershipV1Create(ctx context.Context, d *schema.ResourceD
 	return resourceIAMGroupMembershipV1Read(ctx, d, meta)
 }
 
-func resourceIAMGroupMembershipV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMGroupMembershipV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -66,7 +66,7 @@ func resourceIAMGroupMembershipV1Read(ctx context.Context, d *schema.ResourceDat
 
 	groupID := d.Id()
 
-	userIDsInterface := d.Get("user_ids").([]interface{})
+	userIDsInterface := d.Get("user_ids").([]any)
 	userIDs := make([]string, len(userIDsInterface))
 	for i, v := range userIDsInterface {
 		userIDs[i] = v.(string)
@@ -93,7 +93,7 @@ func resourceIAMGroupMembershipV1Read(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func resourceIAMGroupMembershipV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMGroupMembershipV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -104,12 +104,12 @@ func resourceIAMGroupMembershipV1Update(ctx context.Context, d *schema.ResourceD
 	oldValue, newValue := d.GetChange("user_ids")
 
 	oldUserIDs := make(map[string]struct{})
-	for _, v := range oldValue.([]interface{}) {
+	for _, v := range oldValue.([]any) {
 		oldUserIDs[v.(string)] = struct{}{}
 	}
 
 	newUserIDs := make(map[string]struct{})
-	for _, v := range newValue.([]interface{}) {
+	for _, v := range newValue.([]any) {
 		newUserIDs[v.(string)] = struct{}{}
 	}
 
@@ -134,7 +134,7 @@ func resourceIAMGroupMembershipV1Update(ctx context.Context, d *schema.ResourceD
 	return resourceIAMGroupMembershipV1Read(ctx, d, meta)
 }
 
-func resourceIAMGroupMembershipV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMGroupMembershipV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -142,7 +142,7 @@ func resourceIAMGroupMembershipV1Delete(ctx context.Context, d *schema.ResourceD
 
 	groupID := d.Id()
 
-	userIDsInterface := d.Get("user_ids").([]interface{})
+	userIDsInterface := d.Get("user_ids").([]any)
 	userIDs := make([]string, len(userIDsInterface))
 	for i, v := range userIDsInterface {
 		userIDs[i] = v.(string)

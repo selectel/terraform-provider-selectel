@@ -39,7 +39,7 @@ func WaitForServersServerInstallNewOSV1ActiveState(
 func serversServerInstallNewOSV1StateRefreshFunc(
 	ctx context.Context, client *dedicated.ServiceClient, resourceID string, timer *time.Timer,
 ) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		select {
 		case <-timer.C:
 			log.Printf("[WARN] reinstalling the OS is taking more than 30 minutes, contact support")

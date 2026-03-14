@@ -52,7 +52,7 @@ func testAccDedicatedConfigurationV1Exists(
 			return err
 		}
 
-		var srvFromAPI map[string]interface{}
+		var srvFromAPI map[string]any
 		for _, srv := range serversFromAPI {
 			name, _ := srv["name"].(string)
 			if name == serverName {

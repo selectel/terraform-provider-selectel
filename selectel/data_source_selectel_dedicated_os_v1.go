@@ -103,7 +103,7 @@ func dataSourceDedicatedOSV1() *schema.Resource {
 	}
 }
 
-func dataSourceDedicatedOSV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceDedicatedOSV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dsClient, diagErr := getDedicatedClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -169,7 +169,7 @@ func expandDedicatedOperatingSystemsSearchFilter(d *schema.ResourceData) dedicat
 		return filter
 	}
 
-	resourceFilterMap := filterSet.List()[0].(map[string]interface{})
+	resourceFilterMap := filterSet.List()[0].(map[string]any)
 
 	name, ok := resourceFilterMap["name"]
 	if ok {
@@ -232,10 +232,10 @@ func filterDedicatedOperatingSystems(list dedicated.OperatingSystems, filter ded
 	return filtered, nil
 }
 
-func flattenDedicatedOperatingSystems(list dedicated.OperatingSystems) []interface{} {
-	res := make([]interface{}, len(list))
+func flattenDedicatedOperatingSystems(list dedicated.OperatingSystems) []any {
+	res := make([]any, len(list))
 	for i, e := range list {
-		sMap := make(map[string]interface{})
+		sMap := make(map[string]any)
 		sMap["id"] = e.UUID
 		sMap["name"] = e.Name
 		sMap["arch"] = e.Arch

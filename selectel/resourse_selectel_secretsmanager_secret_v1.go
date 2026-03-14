@@ -65,7 +65,7 @@ func resourceSecretsManagerSecretV1() *schema.Resource {
 	}
 }
 
-func resourceSecretsManagerSecretV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSecretsManagerSecretV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	cl, diagErr := getSecretsManagerClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -94,7 +94,7 @@ func resourceSecretsManagerSecretV1Create(ctx context.Context, d *schema.Resourc
 	return resourceSecretsManagerSecretV1Read(ctx, d, meta)
 }
 
-func resourceSecretsManagerSecretV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSecretsManagerSecretV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	cl, diagErr := getSecretsManagerClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -123,7 +123,7 @@ func resourceSecretsManagerSecretV1Read(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
-func resourceSecretsManagerSecretV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSecretsManagerSecretV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	cl, diagErr := getSecretsManagerClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -141,7 +141,7 @@ func resourceSecretsManagerSecretV1Delete(ctx context.Context, d *schema.Resourc
 	return nil
 }
 
-func resourceSecretsManagerSecretV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSecretsManagerSecretV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	cl, diagErr := getSecretsManagerClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -168,7 +168,7 @@ func resourceSecretsManagerSecretV1Update(ctx context.Context, d *schema.Resourc
 // resourceSecretsManagerSecretV1ImportState —  helper used in Importer: &schema.ResourceImporter
 // to avoid difficulties occurred with required INFRA_PROJECT_ID env in
 // resourceSecretsManagerSecretV1Read when uising schema.ImportStatePassthroughContext.
-func resourceSecretsManagerSecretV1ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceSecretsManagerSecretV1ImportState(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")

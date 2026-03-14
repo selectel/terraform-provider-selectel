@@ -31,7 +31,7 @@ func resourceDBaaSFirewallV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSFirewallV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSFirewallV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	datastoreID := d.Get("datastore_id").(string)
 
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
@@ -39,7 +39,7 @@ func resourceDBaaSFirewallV1Update(ctx context.Context, d *schema.ResourceData, 
 		return diagErr
 	}
 
-	rawIPs := d.Get("ips").([]interface{})
+	rawIPs := d.Get("ips").([]any)
 	firewallOpts, err := resourceDBaaSDatastoreV1FirewallOptsFromList(rawIPs)
 	if err != nil {
 		return diag.FromErr(errParseDatastoreV1Firewall(err))
@@ -61,7 +61,7 @@ func resourceDBaaSFirewallV1Update(ctx context.Context, d *schema.ResourceData, 
 	return resourceDBaaSFirewallV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSFirewallV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSFirewallV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	datastoreID := d.Get("datastore_id").(string)
 
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
@@ -84,7 +84,7 @@ func resourceDBaaSFirewallV1Read(ctx context.Context, d *schema.ResourceData, me
 	return nil
 }
 
-func resourceDBaaSFirewallV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSFirewallV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	datastoreID := d.Get("datastore_id").(string)
 
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
@@ -110,7 +110,7 @@ func resourceDBaaSFirewallV1Delete(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceDBaaSFirewallV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSFirewallV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")
@@ -134,14 +134,14 @@ func resourceDBaaSDatastoreV1FirewallOptsFromSet(firewallSet *schema.Set) (dbaas
 		return getEmptyFirewallOpts(), nil
 	}
 
-	var resourceIPsRaw interface{}
+	var resourceIPsRaw any
 	var ok bool
 
-	resourceFirewallRaw := firewallSet.List()[0].(map[string]interface{})
+	resourceFirewallRaw := firewallSet.List()[0].(map[string]any)
 	if resourceIPsRaw, ok = resourceFirewallRaw["ips"]; !ok {
 		return dbaas.DatastoreFirewallOpts{}, errors.New("firewall.ips value isn't provided")
 	}
-	resourceIPRaw := resourceIPsRaw.([]interface{})
+	resourceIPRaw := resourceIPsRaw.([]any)
 	var firewall dbaas.DatastoreFirewallOpts
 	for _, ip := range resourceIPRaw {
 		firewall.IPs = append(firewall.IPs, ip.(string))
@@ -150,7 +150,7 @@ func resourceDBaaSDatastoreV1FirewallOptsFromSet(firewallSet *schema.Set) (dbaas
 	return firewall, nil
 }
 
-func resourceDBaaSDatastoreV1FirewallOptsFromList(rawList []interface{}) (dbaas.DatastoreFirewallOpts, error) {
+func resourceDBaaSDatastoreV1FirewallOptsFromList(rawList []any) (dbaas.DatastoreFirewallOpts, error) {
 	if len(rawList) == 0 {
 		return getEmptyFirewallOpts(), nil
 	}

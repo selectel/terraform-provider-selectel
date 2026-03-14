@@ -81,7 +81,7 @@ func resourceIAMUserV1() *schema.Resource {
 	}
 }
 
-func resourceIAMUserV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMUserV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	iamClient, diagErr := getIAMClient(meta)
@@ -96,7 +96,7 @@ func resourceIAMUserV1Create(ctx context.Context, d *schema.ResourceData, meta i
 
 	diags = checkDeprecatedRoles(ctx, meta, roles)
 
-	federation, err := convertIAMListToUserFederation(d.Get("federation").([]interface{}))
+	federation, err := convertIAMListToUserFederation(d.Get("federation").([]any))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -125,7 +125,7 @@ func resourceIAMUserV1Create(ctx context.Context, d *schema.ResourceData, meta i
 	return diags
 }
 
-func resourceIAMUserV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMUserV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -149,7 +149,7 @@ func resourceIAMUserV1Read(ctx context.Context, d *schema.ResourceData, meta int
 	return nil
 }
 
-func resourceIAMUserV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMUserV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	iamClient, diagErr := getIAMClient(meta)
@@ -188,7 +188,7 @@ func resourceIAMUserV1Update(ctx context.Context, d *schema.ResourceData, meta i
 	return diags
 }
 
-func resourceIAMUserV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMUserV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr

@@ -28,11 +28,11 @@ func resourceVPCProjectV2QuotasOptsFromSet(
 
 	// Iterate over each billing resource quotas map.
 	for _, resourceQuotasData := range quotaSet.List() {
-		var resourceNameRaw, resourceQuotasRaw interface{}
+		var resourceNameRaw, resourceQuotasRaw any
 		var ok bool
 
 		// Cast type of the current resource quotas map and check provided values.
-		resourceQuotasMap := resourceQuotasData.(map[string]interface{})
+		resourceQuotasMap := resourceQuotasData.(map[string]any)
 		if resourceNameRaw, ok = resourceQuotasMap["resource_name"]; !ok {
 			return nil, errors.New("resource_name value isn't provided")
 		}
@@ -52,7 +52,7 @@ func resourceVPCProjectV2QuotasOptsFromSet(
 				resourceQuotasEntityZone   string
 				resourceQuotasEntityValue  int
 			)
-			resourceQuotasEntity := resourceQuotasEntityRaw.(map[string]interface{})
+			resourceQuotasEntity := resourceQuotasEntityRaw.(map[string]any)
 			if region, ok := resourceQuotasEntity["region"]; ok {
 				resourceQuotasEntityRegion = region.(string)
 			}
@@ -109,7 +109,7 @@ func resourceVPCProjectV2QuotasToSet(quotasStructures []resellQuotas.Quota) *sch
 			F: resourceQuotasHashSetFunc(),
 		}
 		for _, resourceQuotasEntity := range quota.ResourceQuotasEntities {
-			resourceQuotasSet.Add(map[string]interface{}{
+			resourceQuotasSet.Add(map[string]any{
 				"region": resourceQuotasEntity.Region,
 				"zone":   resourceQuotasEntity.Zone,
 				"value":  resourceQuotasEntity.Value,
@@ -118,7 +118,7 @@ func resourceVPCProjectV2QuotasToSet(quotasStructures []resellQuotas.Quota) *sch
 		}
 
 		// Populate single quota element.
-		quotaSet.Add(map[string]interface{}{
+		quotaSet.Add(map[string]any{
 			"resource_name":   quota.Name,
 			"resource_quotas": resourceQuotasSet,
 		})
@@ -130,7 +130,7 @@ func resourceVPCProjectV2QuotasToSet(quotasStructures []resellQuotas.Quota) *sch
 // resourceProjectV2UpdateThemeOptsFromMap converts the provided themeOptsMap to
 // the *project.ThemeUpdateOpts.
 // It can be used to make requests with project theme parameters.
-func resourceProjectV2UpdateThemeOptsFromMap(themeOptsMap map[string]interface{}) *projects.ThemeUpdateOpts {
+func resourceProjectV2UpdateThemeOptsFromMap(themeOptsMap map[string]any) *projects.ThemeUpdateOpts {
 	themeUpdateOpts := &projects.ThemeUpdateOpts{}
 
 	var themeColor, themeLogo string
@@ -184,9 +184,9 @@ func resourceQuotasHashSetFunc() schema.SchemaSetFunc {
 }
 
 // hashResourceQuotas is a hash function to use with the "resource_quotas" set.
-func hashResourceQuotas(v interface{}) int {
+func hashResourceQuotas(v any) int {
 	var buf bytes.Buffer
-	m := v.(map[string]interface{})
+	m := v.(map[string]any)
 	if m["region"] != "" {
 		buf.WriteString(fmt.Sprintf("%s-", m["region"].(string)))
 	}

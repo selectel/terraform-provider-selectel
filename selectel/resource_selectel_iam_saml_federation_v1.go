@@ -69,7 +69,7 @@ func resourceIAMSAMLFederationV1() *schema.Resource {
 	}
 }
 
-func resourceIAMSAMLFederationV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMSAMLFederationV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -96,7 +96,7 @@ func resourceIAMSAMLFederationV1Create(ctx context.Context, d *schema.ResourceDa
 	return resourceIAMSAMLFederationV1Read(ctx, d, meta)
 }
 
-func resourceIAMSAMLFederationV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMSAMLFederationV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -120,7 +120,7 @@ func resourceIAMSAMLFederationV1Read(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func resourceIAMSAMLFederationV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMSAMLFederationV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -149,7 +149,7 @@ func resourceIAMSAMLFederationV1Update(ctx context.Context, d *schema.ResourceDa
 	return resourceIAMSAMLFederationV1Read(ctx, d, meta)
 }
 
-func resourceIAMSAMLFederationV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMSAMLFederationV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr

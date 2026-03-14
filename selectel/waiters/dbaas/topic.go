@@ -43,7 +43,7 @@ func WaitForDBaaSTopicV1ActiveState(
 }
 
 func DBaaSTopicV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, topicID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		d, err := client.Topic(ctx, topicID)
 		if err != nil {
 			var dbaasError *dbaas.DBaaSAPIError
@@ -59,7 +59,7 @@ func DBaaSTopicV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, 
 }
 
 func dbaasTopicV1StateRefreshFunc(ctx context.Context, client *dbaas.API, topicID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		d, err := client.Topic(ctx, topicID)
 		if err != nil {
 			return nil, "", err

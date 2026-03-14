@@ -83,7 +83,7 @@ func dataSourceDedicatedPublicSubnetV1() *schema.Resource {
 	}
 }
 
-func dataSourceDedicatedPublicSubnetV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceDedicatedPublicSubnetV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dsClient, diagErr := getDedicatedClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -141,7 +141,7 @@ func expandDedicatedPublicSubnetsSearchFilter(d *schema.ResourceData) dedicatedP
 		return filter
 	}
 
-	resourceFilterMap := filterSet.List()[0].(map[string]interface{})
+	resourceFilterMap := filterSet.List()[0].(map[string]any)
 
 	ip, ok := resourceFilterMap["ip"]
 	if ok {
@@ -184,10 +184,10 @@ func filterDedicatedPublicSubnets(subnets dedicated.Subnets, filter dedicatedPub
 	return filteredSubnets, nil
 }
 
-func flattenDedicatedPublicSubnets(subnets dedicated.Subnets, filter dedicatedPublicSubnetsSearchFilter) []interface{} {
-	subnetsList := make([]interface{}, len(subnets))
+func flattenDedicatedPublicSubnets(subnets dedicated.Subnets, filter dedicatedPublicSubnetsSearchFilter) []any {
+	subnetsList := make([]any, len(subnets))
 	for i, subnet := range subnets {
-		subnetMap := make(map[string]interface{})
+		subnetMap := make(map[string]any)
 		subnetMap["id"] = subnet.UUID
 		subnetMap["network_id"] = subnet.NetworkUUID
 		subnetMap["subnet"] = subnet.Subnet

@@ -42,7 +42,7 @@ func WaitForDBaaSGrantV1ActiveState(
 }
 
 func DBaaSGrantV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, grantID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		d, err := client.Grant(ctx, grantID)
 		if err != nil {
 			var dbaasError *dbaas.DBaaSAPIError
@@ -58,7 +58,7 @@ func DBaaSGrantV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, 
 }
 
 func dbaasGrantV1StateRefreshFunc(ctx context.Context, client *dbaas.API, grantID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		d, err := client.Grant(ctx, grantID)
 		if err != nil {
 			return nil, "", err

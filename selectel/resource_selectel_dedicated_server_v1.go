@@ -32,7 +32,7 @@ func resourceDedicatedServerV1() *schema.Resource {
 	}
 }
 
-func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dsClient, diagErr := getDedicatedClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -392,7 +392,7 @@ func resourceDedicatedServerV1CreateValidatePreconditions(
 	return nil
 }
 
-func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dsClient, diagErr := getDedicatedClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -474,7 +474,7 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceDedicatedServerV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDedicatedServerV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dsClient, diagErr := getDedicatedClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -498,7 +498,7 @@ func resourceDedicatedServerV1Delete(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func resourceDedicatedServerV1UpdateWithStateRollback(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDedicatedServerV1UpdateWithStateRollback(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	d.Partial(true)
 
 	dsClient, diagErr := getDedicatedClient(d, meta)
@@ -753,7 +753,7 @@ func resourceDedicatedServerV1UpdateValidatePreconditionsAdditionalOSParams(
 	return nil
 }
 
-func resourceDedicatedServerV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDedicatedServerV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("project_id must be set for the resource import")

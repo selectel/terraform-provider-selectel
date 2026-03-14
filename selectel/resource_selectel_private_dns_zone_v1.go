@@ -103,7 +103,7 @@ func resourcePrivateDNSZoneV1() *schema.Resource {
 	}
 }
 
-func resourcePrivateDNSZoneV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePrivateDNSZoneV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getPrivateDNSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -140,7 +140,7 @@ func resourcePrivateDNSZoneV1Create(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourcePrivateDNSZoneV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePrivateDNSZoneV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getPrivateDNSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -158,7 +158,7 @@ func resourcePrivateDNSZoneV1Read(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func resourcePrivateDNSZoneV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePrivateDNSZoneV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getPrivateDNSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -189,7 +189,7 @@ func resourcePrivateDNSZoneV1Update(ctx context.Context, d *schema.ResourceData,
 	return resourcePrivateDNSZoneV1Read(ctx, d, meta)
 }
 
-func resourcePrivateDNSZoneV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePrivateDNSZoneV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getPrivateDNSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -203,7 +203,7 @@ func resourcePrivateDNSZoneV1Delete(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourcePrivateDNSZoneV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePrivateDNSZoneV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, fmt.Errorf("INFRA_PROJECT_ID must be set for the resource import")
@@ -219,8 +219,8 @@ func resourcePrivateDNSZoneV1ImportState(_ context.Context, d *schema.ResourceDa
 	return []*schema.ResourceData{d}, nil
 }
 
-func privateDNSRecordKey(v interface{}) string {
-	m := v.(map[string]interface{})
+func privateDNSRecordKey(v any) string {
+	m := v.(map[string]any)
 	return m["type"].(string) + " " + m["domain"].(string)
 }
 

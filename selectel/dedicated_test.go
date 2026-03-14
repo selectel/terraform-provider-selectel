@@ -19,7 +19,7 @@ func TestServersMapsFromStructs(t *testing.T) {
 			Status: "ACTIVE",
 		},
 	}
-	expectedServersMaps := []map[string]interface{}{
+	expectedServersMaps := []map[string]any{
 		{
 			"id":     "a208023f-69fe-4a9e-8285-dd44e94a854a",
 			"name":   "fake",

@@ -61,7 +61,7 @@ func dataSourceDomainsRRSetV2() *schema.Resource {
 	}
 }
 
-func dataSourceDomainsRRSetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceDomainsRRSetV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
 		return diag.FromErr(err)

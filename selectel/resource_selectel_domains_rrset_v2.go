@@ -77,7 +77,7 @@ func resourceDomainsRRSetV2() *schema.Resource {
 	}
 }
 
-func resourceDomainsRRSetV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsRRSetV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	zoneID := d.Get("zone_id").(string)
 
 	client, err := getDomainsV2Client(d, meta)
@@ -116,7 +116,7 @@ func resourceDomainsRRSetV2Create(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func resourceDomainsRRSetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsRRSetV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
@@ -141,7 +141,7 @@ func resourceDomainsRRSetV2Read(ctx context.Context, d *schema.ResourceData, met
 	return nil
 }
 
-func resourceDomainsRRSetV2ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDomainsRRSetV2ImportState(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")
@@ -183,7 +183,7 @@ func resourceDomainsRRSetV2ImportState(ctx context.Context, d *schema.ResourceDa
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceDomainsRRSetV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsRRSetV2Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	zoneID := d.Get("zone_id").(string)
 
 	client, err := getDomainsV2Client(d, meta)
@@ -215,7 +215,7 @@ func resourceDomainsRRSetV2Update(ctx context.Context, d *schema.ResourceData, m
 	return resourceDomainsRRSetV2Read(ctx, d, meta)
 }
 
-func resourceDomainsRRSetV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsRRSetV2Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	zoneID := d.Get("zone_id").(string)
 
 	client, err := getDomainsV2Client(d, meta)

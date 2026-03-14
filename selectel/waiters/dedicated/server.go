@@ -39,7 +39,7 @@ func WaitForServersServerV1ActiveState(
 }
 
 func serversServerV1StateRefreshFunc(ctx context.Context, client *dedicated.ServiceClient, id string, timer *time.Timer) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		select {
 		case <-timer.C:
 			log.Printf("[WARN] operation is taking more than 30 minutes, contact support")

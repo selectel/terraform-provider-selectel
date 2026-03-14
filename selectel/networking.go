@@ -35,11 +35,11 @@ func getIPVersionFromPrefixLength(prefixLength int) string {
 
 // subnetsMapsFromStructs converts the provided subnets.Subnet to
 // the slice of maps correspondingly to the resource's schema.
-func subnetsMapsFromStructs(subnetsStructs []subnets.Subnet) []map[string]interface{} {
-	associatedSubnets := make([]map[string]interface{}, len(subnetsStructs))
+func subnetsMapsFromStructs(subnetsStructs []subnets.Subnet) []map[string]any {
+	associatedSubnets := make([]map[string]any, len(subnetsStructs))
 
 	for i, subnet := range subnetsStructs {
-		associatedSubnets[i] = map[string]interface{}{
+		associatedSubnets[i] = map[string]any{
 			"network_id":      subnet.NetworkID,
 			"subnet_id":       subnet.SubnetID,
 			"region":          subnet.Region,

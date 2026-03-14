@@ -95,7 +95,7 @@ func resourceGlobalRouterStaticRouteV1() *schema.Resource {
 	}
 }
 
-func resourceGlobalRouterStaticRouteV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceGlobalRouterStaticRouteV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getGlobalRouterClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -133,7 +133,7 @@ func resourceGlobalRouterStaticRouteV1Create(ctx context.Context, d *schema.Reso
 	return resourceGlobalRouterStaticRouteV1Read(ctx, d, meta)
 }
 
-func resourceGlobalRouterStaticRouteV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceGlobalRouterStaticRouteV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getGlobalRouterClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -164,7 +164,7 @@ func resourceGlobalRouterStaticRouteV1Read(ctx context.Context, d *schema.Resour
 	return nil
 }
 
-func resourceGlobalRouterStaticRouteV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceGlobalRouterStaticRouteV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getGlobalRouterClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -209,7 +209,7 @@ func resourceGlobalRouterStaticRouteV1Update(ctx context.Context, d *schema.Reso
 	return nil
 }
 
-func resourceGlobalRouterStaticRouteV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceGlobalRouterStaticRouteV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getGlobalRouterClient(meta)
 	if diagErr != nil {
 		return diagErr
