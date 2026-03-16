@@ -160,11 +160,13 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 			Optional:      true,
 			ConflictsWith: []string{dedicatedServerSchemaKeyPrivateSubnet},
 			ValidateFunc:  validation.IsUUID,
+			RequiredWith:  []string{dedicatedServerSchemaKeyPrivateSubnetIP},
 		},
 		dedicatedServerSchemaKeyPrivateSubnetIP: {
 			Type:         schema.TypeString,
 			Optional:     true,
 			ValidateFunc: validation.IsIPv4Address,
+			RequiredWith: []string{dedicatedServerSchemaKeyPrivateSubnetID},
 		},
 		dedicatedServerSchemaAddPrivateVlan: {
 			Type:     schema.TypeBool,

@@ -624,7 +624,31 @@ func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData
 		osID            = d.Get(dedicatedServerSchemaKeyOSID).(string)
 		sshKeyName, _   = d.Get(dedicatedServerSchemaKeyOSSSHKeyName).(string)
 		password, _     = d.Get(dedicatedServerSchemaKeyOSPassword).(string)
+
+		privateSubnetIP, _                     = d.Get(dedicatedServerSchemaKeyPrivateSubnetIP).(string)
+		oldPrivateSubnetID, newPrivateSubnetID = d.GetChange(dedicatedServerSchemaKeyPrivateSubnetID)
 	)
+
+	if oldPrivateSubnetID.(string) == "" && newPrivateSubnetID.(string) != "" {
+		_, _, err := dsClient.AddIPInNetworkLocalSubnet(ctx, newPrivateSubnetID.(string), d.Id(), privateSubnetIP)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	// If only private_subnet_id changed, no need to reinstall OS
+	onlyPrivateSubnetChanged := d.HasChange(dedicatedServerSchemaKeyPrivateSubnetID) &&
+		!d.HasChange(dedicatedServerSchemaKeyOSID) &&
+		!d.HasChange(dedicatedServerSchemaKeyOSHostName) &&
+		!d.HasChange(dedicatedServerSchemaKeyOSSSHKey) &&
+		!d.HasChange(dedicatedServerSchemaKeyOSSSHKeyName) &&
+		!d.HasChange(dedicatedServerSchemaKeyOSPassword) &&
+		!d.HasChange(dedicatedServerSchemaKeyOSPartitionsConfig) &&
+		!d.HasChange(dedicatedServerSchemaKeyOSUserData)
+
+	if onlyPrivateSubnetChanged {
+		return nil
+	}
 
 	data, err := resourceDedicatedServerV1UpdateLoadData(ctx, dsClient, d, locationID, osID, configurationID, sshKeyName)
 	if err != nil {
@@ -751,7 +775,9 @@ func resourceDedicatedServerV1UpdateValidatePreconditions(
 	)
 
 	switch {
-	case !(d.HasChange(dedicatedServerSchemaKeyOSID) || (forceUpdateAdditionalParams && isAdditionalParamsChanged)): //nolint:staticcheck
+	case !d.HasChange(dedicatedServerSchemaKeyOSID) &&
+		(!forceUpdateAdditionalParams || !isAdditionalParamsChanged) &&
+		!d.HasChange(dedicatedServerSchemaKeyPrivateSubnetID):
 		return fmt.Errorf("can't update cause os configuration has not changed")
 
 	case d.HasChange(dedicatedServerSchemaKeyProjectID):
