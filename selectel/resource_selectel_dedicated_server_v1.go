@@ -28,14 +28,56 @@ func resourceDedicatedServerV1() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(5 * time.Minute),
 		},
-		Schema: resourceDedicatedServerV1Schema(),
+		Schema:        resourceDedicatedServerV1Schema(),
+		CustomizeDiff: resourceDedicatedServerV1CustomizeDiff,
 	}
+}
+
+func resourceDedicatedServerV1CustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ any) error {
+	// Validate that power_state change is not combined with other changes
+	if d.HasChange(dedicatedServerSchemaKeyPowerState) {
+		// Skip validation if power_state is not changing (only computed value changing)
+		if !d.HasChange(dedicatedServerSchemaKeyOSID) &&
+			!d.HasChange(dedicatedServerSchemaKeyOSPassword) &&
+			!d.HasChange(dedicatedServerSchemaKeyOSSSHKey) &&
+			!d.HasChange(dedicatedServerSchemaKeyOSSSHKeyName) &&
+			!d.HasChange(dedicatedServerSchemaKeyOSPartitionsConfig) &&
+			!d.HasChange(dedicatedServerSchemaKeyOSUserData) &&
+			!d.HasChange(dedicatedServerSchemaKeyOSHostName) &&
+			!d.HasChange(dedicatedServerSchemaForceUpdateAdditionalParams) {
+			return nil
+		}
+
+		return fmt.Errorf(
+			"power_state change cannot be combined with other configuration changes: " +
+				"when changing power_state, no other parameters (os_id, os_password, ssh_key, ssh_key_name, " +
+				"partitions_config, user_data, os_host_name, force_update_additional_params) can be modified " +
+				"in the same apply",
+		)
+	}
+
+	return nil
 }
 
 func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
+	}
+
+	// power_state cannot be used during creation - server is always created in "on" state
+	if powerState, ok := d.GetOk(dedicatedServerSchemaKeyPowerState); ok {
+		state := powerState.(string)
+		if state == dedicatedServerPowerStateOff {
+			return diag.FromErr(fmt.Errorf(
+				"cannot create server with power_state = \"off\": server is always created in running state, use power_state = \"off\" only in resource update",
+			))
+		}
+		if state == dedicatedServerPowerActionReboot {
+			return diag.FromErr(fmt.Errorf(
+				"cannot create server with power_state = \"reboot\": reboot operation is only meaningful for existing servers",
+			))
+		}
 	}
 
 	partitionsConfigFromSchema, err := resourceDedicatedServerV1ReadPartitionsConfig(d)
@@ -533,8 +575,19 @@ func resourceDedicatedServerV1Delete(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceDedicatedServerV1UpdateWithStateRollback(
-	ctx context.Context, d *schema.ResourceData, dsClient *dedicated.ServiceClient,
+	ctx context.Context, d *schema.ResourceData, dsClient *dedicated.ServiceClient, meta any,
 ) diag.Diagnostics {
+	// Check if power_state is "off" - server must be powered on for OS installation
+	if powerState, ok := d.GetOk(dedicatedServerSchemaKeyPowerState); ok {
+		state := powerState.(string)
+		if state == dedicatedServerPowerStateOff {
+			return diag.FromErr(fmt.Errorf(
+				"cannot perform OS installation while server is powered off: " +
+					"please set power_state = \"on\" and apply changes first, then perform OS installation",
+			))
+		}
+	}
+
 	d.Partial(true)
 
 	diagErr := resourceDedicatedServerV1Update(ctx, d, dsClient)
@@ -550,6 +603,14 @@ func resourceDedicatedServerV1UpdateWithStateRollback(
 	err := waiters.WaitForServersServerInstallNewOSV1ActiveState(ctx, dsClient, d.Id(), timeout)
 	if err != nil {
 		return diag.FromErr(errUpdatingObject(objectDedicatedServer, d.Id(), err))
+	}
+
+	// Apply power_state after OS installation if specified
+	if powerState, ok := d.GetOk(dedicatedServerSchemaKeyPowerState); ok {
+		state := powerState.(string)
+		if state == dedicatedServerPowerStateOff || state == dedicatedServerPowerActionReboot {
+			return resourceDedicatedServerV1UpdatePowerState(ctx, d, dsClient, state, meta)
+		}
 	}
 
 	return nil
@@ -761,11 +822,11 @@ func resourceDedicatedServerV1UpdateWithPowerControl(
 
 	powerStateRaw, ok := d.GetOk(dedicatedServerSchemaKeyPowerState)
 	if !ok {
-		return resourceDedicatedServerV1UpdateWithStateRollback(ctx, d, dsClient)
+		return resourceDedicatedServerV1UpdateWithStateRollback(ctx, d, dsClient, meta)
 	}
 
 	if !d.HasChange(dedicatedServerSchemaKeyPowerState) {
-		return resourceDedicatedServerV1UpdateWithStateRollback(ctx, d, dsClient)
+		return resourceDedicatedServerV1UpdateWithStateRollback(ctx, d, dsClient, meta)
 	}
 
 	desiredState, _ := powerStateRaw.(string)

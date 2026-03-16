@@ -211,7 +211,7 @@ resource "selectel_dedicated_server_v1" "server_power" {
 
 * `os_host_name` - (Optional) Hostname for the server.
 
-* `power_state` - (Optional) Power state of the server. If specified, only power management is performed. Valid values are `on`, `off`, and `reboot`.
+* `power_state` - (Optional) Power state of the server. Valid values are `on`, `off`, and `reboot`. **Note:** This field cannot be set during server creation - servers are always created in the "on" state. Use `power_state` only for updating an existing server's power state. Changing `power_state` is mutually exclusive with other configuration changes (`os_id`, `os_password`, `ssh_key`, `ssh_key_name`, `partitions_config`, `user_data`, `os_host_name`, `force_update_additional_params`). This validation occurs at plan time to prevent state corruption. Setting `power_state = "off"` prevents OS installation operations - the server must be powered on first.
 
 * `force_update_additional_params` - (Optional) Enable or disable update for additional os params (os_password, user_data, ssh_key, ssh_key_name, partitions_config, os_host_name) without changing os_id. NOTE: installing new os will delete all data on the server.
 
