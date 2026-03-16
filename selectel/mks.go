@@ -555,7 +555,7 @@ func flattenAdmissionControllersFromSlice(kubeVersion string, admissionControlle
 	return availableAdmissionControllers
 }
 
-func flattenMKSClusterV1OIDC(view *cluster.View) []interface{} {
+func flattenMKSClusterV1OIDC(view *cluster.GetView) []interface{} {
 	return []interface{}{map[string]interface{}{
 		"enabled":        view.KubernetesOptions.OIDC.Enabled,
 		"provider_name":  view.KubernetesOptions.OIDC.ProviderName,
@@ -564,6 +564,27 @@ func flattenMKSClusterV1OIDC(view *cluster.View) []interface{} {
 		"username_claim": view.KubernetesOptions.OIDC.UsernameClaim,
 		"groups_claim":   view.KubernetesOptions.OIDC.GroupsClaim,
 		"ca_certs":       view.KubernetesOptions.OIDC.CACerts,
+	}}
+}
+
+func flattenMKSClusterV1CNICiliumSettings(view *cluster.GetView) []any {
+	if view.CNICiliumSettings == nil {
+		return []any{}
+	}
+
+	var envoyDaemonset, hubbleRelay bool
+
+	if view.CNICiliumSettings.EnvoyDaemonset != nil {
+		envoyDaemonset = *view.CNICiliumSettings.EnvoyDaemonset
+	}
+
+	if view.CNICiliumSettings.HubbleRelay != nil {
+		hubbleRelay = *view.CNICiliumSettings.HubbleRelay
+	}
+
+	return []any{map[string]any{
+		"envoy_daemonset": envoyDaemonset,
+		"hubble_relay":    hubbleRelay,
 	}}
 }
 
@@ -620,6 +641,24 @@ func expandMKSClusterV1OIDC(d *schema.ResourceData) cluster.OIDC {
 	}
 }
 
+func expandMKSClusterV1CNICiliumSettings(d *schema.ResourceData) *cluster.CNICiliumSettings {
+	nestedResource := d.Get("cni_cilium_settings").([]any)
+	if len(nestedResource) == 0 {
+		return nil
+	}
+
+	// Resource always comes with only first element because of validation.
+	resourceMap := nestedResource[0].(map[string]any)
+
+	envoyDaemonset := resourceMap["envoy_daemonset"].(bool)
+	hubbleRelay := resourceMap["hubble_relay"].(bool)
+
+	return &cluster.CNICiliumSettings{
+		EnvoyDaemonset: &envoyDaemonset,
+		HubbleRelay:    &hubbleRelay,
+	}
+}
+
 func expandAndValidateMKSClusterV1OIDC(d *schema.ResourceData) (cluster.OIDC, error) {
 	oidc := expandMKSClusterV1OIDC(d)
 
@@ -639,6 +678,25 @@ func expandAndValidateMKSClusterV1OIDC(d *schema.ResourceData) (cluster.OIDC, er
 	}
 
 	return oidc, nil
+}
+
+func expandAndValidateMKSClusterV1CNICiliumSettings(
+	d *schema.ResourceData, cniType cluster.CNIType,
+) (*cluster.CNICiliumSettings, error) {
+	cniCiliumSettings := expandMKSClusterV1CNICiliumSettings(d)
+	if cniType != cluster.CNITypeCilium {
+		disabled := false
+		return &cluster.CNICiliumSettings{
+			EnvoyDaemonset: &disabled,
+			HubbleRelay:    &disabled,
+		}, nil
+	}
+
+	if cniCiliumSettings == nil {
+		return nil, nil
+	}
+
+	return cniCiliumSettings, nil
 }
 
 func getMKSClient(d *schema.ResourceData, meta interface{}) (*v1.ServiceClient, diag.Diagnostics) {

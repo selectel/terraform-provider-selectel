@@ -14,7 +14,7 @@ require (
 	github.com/selectel/globalrouter-go v1.2.0
 	github.com/selectel/go-selvpcclient/v4 v4.2.0
 	github.com/selectel/iam-go v0.8.1
-	github.com/selectel/mks-go v0.20.0
+	github.com/selectel/mks-go v1.0.0
 	github.com/selectel/private-dns-go v1.0.0
 	github.com/selectel/secretsmanager-go v0.2.1
 	github.com/stretchr/testify v1.11.1
