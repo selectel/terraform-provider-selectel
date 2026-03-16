@@ -8,9 +8,9 @@ description: |-
 
 # selectel\_iam\_saml\_federation\_group\_mappings\_v1
 
-Manages SAML Federation group mappings for Selectel products using public API v1.
+Manages SAML federation group mappings for Selectel products using public API v1.
 Selectel products support Identity and Access Management (IAM).
-For more information about federations, see the [official Selectel documentation](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/federations/).
+For more information about federations, see the [official Selectel documentation](https://docs.selectel.ru/access-control/federations/).
 
 ## Example Usage
 
@@ -25,10 +25,10 @@ resource "selectel_iam_group_v1" "group_1" {
 }
 
 resource "selectel_iam_saml_federation_v1" "federation_1" {
-  name                  = "federation name"
-  description           = "simple description"
-  issuer                = "http://localhost:8080/realms/master"
-  sso_url               = "http://localhost:8080/realms/master/protocol/saml"
+  name                  = "Federation name"
+  description           = "Federation description"
+  issuer                = "https://idp.example.com/realms/master"
+  sso_url               = "https://idp.example.com/realms/master/protocol/saml"
   session_max_age_hours = 24
 }
 
@@ -46,19 +46,15 @@ resource "selectel_iam_saml_federation_group_mappings_v1" "group_mappings_1" {
 
 * `federation_id` - (Required) Federation ID to manage group mappings for.
 
-* `group_mapping` - (Required) One or more blocks defining mappings between internal IAM groups and external identity provider groups.
+* `group_mapping` - (Required) Defines mappings between internal IAM groups and external identity provider groups. You can add multiple mappings – each mapping in a separate block.
 
-The `group_mapping` block supports:
+    * `internal_group_id` - (Required) Internal IAM group ID.
 
-* `internal_group_id` - (Required) Internal IAM group ID.
-
-* `external_group_id` - (Required) External identity provider group ID.
+    * `external_group_id` - (Required) External identity provider group ID.
 
 ## Attributes Reference
 
-In addition to the arguments listed above, the following attributes are exported:
-
-* `id` - Resource ID. Equals to the `federation_id` value.
+* `id` - Resource ID. Equals the `federation_id` value.
 
 ## Import
 
@@ -73,11 +69,11 @@ terraform import selectel_iam_saml_federation_group_mappings_v1.group_mappings_1
 
 where:
 
-* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/account/registration/).
 
-* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service Users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/service-users), go to **Account** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service Users](https://docs.selectel.ru/access-control/user-types/).
 
 * `<password>` — Password of the service user.
 
-* `<federation_id>` — Unique identifier of the federation, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, use either [Control Panel](https://my.selectel.ru/iam/federations) or [IAM API](https://developers.selectel.ru/docs/control-panel/iam/).
+* `<federation_id>` — Unique identifier of the federation, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, use either [Control Panel](https://my.selectel.ru/iam/federations) or [Federations API](https://docs.selectel.ru/api/federations/).
 
