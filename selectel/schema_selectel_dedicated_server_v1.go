@@ -89,6 +89,7 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 		dedicatedServerSchemaKeyOSPartitionsConfig: {
 			Type:     schema.TypeList,
 			Optional: true,
+			Computed: true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					dedicatedServerSchemaKeySoftRaidConfig: {

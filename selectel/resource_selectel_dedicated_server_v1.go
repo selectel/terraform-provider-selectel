@@ -190,6 +190,21 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(errCreatingObject(objectDedicatedServer, err))
 	}
 
+	resourceOS, _, err := dsClient.OperatingSystemByResource(ctx, d.Id())
+	if err != nil {
+		return diag.FromErr(fmt.Errorf(
+			"error getting OS for server %s: %w", d.Id(), err,
+		))
+	}
+
+	if len(resourceOS.PartitionsConfig) > 0 {
+		partitionsConfig, err := apiPartitionsConfigToSchema(resourceOS.PartitionsConfig)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("failed to convert partitions config: %w", err))
+		}
+		_ = d.Set("partitions_config", partitionsConfig)
+	}
+
 	return nil
 }
 
