@@ -42,7 +42,7 @@ func dataSourceDedicatedPrivateSubnetV1() *schema.Resource {
 							ValidateFunc: validation.IsCIDR,
 						},
 						"vlan": {
-							Type:         schema.TypeString,
+							Type:         schema.TypeInt,
 							Optional:     true,
 							ValidateFunc: validation.IntBetween(1, 3499),
 						},
@@ -91,7 +91,7 @@ func dataSourceDedicatedPrivateSubnetV1Read(ctx context.Context, d *schema.Resou
 
 	var allSubnets dedicated.Subnets
 
-	nets, _, err := dsClient.Networks(ctx, filter.locationID, dedicated.NetworkTypeLocal, filter.vlan)
+	nets, _, err := dsClient.Networks(ctx, filter.locationID, dedicated.NetworkTypeLocal, strconv.Itoa(filter.vlan))
 	if err != nil {
 		return diag.FromErr(errGettingObjects(objectNetwork, err))
 	}
@@ -141,7 +141,7 @@ type dedicatedPrivateSubnetsSearchFilter struct {
 	locationID string
 	ip         string
 	subnet     string
-	vlan       string
+	vlan       int
 }
 
 func expandDedicatedPrivateSubnetsSearchFilter(d *schema.ResourceData) dedicatedPrivateSubnetsSearchFilter {
@@ -175,7 +175,7 @@ func expandDedicatedPrivateSubnetsSearchFilter(d *schema.ResourceData) dedicated
 
 	vlan, ok := resourceFilterMap["vlan"]
 	if ok {
-		filter.vlan = vlan.(string)
+		filter.vlan = vlan.(int)
 	}
 
 	return filter
