@@ -25,6 +25,7 @@ const (
 	objectS3Credentials                = "s3 credentials"
 	objectSAMLFederation               = "saml federation"
 	objectSAMLFederationCertificate    = "saml federation certificate"
+	objectSAMLFederationGroupMappings  = "saml federation group mappings"
 	objectGroup                        = "group"
 	objectGroupMembership              = "group-membership"
 	objectCluster                      = "cluster"
@@ -161,6 +162,7 @@ func Provider(providerVersion string) *schema.Provider {
 			"selectel_iam_s3_credentials_v1":                        resourceIAMS3CredentialsV1(),
 			"selectel_iam_saml_federation_v1":                       resourceIAMSAMLFederationV1(),
 			"selectel_iam_saml_federation_certificate_v1":           resourceIAMSAMLFederationCertificateV1(),
+			"selectel_iam_saml_federation_group_mappings_v1":        resourceIAMSAMLFederationGroupMappingsV1(),
 			"selectel_iam_group_v1":                                 resourceIAMGroupV1(),
 			"selectel_iam_group_membership_v1":                      resourceIAMGroupMembershipV1(),
 			"selectel_mks_cluster_v1":                               resourceMKSClusterV1(),
