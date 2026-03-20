@@ -37,11 +37,10 @@ func resourceDedicatedPrivateSubnetV1() *schema.Resource {
 				ValidateFunc: validation.IsUUID,
 			},
 			"vlan": {
-				Type:         schema.TypeInt,
-				Required:     true,
-				ForceNew:     true,
-				Description:  "VLAN TAG for the private subnet",
-				ValidateFunc: validation.IntBetween(1, 3499),
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "VLAN TAG for the private subnet",
 			},
 			"subnet": {
 				Type:         schema.TypeString,
@@ -61,7 +60,7 @@ func resourceDedicatedPrivateSubnetV1Create(ctx context.Context, d *schema.Resou
 	}
 
 	locationID := d.Get("location_id").(string)
-	vlan := d.Get("vlan").(int)
+	vlan := d.Get("vlan").(string)
 	subnetCIDR := d.Get("subnet").(string)
 
 	// Validate private subnet
@@ -70,12 +69,12 @@ func resourceDedicatedPrivateSubnetV1Create(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	networks, _, err := client.Networks(ctx, locationID, dedicated.NetworkTypeLocal, strconv.Itoa(vlan))
+	networks, _, err := client.Networks(ctx, locationID, dedicated.NetworkTypeLocal, vlan)
 	if err != nil {
 		return diag.Errorf("failed to get networks for location %s: %s", locationID, err)
 	}
 	if len(networks) == 0 {
-		return diag.Errorf("vlan %d not found in location %s", vlan, locationID)
+		return diag.Errorf("vlan %s not found in location %s", vlan, locationID)
 	}
 
 	localSubnet, _, err := client.CreateNetworkLocalSubnet(ctx, networks[0].UUID, subnetCIDR)
