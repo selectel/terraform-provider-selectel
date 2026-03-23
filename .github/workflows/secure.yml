@@ -51,7 +51,7 @@ jobs:
   trivy:
     runs-on: ubuntu-24.04
     container:
-      image: aquasec/trivy
+      image: aquasec/trivy:0.69.3
     permissions:
       contents: read
       security-events: write
