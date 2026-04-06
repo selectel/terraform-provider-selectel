@@ -1,3 +1,42 @@
+## 7.6.0 (March 12, 2026)
+
+FEATURES:
+* Add cilium CNI parameters support for MKS clusters ([#383](https://github.com/selectel/terraform-provider-selectel/pull/383)):
+  * Add `cni_type` argument for `selectel_mks_cluster_v1`
+  * Add nested resource `cilium_cni_settings` with parameters `envoy_daemonset` and `hubble_relay`
+
+## 7.5.5 (March 10, 2026)
+
+IMPROVEMENTS:
+
+* Add documentation for `global_router` import ([#379](https://github.com/selectel/terraform-provider-selectel/pull/379))
+* Add user-agent to `selvpcclient-go` ([#381](https://github.com/selectel/terraform-provider-selectel/pull/381))
+
+## 7.5.4 (February 18, 2026)
+
+BUG FIXES:
+
+* Fix `selectel_craas_token_v2` resource to recreate expired/revoked tokens instead of failing ([#377](https://github.com/selectel/terraform-provider-selectel/pull/377))
+* Update `craas-go` to v0.4.2 ([#377](https://github.com/selectel/terraform-provider-selectel/pull/377))
+
+## 7.5.3 (February 2, 2026)
+
+IMPROVEMENTS:
+
+* Update documentation for Private DNS resources ([#375](https://github.com/selectel/terraform-provider-selectel/pull/375))
+  
+## 7.5.2 (January 31, 2026)
+
+IMPROVEMENTS:
+
+* Update Go version (1.23 -> 1.24) ([#374](https://github.com/selectel/terraform-provider-selectel/pull/374))
+
+## 7.5.1 (January 29, 2026)
+
+IMPROVEMENTS:
+
+* Update documentation for Global Router resources ([#372](https://github.com/selectel/terraform-provider-selectel/pull/372))
+
 ## 7.5.0 (January 28, 2026)
 
 FEATURES:

@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/selectel/craas-go/pkg/svc"
 	tokenv2 "github.com/selectel/craas-go/pkg/v2/token"
 )
 
@@ -125,7 +127,7 @@ func resourceCRaaSTokenV2Read(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	log.Print(msgGet(objectRegistryToken, d.Id()))
-	_, response, err := tokenv2.GetByID(ctx, craasClient, d.Id())
+	tokenObj, response, err := tokenv2.GetByID(ctx, craasClient, d.Id())
 	if err != nil {
 		if response != nil {
 			if response.StatusCode == http.StatusNotFound {
@@ -135,6 +137,12 @@ func resourceCRaaSTokenV2Read(ctx context.Context, d *schema.ResourceData, meta 
 		}
 
 		return diag.FromErr(errGettingObject(objectRegistryToken, d.Id(), err))
+	}
+
+	if remove, reason := shouldRemoveCRaaSTokenV2FromState(tokenObj); remove {
+		log.Printf("[WARN] CRaaS token %s: %s, removing from state", d.Id(), reason)
+		d.SetId("")
+		return nil
 	}
 
 	d.Set("username", craasV1TokenUsername)
@@ -150,8 +158,12 @@ func resourceCRaaSTokenV2Delete(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	log.Print(msgDelete(objectRegistryToken, d.Id()))
-	_, err := tokenv2.Delete(ctx, craasClient, d.Id())
+	response, err := tokenv2.Delete(ctx, craasClient, d.Id())
 	if err != nil {
+		if isCRaaSTokenV2DeleteNotFound(response) {
+			return nil
+		}
+
 		return diag.FromErr(errDeletingObject(objectRegistryToken, d.Id(), err))
 	}
 
@@ -194,4 +206,24 @@ func resourceCRaaSTokenV2Update(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	return resourceCRaaSTokenV2Read(ctx, d, meta)
+}
+
+func shouldRemoveCRaaSTokenV2FromState(tokenObj *tokenv2.TokenV2) (bool, string) {
+	return shouldRemoveCRaaSTokenV2FromStateAt(tokenObj, time.Now())
+}
+
+func shouldRemoveCRaaSTokenV2FromStateAt(tokenObj *tokenv2.TokenV2, now time.Time) (bool, string) {
+	if tokenObj.Status != tokenv2.StatusActive {
+		return true, fmt.Sprintf("has non-active status %q", tokenObj.Status)
+	}
+
+	if tokenObj.Expiration.IsSet && tokenObj.Expiration.ExpiresAt.Before(now) {
+		return true, fmt.Sprintf("expired at %s", tokenObj.Expiration.ExpiresAt.Format(time.RFC3339))
+	}
+
+	return false, ""
+}
+
+func isCRaaSTokenV2DeleteNotFound(response *svc.ResponseResult) bool {
+	return response != nil && response.StatusCode == http.StatusNotFound
 }

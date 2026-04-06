@@ -17,9 +17,14 @@ For more information about federations, see the [official Selectel documentation
 ```hcl
 resource "selectel_iam_saml_federation_v1" "federation_1" {
   name                  = "federation name"
+  alias                 = "federation-alias"
   description           = "simple description"
   issuer                = "http://localhost:8080/realms/master"
   sso_url               = "http://localhost:8080/realms/master/protocol/saml"
+  sign_authn_requests   = true
+  force_authn           = true
+  auto_users_creation   = true
+  enable_group_mappings = true
   session_max_age_hours = 24
 }
 ```
@@ -27,6 +32,8 @@ resource "selectel_iam_saml_federation_v1" "federation_1" {
 ## Argument Reference
 
 * `name` - (Required) Federation name.
+
+* `alias` - (Optional) Federation alias.
 
 * `description` - (Optional) Federation description.
 
@@ -37,6 +44,10 @@ resource "selectel_iam_saml_federation_v1" "federation_1" {
 * `sign_authn_requests` - (Optional) Enables signing of authentication requests.
 
 * `force_authn` - (Optional) Requires users to authenticate via SSO every time they log in.
+
+* `auto_users_creation` - (Optional) Enables automatic creation of users for this federation.
+
+* `enable_group_mappings` - (Optional) Enables group mappings for this federation.
 
 * `session_max_age_hours` - (Required) Session lifetime.
 
