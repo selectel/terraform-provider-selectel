@@ -47,4 +47,3 @@ resource "selectel_global_router_dedicated_network_v1" "global_router_dedicated_
 * `account_id` - Selectel account ID.
 * `netops_vlan_uuid` - Option for internal usage.
 * `sv_network_id` - Option for internal usage.
-
