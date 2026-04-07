@@ -12,6 +12,8 @@ Creates and manages a public subnet using public API v2. For more information ab
 
 For private networks and subnets, use [openstack\_networking\_network\_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_network_v2) and [openstack\_networking\_subnet\_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_subnet_v2) resources of the OpenStack provider.
 
+Resource creates a public OpenStack subnet in a service OpenStack network. You cannot select a network during subnet creation, and you cannot modify service network settings.
+
 ## Example Usage
 
 ```hcl
@@ -37,13 +39,13 @@ resource "selectel_vpc_subnet_v2" "subnet_1" {
 
 * `cidr` - CIDR of the public subnet.
 
-* `network_id` - Unique identifier of the associated OpenStack network. Learn more about the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_network_v2) resource in the official OpenStack documentation.
+* `network_id` - Unique identifier of the parent network (a service OpenStack network).
 
-* `subnet_id` - Unique identifier of the associated OpenStack subnet. Learn more about the [openstack_networking_subnet_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_subnet_v2) resource in the official OpenStack documentation.
+* `subnet_id` - Unique identifier of the public subnet.
 
 * `status` - Status of the public subnet.
 
-* `servers` - List of the cloud servers that are located in the public subnet.
+* `servers` - List of cloud servers that are located in the public subnet.
 
   * `id` - Unique identifier of the cloud server.
 
@@ -70,4 +72,4 @@ where:
 
 * `<password>` — Password of the service user.
 
-* `<public_subnet_id>` is a unique identifier of the public subnet, for example, `2060`. To get the public subnet ID, use [Selectel Cloud Management API](https://developers.selectel.ru/docs/selectel-cloud-platform/main-services/selectel_cloud_management_api/).
+* `<public_subnet_id>` — Unique identifier of the public subnet. To get public subnet ID, use the [Get list of subnets](https://docs.selectel.ru/en/api/cloud-projects-and-resources/#tag/Subnets/operation/listSubnets) method in [Cloud Platform Projects and Resources API](https://docs.selectel.ru/en/api/cloud-projects-and-resources/).
