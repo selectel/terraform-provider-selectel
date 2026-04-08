@@ -33,7 +33,7 @@ func resourceDBaaSGrantV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSGrantV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSGrantV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -63,7 +63,7 @@ func resourceDBaaSGrantV1Create(ctx context.Context, d *schema.ResourceData, met
 	return resourceDBaaSGrantV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSGrantV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSGrantV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -82,7 +82,7 @@ func resourceDBaaSGrantV1Read(ctx context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
-func resourceDBaaSGrantV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSGrantV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -112,7 +112,7 @@ func resourceDBaaSGrantV1Delete(ctx context.Context, d *schema.ResourceData, met
 	return nil
 }
 
-func resourceDBaaSGrantV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSGrantV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")

@@ -78,7 +78,7 @@ func resourceVPCLicenseV2() *schema.Resource {
 	}
 }
 
-func resourceVPCLicenseV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCLicenseV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*Config)
 	projectID := d.Get("project_id").(string)
 	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
@@ -118,7 +118,7 @@ func resourceVPCLicenseV2Create(ctx context.Context, d *schema.ResourceData, met
 	return resourceVPCLicenseV2Read(ctx, d, meta)
 }
 
-func resourceVPCLicenseV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCLicenseV2Read(_ context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*Config)
 	projectID := d.Get("project_id").(string)
 	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
@@ -154,7 +154,7 @@ func resourceVPCLicenseV2Read(_ context.Context, d *schema.ResourceData, meta in
 	return nil
 }
 
-func resourceVPCLicenseV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCLicenseV2Delete(_ context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*Config)
 	projectID := d.Get("project_id").(string)
 	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
@@ -178,7 +178,7 @@ func resourceVPCLicenseV2Delete(_ context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
-func resourceVPCLicenseV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVPCLicenseV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, fmt.Errorf("INFRA_PROJECT_ID must be set for the resource import")

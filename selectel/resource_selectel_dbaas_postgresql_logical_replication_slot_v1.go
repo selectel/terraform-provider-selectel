@@ -33,7 +33,7 @@ func resourceDBaaSPostgreSQLLogicalReplicationSlotV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSPostgreSQLLogicalReplicationSlotV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLLogicalReplicationSlotV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -63,7 +63,7 @@ func resourceDBaaSPostgreSQLLogicalReplicationSlotV1Create(ctx context.Context, 
 	return resourceDBaaSPostgreSQLLogicalReplicationSlotV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSPostgreSQLLogicalReplicationSlotV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLLogicalReplicationSlotV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -82,7 +82,7 @@ func resourceDBaaSPostgreSQLLogicalReplicationSlotV1Read(ctx context.Context, d 
 	return nil
 }
 
-func resourceDBaaSPostgreSQLLogicalReplicationSlotV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLLogicalReplicationSlotV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -112,7 +112,7 @@ func resourceDBaaSPostgreSQLLogicalReplicationSlotV1Delete(ctx context.Context, 
 	return nil
 }
 
-func resourceDBaaSPostgreSQLLogicalReplicationSlotV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSPostgreSQLLogicalReplicationSlotV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")

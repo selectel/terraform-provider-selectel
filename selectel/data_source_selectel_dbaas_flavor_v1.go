@@ -103,7 +103,7 @@ func dataSourceDBaaSFlavorV1() *schema.Resource {
 	}
 }
 
-func dataSourceDBaaSFlavorV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceDBaaSFlavorV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -149,7 +149,7 @@ func expandFlavorSearchFilter(filterSet *schema.Set) (flavorSearchFilter, error)
 		return filter, nil
 	}
 
-	resourceFilterMap := filterSet.List()[0].(map[string]interface{})
+	resourceFilterMap := filterSet.List()[0].(map[string]any)
 
 	vcpus, ok := resourceFilterMap["vcpus"]
 	if ok {
@@ -256,10 +256,10 @@ func filterFlavorByDatastoreTypeID(flavors []dbaas.FlavorResponse, datastoreType
 	return filteredFlavors
 }
 
-func flattenDBaaSFlavors(flavors []dbaas.FlavorResponse) []interface{} {
-	flavorsList := make([]interface{}, len(flavors))
+func flattenDBaaSFlavors(flavors []dbaas.FlavorResponse) []any {
+	flavorsList := make([]any, len(flavors))
 	for i, flavor := range flavors {
-		flavorMap := make(map[string]interface{})
+		flavorMap := make(map[string]any)
 		flavorMap["id"] = flavor.ID
 		flavorMap["name"] = flavor.Name
 		flavorMap["description"] = flavor.Description

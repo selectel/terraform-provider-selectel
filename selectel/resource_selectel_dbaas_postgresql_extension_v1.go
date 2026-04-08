@@ -33,7 +33,7 @@ func resourceDBaaSPostgreSQLExtensionV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSPostgreSQLExtensionV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLExtensionV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -63,7 +63,7 @@ func resourceDBaaSPostgreSQLExtensionV1Create(ctx context.Context, d *schema.Res
 	return resourceDBaaSPostgreSQLExtensionV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSPostgreSQLExtensionV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLExtensionV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -82,7 +82,7 @@ func resourceDBaaSPostgreSQLExtensionV1Read(ctx context.Context, d *schema.Resou
 	return nil
 }
 
-func resourceDBaaSPostgreSQLExtensionV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLExtensionV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -112,7 +112,7 @@ func resourceDBaaSPostgreSQLExtensionV1Delete(ctx context.Context, d *schema.Res
 	return nil
 }
 
-func resourceDBaaSPostgreSQLExtensionV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSPostgreSQLExtensionV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")

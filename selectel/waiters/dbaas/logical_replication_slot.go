@@ -43,7 +43,7 @@ func WaitForDBaaSLogicalReplicationSlotV1ActiveState(
 }
 
 func DBaaSLogicalReplicationSlotV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, slotID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		d, err := client.LogicalReplicationSlot(ctx, slotID)
 		if err != nil {
 			var dbaasError *dbaas.DBaaSAPIError
@@ -59,7 +59,7 @@ func DBaaSLogicalReplicationSlotV1DeleteStateRefreshFunc(ctx context.Context, cl
 }
 
 func dbaasLogicalReplicationSlotV1StateRefreshFunc(ctx context.Context, client *dbaas.API, slotID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		d, err := client.LogicalReplicationSlot(ctx, slotID)
 		if err != nil {
 			return nil, "", err

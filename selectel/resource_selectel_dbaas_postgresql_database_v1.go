@@ -34,7 +34,7 @@ func resourceDBaaSPostgreSQLDatabaseV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSPostgreSQLDatabaseV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLDatabaseV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -66,7 +66,7 @@ func resourceDBaaSPostgreSQLDatabaseV1Create(ctx context.Context, d *schema.Reso
 	return resourceDBaaSPostgreSQLDatabaseV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSPostgreSQLDatabaseV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLDatabaseV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -93,7 +93,7 @@ func resourceDBaaSPostgreSQLDatabaseV1Read(ctx context.Context, d *schema.Resour
 	return nil
 }
 
-func resourceDBaaSPostgreSQLDatabaseV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLDatabaseV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -121,7 +121,7 @@ func resourceDBaaSPostgreSQLDatabaseV1Update(ctx context.Context, d *schema.Reso
 	return resourceDBaaSPostgreSQLDatabaseV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSPostgreSQLDatabaseV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLDatabaseV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -151,7 +151,7 @@ func resourceDBaaSPostgreSQLDatabaseV1Delete(ctx context.Context, d *schema.Reso
 	return nil
 }
 
-func resourceDBaaSPostgreSQLDatabaseV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSPostgreSQLDatabaseV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")

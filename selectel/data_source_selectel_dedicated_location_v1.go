@@ -60,7 +60,7 @@ func dataSourceDedicatedLocationV1() *schema.Resource {
 	}
 }
 
-func dataSourceDedicatedLocationV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceDedicatedLocationV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dsClient, diagErr := getDedicatedClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -115,7 +115,7 @@ func expandDedicatedLocationsSearchFilter(d *schema.ResourceData) dedicatedLocat
 		return filter
 	}
 
-	resourceFilterMap := filterSet.List()[0].(map[string]interface{})
+	resourceFilterMap := filterSet.List()[0].(map[string]any)
 
 	name, ok := resourceFilterMap["name"]
 	if ok {
@@ -136,10 +136,10 @@ func filterDedicatedLocations(list dedicated.Locations, filter dedicatedLocation
 	return filtered
 }
 
-func flattenDedicatedLocations(list dedicated.Locations) []interface{} {
-	res := make([]interface{}, len(list))
+func flattenDedicatedLocations(list dedicated.Locations) []any {
+	res := make([]any, len(list))
 	for i, e := range list {
-		sMap := make(map[string]interface{})
+		sMap := make(map[string]any)
 		sMap["id"] = e.UUID
 		sMap["name"] = e.Name
 		sMap["description"] = e.Description

@@ -8,6 +8,7 @@ import (
 	"log"
 	"math"
 	"math/rand" // nosemgrep: go.lang.security.audit.crypto.math_random.math-random-used
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -29,7 +30,7 @@ const (
 	replicaRole              = "REPLICA"
 )
 
-func getDBaaSClient(d *schema.ResourceData, meta interface{}) (*dbaas.API, diag.Diagnostics) {
+func getDBaaSClient(d *schema.ResourceData, meta any) (*dbaas.API, diag.Diagnostics) {
 	config := meta.(*Config)
 	projectID := d.Get("project_id").(string)
 	region := d.Get("region").(string)
@@ -79,7 +80,7 @@ func stringListChecksum(s []string) (string, error) {
 	return checksum, nil
 }
 
-func convertFieldToStringByType(field interface{}) string {
+func convertFieldToStringByType(field any) string {
 	switch fieldValue := field.(type) {
 	case int:
 		return strconv.Itoa(fieldValue)
@@ -112,10 +113,10 @@ func resourceDBaaSDatastoreV1FlavorFromSet(flavorSet *schema.Set) (*dbaas.Flavor
 	if flavorSet.Len() == 0 {
 		return nil, nil
 	}
-	var resourceVcpusRaw, resourceRAMRaw, resourceDiskRaw interface{}
+	var resourceVcpusRaw, resourceRAMRaw, resourceDiskRaw any
 	var ok bool
 
-	resourceFlavorMap := flavorSet.List()[0].(map[string]interface{})
+	resourceFlavorMap := flavorSet.List()[0].(map[string]any)
 	if resourceVcpusRaw, ok = resourceFlavorMap["vcpus"]; !ok {
 		return &dbaas.Flavor{}, errors.New("flavor.vcpus value isn't provided")
 	}
@@ -147,7 +148,7 @@ func resourceDBaaSDatastoreV1FlavorToSet(flavor dbaas.Flavor) *schema.Set {
 		F: flavorHashSetFunc(),
 	}
 
-	flavorSet.Add(map[string]interface{}{
+	flavorSet.Add(map[string]any{
 		"vcpus":     flavor.Vcpus,
 		"ram":       flavor.RAM,
 		"disk":      flavor.Disk,
@@ -157,11 +158,11 @@ func resourceDBaaSDatastoreV1FlavorToSet(flavor dbaas.Flavor) *schema.Set {
 	return flavorSet
 }
 
-func resourceDBaaSDatastoreV1InstancesToList(instances []dbaas.Instances) []interface{} {
-	flattenedInstances := make([]interface{}, len(instances))
+func resourceDBaaSDatastoreV1InstancesToList(instances []dbaas.Instances) []any {
+	flattenedInstances := make([]any, len(instances))
 
 	for i, instance := range instances {
-		flattenedInstance := map[string]interface{}{
+		flattenedInstance := map[string]any{
 			"role":        instance.Role,
 			"floating_ip": instance.FloatingIP,
 		}
@@ -175,10 +176,10 @@ func resourceDBaaSDatastoreV1RestoreOptsFromSet(restoreSet *schema.Set) (*dbaas.
 	if restoreSet.Len() == 0 {
 		return nil, nil
 	}
-	var resourceDatastoreIDRaw, resourceTargetTimeRaw interface{}
+	var resourceDatastoreIDRaw, resourceTargetTimeRaw any
 	var ok bool
 
-	resourceRestoreMap := restoreSet.List()[0].(map[string]interface{})
+	resourceRestoreMap := restoreSet.List()[0].(map[string]any)
 	if resourceDatastoreIDRaw, ok = resourceRestoreMap["datastore_id"]; !ok {
 		return &dbaas.Restore{}, errors.New("restore.datastore_id value isn't provided")
 	}
@@ -202,7 +203,7 @@ func resourceDBaaSDatastoreV1FloatingIPsOptsFromSet(floatingIPsSet *schema.Set) 
 		return nil, nil
 	}
 
-	floatingIPMap, ok := floatingIPsSet.List()[0].(map[string]interface{})
+	floatingIPMap, ok := floatingIPsSet.List()[0].(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("invalid format for floating IPs data")
 	}
@@ -278,7 +279,7 @@ func updateDatastoreConfig(ctx context.Context, d *schema.ResourceData, client *
 	if err != nil {
 		return err
 	}
-	config := d.Get("config").(map[string]interface{})
+	config := d.Get("config").(map[string]any)
 
 	for param := range datastore.Config {
 		if _, ok := config[param]; !ok {
@@ -374,13 +375,7 @@ func resizeDatastore(ctx context.Context, d *schema.ResourceData, client *dbaas.
 }
 
 func containDatastoreType(expectedTypes []string, datastoreType string) bool {
-	for _, expectedType := range expectedTypes {
-		if expectedType == datastoreType {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(expectedTypes, datastoreType)
 }
 
 func buildDatastoreTypeErrorMessage(expectedDatastoreTypeEngines []string, datastoreTypeEngine string) string {
@@ -439,7 +434,7 @@ func getDatastoreReplicasInstancesIDsWithoutFloatings(datastore dbaas.Datastore)
 
 // Floating IPs
 
-func refreshDatastoreInstancesOutputsDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+func refreshDatastoreInstancesOutputsDiff(_ context.Context, diff *schema.ResourceDiff, _ any) error {
 	if diff.HasChanges("floating_ips") {
 		if err := diff.SetNewComputed("instances"); err != nil {
 			return err
@@ -657,7 +652,7 @@ func adjustMasterFloatingIPs(ctx context.Context, d *schema.ResourceData, client
 }
 
 func addReplicasFloatingIPs(ctx context.Context, d *schema.ResourceData, client *dbaas.API, replicasWithoutFIPs []string, diff int) error {
-	for i := 0; i < diff; i++ {
+	for i := range diff {
 		err := dbaasFloatingIPCreate(ctx, d, client, replicasWithoutFIPs[i])
 		if err != nil {
 			return fmt.Errorf(
@@ -673,7 +668,7 @@ func addReplicasFloatingIPs(ctx context.Context, d *schema.ResourceData, client 
 
 func removeReplicasFloatingIPs(ctx context.Context, d *schema.ResourceData, client *dbaas.API, replicasWithFIPs []string, diff int) error {
 	needed := int(math.Abs(float64(diff)))
-	for i := 0; i < needed; i++ {
+	for i := range needed {
 		err := dbaasFloatingIPDelete(ctx, d, client, replicasWithFIPs[i])
 		if err != nil {
 			return fmt.Errorf(

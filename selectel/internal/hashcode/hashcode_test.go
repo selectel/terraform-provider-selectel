@@ -5,7 +5,7 @@ import "testing"
 func TestString(t *testing.T) {
 	v := "hello, world"
 	expected := String(v)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		actual := String(v)
 		if actual != expected {
 			t.Fatalf("bad: %#v\n\t%#v", actual, expected)

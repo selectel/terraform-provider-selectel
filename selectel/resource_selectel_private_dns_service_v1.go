@@ -58,7 +58,7 @@ func resourcePrivateDNSServiceV1() *schema.Resource {
 	}
 }
 
-func resourcePrivateDNSServiceV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePrivateDNSServiceV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getPrivateDNSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -78,7 +78,7 @@ func resourcePrivateDNSServiceV1Create(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func resourcePrivateDNSServiceV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePrivateDNSServiceV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getPrivateDNSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -96,7 +96,7 @@ func resourcePrivateDNSServiceV1Read(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func resourcePrivateDNSServiceV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePrivateDNSServiceV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getPrivateDNSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -110,7 +110,7 @@ func resourcePrivateDNSServiceV1Delete(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func resourcePrivateDNSServiceV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePrivateDNSServiceV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, fmt.Errorf("INFRA_PROJECT_ID must be set for the resource import")

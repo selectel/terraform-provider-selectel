@@ -59,7 +59,7 @@ func dataSourceDBaaSPrometheusMetricTokenV1() *schema.Resource {
 	}
 }
 
-func dataSourceDBaaSPrometheusMetricTokenV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceDBaaSPrometheusMetricTokenV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -88,10 +88,10 @@ func dataSourceDBaaSPrometheusMetricTokenV1Read(ctx context.Context, d *schema.R
 	return nil
 }
 
-func flattenDBaaSPrometheusMetricTokenTypes(tokens []dbaas.PrometheusMetricToken) []interface{} {
-	tokensList := make([]interface{}, len(tokens))
+func flattenDBaaSPrometheusMetricTokenTypes(tokens []dbaas.PrometheusMetricToken) []any {
+	tokensList := make([]any, len(tokens))
 	for i, token := range tokens {
-		tokensMap := make(map[string]interface{})
+		tokensMap := make(map[string]any)
 		tokensMap["id"] = token.ID
 		tokensMap["created_at"] = token.CreatedAt
 		tokensMap["updated_at"] = token.UpdatedAt

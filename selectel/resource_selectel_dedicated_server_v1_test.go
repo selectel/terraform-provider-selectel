@@ -521,7 +521,7 @@ func Test_resourceDedicatedServerV1UpdateValidatePreconditions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			res := resourceDedicatedServerV1()
 
-			initMap := map[string]interface{}{}
+			initMap := map[string]any{}
 			for _, key := range tt.changes {
 				initMap[key] = "changed"
 			}

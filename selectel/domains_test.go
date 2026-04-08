@@ -54,12 +54,12 @@ func TestDomainsV1ParseDomainRecordIDsPair(t *testing.T) {
 
 func TestGetIntPtrOrNil(_ *testing.T) {
 	tableTest := []struct {
-		input    interface{}
+		input    any
 		expected *int
 	}{
 		{
 			input:    123,
-			expected: intPtr(123),
+			expected: new(123),
 		},
 		{
 			input:    nil,

@@ -120,7 +120,7 @@ func dataSourceCloudBackupPlanV2() *schema.Resource {
 	}
 }
 
-func dataSourceCloudBackupPlanV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceCloudBackupPlanV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	filter := expandCloudBackupPlansSearchFilter(d)
 
 	log.Printf("[DEBUG] Getting %s '%#v'", objectCloudBackupPlan, filter)
@@ -155,7 +155,7 @@ func dataSourceCloudBackupPlanV2Read(ctx context.Context, d *schema.ResourceData
 }
 
 func dataSourceCloudBackupPlanV2LoadPlans(
-	ctx context.Context, d *schema.ResourceData, meta interface{}, filter cloudBackupPlansFilter,
+	ctx context.Context, d *schema.ResourceData, meta any, filter cloudBackupPlansFilter,
 ) ([]*cloudbackup.Plan, diag.Diagnostics) {
 	client, diagErr := getScheduledBackupClient(d, meta)
 	if diagErr != nil {
@@ -209,7 +209,7 @@ func expandCloudBackupPlansSearchFilter(d *schema.ResourceData) cloudBackupPlans
 		return filter
 	}
 
-	resourceFilterMap := filterSet.List()[0].(map[string]interface{})
+	resourceFilterMap := filterSet.List()[0].(map[string]any)
 
 	name, ok := resourceFilterMap["name"]
 	if ok {
@@ -242,19 +242,19 @@ func filterCloudBackupPlans(list []*cloudbackup.Plan, filter cloudBackupPlansFil
 	return filtered
 }
 
-func flattenCloudBackupPlans(list []*cloudbackup.Plan, total int) []interface{} {
-	plans := make([]interface{}, len(list))
+func flattenCloudBackupPlans(list []*cloudbackup.Plan, total int) []any {
+	plans := make([]any, len(list))
 	for i, e := range list {
-		sMap := make(map[string]interface{})
+		sMap := make(map[string]any)
 		sMap["backup_mode"] = e.BackupMode
 		sMap["created_at"] = e.CreatedAt
 		sMap["id"] = e.ID
 		sMap["full_backups_amount"] = e.FullBackupsAmount
 		sMap["name"] = e.Name
 
-		resources := make([]interface{}, len(e.Resources))
+		resources := make([]any, len(e.Resources))
 		for j, r := range e.Resources {
-			rMap := make(map[string]interface{})
+			rMap := make(map[string]any)
 			rMap["id"] = r.ID
 			rMap["name"] = r.Name
 			rMap["type"] = r.Type
@@ -269,8 +269,8 @@ func flattenCloudBackupPlans(list []*cloudbackup.Plan, total int) []interface{} 
 		plans[i] = sMap
 	}
 
-	return []interface{}{
-		map[string]interface{}{
+	return []any{
+		map[string]any{
 			"list":  plans,
 			"total": total,
 		},

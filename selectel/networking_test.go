@@ -62,7 +62,7 @@ func TestSubnetsMapsFromStructs(t *testing.T) {
 			VTEPIPAddress: "10.10.0.201",
 		},
 	}
-	expectedSubnetsMaps := []map[string]interface{}{
+	expectedSubnetsMaps := []map[string]any{
 		{
 			"network_id":      "912bd5d0-cb11-4a7f-af7c-ea84c8e7db2e",
 			"subnet_id":       "4912cca9-cad2-49c1-a69a-929cd4cf9559",

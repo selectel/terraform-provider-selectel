@@ -16,7 +16,7 @@ import (
 
 var ErrProjectIDNotSetupForDNSV2 = errors.New("env variable INFRA_PROJECT_ID or variable project_id must be set for the dns v2")
 
-func getDomainsV2Client(d *schema.ResourceData, meta interface{}) (domainsV2.DNSClient[domainsV2.Zone, domainsV2.RRSet], error) {
+func getDomainsV2Client(d *schema.ResourceData, meta any) (domainsV2.DNSClient[domainsV2.Zone, domainsV2.RRSet], error) {
 	config := meta.(*Config)
 	projectID := d.Get("project_id").(string)
 
@@ -133,10 +133,10 @@ func setRRSetToResourceData(d *schema.ResourceData, rrset *domainsV2.RRSet) erro
 }
 
 // generateSetFromRecords - generate terraform TypeList from records in RRSet.
-func generateSetFromRecords(records []domainsV2.RecordItem) []interface{} {
-	recordsAsList := []interface{}{}
+func generateSetFromRecords(records []domainsV2.RecordItem) []any {
+	recordsAsList := []any{}
 	for _, record := range records {
-		recordsAsList = append(recordsAsList, map[string]interface{}{
+		recordsAsList = append(recordsAsList, map[string]any{
 			"content":  record.Content,
 			"disabled": record.Disabled,
 		})
@@ -149,7 +149,7 @@ func generateSetFromRecords(records []domainsV2.RecordItem) []interface{} {
 func generateRecordsFromSet(recordsSet *schema.Set) []domainsV2.RecordItem {
 	records := []domainsV2.RecordItem{}
 	for _, recordItem := range recordsSet.List() {
-		record, isOk := recordItem.(map[string]interface{})
+		record, isOk := recordItem.(map[string]any)
 		if !isOk {
 			continue
 		}

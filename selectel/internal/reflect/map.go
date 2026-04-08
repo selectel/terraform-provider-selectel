@@ -2,7 +2,7 @@ package reflect
 
 import "reflect"
 
-func IsSetContainsSubset(subset, set map[string]interface{}) bool {
+func IsSetContainsSubset(subset, set map[string]any) bool {
 	for k, subsetValue := range subset {
 		setValue, ok := set[k]
 		if !ok {
@@ -10,14 +10,14 @@ func IsSetContainsSubset(subset, set map[string]interface{}) bool {
 		}
 
 		switch subsetValueTyped := subsetValue.(type) {
-		case map[string]interface{}:
-			setValueTyped, ok := setValue.(map[string]interface{})
+		case map[string]any:
+			setValueTyped, ok := setValue.(map[string]any)
 			if !ok || !IsSetContainsSubset(subsetValueTyped, setValueTyped) {
 				return false
 			}
 
-		case []interface{}:
-			setValueTyped, ok := setValue.([]interface{})
+		case []any:
+			setValueTyped, ok := setValue.([]any)
 			if !ok {
 				return false
 			}
@@ -35,20 +35,20 @@ func IsSetContainsSubset(subset, set map[string]interface{}) bool {
 	return true
 }
 
-func isArrayContainsSubarray(subarray, array []interface{}) bool {
+func isArrayContainsSubarray(subarray, array []any) bool {
 	for _, subarrayElement := range subarray {
 		found := false
 		for _, arrayElement := range array {
 			switch subarrayElementTyped := subarrayElement.(type) {
-			case map[string]interface{}:
-				arrayElementTyped, ok := arrayElement.(map[string]interface{})
+			case map[string]any:
+				arrayElementTyped, ok := arrayElement.(map[string]any)
 				if ok && IsSetContainsSubset(subarrayElementTyped, arrayElementTyped) {
 					found = true
 					break
 				}
 
-			case []interface{}:
-				arrayElementTyped, ok := arrayElement.([]interface{})
+			case []any:
+				arrayElementTyped, ok := arrayElement.([]any)
 				if ok && isArrayContainsSubarray(subarrayElementTyped, arrayElementTyped) {
 					found = true
 					break

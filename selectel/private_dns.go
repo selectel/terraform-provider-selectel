@@ -16,7 +16,7 @@ const (
 	privateDNSDefaultRetry        = 5
 )
 
-func getPrivateDNSClient(d *schema.ResourceData, meta interface{}) (*privatedns.PrivateDNSClient, diag.Diagnostics) {
+func getPrivateDNSClient(d *schema.ResourceData, meta any) (*privatedns.PrivateDNSClient, diag.Diagnostics) {
 	config := meta.(*Config)
 	projectID := d.Get("project_id").(string)
 	region := d.Get("region").(string)

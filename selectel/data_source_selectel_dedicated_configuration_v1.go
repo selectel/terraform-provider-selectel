@@ -45,7 +45,7 @@ func dataSourceDedicatedConfigurationV1() *schema.Resource {
 	}
 }
 
-func dataSourceDedicatedConfigurationV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceDedicatedConfigurationV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dsClient, diagErr := getDedicatedClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -131,10 +131,10 @@ func filterDedicatedConfigurations(list []map[string]any, filter *dedicatedConfi
 	return filteredRaw
 }
 
-func flattenDedicatedConfigurations(list []map[string]any) []interface{} {
-	res := make([]interface{}, len(list))
+func flattenDedicatedConfigurations(list []map[string]any) []any {
+	res := make([]any, len(list))
 	for i, e := range list {
-		sMap := make(map[string]interface{})
+		sMap := make(map[string]any)
 		sMap["id"] = e["uuid"]
 		sMap["name"] = e["name"]
 

@@ -86,7 +86,7 @@ func dataSourceGlobalRouterZoneV1() *schema.Resource {
 	}
 }
 
-func dataSourceGlobalRouterZoneV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceGlobalRouterZoneV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getGlobalRouterClient(meta)
 	if diagErr != nil {
 		return diagErr

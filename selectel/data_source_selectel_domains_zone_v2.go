@@ -52,7 +52,7 @@ func dataSourceDomainsZoneV2() *schema.Resource {
 	}
 }
 
-func dataSourceDomainsZoneV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceDomainsZoneV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getDomainsV2Client(d, meta)
 	if err != nil {
 		return diag.FromErr(err)

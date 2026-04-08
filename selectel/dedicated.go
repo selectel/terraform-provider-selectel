@@ -19,11 +19,11 @@ import (
 
 // serversMapsFromStructs converts the provided license.Servers to
 // the slice of maps correspondingly to the resource's schema.
-func serversMapsFromStructs(serverStructs []servers.Server) []map[string]interface{} {
-	associatedServers := make([]map[string]interface{}, len(serverStructs))
+func serversMapsFromStructs(serverStructs []servers.Server) []map[string]any {
+	associatedServers := make([]map[string]any, len(serverStructs))
 
 	for i, server := range serverStructs {
-		associatedServers[i] = map[string]interface{}{
+		associatedServers[i] = map[string]any{
 			"id":     server.ID,
 			"name":   server.Name,
 			"status": server.Status,
@@ -34,12 +34,12 @@ func serversMapsFromStructs(serverStructs []servers.Server) []map[string]interfa
 }
 
 // hashServers is a hash function to use with the "servers" set.
-func hashServers(v interface{}) int {
-	m := v.(map[string]interface{})
+func hashServers(v any) int {
+	m := v.(map[string]any)
 	return hashcode.String(fmt.Sprintf("%s-", m["id"].(string)))
 }
 
-func getDedicatedClient(d *schema.ResourceData, meta interface{}) (*dedicated.ServiceClient, diag.Diagnostics) {
+func getDedicatedClient(d *schema.ResourceData, meta any) (*dedicated.ServiceClient, diag.Diagnostics) {
 	config := meta.(*Config)
 	projectID := d.Get(dedicatedServerSchemaKeyProjectID).(string)
 
@@ -356,12 +356,12 @@ func resourceDedicatedServerV1ReadPartitionsConfig(d *schema.ResourceData) (*Par
 		return res, nil
 	}
 
-	partitionsConfigRaw, ok := v.([]interface{})
+	partitionsConfigRaw, ok := v.([]any)
 	if !ok || len(partitionsConfigRaw) != 1 {
 		return nil, errors.New("partitions_config has unexpected type")
 	}
 
-	partitionsConfig, ok := partitionsConfigRaw[0].(map[string]interface{})
+	partitionsConfig, ok := partitionsConfigRaw[0].(map[string]any)
 	if !ok {
 		return nil, errors.New("partitions_config has unexpected type")
 	}
@@ -380,16 +380,16 @@ func resourceDedicatedServerV1ReadPartitionsConfig(d *schema.ResourceData) (*Par
 	return res, nil
 }
 
-func resourceDedicatedServerV1ReadPartitionsConfigSoftRaid(partitionsConfig map[string]interface{}) ([]*SoftRaidConfigItem, error) {
-	srCfgRaw, ok := partitionsConfig[dedicatedServerSchemaKeySoftRaidConfig].([]interface{})
+func resourceDedicatedServerV1ReadPartitionsConfigSoftRaid(partitionsConfig map[string]any) ([]*SoftRaidConfigItem, error) {
+	srCfgRaw, ok := partitionsConfig[dedicatedServerSchemaKeySoftRaidConfig].([]any)
 	if !ok {
-		srCfgRaw = make([]interface{}, 0)
+		srCfgRaw = make([]any, 0)
 	}
 
 	res := make([]*SoftRaidConfigItem, 0, len(srCfgRaw))
 
 	for idx, itemRaw := range srCfgRaw {
-		item, ok := itemRaw.(map[string]interface{})
+		item, ok := itemRaw.(map[string]any)
 		if !ok {
 			return nil, fmt.Errorf("partitions_config.soft_raid_config[%d] has unexpected type", idx)
 		}
@@ -419,16 +419,16 @@ func resourceDedicatedServerV1ReadPartitionsConfigSoftRaid(partitionsConfig map[
 	return res, nil
 }
 
-func resourceDedicatedServerV1ReadPartitionsConfigDiskPartitions(partitionsConfig map[string]interface{}) ([]*DiskPartitionsItem, error) {
-	dpCfgRaw, ok := partitionsConfig[dedicatedServerSchemaKeyDiskPartitions].([]interface{})
+func resourceDedicatedServerV1ReadPartitionsConfigDiskPartitions(partitionsConfig map[string]any) ([]*DiskPartitionsItem, error) {
+	dpCfgRaw, ok := partitionsConfig[dedicatedServerSchemaKeyDiskPartitions].([]any)
 	if !ok {
-		dpCfgRaw = make([]interface{}, 0)
+		dpCfgRaw = make([]any, 0)
 	}
 
 	res := make([]*DiskPartitionsItem, 0, len(dpCfgRaw))
 
 	for idx, itemRaw := range dpCfgRaw {
-		item, ok := itemRaw.(map[string]interface{})
+		item, ok := itemRaw.(map[string]any)
 		if !ok {
 			return nil, fmt.Errorf("partitions_config.disk_partitions[%d] has unexpected type", idx)
 		}

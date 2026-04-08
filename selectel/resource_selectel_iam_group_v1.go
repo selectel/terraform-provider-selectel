@@ -60,7 +60,7 @@ func resourceIAMGroupV1() *schema.Resource {
 	}
 }
 
-func resourceIAMGroupV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMGroupV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	iamClient, diagErr := getIAMClient(meta)
@@ -101,7 +101,7 @@ func resourceIAMGroupV1Create(ctx context.Context, d *schema.ResourceData, meta 
 	return diags
 }
 
-func resourceIAMGroupV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMGroupV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -118,7 +118,7 @@ func resourceIAMGroupV1Read(ctx context.Context, d *schema.ResourceData, meta in
 	return nil
 }
 
-func resourceIAMGroupV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMGroupV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	iamClient, diagErr := getIAMClient(meta)
@@ -170,7 +170,7 @@ func resourceIAMGroupV1Update(ctx context.Context, d *schema.ResourceData, meta 
 	return diags
 }
 
-func resourceIAMGroupV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMGroupV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr

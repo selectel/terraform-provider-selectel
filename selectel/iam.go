@@ -25,7 +25,7 @@ var (
 	deprecatedRolesCacheOnce sync.Once
 )
 
-func getIAMClient(meta interface{}) (*iam.Client, diag.Diagnostics) {
+func getIAMClient(meta any) (*iam.Client, diag.Diagnostics) {
 	config := meta.(*Config)
 
 	selvpcClient, err := config.GetSelVPCClient()
@@ -79,20 +79,20 @@ func diffRoles(oldRoles, newRoles []roles.Role) ([]roles.Role, []roles.Role) {
 	return rolesToUnassign, rolesToAssign
 }
 
-func convertIAMListToUserFederation(federationList []interface{}) (*users.Federation, error) {
+func convertIAMListToUserFederation(federationList []any) (*users.Federation, error) {
 	if len(federationList) == 0 {
 		return nil, nil
 	}
 	if len(federationList) > 1 {
 		return nil, errors.New("more than one federation value provided")
 	}
-	var idRaw, externalIDRaw interface{}
+	var idRaw, externalIDRaw any
 	var ok bool
 
-	if idRaw, ok = federationList[0].(map[string]interface{})["id"]; !ok {
+	if idRaw, ok = federationList[0].(map[string]any)["id"]; !ok {
 		return nil, errors.New("federation.id value isn't provided")
 	}
-	if externalIDRaw, ok = federationList[0].(map[string]interface{})["external_id"]; !ok {
+	if externalIDRaw, ok = federationList[0].(map[string]any)["external_id"]; !ok {
 		return nil, errors.New("federation.external_id value isn't provided")
 	}
 
@@ -111,11 +111,11 @@ func convertIAMSetToRoles(rolesSet *schema.Set) ([]roles.Role, error) {
 	rolesList := rolesSet.List()
 
 	output := make([]roles.Role, len(rolesList))
-	var roleNameRaw, scopeRaw, projectIDRaw interface{}
+	var roleNameRaw, scopeRaw, projectIDRaw any
 
 	for i := range rolesList {
 		var roleName, scope, projectID string
-		resourceRoleMap := rolesList[i].(map[string]interface{})
+		resourceRoleMap := rolesList[i].(map[string]any)
 
 		if roleNameRaw = resourceRoleMap["role_name"]; roleNameRaw == "" {
 			return nil, errors.New("role_name value isn't provided")
@@ -146,10 +146,10 @@ func convertIAMSetToRoles(rolesSet *schema.Set) ([]roles.Role, error) {
 	return output, nil
 }
 
-func convertIAMRolesToSet(roles []roles.Role) []interface{} {
-	result := make([]interface{}, 0, len(roles))
+func convertIAMRolesToSet(roles []roles.Role) []any {
+	result := make([]any, 0, len(roles))
 	for _, role := range roles {
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"role_name":  role.RoleName,
 			"scope":      role.Scope,
 			"project_id": role.ProjectID,
@@ -159,20 +159,20 @@ func convertIAMRolesToSet(roles []roles.Role) []interface{} {
 	return result
 }
 
-func convertIAMFederationToList(federation *users.Federation) []interface{} {
+func convertIAMFederationToList(federation *users.Federation) []any {
 	if federation == nil {
 		return nil
 	}
 
-	return []interface{}{
-		map[string]interface{}{
+	return []any{
+		map[string]any{
 			"id":          federation.ID,
 			"external_id": federation.ExternalID,
 		},
 	}
 }
 
-func checkDeprecatedRoles(ctx context.Context, meta interface{}, assignedRoles []roles.Role) diag.Diagnostics {
+func checkDeprecatedRoles(ctx context.Context, meta any, assignedRoles []roles.Role) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if len(assignedRoles) == 0 {
@@ -197,7 +197,7 @@ func checkDeprecatedRoles(ctx context.Context, meta interface{}, assignedRoles [
 	return diags
 }
 
-func getDeprecatedRoles(ctx context.Context, meta interface{}) (map[string]bool, diag.Diagnostics) {
+func getDeprecatedRoles(ctx context.Context, meta any) (map[string]bool, diag.Diagnostics) {
 	deprecatedRolesCacheOnce.Do(func() {
 		iamClient, diagErr := getIAMClient(meta)
 		if diagErr != nil {

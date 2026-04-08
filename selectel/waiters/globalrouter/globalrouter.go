@@ -200,7 +200,7 @@ func WaitForStaticRouteV1Deleted(
 }
 
 func routerV1RefreshFunc(ctx context.Context, client *globalrouter.ServiceClient, id string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		p, _, err := client.Router(ctx, id)
 		if err != nil {
 			return nil, "", err
@@ -215,7 +215,7 @@ func routerV1RefreshFunc(ctx context.Context, client *globalrouter.ServiceClient
 }
 
 func routerV1DeleteRefreshFunc(ctx context.Context, client *globalrouter.ServiceClient, id string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		p, resp, err := client.Router(ctx, id)
 		switch {
 		case resp != nil && resp.StatusCode == http.StatusNotFound:
@@ -229,7 +229,7 @@ func routerV1DeleteRefreshFunc(ctx context.Context, client *globalrouter.Service
 }
 
 func networkV1RefreshFunc(ctx context.Context, client *globalrouter.ServiceClient, id string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		p, _, err := client.Network(ctx, id)
 		if err != nil {
 			return nil, "", err
@@ -244,7 +244,7 @@ func networkV1RefreshFunc(ctx context.Context, client *globalrouter.ServiceClien
 }
 
 func networkV1DeleteRefreshFunc(ctx context.Context, client *globalrouter.ServiceClient, id string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		p, resp, err := client.Network(ctx, id)
 		switch {
 		case resp != nil && resp.StatusCode == http.StatusNotFound:
@@ -258,7 +258,7 @@ func networkV1DeleteRefreshFunc(ctx context.Context, client *globalrouter.Servic
 }
 
 func subnetV1RefreshFunc(ctx context.Context, client *globalrouter.ServiceClient, id string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		p, _, err := client.Subnet(ctx, id)
 		if err != nil {
 			return nil, "", err
@@ -273,7 +273,7 @@ func subnetV1RefreshFunc(ctx context.Context, client *globalrouter.ServiceClient
 }
 
 func subnetV1DeleteRefreshFunc(ctx context.Context, client *globalrouter.ServiceClient, id string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		p, resp, err := client.Subnet(ctx, id)
 		switch {
 		case resp != nil && resp.StatusCode == http.StatusNotFound:
@@ -287,7 +287,7 @@ func subnetV1DeleteRefreshFunc(ctx context.Context, client *globalrouter.Service
 }
 
 func staticRouteV1RefreshFunc(ctx context.Context, client *globalrouter.ServiceClient, id string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		p, _, err := client.StaticRoute(ctx, id)
 		if err != nil {
 			return nil, "", err
@@ -302,7 +302,7 @@ func staticRouteV1RefreshFunc(ctx context.Context, client *globalrouter.ServiceC
 }
 
 func staticRouteV1DeleteRefreshFunc(ctx context.Context, client *globalrouter.ServiceClient, id string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		p, resp, err := client.StaticRoute(ctx, id)
 		switch {
 		case resp != nil && resp.StatusCode == http.StatusNotFound:

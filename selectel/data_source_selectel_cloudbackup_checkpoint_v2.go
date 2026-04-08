@@ -140,7 +140,7 @@ func dataSourceCloudBackupCheckpointV2() *schema.Resource {
 	}
 }
 
-func dataSourceCloudBackupCheckpointV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceCloudBackupCheckpointV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	filter := expandCloudBlockStorageBackupCheckpointsSearchFilter(d)
 
 	log.Printf("[DEBUG] Getting %s '%#v'", objectCloudBackupCheckpoint, filter)
@@ -173,7 +173,7 @@ func dataSourceCloudBackupCheckpointV2Read(ctx context.Context, d *schema.Resour
 }
 
 func dataSourceCloudBackupCheckpointV2LoadCheckpoints(
-	ctx context.Context, d *schema.ResourceData, meta interface{}, filter cloudBackupCheckpointsFilter,
+	ctx context.Context, d *schema.ResourceData, meta any, filter cloudBackupCheckpointsFilter,
 ) ([]*cloudbackup.Checkpoint, diag.Diagnostics) {
 	client, diagErr := getScheduledBackupClient(d, meta)
 	if diagErr != nil {
@@ -226,7 +226,7 @@ func expandCloudBlockStorageBackupCheckpointsSearchFilter(d *schema.ResourceData
 		return filter
 	}
 
-	resourceFilterMap := filterSet.List()[0].(map[string]interface{})
+	resourceFilterMap := filterSet.List()[0].(map[string]any)
 
 	planName, ok := resourceFilterMap["plan_name"]
 	if ok {
@@ -241,18 +241,18 @@ func expandCloudBlockStorageBackupCheckpointsSearchFilter(d *schema.ResourceData
 	return filter
 }
 
-func flattenCloudBlockStorageBackupCheckpoints(list []*cloudbackup.Checkpoint) []interface{} {
-	checkpoints := make([]interface{}, len(list))
+func flattenCloudBlockStorageBackupCheckpoints(list []*cloudbackup.Checkpoint) []any {
+	checkpoints := make([]any, len(list))
 	for i, e := range list {
-		sMap := make(map[string]interface{})
+		sMap := make(map[string]any)
 		sMap["id"] = e.ID
 		sMap["plan_id"] = e.PlanID
 		sMap["created_at"] = e.CreatedAt
 		sMap["status"] = e.Status
 
-		items := make([]interface{}, len(e.CheckpointItems))
+		items := make([]any, len(e.CheckpointItems))
 		for j, item := range e.CheckpointItems {
-			itemMap := make(map[string]interface{})
+			itemMap := make(map[string]any)
 			itemMap["id"] = item.ID
 			itemMap["backup_id"] = item.BackupID
 			itemMap["chain_id"] = item.ChainID
@@ -262,8 +262,8 @@ func flattenCloudBlockStorageBackupCheckpoints(list []*cloudbackup.Checkpoint) [
 			itemMap["is_incremental"] = item.IsIncremental
 			itemMap["status"] = item.Status
 
-			resource := make([]interface{}, 1)
-			resourceMap := make(map[string]interface{})
+			resource := make([]any, 1)
+			resourceMap := make(map[string]any)
 			resourceMap["id"] = item.Resource.ID
 			resourceMap["name"] = item.Resource.Name
 			resourceMap["type"] = item.Resource.Type
@@ -277,8 +277,8 @@ func flattenCloudBlockStorageBackupCheckpoints(list []*cloudbackup.Checkpoint) [
 		checkpoints[i] = sMap
 	}
 
-	return []interface{}{
-		map[string]interface{}{
+	return []any{
+		map[string]any{
 			"list":  checkpoints,
 			"total": len(checkpoints),
 		},

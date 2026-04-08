@@ -107,7 +107,7 @@ func dataSourceDBaaSConfigurationParameterV1() *schema.Resource {
 	}
 }
 
-func dataSourceDBaaSConfigurationParameterV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceDBaaSConfigurationParameterV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -150,7 +150,7 @@ func expandConfigurationParameterSearchFilter(filterSet *schema.Set) (configurat
 		return filter, nil
 	}
 
-	resourceFilterMap := filterSet.List()[0].(map[string]interface{})
+	resourceFilterMap := filterSet.List()[0].(map[string]any)
 
 	datastoreTypeID, ok := resourceFilterMap["datastore_type_id"]
 	if ok {
@@ -195,7 +195,7 @@ func filterConfigurationParametersByName(configurationParameters []dbaas.Configu
 	return filteredConfigurationParameters
 }
 
-func convertListParametersTypes(parameters []interface{}) []string {
+func convertListParametersTypes(parameters []any) []string {
 	parameterList := make([]string, len(parameters))
 	for i, value := range parameters {
 		parameterList[i] = convertFieldToStringByType(value)
@@ -204,10 +204,10 @@ func convertListParametersTypes(parameters []interface{}) []string {
 	return parameterList
 }
 
-func flattenDBaaSConfigurationParameters(configurationParameters []dbaas.ConfigurationParameter) []interface{} {
-	configurationParametersList := make([]interface{}, len(configurationParameters))
+func flattenDBaaSConfigurationParameters(configurationParameters []dbaas.ConfigurationParameter) []any {
+	configurationParametersList := make([]any, len(configurationParameters))
 	for i, param := range configurationParameters {
-		configurationParametersMap := make(map[string]interface{})
+		configurationParametersMap := make(map[string]any)
 		configurationParametersMap["id"] = param.ID
 		configurationParametersMap["datastore_type_id"] = param.DatastoreTypeID
 		configurationParametersMap["name"] = param.Name

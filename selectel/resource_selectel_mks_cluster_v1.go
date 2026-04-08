@@ -40,7 +40,7 @@ func resourceMKSClusterV1() *schema.Resource {
 			},
 			customdiff.ComputedIf(
 				"maintenance_window_end",
-				func(_ context.Context, d *schema.ResourceDiff, _ interface{}) bool {
+				func(_ context.Context, d *schema.ResourceDiff, _ any) bool {
 					return d.HasChange("maintenance_window_start")
 				}),
 		),
@@ -74,7 +74,7 @@ func resourceMKSClusterV1() *schema.Resource {
 				Required:         true,
 				ForceNew:         false,
 				DiffSuppressFunc: mksClusterV1KubeVersionDiffSuppressFunc,
-				StateFunc: func(v interface{}) string {
+				StateFunc: func(v any) string {
 					return strings.TrimPrefix(v.(string), "v")
 				},
 			},
@@ -159,7 +159,7 @@ func resourceMKSClusterV1() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				StateFunc: func(v interface{}) string {
+				StateFunc: func(v any) string {
 					return strings.ToUpper(v.(string))
 				},
 				ValidateFunc: validation.StringInSlice([]string{
@@ -259,7 +259,7 @@ func resourceMKSClusterV1() *schema.Resource {
 	}
 }
 
-func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	mksClient, diagErr := getMKSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -374,7 +374,7 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 	return resourceMKSClusterV1Read(ctx, d, meta)
 }
 
-func resourceMKSClusterV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMKSClusterV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	mksClient, diagErr := getMKSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -416,7 +416,7 @@ func resourceMKSClusterV1Read(ctx context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
-func resourceMKSClusterV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMKSClusterV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	mksClient, diagErr := getMKSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -492,7 +492,7 @@ func resourceMKSClusterV1Update(ctx context.Context, d *schema.ResourceData, met
 	return resourceMKSClusterV1Read(ctx, d, meta)
 }
 
-func resourceMKSClusterV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMKSClusterV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	mksClient, diagErr := getMKSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -507,7 +507,7 @@ func resourceMKSClusterV1Delete(ctx context.Context, d *schema.ResourceData, met
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{strconv.Itoa(http.StatusOK)},
 		Target:  []string{strconv.Itoa(http.StatusNotFound)},
-		Refresh: func() (result interface{}, state string, err error) {
+		Refresh: func() (result any, state string, err error) {
 			result, response, err := cluster.Get(ctx, mksClient, d.Id())
 			if err != nil {
 				if response != nil {
@@ -533,7 +533,7 @@ func resourceMKSClusterV1Delete(ctx context.Context, d *schema.ResourceData, met
 	return nil
 }
 
-func resourceMKSClusterV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceMKSClusterV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")

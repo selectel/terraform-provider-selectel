@@ -48,7 +48,7 @@ func resourceCRaaSTokenV1() *schema.Resource {
 	}
 }
 
-func resourceCRaaSTokenV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceCRaaSTokenV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	craasClient, diagErr := getCRaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -72,7 +72,7 @@ func resourceCRaaSTokenV1Create(ctx context.Context, d *schema.ResourceData, met
 	return resourceCRaaSTokenV1Read(ctx, d, meta)
 }
 
-func resourceCRaaSTokenV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceCRaaSTokenV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	craasClient, diagErr := getCRaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -97,7 +97,7 @@ func resourceCRaaSTokenV1Read(ctx context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
-func resourceCRaaSTokenV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceCRaaSTokenV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	craasClient, diagErr := getCRaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr

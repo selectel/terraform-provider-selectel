@@ -206,7 +206,7 @@ func Provider(providerVersion string) *schema.Provider {
 		},
 	}
 
-	p.ConfigureContextFunc = func(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+	p.ConfigureContextFunc = func(_ context.Context, d *schema.ResourceData) (any, diag.Diagnostics) {
 		userAgent := p.UserAgent(version.ProviderName, providerVersion)
 		client, diagErr := configureProvider(d, userAgent)
 		if diagErr != nil {
@@ -219,7 +219,7 @@ func Provider(providerVersion string) *schema.Provider {
 	return p
 }
 
-func configureProvider(d *schema.ResourceData, userAgent string) (interface{}, diag.Diagnostics) {
+func configureProvider(d *schema.ResourceData, userAgent string) (any, diag.Diagnostics) {
 	config, diagError := getConfig(d, userAgent)
 	if diagError != nil {
 		return nil, diagError

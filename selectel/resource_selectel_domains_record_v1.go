@@ -126,7 +126,7 @@ func resourceDomainsRecordV1() *schema.Resource {
 	}
 }
 
-func resourceDomainsRecordV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsRecordV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	domainID := d.Get("domain_id").(int)
 	selMutexKV.Lock(strconv.Itoa(domainID))
 	defer selMutexKV.Unlock(strconv.Itoa(domainID))
@@ -170,7 +170,7 @@ func resourceDomainsRecordV1Create(ctx context.Context, d *schema.ResourceData, 
 	return resourceDomainsRecordV1Read(ctx, d, meta)
 }
 
-func resourceDomainsRecordV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsRecordV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getDomainsClient(meta)
 	if err != nil {
 		return diag.FromErr(err)
@@ -213,7 +213,7 @@ func resourceDomainsRecordV1Read(ctx context.Context, d *schema.ResourceData, me
 	return nil
 }
 
-func resourceDomainsRecordV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsRecordV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	domainID, recordID, err := domainsV1ParseDomainRecordIDsPair(d.Id())
 	if err != nil {
 		d.SetId("")
@@ -254,7 +254,7 @@ func resourceDomainsRecordV1Update(ctx context.Context, d *schema.ResourceData, 
 	return resourceDomainsRecordV1Read(ctx, d, meta)
 }
 
-func resourceDomainsRecordV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsRecordV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	domainID, recordID, err := domainsV1ParseDomainRecordIDsPair(d.Id())
 	if err != nil {
 		d.SetId("")

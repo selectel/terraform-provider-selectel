@@ -101,7 +101,7 @@ func resourceGlobalRouterVPCNetworkV1() *schema.Resource {
 	}
 }
 
-func resourceGlobalRouterVPCNetworkV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceGlobalRouterVPCNetworkV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getGlobalRouterClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -140,7 +140,7 @@ func resourceGlobalRouterVPCNetworkV1Create(ctx context.Context, d *schema.Resou
 	return resourceGlobalRouterVPCNetworkV1Read(ctx, d, meta)
 }
 
-func resourceGlobalRouterVPCNetworkV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceGlobalRouterVPCNetworkV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getGlobalRouterClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -172,7 +172,7 @@ func resourceGlobalRouterVPCNetworkV1Read(ctx context.Context, d *schema.Resourc
 	return nil
 }
 
-func resourceGlobalRouterVPCNetworkV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceGlobalRouterVPCNetworkV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getGlobalRouterClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -217,7 +217,7 @@ func resourceGlobalRouterVPCNetworkV1Update(ctx context.Context, d *schema.Resou
 	return nil
 }
 
-func resourceGlobalRouterVPCNetworkV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceGlobalRouterVPCNetworkV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getGlobalRouterClient(meta)
 	if diagErr != nil {
 		return diagErr
