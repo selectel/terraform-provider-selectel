@@ -24,6 +24,8 @@ resource "selectel_dedicated_server_v1" "server_1" {
   os_host_name     = "Turing"
   public_subnet_id = data.selectel_dedicated_public_subnet_v1.subnets.subnets[0].id
   # public_subnet_ip = data.selectel_dedicated_public_subnet_v1.subnets.subnets[0].ip
+  private_subnet_id = var.private_subnet_id  # Optional: Private subnet ID
+  private_subnet_ip = "192.168.100.10"       # Optional: Specific private IP
   ssh_key_name     = "deploy-ed25519"
   os_password      = "Passw0rd!"
   user_data        = file("init-script-dir/init.sh")
@@ -105,6 +107,14 @@ resource "selectel_dedicated_server_v1" "server_1" {
 
 * `public_subnet_ip` - (Optional) Public IP to use. Can be set instead of `public_subnet_id`.
 
+* `private_subnet_id` - (Optional) ID of the private subnet to connect the server to. Changing this forces the server to be recreated.
+
+* `private_subnet_ip` - (Optional) Specific private IP address to assign to the server within the private subnet. Used in conjunction with `private_subnet_id`.
+
+* `add_private_vlan` - (Optional) If set to `true`, creates a private VLAN for the server during creation. Defaults to `false`.
+
+* `private_vlan` - (Computed) The VLAN ID of the private subnet assigned to the server. Returned when a private VLAN is configured or created for the server.
+
 * `os_host_name` - (Optional) Hostname for the server.
 
 * `force_update_additional_params` - (Optional) Enable or disable update for additional os params (os_password, user_data, ssh_key, ssh_key_name, partitions_config, os_host_name) without changing os_id. NOTE: installing new os will delete all data on the server.
@@ -114,6 +124,9 @@ resource "selectel_dedicated_server_v1" "server_1" {
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - Unique identifier of the server.
+* `public_ip` - Public IP address of the server.
+* `private_ip` - Private IP address of the server.
+* `private_vlan` - The VLAN ID of the private subnet assigned to the server. Returned when a private VLAN is configured or created for the server.
 
 ## Import
 

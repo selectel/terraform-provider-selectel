@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	dedicated "github.com/selectel/dedicated-go/pkg/v2"
+	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
 )
 
 func dataSourceDedicatedPublicSubnetV1() *schema.Resource {
@@ -84,7 +84,7 @@ func dataSourceDedicatedPublicSubnetV1() *schema.Resource {
 }
 
 func dataSourceDedicatedPublicSubnetV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -102,7 +102,9 @@ func dataSourceDedicatedPublicSubnetV1Read(ctx context.Context, d *schema.Resour
 	}
 
 	subnetsFlatten := flattenDedicatedPublicSubnets(filteredSubnets, filter)
-	if err := d.Set("subnets", subnetsFlatten); err != nil {
+
+	err = d.Set("subnets", subnetsFlatten)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
