@@ -33,7 +33,7 @@ resource "selectel_iam_group_v1" "group_1" {
 
 * `role` - (Optional) Manages group roles. You can add multiple roles – each role in a separate block. For more information about roles, see the [Roles](#roles) section.
 
-    * `role_name` - (Required) Role name. Available role names are `iam_admin`, `member`, `reader`, and `billing`.
+    * `role_name` - (Required) Role name. Available role names are `iam.admin`, `member`, `reader`, and `billing`.
 
     * `scope` - (Required) Scope of the role. Available scopes are `account` and `project`. If `scope` is `project`, the `project_id` argument is required.
 
@@ -47,7 +47,7 @@ To assign roles, use the following values for `scope` and `role_name`:
 
 * Billing administrator - `scope` is `account`, `role_name` is `billing`.
 
-* User administrator - `scope` is `account`, `role_name` is `iam_admin`.
+* User administrator - `scope` is `account`, `role_name` is `iam.admin`.
 
 * Project administrator - `scope` is `project`, `role_name` is `member`.
 
