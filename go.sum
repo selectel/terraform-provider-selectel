@@ -189,6 +189,8 @@ github.com/selectel/craas-go v0.4.2 h1:sfCpA9PygkBKeDOkuGgBAOemp6PSJOL58m47hkvtO
 github.com/selectel/craas-go v0.4.2/go.mod h1:9RAUn9PdMITP4I3GAade6v2hjB2j3lo3J2dDlG5SLYE=
 github.com/selectel/dbaas-go v0.18.0 h1:IrnEt/6ETx6oKvV4est6RGei4AebrUPN/njczZfbVL0=
 github.com/selectel/dbaas-go v0.18.0/go.mod h1:KU+HEvlHGdq4hgHaKagz+JvCIAVya1N+ugZIaea0m4Y=
+github.com/selectel/dedicated-go/v2 v2.1.0 h1:S0H80vYOUrgSPb1jlXzuaN8L+7XRCb1ZoPSip163r0I=
+github.com/selectel/dedicated-go/v2 v2.1.0/go.mod h1:4x2656DDXxvQdEVGVO27/PcgydBuQwiqw2E7nFDbVVM=
 github.com/selectel/domains-go v1.0.2 h1:Si6iGaMnTFJxwiJVI50DOdZnwcxc87kqaWrVQYW0a4U=
 github.com/selectel/domains-go v1.0.2/go.mod h1:SugRKfq4sTpnOHquslCpzda72wV8u0cMBHx0C0l+bzA=
 github.com/selectel/globalrouter-go v1.2.0 h1:hNwxN9YAEaGSsveZ35u1m3CqTWjKIyIfvibJID8aEl0=
