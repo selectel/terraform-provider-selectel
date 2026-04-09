@@ -683,7 +683,7 @@ func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData
 			UserHostname:     hostName,
 			Password:         password,
 			PartitionsConfig: data.partitions,
-			UserData:         userData,
+			UserData:         &userData,
 		}
 	)
 
