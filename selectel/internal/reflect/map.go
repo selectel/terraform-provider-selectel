@@ -10,7 +10,6 @@ func IsSetContainsSubset(subset map[string]interface{}, set any) bool {
 }
 
 func match(subset map[string]interface{}, val reflect.Value) bool {
-	// разыменовываем указатели
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}
@@ -47,7 +46,6 @@ func match(subset map[string]interface{}, val reflect.Value) bool {
 
 func matchValue(subsetValue any, setValue any) bool {
 	switch subsetValueTyped := subsetValue.(type) {
-
 	case map[string]interface{}:
 		return IsSetContainsSubset(subsetValueTyped, setValue)
 
@@ -56,6 +54,7 @@ func matchValue(subsetValue any, setValue any) bool {
 		if !ok {
 			return false
 		}
+
 		return isArrayContainsSubarray(subsetValueTyped, setSlice)
 
 	default:
