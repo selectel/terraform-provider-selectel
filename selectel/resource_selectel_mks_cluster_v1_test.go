@@ -20,7 +20,7 @@ import (
 
 func TestAccMKSClusterV1Basic(t *testing.T) {
 	var (
-		mksCluster cluster.View
+		mksCluster cluster.GetView
 		project    projects.Project
 	)
 
@@ -54,6 +54,9 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_patch_version_auto_upgrade", "true"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_start", maintenanceWindowStart),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "status", "ACTIVE"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "cni_type", "CILIUM"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "cni_cilium_settings.0.envoy_daemonset", "false"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "cni_cilium_settings.0.hubble_relay", "true"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "feature_gates.0", defaultFeatureGates[0]),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "admission_controllers.0", defaultAdmissionControllers[0]),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_audit_logs", "false"),
@@ -77,6 +80,9 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_pod_security_policy", "false"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "maintenance_window_start", maintenanceWindowStartUpdated),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "status", "ACTIVE"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "cni_type", "CILIUM"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "cni_cilium_settings.0.envoy_daemonset", "false"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "cni_cilium_settings.0.hubble_relay", "true"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "feature_gates.0", defaultFeatureGates[1]),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "admission_controllers.0", defaultAdmissionControllers[1]),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_audit_logs", "true"),
@@ -95,7 +101,7 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 
 func TestAccMKSClusterV1Zonal(t *testing.T) {
 	var (
-		mksCluster cluster.View
+		mksCluster cluster.GetView
 		project    projects.Project
 	)
 
@@ -139,7 +145,7 @@ func TestAccMKSClusterV1Zonal(t *testing.T) {
 
 func TestAccMKSClusterV1PrivateKubeAPI(t *testing.T) {
 	var (
-		mksCluster cluster.View
+		mksCluster cluster.GetView
 		project    projects.Project
 	)
 
@@ -237,7 +243,7 @@ func testAccCheckMKSClusterV1DefaultKubeVersion(n string, kubeVersion *string) r
 	}
 }
 
-func testAccCheckMKSClusterV1Exists(n string, mksCluster *cluster.View) resource.TestCheckFunc {
+func testAccCheckMKSClusterV1Exists(n string, mksCluster *cluster.GetView) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -297,6 +303,11 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
   kube_version             = "%s"
   project_id               = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region                   = "ru-9"
+  cni_type                 = "CILIUM"
+  cni_cilium_settings {
+    envoy_daemonset = false
+    hubble_relay    = true
+  }
   maintenance_window_start = "%s"
   feature_gates            = [%s]
   admission_controllers    = [%s]
@@ -316,6 +327,11 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
   kube_version = "%s"
   project_id                        = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region                            = "ru-9"
+  cni_type                          = "CILIUM"
+  cni_cilium_settings {
+    envoy_daemonset = false
+    hubble_relay    = true
+  }
   maintenance_window_start          = "%s"
   enable_autorepair                 = false
   enable_patch_version_auto_upgrade = false

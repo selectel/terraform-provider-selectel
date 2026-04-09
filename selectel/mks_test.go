@@ -820,6 +820,16 @@ var testQuotasFull = []*quotas.Quota{
 		},
 	},
 	{
+		Name: "volume_gigabytes_basicssd",
+		ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
+			{
+				Zone:  "ru-9a",
+				Value: 10,
+				Used:  10,
+			},
+		},
+	},
+	{
 		Name: "volume_gigabytes_universal",
 		ResourceQuotasEntities: []quotas.ResourceQuotaEntity{
 			{
@@ -903,6 +913,22 @@ func TestCheckQuotasForNodegroupErrBasicVolume(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "not enough basic volume quota to create nodes")
+}
+
+func TestCheckQuotasForNodegroupErrBasicSSDVolume(t *testing.T) {
+	testNodegroupOpts := nodegroup.CreateOpts{
+		Count:            1,
+		CPUs:             0,
+		RAMMB:            0,
+		VolumeType:       "basicssd.ru-9a",
+		VolumeGB:         1,
+		AvailabilityZone: "ru-9a",
+	}
+
+	err := checkQuotasForNodegroup(testQuotasFull, &testNodegroupOpts)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not enough basicssd volume quota to create nodes")
 }
 
 func TestCheckQuotasForNodegroupErrUniversalVolume(t *testing.T) {
