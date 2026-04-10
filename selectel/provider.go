@@ -26,6 +26,8 @@ const (
 	objectSAMLFederation               = "saml federation"
 	objectSAMLFederationCertificate    = "saml federation certificate"
 	objectSAMLFederationGroupMappings  = "saml federation group mappings"
+	objectOIDCFederation               = "oidc federation"
+	objectOIDCFederationGroupMappings  = "oidc federation group mappings"
 	objectGroup                        = "group"
 	objectGroupMembership              = "group-membership"
 	objectCluster                      = "cluster"
@@ -163,6 +165,8 @@ func Provider(providerVersion string) *schema.Provider {
 			"selectel_iam_saml_federation_v1":                       resourceIAMSAMLFederationV1(),
 			"selectel_iam_saml_federation_certificate_v1":           resourceIAMSAMLFederationCertificateV1(),
 			"selectel_iam_saml_federation_group_mappings_v1":        resourceIAMSAMLFederationGroupMappingsV1(),
+			"selectel_iam_oidc_federation_v1":                       resourceIAMOIDCFederationV1(),
+			"selectel_iam_oidc_federation_group_mappings_v1":        resourceIAMOIDCFederationGroupMappingsV1(),
 			"selectel_iam_group_v1":                                 resourceIAMGroupV1(),
 			"selectel_iam_group_membership_v1":                      resourceIAMGroupMembershipV1(),
 			"selectel_mks_cluster_v1":                               resourceMKSClusterV1(),
