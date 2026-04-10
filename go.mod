@@ -13,7 +13,7 @@ require (
 	github.com/selectel/domains-go v1.0.2
 	github.com/selectel/globalrouter-go v1.2.0
 	github.com/selectel/go-selvpcclient/v4 v4.2.0
-	github.com/selectel/iam-go v0.8.1
+	github.com/selectel/iam-go v0.8.2-0.20260402132528-00c244ccdefb
 	github.com/selectel/mks-go v1.0.0
 	github.com/selectel/private-dns-go v1.0.0
 	github.com/selectel/secretsmanager-go v0.2.1
