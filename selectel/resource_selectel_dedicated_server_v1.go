@@ -198,7 +198,13 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 	}
 
 	if len(resourceOS.PartitionsConfig) > 0 {
-		partitionsConfig, err := apiPartitionsConfigToSchema(resourceOS.PartitionsConfig)
+		existingNamesByType := resourceDedicatedServerV1ReadExistingDiskNames(d)
+		existingMounts := resourceDedicatedServerV1ReadExistingDiskPartitionMounts(d)
+		existingDiskNameByMount := resourceDedicatedServerV1ReadExistingDiskNameByMount(d)
+		existingDiskConfigOrder := resourceDedicatedServerV1ReadExistingDiskConfigOrder(d)
+		existingRaidNamesByKey := resourceDedicatedServerV1ReadExistingRaidNames(d)
+		existingRaidConfigOrder := resourceDedicatedServerV1ReadExistingRaidConfigOrder(d)
+		partitionsConfig, err := apiPartitionsConfigToSchema(resourceOS.PartitionsConfig, existingNamesByType, existingMounts, existingDiskNameByMount, existingDiskConfigOrder, existingRaidNamesByKey, existingRaidConfigOrder)
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("failed to convert partitions config: %w", err))
 		}
@@ -454,6 +460,251 @@ func resourceDedicatedServerV1CreateValidatePreconditions(
 	return nil
 }
 
+// resourceDedicatedServerV1ReadExistingDiskNames reads disk_config entries already in state and
+// returns them grouped by disk_type. apiPartitionsConfigToSchema uses these names to preserve
+// user-defined labels (e.g. "system", "backup") across Read cycles instead of regenerating
+// generic names like "disk-ssd-sata".
+func resourceDedicatedServerV1ReadExistingDiskNames(d *schema.ResourceData) map[string][]string {
+	result := make(map[string][]string)
+
+	rawList, ok := d.GetOk(dedicatedServerSchemaKeyOSPartitionsConfig)
+	if !ok {
+		return result
+	}
+
+	pList, ok := rawList.([]interface{})
+	if !ok || len(pList) == 0 {
+		return result
+	}
+
+	pMap, ok := pList[0].(map[string]interface{})
+	if !ok {
+		return result
+	}
+
+	dcRaw, ok := pMap[dedicatedServerSchemaKeyDiskConfig].([]interface{})
+	if !ok {
+		return result
+	}
+
+	for _, itemRaw := range dcRaw {
+		item, ok := itemRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		name, _ := item[dedicatedServerSchemaKeyName].(string)
+		diskType, _ := item[dedicatedServerSchemaKeyDiskType].(string)
+		if name != "" && diskType != "" {
+			result[diskType] = append(result[diskType], name)
+		}
+	}
+
+	return result
+}
+
+// resourceDedicatedServerV1ReadExistingDiskPartitionMounts reads disk_partitions
+// entries from the current schema data and returns their mount points. Used to
+// filter auto-injected partitions (e.g. /boot) from the state read-back.
+func resourceDedicatedServerV1ReadExistingDiskPartitionMounts(d *schema.ResourceData) []string {
+	rawList, ok := d.GetOk(dedicatedServerSchemaKeyOSPartitionsConfig)
+	if !ok {
+		return nil
+	}
+
+	pList, ok := rawList.([]interface{})
+	if !ok || len(pList) == 0 {
+		return nil
+	}
+
+	pMap, ok := pList[0].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	dpRaw, ok := pMap[dedicatedServerSchemaKeyDiskPartitions].([]interface{})
+	if !ok {
+		return nil
+	}
+
+	mounts := make([]string, 0, len(dpRaw))
+	for _, itemRaw := range dpRaw {
+		item, ok := itemRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if mount, ok := item[dedicatedServerSchemaKeyMount].(string); ok && mount != "" {
+			mounts = append(mounts, mount)
+		}
+	}
+
+	return mounts
+}
+
+// resourceDedicatedServerV1ReadExistingDiskNameByMount reads disk_partitions from the
+// current schema data and returns a map of mount→disk_name. Used by buildDiskConfigs
+// to identify each physical drive's user-assigned name by tracing the API partition graph.
+func resourceDedicatedServerV1ReadExistingDiskNameByMount(d *schema.ResourceData) map[string]string {
+	rawList, ok := d.GetOk(dedicatedServerSchemaKeyOSPartitionsConfig)
+	if !ok {
+		return nil
+	}
+
+	pList, ok := rawList.([]interface{})
+	if !ok || len(pList) == 0 {
+		return nil
+	}
+
+	pMap, ok := pList[0].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	dpRaw, ok := pMap[dedicatedServerSchemaKeyDiskPartitions].([]interface{})
+	if !ok {
+		return nil
+	}
+
+	result := make(map[string]string)
+	for _, itemRaw := range dpRaw {
+		item, ok := itemRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		mount, _ := item[dedicatedServerSchemaKeyMount].(string)
+		diskName, _ := item[dedicatedServerSchemaKeyDiskName].(string)
+		if mount != "" && diskName != "" {
+			result[mount] = diskName
+		}
+	}
+
+	if len(result) == 0 {
+		return nil
+	}
+
+	return result
+}
+
+// resourceDedicatedServerV1ReadExistingDiskConfigOrder reads disk_config entries from the
+// current schema data and returns their names in state order. Used to sort disk_configs
+// in state to match the user's original config order and avoid TypeList positional diffs.
+func resourceDedicatedServerV1ReadExistingDiskConfigOrder(d *schema.ResourceData) []string {
+	rawList, ok := d.GetOk(dedicatedServerSchemaKeyOSPartitionsConfig)
+	if !ok {
+		return nil
+	}
+
+	pList, ok := rawList.([]interface{})
+	if !ok || len(pList) == 0 {
+		return nil
+	}
+
+	pMap, ok := pList[0].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	dcRaw, ok := pMap[dedicatedServerSchemaKeyDiskConfig].([]interface{})
+	if !ok {
+		return nil
+	}
+
+	names := make([]string, 0, len(dcRaw))
+	for _, itemRaw := range dcRaw {
+		item, ok := itemRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		name, _ := item[dedicatedServerSchemaKeyName].(string)
+		if name != "" {
+			names = append(names, name)
+		}
+	}
+
+	return names
+}
+
+// resourceDedicatedServerV1ReadExistingRaidNames reads soft_raid_config entries from
+// the current schema data and returns names grouped by "level|diskType" key. Used by
+// buildSoftRaids to preserve user-defined RAID labels across Read cycles.
+func resourceDedicatedServerV1ReadExistingRaidNames(d *schema.ResourceData) map[string][]string {
+	result := make(map[string][]string)
+
+	rawList, ok := d.GetOk(dedicatedServerSchemaKeyOSPartitionsConfig)
+	if !ok {
+		return result
+	}
+
+	pList, ok := rawList.([]interface{})
+	if !ok || len(pList) == 0 {
+		return result
+	}
+
+	pMap, ok := pList[0].(map[string]interface{})
+	if !ok {
+		return result
+	}
+
+	srCfgRaw, ok := pMap[dedicatedServerSchemaKeySoftRaidConfig].([]interface{})
+	if !ok {
+		return result
+	}
+
+	for _, itemRaw := range srCfgRaw {
+		item, ok := itemRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		name, _ := item[dedicatedServerSchemaKeyName].(string)
+		level, _ := item[dedicatedServerSchemaKeyLevel].(string)
+		diskType, _ := item[dedicatedServerSchemaKeyDiskType].(string)
+		if name != "" && level != "" && diskType != "" {
+			key := level + "|" + diskType
+			result[key] = append(result[key], name)
+		}
+	}
+
+	return result
+}
+
+// resourceDedicatedServerV1ReadExistingRaidConfigOrder reads soft_raid_config entries
+// from the current schema data and returns their names in state order. Used to sort
+// soft_raid_config in state to match the user's original config order.
+func resourceDedicatedServerV1ReadExistingRaidConfigOrder(d *schema.ResourceData) []string {
+	rawList, ok := d.GetOk(dedicatedServerSchemaKeyOSPartitionsConfig)
+	if !ok {
+		return nil
+	}
+
+	pList, ok := rawList.([]interface{})
+	if !ok || len(pList) == 0 {
+		return nil
+	}
+
+	pMap, ok := pList[0].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	srCfgRaw, ok := pMap[dedicatedServerSchemaKeySoftRaidConfig].([]interface{})
+	if !ok {
+		return nil
+	}
+
+	names := make([]string, 0, len(srCfgRaw))
+	for _, itemRaw := range srCfgRaw {
+		item, ok := itemRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		name, _ := item[dedicatedServerSchemaKeyName].(string)
+		if name != "" {
+			names = append(names, name)
+		}
+	}
+
+	return names
+}
+
 func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
@@ -533,9 +784,20 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 
 	_ = d.Set("os_id", os.UUID)
 
-	// Reading partitions config from the API response
+	// Reading partitions config from the API response.
+	// existingMounts is sourced from prior state (d holds the last-applied state during Read).
+	// On the very first Read after a fresh apply the prior state already has the filtered
+	// (user-configured) mounts, so the filter stays clean. On the first apply after
+	// deploying this provider version to an existing resource, one apply cycle is needed
+	// to rewrite state before the drift disappears.
 	if len(resourceOS.PartitionsConfig) > 0 {
-		partitionsConfig, err := apiPartitionsConfigToSchema(resourceOS.PartitionsConfig)
+		existingNamesByType := resourceDedicatedServerV1ReadExistingDiskNames(d)
+		existingMounts := resourceDedicatedServerV1ReadExistingDiskPartitionMounts(d)
+		existingDiskNameByMount := resourceDedicatedServerV1ReadExistingDiskNameByMount(d)
+		existingDiskConfigOrder := resourceDedicatedServerV1ReadExistingDiskConfigOrder(d)
+		existingRaidNamesByKey := resourceDedicatedServerV1ReadExistingRaidNames(d)
+		existingRaidConfigOrder := resourceDedicatedServerV1ReadExistingRaidConfigOrder(d)
+		partitionsConfig, err := apiPartitionsConfigToSchema(resourceOS.PartitionsConfig, existingNamesByType, existingMounts, existingDiskNameByMount, existingDiskConfigOrder, existingRaidNamesByKey, existingRaidConfigOrder)
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("failed to convert partitions config: %w", err))
 		}

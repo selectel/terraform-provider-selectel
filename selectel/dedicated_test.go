@@ -325,6 +325,47 @@ func TestPartitionsConfig_CastToAPIPartitionsConfig(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "no free drive for disk_config system-disk")
 	})
+
+	t.Run("FallbackPicksFastestDisk", func(t *testing.T) {
+		// Use a non-empty PC (IsEmpty()=false) so ensureDefaultConfig is skipped.
+		// No /boot in DiskPartitions → ensureBootPartition auto-injects it with Raid: "".
+		// No Raid, no DiskName on /boot → fallback picks best drive by SpeedRatio().
+		mixedDrives := dedicated.LocalDrives{
+			"drive-nvme-1": {
+				Type:  "drive",
+				Match: &dedicated.LocalDriveMatch{Size: 500, Type: "NVMe"},
+			},
+			"drive-ssd-1": {
+				Type:  "drive",
+				Match: &dedicated.LocalDriveMatch{Size: 1000, Type: "SSD"},
+			},
+			"drive-hdd-1": {
+				Type:  "drive",
+				Match: &dedicated.LocalDriveMatch{Size: 2000, Type: "SATA"},
+			},
+		}
+
+		pc := &PartitionsConfig{
+			DiskPartitions: []*DiskPartitionsItem{
+				{Mount: "/", Size: -1, FSType: "ext4"},
+			},
+		}
+		apiConfig, err := pc.CastToAPIPartitionsConfig(mixedDrives, defaultPartitions)
+		require.NoError(t, err)
+
+		bootFS := findFSByMount(apiConfig, "/boot")
+		require.NotNil(t, bootFS, "/boot filesystem not found in api config")
+
+		// Single drive → no soft_raid; filesystem.Device points to the partition node.
+		bootPartition := apiConfig[bootFS.Device]
+		require.NotNil(t, bootPartition, "partition for /boot not found")
+		require.Equal(t, "partition", bootPartition.Type, "expected partition node as /boot device")
+
+		// partition.Device is the local_drive key in apiConfig.
+		bootLD := apiConfig[bootPartition.Device]
+		require.NotNil(t, bootLD, "local_drive for /boot not found")
+		assert.Equal(t, "NVMe", bootLD.Match.Type, "/boot should be on NVMe (fastest), got %s", bootLD.Match.Type)
+	})
 }
 
 func TestApiPartitionsConfigToSchema(t *testing.T) {
@@ -398,7 +439,7 @@ func TestApiPartitionsConfigToSchema(t *testing.T) {
 			},
 		}
 
-		result, err := apiPartitionsConfigToSchema(apiCfg)
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Len(t, result, 1)
@@ -463,7 +504,7 @@ func TestApiPartitionsConfigToSchema(t *testing.T) {
 
 	t.Run("EmptyConfig", func(t *testing.T) {
 		apiCfg := dedicated.PartitionsConfig{}
-		result, err := apiPartitionsConfigToSchema(apiCfg)
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		assert.Nil(t, result)
 	})
@@ -491,7 +532,7 @@ func TestApiPartitionsConfigToSchema(t *testing.T) {
 			},
 		}
 
-		result, err := apiPartitionsConfigToSchema(apiCfg)
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Len(t, result, 1)
@@ -602,7 +643,7 @@ func TestApiPartitionsConfigToSchema(t *testing.T) {
 			},
 		}
 
-		result, err := apiPartitionsConfigToSchema(apiCfg)
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Len(t, result, 1)
@@ -680,7 +721,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 			},
 		}
 
-		result, err := apiPartitionsConfigToSchema(apiCfg)
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Len(t, result, 1)
@@ -700,6 +741,197 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
 		require.True(t, ok)
 		assert.Len(t, diskPartitions, 2)
+	})
+
+	t.Run("AutoBootFilteredWhenExistingMountsSet", func(t *testing.T) {
+		// API returns /boot (auto-injected), / and /home. User configured only / and /home.
+		apiCfg := dedicated.PartitionsConfig{
+			"disk1": {
+				Type: "local_drive",
+				Match: &dedicated.PartitionConfigItemMatch{
+					Size: 479,
+					Type: "SSD SATA",
+				},
+			},
+			"part_boot": {
+				Type:     "partition",
+				Device:   "disk1",
+				Size:     1.0,
+				Priority: ptr(0),
+			},
+			"fs_boot": {
+				Type:   "filesystem",
+				Device: "part_boot",
+				FSType: "ext3",
+				Mount:  "/boot",
+			},
+			"part_root": {
+				Type:     "partition",
+				Device:   "disk1",
+				Size:     100.0,
+				Priority: ptr(1),
+			},
+			"fs_root": {
+				Type:   "filesystem",
+				Device: "part_root",
+				FSType: "ext4",
+				Mount:  "/",
+			},
+			"part_home": {
+				Type:     "partition",
+				Device:   "disk1",
+				Size:     -1.0,
+				Priority: ptr(2),
+			},
+			"fs_home": {
+				Type:   "filesystem",
+				Device: "part_home",
+				FSType: "ext4",
+				Mount:  "/home",
+			},
+		}
+
+		// existingMounts = user's config: only / and /home (no /boot)
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, []string{"/", "/home"}, nil, nil, nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.Len(t, result, 1)
+
+		config := result[0]
+		partitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		require.True(t, ok)
+
+		// Must be exactly 2 — /boot must be filtered out
+		require.Len(t, partitions, 2)
+		mounts := []string{
+			partitions[0][dedicatedServerSchemaKeyMount].(string),
+			partitions[1][dedicatedServerSchemaKeyMount].(string),
+		}
+		assert.Equal(t, []string{"/", "/home"}, mounts)
+	})
+
+	t.Run("FourDisksTwoTypesWithNameMapping", func(t *testing.T) {
+		// 2× SSD SATA + 2× HDD SATA, each configured separately.
+		// existingDiskNameByMount maps each mount to the user-assigned disk_name.
+		// existingDiskConfigOrder is the user's disk_config order from state.
+		apiCfg := dedicated.PartitionsConfig{
+			"ssd1": {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 480, Type: "SSD SATA"}},
+			"ssd2": {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 480, Type: "SSD SATA"}},
+			"hdd1": {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 2000, Type: "HDD SATA"}},
+			"hdd2": {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 2000, Type: "HDD SATA"}},
+			// ssd1: /boot + /
+			"p-ssd1-boot": {Type: "partition", Device: "ssd1", Size: 1.0, Priority: ptr(0)},
+			"fs-boot":     {Type: "filesystem", Device: "p-ssd1-boot", FSType: "ext3", Mount: "/boot"},
+			"p-ssd1-root": {Type: "partition", Device: "ssd1", Size: -1.0, Priority: ptr(1)},
+			"fs-root":     {Type: "filesystem", Device: "p-ssd1-root", FSType: "ext4", Mount: "/"},
+			// ssd2: /var
+			"p-ssd2-var": {Type: "partition", Device: "ssd2", Size: -1.0, Priority: ptr(0)},
+			"fs-var":     {Type: "filesystem", Device: "p-ssd2-var", FSType: "ext4", Mount: "/var"},
+			// hdd1: /backup
+			"p-hdd1-bk": {Type: "partition", Device: "hdd1", Size: -1.0, Priority: ptr(0)},
+			"fs-backup": {Type: "filesystem", Device: "p-hdd1-bk", FSType: "ext4", Mount: "/backup"},
+			// hdd2: /system-backup
+			"p-hdd2-sb": {Type: "partition", Device: "hdd2", Size: -1.0, Priority: ptr(0)},
+			"fs-sysbk":  {Type: "filesystem", Device: "p-hdd2-sb", FSType: "ext4", Mount: "/system-backup"},
+		}
+
+		existingDiskNameByMount := map[string]string{
+			"/boot":          "system",
+			"/":              "system",
+			"/var":           "data",
+			"/backup":        "backup",
+			"/system-backup": "system-backup",
+		}
+		existingDiskConfigOrder := []string{"system", "data", "backup", "system-backup"}
+		existingMounts := []string{"/boot", "/", "/var", "/backup", "/system-backup"}
+
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, existingMounts, existingDiskNameByMount, existingDiskConfigOrder, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+
+		config := result[0]
+
+		// Must have 4 disk_configs in user-config order
+		diskConfigs, ok := config[dedicatedServerSchemaKeyDiskConfig].([]map[string]interface{})
+		require.True(t, ok)
+		require.Len(t, diskConfigs, 4)
+
+		names := make([]string, 4)
+		for i, dc := range diskConfigs {
+			names[i] = dc[dedicatedServerSchemaKeyName].(string)
+		}
+		assert.Equal(t, []string{"system", "data", "backup", "system-backup"}, names)
+
+		// disk_partitions must reference correct disk_names
+		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		require.True(t, ok)
+		require.Len(t, diskPartitions, 5)
+
+		// Check /var partition has disk_name = "data"
+		var varPartition map[string]interface{}
+		for _, dp := range diskPartitions {
+			if dp[dedicatedServerSchemaKeyMount] == "/var" {
+				varPartition = dp
+				break
+			}
+		}
+		require.NotNil(t, varPartition, "/var partition not found")
+		assert.Equal(t, "data", varPartition[dedicatedServerSchemaKeyDiskName])
+
+		// Check /system-backup partition has disk_name = "system-backup"
+		var sbPartition map[string]interface{}
+		for _, dp := range diskPartitions {
+			if dp[dedicatedServerSchemaKeyMount] == "/system-backup" {
+				sbPartition = dp
+				break
+			}
+		}
+		require.NotNil(t, sbPartition, "/system-backup partition not found")
+		assert.Equal(t, "system-backup", sbPartition[dedicatedServerSchemaKeyDiskName])
+	})
+
+	t.Run("FourDisksMountOrderPreserved", func(t *testing.T) {
+		// Verify disk_partitions come back in existingMounts order, not priority+alpha order.
+		// User's config order: /boot, /, /var, /backup, /system-backup
+		// Priority+alpha order would be: /boot, /, /backup, /system-backup, /var (different!)
+		apiCfg := dedicated.PartitionsConfig{
+			"disk1":   {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 480, Type: "SSD SATA"}},
+			"disk2":   {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 480, Type: "SSD SATA"}},
+			"disk3":   {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 2000, Type: "HDD SATA"}},
+			"disk4":   {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 2000, Type: "HDD SATA"}},
+			"p1a":     {Type: "partition", Device: "disk1", Size: 1.0, Priority: ptr(0)},
+			"fs-boot": {Type: "filesystem", Device: "p1a", FSType: "ext3", Mount: "/boot"},
+			"p1b":     {Type: "partition", Device: "disk1", Size: -1.0, Priority: ptr(1)},
+			"fs-root": {Type: "filesystem", Device: "p1b", FSType: "ext4", Mount: "/"},
+			"p2":      {Type: "partition", Device: "disk2", Size: -1.0, Priority: ptr(0)},
+			"fs-var":  {Type: "filesystem", Device: "p2", FSType: "ext4", Mount: "/var"},
+			"p3":      {Type: "partition", Device: "disk3", Size: -1.0, Priority: ptr(0)},
+			"fs-bk":   {Type: "filesystem", Device: "p3", FSType: "ext4", Mount: "/backup"},
+			"p4":      {Type: "partition", Device: "disk4", Size: -1.0, Priority: ptr(0)},
+			"fs-sb":   {Type: "filesystem", Device: "p4", FSType: "ext4", Mount: "/system-backup"},
+		}
+
+		existingMounts := []string{"/boot", "/", "/var", "/backup", "/system-backup"}
+		existingDiskNameByMount := map[string]string{
+			"/boot": "system", "/": "system", "/var": "data",
+			"/backup": "backup", "/system-backup": "system-backup",
+		}
+		existingDiskConfigOrder := []string{"system", "data", "backup", "system-backup"}
+
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, existingMounts, existingDiskNameByMount, existingDiskConfigOrder, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+
+		diskPartitions, ok := result[0][dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		require.True(t, ok)
+		require.Len(t, diskPartitions, 5)
+
+		mounts := make([]string, 5)
+		for i, dp := range diskPartitions {
+			mounts[i] = dp[dedicatedServerSchemaKeyMount].(string)
+		}
+		// Must match existingMounts order exactly
+		assert.Equal(t, []string{"/boot", "/", "/var", "/backup", "/system-backup"}, mounts)
 	})
 
 	t.Run("FourDisksSeparateNoRAID", func(t *testing.T) {
@@ -800,7 +1032,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 			},
 		}
 
-		result, err := apiPartitionsConfigToSchema(apiCfg)
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
@@ -810,11 +1042,11 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		softRaids, hasSoftRaids := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]interface{})
 		assert.True(t, !hasSoftRaids || len(softRaids) == 0)
 
-		// Single disk_config (all same type)
+		// One disk_config per physical disk (all same type "HDD SATA")
 		diskConfigs, ok := config[dedicatedServerSchemaKeyDiskConfig].([]map[string]interface{})
 		require.True(t, ok)
-		assert.Len(t, diskConfigs, 1)
-		assert.Equal(t, "disk-hdd-sata", diskConfigs[0][dedicatedServerSchemaKeyName])
+		assert.Len(t, diskConfigs, 4)
+		assert.Equal(t, "HDD SATA", diskConfigs[0][dedicatedServerSchemaKeyDiskType])
 
 		// Has partitions for all disks
 		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
@@ -894,7 +1126,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 			},
 		}
 
-		result, err := apiPartitionsConfigToSchema(apiCfg)
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
@@ -993,7 +1225,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 			},
 		}
 
-		result, err := apiPartitionsConfigToSchema(apiCfg)
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
@@ -1095,7 +1327,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 			},
 		}
 
-		result, err := apiPartitionsConfigToSchema(apiCfg)
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
@@ -1196,7 +1428,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 			},
 		}
 
-		result, err := apiPartitionsConfigToSchema(apiCfg)
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
@@ -1291,7 +1523,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 			},
 		}
 
-		result, err := apiPartitionsConfigToSchema(apiCfg)
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
@@ -1303,11 +1535,10 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		require.Len(t, softRaids, 1)
 		assert.Equal(t, 2, softRaids[0][dedicatedServerSchemaKeyDiskCount])
 
-		// disk_config for unconfigured disks (disk3, disk4)
-		diskConfigs, ok := config[dedicatedServerSchemaKeyDiskConfig].([]map[string]interface{})
-		require.True(t, ok)
-		assert.Len(t, diskConfigs, 1)
-		assert.Equal(t, "disk-hdd-sata", diskConfigs[0][dedicatedServerSchemaKeyName])
+		// disk3 and disk4 have no mounts, so they are skipped by buildDiskConfigs.
+		// disk_config is only produced for disks that have at least one filesystem mount.
+		_, hasDiskConfig := config[dedicatedServerSchemaKeyDiskConfig]
+		assert.False(t, hasDiskConfig, "unconfigured disks (no mounts) should not produce disk_config entries")
 	})
 
 	t.Run("RAID1PlusOneConfigured", func(t *testing.T) {
@@ -1381,7 +1612,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 			},
 		}
 
-		result, err := apiPartitionsConfigToSchema(apiCfg)
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
@@ -1486,7 +1717,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 			},
 		}
 
-		result, err := apiPartitionsConfigToSchema(apiCfg)
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
@@ -1518,8 +1749,95 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		require.True(t, ok)
 		assert.Len(t, diskPartitions, 2)
 	})
+
+	t.Run("RAID1NamePreservedFromState", func(t *testing.T) {
+		// API returns RAID1 of 2 SSD SATA + 2 separate HDD SATA.
+		// Prior state had soft_raid_config name = "boot-raid". Verify name is preserved.
+		apiCfg := dedicated.PartitionsConfig{
+			"disk1": {
+				Type:  "local_drive",
+				Match: &dedicated.PartitionConfigItemMatch{Size: 480, Type: "SSD SATA"},
+			},
+			"disk2": {
+				Type:  "local_drive",
+				Match: &dedicated.PartitionConfigItemMatch{Size: 480, Type: "SSD SATA"},
+			},
+			"disk3": {
+				Type:  "local_drive",
+				Match: &dedicated.PartitionConfigItemMatch{Size: 4000, Type: "HDD SATA"},
+			},
+			"disk4": {
+				Type:  "local_drive",
+				Match: &dedicated.PartitionConfigItemMatch{Size: 4000, Type: "HDD SATA"},
+			},
+			// RAID1 member partitions (one per physical disk)
+			"raid1-part1": {Type: "partition", Device: "disk1", Size: -1.0, Priority: ptr(0)},
+			"raid1-part2": {Type: "partition", Device: "disk2", Size: -1.0, Priority: ptr(0)},
+			// RAID1 array
+			"raid1-array": {
+				Type:    "soft_raid",
+				Members: []string{"raid1-part1", "raid1-part2"},
+				Level:   "raid1",
+			},
+			// Partitions on RAID1
+			"p-boot":  {Type: "partition", Device: "raid1-array", Size: 1.0, Priority: ptr(0)},
+			"fs-boot": {Type: "filesystem", Device: "p-boot", FSType: "ext3", Mount: "/boot"},
+			"p-root":  {Type: "partition", Device: "raid1-array", Size: -1.0, Priority: ptr(1)},
+			"fs-root": {Type: "filesystem", Device: "p-root", FSType: "ext4", Mount: "/"},
+			// Partitions on separate HDD disks
+			"p-app":  {Type: "partition", Device: "disk3", Size: -1.0, Priority: ptr(0)},
+			"fs-app": {Type: "filesystem", Device: "p-app", FSType: "xfs", Mount: "/app"},
+			"p-log":  {Type: "partition", Device: "disk4", Size: -1.0, Priority: ptr(0)},
+			"fs-log": {Type: "filesystem", Device: "p-log", FSType: "ext4", Mount: "/var/log"},
+		}
+
+		existingRaidNamesByKey := map[string][]string{
+			"raid1|SSD SATA": {"boot-raid"},
+		}
+		existingRaidConfigOrder := []string{"boot-raid"}
+
+		// 7-arg call: pass nil for existingMounts (no filtering), nil for disk name helpers
+		result, err := apiPartitionsConfigToSchema(apiCfg, nil, nil, nil, nil, existingRaidNamesByKey, existingRaidConfigOrder)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.Len(t, result, 1)
+
+		config := result[0]
+
+		// soft_raid_config must use preserved name "boot-raid"
+		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]interface{})
+		require.True(t, ok)
+		require.Len(t, softRaids, 1)
+		assert.Equal(t, "boot-raid", softRaids[0][dedicatedServerSchemaKeyName])
+		assert.Equal(t, "raid1", softRaids[0][dedicatedServerSchemaKeyLevel])
+		assert.Equal(t, "SSD SATA", softRaids[0][dedicatedServerSchemaKeyDiskType])
+		assert.Equal(t, 2, softRaids[0][dedicatedServerSchemaKeyDiskCount])
+
+		// disk_partitions on RAID must reference "boot-raid", not "new-raid1"
+		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		require.True(t, ok)
+		for _, p := range diskPartitions {
+			mount, _ := p[dedicatedServerSchemaKeyMount].(string)
+			if mount == "/boot" || mount == "/" {
+				assert.Equal(t, "boot-raid", p[dedicatedServerSchemaKeyRaid],
+					"partition %s should reference boot-raid", mount)
+			}
+		}
+	})
 }
 
 func ptr(v int) *int {
 	return &v
+}
+
+func TestResourceDedicatedServerV1ReadExistingRaidNames(t *testing.T) {
+	t.Run("SignatureCheck", func(_ *testing.T) {
+		_ = resourceDedicatedServerV1ReadExistingRaidNames
+	})
+}
+
+func TestResourceDedicatedServerV1ReadExistingRaidConfigOrder(t *testing.T) {
+	t.Run("SignatureCheck", func(_ *testing.T) {
+		_ = resourceDedicatedServerV1ReadExistingRaidConfigOrder
+	})
 }

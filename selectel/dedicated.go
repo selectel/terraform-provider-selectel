@@ -321,22 +321,16 @@ func (pc *PartitionsConfig) ensureBootPartition(
 	return errors.New("can't find default partition for boot partition")
 }
 
-func (pc *PartitionsConfig) addDiskPartitionToAPIConfig(
+func (pc *PartitionsConfig) resolveDevicesForPartition(
 	diskPartition *DiskPartitionsItem,
 	localDrives dedicated.LocalDrives,
-	nextPriorityByDrive map[string]int,
-	cfg dedicated.PartitionsConfig,
 	raidMembers map[string][]string,
 	diskNameToDrive map[string]string,
-) error {
-	var devices []string
-	var raidLevel string
-
-	// RAID source
+) (devices []string, raidLevel string, err error) {
 	if diskPartition.Raid != "" {
 		members := raidMembers[diskPartition.Raid]
 		if len(members) == 0 {
-			return fmt.Errorf("raid %s has no devices", diskPartition.Raid)
+			return nil, "", fmt.Errorf("raid %s has no devices", diskPartition.Raid)
 		}
 		devices = members
 
@@ -347,26 +341,48 @@ func (pc *PartitionsConfig) addDiskPartitionToAPIConfig(
 				break
 			}
 		}
+
+		return devices, raidLevel, nil
 	}
 
-	// disk_config source
 	if diskPartition.DiskName != "" {
 		d := diskNameToDrive[diskPartition.DiskName]
 		if d == "" {
-			return fmt.Errorf("disk %s not allocated", diskPartition.DiskName)
+			return nil, "", fmt.Errorf("disk %s not allocated", diskPartition.DiskName)
 		}
-		devices = []string{d}
+
+		return []string{d}, "", nil
 	}
 
-	// fallback
-	if len(devices) == 0 {
-		for ldID := range localDrives {
-			devices = []string{ldID}
-
-			break
+	bestRatio := -1
+	bestSize := -1
+	bestID := ""
+	for ldID, ld := range localDrives {
+		if ld.Match == nil {
+			continue
+		}
+		ratio := ld.SpeedRatio()
+		size := ld.Match.Size
+		if ratio > bestRatio || (ratio == bestRatio && size > bestSize) {
+			bestRatio = ratio
+			bestSize = size
+			bestID = ldID
 		}
 	}
+	if bestID != "" {
+		devices = []string{bestID}
+	}
 
+	return devices, "", nil
+}
+
+func buildPartitionMembers(
+	diskPartition *DiskPartitionsItem,
+	devices []string,
+	localDrives dedicated.LocalDrives,
+	nextPriorityByDrive map[string]int,
+	cfg dedicated.PartitionsConfig,
+) ([]string, error) {
 	members := make([]string, 0, len(devices))
 
 	for _, ldID := range devices {
@@ -374,7 +390,7 @@ func (pc *PartitionsConfig) addDiskPartitionToAPIConfig(
 
 		id, err := uuid.GenerateUUID()
 		if err != nil {
-			return fmt.Errorf("failed to generate uuid for partition %s local drive %s: %w",
+			return nil, fmt.Errorf("failed to generate uuid for partition %s local drive %s: %w",
 				diskPartition.Mount, ldID, err)
 		}
 
@@ -382,23 +398,46 @@ func (pc *PartitionsConfig) addDiskPartitionToAPIConfig(
 		if diskPartition.SizePercent > 0 {
 			baseSize := float64(ld.Match.Size)
 			if baseSize <= 0 {
-				return fmt.Errorf("invalid local drive %s size: %d",
+				return nil, fmt.Errorf("invalid local drive %s size: %d",
 					ld.Match.Type, ld.Match.Size)
 			}
 			size = math.Round(baseSize * diskPartition.SizePercent / 100.0)
 		}
 
 		priority := nextPriorityByDrive[ldID]
-
 		cfg[id] = &dedicated.PartitionConfigItem{
 			Type:     "partition",
 			Device:   ldID,
 			Size:     size,
 			Priority: &priority,
 		}
-
 		nextPriorityByDrive[ldID] = priority + 1
 		members = append(members, id)
+	}
+
+	return members, nil
+}
+
+func (pc *PartitionsConfig) addDiskPartitionToAPIConfig(
+	diskPartition *DiskPartitionsItem,
+	localDrives dedicated.LocalDrives,
+	nextPriorityByDrive map[string]int,
+	cfg dedicated.PartitionsConfig,
+	raidMembers map[string][]string,
+	diskNameToDrive map[string]string,
+) error {
+	devices, raidLevel, err := pc.resolveDevicesForPartition(
+		diskPartition, localDrives, raidMembers, diskNameToDrive,
+	)
+	if err != nil {
+		return err
+	}
+
+	members, err := buildPartitionMembers(
+		diskPartition, devices, localDrives, nextPriorityByDrive, cfg,
+	)
+	if err != nil {
+		return err
 	}
 
 	var fsPartitionDeviceID string
@@ -413,13 +452,11 @@ func (pc *PartitionsConfig) addDiskPartitionToAPIConfig(
 			return fmt.Errorf("failed to generate uuid for soft_raid %s: %w",
 				diskPartition.Mount, err)
 		}
-
 		cfg[srID] = &dedicated.PartitionConfigItem{
 			Type:    "soft_raid",
 			Members: members,
 			Level:   raidLevel,
 		}
-
 		fsPartitionDeviceID = srID
 
 	default:
@@ -878,10 +915,15 @@ func resourceDedicatedServerV1GenerateHostNameIfNotPresented(schema *schema.Reso
 	return osHostName
 }
 
-// apiPartitionsConfigToSchema converts API PartitionsConfig to Terraform schema format.
-// The API returns a flat map of partition items with references between them.
-// We need to reconstruct it into the structured format: soft_raid_config, disk_partitions, disk_config.
-func apiPartitionsConfigToSchema(apiCfg dedicated.PartitionsConfig) ([]map[string]any, error) {
+func apiPartitionsConfigToSchema(
+	apiCfg dedicated.PartitionsConfig,
+	existingNamesByType map[string][]string,
+	existingMounts []string,
+	existingDiskNameByMount map[string]string,
+	existingDiskConfigOrder []string,
+	existingRaidNamesByKey map[string][]string,
+	existingRaidConfigOrder []string,
+) ([]map[string]any, error) {
 	if len(apiCfg) == 0 {
 		return nil, nil
 	}
@@ -892,22 +934,15 @@ func apiPartitionsConfigToSchema(apiCfg dedicated.PartitionsConfig) ([]map[strin
 		diskInRaid    = make(map[string]bool)
 	)
 
-	// Build RAID configs
-	softRaids := buildSoftRaids(apiCfg, raidNamesByID, diskInRaid)
+	softRaids := buildSoftRaids(apiCfg, raidNamesByID, diskInRaid, existingRaidNamesByKey, existingRaidConfigOrder)
+	diskConfigs := buildDiskConfigs(apiCfg, diskNamesByID, diskInRaid, existingNamesByType, existingDiskNameByMount, existingDiskConfigOrder)
+	diskPartitions := buildDiskPartitions(apiCfg, raidNamesByID, diskNamesByID, existingMounts)
 
-	// Build disk configs
-	diskConfigs := buildDiskConfigs(apiCfg, diskNamesByID, diskInRaid)
-
-	// Build partitions
-	diskPartitions := buildDiskPartitions(apiCfg, raidNamesByID, diskNamesByID)
-
-	// Build the result
 	result := map[string]any{
 		dedicatedServerSchemaKeySoftRaidConfig: softRaids,
 		dedicatedServerSchemaKeyDiskPartitions: diskPartitions,
 	}
 
-	// Only add disk_config if there are disks not in RAID
 	if len(diskConfigs) > 0 {
 		result[dedicatedServerSchemaKeyDiskConfig] = diskConfigs
 	}
@@ -916,8 +951,15 @@ func apiPartitionsConfigToSchema(apiCfg dedicated.PartitionsConfig) ([]map[strin
 }
 
 // buildSoftRaids creates soft_raid_config entries from API config.
+// existingRaidNamesByKey maps "level|diskType" → ordered slice of prior names; when
+// non-empty the first unused name for each key is reused so user-defined labels are
+// preserved across Read cycles instead of regenerating "new-raid1" etc.
+// existingRaidConfigOrder lists RAID names in the order they appear in prior state;
+// used to sort the result to match the user's TypeList order and avoid positional diffs.
 func buildSoftRaids( //nolint:gocognit
 	apiCfg dedicated.PartitionsConfig, raidNamesByID map[string]string, diskInRaid map[string]bool,
+	existingRaidNamesByKey map[string][]string,
+	existingRaidConfigOrder []string,
 ) []map[string]any {
 	softRaids := make([]map[string]any, 0)
 
@@ -936,7 +978,7 @@ func buildSoftRaids( //nolint:gocognit
 		}
 
 		diskType := getDiskTypeForRaid(apiCfg, item.Members)
-		key := diskType + "|" + item.Level
+		key := item.Level + "|" + diskType
 
 		// Count unique physical disks for this RAID
 		diskSet := make(map[string]bool)
@@ -964,14 +1006,36 @@ func buildSoftRaids( //nolint:gocognit
 		raidKeyInfo[key] = info
 	}
 
-	// Second pass: create RAID configs
-	raidLevelIndex := make(map[string]int)
-	for _, info := range raidKeyInfo {
-		raidName := "new-" + info.level
-		if len(raidKeyInfo) > 1 {
-			idx := raidLevelIndex[info.level]
-			raidName = fmt.Sprintf("new-%s-%d", info.level, idx)
-			raidLevelIndex[info.level] = idx + 1
+	// Second pass: create RAID configs, preserving user-defined names from prior state.
+	raidKeys := make([]string, 0, len(raidKeyInfo))
+	for k := range raidKeyInfo {
+		raidKeys = append(raidKeys, k)
+	}
+	slices.Sort(raidKeys)
+
+	raidNameIdx := make(map[string]int)
+	for _, raidKey := range raidKeys {
+		info := raidKeyInfo[raidKey]
+
+		var raidName string
+		if names := existingRaidNamesByKey[raidKey]; len(names) > 0 {
+			idx := raidNameIdx[raidKey]
+			if idx < len(names) {
+				raidName = names[idx]
+			}
+			raidNameIdx[raidKey] = idx + 1
+		}
+
+		if raidName == "" {
+			// No prior state — generate a stable fallback name.
+			genKey := "gen|" + info.level
+			if len(raidKeyInfo) > 1 {
+				idx := raidNameIdx[genKey]
+				raidName = fmt.Sprintf("new-%s-%d", info.level, idx)
+				raidNameIdx[genKey] = idx + 1
+			} else {
+				raidName = "new-" + info.level
+			}
 		}
 
 		// Store RAID name for all RAID items with this key
@@ -1004,68 +1068,218 @@ func buildSoftRaids( //nolint:gocognit
 		softRaids = append(softRaids, softRaid)
 	}
 
-	// Sort soft_raids by name for stable ordering
-	slices.SortFunc(softRaids, func(a, b map[string]any) int {
-		nameA, _ := a[dedicatedServerSchemaKeyName].(string)
-		nameB, _ := b[dedicatedServerSchemaKeyName].(string)
-		return strings.Compare(nameA, nameB)
-	})
+	// Sort soft_raids: use prior-state order when available, otherwise alphabetically.
+	if len(existingRaidConfigOrder) > 0 {
+		orderIdx := make(map[string]int, len(existingRaidConfigOrder))
+		for i, name := range existingRaidConfigOrder {
+			orderIdx[name] = i
+		}
+		slices.SortFunc(softRaids, func(a, b map[string]any) int {
+			nameA, _ := a[dedicatedServerSchemaKeyName].(string)
+			nameB, _ := b[dedicatedServerSchemaKeyName].(string)
+			posA, okA := orderIdx[nameA]
+			posB, okB := orderIdx[nameB]
+			if !okA {
+				posA = len(existingRaidConfigOrder)
+			}
+			if !okB {
+				posB = len(existingRaidConfigOrder)
+			}
+			if posA != posB {
+				return posA - posB
+			}
+
+			return strings.Compare(nameA, nameB)
+		})
+	} else {
+		slices.SortFunc(softRaids, func(a, b map[string]any) int {
+			nameA, _ := a[dedicatedServerSchemaKeyName].(string)
+			nameB, _ := b[dedicatedServerSchemaKeyName].(string)
+			return strings.Compare(nameA, nameB)
+		})
+	}
 
 	return softRaids
 }
 
+// findMountsForDrive returns the filesystem mount points served by a given local drive.
+// It traces: driveID → partition items where Device=driveID → filesystem items where Device=partitionID.
+func findMountsForDrive(apiCfg dedicated.PartitionsConfig, driveID string) []string {
+	var mounts []string
+	for partID, partItem := range apiCfg {
+		if partItem.Type != partitionTypePartition || partItem.Device != driveID {
+			continue
+		}
+		for _, fsItem := range apiCfg {
+			if fsItem.Type == partitionTypeFilesystem && fsItem.Device == partID {
+				mounts = append(mounts, fsItem.Mount)
+			}
+		}
+	}
+
+	return mounts
+}
+
+// resolveDiskName returns the disk name for a given drive ID, or (_, false) if the drive
+// should be skipped. It updates typeNameIndex and seenNames as a side-effect.
+func resolveDiskName(
+	apiCfg dedicated.PartitionsConfig,
+	id string,
+	diskType string,
+	existingDiskNameByMount map[string]string,
+	existingNamesByType map[string][]string,
+	typeNameIndex map[string]int,
+	seenNames map[string]bool,
+) (name string, ok bool) {
+	if len(existingDiskNameByMount) > 0 {
+		for _, mount := range findMountsForDrive(apiCfg, id) {
+			if n, found := existingDiskNameByMount[mount]; found && n != "" {
+				name = n
+				break
+			}
+		}
+		if name == "" || seenNames[name] {
+			return "", false
+		}
+		seenNames[name] = true
+
+		return name, true
+	}
+
+	mounts := findMountsForDrive(apiCfg, id)
+	if len(mounts) == 0 {
+		return "", false
+	}
+
+	idx := typeNameIndex[diskType]
+	names := existingNamesByType[diskType]
+	if idx < len(names) {
+		name = names[idx]
+	} else {
+		name = generateDiskName(diskType, idx)
+	}
+	typeNameIndex[diskType]++
+
+	if seenNames[name] {
+		return "", false
+	}
+	seenNames[name] = true
+
+	return name, true
+}
+
 // buildDiskConfigs creates disk_config entries for drives not in RAID.
+// One entry is created per physical drive that has at least one filesystem mount.
+// When existingDiskNameByMount is provided the function traces each drive through its
+// partitions to a filesystem mount and looks up the user-assigned name; drives with no
+// matching mounts are skipped (// drive not in prior config; skip to avoid phantom entries).
+// When existingDiskNameByMount is empty the fallback assigns names from existingNamesByType
+// by position within each type, or generates a name. Drives with no mounts are always skipped.
+// When existingDiskConfigOrder is provided disk_configs are sorted to match that order;
+// otherwise sorted alphabetically by name.
 func buildDiskConfigs(
-	apiCfg dedicated.PartitionsConfig, diskNamesByID map[string]string, diskInRaid map[string]bool,
+	apiCfg dedicated.PartitionsConfig,
+	diskNamesByID map[string]string,
+	diskInRaid map[string]bool,
+	existingNamesByType map[string][]string,
+	existingDiskNameByMount map[string]string,
+	existingDiskConfigOrder []string,
 ) []map[string]any {
 	diskConfigs := make([]map[string]any, 0)
-	usedDiskTypes := make(map[string]bool)
+	typeNameIndex := make(map[string]int)
+	seenNames := make(map[string]bool)
 
 	for id, item := range apiCfg {
 		if item.Type != partitionTypeLocalDrive || diskInRaid[id] {
 			continue
 		}
 
-		if !usedDiskTypes[item.Match.Type] {
-			usedDiskTypes[item.Match.Type] = true
-			diskName := generateDiskName(item.Match.Type, len(diskConfigs))
-			diskNamesByID[id] = diskName
-
-			diskConfig := map[string]any{
-				dedicatedServerSchemaKeyName:     diskName,
-				dedicatedServerSchemaKeyDiskType: item.Match.Type,
-			}
-			diskConfigs = append(diskConfigs, diskConfig)
-		} else {
-			// Use existing disk name for this type
-			for diskID, name := range diskNamesByID {
-				disk, exists := apiCfg[diskID]
-				if exists && disk.Type == partitionTypeLocalDrive && disk.Match.Type == item.Match.Type {
-					diskNamesByID[id] = name
-					break
-				}
-			}
+		diskType := item.Match.Type
+		diskName, ok := resolveDiskName(
+			apiCfg, id, diskType,
+			existingDiskNameByMount, existingNamesByType,
+			typeNameIndex, seenNames,
+		)
+		if !ok {
+			continue
 		}
+
+		diskNamesByID[id] = diskName
+		diskConfigs = append(diskConfigs, map[string]any{
+			dedicatedServerSchemaKeyName:     diskName,
+			dedicatedServerSchemaKeyDiskType: diskType,
+		})
 	}
 
-	// Sort disk_configs by name for stable ordering
-	slices.SortFunc(diskConfigs, func(a, b map[string]any) int {
-		nameA, _ := a[dedicatedServerSchemaKeyName].(string)
-		nameB, _ := b[dedicatedServerSchemaKeyName].(string)
-		return strings.Compare(nameA, nameB)
-	})
+	if len(existingDiskConfigOrder) > 0 {
+		orderIdx := make(map[string]int, len(existingDiskConfigOrder))
+		for i, name := range existingDiskConfigOrder {
+			orderIdx[name] = i
+		}
+		slices.SortFunc(diskConfigs, func(a, b map[string]any) int {
+			nameA, _ := a[dedicatedServerSchemaKeyName].(string)
+			nameB, _ := b[dedicatedServerSchemaKeyName].(string)
+			posA, okA := orderIdx[nameA]
+			posB, okB := orderIdx[nameB]
+			if !okA {
+				posA = len(existingDiskConfigOrder)
+			}
+			if !okB {
+				posB = len(existingDiskConfigOrder)
+			}
+			if posA != posB {
+				return posA - posB
+			}
+
+			return strings.Compare(nameA, nameB)
+		})
+	} else {
+		slices.SortFunc(diskConfigs, func(a, b map[string]any) int {
+			nameA, _ := a[dedicatedServerSchemaKeyName].(string)
+			nameB, _ := b[dedicatedServerSchemaKeyName].(string)
+
+			return strings.Compare(nameA, nameB)
+		})
+	}
 
 	return diskConfigs
 }
 
+func mountSortPriority(mount string) int {
+	switch mount {
+	case mountBaseBoot:
+		return 0
+	case mountBaseSwap:
+		return 1
+	case mountBaseRoot:
+		return 2
+	default:
+		return 3
+	}
+}
+
 // buildDiskPartitions creates disk_partitions entries from filesystem items.
+// When existingMounts is non-empty only partitions whose mount appears in that set are returned.
 func buildDiskPartitions(
 	apiCfg dedicated.PartitionsConfig, raidNamesByID, diskNamesByID map[string]string,
+	existingMounts []string,
 ) []map[string]any {
 	diskPartitions := make([]map[string]any, 0)
 
+	var mountFilter map[string]bool
+	if len(existingMounts) > 0 {
+		mountFilter = make(map[string]bool, len(existingMounts))
+		for _, m := range existingMounts {
+			mountFilter[m] = true
+		}
+	}
+
 	for _, item := range apiCfg {
 		if item.Type != partitionTypeFilesystem {
+			continue
+		}
+
+		if mountFilter != nil && !mountFilter[item.Mount] {
 			continue
 		}
 
@@ -1084,34 +1298,41 @@ func buildDiskPartitions(
 		diskPartitions = append(diskPartitions, partition)
 	}
 
-	// Sort disk_partitions by mount point for stable ordering
-	// Special mounts (/boot, swap) come first, then others alphabetically
-	slices.SortFunc(diskPartitions, func(a, b map[string]any) int {
-		mountA, _ := a[dedicatedServerSchemaKeyMount].(string)
-		mountB, _ := b[dedicatedServerSchemaKeyMount].(string)
-
-		priority := func(mount string) int {
-			switch mount {
-			case "/boot":
-				return 0
-			case "swap":
-				return 1
-			case "/":
-				return 2
-			default:
-				return 3
+	if len(existingMounts) > 0 {
+		mountIdx := make(map[string]int, len(existingMounts))
+		for i, m := range existingMounts {
+			mountIdx[m] = i
+		}
+		slices.SortFunc(diskPartitions, func(a, b map[string]any) int {
+			mountA, _ := a[dedicatedServerSchemaKeyMount].(string)
+			mountB, _ := b[dedicatedServerSchemaKeyMount].(string)
+			posA, okA := mountIdx[mountA]
+			posB, okB := mountIdx[mountB]
+			if !okA {
+				posA = len(existingMounts)
 			}
-		}
+			if !okB {
+				posB = len(existingMounts)
+			}
+			if posA != posB {
+				return posA - posB
+			}
 
-		prioA := priority(mountA)
-		prioB := priority(mountB)
+			return strings.Compare(mountA, mountB)
+		})
+	} else {
+		slices.SortFunc(diskPartitions, func(a, b map[string]any) int {
+			mountA, _ := a[dedicatedServerSchemaKeyMount].(string)
+			mountB, _ := b[dedicatedServerSchemaKeyMount].(string)
+			prioA := mountSortPriority(mountA)
+			prioB := mountSortPriority(mountB)
+			if prioA != prioB {
+				return prioA - prioB
+			}
 
-		if prioA != prioB {
-			return prioA - prioB
-		}
-
-		return strings.Compare(mountA, mountB)
-	})
+			return strings.Compare(mountA, mountB)
+		})
+	}
 
 	return diskPartitions
 }
