@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	dedicated "github.com/selectel/dedicated-go/pkg/v2"
+	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
 )
 
 func WaitForServersServerV1ActiveState(

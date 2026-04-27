@@ -10,7 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	dedicated "github.com/selectel/dedicated-go/pkg/v2"
+	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
 	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dedicated"
 )
 
@@ -18,7 +18,7 @@ func resourceDedicatedServerV1() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceDedicatedServerV1Create,
 		ReadContext:   resourceDedicatedServerV1Read,
-		UpdateContext: resourceDedicatedServerV1UpdateWithStateRollback,
+		UpdateContext: resourceDedicatedServerV1UpdateWithPowerControl,
 		DeleteContext: resourceDedicatedServerV1Delete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceDedicatedServerV1ImportState,
@@ -28,14 +28,56 @@ func resourceDedicatedServerV1() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(5 * time.Minute),
 		},
-		Schema: resourceDedicatedServerV1Schema(),
+		Schema:        resourceDedicatedServerV1Schema(),
+		CustomizeDiff: resourceDedicatedServerV1CustomizeDiff,
 	}
 }
 
+func resourceDedicatedServerV1CustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ any) error {
+	// Validate that power_state change is not combined with other changes
+	if d.HasChange(dedicatedServerSchemaKeyPowerState) {
+		// Skip validation if power_state is not changing (only computed value changing)
+		if !d.HasChange(dedicatedServerSchemaKeyOSID) &&
+			!d.HasChange(dedicatedServerSchemaKeyOSPassword) &&
+			!d.HasChange(dedicatedServerSchemaKeyOSSSHKey) &&
+			!d.HasChange(dedicatedServerSchemaKeyOSSSHKeyName) &&
+			!d.HasChange(dedicatedServerSchemaKeyOSPartitionsConfig) &&
+			!d.HasChange(dedicatedServerSchemaKeyOSUserData) &&
+			!d.HasChange(dedicatedServerSchemaKeyOSHostName) &&
+			!d.HasChange(dedicatedServerSchemaForceUpdateAdditionalParams) {
+			return nil
+		}
+
+		return fmt.Errorf(
+			"power_state change cannot be combined with other configuration changes: " +
+				"when changing power_state, no other parameters (os_id, os_password, ssh_key, ssh_key_name, " +
+				"partitions_config, user_data, os_host_name, force_update_additional_params) can be modified " +
+				"in the same apply",
+		)
+	}
+
+	return nil
+}
+
 func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
+	}
+
+	// power_state cannot be used during creation - server is always created in "on" state
+	if powerState, ok := d.GetOk(dedicatedServerSchemaKeyPowerState); ok {
+		state := powerState.(string)
+		if state == dedicatedServerPowerStateOff {
+			return diag.FromErr(fmt.Errorf(
+				"cannot create server with power_state = \"off\": server is always created in running state, use power_state = \"off\" only in resource update",
+			))
+		}
+		if state == dedicatedServerPowerActionReboot {
+			return diag.FromErr(fmt.Errorf(
+				"cannot create server with power_state = \"reboot\": reboot operation is only meaningful for existing servers",
+			))
+		}
 	}
 
 	partitionsConfigFromSchema, err := resourceDedicatedServerV1ReadPartitionsConfig(d)
@@ -69,16 +111,21 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 	// validating availability of the server, OS, price plan and balance, partitions config
 
 	var (
-		userData, _ = d.Get(dedicatedServerSchemaKeyOSUserData).(string)
-		sshKeyPK, _ = d.Get(dedicatedServerSchemaKeyOSSSHKey).(string)
+		sshKeyPK, _              = d.Get(dedicatedServerSchemaKeyOSSSHKey).(string)
+		userDataRaw, hasUserData = d.GetOk(dedicatedServerSchemaKeyOSUserData)
+		userData                 = ""
 	)
+
+	if hasUserData {
+		userData, _ = userDataRaw.(string)
+	}
 
 	if data.sshKeyByName != nil {
 		sshKeyPK = data.sshKeyByName.PublicKey
 	}
 
 	err = resourceDedicatedServerV1CreateValidatePreconditions(
-		ctx, dsClient, data, locationID, data.pricePlan.UUID, configurationID, osID, userData != "",
+		ctx, dsClient, data, locationID, data.pricePlan.UUID, configurationID, osID, hasUserData,
 		sshKeyPK != "" || data.sshKeyByName != nil, password != "", privateSubnet != "",
 	)
 	if err != nil {
@@ -141,6 +188,27 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 	err = waiters.WaitForServersServerV1ActiveState(ctx, dsClient, uuid, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectDedicatedServer, err))
+	}
+
+	resourceOS, _, err := dsClient.OperatingSystemByResource(ctx, d.Id())
+	if err != nil {
+		return diag.FromErr(fmt.Errorf(
+			"error getting OS for server %s: %w", d.Id(), err,
+		))
+	}
+
+	if len(resourceOS.PartitionsConfig) > 0 {
+		existingNamesByType := resourceDedicatedServerV1ReadExistingDiskNames(d)
+		existingMounts := resourceDedicatedServerV1ReadExistingDiskPartitionMounts(d)
+		existingDiskNameByMount := resourceDedicatedServerV1ReadExistingDiskNameByMount(d)
+		existingDiskConfigOrder := resourceDedicatedServerV1ReadExistingDiskConfigOrder(d)
+		existingRaidNamesByKey := resourceDedicatedServerV1ReadExistingRaidNames(d)
+		existingRaidConfigOrder := resourceDedicatedServerV1ReadExistingRaidConfigOrder(d)
+		partitionsConfig, err := apiPartitionsConfigToSchema(resourceOS.PartitionsConfig, existingNamesByType, existingMounts, existingDiskNameByMount, existingDiskConfigOrder, existingRaidNamesByKey, existingRaidConfigOrder)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("failed to convert partitions config: %w", err))
+		}
+		_ = d.Set("partitions_config", partitionsConfig)
 	}
 
 	return nil
@@ -392,8 +460,253 @@ func resourceDedicatedServerV1CreateValidatePreconditions(
 	return nil
 }
 
+// resourceDedicatedServerV1ReadExistingDiskNames reads disk_config entries already in state and
+// returns them grouped by disk_type. apiPartitionsConfigToSchema uses these names to preserve
+// user-defined labels (e.g. "system", "backup") across Read cycles instead of regenerating
+// generic names like "disk-ssd-sata".
+func resourceDedicatedServerV1ReadExistingDiskNames(d *schema.ResourceData) map[string][]string {
+	result := make(map[string][]string)
+
+	rawList, ok := d.GetOk(dedicatedServerSchemaKeyOSPartitionsConfig)
+	if !ok {
+		return result
+	}
+
+	pList, ok := rawList.([]interface{})
+	if !ok || len(pList) == 0 {
+		return result
+	}
+
+	pMap, ok := pList[0].(map[string]interface{})
+	if !ok {
+		return result
+	}
+
+	dcRaw, ok := pMap[dedicatedServerSchemaKeyDiskConfig].([]interface{})
+	if !ok {
+		return result
+	}
+
+	for _, itemRaw := range dcRaw {
+		item, ok := itemRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		name, _ := item[dedicatedServerSchemaKeyName].(string)
+		diskType, _ := item[dedicatedServerSchemaKeyDiskType].(string)
+		if name != "" && diskType != "" {
+			result[diskType] = append(result[diskType], name)
+		}
+	}
+
+	return result
+}
+
+// resourceDedicatedServerV1ReadExistingDiskPartitionMounts reads disk_partitions
+// entries from the current schema data and returns their mount points. Used to
+// filter auto-injected partitions (e.g. /boot) from the state read-back.
+func resourceDedicatedServerV1ReadExistingDiskPartitionMounts(d *schema.ResourceData) []string {
+	rawList, ok := d.GetOk(dedicatedServerSchemaKeyOSPartitionsConfig)
+	if !ok {
+		return nil
+	}
+
+	pList, ok := rawList.([]interface{})
+	if !ok || len(pList) == 0 {
+		return nil
+	}
+
+	pMap, ok := pList[0].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	dpRaw, ok := pMap[dedicatedServerSchemaKeyDiskPartitions].([]interface{})
+	if !ok {
+		return nil
+	}
+
+	mounts := make([]string, 0, len(dpRaw))
+	for _, itemRaw := range dpRaw {
+		item, ok := itemRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if mount, ok := item[dedicatedServerSchemaKeyMount].(string); ok && mount != "" {
+			mounts = append(mounts, mount)
+		}
+	}
+
+	return mounts
+}
+
+// resourceDedicatedServerV1ReadExistingDiskNameByMount reads disk_partitions from the
+// current schema data and returns a map of mount→disk_name. Used by buildDiskConfigs
+// to identify each physical drive's user-assigned name by tracing the API partition graph.
+func resourceDedicatedServerV1ReadExistingDiskNameByMount(d *schema.ResourceData) map[string]string {
+	rawList, ok := d.GetOk(dedicatedServerSchemaKeyOSPartitionsConfig)
+	if !ok {
+		return nil
+	}
+
+	pList, ok := rawList.([]interface{})
+	if !ok || len(pList) == 0 {
+		return nil
+	}
+
+	pMap, ok := pList[0].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	dpRaw, ok := pMap[dedicatedServerSchemaKeyDiskPartitions].([]interface{})
+	if !ok {
+		return nil
+	}
+
+	result := make(map[string]string)
+	for _, itemRaw := range dpRaw {
+		item, ok := itemRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		mount, _ := item[dedicatedServerSchemaKeyMount].(string)
+		diskName, _ := item[dedicatedServerSchemaKeyDiskName].(string)
+		if mount != "" && diskName != "" {
+			result[mount] = diskName
+		}
+	}
+
+	if len(result) == 0 {
+		return nil
+	}
+
+	return result
+}
+
+// resourceDedicatedServerV1ReadExistingDiskConfigOrder reads disk_config entries from the
+// current schema data and returns their names in state order. Used to sort disk_configs
+// in state to match the user's original config order and avoid TypeList positional diffs.
+func resourceDedicatedServerV1ReadExistingDiskConfigOrder(d *schema.ResourceData) []string {
+	rawList, ok := d.GetOk(dedicatedServerSchemaKeyOSPartitionsConfig)
+	if !ok {
+		return nil
+	}
+
+	pList, ok := rawList.([]interface{})
+	if !ok || len(pList) == 0 {
+		return nil
+	}
+
+	pMap, ok := pList[0].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	dcRaw, ok := pMap[dedicatedServerSchemaKeyDiskConfig].([]interface{})
+	if !ok {
+		return nil
+	}
+
+	names := make([]string, 0, len(dcRaw))
+	for _, itemRaw := range dcRaw {
+		item, ok := itemRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		name, _ := item[dedicatedServerSchemaKeyName].(string)
+		if name != "" {
+			names = append(names, name)
+		}
+	}
+
+	return names
+}
+
+// resourceDedicatedServerV1ReadExistingRaidNames reads soft_raid_config entries from
+// the current schema data and returns names grouped by "level|diskType" key. Used by
+// buildSoftRaids to preserve user-defined RAID labels across Read cycles.
+func resourceDedicatedServerV1ReadExistingRaidNames(d *schema.ResourceData) map[string][]string {
+	result := make(map[string][]string)
+
+	rawList, ok := d.GetOk(dedicatedServerSchemaKeyOSPartitionsConfig)
+	if !ok {
+		return result
+	}
+
+	pList, ok := rawList.([]interface{})
+	if !ok || len(pList) == 0 {
+		return result
+	}
+
+	pMap, ok := pList[0].(map[string]interface{})
+	if !ok {
+		return result
+	}
+
+	srCfgRaw, ok := pMap[dedicatedServerSchemaKeySoftRaidConfig].([]interface{})
+	if !ok {
+		return result
+	}
+
+	for _, itemRaw := range srCfgRaw {
+		item, ok := itemRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		name, _ := item[dedicatedServerSchemaKeyName].(string)
+		level, _ := item[dedicatedServerSchemaKeyLevel].(string)
+		diskType, _ := item[dedicatedServerSchemaKeyDiskType].(string)
+		if name != "" && level != "" && diskType != "" {
+			key := level + "|" + diskType
+			result[key] = append(result[key], name)
+		}
+	}
+
+	return result
+}
+
+// resourceDedicatedServerV1ReadExistingRaidConfigOrder reads soft_raid_config entries
+// from the current schema data and returns their names in state order. Used to sort
+// soft_raid_config in state to match the user's original config order.
+func resourceDedicatedServerV1ReadExistingRaidConfigOrder(d *schema.ResourceData) []string {
+	rawList, ok := d.GetOk(dedicatedServerSchemaKeyOSPartitionsConfig)
+	if !ok {
+		return nil
+	}
+
+	pList, ok := rawList.([]interface{})
+	if !ok || len(pList) == 0 {
+		return nil
+	}
+
+	pMap, ok := pList[0].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	srCfgRaw, ok := pMap[dedicatedServerSchemaKeySoftRaidConfig].([]interface{})
+	if !ok {
+		return nil
+	}
+
+	names := make([]string, 0, len(srCfgRaw))
+	for _, itemRaw := range srCfgRaw {
+		item, ok := itemRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		name, _ := item[dedicatedServerSchemaKeyName].(string)
+		if name != "" {
+			names = append(names, name)
+		}
+	}
+
+	return names
+}
+
 func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -471,11 +784,51 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 
 	_ = d.Set("os_id", os.UUID)
 
+	// Reading partitions config from the API response.
+	// existingMounts is sourced from prior state (d holds the last-applied state during Read).
+	// On the very first Read after a fresh apply the prior state already has the filtered
+	// (user-configured) mounts, so the filter stays clean. On the first apply after
+	// deploying this provider version to an existing resource, one apply cycle is needed
+	// to rewrite state before the drift disappears.
+	if len(resourceOS.PartitionsConfig) > 0 {
+		existingNamesByType := resourceDedicatedServerV1ReadExistingDiskNames(d)
+		existingMounts := resourceDedicatedServerV1ReadExistingDiskPartitionMounts(d)
+		existingDiskNameByMount := resourceDedicatedServerV1ReadExistingDiskNameByMount(d)
+		existingDiskConfigOrder := resourceDedicatedServerV1ReadExistingDiskConfigOrder(d)
+		existingRaidNamesByKey := resourceDedicatedServerV1ReadExistingRaidNames(d)
+		existingRaidConfigOrder := resourceDedicatedServerV1ReadExistingRaidConfigOrder(d)
+		partitionsConfig, err := apiPartitionsConfigToSchema(resourceOS.PartitionsConfig, existingNamesByType, existingMounts, existingDiskNameByMount, existingDiskConfigOrder, existingRaidNamesByKey, existingRaidConfigOrder)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("failed to convert partitions config: %w", err))
+		}
+		_ = d.Set("partitions_config", partitionsConfig)
+	}
+
+	driverStatus, _, err := dsClient.ShowPowerState(ctx, d.Id())
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to get power state: %w", err))
+	}
+
+	if driverStatus != nil {
+		var state string
+		switch {
+		case driverStatus.IsReboot():
+			state = dedicatedServerPowerActionReboot
+		case driverStatus.IsOff():
+			state = dedicatedServerPowerStateOff
+		case driverStatus.IsOn():
+			state = dedicatedServerPowerStateOn
+		default:
+			state = string(driverStatus.PowerState)
+		}
+		_ = d.Set("power_state", state)
+	}
+
 	return nil
 }
 
 func resourceDedicatedServerV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -498,15 +851,23 @@ func resourceDedicatedServerV1Delete(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func resourceDedicatedServerV1UpdateWithStateRollback(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	d.Partial(true)
-
-	dsClient, diagErr := getDedicatedClient(d, meta)
-	if diagErr != nil {
-		return diagErr
+func resourceDedicatedServerV1UpdateWithStateRollback(
+	ctx context.Context, d *schema.ResourceData, dsClient *dedicated.ServiceClient, meta any,
+) diag.Diagnostics {
+	// Check if power_state is "off" - server must be powered on for OS installation
+	if powerState, ok := d.GetOk(dedicatedServerSchemaKeyPowerState); ok {
+		state := powerState.(string)
+		if state == dedicatedServerPowerStateOff {
+			return diag.FromErr(fmt.Errorf(
+				"cannot perform OS installation while server is powered off: " +
+					"please set power_state = \"on\" and apply changes first, then perform OS installation",
+			))
+		}
 	}
 
-	diagErr = resourceDedicatedServerV1Update(ctx, d, dsClient)
+	d.Partial(true)
+
+	diagErr := resourceDedicatedServerV1Update(ctx, d, dsClient)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -519,6 +880,14 @@ func resourceDedicatedServerV1UpdateWithStateRollback(ctx context.Context, d *sc
 	err := waiters.WaitForServersServerInstallNewOSV1ActiveState(ctx, dsClient, d.Id(), timeout)
 	if err != nil {
 		return diag.FromErr(errUpdatingObject(objectDedicatedServer, d.Id(), err))
+	}
+
+	// Apply power_state after OS installation if specified
+	if powerState, ok := d.GetOk(dedicatedServerSchemaKeyPowerState); ok {
+		state := powerState.(string)
+		if state == dedicatedServerPowerStateOff || state == dedicatedServerPowerActionReboot {
+			return resourceDedicatedServerV1UpdatePowerState(ctx, d, dsClient, state, meta)
+		}
 	}
 
 	return nil
@@ -539,16 +908,22 @@ func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData
 	}
 
 	var (
-		userData, _ = d.Get(dedicatedServerSchemaKeyOSUserData).(string)
-		sshKeyPK, _ = d.Get(dedicatedServerSchemaKeyOSSSHKey).(string)
+		sshKeyPK, _              = d.Get(dedicatedServerSchemaKeyOSSSHKey).(string)
+		userDataRaw, hasUserData = d.GetOk(dedicatedServerSchemaKeyOSUserData)
+		userData                 *string
 	)
+
+	if hasUserData {
+		v := userDataRaw.(string)
+		userData = &v
+	}
 
 	if data.sshKeyByName != nil {
 		sshKeyPK = data.sshKeyByName.PublicKey
 	}
 
 	err = resourceDedicatedServerV1UpdateValidatePreconditions(
-		ctx, d, dsClient, data.os, data.partitions, userData != "",
+		ctx, d, dsClient, data.os, data.partitions, hasUserData,
 		sshKeyPK != "" || data.sshKeyByName != nil, password != "",
 	)
 	if err != nil {
@@ -640,6 +1015,118 @@ func resourceDedicatedServerV1UpdateLoadData(
 	}, nil
 }
 
+func resourceDedicatedServerV1UpdatePowerState(
+	ctx context.Context, d *schema.ResourceData, dsClient *dedicated.ServiceClient, desiredState string, meta any,
+) diag.Diagnostics {
+	driverStatus, _, err := dsClient.ShowPowerState(ctx, d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if desiredState == dedicatedServerPowerActionReboot && driverStatus.IsOff() {
+		return diag.FromErr(fmt.Errorf("server is shutdown cannot reboot %s", d.Id()))
+	}
+
+	if desiredState == dedicatedServerPowerActionReboot && driverStatus.IsReboot() {
+		return diag.FromErr(fmt.Errorf("server is already rebooting %s", d.Id()))
+	}
+
+	if desiredState == dedicatedServerPowerStateOff && driverStatus.IsOff() {
+		return diag.FromErr(fmt.Errorf("server is already shutdown %s", d.Id()))
+	}
+
+	if desiredState == dedicatedServerPowerStateOff && driverStatus.IsReboot() {
+		return diag.FromErr(fmt.Errorf("server is rebooting %s", d.Id()))
+	}
+
+	if desiredState == dedicatedServerPowerStateOn && driverStatus.IsOn() {
+		return diag.FromErr(fmt.Errorf("server is already running %s", d.Id()))
+	}
+
+	if desiredState == dedicatedServerPowerStateOn && driverStatus.IsReboot() {
+		return diag.FromErr(fmt.Errorf("server is rebooting %s", d.Id()))
+	}
+
+	if desiredState == dedicatedServerPowerStateOff {
+		if err = setResourcePowerState(ctx, dsClient, d.Id(), dedicatedServerPowerStateOff); err != nil {
+			return diag.FromErr(fmt.Errorf("error powering off: %w", err))
+		}
+
+		timeout := d.Timeout(schema.TimeoutUpdate)
+		if err = waiters.WaitForServersV1PowerShutdown(ctx, dsClient, d.Id(), timeout); err != nil {
+			return diag.FromErr(fmt.Errorf("server did not become shutdown after power off: %w", err))
+		}
+
+		return resourceDedicatedServerV1Read(ctx, d, meta)
+	}
+
+	if desiredState == dedicatedServerPowerActionReboot {
+		if err = setResourcePowerState(ctx, dsClient, d.Id(), dedicatedServerPowerActionReboot); err != nil {
+			return diag.FromErr(fmt.Errorf("error rebooting: %w", err))
+		}
+
+		timeout := d.Timeout(schema.TimeoutUpdate)
+		if err = waiters.WaitForServersV1PowerRunningAfterReboot(ctx, dsClient, d.Id(), timeout); err != nil {
+			return diag.FromErr(fmt.Errorf("server did not become active after reboot: %w", err))
+		}
+
+		return resourceDedicatedServerV1Read(ctx, d, meta)
+	}
+
+	if desiredState == dedicatedServerPowerStateOn {
+		if err = setResourcePowerState(ctx, dsClient, d.Id(), dedicatedServerPowerStateOn); err != nil {
+			return diag.FromErr(fmt.Errorf("error powering on: %w", err))
+		}
+
+		timeout := d.Timeout(schema.TimeoutUpdate)
+		if err = waiters.WaitForServersV1PowerRunning(ctx, dsClient, d.Id(), timeout); err != nil {
+			return diag.FromErr(fmt.Errorf("server did not become running after power on: %w", err))
+		}
+
+		return resourceDedicatedServerV1Read(ctx, d, meta)
+	}
+
+	return diag.Errorf("unknown power_state: %s", desiredState)
+}
+
+func resourceDedicatedServerV1UpdateWithPowerControl(
+	ctx context.Context, d *schema.ResourceData, meta any,
+) diag.Diagnostics {
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
+	if diagErr != nil {
+		return diagErr
+	}
+
+	powerStateRaw, ok := d.GetOk(dedicatedServerSchemaKeyPowerState)
+	if !ok {
+		return resourceDedicatedServerV1UpdateWithStateRollback(ctx, d, dsClient, meta)
+	}
+
+	if !d.HasChange(dedicatedServerSchemaKeyPowerState) {
+		return resourceDedicatedServerV1UpdateWithStateRollback(ctx, d, dsClient, meta)
+	}
+
+	desiredState, _ := powerStateRaw.(string)
+
+	return resourceDedicatedServerV1UpdatePowerState(ctx, d, dsClient, desiredState, meta)
+}
+
+func setResourcePowerState(ctx context.Context, dsClient *dedicated.ServiceClient, resourceUUID, powerState string) error {
+	switch powerState {
+	case dedicatedServerPowerStateOn:
+		_, err := dsClient.SetPowerState(ctx, resourceUUID, true)
+		return err
+	case dedicatedServerPowerStateOff:
+		_, err := dsClient.SetPowerState(ctx, resourceUUID, false)
+		return err
+	case dedicatedServerPowerActionReboot:
+		_, err := dsClient.RebootServer(ctx, resourceUUID)
+		return err
+	default:
+		return fmt.Errorf("unknown power state: %s", powerState)
+	}
+}
+
 func resourceDedicatedServerV1UpdateValidatePreconditions(
 	ctx context.Context, d *schema.ResourceData, dsClient *dedicated.ServiceClient,
 	os *dedicated.OperatingSystem, partitions dedicated.PartitionsConfig,
@@ -700,7 +1187,9 @@ func resourceDedicatedServerV1UpdateValidatePreconditions(
 		return errors.New("noos configuration does not support password")
 	}
 
-	diagErr := resourceDedicatedServerV1UpdateValidatePreconditionsAdditionalOSParams(d, forceUpdateAdditionalParams || d.HasChange(dedicatedServerSchemaKeyOSID))
+	diagErr := resourceDedicatedServerV1UpdateValidatePreconditionsAdditionalOSParams(
+		d, forceUpdateAdditionalParams || d.HasChange(dedicatedServerSchemaKeyOSID),
+	)
 	if diagErr != nil {
 		return diagErr
 	}

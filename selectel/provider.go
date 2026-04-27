@@ -140,6 +140,7 @@ func Provider(providerVersion string) *schema.Provider {
 			"selectel_mks_kube_versions_v1":             dataSourceMKSKubeVersionsV1(),
 			"selectel_mks_feature_gates_v1":             dataSourceMKSFeatureGatesV1(),
 			"selectel_mks_admission_controllers_v1":     dataSourceMKSAdmissionControllersV1(),
+			"selectel_dedicated_servers_v1":             dataSourceDedicatedServersV1(),
 			"selectel_dedicated_configuration_v1":       dataSourceDedicatedConfigurationV1(),
 			"selectel_dedicated_os_v1":                  dataSourceDedicatedOSV1(),
 			"selectel_dedicated_location_v1":            dataSourceDedicatedLocationV1(),
@@ -154,6 +155,7 @@ func Provider(providerVersion string) *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"selectel_vpc_floatingip_v2":                            resourceVPCFloatingIPV2(),
 			"selectel_vpc_keypair_v2":                               resourceVPCKeypairV2(),
+			"selectel_dedicated_ssh_keys_v1":                        resourceDedicatedSSHKeysV1(),
 			"selectel_vpc_license_v2":                               resourceVPCLicenseV2(),
 			"selectel_vpc_project_v2":                               resourceVPCProjectV2(),
 			"selectel_vpc_subnet_v2":                                resourceVPCSubnetV2(),
