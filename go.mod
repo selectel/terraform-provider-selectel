@@ -78,3 +78,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/selectel/dedicated-go/v2 => github.com/kefiriaus/dedicated-go/v2 v2.0.0-20260424222031-88ca66a7cae3

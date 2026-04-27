@@ -37,7 +37,7 @@ func dataSourceDedicatedServersV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
-						"configuration_id": {
+						"configuration": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
@@ -74,6 +74,14 @@ func dataSourceDedicatedServersV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"configuration": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"location": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"reserved_public_ips": {
 							Type:     schema.TypeList,
 							Computed: true,
@@ -103,35 +111,49 @@ func dataSourceDedicatedServersV1Read(ctx context.Context, d *schema.ResourceDat
 
 	filter := expandDedicatedServersSearchFilter(d)
 
-	servers, _, err := dsClient.ResourcesList(ctx, filter.locationID, filter.configurationID)
+	servers, _, err := dsClient.ResourcesList(ctx, filter.locationID, "")
 	if err != nil {
 		return diag.FromErr(errGettingObjects(objectDedicatedServer, err))
 	}
 
-	reservedIPs := make(dedicated.ReservedIPs, 0)
+	serverConfigs, _, err := dsClient.Servers(ctx)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("error getting server configurations: %w", err))
+	}
+
+	serverChipConfigs, _, err := dsClient.ServerChips(ctx)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("error getting server chip configurations: %w", err))
+	}
+
+	configNameByUUID := buildConfigNameByUUID(serverConfigs, serverChipConfigs)
+
+	locations, _, err := dsClient.Locations(ctx)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("error getting locations: %w", err))
+	}
+
+	locationNameByUUID := make(map[string]string, len(locations))
+	for _, loc := range locations {
+		locationNameByUUID[loc.UUID] = loc.Name
+	}
 
 	reservedPublicIPs, _, err := dsClient.NetworkReservedIPs(ctx, filter.locationID, "")
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting reserved public IPs: %w", err))
-	}
-	if len(reservedPublicIPs) > 0 {
-		reservedIPs = append(reservedIPs, reservedPublicIPs...)
 	}
 
 	reservedPrivateIPs, _, err := dsClient.NetworkReservedLocalIPs(ctx, "")
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting reserved private IPs: %w", err))
 	}
-	if len(reservedPrivateIPs) > 0 {
-		reservedIPs = append(reservedIPs, reservedPrivateIPs...)
-	}
 
-	filteredServers, err := filterDedicatedServers(servers, filter, reservedIPs)
+	filteredServers, err := filterDedicatedServers(servers, filter, reservedPublicIPs, reservedPrivateIPs, configNameByUUID)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error filtering servers: %w", err))
 	}
 
-	serversFlatten := flattenDedicatedServers(filteredServers, reservedPublicIPs, reservedPrivateIPs)
+	serversFlatten := flattenDedicatedServers(filteredServers, reservedPublicIPs, reservedPrivateIPs, configNameByUUID, locationNameByUUID)
 	if err = d.Set("servers", serversFlatten); err != nil {
 		return diag.FromErr(err)
 	}
@@ -154,17 +176,20 @@ func dataSourceDedicatedServersV1Read(ctx context.Context, d *schema.ResourceDat
 }
 
 type dedicatedServersSearchFilter struct {
-	name            string
-	ip              string
-	locationID      string
-	configurationID string
-	publicSubnet    string
-	privateSubnet   string
+	name          string
+	ip            string
+	locationID    string
+	configuration string
+	publicSubnet  string
+	privateSubnet string
 }
 
+// IsEmpty reports whether all in-memory filter fields are unset.
+// locationID is excluded because it is applied at the API call layer, not in-memory.
 func (f dedicatedServersSearchFilter) IsEmpty() bool {
 	return f.name == "" &&
 		f.ip == "" &&
+		f.configuration == "" &&
 		f.publicSubnet == "" &&
 		f.privateSubnet == ""
 }
@@ -173,99 +198,109 @@ func expandDedicatedServersSearchFilter(d *schema.ResourceData) dedicatedServers
 	filter := dedicatedServersSearchFilter{}
 
 	filterSet, ok := d.Get("filter").(*schema.Set)
-	if !ok {
+	if !ok || filterSet.Len() == 0 {
 		return filter
 	}
 
-	if filterSet.Len() == 0 {
-		return filter
+	m := filterSet.List()[0].(map[string]interface{})
+
+	if v, ok := m["name"]; ok {
+		filter.name = v.(string)
 	}
-
-	resourceFilterMap := filterSet.List()[0].(map[string]interface{})
-
-	name, ok := resourceFilterMap["name"]
-	if ok {
-		filter.name = name.(string)
+	if v, ok := m["ip"]; ok {
+		filter.ip = v.(string)
 	}
-
-	ip, ok := resourceFilterMap["ip"]
-	if ok {
-		filter.ip = ip.(string)
+	if v, ok := m["location_id"]; ok {
+		filter.locationID = v.(string)
 	}
-
-	locationID, ok := resourceFilterMap["location_id"]
-	if ok {
-		filter.locationID = locationID.(string)
+	if v, ok := m["configuration"]; ok {
+		filter.configuration = v.(string)
 	}
-
-	configurationID, ok := resourceFilterMap["configuration_id"]
-	if ok {
-		filter.configurationID = configurationID.(string)
+	if v, ok := m["public_subnet"]; ok {
+		filter.publicSubnet = v.(string)
 	}
-
-	publicSubnet, ok := resourceFilterMap["public_subnet"]
-	if ok {
-		filter.publicSubnet = publicSubnet.(string)
-	}
-
-	privateSubnet, ok := resourceFilterMap["private_subnet"]
-	if ok {
-		filter.privateSubnet = privateSubnet.(string)
+	if v, ok := m["private_subnet"]; ok {
+		filter.privateSubnet = v.(string)
 	}
 
 	return filter
 }
 
 func filterDedicatedServers(
-	servers []dedicated.ResourceDetails, filter dedicatedServersSearchFilter, reservedIPs dedicated.ReservedIPs,
+	servers []dedicated.ResourceDetails, filter dedicatedServersSearchFilter,
+	publicReservedIPs, privateReservedIPs dedicated.ReservedIPs,
+	configNameByUUID map[string]string,
 ) ([]dedicated.ResourceDetails, error) {
-	filteredServers := make([]dedicated.ResourceDetails, 0, len(servers))
-
 	if filter.IsEmpty() {
 		return servers, nil
 	}
 
+	filteredServers := make([]dedicated.ResourceDetails, 0, len(servers))
 	for _, server := range servers {
-		if !serverMatchesFilter(server, filter, reservedIPs) {
-			continue
+		if serverMatchesFilter(server, filter, publicReservedIPs, privateReservedIPs, configNameByUUID) {
+			filteredServers = append(filteredServers, server)
 		}
-		filteredServers = append(filteredServers, server)
 	}
 
 	return filteredServers, nil
 }
 
 func serverMatchesFilter(
-	server dedicated.ResourceDetails, filter dedicatedServersSearchFilter, reservedIPs dedicated.ReservedIPs,
+	server dedicated.ResourceDetails, filter dedicatedServersSearchFilter,
+	publicReservedIPs, privateReservedIPs dedicated.ReservedIPs,
+	configNameByUUID map[string]string,
 ) bool {
-	// Filter by name (partial match, case-insensitive)
-	if filter.name != "" && !strings.Contains(strings.ToLower(server.Info), strings.ToLower(filter.name)) {
-		return false
+	if filter.name != "" {
+		name := server.UserDesc
+		if name == "" {
+			name = server.Info
+		}
+		if !strings.Contains(strings.ToLower(name), strings.ToLower(filter.name)) {
+			return false
+		}
 	}
 
-	// Filter by IP or subnet
+	if filter.configuration != "" {
+		configName, ok := configNameByUUID[server.ServiceUUID]
+		if !ok {
+			return false
+		}
+		if !strings.Contains(strings.ToLower(configName), strings.ToLower(filter.configuration)) {
+			return false
+		}
+	}
+
 	if filter.ip != "" || filter.publicSubnet != "" || filter.privateSubnet != "" {
-		return serverIPMatchesFilter(server, filter, reservedIPs)
+		return serverIPMatchesFilter(server, filter, publicReservedIPs, privateReservedIPs)
 	}
 
 	return true
 }
 
 func serverIPMatchesFilter(
-	server dedicated.ResourceDetails, filter dedicatedServersSearchFilter, reservedIPs dedicated.ReservedIPs,
+	server dedicated.ResourceDetails, filter dedicatedServersSearchFilter,
+	publicReservedIPs, privateReservedIPs dedicated.ReservedIPs,
 ) bool {
-	for _, reserverIP := range reservedIPs {
-		if server.UUID != reserverIP.ResourceUUID {
+	for _, rip := range publicReservedIPs {
+		if server.UUID != rip.ResourceUUID {
 			continue
 		}
+		if filter.ip != "" && filter.ip == rip.IP.String() {
+			return true
+		}
+		if filter.publicSubnet != "" && filter.publicSubnet == rip.Subnet {
+			return true
+		}
+	}
 
-		if filter.ip != "" && filter.ip == reserverIP.IP.String() {
+	for _, rip := range privateReservedIPs {
+		if server.UUID != rip.ResourceUUID {
+			continue
+		}
+		if filter.ip != "" && filter.ip == rip.IP.String() {
 			return true
 		}
-		if filter.publicSubnet != "" && filter.publicSubnet == reserverIP.Subnet {
-			return true
-		}
-		if filter.privateSubnet != "" && filter.privateSubnet == reserverIP.Subnet {
+		if filter.privateSubnet != "" && filter.privateSubnet == rip.Subnet {
 			return true
 		}
 	}
@@ -276,15 +311,24 @@ func serverIPMatchesFilter(
 func flattenDedicatedServers(
 	servers []dedicated.ResourceDetails,
 	reservedPublicIPs, reservedPrivateIPs dedicated.ReservedIPs,
+	configNameByUUID, locationNameByUUID map[string]string,
 ) []any {
 	serversList := make([]any, len(servers))
 
 	for i, server := range servers {
 		serverMap := make(map[string]any)
 		serverMap["id"] = server.UUID
-		serverMap["name"] = server.Info
+
+		name := server.UserDesc
+		if name == "" {
+			name = server.Info
+		}
+		serverMap["name"] = name
+
 		serverMap["configuration_id"] = server.ServiceUUID
 		serverMap["location_id"] = server.LocationUUID
+		serverMap["configuration"] = configNameByUUID[server.ServiceUUID]
+		serverMap["location"] = locationNameByUUID[server.LocationUUID]
 
 		publicIPs := make([]string, 0, len(reservedPublicIPs))
 		for _, ip := range reservedPublicIPs {
@@ -307,4 +351,17 @@ func flattenDedicatedServers(
 	}
 
 	return serversList
+}
+
+func buildConfigNameByUUID(servers, serverChips []dedicated.Server) map[string]string {
+	m := make(map[string]string, len(servers)+len(serverChips))
+	for _, s := range servers {
+		m[s.ID] = s.Name
+	}
+	// serverChips entries overwrite servers entries on UUID collision (service types are disjoint in practice).
+	for _, s := range serverChips {
+		m[s.ID] = s.Name
+	}
+
+	return m
 }

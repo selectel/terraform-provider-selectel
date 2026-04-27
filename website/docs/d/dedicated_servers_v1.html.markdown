@@ -49,10 +49,10 @@ data "selectel_dedicated_servers_v1" "server_by_ip" {
 ```hcl
 data "selectel_dedicated_servers_v1" "filtered_servers" {
   project_id = selectel_vpc_project_v2.project.id
-  
+
   filter {
-    location_id      = "796f1f0a-d97d-4a8e-904e-4fd5ef57465c"
-    configuration_id = "796f1f0a-d97d-4a8e-904e-4fd5ef574652"
+    location_id   = "796f1f0a-d97d-4a8e-904e-4fd5ef57465c"
+    configuration = "EL50 SSD"
   }
 }
 ```
@@ -81,7 +81,7 @@ data "selectel_dedicated_servers_v1" "servers_by_subnet" {
 
   * `location_id` - (Optional) Unique identifier of the location. Retrieved from the [selectel_dedicated_location_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dedicated_location_v1) data source. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/availability-matrix/#dedicated-servers).
 
-  * `configuration_id` - (Optional) Unique identifier of the server configuration (UUID). Retrieved from the [selectel_dedicated_configuration_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data_source/dedicated_configuration_v1)
+  * `configuration` - (Optional) Partial, case-insensitive substring of the configuration display name (e.g. `"EL50 SSD"`). Matches any server whose configuration name contains the specified string.
 
   * `public_subnet` - (Optional) Public subnet ID of the server to filter.
 
@@ -93,7 +93,7 @@ data "selectel_dedicated_servers_v1" "servers_by_subnet" {
 
   * `id` - Unique identifier of the server (UUID).
   
-  * `name` - Server name.
+  * `name` - Configuration display name of the server (e.g. `"EL50 SSD SATA"`).
   
   * `configuration_id` - Configuration ID of the server.
   
