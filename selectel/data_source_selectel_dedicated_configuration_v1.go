@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	v2 "github.com/selectel/dedicated-go/v2/pkg/v2"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/reflect"
 )
 
@@ -46,7 +47,7 @@ func dataSourceDedicatedConfigurationV1() *schema.Resource {
 }
 
 func dataSourceDedicatedConfigurationV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -58,14 +59,14 @@ func dataSourceDedicatedConfigurationV1Read(ctx context.Context, d *schema.Resou
 
 	log.Printf("[DEBUG] Getting server configurations")
 
-	serversList, _, err := dsClient.ServersRaw(ctx)
+	serversList, _, err := dsClient.Servers(ctx)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf(
 			"error getting list of servers configurations (without chips): %w", err,
 		))
 	}
 
-	serverChipsList, _, err := dsClient.ServerChipsRaw(ctx)
+	serverChipsList, _, err := dsClient.ServerChips(ctx)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf(
 			"error getting list of servers configurations (with chips): %w", err))
@@ -82,8 +83,7 @@ func dataSourceDedicatedConfigurationV1Read(ctx context.Context, d *schema.Resou
 
 	ids := make([]string, 0, len(filteredServers))
 	for _, e := range filteredServers {
-		id, _ := e["uuid"].(string)
-		ids = append(ids, id)
+		ids = append(ids, e.ID)
 	}
 
 	slices.Sort(ids)
@@ -120,23 +120,23 @@ func expandDedicatedConfigurationsSearchFilter(d *schema.ResourceData) (*dedicat
 	return filter, nil
 }
 
-func filterDedicatedConfigurations(list []map[string]any, filter *dedicatedConfigurationsFilter) []map[string]any {
-	var filteredRaw []map[string]any
+func filterDedicatedConfigurations(list []v2.Server, filter *dedicatedConfigurationsFilter) []v2.Server {
+	var filtered []v2.Server
 	for _, entry := range list {
 		if reflect.IsSetContainsSubset(filter.deepFilter, entry) {
-			filteredRaw = append(filteredRaw, entry)
+			filtered = append(filtered, entry)
 		}
 	}
 
-	return filteredRaw
+	return filtered
 }
 
-func flattenDedicatedConfigurations(list []map[string]any) []interface{} {
+func flattenDedicatedConfigurations(list []v2.Server) []interface{} {
 	res := make([]interface{}, len(list))
 	for i, e := range list {
 		sMap := make(map[string]interface{})
-		sMap["id"] = e["uuid"]
-		sMap["name"] = e["name"]
+		sMap["id"] = e.ID
+		sMap["name"] = e.Name
 
 		res[i] = sMap
 	}

@@ -1,7 +1,10 @@
 package selectel
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const (
@@ -13,6 +16,8 @@ const (
 	dedicatedServerSchemaKeyPublicSubnetID           = "public_subnet_id"
 	dedicatedServerSchemaKeyPublicSubnetIP           = "public_subnet_ip"
 	dedicatedServerSchemaKeyPrivateSubnet            = "private_subnet"
+	dedicatedServerSchemaKeyPrivateSubnetID          = "private_subnet_id"
+	dedicatedServerSchemaKeyPrivateSubnetIP          = "private_subnet_ip"
 	dedicatedServerSchemaKeyOSUserData               = "user_data"
 	dedicatedServerSchemaKeyOSHostName               = "os_host_name"
 	dedicatedServerSchemaKeyOSSSHKey                 = "ssh_key"
@@ -30,6 +35,10 @@ const (
 	dedicatedServerSchemaKeyFSType                   = "fs_type"
 	dedicatedServerSchemaKeyOSPassword               = "os_password"
 	dedicatedServerSchemaForceUpdateAdditionalParams = "force_update_additional_params"
+	dedicatedServerSchemaPublicIP                    = "public_ip"
+	dedicatedServerSchemaPrivateIP                   = "private_ip"
+	dedicatedServerSchemaAddPrivateVlan              = "add_private_vlan"
+	dedicatedServerSchemaPrivateVlan                 = "private_vlan"
 )
 
 func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
@@ -141,8 +150,28 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 			Optional: true,
 		},
 		dedicatedServerSchemaKeyPrivateSubnet: {
-			Type:     schema.TypeString,
+			Type:          schema.TypeString,
+			Optional:      true,
+			Deprecated:    fmt.Sprintf("Use `%s` instead.", dedicatedServerSchemaKeyPrivateSubnetID),
+			ConflictsWith: []string{dedicatedServerSchemaKeyPrivateSubnetID},
+		},
+		dedicatedServerSchemaKeyPrivateSubnetID: {
+			Type:          schema.TypeString,
+			Optional:      true,
+			ConflictsWith: []string{dedicatedServerSchemaKeyPrivateSubnet},
+			ValidateFunc:  validation.IsUUID,
+			RequiredWith:  []string{dedicatedServerSchemaKeyPrivateSubnetIP},
+		},
+		dedicatedServerSchemaKeyPrivateSubnetIP: {
+			Type:         schema.TypeString,
+			Optional:     true,
+			ValidateFunc: validation.IsIPv4Address,
+			RequiredWith: []string{dedicatedServerSchemaKeyPrivateSubnetID},
+		},
+		dedicatedServerSchemaAddPrivateVlan: {
+			Type:     schema.TypeBool,
 			Optional: true,
+			Default:  false,
 		},
 
 		// optional misc
@@ -153,6 +182,20 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 		dedicatedServerSchemaForceUpdateAdditionalParams: {
 			Type:     schema.TypeBool,
 			Optional: true,
+		},
+
+		// computed attributes
+		dedicatedServerSchemaPublicIP: {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		dedicatedServerSchemaPrivateIP: {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		dedicatedServerSchemaPrivateVlan: {
+			Type:     schema.TypeInt,
+			Computed: true,
 		},
 	}
 }
