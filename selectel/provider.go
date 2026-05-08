@@ -57,6 +57,7 @@ const (
 	objectDedicatedServer              = "dedicated-server"
 	objectOS                           = "os"
 	objectLocation                     = "location"
+	objectNetwork                      = "dedicated-network"
 	objectCloudBackupPlan              = "cloud-backup-plan"
 	objectCloudBackupCheckpoint        = "cloud-backup-checkpoint"
 	objectGlobalRouterZone             = "global-router-zone"
@@ -146,6 +147,7 @@ func Provider(providerVersion string) *schema.Provider {
 			"selectel_dedicated_os_v1":                  dataSourceDedicatedOSV1(),
 			"selectel_dedicated_location_v1":            dataSourceDedicatedLocationV1(),
 			"selectel_dedicated_public_subnet_v1":       dataSourceDedicatedPublicSubnetV1(),
+			"selectel_dedicated_private_subnet_v1":      dataSourceDedicatedPrivateSubnetV1(),
 			"selectel_cloudbackup_plan_v2":              dataSourceCloudBackupPlanV2(),
 			"selectel_cloudbackup_checkpoint_v2":        dataSourceCloudBackupCheckpointV2(),
 			"selectel_global_router_service_v1":         dataSourceGlobalRouterServiceV1(),
@@ -207,6 +209,7 @@ func Provider(providerVersion string) *schema.Provider {
 			"selectel_global_router_static_route_v1":                resourceGlobalRouterStaticRouteV1(),
 			"selectel_private_dns_service_v1":                       resourcePrivateDNSServiceV1(),
 			"selectel_private_dns_zone_v1":                          resourcePrivateDNSZoneV1(),
+			"selectel_dedicated_private_subnet_v1":                  resourceDedicatedPrivateSubnetV1(),
 		},
 	}
 

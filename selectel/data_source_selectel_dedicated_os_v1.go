@@ -10,7 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	dedicated "github.com/selectel/dedicated-go/pkg/v2"
+	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
 )
 
 func dataSourceDedicatedOSV1() *schema.Resource {
@@ -104,7 +104,7 @@ func dataSourceDedicatedOSV1() *schema.Resource {
 }
 
 func dataSourceDedicatedOSV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	v2 "github.com/selectel/dedicated-go/v2/pkg/v2"
 	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/projects"
 )
 
@@ -47,16 +48,15 @@ func testAccDedicatedConfigurationV1Exists(
 
 		dsClient := newTestDedicatedAPIClient(rs, testAccProvider)
 
-		serversFromAPI, _, err := dsClient.ServersRaw(ctx)
+		serversFromAPI, _, err := dsClient.Servers(ctx)
 		if err != nil {
 			return err
 		}
 
-		var srvFromAPI map[string]interface{}
+		var srvFromAPI *v2.Server
 		for _, srv := range serversFromAPI {
-			name, _ := srv["name"].(string)
-			if name == serverName {
-				srvFromAPI = srv
+			if srv.Name == serverName {
+				srvFromAPI = &srv
 			}
 		}
 
