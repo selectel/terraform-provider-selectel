@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	dedicated "github.com/selectel/dedicated-go/pkg/v2"
+	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
 )
 
 func dataSourceDedicatedLocationV1() *schema.Resource {
@@ -61,7 +61,7 @@ func dataSourceDedicatedLocationV1() *schema.Resource {
 }
 
 func dataSourceDedicatedLocationV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dsClient, diagErr := getDedicatedClient(d, meta)
+	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -128,6 +128,9 @@ func expandDedicatedLocationsSearchFilter(d *schema.ResourceData) dedicatedLocat
 func filterDedicatedLocations(list dedicated.Locations, filter dedicatedLocationsFilter) dedicated.Locations {
 	var filtered dedicated.Locations
 	for _, entry := range list {
+		if entry.Visibility == "only_in_admin" {
+			continue // filter by visibility only_in_admin
+		}
 		if filter.name == "" || entry.Name == filter.name {
 			filtered = append(filtered, entry)
 		}

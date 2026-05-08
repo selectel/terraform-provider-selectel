@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	dedicated "github.com/selectel/dedicated-go/pkg/v2"
+	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
 	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/projects"
 	"github.com/stretchr/testify/assert"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/httptest"
@@ -25,13 +25,18 @@ func TestAccDedicatedServerV1Basic(t *testing.T) {
 
 		osName                        = "Ubuntu"
 		osVersion, updatedOSVersion   = "2404", "2204"
-		locationName                  = "MSK-2"
-		cfgName                       = "CL25-NVMe"
+		locationName                  = "SPB-5"
+		cfgName                       = "EL10-SSD"
 		pricePlanName                 = "1 day"
 		osHostName, updatedOSHostName = "hostname", "hostname1"
 		osPassword, updatedOSPassword = "Passw0rd!", "Passw0rd!1"
 		userData, updatedUserData     = "#!/bin/bash", "#!/bin/sh"
-		sshKey                        = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCOIWeVNMRC7Y9jeBoG5GP3irOf/u5EbuHYixuZEmtHDtmtlnmzdcBEnpPY5OlFhjSySlUC1clCIShMXgWBfdnvk7Dbp5hgCP3Lh9pS/b8e3kxstIiGF9d7IX04DfVTOF424LlMAFbHNsrmX+uU3lizO20DljFIJNML0OdUO7eKg0XOK1OWVQlSzvZbFj39oYTSqCtoI92czQf4DdJ+0IF1/ZNewE6xPohfnZp5cl82UjYs8vxmcaiifVf7kUyQe/ilv/fZYpt59KCJBJDrTU/ko9hNxCVXrCOw7pPOQayoQ2Vir3M1AnhDMunoxFBocndgffNXVQYtA/3TXLVB7feb"
+		sshKey                        = `ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCOIWeVNMRC7Y9jeBoG5GP3irOf/u5EbuHYixuZEmtHDtmtlnmzdcBEnpPY5OlFhjSySlUC1clCIShMXgWBfdnvk7Dbp5hgCP3Lh9pS/b8e3kxstIiGF9d7IX04DfVTOF424LlMAFbHNsrmX+uU3lizO20DljFIJNML0OdUO7eKg0XOK1OWVQlSzvZbFj39oYTSqCtoI92czQf4DdJ+0IF1/ZNewE6xPohfnZp5cl82UjYs8vxmcaiifVf7kUyQe/ilv/fZYpt59KCJBJDrTU/ko9hNxCVXrCOw7pPOQayoQ2Vir3M1AnhDMunoxFBocndgffNXVQYtA/3TXLVB7feb`
+
+		privateSubnetID string
+		privateSubnet   = "192.168.100.0/24"
+		privateIP       = "192.168.100.1"
+		vlan            = "2989"
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -85,6 +90,15 @@ func TestAccDedicatedServerV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_dedicated_server_v1.server_tf_acc_test_1", "os_password", updatedOSPassword),
 				),
 			},
+			{
+				Config: testAccDedicatedServerV1WithPrivateSubnet(projectName, osName, osVersion, locationName, cfgName, pricePlanName, vlan, privateSubnet, privateIP),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDedicatedPrivateSubnetV1Exists("selectel_dedicated_private_subnet_v1.subnet_tf_acc_test_1", &privateSubnetID),
+					resource.TestCheckResourceAttr("selectel_dedicated_server_v1.server_tf_acc_test_1", "private_vlan", vlan),
+					resource.TestCheckResourceAttrSet("selectel_dedicated_server_v1.server_tf_acc_test_1", "public_ip"),
+					resource.TestCheckResourceAttr("selectel_dedicated_server_v1.server_tf_acc_test_1", "private_ip", privateIP),
+				),
+			},
 		},
 	})
 }
@@ -124,7 +138,7 @@ data "selectel_dedicated_os_v1" "os_tf_acc_test_1" {
 
  filter {
    name             = "%s"
-   version          = "%s"
+   version_value    = "%s"
  }
 }
 
@@ -188,6 +202,55 @@ resource "selectel_dedicated_server_v1" "server_tf_acc_test_1" {
  }
 }
 `, projectName, osName, osVersion, locationName, cfgName, pricePlanName, osHostName, sshKey, osPassword, userData)
+}
+
+func testAccDedicatedServerV1WithPrivateSubnet(
+	projectName, osName, osVersion, locationName, cfgName, pricePlanName, vlan, subnet, privateIP string,
+) string {
+	return fmt.Sprintf(`
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
+ name        = "%s"
+}
+
+data "selectel_dedicated_os_v1" "os_tf_acc_test_1" {
+ project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+
+ filter {
+   name             = "%s"
+   version_value    = "%s"
+ }
+}
+
+data "selectel_dedicated_location_v1" "location_tf_acc_test_1" {
+ project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+ filter {
+   name = "%s"
+ }
+}
+
+data "selectel_dedicated_configuration_v1" "server_configuration_tf_acc_test_1" {
+ project_id     = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+ deep_filter = "{\"name\": \"%s\"}"
+}
+
+resource "selectel_dedicated_private_subnet_v1" "subnet_tf_acc_test_1" {
+ location_id = "${data.selectel_dedicated_location_v1.location_tf_acc_test_1.locations[0].id}"
+ vlan        = "%s"
+ subnet      = "%s"
+}
+
+resource "selectel_dedicated_server_v1" "server_tf_acc_test_1" {
+ project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+
+ configuration_id = "${data.selectel_dedicated_configuration_v1.server_configuration_tf_acc_test_1.configurations.0.id}"
+ location_id      = "${data.selectel_dedicated_location_v1.location_tf_acc_test_1.locations[0].id}"
+ os_id            = "${data.selectel_dedicated_os_v1.os_tf_acc_test_1.os.0.id}"
+ price_plan_name  = "%s"
+
+ private_subnet_id = "${selectel_dedicated_private_subnet_v1.subnet_tf_acc_test_1.id}"
+ private_subnet_ip = "%s"
+}
+`, projectName, osName, osVersion, locationName, cfgName, vlan, subnet, pricePlanName, privateIP)
 }
 
 func Test_resourceDedicatedServerV1CreateValidatePreconditions(t *testing.T) {
