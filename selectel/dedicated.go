@@ -806,53 +806,6 @@ func resourceDedicatedServerV1GetFreePublicIPs(
 	return freeIP, nil
 }
 
-func resourceDedicatedServerV1GetFreePrivateIPs(
-	ctx context.Context, cl *dedicated.ServiceClient, locationID, subnetStr string,
-) (ip net.IP, subnetID string, err error) {
-	nets, _, err := cl.Networks(ctx, locationID, dedicated.NetworkTypeLocal, "")
-	if err != nil {
-		return nil, "", fmt.Errorf(
-			"failed to get %s networks for %s %s: %w", dedicated.NetworkTypeInet, objectLocation, locationID, err,
-		)
-	}
-
-	if len(nets) != 1 {
-		return nil, "", fmt.Errorf(
-			"expected exactly one local network for %s %s, got %d", objectLocation, locationID, len(nets),
-		)
-	}
-
-	subnets, _, err := cl.NetworkLocalSubnets(ctx, nets[0].UUID)
-	if err != nil {
-		return nil, "", fmt.Errorf(
-			"failed to get subnets for %s %s: %w", objectLocation, locationID, err,
-		)
-	}
-
-	subnet := subnets.FindBySubnet(subnetStr)
-	if subnet == nil {
-		return nil, "", fmt.Errorf(
-			"can't find subnet %s for %s %s and network %s", subnetStr, objectLocation, locationID, nets[0].UUID,
-		)
-	}
-
-	reservedIPs, _, err := cl.NetworkSubnetLocalReservedIPs(ctx, subnet.UUID)
-	if err != nil {
-		return nil, "", fmt.Errorf(
-			"failed to get reserved ips for %s %s: %w", objectLocation, locationID, err,
-		)
-	}
-
-	freeIP, err := subnet.GetFreeIP(reservedIPs, true)
-	if err != nil {
-		return nil, "", fmt.Errorf(
-			"failed to compute free ips for %s %s: %w", objectLocation, locationID, err,
-		)
-	}
-
-	return freeIP, subnet.UUID, nil
-}
-
 var defaultHostNames = [52]string{
 	"Einstein",
 	"Gauss",
@@ -961,8 +914,6 @@ func buildSoftRaids( //nolint:gocognit
 	existingRaidNamesByKey map[string][]string,
 	existingRaidConfigOrder []string,
 ) []map[string]any {
-	softRaids := make([]map[string]any, 0)
-
 	// First pass: group RAID arrays by disk type and level
 	raidKeyInfo := make(map[string]struct {
 		level       string
@@ -1013,6 +964,7 @@ func buildSoftRaids( //nolint:gocognit
 	}
 	slices.Sort(raidKeys)
 
+	softRaids := make([]map[string]any, 0, len(raidKeys))
 	raidNameIdx := make(map[string]int)
 	for _, raidKey := range raidKeys {
 		info := raidKeyInfo[raidKey]

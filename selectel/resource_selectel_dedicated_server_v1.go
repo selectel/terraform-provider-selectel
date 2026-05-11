@@ -135,7 +135,7 @@ func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData
 
 	err = resourceDedicatedServerV1CreateValidatePreconditions(
 		ctx, dsClient, data, locationID, data.pricePlan.UUID, configurationID, osID, hasUserData,
-		sshKeyPK != "" || data.sshKeyByName != nil, password != "", privateSubnet != "",
+		sshKeyPK != "" || data.sshKeyByName != nil, password != "", privateSubnetID != "",
 	)
 	if err != nil {
 		return diag.FromErr(err)
@@ -880,6 +880,21 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 		_ = d.Set("power_state", state)
 	}
 
+	ips, err := resourceDedicatedServerGetReservedIPs(ctx, dsClient, d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	_ = d.Set(dedicatedServerSchemaPublicIP, ips.publicIP)
+	_ = d.Set(dedicatedServerSchemaPrivateIP, ips.privateIP)
+
+	vlan, err := resourceDedicatedServerGetPrivateVlan(ctx, dsClient, d.Id(), rd.LocationUUID)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if vlan != nil {
+		_ = d.Set(dedicatedServerSchemaPrivateVlan, *vlan)
+	}
+
 	return nil
 }
 
@@ -1021,7 +1036,7 @@ func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData
 			UserHostname:     hostName,
 			Password:         password,
 			PartitionsConfig: data.partitions,
-			UserData:         &userData,
+			UserData:         userData,
 		}
 	)
 

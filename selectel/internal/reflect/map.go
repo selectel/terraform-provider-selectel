@@ -3,7 +3,7 @@ package reflect
 import (
 	"encoding/json"
 	"reflect"
-  "strings"
+	"strings"
 )
 
 func StructToMap(v any) (map[string]any, error) {

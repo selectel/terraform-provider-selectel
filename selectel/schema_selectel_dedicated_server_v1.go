@@ -43,7 +43,7 @@ const (
 	dedicatedServerSchemaPrivateIP                   = "private_ip"
 	dedicatedServerSchemaAddPrivateVlan              = "add_private_vlan"
 	dedicatedServerSchemaPrivateVlan                 = "private_vlan"
-  dedicatedServerPowerStateOn                      = "on"
+	dedicatedServerPowerStateOn                      = "on"
 	dedicatedServerPowerStateOff                     = "off"
 	dedicatedServerPowerActionReboot                 = "reboot"
 )
@@ -195,8 +195,10 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 			ValidateFunc: validation.IsIPAddress,
 		},
 		dedicatedServerSchemaKeyPrivateSubnet: {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:          schema.TypeString,
+			Optional:      true,
+			Deprecated:    fmt.Sprintf("Use `%s` instead.", dedicatedServerSchemaKeyPrivateSubnetID),
+			ConflictsWith: []string{dedicatedServerSchemaKeyPrivateSubnetID},
 		},
 
 		// optional power params
@@ -209,12 +211,6 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 				dedicatedServerPowerStateOff,
 				dedicatedServerPowerActionReboot,
 			}, false),
-
-		dedicatedServerSchemaKeyPrivateSubnet: {
-			Type:          schema.TypeString,
-			Optional:      true,
-			Deprecated:    fmt.Sprintf("Use `%s` instead.", dedicatedServerSchemaKeyPrivateSubnetID),
-			ConflictsWith: []string{dedicatedServerSchemaKeyPrivateSubnetID},
 		},
 		dedicatedServerSchemaKeyPrivateSubnetID: {
 			Type:          schema.TypeString,
