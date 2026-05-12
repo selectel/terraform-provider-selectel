@@ -23,6 +23,9 @@ fmt:
 	@echo "==> Fixing source code with gofmt..."
 	gofmt -w $(GOFMT_FILES)
 
+import:
+	goimports -w $(GOFMT_FILES)
+
 test-compile:
 	@if [ "$(TEST)" = "./..." ]; then \
 		echo "ERROR: Set TEST to a specific package. For example,"; \
@@ -30,6 +33,8 @@ test-compile:
 		exit 1; \
 	fi
 	go test -c $(TEST) $(TESTARGS)
+
+all: fmt import golangci-lint test testacc semgrep test-compile
 
 website:
 ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))

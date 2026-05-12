@@ -1,0 +1,617 @@
+package selectel
+
+import (
+	"context"
+	"fmt"
+	"net"
+	"strings"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
+	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/projects"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestAccDedicatedServersV1Basic(t *testing.T) {
+	var project projects.Project
+
+	projectName := acctest.RandomWithPrefix("tf-acc")
+	// serverName is a substring of the user-assigned custom name stored in server.UserDesc
+	// (the user_desc field from GET /resource, e.g. "test-server-01").
+	// Update this value to match a substring of an existing server's custom name in your test environment.
+	serverName := "test-server"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDedicatedServersV1Basic(projectName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccDedicatedServersV1Exists("data.selectel_dedicated_servers_v1.servers_tf_acc_test_1", serverName),
+					resource.TestCheckResourceAttr("data.selectel_dedicated_servers_v1.servers_tf_acc_test_1", "servers.0.name", serverName),
+				),
+			},
+			{
+				Config: testAccDedicatedServersV1WithFilter(projectName, serverName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("data.selectel_dedicated_servers_v1.servers_filtered_tf_acc_test_1", "servers.0.name", serverName),
+				),
+			},
+		},
+	})
+}
+
+func testAccDedicatedServersV1Exists(n, serverName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+
+		ctx := context.Background()
+		dsClient := newTestDedicatedAPIClient(rs, testAccProvider)
+
+		serversFromAPI, _, err := dsClient.ResourcesList(ctx, "", "")
+		if err != nil {
+			return err
+		}
+
+		for _, server := range serversFromAPI {
+			name := server.UserDesc
+			if name == "" {
+				name = server.Info
+			}
+			if strings.Contains(strings.ToLower(name), strings.ToLower(serverName)) {
+				return nil
+			}
+		}
+
+		return fmt.Errorf("server with custom name containing %q not found", serverName)
+	}
+}
+
+func testAccDedicatedServersV1Basic(projectName string) string {
+	return fmt.Sprintf(`
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
+ name = "%s"
+}
+
+data "selectel_dedicated_servers_v1" "servers_tf_acc_test_1" {
+ project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+}
+`, projectName)
+}
+
+func testAccDedicatedServersV1WithFilter(projectName, serverName string) string {
+	return fmt.Sprintf(`
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
+ name = "%s"
+}
+
+data "selectel_dedicated_servers_v1" "servers_filtered_tf_acc_test_1" {
+ project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+
+ filter {
+   name             = "%s"
+ }
+}
+`, projectName, serverName)
+}
+
+func TestFilterDedicatedServers(t *testing.T) {
+	type testCase struct {
+		name     string
+		servers  []dedicated.ResourceDetails
+		filter   dedicatedServersSearchFilter
+		ips      dedicated.ReservedIPs
+		expected int
+	}
+
+	servers := []dedicated.ResourceDetails{
+		{UUID: "server-1", Info: "EL50-SSD", UserDesc: "test-server-1", ServiceUUID: "config-1", LocationUUID: "location-1"},
+		{UUID: "server-2", Info: "EL100-HDD", UserDesc: "test-server-2", ServiceUUID: "config-2", LocationUUID: "location-2"},
+		{UUID: "server-3", Info: "EL200-NVMe", UserDesc: "another-server", ServiceUUID: "config-3", LocationUUID: "location-3"},
+	}
+
+	configNameByUUID := map[string]string{
+		"config-1": "EL50 SSD SATA",
+		"config-2": "EL100 HDD SATA",
+		"config-3": "EL200 NVMe",
+	}
+
+	ips := dedicated.ReservedIPs{
+		{ResourceUUID: "server-1", IP: net.ParseIP("192.168.1.10"), Subnet: "public-subnet-1"},
+		{ResourceUUID: "server-2", IP: net.ParseIP("10.0.0.5"), Subnet: "private-subnet-1"},
+	}
+
+	testCases := []testCase{
+		{
+			name:     "Empty filter returns all servers",
+			servers:  servers,
+			filter:   dedicatedServersSearchFilter{},
+			ips:      ips,
+			expected: len(servers),
+		},
+		{
+			name:     "Filter by name returns one match",
+			servers:  servers,
+			filter:   dedicatedServersSearchFilter{name: "test-server-1"},
+			ips:      ips,
+			expected: 1,
+		},
+		{
+			name:     "Filter by non-existent name",
+			servers:  servers,
+			filter:   dedicatedServersSearchFilter{name: "non-existent"},
+			ips:      ips,
+			expected: 0,
+		},
+		{
+			name:     "Filter by IP",
+			servers:  servers,
+			filter:   dedicatedServersSearchFilter{ip: "192.168.1.10"},
+			ips:      ips,
+			expected: 1,
+		},
+		{
+			name:     "Filter by subnet",
+			servers:  servers,
+			filter:   dedicatedServersSearchFilter{publicSubnet: "public-subnet-1"},
+			ips:      ips,
+			expected: 1,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := filterDedicatedServers(tc.servers, tc.filter, tc.ips, tc.ips, configNameByUUID)
+			if err != nil {
+				t.Errorf("filterDedicatedServers returned error: %v", err)
+				return
+			}
+			if len(result) != tc.expected {
+				t.Errorf("Expected %d results, got %d", tc.expected, len(result))
+			}
+		})
+	}
+}
+
+func TestDedicatedServersSearchFilterIsEmpty(t *testing.T) {
+	type testCase struct {
+		name     string
+		filter   dedicatedServersSearchFilter
+		expected bool
+	}
+
+	testCases := []testCase{
+		{
+			name:     "Empty filter",
+			filter:   dedicatedServersSearchFilter{},
+			expected: true,
+		},
+		{
+			name: "Filter with name",
+			filter: dedicatedServersSearchFilter{
+				name: "test-server",
+			},
+			expected: false,
+		},
+		{
+			name: "Filter with IP",
+			filter: dedicatedServersSearchFilter{
+				ip: "192.168.1.10",
+			},
+			expected: false,
+		},
+		{
+			name: "Filter with public subnet",
+			filter: dedicatedServersSearchFilter{
+				publicSubnet: "public-subnet-1",
+			},
+			expected: false,
+		},
+		{
+			name: "Filter with private subnet",
+			filter: dedicatedServersSearchFilter{
+				privateSubnet: "private-subnet-1",
+			},
+			expected: false,
+		},
+		{
+			name: "Filter with all fields empty",
+			filter: dedicatedServersSearchFilter{
+				name:          "",
+				ip:            "",
+				publicSubnet:  "",
+				privateSubnet: "",
+			},
+			expected: true,
+		},
+		{
+			name: "Filter with configuration",
+			filter: dedicatedServersSearchFilter{
+				configuration: "EL50",
+			},
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.filter.IsEmpty()
+			if result != tc.expected {
+				t.Errorf("IsEmpty() = %v, want %v", result, tc.expected)
+			}
+		})
+	}
+}
+
+func TestFilterDedicatedServers_PartialNameMatch(t *testing.T) {
+	servers := []dedicated.ResourceDetails{
+		{UUID: "1", Info: "EL50-SSD", UserDesc: "web-server-01", ServiceUUID: "cfg-1"},
+		{UUID: "2", Info: "EL50-SSD", UserDesc: "WEB-SERVER-02", ServiceUUID: "cfg-2"},
+		{UUID: "3", Info: "EL100-HDD", UserDesc: "db-server-01", ServiceUUID: "cfg-3"},
+		{UUID: "4", Info: "EL200-NVMe", UserDesc: "app-server", ServiceUUID: "cfg-4"},
+	}
+	configNameByUUID := map[string]string{
+		"cfg-1": "EL50 SSD SATA",
+		"cfg-2": "EL50 SSD SATA",
+		"cfg-3": "EL100 HDD SATA",
+		"cfg-4": "EL200 NVMe",
+	}
+
+	t.Run("Partial match case-insensitive", func(t *testing.T) {
+		filter := dedicatedServersSearchFilter{name: "web"}
+		result, err := filterDedicatedServers(servers, filter, nil, nil, configNameByUUID)
+		assert.NoError(t, err)
+		assert.Len(t, result, 2, "should match 'web-server-01' and 'WEB-SERVER-02'")
+	})
+
+	t.Run("Partial match middle of string", func(t *testing.T) {
+		filter := dedicatedServersSearchFilter{name: "server"}
+		result, err := filterDedicatedServers(servers, filter, nil, nil, configNameByUUID)
+		assert.NoError(t, err)
+		assert.Len(t, result, 4, "should match all servers containing 'server'")
+	})
+
+	t.Run("Exact match", func(t *testing.T) {
+		filter := dedicatedServersSearchFilter{name: "web-server-01"}
+		result, err := filterDedicatedServers(servers, filter, nil, nil, configNameByUUID)
+		assert.NoError(t, err)
+		assert.Len(t, result, 1)
+	})
+
+	t.Run("Empty name filter", func(t *testing.T) {
+		filter := dedicatedServersSearchFilter{name: ""}
+		result, err := filterDedicatedServers(servers, filter, nil, nil, configNameByUUID)
+		assert.NoError(t, err)
+		assert.Len(t, result, len(servers), "empty filter should return all servers")
+	})
+
+	t.Run("UserDesc takes priority over Info for name filter", func(t *testing.T) {
+		twoServers := []dedicated.ResourceDetails{
+			{UUID: "a", Info: "EL50-SSD", UserDesc: "web-prod-01", ServiceUUID: "cfg-1"},
+			{UUID: "b", Info: "EL50-SSD", UserDesc: "", ServiceUUID: "cfg-2"},
+		}
+		cfgMap := map[string]string{"cfg-1": "EL50 SSD SATA", "cfg-2": "EL50 SSD SATA"}
+		// "EL50" matches Info of both servers; but server "a" has UserDesc set so filter uses
+		// UserDesc ("web-prod-01"), not Info. Only server "b" (empty UserDesc) falls back to Info and matches.
+		filter := dedicatedServersSearchFilter{name: "EL50"}
+		result, err := filterDedicatedServers(twoServers, filter, nil, nil, cfgMap)
+		assert.NoError(t, err)
+		assert.Len(t, result, 1)
+		assert.Equal(t, "b", result[0].UUID)
+	})
+}
+
+func TestFilterDedicatedServers_CombinedFilters(t *testing.T) {
+	servers := []dedicated.ResourceDetails{
+		{UUID: "1", Info: "EL50-SSD", UserDesc: "web-01", ServiceUUID: "cfg-web-1", LocationUUID: "loc-1"},
+		{UUID: "2", Info: "EL50-SSD", UserDesc: "web-02", ServiceUUID: "cfg-web-2", LocationUUID: "loc-1"},
+		{UUID: "3", Info: "EL100-HDD", UserDesc: "db-01", ServiceUUID: "cfg-db", LocationUUID: "loc-2"},
+	}
+	configNameByUUID := map[string]string{
+		"cfg-web-1": "EL50 SSD SATA",
+		"cfg-web-2": "EL50 SSD SATA",
+		"cfg-db":    "EL100 HDD SATA",
+	}
+	ips := dedicated.ReservedIPs{
+		{ResourceUUID: "1", IP: net.ParseIP("192.168.1.10"), Subnet: "subnet-1"},
+		{ResourceUUID: "2", IP: net.ParseIP("192.168.1.11"), Subnet: "subnet-1"},
+		{ResourceUUID: "3", IP: net.ParseIP("10.0.0.5"), Subnet: "subnet-2"},
+	}
+
+	t.Run("Name and IP filter", func(t *testing.T) {
+		filter := dedicatedServersSearchFilter{name: "web", ip: "192.168.1.10"}
+		result, err := filterDedicatedServers(servers, filter, ips, ips, configNameByUUID)
+		assert.NoError(t, err)
+		assert.Len(t, result, 1, "should match only web-01 with specific IP")
+		assert.Equal(t, "1", result[0].UUID)
+	})
+
+	t.Run("Name and subnet filter", func(t *testing.T) {
+		filter := dedicatedServersSearchFilter{name: "web", publicSubnet: "subnet-1"}
+		result, err := filterDedicatedServers(servers, filter, ips, ips, configNameByUUID)
+		assert.NoError(t, err)
+		assert.Len(t, result, 2, "should match both web servers in subnet-1")
+	})
+
+	t.Run("Private subnet filter", func(t *testing.T) {
+		filter := dedicatedServersSearchFilter{privateSubnet: "subnet-2"}
+		result, err := filterDedicatedServers(servers, filter, ips, ips, configNameByUUID)
+		assert.NoError(t, err)
+		assert.Len(t, result, 1, "should match only db-01 in subnet-2")
+	})
+
+	t.Run("No matching IP", func(t *testing.T) {
+		filter := dedicatedServersSearchFilter{name: "web", ip: "10.10.10.10"}
+		result, err := filterDedicatedServers(servers, filter, ips, ips, configNameByUUID)
+		assert.NoError(t, err)
+		assert.Len(t, result, 0, "should not match any server with non-existent IP")
+	})
+}
+
+func TestExpandDedicatedServersSearchFilter(t *testing.T) {
+	resource := dataSourceDedicatedServersV1()
+	d := resource.TestResourceData()
+
+	filterSet := schema.NewSet(schema.HashResource(resource.Schema["filter"].Elem.(*schema.Resource)), []interface{}{})
+	filterSet.Add(map[string]interface{}{
+		"name":           "test-server",
+		"ip":             "192.168.1.100",
+		"location_id":    "loc-uuid-123",
+		"configuration":  "EL50",
+		"public_subnet":  "public-subnet-1",
+		"private_subnet": "private-subnet-1",
+	})
+	_ = d.Set("filter", filterSet)
+
+	filter := expandDedicatedServersSearchFilter(d)
+
+	assert.Equal(t, "test-server", filter.name)
+	assert.Equal(t, "192.168.1.100", filter.ip)
+	assert.Equal(t, "loc-uuid-123", filter.locationID)
+	assert.Equal(t, "EL50", filter.configuration)
+	assert.Equal(t, "public-subnet-1", filter.publicSubnet)
+	assert.Equal(t, "private-subnet-1", filter.privateSubnet)
+}
+
+func TestExpandDedicatedServersSearchFilter_Empty(t *testing.T) {
+	resource := dataSourceDedicatedServersV1()
+	d := resource.TestResourceData()
+
+	filter := expandDedicatedServersSearchFilter(d)
+
+	assert.Equal(t, "", filter.name)
+	assert.Equal(t, "", filter.ip)
+	assert.Equal(t, "", filter.locationID)
+	assert.Equal(t, "", filter.configuration)
+	assert.Equal(t, "", filter.publicSubnet)
+	assert.Equal(t, "", filter.privateSubnet)
+}
+
+func TestFlattenDedicatedServers(t *testing.T) {
+	servers := []dedicated.ResourceDetails{
+		{
+			UUID:         "server-uuid-1",
+			Info:         "EL50-SSD",
+			UserDesc:     "my-web-server-01",
+			ServiceUUID:  "config-uuid-1",
+			LocationUUID: "location-uuid-1",
+		},
+		{
+			UUID:         "server-uuid-2",
+			Info:         "EL100-HDD",
+			UserDesc:     "my-db-server-02",
+			ServiceUUID:  "config-uuid-2",
+			LocationUUID: "location-uuid-2",
+		},
+	}
+
+	reservedPublicIPs := dedicated.ReservedIPs{
+		{ResourceUUID: "server-uuid-1", IP: net.ParseIP("192.168.1.10")},
+		{ResourceUUID: "server-uuid-2", IP: net.ParseIP("192.168.1.11")},
+	}
+
+	reservedPrivateIPs := dedicated.ReservedIPs{
+		{ResourceUUID: "server-uuid-1", IP: net.ParseIP("10.0.0.5")},
+	}
+
+	configNames := map[string]string{
+		"config-uuid-1": "EL50-SSD Config",
+		"config-uuid-2": "EL100-HDD Config",
+	}
+	locationNames := map[string]string{
+		"location-uuid-1": "Moscow",
+		"location-uuid-2": "Saint Petersburg",
+	}
+
+	result := flattenDedicatedServers(servers, reservedPublicIPs, reservedPrivateIPs, configNames, locationNames)
+
+	assert.Len(t, result, 2)
+
+	server1 := result[0].(map[string]interface{})
+	assert.Equal(t, "server-uuid-1", server1["id"])
+	assert.Equal(t, "my-web-server-01", server1["name"])
+	assert.Equal(t, "config-uuid-1", server1["configuration_id"])
+	assert.Equal(t, "location-uuid-1", server1["location_id"])
+	assert.Equal(t, "EL50-SSD Config", server1["configuration"])
+	assert.Equal(t, "Moscow", server1["location"])
+	publicIPs1 := server1["reserved_public_ips"].([]string)
+	assert.Contains(t, publicIPs1, "192.168.1.10")
+	privateIPs1 := server1["reserved_private_ips"].([]string)
+	assert.Contains(t, privateIPs1, "10.0.0.5")
+
+	server2 := result[1].(map[string]interface{})
+	assert.Equal(t, "server-uuid-2", server2["id"])
+	assert.Equal(t, "my-db-server-02", server2["name"])
+	assert.Equal(t, "config-uuid-2", server2["configuration_id"])
+	assert.Equal(t, "location-uuid-2", server2["location_id"])
+	assert.Equal(t, "EL100-HDD Config", server2["configuration"])
+	assert.Equal(t, "Saint Petersburg", server2["location"])
+	publicIPs2 := server2["reserved_public_ips"].([]string)
+	assert.Contains(t, publicIPs2, "192.168.1.11")
+	privateIPs2 := server2["reserved_private_ips"].([]string)
+	assert.Empty(t, privateIPs2, "should have no private IPs")
+}
+
+func TestFlattenDedicatedServers_NoIPs(t *testing.T) {
+	servers := []dedicated.ResourceDetails{
+		{
+			UUID:         "server-uuid-1",
+			Info:         "EL50-SSD",
+			UserDesc:     "",
+			ServiceUUID:  "config-uuid-1",
+			LocationUUID: "location-uuid-1",
+		},
+	}
+
+	result := flattenDedicatedServers(servers, nil, nil, map[string]string{}, map[string]string{})
+
+	assert.Len(t, result, 1)
+	server1 := result[0].(map[string]interface{})
+	assert.Equal(t, "EL50-SSD", server1["name"], "falls back to server.Info when UserDesc is empty")
+	assert.Equal(t, "", server1["configuration"], "empty when UUID not in map")
+	assert.Equal(t, "", server1["location"], "empty when UUID not in map")
+	assert.Empty(t, server1["reserved_public_ips"].([]string))
+	assert.Empty(t, server1["reserved_private_ips"].([]string))
+}
+
+func TestFilterDedicatedServers_SubnetFilterIsolation(t *testing.T) {
+	servers := []dedicated.ResourceDetails{
+		{UUID: "server-1", Info: "EL50-SSD", UserDesc: "web-01", ServiceUUID: "config-1", LocationUUID: "loc-1"},
+		{UUID: "server-2", Info: "EL100-HDD", UserDesc: "db-01", ServiceUUID: "config-2", LocationUUID: "loc-1"},
+	}
+
+	publicIPs := dedicated.ReservedIPs{
+		{ResourceUUID: "server-1", IP: net.ParseIP("10.0.0.2"), Subnet: "10.0.0.0/24"},
+	}
+	privateIPs := dedicated.ReservedIPs{
+		{ResourceUUID: "server-2", IP: net.ParseIP("10.0.0.3"), Subnet: "10.0.0.0/24"},
+	}
+
+	t.Run("publicSubnet filter must not match private IP in same subnet", func(t *testing.T) {
+		filter := dedicatedServersSearchFilter{publicSubnet: "10.0.0.0/24"}
+		result, err := filterDedicatedServers(servers, filter, publicIPs, privateIPs, nil)
+		assert.NoError(t, err)
+		assert.Len(t, result, 1)
+		assert.Equal(t, "server-1", result[0].UUID)
+	})
+
+	t.Run("privateSubnet filter must not match public IP in same subnet", func(t *testing.T) {
+		filter := dedicatedServersSearchFilter{privateSubnet: "10.0.0.0/24"}
+		result, err := filterDedicatedServers(servers, filter, publicIPs, privateIPs, nil)
+		assert.NoError(t, err)
+		assert.Len(t, result, 1)
+		assert.Equal(t, "server-2", result[0].UUID)
+	})
+}
+
+func TestFilterDedicatedServers_ConfigurationNameFilter(t *testing.T) {
+	servers := []dedicated.ResourceDetails{
+		{UUID: "s-1", Info: "EL50-SSD", UserDesc: "my-el50-server", ServiceUUID: "cfg-1", LocationUUID: "loc-1"},
+		{UUID: "s-2", Info: "EL100-HDD", UserDesc: "my-el100-server", ServiceUUID: "cfg-2", LocationUUID: "loc-1"},
+		{UUID: "s-3", Info: "EL50-NVMe", UserDesc: "my-el50-nvme", ServiceUUID: "cfg-3", LocationUUID: "loc-1"},
+	}
+	configNameByUUID := map[string]string{
+		"cfg-1": "EL50 SSD SATA",
+		"cfg-2": "EL100 HDD SATA",
+		"cfg-3": "EL50 NVMe",
+	}
+
+	t.Run("partial configuration name match", func(t *testing.T) {
+		filter := dedicatedServersSearchFilter{configuration: "EL50"}
+		result, err := filterDedicatedServers(servers, filter, nil, nil, configNameByUUID)
+		assert.NoError(t, err)
+		assert.Len(t, result, 2, "should match 'EL50 SSD SATA' and 'EL50 NVMe'")
+	})
+
+	t.Run("configuration filter is case-insensitive", func(t *testing.T) {
+		filter := dedicatedServersSearchFilter{configuration: "el50 ssd"}
+		result, err := filterDedicatedServers(servers, filter, nil, nil, configNameByUUID)
+		assert.NoError(t, err)
+		assert.Len(t, result, 1)
+		assert.Equal(t, "s-1", result[0].UUID)
+	})
+
+	t.Run("no match returns empty", func(t *testing.T) {
+		filter := dedicatedServersSearchFilter{configuration: "nonexistent"}
+		result, err := filterDedicatedServers(servers, filter, nil, nil, configNameByUUID)
+		assert.NoError(t, err)
+		assert.Empty(t, result)
+	})
+
+	t.Run("configuration filter excludes server with unknown ServiceUUID", func(t *testing.T) {
+		filter := dedicatedServersSearchFilter{configuration: "EL50"}
+		unknownServer := []dedicated.ResourceDetails{
+			{UUID: "s-unknown", Info: "EL50-SSD", UserDesc: "my-server", ServiceUUID: "cfg-unknown"},
+		}
+		result, err := filterDedicatedServers(unknownServer, filter, nil, nil, configNameByUUID)
+		assert.NoError(t, err)
+		assert.Empty(t, result, "server with unknown config UUID must be excluded when configuration filter is active")
+	})
+
+	t.Run("name filter matches UserDesc regardless of ServiceUUID", func(t *testing.T) {
+		filter := dedicatedServersSearchFilter{name: "my-server"}
+		unknownServer := []dedicated.ResourceDetails{
+			{UUID: "s-unknown", Info: "EL50-SSD", UserDesc: "my-server", ServiceUUID: "cfg-unknown"},
+		}
+		result, err := filterDedicatedServers(unknownServer, filter, nil, nil, configNameByUUID)
+		assert.NoError(t, err)
+		assert.Len(t, result, 1, "name filter checks server.UserDesc, not ServiceUUID mapping")
+	})
+}
+
+func TestFlattenDedicatedServers_UsesCustomName(t *testing.T) {
+	servers := []dedicated.ResourceDetails{
+		{UUID: "srv-1", Info: "EL50-SSD", UserDesc: "my-prod-server", ServiceUUID: "cfg-1", LocationUUID: "loc-1"},
+		{UUID: "srv-2", Info: "EL100-HDD", UserDesc: "my-staging-server", ServiceUUID: "cfg-2", LocationUUID: "loc-2"},
+	}
+	publicIPs := dedicated.ReservedIPs{
+		{ResourceUUID: "srv-1", IP: net.ParseIP("178.72.1.1")},
+	}
+	privateIPs := dedicated.ReservedIPs{
+		{ResourceUUID: "srv-1", IP: net.ParseIP("10.0.0.5")},
+	}
+	configNames := map[string]string{"cfg-1": "EL50 SSD"}
+	locationNames := map[string]string{"loc-1": "Moscow"}
+
+	result := flattenDedicatedServers(servers, publicIPs, privateIPs, configNames, locationNames)
+	require.Len(t, result, 2)
+
+	s1 := result[0].(map[string]interface{})
+	assert.Equal(t, "my-prod-server", s1["name"], "name must be the user-assigned UserDesc value")
+	assert.Equal(t, "EL50 SSD", s1["configuration"])
+	assert.Equal(t, "Moscow", s1["location"])
+	assert.Equal(t, "srv-1", s1["id"])
+	assert.Equal(t, "cfg-1", s1["configuration_id"])
+	assert.Contains(t, s1["reserved_public_ips"].([]string), "178.72.1.1")
+	assert.Contains(t, s1["reserved_private_ips"].([]string), "10.0.0.5")
+
+	s2 := result[1].(map[string]interface{})
+	assert.Equal(t, "my-staging-server", s2["name"])
+}
+
+func TestBuildConfigNameByUUID(t *testing.T) {
+	servers := []dedicated.Server{
+		{ID: "uuid-1", Name: "EL50 SSD SATA"},
+		{ID: "uuid-2", Name: "EL100 HDD SATA"},
+	}
+	chips := []dedicated.Server{
+		{ID: "uuid-3", Name: "EL10 Chip"},
+	}
+
+	m := buildConfigNameByUUID(servers, chips)
+
+	assert.Equal(t, "EL50 SSD SATA", m["uuid-1"])
+	assert.Equal(t, "EL100 HDD SATA", m["uuid-2"])
+	assert.Equal(t, "EL10 Chip", m["uuid-3"])
+	assert.Len(t, m, 3)
+}
