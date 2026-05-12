@@ -188,10 +188,10 @@ func hashResourceQuotas(v interface{}) int {
 	var buf bytes.Buffer
 	m := v.(map[string]interface{})
 	if m["region"] != "" {
-		buf.WriteString(fmt.Sprintf("%s-", m["region"].(string)))
+		fmt.Fprintf(&buf, "%s-", m["region"].(string))
 	}
 	if m["zone"] != "" {
-		buf.WriteString(fmt.Sprintf("%s-", m["zone"].(string)))
+		fmt.Fprintf(&buf, "%s-", m["zone"].(string))
 	}
 
 	return hashcode.String(buf.String())

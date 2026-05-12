@@ -129,7 +129,7 @@ func resourcePrivateDNSServiceV1ImportState(_ context.Context, d *schema.Resourc
 func fillPrivateDNSServiceV1Data(service *privatedns.ServiceDetails, d *schema.ResourceData) {
 	d.Set("network_id", service.NetworkID)
 	d.Set("high_availability", service.HighAvailability)
-	addresses := []any{}
+	addresses := make([]any, 0, len(service.Addresses))
 	for _, addr := range service.Addresses {
 		addresses = append(addresses, map[string]string{
 			"address": addr.Address,
