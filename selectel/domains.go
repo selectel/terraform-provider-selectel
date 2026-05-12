@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	domainsV1DefaultRetryWaitMin = time.Second
-	domainsV1DefaultRetryWaitMax = 5 * time.Second
+	domainsV1DefaultMinRetryWait = time.Second
+	domainsV1DefaultMaxRetryWait = 5 * time.Second
 	domainsV1DefaultRetry        = 5
 )
 
@@ -28,8 +28,8 @@ func getDomainsClient(meta interface{}) (*domainsV1.ServiceClient, error) {
 
 	retryClient := retryablehttp.NewClient()
 	retryClient.Logger = nil // Ignore retyablehttp client logs
-	retryClient.RetryWaitMin = domainsV1DefaultRetryWaitMin
-	retryClient.RetryWaitMax = domainsV1DefaultRetryWaitMax
+	retryClient.RetryWaitMin = domainsV1DefaultMinRetryWait
+	retryClient.RetryWaitMax = domainsV1DefaultMaxRetryWait
 	retryClient.RetryMax = domainsV1DefaultRetry
 	domainsClient.HTTPClient = retryClient.StandardClient()
 

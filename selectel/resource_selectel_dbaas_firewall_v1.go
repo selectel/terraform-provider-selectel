@@ -167,7 +167,7 @@ func resourceDBaaSDatastoreV1FirewallOptsFromList(rawList []interface{}) (dbaas.
 }
 
 func firewallChecksum(firewall []dbaas.Firewall, datastoreID string) (string, error) {
-	ipsList := make([]string, len(firewall))
+	ipsList := make([]string, len(firewall), 2*len(firewall)+1)
 	for _, rule := range firewall {
 		ipsList = append(ipsList, rule.IP)
 	}

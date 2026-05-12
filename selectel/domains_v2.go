@@ -134,7 +134,7 @@ func setRRSetToResourceData(d *schema.ResourceData, rrset *domainsV2.RRSet) erro
 
 // generateSetFromRecords - generate terraform TypeList from records in RRSet.
 func generateSetFromRecords(records []domainsV2.RecordItem) []interface{} {
-	recordsAsList := []interface{}{}
+	recordsAsList := make([]interface{}, 0, len(records))
 	for _, record := range records {
 		recordsAsList = append(recordsAsList, map[string]interface{}{
 			"content":  record.Content,

@@ -1,9 +1,24 @@
 package reflect
 
 import (
+	"encoding/json"
 	"reflect"
 	"strings"
 )
+
+func StructToMap(v any) (map[string]any, error) {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+
+	var result map[string]any
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
 
 func IsSetContainsSubset(subset map[string]interface{}, set any) bool {
 	return match(subset, reflect.ValueOf(set))
