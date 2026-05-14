@@ -10,15 +10,15 @@ description: |-
 
 Manages OIDC Federation for Selectel products using public API v1.
 Selectel products support Identity and Access Management (IAM).
-For more information about federations, see the [official Selectel documentation](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/federations/).
+For more information about federations, see the [official Selectel documentation](https://docs.selectel.ru/en/access-control/federations/).
 
 ## Example Usage
 
 ```hcl
 resource "selectel_iam_oidc_federation_v1" "federation_1" {
-  name                  = "federation name"
+  name                  = "Federation name"
   alias                 = "federation-alias"
-  description           = "simple description"
+  description           = "Federation description"
   issuer                = "https://idp.example.com/realms/master"
   client_id             = "my-client-id"
   client_secret         = "my-client-secret"
@@ -45,13 +45,13 @@ resource "selectel_iam_oidc_federation_v1" "federation_1" {
 
 * `client_secret` - (Required, Sensitive) Client secret for OIDC authentication.
 
-* `auth_url` - (Required) Authorization endpoint URL.
+* `auth_url` - (Required) URL of the authorization endpoint used to authenticate users via the OIDC provider.
 
-* `token_url` - (Required) Token endpoint URL.
+* `token_url` - (Required) URL of the token endpoint.
 
-* `jwks_url` - (Required) JWKS endpoint URL.
+* `jwks_url` - (Required) URL of the JWKS endpoint with certificates used for token verification.
 
-* `auto_users_creation` - (Optional) Enables automatic creation of users for this federation.
+* `auto_users_creation` - (Optional) Enables automatic user creation for this federation.
 
 * `enable_group_mappings` - (Optional) Enables group mappings for this federation.
 
@@ -59,7 +59,7 @@ resource "selectel_iam_oidc_federation_v1" "federation_1" {
 
 ## Attributes Reference
 
-* `account_id` - Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
+* `account_id` - Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/account/registration/).
 
 ## Import
 
@@ -74,10 +74,10 @@ terraform import selectel_iam_oidc_federation_v1.federation_1 <federation_id>
 
 where:
 
-* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/account/registration/).
 
-* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service Users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/service-users), go to **Account** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service Users](https://docs.selectel.ru/en/access-control/user-types/).
 
 * `<password>` — Password of the service user.
 
-* `<federation_id>` — Unique identifier of the federation, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, use either [Control Panel](https://my.selectel.ru/iam/federations) or [IAM API](https://developers.selectel.ru/docs/control-panel/iam/).
+* `<federation_id>` — Unique identifier of the federation, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, use either [Control Panel](https://my.selectel.ru/iam/federations) or [Federations API](https://docs.selectel.ru/en/api/federations/).

@@ -10,7 +10,7 @@ description: |-
 
 Manages OIDC federation group mappings for Selectel products using public API v1.
 Selectel products support Identity and Access Management (IAM).
-For more information about federations, see the [official Selectel documentation](https://docs.selectel.ru/access-control/federations/).
+For more information about federations, see the [official Selectel documentation](https://docs.selectel.ru/en/access-control/federations/).
 
 ## Example Usage
 
@@ -48,7 +48,7 @@ resource "selectel_iam_oidc_federation_group_mappings_v1" "group_mappings_1" {
 
 ## Argument Reference
 
-* `federation_id` - (Required) Federation ID to manage group mappings for.
+* `federation_id` - (Required) Federation ID to manage group mappings.
 
 * `group_mapping` - (Required) Defines mappings between internal IAM groups and external identity provider groups. You can add multiple mappings – each mapping in a separate block.
 
@@ -73,10 +73,10 @@ terraform import selectel_iam_oidc_federation_group_mappings_v1.group_mappings_1
 
 where:
 
-* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/account/registration/).
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/account/registration/).
 
-* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/service-users), go to **Account** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service Users](https://docs.selectel.ru/access-control/user-types/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/service-users), go to **Account** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service Users](https://docs.selectel.ru/en/access-control/user-types/).
 
 * `<password>` — Password of the service user.
 
-* `<federation_id>` — Unique identifier of the federation, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, use either [Control Panel](https://my.selectel.ru/iam/federations) or [Federations API](https://docs.selectel.ru/api/federations/).
+* `<federation_id>` — Unique identifier of the federation, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, use either [Control Panel](https://my.selectel.ru/iam/federations) or [Federations API](https://docs.selectel.ru/en/api/federations/).
