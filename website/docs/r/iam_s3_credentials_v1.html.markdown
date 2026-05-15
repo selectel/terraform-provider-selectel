@@ -56,6 +56,6 @@ where:
 
 * `<password>` — Password of the service user.
 
-* `<user_id>` — Unique identifier of the service user who owns S3 credentials, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the service user ID, use either [Control panel](https://my.selectel.ru/iam/service-users), or [IAM API](https://developers.selectel.ru/docs/control-panel/iam/).
+* `<user_id>` — Unique identifier of the service user who owns S3 credentials, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the service user ID, use either [Control panel](https://my.selectel.ru/iam/service-users), or [IAM API](https://docs.selectel.ru/en/api/users-and-roles/).
 
 * `<access_key>` — Access Key from S3 credentials. To get the Access Key, in the [Control panel](https://my.selectel.ru/iam/service-users), go to **Account** ⟶ the **Service users** tab ⟶ click on the service user who owns credentials ⟶ copy the Access Key in the **S3 keys** section.
