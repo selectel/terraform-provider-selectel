@@ -74,4 +74,4 @@ where:
 
 * `<password>` — Password of the service user.
 
-* `<group_id>` — Unique identifier of the group, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the group ID, use either [Control panel](https://my.selectel.ru/iam/groups) or [IAM API](https://developers.selectel.ru/docs/control-panel/iam/).
+* `<group_id>` — Unique identifier of the group, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the group ID, use either [Control panel](https://my.selectel.ru/iam/groups) or [IAM API](https://docs.selectel.ru/en/api/users-and-roles/).
