@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_iam\_serviceuser\_v1
 
-Creates and manages a service user using public API v1. Selectel products support Identity and Access Management (IAM). For more information about service users, see the [official Selectel documentation](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
+Creates and manages a service user using public API v1. Selectel products support Identity and Access Management (IAM). For more information about service users, see the [official Selectel documentation](https://docs.selectel.ru/en/access-control/user-types/).
 
 The `selectel_iam_serviceuser_v1` resource replaces the deprecated `selectel_vpc_user_v2` and `selectel_vpc_role_v2` resources. For additional information, see the [Upgrading Terraform Selectel Provider to version 5.0.0](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_5) guide.
 
@@ -45,7 +45,7 @@ resource "selectel_iam_serviceuser_v1" "serviceuser_1" {
 
     * `scope` - (Required) Scope of the role. Available scopes are `account` and `project`. If `scope` is `project`, the `project_id` argument is required.
 
-    * `project_id` - (Optional) Unique identifier of the associated project. Changing this creates a new service user. If `scope` is `project`, the `project_id` argument is required. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
+    * `project_id` - (Optional) Unique identifier of the associated project. Changing this creates a new service user. If `scope` is `project`, the `project_id` argument is required. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
 
 * `enabled` - (Optional) Specifies if you can create a IAM token for the service user. Boolean flag, the default value is `true`. Learn more about [IAM tokens](https://docs.selectel.ru/en/api/authorization/).
 
@@ -82,10 +82,10 @@ terraform import selectel_iam_serviceuser_v1.serviceuser_1 <user_id>
 
 where:
 
-* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/account/registration/).
 
-* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service Users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/service-users), go to **Account** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service Users](https://docs.selectel.ru/en/access-control/user-types/).
 
 * `<password>` — Password of the service user.
 
-* `<user_id>` — Unique identifier of the service user to import, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the ID, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the ID under the user name.
+* `<user_id>` — Unique identifier of the service user to import, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the service user ID, use either [Control panel](https://my.selectel.ru/iam/service-users), or [IAM API](https://developers.selectel.ru/docs/control-panel/iam/).

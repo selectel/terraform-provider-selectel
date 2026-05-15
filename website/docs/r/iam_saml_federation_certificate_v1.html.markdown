@@ -10,7 +10,7 @@ description: |-
 
 Manages SAML Federation Certificates for Selectel products using public API v1.
 Selectel products support Identity and Access Management (IAM).
-For more information about Federation Certificates, see the [official Selectel documentation](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/federations/certificates/).
+For more information about Federation Certificates, see the [official Selectel documentation](https://docs.selectel.ru/en/access-control/federations/certificates/).
 
 ## Example Usage
 
@@ -36,7 +36,7 @@ resource "selectel_iam_saml_federation_certificate_v1" "certificate" {
 
 ## Attributes Reference
 
-* `account_id` - Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
+* `account_id` - Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/account/registration/).
 
 * `not_before` - Issue date of the certificate.
 
@@ -58,12 +58,12 @@ terraform import selectel_iam_saml_federation_certificate_v1.certificate_1 <cert
 
 where:
 
-* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/account/registration/).
 
-* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service Users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/service-users), go to **Account** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service Users](https://docs.selectel.ru/en/access-control/user-types/).
 
 * `<password>` — Password of the service user.
 
-* `<federation_id>` — Unique identifier of the associated federation, for which the certificate is issued, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, use either [Control Panel](https://my.selectel.ru/iam/federations) or [IAM API](https://developers.selectel.ru/docs/control-panel/iam/).
+* `<federation_id>` — Unique identifier of the associated federation, for which the certificate is issued, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, use either [Control Panel](https://my.selectel.ru/iam/federations) or [Federations API](https://docs.selectel.ru/en/api/federations/).
 
 * `<certificate_id>` — Unique identifier of the certificate.
