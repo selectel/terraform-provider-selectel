@@ -10,7 +10,7 @@ description: |-
 
 Manages SAML Federation Certificates for Selectel products using public API v1.
 Selectel products support Identity and Access Management (IAM).
-For more information about Federation Certificates, see the [official Selectel documentation](https://docs.selectel.ru/en/access-control/federations/certificates/).
+For more information about SAML Federation Certificates, see the [official Selectel documentation](https://docs.selectel.ru/en/access-control/federations/manage-saml/certificates/).
 
 ## Example Usage
 
