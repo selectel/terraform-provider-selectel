@@ -85,4 +85,4 @@ where:
 
 * `<password>` — Password of the service user.
 
-* `<user_id>` — Unique identifier of the user to import (not the Keystone ID), for example, `123456_5432`. To get the user ID, use either [Control panel](https://my.selectel.ru/iam/users) or [IAM API](https://developers.selectel.ru/docs/control-panel/iam/).
+* `<user_id>` — Unique identifier of the user to import (not the Keystone ID), for example, `123456_5432`. To get the user ID, use either [Control panel](https://my.selectel.ru/iam/users) or [IAM API](https://docs.selectel.ru/en/api/users-and-roles/).
