@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -230,7 +231,10 @@ func resourceDedicatedServerGetPrivateVlan(
 ) (*int, error) {
 	localType := dedicated.NetworkTypeLocal
 
-	ports, _, err := dsClient.GetHardwarePortsList(ctx, hwID, &localType)
+	ports, r, err := dsClient.GetHardwarePortsList(ctx, hwID, &localType)
+	if r != nil && r.Response != nil && r.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -769,7 +773,12 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 
 	log.Print(msgGet(objectDedicatedServer, d.Id()))
 
-	rd, _, err := dsClient.ResourceDetails(ctx, d.Id())
+	rd, r, err := dsClient.ResourceDetails(ctx, d.Id())
+	if r != nil && r.Response != nil && r.StatusCode == http.StatusNotFound {
+		d.SetId("")
+
+		return nil
+	}
 	if err != nil {
 		return diag.FromErr(errGettingObject(objectDedicatedServer, d.Id(), err))
 	}

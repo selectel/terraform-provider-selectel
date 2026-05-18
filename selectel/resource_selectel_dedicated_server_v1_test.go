@@ -805,3 +805,80 @@ func hasOtherChangesMock(hasChange func(string) bool) bool {
 		hasChange(dedicatedServerSchemaKeyOSHostName) ||
 		hasChange(dedicatedServerSchemaForceUpdateAdditionalParams)
 }
+
+func Test_resourceDedicatedServerGetPrivateVlan(t *testing.T) {
+	const (
+		hwID       = "hw-1"
+		locationID = "loc-1"
+	)
+
+	tests := []struct {
+		name       string
+		statusCode int
+		body       string
+		wantVlan   *int
+		wantErrSub string
+	}{
+		{
+			name:       "MatchingLocationReturnsVlan",
+			statusCode: http.StatusOK,
+			body:       `{"result":[{"uuid":"p1","port_type":"local","hw_uuid":"hw-1","network":[{"uuid":"n1","vlan":2989,"location_uuid":"loc-1"}]}]}`,
+			wantVlan:   func() *int { v := 2989; return &v }(),
+		},
+		{
+			name:       "NoMatchingLocationReturnsNil",
+			statusCode: http.StatusOK,
+			body:       `{"result":[{"uuid":"p1","port_type":"local","hw_uuid":"hw-1","network":[{"uuid":"n1","vlan":2989,"location_uuid":"other"}]}]}`,
+			wantVlan:   nil,
+		},
+		{
+			name:       "EmptyPortsReturnsNil",
+			statusCode: http.StatusOK,
+			body:       `{"result":[]}`,
+			wantVlan:   nil,
+		},
+		{
+			// Regression: an active server can return 404 from /network/port/hw/{id}
+			// when no ports are registered in the hardware-port subsystem.
+			// Treat as "no private VLAN" rather than failing Read.
+			name:       "NotFoundReturnsNil",
+			statusCode: http.StatusNotFound,
+			body:       `{"type":"SeidoNotFoundError","message":"HwRepository: hw-1","code":"R00002"}`,
+			wantVlan:   nil,
+		},
+		{
+			name:       "ServerErrorPropagates",
+			statusCode: http.StatusInternalServerError,
+			body:       `{"error":"internal"}`,
+			wantErrSub: "500 status code",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := new(dedicated.ServiceClient)
+			client.HTTPClient = &http.Client{
+				Transport: httptest.RoundTripFunc(func(_ *http.Request) (*http.Response, error) {
+					return httptest.NewFakeResponse(tt.statusCode, tt.body), nil
+				}),
+			}
+
+			vlan, err := resourceDedicatedServerGetPrivateVlan(context.Background(), client, hwID, locationID)
+
+			if tt.wantErrSub != "" {
+				assert.Error(t, err)
+				assert.ErrorContains(t, err, tt.wantErrSub)
+				assert.Nil(t, vlan)
+
+				return
+			}
+
+			assert.NoError(t, err)
+			if tt.wantVlan == nil {
+				assert.Nil(t, vlan)
+			} else if assert.NotNil(t, vlan) {
+				assert.Equal(t, *tt.wantVlan, *vlan)
+			}
+		})
+	}
+}
