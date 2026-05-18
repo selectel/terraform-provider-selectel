@@ -41,33 +41,13 @@ resource "selectel_iam_serviceuser_v1" "serviceuser_1" {
 
 * `role` - (Optional) Manages service user roles. You can add multiple roles – each role in a separate block. For more information about roles, see the [Roles](#roles) section.
 
-    * `role_name` - (Required) Role name. Available role names are `iam_admin`, `member`, `reader`, `billing`, `object_storage:admin`, and `object_storage_user`.
+    * `role_name` - (Required) Role name.
 
     * `scope` - (Required) Scope of the role. Available scopes are `account` and `project`. If `scope` is `project`, the `project_id` argument is required.
 
     * `project_id` - (Optional) Unique identifier of the associated project. Changing this creates a new service user. If `scope` is `project`, the `project_id` argument is required. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
 
 * `enabled` - (Optional) Specifies if you can create a IAM token for the service user. Boolean flag, the default value is `true`. Learn more about [IAM tokens](https://docs.selectel.ru/en/api/authorization/).
-
-### Roles
-
-To assign roles, use the following values for `scope` and `role_name`:
-
-* Account administrator - `scope` is `account`, `role_name` is `member`.
-
-* Billing administrator - `scope` is `account`, `role_name` is `billing`.
-
-* User administrator - `scope` is `account`, `role_name` is `iam_admin`.
-
-* Project administrator - `scope` is `project`, `role_name` is `member`.
-
-* Account viewer - `scope` is `account`, `role_name` is `reader`.
-
-* Project viewer - `scope` is `project`, `role_name` is `reader`.
-
-* Object storage admin - `scope` is `project`, `role_name` is `object_storage:admin`.
-
-* Object storage user - `scope` is `project`, `role_name` is `object_storage_user`.
 
 ## Import
 
