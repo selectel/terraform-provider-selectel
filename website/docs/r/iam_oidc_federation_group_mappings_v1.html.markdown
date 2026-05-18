@@ -16,7 +16,7 @@ For more information about federations, see the [official Selectel documentation
 
 ```hcl
 resource "selectel_iam_group_v1" "group_1" {
-  name = "example-group"
+  name = "Group name"
 
   role {
     role_name = "reader"
