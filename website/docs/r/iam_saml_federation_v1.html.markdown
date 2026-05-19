@@ -37,7 +37,7 @@ resource "selectel_iam_saml_federation_v1" "federation_1" {
 
 * `description` - (Optional) Federation description.
 
-* `issuer` - (Required) Identifier of the credential provider.
+* `issuer` - (Required) Unique identifier of the credential provider.
 
 * `sso_url` - (Required) Link to the credential provider login page.
 
@@ -49,11 +49,11 @@ resource "selectel_iam_saml_federation_v1" "federation_1" {
 
 * `enable_group_mappings` - (Optional) Enables group mappings for this federation.
 
-* `session_max_age_hours` - (Required) Session lifetime.
+* `session_max_age_hours` - (Required) Session lifetime in hours.
 
 ## Attributes Reference
 
-* `account_id` - Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/account/registration/).
+* `account_id` - Selectel account ID.
 
 ## Import
 
@@ -74,4 +74,4 @@ where:
 
 * `<password>` — Password of the service user.
 
-* `<federation_id>` — Unique identifier of the federation, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, use either [Control Panel](https://my.selectel.ru/iam/federations) or [Federations API](https://docs.selectel.ru/en/api/federations/).
+* `<federation_id>` — Unique identifier of the federation, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, in the [Control Panel](https://my.selectel.ru/iam/federations), go to **Account** → **Federations** → copy the ID under the federation name.

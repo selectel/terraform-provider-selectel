@@ -31,29 +31,13 @@ resource "selectel_iam_group_v1" "group_1" {
 
 * `description` - (Optional) Group description.
 
-* `role` - (Optional) Manages group roles. You can add multiple roles – each role in a separate block. For more information about roles, see the [Roles](#roles) section.
+* `role` - (Optional) Manages group roles. You can add multiple roles – each role in a separate block.
 
-    * `role_name` - (Required) Role name. Available role names are `iam_admin`, `member`, `reader`, and `billing`.
+    * `role_name` - (Required) Role name.
 
     * `scope` - (Required) Scope of the role. Available scopes are `account` and `project`. If `scope` is `project`, the `project_id` argument is required.
 
     * `project_id` - (Optional) Unique identifier of the associated project. If `scope` is `project`, the `project_id` argument is required. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
-
-### Roles
-
-To assign roles, use the following values for `scope` and `role_name`:
-
-* Account administrator - `scope` is `account`, `role_name` is `member`.
-
-* Billing administrator - `scope` is `account`, `role_name` is `billing`.
-
-* User administrator - `scope` is `account`, `role_name` is `iam_admin`.
-
-* Project administrator - `scope` is `project`, `role_name` is `member`.
-
-* Account viewer - `scope` is `account`, `role_name` is `reader`.
-
-* Project viewer - `scope` is `project`, `role_name` is `reader`.
 
 ## Import
 

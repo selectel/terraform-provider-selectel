@@ -39,7 +39,7 @@ resource "selectel_iam_serviceuser_v1" "serviceuser_1" {
 
 * `password` - (Required, Sensitive) Password of the service user.
 
-* `role` - (Optional) Manages service user roles. You can add multiple roles – each role in a separate block. For more information about roles, see the [Roles](#roles) section.
+* `role` - (Optional) Manages service user roles. You can add multiple roles – each role in a separate block.
 
     * `role_name` - (Required) Role name.
 

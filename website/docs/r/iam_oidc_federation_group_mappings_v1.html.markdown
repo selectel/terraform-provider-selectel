@@ -10,7 +10,7 @@ description: |-
 
 Manages OIDC federation group mappings for Selectel products using public API v1.
 Selectel products support Identity and Access Management (IAM).
-For more information about federations, see the [official Selectel documentation](https://docs.selectel.ru/en/access-control/federations/).
+For more information about group mappings, see the [official Selectel documentation](https://docs.selectel.ru/en/access-control/groups/mapping/).
 
 ## Example Usage
 
@@ -48,7 +48,7 @@ resource "selectel_iam_oidc_federation_group_mappings_v1" "group_mappings_1" {
 
 ## Argument Reference
 
-* `federation_id` - (Required) Federation ID to manage group mappings.
+* `federation_id` - (Required) Unique identifier of the federation, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, in the [Control Panel](https://my.selectel.ru/iam/federations), go to **Account** → **Federations** → copy the ID under the federation name.
 
 * `group_mapping` - (Required) Defines mappings between internal IAM groups and external identity provider groups. You can add multiple mappings – each mapping in a separate block.
 
@@ -79,4 +79,4 @@ where:
 
 * `<password>` — Password of the service user.
 
-* `<federation_id>` — Unique identifier of the federation, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, use either [Control Panel](https://my.selectel.ru/iam/federations) or [Federations API](https://docs.selectel.ru/en/api/federations/).
+* `<federation_id>` — Unique identifier of the federation, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, in the [Control Panel](https://my.selectel.ru/iam/federations), go to **Account** → **Federations** → copy the ID under the federation name.

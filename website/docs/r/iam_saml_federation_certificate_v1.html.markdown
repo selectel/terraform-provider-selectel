@@ -36,7 +36,7 @@ resource "selectel_iam_saml_federation_certificate_v1" "certificate" {
 
 ## Attributes Reference
 
-* `account_id` - Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/account/registration/).
+* `account_id` - Selectel account ID.
 
 * `not_before` - Issue date of the certificate.
 
@@ -64,6 +64,6 @@ where:
 
 * `<password>` — Password of the service user.
 
-* `<federation_id>` — Unique identifier of the associated federation, for which the certificate is issued, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, use either [Control Panel](https://my.selectel.ru/iam/federations) or [Federations API](https://docs.selectel.ru/en/api/federations/).
+* `<federation_id>` — Unique identifier of the associated federation, for which the certificate is issued, for example, `abc1bb378ac84e1234b869b77aadd2ab`. To get the federation ID, in the [Control Panel](https://my.selectel.ru/iam/federations), go to **Account** → **Federations** → copy the ID under the federation name.
 
 * `<certificate_id>` — Unique identifier of the certificate.
