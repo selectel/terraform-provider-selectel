@@ -12,7 +12,7 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
-* Clarify `network_id` usage in `selectel_vpc_subnet_v2` ([388](https://github.com/selectel/terraform-provider-selectel/pull/388))
+* Clarify `network_id` usage in `selectel_vpc_subnet_v2` ([#388](https://github.com/selectel/terraform-provider-selectel/pull/388))
 
 ## 7.6.0 (March 12, 2026)
 
