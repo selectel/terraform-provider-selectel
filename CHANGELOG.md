@@ -1,3 +1,19 @@
+## 7.7.0 (May 19, 2026)
+
+FEATURES:
+
+* Add `SAML` group mapping resource, extend `SAML` federation resource ([#378](https://github.com/selectel/terraform-provider-selectel/pull/378))
+* Add `OIDC` federations resources ([#389](https://github.com/selectel/terraform-provider-selectel/pull/389))
+
+BUG FIXES:
+
+* Update `google.golang.org/grpc` to `v1.79.3` ([#386](https://github.com/selectel/terraform-provider-selectel/pull/386))
+* Pin `aquasec/trivy` to `0.69.3` ([#387](https://github.com/selectel/terraform-provider-selectel/pull/387))
+
+IMPROVEMENTS:
+
+* Clarify `network_id` usage in `selectel_vpc_subnet_v2` ([388](https://github.com/selectel/terraform-provider-selectel/pull/388))
+
 ## 7.6.0 (March 12, 2026)
 
 FEATURES:
