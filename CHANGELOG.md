@@ -1,3 +1,13 @@
+## 8.0.0 (May 28, 2026)
+
+FEATURES:
+
+* Add resources: `selectel_dedicated_private_subnet_v1`, `selectel_dedicated_ssh_key_v1`
+* Add data sources: `selectel_dedicated_private_subnet_v1`, `selectel_dedicated_servers_v1`
+* Add arguments: `private_subnet_id`, `private_subnet_ip`, `add_private_vlan` and `power_state` to `selectel_dedicated_server_v1`
+* Add `count` argument to `soft_raid_config` in `selectel_dedicated_server_v1`
+* Add `disk_name` argument to `partitions_config` in `selectel_dedicated_server_v1`
+
 ## 7.8.1 (May 28, 2026)
 
 BUG FIXES:

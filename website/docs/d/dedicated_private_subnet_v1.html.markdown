@@ -3,22 +3,21 @@ layout: "selectel"
 page_title: "Selectel: selectel_dedicated_private_subnet_v1"
 sidebar_current: "docs-selectel-data-source-dedicated-private-subnet-v1"
 description: |-
-  Retrieves information about dedicated private subnets.
+  Provides a list of existing private subnets in a project. 
 ---
 
 # selectel\_dedicated\_private\_subnet\_v1
 
-Retrieves information about dedicated private subnets.
+Provides a list of existing private subnets in a project. For more information about private subnets for dedicated servers, see the [official Selectel documentation.](https://docs.selectel.ru/en/dedicated/networks/private-networks-and-subnets/#assign-private-ip-address-to-server)
 
 ## Example usage
 
 ```hcl
 data "selectel_dedicated_private_subnet_v1" "subnet_ds" {
   project_id = selectel_vpc_project_v2.project_1.id
-
   filter {
-    location_id = "73bc417f-bc6b-45c1-8e06-ea9d5cce061c"
-    vlan        = "100"
+    location_id = data.selectel_dedicated_location_v1.server_location.locations[0].id
+    vlan        = "1000"
     subnet      = "192.168.100.0/24"
   }
 }
@@ -26,32 +25,19 @@ data "selectel_dedicated_private_subnet_v1" "subnet_ds" {
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource.
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
 
 * `filter` - (Optional) Filter for searching subnets.
-  * `location_id` - (Optional) Location ID to filter subnets by location.
-  * `subnet` - (Optional) Subnet CIDR to filter (e.g., "192.168.100.0/24").
-  * `vlan` - (Optional) VLAN ID to filter subnets by VLAN tag.
-  * `ip` - (Optional) IP address to check if it's included in the subnet.
+  * `location_id` - (Required) Unique identifier of the location where the private subnet will be created. Retrieved from the [dedicated_location_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/dedicated_location_v1) data source.
+  * `subnet` - (Optional) Subnet in CIDR notation, for example, 192.168.100.0/24. 
+  * `vlan` - (Optional) Unique identifier of VLAN.
+  * `ip` - (Optional) IP address belonging to the subnet.
 
 ## Attributes Reference
 
-* `id` - Unique identifier of the data source (checksum of subnet IDs).
-
-* `subnets` - List of matching subnets, each containing:
+* `subnets` - List of available subnets:
   * `id` - Unique identifier of the subnet (UUID).
-  * `subnet` - Subnet CIDR (e.g., "192.168.100.0/24").
-  * `vlan` - VLAN ID (tag in API).
-  * `reserved_ips` - List of reserved IP addresses in the subnet.
+  * `subnet` - Subnet in CIDR notation, for example, 192.168.100.0/24.
+  * `vlan` - Unique identifier of the VLAN.
+  * `reserved_ips` - List of reserved IP addresses in the subnet that you cannot use.
 
-where:
-
-* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/).
-
-* `<username>` — Name of the service user.
-
-* `<password>` — Password of the service user.
-
-* `<selectel_project_id>` — Unique identifier of the associated project.
-
-* `<subnet_id>` — Unique identifier of the subnet.
