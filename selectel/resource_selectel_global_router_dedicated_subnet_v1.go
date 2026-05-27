@@ -46,12 +46,14 @@ func resourceGlobalRouterDedicatedSubnetV1() *schema.Resource {
 			"gateway": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "Subnet gateway address from specified cidr",
 				ForceNew:    true,
 			},
 			"service_addresses": {
 				Type:        schema.TypeSet,
 				Optional:    true,
+				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Set:         schema.HashString,
 				MaxItems:    2,

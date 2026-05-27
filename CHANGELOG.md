@@ -1,3 +1,9 @@
+## 8.0.1 (May 28, 2026)
+
+BUG FIXES:
+
+* Fix optional parameters for `selectel_global_router_vpc_subnet_v1`, `selectel_global_router_dedicated_subnet_v1` resources in global_router_go sdk ([#395](https://github.com/selectel/terraform-provider-selectel/pull/395))
+
 ## 8.0.0 (May 28, 2026)
 
 FEATURES:
