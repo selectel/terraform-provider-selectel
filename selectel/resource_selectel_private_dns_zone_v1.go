@@ -229,7 +229,7 @@ func fillPrivateDNSZoneV1Data(zone *privatedns.ZoneDetails, d *schema.ResourceDa
 	d.Set("serial_number", zone.SerialNumber)
 	d.Set("ttl", zone.TTL)
 
-	bindings := []any{}
+	bindings := []any{} //nolint:prealloc
 	for _, binding := range zone.Bindings {
 		bindings = append(bindings, map[string]any{
 			"resource_id":   binding.ResourceID,
@@ -238,7 +238,7 @@ func fillPrivateDNSZoneV1Data(zone *privatedns.ZoneDetails, d *schema.ResourceDa
 	}
 	d.Set("bindings", bindings)
 
-	records := []any{}
+	records := []any{} //nolint:prealloc
 	for _, record := range zone.Records {
 		records = append(records, map[string]any{
 			"domain": record.Domain,

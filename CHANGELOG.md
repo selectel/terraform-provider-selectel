@@ -1,3 +1,9 @@
+## 7.8.1 (May 27, 2026)
+
+IMPROVEMENTS:
+
+* Update Go version (1.24 -> 1.25) and fix govuln-check errors for old dependencies ([#396](https://github.com/selectel/terraform-provider-selectel/pull/396))
+
 ## 7.8.0 (May 19, 2026)
 
 FEATURES:

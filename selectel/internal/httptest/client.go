@@ -1,4 +1,4 @@
-package httptest
+package httptest //nolint:revive
 
 import (
 	"io"

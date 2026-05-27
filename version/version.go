@@ -1,4 +1,4 @@
-package version
+package version //nolint:revive
 
 var Version = "dev"
 

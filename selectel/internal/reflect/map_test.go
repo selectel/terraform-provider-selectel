@@ -1,4 +1,4 @@
-package reflect
+package reflect //nolint:revive
 
 import (
 	"encoding/json"
