@@ -3,18 +3,18 @@ layout: "selectel"
 page_title: "Selectel: selectel_dedicated_private_subnet_v1"
 sidebar_current: "docs-selectel-resource-dedicated-private-subnet-v1"
 description: |-
-  Creates and manages a private subnet in Selectel Dedicated Servers.
+  Creates and manages a private subnet for dedicated servers using public API v1.  
 ---
 
 # selectel\_dedicated\_private\_subnet\_v1
 
-Creates and manages a private subnet in Selectel Dedicated Servers.
+Creates and manages a private subnet for dedicated servers using public API v1. Learn how to [assign a private IP address to a dedicated server.](https://docs.selectel.ru/en/dedicated/networks/private-networks-and-subnets/#assign-private-ip-address-to-server)
 
 ## Example usage
 
 ```hcl
 resource "selectel_dedicated_private_subnet_v1" "subnet_1" {
-  location_id = "73bc417f-bc6b-45c1-8e06-ea9d5cce061c"
+  location_id = data.selectel_dedicated_location_v1.server_location.locations[0].id
   vlan        = "100"
   subnet      = "192.168.100.0/24"
 }
@@ -24,17 +24,15 @@ resource "selectel_dedicated_private_subnet_v1" "subnet_1" {
 
 * `location_id` - (Required) Unique identifier of the location where the private subnet will be created. Retrieved from the [dedicated_location_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/dedicated_location_v1) data source.
 
-* `vlan` - (Required) VLAN ID for the private subnet. Must be a unique VLAN within the location.
+* `vlan` - (Required) Unique identifier of the VLAN for the private subnet. To get the unique identifier of the VLAN, in the [Control panel](https://my.selectel.ru/servers), go to Products ⟶ Dedicated Servers ⟶ Servers ⟶ servers page ⟶ in the Private block, select a private subnet → copy the ID in the VLAN field. 
 
-* `subnet` - (Required) CIDR block for the private subnet. Must be within private IP ranges: 10.0.0.0/8, 172.16.0.0/12, or 192.168.0.0/16.
+* `subnet` - subnet — (Required) CIDR block for the private subnet. Must be within private IP ranges: 10.0.0.0/8, 172.16.0.0/12, or 192.168.0.0/16. Lern more about [Private networks and subnets of the dedicated server.](https://docs.selectel.ru/en/dedicated/networks/private-networks-and-subnets)
 
 ## Attributes Reference
 
-In addition to all arguments above, the following attributes are exported:
-
 * `id` - Unique identifier of the private subnet.
-* `vlan` - VLAN ID of the private subnet.
-* `subnet` - CIDR block of the private subnet.
+* `vlan` - Unique identifier of the VLAN of the private subnet. 
+* `subnet` - CIDR block of the private subnet. Learn more about [Private networks and subnets of the dedicated server.](https://docs.selectel.ru/en/dedicated/networks/private-networks-and-subnets)
 
 ## Import
 
