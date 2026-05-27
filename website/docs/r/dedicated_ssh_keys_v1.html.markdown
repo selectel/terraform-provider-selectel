@@ -30,7 +30,6 @@ resource "selectel_dedicated_ssh_keys_v1" "ssh_key_1" {
 * `id` - Unique identifier of the SSH key. 
 * `name` - Name of the SSH key.
 * `public_key` - SSH public key.
-* `user_id` - Unique identifier of the user for whom the SSH key is created.
 
 ## Import
 
@@ -42,4 +41,4 @@ terraform import selectel_dedicated_ssh_keys_v1.ssh_key_1 <ssh_key_name>
 
 where:
 
-* `<ssh_key_name>` — Name of the SSH key. If multiple SSH keys with the same name exist, the first one found will be imported. WE recommend to use unique names for SSH keys.
+* `<ssh_key_name>` — Name of the SSH key. If multiple SSH keys with the same name exist, the first one found will be imported. We recommend to use unique names for SSH keys.

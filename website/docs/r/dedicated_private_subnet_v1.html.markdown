@@ -15,7 +15,7 @@ Creates and manages a private subnet for dedicated servers using public API v1. 
 ```hcl
 resource "selectel_dedicated_private_subnet_v1" "subnet_1" {
   location_id = data.selectel_dedicated_location_v1.server_location.locations[0].id
-  vlan        = "100"
+  vlan        = "1000"
   subnet      = "192.168.100.0/24"
 }
 ```

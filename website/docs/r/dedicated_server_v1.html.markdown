@@ -165,17 +165,21 @@ resource "selectel_dedicated_server_v1" "server_single_disk" {
 
 * `location_id` - (Required) Pool where the server is located. Retrieved from the [dedicated_location_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/dedicated_location_v1) data source.
 
-* `os_id` - (Required) Unique identifier of the operating system to install. Changing this installs new os on a new server.  Installing new os will delete all data on the server.  Retrieved from the [dedicated_os_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/dedicated_os_v1) data source.
+* `os_id` - (Required) Unique identifier of the operating system to install. Changing this installs new os on a new server.  Installing a new operating system deletes all data on the server.  Retrieved from the [dedicated_os_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/dedicated_os_v1) data source.
 
 * `price_plan_name` - (Required) The name of the price plan. Available tariff plans are `1 day`, `1 month`, `3 months`, `6 months`, `12 months`, and `12 months • monthly payment`. Learn more about tariff plans in the [Payment model and prices of a dedicated server](https://docs.selectel.ru/en/dedicated/about/payment).
 
-* `os_password` - (Optional) Password for the OS user.
+* `os_password` — (Optional) Password for the operating system user.
+After the operating system is installed, a password will be generated to connect to the server.
+To get the password, in the [Control panel](https://my.selectel.ru/servers), go to **Products** → **Dedicated Servers** → Server page → **Operating System** tab → in the **Password** field.
+The password is available for 24 hours from the start of the operating system installation or configuration change.
+If you forget the server password, you can [reset and restore it](https://github.com/dedicated/troubleshooting/recover-password/).
 
-* `user_data` - (Optional) These are custom configuration settings that automatically perform common tasks or run server setup scripts, reducing the time it takes to configure and deploy your infrastructure. Learn more about user data in the [User data on a dedicated server](https://docs.selectel.ru/en/dedicated/manage/user-data).
+* `user_data` - (Optional) Custom configuration settings that automate perform common tasks or execute server setup scripts, reducing the time required to configure and deploy your infrastructure. Learn more about user data in the [User data on a dedicated server](https://docs.selectel.ru/en/dedicated/manage/user-data).
 
 * `ssh_key` - (Optional) The public SSH key to be added to the server.
 
-* `ssh_key_name` - (Optional) The name of an existing SSH key to be added to the server. Learn more about add a public SSH key to the SSH key repository in the [Create and host an SSH key on a dedicated server](https://docs.selectel.ru/en/dedicated/manage/create-and-place-ssh-key).
+* `ssh_key_name` - (Optional) Name of an existing SSH key to be added to the server. Learn more about add a public SSH key to the SSH key repository in the [Create and host an SSH key on a dedicated server](https://docs.selectel.ru/en/dedicated/manage/create-and-place-ssh-key).
 
 * `partitions_config` - (Optional) Configuration for disk partitions. Learn more about disk partitioning in the [Install the OS by auto-installation](https://docs.selectel.ru/en/dedicated/manage/autoinstall-os/#partition-disks).
   * `soft_raid_config` - (Optional) Configuration for software RAID. You can add configurations for multiple RAID arrays – each configuration in a separate block. Creating multiple arrays requires 4 or more disks.
@@ -188,10 +192,10 @@ resource "selectel_dedicated_server_v1" "server_single_disk" {
     * `size` - (Optional) Size of the partition in GB. Use either size or size_percent. To use all the remaining space for the partition, specify -1.
     * `size_percent` - (Optional) Size of the partition in percent (0-100). Use either size or size_percent.
     * `raid` - (Optional) RAID array name on which to create the partition. Required only when using RAID.
-    * `disk_name` - (Optional) disk_name - (Optional) Name of the disk on which to create the partition. RAID is not used.
+    * `disk_name` - (Optional) Name of the disk on which to create the partition. RAID is not used.
     * `fs_type` - (Optional) Filesystem type for the partition. Available file system types are swap, ext4, ext3, and xfs. The default value is ext4 for /, ext3 for /boot, swap for swap partition.
   * `disk_config` - (Optional) Configuration for individual disks without RAID. You can add configurations for multiple disks – each configuration in a separate block.
-    * `name` - (Required) Name of the disk to reference in `disk_partitions`.(Required) Name of the disk to reference in disk_partitions.
+    * `name` - (Required) Name of the disk to reference in `disk_partitions`.
     * `disk_type` - (Required) Type of disks to use in the RAID. Available values are SSD, NVMe, HDD.
 
 * `public_subnet_id` - (Optional) Unique identifier of the public subnet to connect to the server. Retrieved from the [selectel_dedicated_public_subnet_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dedicated_public_subnet_v1) data source.
@@ -209,6 +213,12 @@ resource "selectel_dedicated_server_v1" "server_single_disk" {
 * `power_state` - (Optional) Power state of the server. Available values are on, off, and reboot. The default value is on. Cannot be set during server creation — servers are always created in the on state. Use power_state only for updating an existing server's power state. Changing power_state is mutually exclusive with changes of arguments: os_id, os_password, ssh_key, ssh_key_name, partitions_config, user_data, os_host_name and force_update_additional_params.
 
 * `force_update_additional_params` - (Optional) Enables or disables update of operating system parameters without changing os_id. The operating system parameters are os_password, user_data, ssh_key, ssh_key_name, partitions_config, and os_host_name. After updating operating system parameters, a new operating system will be installed. Installation of a new operating system will delete all data on the server.
+
+* `timeouts` — (Optional) Timeout values.
+The default values are the following:
+  * create = "80m",
+  * update = "20m",
+  * delete = "5m".
 
 ## Attributes Reference
 
