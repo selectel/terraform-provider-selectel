@@ -1265,7 +1265,7 @@ func TestCheckQuotasForNodegroupErrInvalidVolumeType(t *testing.T) {
 	err := checkQuotasForNodegroup(testQuotas, &testNodegroupOpts)
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "expected 'fast.<zone>', 'universal.<zone>', 'universal2.<zone>', 'basicssd.<zone>' or 'basic.<zone>' volume type, got")
+	assert.Contains(t, err.Error(), "expected 'fast.<zone>', 'universal.<zone>', 'universal2.<zone>', 'fast2.<zone>', 'basicssd.<zone>' or 'basic.<zone>' volume type, got")
 }
 
 func TestCheckQuotasForNodegroupOk(t *testing.T) {
