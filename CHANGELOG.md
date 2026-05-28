@@ -1,3 +1,15 @@
+## 7.8.1 (May 28, 2026)
+
+BUG FIXES:
+
+* Add support for `fast2` volume type in MKS nodegroup quota checks
+
+IMPROVEMENTS:
+
+* Update Go version to 1.25.0
+* Update `golang.org/x/*` dependencies
+* Update `golangci-lint-action` to v2.4.0
+
 ## 7.8.0 (May 19, 2026)
 
 FEATURES:
