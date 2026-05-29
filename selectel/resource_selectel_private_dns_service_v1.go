@@ -15,6 +15,7 @@ func resourcePrivateDNSServiceV1() *schema.Resource {
 		CreateContext: resourcePrivateDNSServiceV1Create,
 		ReadContext:   resourcePrivateDNSServiceV1Read,
 		DeleteContext: resourcePrivateDNSServiceV1Delete,
+		UpdateContext: resourcePrivateDNSServiceV1Update,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePrivateDNSServiceV1ImportState,
 		},
@@ -37,6 +38,11 @@ func resourcePrivateDNSServiceV1() *schema.Resource {
 			"high_availability": {
 				Type:     schema.TypeBool,
 				Computed: true,
+			},
+			"is_recursor_enabled": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
 			},
 			"addresses": {
 				Type:     schema.TypeList,
@@ -64,7 +70,11 @@ func resourcePrivateDNSServiceV1Create(ctx context.Context, d *schema.ResourceDa
 		return diagErr
 	}
 
-	opts := &privatedns.ServiceCreateDTO{NetworkID: d.Get("network_id").(string)}
+	opts := &privatedns.ServiceCreateDTO{
+		NetworkID:         d.Get("network_id").(string),
+		IsRecursorEnabled: new(bool),
+	}
+	*opts.IsRecursorEnabled = d.Get("is_recursor_enabled").(bool)
 	log.Print(msgCreate(objectPrivateDNSService, opts))
 
 	service, err := client.CreateService(ctx, opts)
@@ -106,6 +116,33 @@ func resourcePrivateDNSServiceV1Delete(ctx context.Context, d *schema.ResourceDa
 	if err != nil {
 		return diag.FromErr(errGettingObject(objectPrivateDNSService, d.Id(), err))
 	}
+
+	return nil
+}
+
+func resourcePrivateDNSServiceV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client, diagErr := getPrivateDNSClient(d, meta)
+	if diagErr != nil {
+		return diagErr
+	}
+	opts := privatedns.ServiceUpdateDTO{ServiceID: d.Id()}
+	if d.HasChange("is_recursor_enabled") {
+		opts.IsRecursorEnabled = new(bool)
+		*opts.IsRecursorEnabled = d.Get("is_recursor_enabled").(bool)
+	}
+
+	log.Print(msgUpdate(objectPrivateDNSService, d.Id(), opts))
+	err := client.UpdateService(ctx, &opts)
+	if err != nil {
+		return diag.FromErr(errUpdatingObject(objectPrivateDNSService, d.Id(), err))
+	}
+
+	service, err := client.GetService(ctx, d.Id())
+	if err != nil {
+		return diag.FromErr(errGettingObject(objectPrivateDNSService, d.Id(), err))
+	}
+
+	fillPrivateDNSServiceV1Data(service, d)
 
 	return nil
 }

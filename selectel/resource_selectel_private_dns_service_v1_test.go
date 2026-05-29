@@ -21,10 +21,45 @@ func TestAccCloudPrivateDNSServiceV1Basic(t *testing.T) {
 		CheckDestroy:      testAccCloudPrivateDNSServiceV1Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCloudPrivateDNSServiceV1Basic(region, projectID),
+				Config: testAccCloudPrivateDNSServiceV1Basic(region, projectID, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"selectel_private_dns_service_v1.service", "high_availability", "true",
+					),
+					resource.TestCheckResourceAttr(
+						"selectel_private_dns_service_v1.service", "is_recursor_enabled", "false",
+					),
+					resource.TestCheckResourceAttr(
+						"selectel_private_dns_service_v1.service", "project_id", os.Getenv("INFRA_PROJECT_ID"),
+					),
+					resource.TestCheckResourceAttr("selectel_private_dns_service_v1.service", "addresses.#", "2"),
+					testAccCloudPrivateDNSServiceV1Exists("selectel_private_dns_service_v1.service"),
+				),
+			},
+			{
+				Config: testAccCloudPrivateDNSServiceV1Basic(region, projectID, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"selectel_private_dns_service_v1.service", "high_availability", "true",
+					),
+					resource.TestCheckResourceAttr(
+						"selectel_private_dns_service_v1.service", "is_recursor_enabled", "true",
+					),
+					resource.TestCheckResourceAttr(
+						"selectel_private_dns_service_v1.service", "project_id", os.Getenv("INFRA_PROJECT_ID"),
+					),
+					resource.TestCheckResourceAttr("selectel_private_dns_service_v1.service", "addresses.#", "2"),
+					testAccCloudPrivateDNSServiceV1Exists("selectel_private_dns_service_v1.service"),
+				),
+			},
+			{
+				Config: testAccCloudPrivateDNSServiceV1Basic(region, projectID, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"selectel_private_dns_service_v1.service", "high_availability", "true",
+					),
+					resource.TestCheckResourceAttr(
+						"selectel_private_dns_service_v1.service", "is_recursor_enabled", "false",
 					),
 					resource.TestCheckResourceAttr(
 						"selectel_private_dns_service_v1.service", "project_id", os.Getenv("INFRA_PROJECT_ID"),
@@ -37,7 +72,7 @@ func TestAccCloudPrivateDNSServiceV1Basic(t *testing.T) {
 	})
 }
 
-func testAccCloudPrivateDNSServiceV1Basic(region, projectID string) string {
+func testAccCloudPrivateDNSServiceV1Basic(region, projectID string, enableRecursor bool) string {
 	return fmt.Sprintf(`
 provider openstack {
 	tenant_id = "%s"
@@ -60,8 +95,9 @@ resource "selectel_private_dns_service_v1" "service" {
     region = "%s"
     project_id = "%s"
     network_id = openstack_networking_network_v2.network_one.id
+	is_recursor_enabled = %t
 }
-`, projectID, region, region, projectID)
+`, projectID, region, region, projectID, enableRecursor)
 }
 
 func testAccCloudPrivateDNSServiceV1Destroy(s *terraform.State) error {

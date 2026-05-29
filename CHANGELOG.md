@@ -1,3 +1,9 @@
+## 8.1.0 (June 4, 2026)
+
+FEATURES:
+
+* Add new field `is_recursor_enabled` for private dns service resource ([#399](https://github.com/selectel/terraform-provider-selectel/pull/399)) 
+
 ## 8.0.1 (May 28, 2026)
 
 BUG FIXES:

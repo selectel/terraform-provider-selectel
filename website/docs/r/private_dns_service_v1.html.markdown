@@ -17,6 +17,7 @@ resource "selectel_private_dns_service_v1" "service_1" {
 	region     = "ru-1"
 	project_id = selectel_vpc_project_v2.project_1.id
 	network_id = openstack_networking_network_v2.network_1.id
+	is_recursor_enabled = true
 
 	depends_on = [
 		openstack_networking_network_v2.network_1
@@ -31,6 +32,9 @@ resource "selectel_private_dns_service_v1" "service_1" {
 * `region` - (Required) Pool where the network is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
 
 * `network_id` - (Required) Unique identifier of a network to connect to the DNS service. Retrieved from the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_network_v2) resource. Learn more about [Networks](https://docs.selectel.ru/en/cloud-networks/private-networks-and-subnets/).
+
+* `is_recursor_enabled` - (Optional) If `true`, the DNS service has a recursive resolver enabled
+that can resolve external DNS queries.
 
 ## Attributes Reference
 

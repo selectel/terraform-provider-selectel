@@ -18,7 +18,7 @@ func TestAccCloudPrivateDNSServiceV1ImportBasic(t *testing.T) {
 		CheckDestroy:      testAccCloudPrivateDNSServiceV1Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCloudPrivateDNSServiceV1Basic(region, projectID),
+				Config: testAccCloudPrivateDNSServiceV1Basic(region, projectID, false),
 			},
 			{
 				ResourceName:      resourceName,
