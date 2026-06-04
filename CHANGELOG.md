@@ -4,6 +4,14 @@ FEATURES:
 
 * Add new field `is_recursor_enabled` for private dns service resource ([#399](https://github.com/selectel/terraform-provider-selectel/pull/399)) 
 
+BUG FIXES:
+
+* Fix empty `Deprecated` attribute for `zonal` argument in `selectel_mks_cluster_v1` ([#402](https://github.com/selectel/terraform-provider-selectel/pull/402))
+
+IMPROVEMENTS:
+
+* Update documentation for `cluster_type` support and `zonal` deprecation in `selectel_mks_cluster_v1` ([#401](https://github.com/selectel/terraform-provider-selectel/pull/401))
+
 ## 8.0.1 (May 28, 2026)
 
 BUG FIXES:
