@@ -72,6 +72,7 @@ const (
 	objectGlobalRouterStaticRoute      = "global-router-static-route"
 	objectPrivateDNSService            = "private-dns-service"
 	objectPrivateDNSZone               = "private-dns-zone"
+	objectPublicPort                   = "public-port"
 )
 
 // This is a global MutexKV for use within this plugin.
@@ -212,6 +213,7 @@ func Provider(providerVersion string) *schema.Provider {
 			"selectel_private_dns_service_v1":                       resourcePrivateDNSServiceV1(),
 			"selectel_private_dns_zone_v1":                          resourcePrivateDNSZoneV1(),
 			"selectel_dedicated_private_subnet_v1":                  resourceDedicatedPrivateSubnetV1(),
+			"selectel_vpc_public_port_v1":                           resourceVPCPublicPortV1(),
 		},
 	}
 
