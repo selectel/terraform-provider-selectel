@@ -18,21 +18,52 @@ func resourceVPCPublicPortV1() *schema.Resource {
 		ReadContext:   resourceVPCPublicPortV1Read,
 		UpdateContext: resourceVPCPublicPortV1Update,
 		DeleteContext: resourceVPCPublicPortV1Delete,
-		Importer:      &schema.ResourceImporter{StateContext: resourceVPCPublicPortV1ImportState},
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceVPCPublicPortV1ImportState,
+		},
 		Schema: map[string]*schema.Schema{
-			"region":         {Type: schema.TypeString, Required: true, ForceNew: true},
-			"project_id":     {Type: schema.TypeString, Required: true, ForceNew: true},
-			"network_id":     {Type: schema.TypeString, Computed: true},
-			"ip_address":     {Type: schema.TypeString, Computed: true},
-			"description":    {Type: schema.TypeString, Optional: true},
-			"subnet":         {Type: schema.TypeString, Computed: true},
-			"gateway":        {Type: schema.TypeString, Computed: true},
-			"admin_state_up": {Type: schema.TypeBool, Optional: true, Computed: true},
+			"region": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+			"project_id": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+			"network_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"ip_address": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"description": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"subnet": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"gateway": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"admin_state_up": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
 			"security_group_ids": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 				MinItems: 1,
 				MaxItems: 20,
 			},
