@@ -2,8 +2,10 @@ package selectel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -87,6 +89,12 @@ func resourceVPCPublicPortV1Read(ctx context.Context, d *schema.ResourceData, me
 
 	port, err := client.GetPort(ctx, d.Id())
 	if err != nil {
+		if isNotFound(err) {
+			d.SetId("")
+
+			return nil
+		}
+
 		return diag.FromErr(errGettingObject(objectPublicPort, d.Id(), err))
 	}
 
@@ -143,6 +151,11 @@ func resourceVPCPublicPortV1Delete(ctx context.Context, d *schema.ResourceData, 
 
 	err := client.DeletePort(ctx, d.Id(), nil)
 	if err != nil {
+		if isNotFound(err) {
+
+			return nil
+		}
+
 		return diag.FromErr(errDeletingObject(objectPublicPort, d.Id(), err))
 	}
 
@@ -189,4 +202,11 @@ func expandStringList(raw []any) []string {
 	}
 
 	return result
+}
+
+func isNotFound(err error) bool {
+	var apiErr *publicnetapi.APIErr
+
+	return errors.As(err, &apiErr) &&
+		apiErr.Code == http.StatusNotFound
 }

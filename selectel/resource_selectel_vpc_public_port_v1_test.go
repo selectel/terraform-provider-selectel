@@ -2,15 +2,12 @@ package selectel
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	publicnetapi "github.com/selectel/public-net-api-go/pkg/v1"
 )
 
 func TestAccVPCPublicPortV1Basic(t *testing.T) {
@@ -214,8 +211,8 @@ func testAccVPCPublicPortV1CheckDestroy(s *terraform.State) error {
 			return fmt.Errorf("selectel_vpc_public_port_v1.port %q still exists", rs.Primary.ID)
 		}
 
-		var apiErr *publicnetapi.APIErr
-		if !errors.As(err, &apiErr) || apiErr.Code != http.StatusNotFound {
+		if isNotFound(err) {
+
 			return err
 		}
 	}
