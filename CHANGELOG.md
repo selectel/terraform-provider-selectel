@@ -1,3 +1,9 @@
+## 8.1.1 (June 16, 2026)
+
+BUG FIXES:
+
+* Fix perpetual diff for existing clusters migrating from `zonal` to `cluster_type` argument in `selectel_mks_cluster_v1`
+
 ## 8.1.0 (June 4, 2026)
 
 FEATURES:
