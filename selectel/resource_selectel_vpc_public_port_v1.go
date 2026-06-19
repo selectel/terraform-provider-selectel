@@ -64,7 +64,6 @@ func resourceVPCPublicPortV1() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				MinItems: 1,
 				MaxItems: 20,
 			},
 		},
