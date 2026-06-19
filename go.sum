@@ -208,6 +208,8 @@ github.com/selectel/mks-go v1.1.0 h1:puJW2uuleAwsVyJaaAeRBwrK8+1cQ8tL7deBjLOyToQ
 github.com/selectel/mks-go v1.1.0/go.mod h1:VxtV3dzwgOEzZc+9VMQb9DvxfSlej2ZQ8jnT8kqIGgU=
 github.com/selectel/private-dns-go v1.1.0 h1:wFJx+XX8VFWwaKI3a7Mboep+iJcXMuAEUT75KYV801s=
 github.com/selectel/private-dns-go v1.1.0/go.mod h1:cLVpLbPIJTqP/Wnp/nyTRBP9MTSqoyLvonrjrxbRiYE=
+github.com/selectel/public-net-api-go v1.0.0 h1:4dskw6qbkv+TZpzPYZBwL5fEOFi1qVk1JYw8pU9FcsE=
+github.com/selectel/public-net-api-go v1.0.0/go.mod h1:ilQXF2PQssdx2P6Nohil6T5olqtRNr2/CyioTC3OhPI=
 github.com/selectel/secretsmanager-go v0.2.1 h1:OSBrA/07lm/Ecpwg59IJHFAoUHZR29oyfwUgTpr/dos=
 github.com/selectel/secretsmanager-go v0.2.1/go.mod h1:DUPexhiJWLTyZEvse7grJWdcA8p8TEI93gNu1dDu7Yg=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
