@@ -212,7 +212,6 @@ func testAccVPCPublicPortV1CheckDestroy(s *terraform.State) error {
 		}
 
 		if isNotFound(err) {
-
 			return err
 		}
 	}

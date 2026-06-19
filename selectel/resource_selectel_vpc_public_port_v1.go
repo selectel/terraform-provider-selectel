@@ -182,7 +182,6 @@ func resourceVPCPublicPortV1Delete(ctx context.Context, d *schema.ResourceData, 
 	err := client.DeletePort(ctx, d.Id(), nil)
 	if err != nil {
 		if isNotFound(err) {
-
 			return nil
 		}
 
