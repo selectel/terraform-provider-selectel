@@ -55,7 +55,7 @@ func resourceVPCPublicPortV1() *schema.Resource {
 			"admin_state_up": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Computed: true,
+				Default:  true,
 			},
 			"security_group_ids": {
 				Type:     schema.TypeList,
@@ -87,12 +87,11 @@ func resourceVPCPublicPortV1Create(
 		dto.Description = &description
 	}
 
-	if adminStateUpVal, ok := d.GetOk("admin_state_up"); ok {
-		adminStateUp := adminStateUpVal.(bool)
-		dto.AdminStateUp = &adminStateUp
-	}
+	adminStateUp := d.Get("admin_state_up").(bool)
+	dto.AdminStateUp = &adminStateUp
 
-	if securityGroupIDsVal, ok := d.GetOk("security_group_ids"); ok {
+	securityGroupIDsVal := d.Get("security_group_ids")
+	if securityGroupIDsVal != nil {
 		dto.SecurityGroupIDs = expandStringList(securityGroupIDsVal.([]any))
 	}
 
@@ -146,8 +145,10 @@ func resourceVPCPublicPortV1Update(ctx context.Context, d *schema.ResourceData, 
 	dto := publicnetapi.PortUpdateDTO{}
 
 	if d.HasChange("description") {
-		description := d.Get("description").(string)
-		dto.Description = &description
+		if descriptionVal, ok := d.GetOk("description"); ok {
+			description := descriptionVal.(string)
+			dto.Description = &description
+		}
 	}
 
 	if d.HasChange("admin_state_up") {
@@ -156,7 +157,10 @@ func resourceVPCPublicPortV1Update(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if d.HasChange("security_group_ids") {
-		dto.SecurityGroupIDs = expandStringList(d.Get("security_group_ids").([]any))
+		securityGroupIDsVal := d.Get("security_group_ids")
+		if securityGroupIDsVal != nil {
+			dto.SecurityGroupIDs = expandStringList(securityGroupIDsVal.([]any))
+		}
 	}
 
 	log.Print(msgUpdate(objectPublicPort, d.Id(), dto))
