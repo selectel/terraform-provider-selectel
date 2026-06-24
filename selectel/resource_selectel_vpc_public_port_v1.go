@@ -82,10 +82,8 @@ func resourceVPCPublicPortV1Create(
 
 	dto := &publicnetapi.PortCreateDTO{ProjectID: d.Get("project_id").(string)}
 
-	if descriptionVal, ok := d.GetOk("description"); ok {
-		description := descriptionVal.(string)
-		dto.Description = &description
-	}
+	description := d.Get("description").(string)
+	dto.Description = &description
 
 	adminStateUp := d.Get("admin_state_up").(bool)
 	dto.AdminStateUp = &adminStateUp
@@ -145,10 +143,8 @@ func resourceVPCPublicPortV1Update(ctx context.Context, d *schema.ResourceData, 
 	dto := publicnetapi.PortUpdateDTO{}
 
 	if d.HasChange("description") {
-		if descriptionVal, ok := d.GetOk("description"); ok {
-			description := descriptionVal.(string)
-			dto.Description = &description
-		}
+		description := d.Get("description").(string)
+		dto.Description = &description
 	}
 
 	if d.HasChange("admin_state_up") {
