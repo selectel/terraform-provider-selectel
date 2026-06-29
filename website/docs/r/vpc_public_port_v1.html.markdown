@@ -6,7 +6,7 @@ description: |-
   Creates and manages a direct public IP address (public port) for Selectel products using public API v1
 ---
 
-# selectel\_vpc\_public_port\_v1
+# selectel\_vpc\_public\_port\_v1
 
 Creates and manages a direct public IP address (public port) in VPC using public API v1. For more information about direct public IP address, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses).
 
