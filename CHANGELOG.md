@@ -1,3 +1,12 @@
+## 8.2.1 (July 2, 2026)
+
+BUG FIXES:
+
+* Fix optional `service` attribute for `selectel_global_router_zone_v1` datasource.
+  Previously, this attribute was used for filtering on every read. ([#406](https://github.com/selectel/terraform-provider-selectel/pull/406))
+
+* Added handling for cases when several zones are found or no zone is found. ([#406](https://github.com/selectel/terraform-provider-selectel/pull/406))
+
 ## 8.2.0 (July 1, 2026)
 
 FEATURES:

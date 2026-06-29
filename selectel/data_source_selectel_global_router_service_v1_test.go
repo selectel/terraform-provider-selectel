@@ -9,9 +9,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+const testServiceName = "vpc"
+
 func TestAccGlobalRouterServiceV1DataSourceBasic(t *testing.T) {
 	dataGRServiceName := "gr_service_1"
-	testServiceName := "vpc"
 	dataSourceServiceName := fmt.Sprintf("data.selectel_global_router_service_v1.%[1]s", dataGRServiceName)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
