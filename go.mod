@@ -16,6 +16,7 @@ require (
 	github.com/selectel/iam-go v0.9.0
 	github.com/selectel/mks-go v1.1.0
 	github.com/selectel/private-dns-go v1.1.0
+	github.com/selectel/public-net-api-go v1.0.1
 	github.com/selectel/secretsmanager-go v0.2.1
 	github.com/stretchr/testify v1.11.1
 	github.com/terraform-provider-openstack/terraform-provider-openstack v1.49.0
