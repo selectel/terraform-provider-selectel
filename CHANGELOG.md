@@ -3,8 +3,6 @@
 FEATURES:
 
 * Add `selectel_vpc_public_port_v1` resource ([#403](https://github.com/selectel/terraform-provider-selectel/pull/403))
-* Add documentation for resource above ([#403](https://github.com/selectel/terraform-provider-selectel/pull/403))
-* Add Public Net API SDK — [public-net-api-go](https://github.com/selectel/public-net-api-go) ([#403](https://github.com/selectel/terraform-provider-selectel/pull/403))
 
 ## 8.1.1 (June 16, 2026)
 
