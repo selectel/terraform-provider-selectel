@@ -34,7 +34,7 @@ test-compile:
 	fi
 	go test -c $(TEST) $(TESTARGS)
 
-all: fmt import golangci-lint test testacc semgrep test-compile
+all: fmt import golangci-lint test testacc semgrep pin-sha-tags test-compile
 
 website:
 ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
@@ -73,4 +73,9 @@ semgrep:
 		--config=p/xss \
 		.
 
-.PHONY: golangci-lint build test testacc fmt test-compile semgrep website website-test
+pin-sha-tags:
+	docker run --rm \
+		-v ${PWD}/.github/workflows:/workflows \
+		mheap/pin-github-action .
+
+.PHONY: golangci-lint build test testacc fmt test-compile semgrep pin-sha-tags website website-test
