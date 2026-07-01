@@ -38,7 +38,7 @@ func resourceSecretsManagerCertificateV1() *schema.Resource {
 				Required: true,
 			},
 			"private_key": {
-				Description: "that should start with -----BEGIN PRIVATE" + " KEY----- and end with -----END PRIVATE" + " KEY-----",
+				Description: "that should start with -----BEGIN PRIVATE KEY----- and end with -----END PRIVATE KEY-----", // nosemgrep: generic.secrets.gitleaks.private-key.private-key
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
