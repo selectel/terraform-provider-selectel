@@ -76,6 +76,6 @@ semgrep:
 pin-sha-tags:
 	docker run --rm \
 		-v ${PWD}/.github/workflows:/workflows \
-		mheap/pin-github-action .
+		mheap/pin-github-action@sha256:1a336147444c5be62b5bade8a7b82d971d138aac3c799f9ad72d0598331210aa .
 
 .PHONY: golangci-lint build test testacc fmt test-compile semgrep pin-sha-tags website website-test
