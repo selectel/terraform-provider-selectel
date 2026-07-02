@@ -11,19 +11,10 @@ import (
 )
 
 var (
-	errZoneNotFound     = errors.New("zone not found")
-	errServiceNoResults = errors.New(
-		"your query returned no results. please change your search criteria and try again")
+	errNotFound        = errors.New("resource not found")
+	errMultipleResults = errors.New(
+		"your query returned more than one result. please try a more specific search criteria")
 )
-
-var errServiceMultipleResults = errors.New(
-	"your query returned more than one result. please try a more specific search criteria")
-
-var errQuotaNoResults = errors.New(
-	"your query returned no results. please change your search criteria and try again")
-
-var errQuotaMultipleResults = errors.New(
-	"your query returned more than one result. please try a more specific search criteria")
 
 func getGlobalRouterClient(meta interface{}) (*globalrouter.ServiceClient, diag.Diagnostics) {
 	config := meta.(*Config)
@@ -58,14 +49,28 @@ func getZoneByParams(ctx context.Context, client *globalrouter.ServiceClient, zo
 		return nil, err
 	}
 
-	// Search by name, because filter support only service_id
-	for _, zone := range *zones {
-		if service != "" && zone.Service == service {
-			return &zone, nil
+	if service != "" {
+		// Search by service name, because filter supports only service_id
+		zonesWithTargetService := (*zones)[:0]
+
+		for _, zone := range *zones {
+			if zone.Service == service {
+				zonesWithTargetService = append(zonesWithTargetService, zone)
+			}
 		}
+		*zones = zonesWithTargetService
 	}
 
-	return nil, errGettingObject(objectGlobalRouterZone, zoneName, errZoneNotFound)
+	if len(*zones) < 1 {
+		return nil, errGettingObject(objectGlobalRouterZone, zoneName, errNotFound)
+	}
+
+	if len(*zones) > 1 {
+		log.Printf("[DEBUG] Multiple results found: %#v", zones)
+		return nil, errGettingObject(objectGlobalRouterZone, zoneName, errMultipleResults)
+	}
+
+	return &(*zones)[0], nil
 }
 
 func getServiceByParams(ctx context.Context, client *globalrouter.ServiceClient, serviceName string) (*globalrouter.Service, error) {
@@ -81,12 +86,12 @@ func getServiceByParams(ctx context.Context, client *globalrouter.ServiceClient,
 	}
 
 	if len(*services) < 1 {
-		return nil, errGettingObject(objectGlobalRouterService, serviceName, errServiceNoResults)
+		return nil, errGettingObject(objectGlobalRouterService, serviceName, errNotFound)
 	}
 
 	if len(*services) > 1 {
 		log.Printf("[DEBUG] Multiple results found: %#v", services)
-		return nil, errGettingObject(objectGlobalRouterService, serviceName, errServiceMultipleResults)
+		return nil, errGettingObject(objectGlobalRouterService, serviceName, errMultipleResults)
 	}
 
 	return &(*services)[0], nil
@@ -107,12 +112,12 @@ func getQuotaByParams(ctx context.Context, client *globalrouter.ServiceClient, q
 	}
 
 	if len(*quotas) < 1 {
-		return nil, errGettingObject(objectGlobalRouterQuota, quotaName, errQuotaNoResults)
+		return nil, errGettingObject(objectGlobalRouterQuota, quotaName, errNotFound)
 	}
 
 	if len(*quotas) > 1 {
 		log.Printf("[DEBUG] Multiple results found: %#v", quotas)
-		return nil, errGettingObject(objectGlobalRouterQuota, quotaName, errQuotaMultipleResults)
+		return nil, errGettingObject(objectGlobalRouterQuota, quotaName, errMultipleResults)
 	}
 
 	return &(*quotas)[0], nil
@@ -131,12 +136,12 @@ func getZoneGroupByParams(ctx context.Context, client *globalrouter.ServiceClien
 	}
 
 	if len(*zoneGroups) < 1 {
-		return nil, errGettingObject(objectGlobalRouterZoneGroup, zoneGroupName, errQuotaNoResults)
+		return nil, errGettingObject(objectGlobalRouterZoneGroup, zoneGroupName, errNotFound)
 	}
 
 	if len(*zoneGroups) > 1 {
 		log.Printf("[DEBUG] Multiple results found: %#v", zoneGroups)
-		return nil, errGettingObject(objectGlobalRouterZoneGroup, zoneGroupName, errQuotaMultipleResults)
+		return nil, errGettingObject(objectGlobalRouterZoneGroup, zoneGroupName, errMultipleResults)
 	}
 
 	return &(*zoneGroups)[0], nil
