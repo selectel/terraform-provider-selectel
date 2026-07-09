@@ -1,3 +1,10 @@
+## 8.2.2 (July 9, 2026)
+
+BUG FIXES:
+
+* Fix `enable_patch_version_auto_upgrade = false` being ignored for HA/Multi-AZ clusters in `selectel_mks_cluster_v1`. ([#409](https://github.com/selectel/terraform-provider-selectel/pull/409))
+* Eliminate unnecessary diff when the `enable_patch_version_auto_upgrade` is not specified. ([#409](https://github.com/selectel/terraform-provider-selectel/pull/409))
+
 ## 8.2.1 (July 2, 2026)
 
 BUG FIXES:
