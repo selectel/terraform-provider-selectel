@@ -87,6 +87,7 @@ func resourceMKSClusterV1() *schema.Resource {
 			"enable_patch_version_auto_upgrade": {
 				Type:     schema.TypeBool,
 				Optional: true,
+				Computed: true,
 				ForceNew: false,
 			},
 			"enable_pod_security_policy": {
@@ -301,7 +302,9 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 	clusterType := inferClusterType(d, zonal)
 
 	enablePatchVersionAutoUpgrade := clusterType != cluster.ClusterTypeBasic
-	if v, ok := d.GetOk("enable_patch_version_auto_upgrade"); ok {
+	// Use GetOkExists instead of GetOk because GetOk treats explicit false as
+	// “not set” for Optional bool without Default.
+	if v, ok := d.GetOkExists("enable_patch_version_auto_upgrade"); ok {
 		enablePatchVersionAutoUpgrade = v.(bool)
 	}
 
