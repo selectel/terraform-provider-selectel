@@ -302,8 +302,7 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 	clusterType := inferClusterType(d, zonal)
 
 	enablePatchVersionAutoUpgrade := clusterType != cluster.ClusterTypeBasic
-	// Use GetOkExists instead of GetOk because GetOk treats explicit false as
-	// “not set” for Optional bool without Default.
+	// Use GetOkExists instead of GetOk because GetOk treats explicit false as “not set” for Optional bool without Default.
 	if v, ok := d.GetOkExists("enable_patch_version_auto_upgrade"); ok {
 		enablePatchVersionAutoUpgrade = v.(bool)
 	}
