@@ -1,4 +1,4 @@
-## 8.2.2 (July 7, 2026)
+## 8.2.2 (July 10, 2026)
 
 * Update documentation for `selectel_vpc_public_port_v1` resource ([#408](https://github.com/selectel/terraform-provider-selectel/pull/408))
 
