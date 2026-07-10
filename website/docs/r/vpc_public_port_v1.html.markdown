@@ -28,7 +28,7 @@ resource "selectel_vpc_public_port_v1" "port_1" {
 
 * `region` — (Required) Pool where the public port is located, for example, `ru-6`. Changing this creates a new public port. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
 
-* `description` — (Optional) Public port description. The default value is empty string.
+* `description` — (Optional) Public port description. The default value is an empty string.
 
 * `admin_state_up` — (Optional) Enables (`true`) or disables (`false`) the public port administratively. The default value is `true`.
 
