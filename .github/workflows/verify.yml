@@ -25,6 +25,7 @@ jobs:
           go-version: "1.25"
       - uses: golangci/golangci-lint-action@9fae48acfc02a90574d7c304a1758ef9895495fa # v7
         with:
+          # NOTE: If you update the version, don't forget to update the Makefile.
           version: v2.4.0
 
   pin-sha-tags:
