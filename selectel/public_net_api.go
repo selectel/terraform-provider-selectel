@@ -12,7 +12,7 @@ import (
 
 const (
 	defaultTimeout      = 150 * time.Second
-	defaultRetryWaitMin = time.Second
+	defaultRetryWaitMin = time.Second //nolint: revive
 	defaultRetryWaitMax = 5 * time.Second
 	defaultRetryMax     = 2
 )
