@@ -14,6 +14,38 @@ import (
 
 var ErrRRSetNotFound = errors.New("rrset not found")
 
+func resourceDomainsRRSetV2CustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	recordType := d.Get("type").(string)
+	if recordType != "TXT" {
+		return nil
+	}
+
+	recordsSet := d.Get("records").(*schema.Set)
+	for _, recordItem := range recordsSet.List() {
+		record, ok := recordItem.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		content, ok := record["content"].(string)
+		if !ok {
+			continue
+		}
+		if err := validateTXTRecordContent(content); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateTXTRecordContent(content string) error {
+	if len(content) < 2 || content[0] != '"' || content[len(content)-1] != '"' {
+		return fmt.Errorf("TXT record content must be enclosed in double quotes, got: %q", content)
+	}
+
+	return nil
+}
+
 func resourceDomainsRRSetV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceDomainsRRSetV2Create,
@@ -23,6 +55,7 @@ func resourceDomainsRRSetV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceDomainsRRSetV2ImportState,
 		},
+		CustomizeDiff: resourceDomainsRRSetV2CustomizeDiff,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
