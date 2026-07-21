@@ -23,8 +23,6 @@ func TestAccDomainsRRSetV2Basic(t *testing.T) {
 	testRRSetType := domainsV2.TXT
 	testRRSetTTL := 60
 	testRRSetContent := fmt.Sprintf("\"%[1]s\"", acctest.RandString(16))
-	resourceZoneName := "zone_tf_acc_test_1"
-	resourceRRSetName := "rrset_tf_acc_test_1"
 	dataSourceRRSetName := fmt.Sprintf("selectel_domains_rrset_v2.%[1]s", resourceRRSetName)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -67,7 +65,6 @@ func TestAccDomainsRRSetV2TXTUnquotedContent(t *testing.T) {
 	testRRSetName := fmt.Sprintf("%[1]s.%[2]s", acctest.RandomWithPrefix("tf-acc"), testZoneName)
 	testRRSetType := domainsV2.TXT
 	testRRSetTTL := 60
-	resourceZoneName := "zone_tf_acc_test_1"
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
 		ProviderFactories: testAccProviders,
@@ -87,7 +84,6 @@ func TestAccDomainsRRSetV2TXTQuotedContent(t *testing.T) {
 	testRRSetType := domainsV2.TXT
 	testRRSetTTL := 60
 	testRRSetContent := fmt.Sprintf("\"%[1]s\"", acctest.RandString(16))
-	resourceZoneName := "zone_tf_acc_test_1"
 	dataSourceRRSetName := fmt.Sprintf("selectel_domains_rrset_v2.%[1]s", resourceRRSetName)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -111,7 +107,6 @@ func TestAccDomainsRRSetV2NonTXTUnquotedContent(t *testing.T) {
 	testRRSetName := fmt.Sprintf("%[1]s.%[2]s", acctest.RandomWithPrefix("tf-acc"), testZoneName)
 	testRRSetType := "A"
 	testRRSetTTL := 60
-	resourceZoneName := "zone_tf_acc_test_1"
 	dataSourceRRSetName := fmt.Sprintf("selectel_domains_rrset_v2.%[1]s", resourceRRSetName)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
