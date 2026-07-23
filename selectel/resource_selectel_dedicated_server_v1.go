@@ -1420,7 +1420,7 @@ func localSubnetNetmask(ls *dedicated.LocalSubnet) (string, error) {
 
 // localSubnetIPv4Gateway computes the gateway IP for a local/private subnet
 // from its CIDR. For local subnets, the gateway is the first usable IP
-// (network address + 1)
+// (network address + 1).
 func localSubnetIPv4Gateway(cidr string) (string, error) {
 	ip, _, err := net.ParseCIDR(cidr)
 	if err != nil {
