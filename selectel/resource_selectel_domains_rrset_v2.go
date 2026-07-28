@@ -16,7 +16,7 @@ var ErrRRSetNotFound = errors.New("rrset not found")
 
 func resourceDomainsRRSetV2CustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
 	recordType := d.Get("type").(string)
-	if recordType != "TXT" {
+	if !strings.EqualFold(recordType, string(domainsV2.TXT)) {
 		return nil
 	}
 

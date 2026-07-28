@@ -1,6 +1,7 @@
 package selectel
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,6 +32,16 @@ func TestValidateTXTRecordContent_InvalidUnquoted(t *testing.T) {
 	for _, content := range invalidContents {
 		err := validateTXTRecordContent(content)
 		assert.Error(t, err, "expected %q to be invalid TXT content", content)
+	}
+}
+
+func TestResourceDomainsRRSetV2CustomizeDiff_TXTCaseInsensitive(t *testing.T) {
+	for _, typ := range []string{"TXT", "txt", "Txt", "tXt"} {
+		t.Run(typ, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, "TXT", strings.ToUpper(typ),
+				"EqualFold should match %q as TXT type", typ)
+		})
 	}
 }
 
