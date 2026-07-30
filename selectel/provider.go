@@ -156,6 +156,8 @@ func Provider(providerVersion string) *schema.Provider {
 			"selectel_global_router_zone_v1":            dataSourceGlobalRouterZoneV1(),
 			"selectel_global_router_quota_v1":           dataSourceGlobalRouterQuotaV1(),
 			"selectel_global_router_zone_group_v1":      dataSourceGlobalRouterZoneGroupV1(),
+			"selectel_compute_volume_type_v3":           dataSourceComputeVolumeTypeV3(),
+			"selectel_compute_volume_v3":                dataSourceComputeVolumeV3(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"selectel_vpc_floatingip_v2":                            resourceVPCFloatingIPV2(),
@@ -176,6 +178,7 @@ func Provider(providerVersion string) *schema.Provider {
 			"selectel_iam_group_membership_v1":                      resourceIAMGroupMembershipV1(),
 			"selectel_mks_cluster_v1":                               resourceMKSClusterV1(),
 			"selectel_mks_nodegroup_v1":                             resourceMKSNodegroupV1(),
+			"selectel_compute_volume_v3":                            resourceComputeVolumeV3(),
 			"selectel_domains_domain_v1":                            resourceDomainsDomainV1(),
 			"selectel_domains_record_v1":                            resourceDomainsRecordV1(),
 			"selectel_domains_zone_v2":                              resourceDomainsZoneV2(),
