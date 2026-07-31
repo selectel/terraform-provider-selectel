@@ -33,8 +33,7 @@ resource "selectel_private_dns_service_v1" "service_1" {
 
 * `network_id` - (Required) Unique identifier of a network to connect to the DNS service. Retrieved from the [openstack_networking_network_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_network_v2) resource. Learn more about [Networks](https://docs.selectel.ru/en/cloud-networks/private-networks-and-subnets/).
 
-* `is_recursor_enabled` - (Optional) If `true`, the DNS service has a recursive resolver enabled
-that can resolve external DNS queries.
+* `is_recursor_enabled` - (Optional) Enables or disables a recursive resolver that allows the service to resolve public domain names. Boolean flag, the default value is `false`.
 
 ## Attributes Reference
 
