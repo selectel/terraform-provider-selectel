@@ -20,7 +20,7 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - run: semgrep scan --sarif --output=semgrep.sarif --error --severity=WARNING --severity=ERROR
         env:
           SEMGREP_RULES: >-
@@ -40,7 +40,7 @@ jobs:
             p/security-audit
             p/sql-injection
             p/xss
-      - uses: github/codeql-action/upload-sarif@02c5e83432fe5497fd85b873b6c9f16a8578e1d9 # v3
+      - uses: github/codeql-action/upload-sarif@a2983b8bed1923f44751c5c43237f479442827b3 # v3
         with:
           sarif_file: semgrep.sarif
         if: always()
@@ -56,7 +56,7 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - run: trivy fs .
         env:
           TRIVY_FORMAT: sarif
@@ -65,7 +65,7 @@ jobs:
           TRIVY_EXIT_CODE: 1
           TRIVY_IGNOREFILE: .trivyignore.yml
           TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
-      - uses: github/codeql-action/upload-sarif@02c5e83432fe5497fd85b873b6c9f16a8578e1d9 # v3
+      - uses: github/codeql-action/upload-sarif@a2983b8bed1923f44751c5c43237f479442827b3 # v3
         with:
           sarif_file: trivy.sarif
         if: always()
