@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -38,9 +39,23 @@ func resourceDomainsRRSetV2CustomizeDiff(_ context.Context, d *schema.ResourceDi
 	return nil
 }
 
+const (
+	txtSpace  = `[ \t\r\n]`
+	txtQuoted = `"[^"]*"`
+)
+
+var txtStringsRe = regexp.MustCompile(
+	`^` +
+		txtSpace + `*` +
+		txtQuoted +
+		`(?:` + txtSpace + `+` + txtQuoted + `)*` +
+		txtSpace + `*` +
+		`$`,
+)
+
 func validateTXTRecordContent(content string) error {
-	if len(content) < 2 || content[0] != '"' || content[len(content)-1] != '"' {
-		return fmt.Errorf("TXT record content must be enclosed in double quotes, got: %q", content)
+	if !txtStringsRe.MatchString(content) {
+		return fmt.Errorf("TXT record content must be one or more double-quoted strings separated by whitespace, got: %q", content)
 	}
 
 	return nil

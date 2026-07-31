@@ -101,6 +101,90 @@ func TestAccDomainsRRSetV2TXTQuotedContent(t *testing.T) {
 	})
 }
 
+func TestAccDomainsRRSetV2TXTMultiStringContent(t *testing.T) {
+	projectName := acctest.RandomWithPrefix("tf-acc")
+	testZoneName := fmt.Sprintf("%s.ru.", acctest.RandomWithPrefix("tf-acc"))
+	testRRSetName := fmt.Sprintf("%[1]s.%[2]s", acctest.RandomWithPrefix("tf-acc"), testZoneName)
+	testRRSetType := domainsV2.TXT
+	testRRSetTTL := 60
+	testRRSetContent := `"v=spf1 include:example.com ~all" " mx:example.com"`
+	dataSourceRRSetName := fmt.Sprintf("selectel_domains_rrset_v2.%[1]s", resourceRRSetName)
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckDomainsV2ZoneDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDomainsRRSetV2WithZoneBasic(projectName, resourceRRSetName, testRRSetName, string(testRRSetType), testRRSetContent, testRRSetTTL, resourceZoneName, testZoneName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccDomainsRRSetV2ID(dataSourceRRSetName),
+					resource.TestCheckResourceAttr(dataSourceRRSetName, "type", string(testRRSetType)),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDomainsRRSetV2TXTMultiStringUnbalancedContent(t *testing.T) {
+	projectName := acctest.RandomWithPrefix("tf-acc")
+	testZoneName := fmt.Sprintf("%s.ru.", acctest.RandomWithPrefix("tf-acc"))
+	testRRSetName := fmt.Sprintf("%[1]s.%[2]s", acctest.RandomWithPrefix("tf-acc"), testZoneName)
+	testRRSetType := domainsV2.TXT
+	testRRSetTTL := 60
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccDomainsRRSetV2WithZoneBasic(projectName, resourceRRSetName, testRRSetName, string(testRRSetType), `"string1" "string2`, testRRSetTTL, resourceZoneName, testZoneName),
+				ExpectError: regexp.MustCompile("unbalanced double quotes"),
+			},
+		},
+	})
+}
+
+func TestAccDomainsRRSetV2TXTMultiLineContent(t *testing.T) {
+	projectName := acctest.RandomWithPrefix("tf-acc")
+	testZoneName := fmt.Sprintf("%s.ru.", acctest.RandomWithPrefix("tf-acc"))
+	testRRSetName := fmt.Sprintf("%[1]s.%[2]s", acctest.RandomWithPrefix("tf-acc"), testZoneName)
+	testRRSetType := domainsV2.TXT
+	testRRSetTTL := 60
+	testRRSetContent := "\"line1\\nline2\""
+	dataSourceRRSetName := fmt.Sprintf("selectel_domains_rrset_v2.%[1]s", resourceRRSetName)
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckDomainsV2ZoneDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDomainsRRSetV2WithZoneBasic(projectName, resourceRRSetName, testRRSetName, string(testRRSetType), testRRSetContent, testRRSetTTL, resourceZoneName, testZoneName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccDomainsRRSetV2ID(dataSourceRRSetName),
+					resource.TestCheckResourceAttr(dataSourceRRSetName, "type", string(testRRSetType)),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDomainsRRSetV2TXTMultiLineUnbalancedContent(t *testing.T) {
+	projectName := acctest.RandomWithPrefix("tf-acc")
+	testZoneName := fmt.Sprintf("%s.ru.", acctest.RandomWithPrefix("tf-acc"))
+	testRRSetName := fmt.Sprintf("%[1]s.%[2]s", acctest.RandomWithPrefix("tf-acc"), testZoneName)
+	testRRSetType := domainsV2.TXT
+	testRRSetTTL := 60
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccDomainsRRSetV2WithZoneBasic(projectName, resourceRRSetName, testRRSetName, string(testRRSetType), "\"line1\\nline2", testRRSetTTL, resourceZoneName, testZoneName),
+				ExpectError: regexp.MustCompile("unbalanced double quotes"),
+			},
+		},
+	})
+}
+
 func TestAccDomainsRRSetV2NonTXTUnquotedContent(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	testZoneName := fmt.Sprintf("%s.ru.", acctest.RandomWithPrefix("tf-acc"))
