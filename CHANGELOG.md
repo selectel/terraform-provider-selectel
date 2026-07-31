@@ -1,4 +1,13 @@
+## 8.2.4 (July, 31, 2026)
+
+IMPROVEMENTS:
+
+* `selectel_private_dns_service_v1`: clarify description of `is_recursor_enabled` in docs ([#413](https://github.com/selectel/terraform-provider-selectel/pull/413))
+* `selectel_domains_rrset_v2`: add double quote validation for content of `TXT` record ([#412](https://github.com/selectel/terraform-provider-selectel/pull/412))
+
 ## 8.2.3 (July 10, 2026)
+
+IMPROVEMENTS:
 
 * Update documentation for `selectel_vpc_public_port_v1` resource ([#408](https://github.com/selectel/terraform-provider-selectel/pull/408))
 
