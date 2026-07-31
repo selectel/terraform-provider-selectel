@@ -1,7 +1,3 @@
-## 8.2.4 (July 29, 2026)
-
-* Update documentation for `selectel_private_dns_service_v1` resource ([#413](https://github.com/selectel/terraform-provider-selectel/pull/413))
-
 ## 8.2.3 (July 10, 2026)
 
 * Update documentation for `selectel_vpc_public_port_v1` resource ([#408](https://github.com/selectel/terraform-provider-selectel/pull/408))
