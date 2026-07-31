@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -13,6 +14,52 @@ import (
 )
 
 var ErrRRSetNotFound = errors.New("rrset not found")
+
+func resourceDomainsRRSetV2CustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	recordType := d.Get("type").(string)
+	if !strings.EqualFold(recordType, string(domainsV2.TXT)) {
+		return nil
+	}
+
+	recordsSet := d.Get("records").(*schema.Set)
+	for _, recordItem := range recordsSet.List() {
+		record, ok := recordItem.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		content, ok := record["content"].(string)
+		if !ok {
+			continue
+		}
+		if err := validateTXTRecordContent(content); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+const (
+	txtSpace  = `[ \t\r\n]`
+	txtQuoted = `"[^"]*"`
+)
+
+var txtStringsRe = regexp.MustCompile(
+	`^` +
+		txtSpace + `*` +
+		txtQuoted +
+		`(?:` + txtSpace + `+` + txtQuoted + `)*` +
+		txtSpace + `*` +
+		`$`,
+)
+
+func validateTXTRecordContent(content string) error {
+	if !txtStringsRe.MatchString(content) {
+		return fmt.Errorf("TXT record content must be one or more double-quoted strings separated by whitespace, got: %q", content)
+	}
+
+	return nil
+}
 
 func resourceDomainsRRSetV2() *schema.Resource {
 	return &schema.Resource{
@@ -23,6 +70,7 @@ func resourceDomainsRRSetV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceDomainsRRSetV2ImportState,
 		},
+		CustomizeDiff: resourceDomainsRRSetV2CustomizeDiff,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,

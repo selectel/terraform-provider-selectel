@@ -16,7 +16,6 @@ const resourceZoneName = "zone_tf_acc_test_1"
 func TestAccDomainsZoneV2Basic(t *testing.T) {
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	testZoneName := fmt.Sprintf("%s.xyz.", acctest.RandomWithPrefix("tf-acc"))
-	resourceZoneName := "zone_tf_acc_test_1"
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
 		ProviderFactories: testAccProviders,
