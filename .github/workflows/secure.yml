@@ -40,7 +40,7 @@ jobs:
             p/security-audit
             p/sql-injection
             p/xss
-      - uses: github/codeql-action/upload-sarif@a2983b8bed1923f44751c5c43237f479442827b3 # v3
+      - uses: github/codeql-action/upload-sarif@e60ea984bd3baa95954f2856bcf24f9eaba46637 # v3
         with:
           sarif_file: semgrep.sarif
         if: always()
@@ -65,7 +65,7 @@ jobs:
           TRIVY_EXIT_CODE: 1
           TRIVY_IGNOREFILE: .trivyignore.yml
           TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
-      - uses: github/codeql-action/upload-sarif@a2983b8bed1923f44751c5c43237f479442827b3 # v3
+      - uses: github/codeql-action/upload-sarif@e60ea984bd3baa95954f2856bcf24f9eaba46637 # v3
         with:
           sarif_file: trivy.sarif
         if: always()
@@ -77,4 +77,4 @@ jobs:
     steps:
       - uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f # v1
         with:
-          go-version-input: "1.25"
+          go-version-input: "1.26"

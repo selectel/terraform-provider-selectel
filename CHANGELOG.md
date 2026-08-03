@@ -1,3 +1,9 @@
+## 8.3.0 (August 3, 2026)
+
+IMPROVEMENTS:
+
+* Update Go version to 1.26
+
 ## 8.2.4 (July, 31, 2026)
 
 IMPROVEMENTS:

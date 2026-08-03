@@ -25,7 +25,7 @@ func IsSetContainsSubset(subset map[string]interface{}, set any) bool {
 }
 
 func match(subset map[string]interface{}, val reflect.Value) bool {
-	if val.Kind() == reflect.Ptr {
+	if val.Kind() == reflect.Ptr { //nolint:govet
 		val = val.Elem()
 	}
 

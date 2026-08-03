@@ -1,6 +1,6 @@
 TEST?=$$(go list ./...)
 GOFMT_FILES?=$$(find . -name '*.go')
-GOLANGCI_VERSION?=v2.4.0
+GOLANGCI_VERSION?=v2.12.2
 WEBSITE_REPO=github.com/hashicorp/terraform-website
 PKG_NAME=selectel
 
