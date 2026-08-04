@@ -90,6 +90,17 @@ func testAccSelectelPreCheckWithProjectID(t *testing.T) {
 	}
 }
 
+// testAccSelectelPreCheckWithProjectIDAndRegion guards the tests that run in a
+// pre-existing project of a specific region: both are taken from the
+// environment, so an unset variable must stop the test instead of sending it to
+// a project or a region nobody chose.
+func testAccSelectelPreCheckWithProjectIDAndRegion(t *testing.T) {
+	testAccSelectelPreCheckWithProjectID(t)
+	if v := os.Getenv("INFRA_REGION"); v == "" {
+		t.Fatal("INFRA_REGION must be set for acceptance tests")
+	}
+}
+
 func testAccSelectelPreCheckWithAuth(t *testing.T) {
 	testAccSelectelPreCheck(t)
 

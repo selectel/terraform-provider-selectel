@@ -22,13 +22,13 @@ const (
 	testAccNetworkingNetworkV2DataSourceName = "data.selectel_networking_network_v2.network_tf_acc_test_1"
 )
 
-// networkingV2TestRegion is the region the networking acceptance tests run in.
-func networkingV2TestRegion() string {
-	if region := os.Getenv("SELECTEL_NETWORKING_REGION"); region != "" {
-		return region
-	}
-
-	return "ru-3"
+// networkingV2TestEnv is the project and the region every networking acceptance
+// test runs in. Both are supplied by the environment and neither has a fallback:
+// a test must never guess where it creates cloud resources. Missing values are
+// reported by testAccSelectelPreCheckWithProjectIDAndRegion before the first
+// step runs.
+func networkingV2TestEnv() (projectID, region string) {
+	return os.Getenv("INFRA_PROJECT_ID"), os.Getenv("INFRA_REGION")
 }
 
 // -----------------------------------------------------------------------------
@@ -160,21 +160,22 @@ func TestNetworkingNetworkV2DataSourceSelectors(t *testing.T) {
 // SCN-007-01 (delete removes the network).
 func TestAccNetworkingNetworkV2Basic(t *testing.T) {
 	var found network.Network
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingNetworkV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingNetworkV2Basic(projectName),
+				Config: testAccNetworkingNetworkV2Basic(projectID, region),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingNetworkV2Exists(testAccNetworkingNetworkV2ResourceName, &found),
-					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2ResourceName, "region", networkingV2TestRegion()),
-					// The API assigns every optional+computed attribute.
-					resource.TestCheckResourceAttrSet(testAccNetworkingNetworkV2ResourceName, "name"),
-					resource.TestCheckResourceAttrSet(testAccNetworkingNetworkV2ResourceName, "admin_state_up"),
+					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2ResourceName, "region", region),
+					// A network created without a name keeps an empty one: the API
+					// does not invent a value, it only defaults admin_state_up.
+					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2ResourceName, "name", ""),
+					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2ResourceName, "admin_state_up", "true"),
 					// Admin-managed attributes are reported, never configured.
 					resource.TestCheckResourceAttrSet(testAccNetworkingNetworkV2ResourceName, "mtu"),
 					resource.TestCheckResourceAttrSet(testAccNetworkingNetworkV2ResourceName, "shared"),
@@ -185,7 +186,7 @@ func TestAccNetworkingNetworkV2Basic(t *testing.T) {
 			},
 			{
 				// SCN-001-02: no changes and no drift means an empty plan.
-				Config:   testAccNetworkingNetworkV2Basic(projectName),
+				Config:   testAccNetworkingNetworkV2Basic(projectID, region),
 				PlanOnly: true,
 			},
 			{
@@ -201,22 +202,21 @@ func TestAccNetworkingNetworkV2Basic(t *testing.T) {
 // TestAccNetworkingNetworkV2OptionalAttributes covers SCN-002-01 and SCN-002-02.
 func TestAccNetworkingNetworkV2OptionalAttributes(t *testing.T) {
 	var found network.Network
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	networkName := acctest.RandomWithPrefix("tf-acc-net")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingNetworkV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingNetworkV2OptionalAttributes(projectName, networkName),
+				Config: testAccNetworkingNetworkV2OptionalAttributes(projectID, region, networkName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingNetworkV2Exists(testAccNetworkingNetworkV2ResourceName, &found),
 					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2ResourceName, "name", networkName),
 					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2ResourceName, "description", "created by the acceptance test"),
 					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2ResourceName, "admin_state_up", "true"),
-					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2ResourceName, "dns_domain", "acc-test.example.com."),
 					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2ResourceName, "tags.#", "2"),
 					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2ResourceName, "all_tags.#", "2"),
 				),
@@ -224,46 +224,92 @@ func TestAccNetworkingNetworkV2OptionalAttributes(t *testing.T) {
 			{
 				// SCN-002-02: attributes left out of the configuration keep the
 				// value the API assigned, so the plan stays empty.
-				Config:   testAccNetworkingNetworkV2OptionalAttributes(projectName, networkName),
+				Config:   testAccNetworkingNetworkV2OptionalAttributes(projectID, region, networkName),
 				PlanOnly: true,
 			},
 		},
 	})
 }
 
-// TestAccNetworkingNetworkV2Update covers SCN-003-01 and SCN-003-02: the
-// mutable attributes and dns_domain change in place, keeping the identifier.
+// TestAccNetworkingNetworkV2Update covers SCN-003-01: the mutable attributes
+// change in place, keeping the identifier. SCN-003-02 (dns_domain) needs a DNS
+// zone that exists in the project, so it lives in
+// TestAccNetworkingNetworkV2DNSDomain.
 func TestAccNetworkingNetworkV2Update(t *testing.T) {
 	var found network.Network
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	networkName := acctest.RandomWithPrefix("tf-acc-net")
 	updatedName := acctest.RandomWithPrefix("tf-acc-net-upd")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingNetworkV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingNetworkV2OptionalAttributes(projectName, networkName),
+				Config: testAccNetworkingNetworkV2OptionalAttributes(projectID, region, networkName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingNetworkV2Exists(testAccNetworkingNetworkV2ResourceName, &found),
 				),
 			},
 			{
-				Config: testAccNetworkingNetworkV2Updated(projectName, updatedName),
+				Config: testAccNetworkingNetworkV2Updated(projectID, region, updatedName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingNetworkV2SameID(testAccNetworkingNetworkV2ResourceName, &found),
 					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2ResourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2ResourceName, "description", "updated by the acceptance test"),
 					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2ResourceName, "admin_state_up", "false"),
-					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2ResourceName, "dns_domain", "acc-test-updated.example.com."),
 					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2ResourceName, "tags.#", "1"),
 				),
 			},
 			{
-				Config:   testAccNetworkingNetworkV2Updated(projectName, updatedName),
+				Config:   testAccNetworkingNetworkV2Updated(projectID, region, updatedName),
 				PlanOnly: true,
+			},
+		},
+	})
+}
+
+// TestAccNetworkingNetworkV2DNSDomain covers SCN-002-01 and SCN-003-02 for
+// dns_domain: it is accepted on create and changed in place.
+//
+// The value cannot be made up: the Selectel fork resolves dns_domain against the
+// private DNS zones of the project and rejects an unknown one with "Bad network
+// request: Dns zone not find in project" (HTTP 400). The zones are therefore part
+// of the configuration — a private DNS service on a network of its own, and two
+// zones on it, so the change of domain has somewhere to go.
+func TestAccNetworkingNetworkV2DNSDomain(t *testing.T) {
+	projectID, region := networkingV2TestEnv()
+	networkName := acctest.RandomWithPrefix("tf-acc-net")
+	zonePrefix := acctest.RandomWithPrefix("tf-acc-zone")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckNetworkingNetworkV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNetworkingNetworkV2DNSDomain(projectID, region, networkName, zonePrefix, testAccNetworkingV2FirstDNSZone),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrPair(
+						testAccNetworkingNetworkV2ResourceName, "dns_domain",
+						testAccNetworkingV2FirstDNSZone, "domain",
+					),
+				),
+			},
+			{
+				Config:   testAccNetworkingNetworkV2DNSDomain(projectID, region, networkName, zonePrefix, testAccNetworkingV2FirstDNSZone),
+				PlanOnly: true,
+			},
+			{
+				// SCN-003-02: dns_domain is mutable, so the network keeps its id.
+				Config: testAccNetworkingNetworkV2DNSDomain(projectID, region, networkName, zonePrefix, testAccNetworkingV2SecondDNSZone),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrPair(
+						testAccNetworkingNetworkV2ResourceName, "dns_domain",
+						testAccNetworkingV2SecondDNSZone, "domain",
+					),
+				),
 			},
 		},
 	})
@@ -274,35 +320,35 @@ func TestAccNetworkingNetworkV2Update(t *testing.T) {
 // (deleting an already absent network still succeeds).
 func TestAccNetworkingNetworkV2ExternalChanges(t *testing.T) {
 	var found network.Network
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	networkName := acctest.RandomWithPrefix("tf-acc-net")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingNetworkV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingNetworkV2OptionalAttributes(projectName, networkName),
+				Config: testAccNetworkingNetworkV2OptionalAttributes(projectID, region, networkName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingNetworkV2Exists(testAccNetworkingNetworkV2ResourceName, &found),
 				),
 			},
 			{
 				// SCN-005-01: an out-of-band rename shows up as drift.
-				Config:             testAccNetworkingNetworkV2OptionalAttributes(projectName, networkName),
+				Config:             testAccNetworkingNetworkV2OptionalAttributes(projectID, region, networkName),
 				Check:              testAccCheckNetworkingNetworkV2RenameOutOfBand(&found),
 				ExpectNonEmptyPlan: true,
 			},
 			{
 				// SCN-005-02 and SCN-007-02: an out-of-band delete plans a
 				// re-create rather than failing the refresh.
-				Config:             testAccNetworkingNetworkV2OptionalAttributes(projectName, networkName),
+				Config:             testAccNetworkingNetworkV2OptionalAttributes(projectID, region, networkName),
 				Check:              testAccCheckNetworkingNetworkV2DeleteOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				Config: testAccNetworkingNetworkV2OptionalAttributes(projectName, networkName),
+				Config: testAccNetworkingNetworkV2OptionalAttributes(projectID, region, networkName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingNetworkV2Exists(testAccNetworkingNetworkV2ResourceName, &found),
 				),
@@ -316,16 +362,16 @@ func TestAccNetworkingNetworkV2ExternalChanges(t *testing.T) {
 // and never drive a plan of their own.
 func TestAccNetworkingNetworkV2AdminManagedAttributes(t *testing.T) {
 	var found network.Network
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	networkName := acctest.RandomWithPrefix("tf-acc-net")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingNetworkV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingNetworkV2OptionalAttributes(projectName, networkName),
+				Config: testAccNetworkingNetworkV2OptionalAttributes(projectID, region, networkName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingNetworkV2Exists(testAccNetworkingNetworkV2ResourceName, &found),
 					resource.TestCheckResourceAttrSet(testAccNetworkingNetworkV2ResourceName, "blocked"),
@@ -337,7 +383,7 @@ func TestAccNetworkingNetworkV2AdminManagedAttributes(t *testing.T) {
 			{
 				// Every admin-managed attribute is Computed-only, so a repeated
 				// plan stays empty no matter what the platform set them to.
-				Config:   testAccNetworkingNetworkV2OptionalAttributes(projectName, networkName),
+				Config:   testAccNetworkingNetworkV2OptionalAttributes(projectID, region, networkName),
 				PlanOnly: true,
 			},
 		},
@@ -348,16 +394,16 @@ func TestAccNetworkingNetworkV2AdminManagedAttributes(t *testing.T) {
 // returns the network with its computed attributes) and SCN-012-02 (no match is
 // a diagnostic error, not an empty result).
 func TestAccNetworkingNetworkV2DataSource(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	networkName := acctest.RandomWithPrefix("tf-acc-net")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingNetworkV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingNetworkV2DataSource(projectName, networkName),
+				Config: testAccNetworkingNetworkV2DataSource(projectID, region, networkName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2DataSourceName, "name", networkName),
 					resource.TestCheckResourceAttrPair(
@@ -381,7 +427,7 @@ func TestAccNetworkingNetworkV2DataSource(t *testing.T) {
 			},
 			{
 				// SCN-012-02: nothing matches, so the read fails explicitly.
-				Config:      testAccNetworkingNetworkV2DataSourceNoMatch(projectName),
+				Config:      testAccNetworkingNetworkV2DataSourceNoMatch(projectID, region),
 				ExpectError: regexp.MustCompile(`no networking network found`),
 			},
 		},
@@ -521,9 +567,7 @@ func testAccCheckNetworkingNetworkV2Destroy(s *terraform.State) error {
 			rs.Primary.Attributes["region"],
 		)
 		if err != nil {
-			// The project is destroyed together with the network, so a client
-			// that can no longer be built proves nothing is left behind.
-			return nil //nolint:nilerr // see comment above
+			return err
 		}
 
 		if _, err := network.Get(context.Background(), client, rs.Primary.ID); err == nil {
@@ -540,67 +584,130 @@ func testAccCheckNetworkingNetworkV2Destroy(s *terraform.State) error {
 // Acceptance test configurations.
 // -----------------------------------------------------------------------------
 
-func testAccNetworkingNetworkV2Project(projectName string) string {
+// testAccNetworkingV2Base binds a configuration to the project the environment
+// points at. Every networking configuration starts with it and every resource
+// refers to local.project_id, so no test creates or destroys a project of its
+// own.
+func testAccNetworkingV2Base(projectID string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name = "%s"
+locals {
+  project_id = %q
 }
-`, projectName)
+`, projectID)
 }
 
-func testAccNetworkingNetworkV2Basic(projectName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingNetworkV2Basic(projectID, region string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_network_v2" "network_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingNetworkV2OptionalAttributes(projectName, networkName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingNetworkV2OptionalAttributes(projectID, region, networkName string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_network_v2" "network_tf_acc_test_1" {
-  project_id     = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id     = local.project_id
   region         = "%s"
   name           = "%s"
   description    = "created by the acceptance test"
   admin_state_up = true
-  dns_domain     = "acc-test.example.com."
   tags           = ["tf-acc", "networking"]
 }
-`, networkingV2TestRegion(), networkName)
+`, region, networkName)
 }
 
-func testAccNetworkingNetworkV2Updated(projectName, networkName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingNetworkV2Updated(projectID, region, networkName string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_network_v2" "network_tf_acc_test_1" {
-  project_id     = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id     = local.project_id
   region         = "%s"
   name           = "%s"
   description    = "updated by the acceptance test"
   admin_state_up = false
-  dns_domain     = "acc-test-updated.example.com."
   tags           = ["tf-acc"]
 }
-`, networkingV2TestRegion(), networkName)
+`, region, networkName)
 }
 
-func testAccNetworkingNetworkV2DataSource(projectName, networkName string) string {
-	return testAccNetworkingNetworkV2OptionalAttributes(projectName, networkName) + fmt.Sprintf(`
+// The two zones a dns_domain can point at. They live on a network of their own,
+// because the private DNS service needs one and the network under test is created
+// only after the zones exist.
+const (
+	testAccNetworkingV2FirstDNSZone  = "selectel_private_dns_zone_v1.zone_tf_acc_test_1"
+	testAccNetworkingV2SecondDNSZone = "selectel_private_dns_zone_v1.zone_tf_acc_test_2"
+)
+
+func testAccNetworkingV2PrivateDNSZones(region, zonePrefix string) string {
+	return fmt.Sprintf(`
+resource "selectel_networking_network_v2" "network_dns_tf_acc_test_1" {
+  project_id = local.project_id
+  region     = "%[1]s"
+  name       = "network-dns-tf-acc-test-1"
+}
+
+resource "selectel_networking_subnet_v2" "subnet_dns_tf_acc_test_1" {
+  project_id = local.project_id
+  region     = "%[1]s"
+  network_id = selectel_networking_network_v2.network_dns_tf_acc_test_1.id
+  cidr       = "192.168.198.0/24"
+}
+
+resource "selectel_private_dns_service_v1" "service_tf_acc_test_1" {
+  project_id = local.project_id
+  region     = "%[1]s"
+  network_id = selectel_networking_network_v2.network_dns_tf_acc_test_1.id
+
+  depends_on = [selectel_networking_subnet_v2.subnet_dns_tf_acc_test_1]
+}
+
+resource "selectel_private_dns_zone_v1" "zone_tf_acc_test_1" {
+  project_id = local.project_id
+  region     = "%[1]s"
+  domain     = "%[2]s-1.example.com."
+
+  depends_on = [selectel_private_dns_service_v1.service_tf_acc_test_1]
+}
+
+resource "selectel_private_dns_zone_v1" "zone_tf_acc_test_2" {
+  project_id = local.project_id
+  region     = "%[1]s"
+  domain     = "%[2]s-2.example.com."
+
+  depends_on = [selectel_private_dns_service_v1.service_tf_acc_test_1]
+}
+`, region, zonePrefix)
+}
+
+func testAccNetworkingNetworkV2DNSDomain(projectID, region, networkName, zonePrefix, zone string) string {
+	return testAccNetworkingV2Base(projectID) +
+		testAccNetworkingV2PrivateDNSZones(region, zonePrefix) + fmt.Sprintf(`
+resource "selectel_networking_network_v2" "network_tf_acc_test_1" {
+  project_id = local.project_id
+  region     = "%s"
+  name       = "%s"
+  dns_domain = %s.domain
+}
+`, region, networkName, zone)
+}
+
+func testAccNetworkingNetworkV2DataSource(projectID, region, networkName string) string {
+	return testAccNetworkingNetworkV2OptionalAttributes(projectID, region, networkName) + fmt.Sprintf(`
 data "selectel_networking_network_v2" "network_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = selectel_networking_network_v2.network_tf_acc_test_1.name
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingNetworkV2DataSourceNoMatch(projectName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingNetworkV2DataSourceNoMatch(projectID, region string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 data "selectel_networking_network_v2" "network_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = "tf-acc-no-such-network"
 }
-`, networkingV2TestRegion())
+`, region)
 }

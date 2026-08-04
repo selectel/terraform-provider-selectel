@@ -221,15 +221,15 @@ func TestNetworkingSecGroupV2DataSourceSelectors(t *testing.T) {
 // SCN-107-01 and SCN-109-01.
 func TestAccNetworkingSecGroupV2Basic(t *testing.T) {
 	var found securitygroup.SecurityGroup
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSecGroupV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSecGroupV2Basic(projectName, "secgroup-1"),
+				Config: testAccNetworkingSecGroupV2Basic(projectID, region, "secgroup-1"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingSecGroupV2Exists(&found),
 					// SCN-103-01: the API defaults land in the state.
@@ -241,7 +241,7 @@ func TestAccNetworkingSecGroupV2Basic(t *testing.T) {
 			},
 			{
 				// SCN-103-02: the follow-up plan is empty.
-				Config:   testAccNetworkingSecGroupV2Basic(projectName, "secgroup-1"),
+				Config:   testAccNetworkingSecGroupV2Basic(projectID, region, "secgroup-1"),
 				PlanOnly: true,
 			},
 			{
@@ -261,15 +261,15 @@ func TestAccNetworkingSecGroupV2Basic(t *testing.T) {
 // API created with the group are removed right after it is created.
 func TestAccNetworkingSecGroupV2DeleteDefaultRules(t *testing.T) {
 	var found securitygroup.SecurityGroup
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSecGroupV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSecGroupV2DeleteDefaultRules(projectName),
+				Config: testAccNetworkingSecGroupV2DeleteDefaultRules(projectID, region),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingSecGroupV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingSecGroupV2ResourceName, "security_group_rules.#", "0"),
@@ -277,7 +277,7 @@ func TestAccNetworkingSecGroupV2DeleteDefaultRules(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingSecGroupV2DeleteDefaultRules(projectName),
+				Config:   testAccNetworkingSecGroupV2DeleteDefaultRules(projectID, region),
 				PlanOnly: true,
 			},
 		},
@@ -287,15 +287,15 @@ func TestAccNetworkingSecGroupV2DeleteDefaultRules(t *testing.T) {
 // TestAccNetworkingSecGroupV2Update covers SCN-105-01 and SCN-105-03.
 func TestAccNetworkingSecGroupV2Update(t *testing.T) {
 	var found securitygroup.SecurityGroup
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSecGroupV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSecGroupV2Described(projectName, "secgroup-1", "web traffic", true),
+				Config: testAccNetworkingSecGroupV2Described(projectID, region, "secgroup-1", "web traffic", true),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingSecGroupV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingSecGroupV2ResourceName, "stateful", "true"),
@@ -305,7 +305,7 @@ func TestAccNetworkingSecGroupV2Update(t *testing.T) {
 			{
 				// SCN-105-01: name, description, stateful and tags all change in
 				// place, and the group keeps its identifier.
-				Config: testAccNetworkingSecGroupV2Described(projectName, "secgroup-1-renamed", "changed", false),
+				Config: testAccNetworkingSecGroupV2Described(projectID, region, "secgroup-1-renamed", "changed", false),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingSecGroupV2SameID(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingSecGroupV2ResourceName, "name", "secgroup-1-renamed"),
@@ -315,7 +315,7 @@ func TestAccNetworkingSecGroupV2Update(t *testing.T) {
 			},
 			{
 				// SCN-105-03: delete_default_rules replaces the group.
-				Config: testAccNetworkingSecGroupV2DeleteDefaultRules(projectName),
+				Config: testAccNetworkingSecGroupV2DeleteDefaultRules(projectID, region),
 				Check:  testAccCheckNetworkingSecGroupV2Replaced(&found),
 			},
 		},
@@ -325,29 +325,29 @@ func TestAccNetworkingSecGroupV2Update(t *testing.T) {
 // TestAccNetworkingSecGroupV2ExternalChanges covers SCN-106-01 and SCN-106-02.
 func TestAccNetworkingSecGroupV2ExternalChanges(t *testing.T) {
 	var found securitygroup.SecurityGroup
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSecGroupV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSecGroupV2Basic(projectName, "secgroup-1"),
+				Config: testAccNetworkingSecGroupV2Basic(projectID, region, "secgroup-1"),
 				Check:  testAccCheckNetworkingSecGroupV2Exists(&found),
 			},
 			{
-				Config:             testAccNetworkingSecGroupV2Basic(projectName, "secgroup-1"),
+				Config:             testAccNetworkingSecGroupV2Basic(projectID, region, "secgroup-1"),
 				Check:              testAccCheckNetworkingSecGroupV2RenameOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				Config:             testAccNetworkingSecGroupV2Basic(projectName, "secgroup-1"),
+				Config:             testAccNetworkingSecGroupV2Basic(projectID, region, "secgroup-1"),
 				Check:              testAccCheckNetworkingSecGroupV2DeleteOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				Config: testAccNetworkingSecGroupV2Basic(projectName, "secgroup-1"),
+				Config: testAccNetworkingSecGroupV2Basic(projectID, region, "secgroup-1"),
 				Check:  testAccCheckNetworkingSecGroupV2Exists(&found),
 			},
 		},
@@ -360,26 +360,26 @@ func TestAccNetworkingSecGroupV2ExternalChanges(t *testing.T) {
 // The port is created through the SDK, because it has to outlive the group for
 // the destroy to hit the conflict.
 func TestAccNetworkingSecGroupV2DeleteConflict(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	attached := &networkingSecGroupV2TestPort{}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSecGroupV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSecGroupV2WithNetwork(projectName),
+				Config: testAccNetworkingSecGroupV2WithNetwork(projectID, region),
 				Check:  testAccCheckNetworkingSecGroupV2AttachPort(attached),
 			},
 			{
-				Config:      testAccNetworkingSecGroupV2WithNetwork(projectName),
+				Config:      testAccNetworkingSecGroupV2WithNetwork(projectID, region),
 				Destroy:     true,
 				ExpectError: regexp.MustCompile(`(?i)conflict|in use`),
 			},
 			{
 				// Detach so the final destroy can succeed.
-				Config: testAccNetworkingSecGroupV2WithNetwork(projectName),
+				Config: testAccNetworkingSecGroupV2WithNetwork(projectID, region),
 				Check:  testAccCheckNetworkingSecGroupV2DeletePort(attached),
 			},
 		},
@@ -389,15 +389,18 @@ func TestAccNetworkingSecGroupV2DeleteConflict(t *testing.T) {
 // TestAccNetworkingSecGroupV2DataSource covers SCN-108-01, SCN-108-02 and
 // SCN-108-03.
 func TestAccNetworkingSecGroupV2DataSource(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
+	// The project is shared, so the name the data source searches on must be
+	// unique to this run.
+	secGroupName := acctest.RandomWithPrefix("tf-acc-secgroup")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSecGroupV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSecGroupV2DataSource(projectName),
+				Config: testAccNetworkingSecGroupV2DataSource(projectID, region, secGroupName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
 						testAccNetworkingSecGroupV2DataSourceName, "secgroup_id",
@@ -414,7 +417,7 @@ func TestAccNetworkingSecGroupV2DataSource(t *testing.T) {
 				),
 			},
 			{
-				Config:      testAccNetworkingSecGroupV2DataSourceNoMatch(projectName),
+				Config:      testAccNetworkingSecGroupV2DataSourceNoMatch(projectID, region),
 				ExpectError: regexp.MustCompile(`no networking security group found`),
 			},
 		},
@@ -605,7 +608,7 @@ func testAccCheckNetworkingSecGroupV2Destroy(s *terraform.State) error {
 			rs.Primary.Attributes["region"],
 		)
 		if err != nil {
-			return nil //nolint:nilerr // the project is gone together with the group
+			return err
 		}
 
 		if _, err := securitygroup.Get(context.Background(), client, rs.Primary.ID); err == nil {
@@ -622,75 +625,75 @@ func testAccCheckNetworkingSecGroupV2Destroy(s *terraform.State) error {
 // Configurations.
 // -----------------------------------------------------------------------------
 
-func testAccNetworkingSecGroupV2Basic(projectName, name string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingSecGroupV2Basic(projectID, region, name string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_secgroup_v2" "secgroup_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = "%s"
 }
-`, networkingV2TestRegion(), name)
+`, region, name)
 }
 
-func testAccNetworkingSecGroupV2Described(projectName, name, description string, stateful bool) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingSecGroupV2Described(projectID, region, name, description string, stateful bool) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_secgroup_v2" "secgroup_tf_acc_test_1" {
-  project_id  = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id  = local.project_id
   region      = "%s"
   name        = "%s"
   description = "%s"
   stateful    = %t
   tags        = ["tf-acc", "networking"]
 }
-`, networkingV2TestRegion(), name, description, stateful)
+`, region, name, description, stateful)
 }
 
-func testAccNetworkingSecGroupV2DeleteDefaultRules(projectName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingSecGroupV2DeleteDefaultRules(projectID, region string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_secgroup_v2" "secgroup_tf_acc_test_1" {
-  project_id           = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id           = local.project_id
   region               = "%s"
   name                 = "secgroup-tf-acc-test-1"
   delete_default_rules = true
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
 // testAccNetworkingSecGroupV2WithNetwork adds the network and subnet the
 // out-of-band port needs.
-func testAccNetworkingSecGroupV2WithNetwork(projectName string) string {
-	return testAccNetworkingSecGroupV2Basic(projectName, "secgroup-1") + fmt.Sprintf(`
+func testAccNetworkingSecGroupV2WithNetwork(projectID, region string) string {
+	return testAccNetworkingSecGroupV2Basic(projectID, region, "secgroup-1") + fmt.Sprintf(`
 resource "selectel_networking_network_v2" "network_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   name       = "network-tf-acc-test-1"
 }
 
 resource "selectel_networking_subnet_v2" "subnet_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   network_id = selectel_networking_network_v2.network_tf_acc_test_1.id
   cidr       = "192.168.199.0/24"
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingSecGroupV2DataSource(projectName string) string {
-	return testAccNetworkingSecGroupV2Basic(projectName, "secgroup-1") + fmt.Sprintf(`
+func testAccNetworkingSecGroupV2DataSource(projectID, region, name string) string {
+	return testAccNetworkingSecGroupV2Basic(projectID, region, name) + fmt.Sprintf(`
 data "selectel_networking_secgroup_v2" "secgroup_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = selectel_networking_secgroup_v2.secgroup_tf_acc_test_1.name
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingSecGroupV2DataSourceNoMatch(projectName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingSecGroupV2DataSourceNoMatch(projectID, region string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 data "selectel_networking_secgroup_v2" "secgroup_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = "tf-acc-no-such-secgroup"
 }
-`, networkingV2TestRegion())
+`, region)
 }

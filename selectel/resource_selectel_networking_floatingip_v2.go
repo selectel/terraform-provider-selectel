@@ -76,17 +76,23 @@ func resourceNetworkingFloatingIPV2() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			// dns_name and dns_domain are write-only in the same way subnet_id is: the
+			// API accepts both on create and returns neither, so Read has nothing to
+			// fill them from. Computed would therefore populate nothing, and without
+			// the suppression a configured value against the empty stored one plans a
+			// replacement on every run — releasing an allocated address over values
+			// the provider merely could not read.
 			"dns_name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: suppressNetworkingFloatingIPV2WriteOnlyDiff,
 			},
 			"dns_domain": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: suppressNetworkingFloatingIPV2WriteOnlyDiff,
 				ValidateFunc: validation.StringMatch(
 					networkingFloatingIPV2DNSDomainRegexp,
 					"fully-qualified (unambiguous) DNS domain names must have a dot at the end",
@@ -292,6 +298,16 @@ func suppressNetworkingFloatingIPV2SubnetIDDiff(_, stored, configured string, _ 
 	return stored == "" && configured != ""
 }
 
+// suppressNetworkingFloatingIPV2WriteOnlyDiff is the same rule for dns_name and
+// dns_domain: the API accepts them on create and returns neither, verified against
+// a live floating IP, so an empty stored value means the provider could not read
+// the value rather than that it changed.
+func suppressNetworkingFloatingIPV2WriteOnlyDiff(
+	_, stored, configured string, _ *schema.ResourceData,
+) bool {
+	return stored == "" && configured != ""
+}
+
 // resolveNetworkingFloatingIPV2Pool maps an external network name to its
 // identifier. An unknown name and an ambiguous one are distinct errors, so the
 // caller learns which of the two happened.
@@ -343,8 +359,8 @@ func flattenNetworkingFloatingIPV2(d *schema.ResourceData, found *floatingip.Flo
 	d.Set("description", found.Description)
 	d.Set("status", found.Status)
 	d.Set("qos_policy_id", derefString(found.QoSPolicyID))
-	d.Set("dns_name", found.DNSName)
-	d.Set("dns_domain", found.DNSDomain)
+	// dns_name and dns_domain are deliberately not set: the API returns neither,
+	// so writing what it sent would replace a configured value with an empty one.
 	d.Set("blocked", found.Blocked)
 
 	if err := d.Set("all_tags", found.Tags); err != nil {

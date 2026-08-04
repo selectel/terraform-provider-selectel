@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/vpc-go/pkg/v2/port"
@@ -121,15 +120,15 @@ func TestNetworkingPortSecGroupAssociateV2SetOperations(t *testing.T) {
 // TestAccNetworkingPortSecGroupAssociateV2Additive covers SCN-120-01, SCN-120-02,
 // SCN-119-01 and SCN-124-01.
 func TestAccNetworkingPortSecGroupAssociateV2Additive(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortSecGroupAssociateV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingPortSecGroupAssociateV2Additive(projectName),
+				Config: testAccNetworkingPortSecGroupAssociateV2Additive(projectID, region),
 				Check: resource.ComposeTestCheckFunc(
 					// SCN-120-01: the group the port already had is still there,
 					// alongside the configured one.
@@ -140,7 +139,7 @@ func TestAccNetworkingPortSecGroupAssociateV2Additive(t *testing.T) {
 			},
 			{
 				// SCN-120-02: the follow-up plan is empty.
-				Config:   testAccNetworkingPortSecGroupAssociateV2Additive(projectName),
+				Config:   testAccNetworkingPortSecGroupAssociateV2Additive(projectID, region),
 				PlanOnly: true,
 			},
 			{
@@ -159,15 +158,15 @@ func TestAccNetworkingPortSecGroupAssociateV2Additive(t *testing.T) {
 // TestAccNetworkingPortSecGroupAssociateV2Enforce covers SCN-121-01: the
 // configured set becomes the port's whole list.
 func TestAccNetworkingPortSecGroupAssociateV2Enforce(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortSecGroupAssociateV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingPortSecGroupAssociateV2Enforce(projectName),
+				Config: testAccNetworkingPortSecGroupAssociateV2Enforce(projectID, region),
 				Check: resource.ComposeTestCheckFunc(
 					// Exactly the configured group, so the one the port carried
 					// before has been removed.
@@ -176,7 +175,7 @@ func TestAccNetworkingPortSecGroupAssociateV2Enforce(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingPortSecGroupAssociateV2Enforce(projectName),
+				Config:   testAccNetworkingPortSecGroupAssociateV2Enforce(projectID, region),
 				PlanOnly: true,
 			},
 		},
@@ -186,22 +185,22 @@ func TestAccNetworkingPortSecGroupAssociateV2Enforce(t *testing.T) {
 // TestAccNetworkingPortSecGroupAssociateV2SwitchToEnforce covers SCN-122-03: the
 // switch itself forces the port to match the configuration.
 func TestAccNetworkingPortSecGroupAssociateV2SwitchToEnforce(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortSecGroupAssociateV2Destroy,
 		Steps: []resource.TestStep{
 			{
 				// Additive: the port keeps its pre-existing group as well.
-				Config: testAccNetworkingPortSecGroupAssociateV2Additive(projectName),
+				Config: testAccNetworkingPortSecGroupAssociateV2Additive(projectID, region),
 				Check:  testAccCheckNetworkingPortSecGroupAssociateV2PortHasAtLeast(2),
 			},
 			{
 				// enforce=true with the same set: the port drops everything else,
 				// and the resource is updated rather than replaced.
-				Config: testAccNetworkingPortSecGroupAssociateV2Enforce(projectName),
+				Config: testAccNetworkingPortSecGroupAssociateV2Enforce(projectID, region),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingPortSecGroupAssociateV2IDIsPort(),
 					testAccCheckNetworkingPortSecGroupAssociateV2PortHas(1),
@@ -214,26 +213,26 @@ func TestAccNetworkingPortSecGroupAssociateV2SwitchToEnforce(t *testing.T) {
 // TestAccNetworkingPortSecGroupAssociateV2ExternalPortDeletion covers REQ-123 and
 // REQ-124: the association cannot outlive its port.
 func TestAccNetworkingPortSecGroupAssociateV2ExternalPortDeletion(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortSecGroupAssociateV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingPortSecGroupAssociateV2Additive(projectName),
+				Config: testAccNetworkingPortSecGroupAssociateV2Additive(projectID, region),
 				Check:  testAccCheckNetworkingPortSecGroupAssociateV2PortHasAtLeast(2),
 			},
 			{
-				Config:             testAccNetworkingPortSecGroupAssociateV2Additive(projectName),
+				Config:             testAccNetworkingPortSecGroupAssociateV2Additive(projectID, region),
 				Check:              testAccCheckNetworkingPortSecGroupAssociateV2DeletePortOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
 			{
 				// The plan re-creates the port and the association rather than
 				// reporting an error.
-				Config: testAccNetworkingPortSecGroupAssociateV2Additive(projectName),
+				Config: testAccNetworkingPortSecGroupAssociateV2Additive(projectID, region),
 				Check:  testAccCheckNetworkingPortSecGroupAssociateV2PortHasAtLeast(2),
 			},
 		},
@@ -333,7 +332,7 @@ func testAccCheckNetworkingPortSecGroupAssociateV2Destroy(s *terraform.State) er
 			rs.Primary.Attributes["region"],
 		)
 		if err != nil {
-			return nil //nolint:nilerr // the project is gone together with the port
+			return err
 		}
 
 		found, err := port.Get(context.Background(), client, rs.Primary.ID)
@@ -367,35 +366,35 @@ func testAccCheckNetworkingPortSecGroupAssociateV2Destroy(s *terraform.State) er
 
 // testAccNetworkingPortSecGroupAssociateV2Base is a port that already carries one
 // security group, plus a second group for the association to add or enforce.
-func testAccNetworkingPortSecGroupAssociateV2Base(projectName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingPortSecGroupAssociateV2Base(projectID, region string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_network_v2" "network_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   name       = "network-tf-acc-test-1"
 }
 
 resource "selectel_networking_subnet_v2" "subnet_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   network_id = selectel_networking_network_v2.network_tf_acc_test_1.id
   cidr       = "192.168.199.0/24"
 }
 
 resource "selectel_networking_secgroup_v2" "secgroup_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   name       = "secgroup-existing"
 }
 
 resource "selectel_networking_secgroup_v2" "secgroup_tf_acc_test_2" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   name       = "secgroup-associated"
 }
 
 resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
-  project_id         = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id         = local.project_id
   region             = "%[1]s"
   network_id         = selectel_networking_network_v2.network_tf_acc_test_1.id
   security_group_ids = [selectel_networking_secgroup_v2.secgroup_tf_acc_test_1.id]
@@ -404,28 +403,28 @@ resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
     subnet_id = selectel_networking_subnet_v2.subnet_tf_acc_test_1.id
   }
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingPortSecGroupAssociateV2Additive(projectName string) string {
-	return testAccNetworkingPortSecGroupAssociateV2Base(projectName) + fmt.Sprintf(`
+func testAccNetworkingPortSecGroupAssociateV2Additive(projectID, region string) string {
+	return testAccNetworkingPortSecGroupAssociateV2Base(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_port_secgroup_associate_v2" "associate_tf_acc_test_1" {
-  project_id         = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id         = local.project_id
   region             = "%s"
   port_id            = selectel_networking_port_v2.port_tf_acc_test_1.id
   security_group_ids = [selectel_networking_secgroup_v2.secgroup_tf_acc_test_2.id]
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingPortSecGroupAssociateV2Enforce(projectName string) string {
-	return testAccNetworkingPortSecGroupAssociateV2Base(projectName) + fmt.Sprintf(`
+func testAccNetworkingPortSecGroupAssociateV2Enforce(projectID, region string) string {
+	return testAccNetworkingPortSecGroupAssociateV2Base(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_port_secgroup_associate_v2" "associate_tf_acc_test_1" {
-  project_id         = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id         = local.project_id
   region             = "%s"
   port_id            = selectel_networking_port_v2.port_tf_acc_test_1.id
   security_group_ids = [selectel_networking_secgroup_v2.secgroup_tf_acc_test_2.id]
   enforce            = true
 }
-`, networkingV2TestRegion())
+`, region)
 }

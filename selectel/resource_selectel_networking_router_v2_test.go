@@ -249,15 +249,15 @@ func TestNetworkingRouterV2AllowlistErrorClasses(t *testing.T) {
 // SCN-062-04, SCN-064-01 and SCN-063-02.
 func TestAccNetworkingRouterV2Basic(t *testing.T) {
 	var found router.Router
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingRouterV2Basic(projectName),
+				Config: testAccNetworkingRouterV2Basic(projectID, region),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterV2Exists(&found),
 					// SCN-056-01: assigned by the API, and no gateway.
@@ -270,7 +270,7 @@ func TestAccNetworkingRouterV2Basic(t *testing.T) {
 			},
 			{
 				// SCN-056-02: the follow-up plan is empty.
-				Config:   testAccNetworkingRouterV2Basic(projectName),
+				Config:   testAccNetworkingRouterV2Basic(projectID, region),
 				PlanOnly: true,
 			},
 			{
@@ -286,16 +286,16 @@ func TestAccNetworkingRouterV2Basic(t *testing.T) {
 // TestAccNetworkingRouterV2Update covers SCN-057-03, SCN-058-01 and SCN-060-01.
 func TestAccNetworkingRouterV2Update(t *testing.T) {
 	var found router.Router
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterV2Destroy,
 		Steps: []resource.TestStep{
 			{
 				// SCN-057-03: an explicit admin_state_up=false differs from the default.
-				Config: testAccNetworkingRouterV2Named(projectName, "router-1", false),
+				Config: testAccNetworkingRouterV2Named(projectID, region, "router-1", false),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingRouterV2ResourceName, "admin_state_up", "false"),
@@ -304,7 +304,7 @@ func TestAccNetworkingRouterV2Update(t *testing.T) {
 			},
 			{
 				// SCN-058-01: name, description and admin_state_up change in place.
-				Config: testAccNetworkingRouterV2Named(projectName, "router-1-renamed", true),
+				Config: testAccNetworkingRouterV2Named(projectID, region, "router-1-renamed", true),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterV2SameID(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingRouterV2ResourceName, "name", "router-1-renamed"),
@@ -313,12 +313,12 @@ func TestAccNetworkingRouterV2Update(t *testing.T) {
 			},
 			{
 				// SCN-060-01: an out-of-band change surfaces as drift.
-				Config:             testAccNetworkingRouterV2Named(projectName, "router-1-renamed", true),
+				Config:             testAccNetworkingRouterV2Named(projectID, region, "router-1-renamed", true),
 				Check:              testAccCheckNetworkingRouterV2RenameOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				Config: testAccNetworkingRouterV2Named(projectName, "router-1-renamed", true),
+				Config: testAccNetworkingRouterV2Named(projectID, region, "router-1-renamed", true),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterV2SameID(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingRouterV2ResourceName, "name", "router-1-renamed"),
@@ -332,17 +332,17 @@ func TestAccNetworkingRouterV2Update(t *testing.T) {
 // SCN-058-03.
 func TestAccNetworkingRouterV2Gateway(t *testing.T) {
 	var found router.Router
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	externalNetworkID := networkingRouterV2TestExternalNetwork(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterV2Destroy,
 		Steps: []resource.TestStep{
 			{
 				// SCN-057-01: a gateway without an explicit enable_snat.
-				Config: testAccNetworkingRouterV2Gateway(projectName, externalNetworkID, ""),
+				Config: testAccNetworkingRouterV2Gateway(projectID, region, externalNetworkID, ""),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingRouterV2ResourceName, "external_network_id", externalNetworkID),
@@ -353,7 +353,7 @@ func TestAccNetworkingRouterV2Gateway(t *testing.T) {
 			},
 			{
 				// SCN-057-02: an explicit enable_snat=false, in place.
-				Config: testAccNetworkingRouterV2Gateway(projectName, externalNetworkID, "enable_snat = false"),
+				Config: testAccNetworkingRouterV2Gateway(projectID, region, externalNetworkID, "enable_snat = false"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterV2SameID(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingRouterV2ResourceName, "enable_snat", "false"),
@@ -361,7 +361,7 @@ func TestAccNetworkingRouterV2Gateway(t *testing.T) {
 			},
 			{
 				// SCN-058-03: removing external_network_id detaches the gateway.
-				Config: testAccNetworkingRouterV2Basic(projectName),
+				Config: testAccNetworkingRouterV2Basic(projectID, region),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterV2SameID(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingRouterV2ResourceName, "external_network_id", ""),
@@ -370,7 +370,7 @@ func TestAccNetworkingRouterV2Gateway(t *testing.T) {
 			},
 			{
 				// SCN-058-02: attaching it again to a router that has no gateway.
-				Config: testAccNetworkingRouterV2Gateway(projectName, externalNetworkID, ""),
+				Config: testAccNetworkingRouterV2Gateway(projectID, region, externalNetworkID, ""),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterV2SameID(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingRouterV2ResourceName, "external_network_id", externalNetworkID),
@@ -383,7 +383,7 @@ func TestAccNetworkingRouterV2Gateway(t *testing.T) {
 // TestAccNetworkingRouterV2Replacement covers SCN-059-01 and SCN-059-02.
 func TestAccNetworkingRouterV2Replacement(t *testing.T) {
 	var found router.Router
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	zone := os.Getenv("SELECTEL_ROUTER_ZONE")
 	otherZone := os.Getenv("SELECTEL_ROUTER_ZONE_ALTERNATIVE")
@@ -392,12 +392,12 @@ func TestAccNetworkingRouterV2Replacement(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingRouterV2Zone(projectName, zone),
+				Config: testAccNetworkingRouterV2Zone(projectID, region, zone),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingRouterV2ResourceName, "availability_zone_hints.0", zone),
@@ -405,7 +405,7 @@ func TestAccNetworkingRouterV2Replacement(t *testing.T) {
 			},
 			{
 				// SCN-059-01: a different zone hint replaces the router.
-				Config: testAccNetworkingRouterV2Zone(projectName, otherZone),
+				Config: testAccNetworkingRouterV2Zone(projectID, region, otherZone),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterV2Replaced(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingRouterV2ResourceName, "availability_zone_hints.0", otherZone),
@@ -422,7 +422,7 @@ func TestAccNetworkingRouterV2Replacement(t *testing.T) {
 // the test would pass for the wrong reason.
 func TestAccNetworkingRouterV2ZoneOutsideAllowlist(t *testing.T) {
 	var found router.Router
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	zone := os.Getenv("SELECTEL_ROUTER_ZONE_OUTSIDE_ALLOWLIST")
 	if zone == "" {
@@ -430,12 +430,12 @@ func TestAccNetworkingRouterV2ZoneOutsideAllowlist(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingRouterV2Zone(projectName, zone),
+				Config: testAccNetworkingRouterV2Zone(projectID, region, zone),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingRouterV2ResourceName, "availability_zone_hints.0", zone),
@@ -448,22 +448,35 @@ func TestAccNetworkingRouterV2ZoneOutsideAllowlist(t *testing.T) {
 // TestAccNetworkingRouterV2DeleteConflict covers SCN-063-01: a router with an
 // attached interface is refused with a conflict instead of being detached.
 func TestAccNetworkingRouterV2DeleteConflict(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
+	var attached networkingRouterV2AttachedInterface
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingRouterV2WithInterface(projectName),
-				Check:  resource.TestCheckResourceAttrSet(testAccNetworkingRouterV2ResourceName, "id"),
+				Config: testAccNetworkingRouterV2WithInterface(projectID, region),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(testAccNetworkingRouterV2ResourceName, "id"),
+					// The interface is attached outside Terraform on purpose. Declaring
+					// it as a resource would make Terraform detach it before the router,
+					// so the conflict this scenario is about could never happen.
+					testAccCheckNetworkingRouterV2AttachInterfaceOutOfBand(&attached),
+				),
 			},
 			{
 				// Destroying only the router, while its interface stays, must be
 				// refused with a conflict.
-				Config:      testAccNetworkingRouterV2InterfaceOnly(projectName),
-				ExpectError: regexp.MustCompile(`(?i)conflict|in use`),
+				Config:      testAccNetworkingRouterV2InterfaceOnly(projectID, region),
+				ExpectError: regexp.MustCompile(`(?i)conflict|in ?use|still has ports`),
+			},
+			{
+				// The interface has to go before the framework can destroy anything:
+				// it is not in the state, so nothing else would ever remove it.
+				PreConfig: attached.detach,
+				Config:    testAccNetworkingRouterV2InterfaceOnly(projectID, region),
 			},
 		},
 	})
@@ -472,24 +485,24 @@ func TestAccNetworkingRouterV2DeleteConflict(t *testing.T) {
 // TestAccNetworkingRouterV2ExternalDeletion covers SCN-060-02 and SCN-063-03.
 func TestAccNetworkingRouterV2ExternalDeletion(t *testing.T) {
 	var found router.Router
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingRouterV2Basic(projectName),
+				Config: testAccNetworkingRouterV2Basic(projectID, region),
 				Check:  testAccCheckNetworkingRouterV2Exists(&found),
 			},
 			{
-				Config:             testAccNetworkingRouterV2Basic(projectName),
+				Config:             testAccNetworkingRouterV2Basic(projectID, region),
 				Check:              testAccCheckNetworkingRouterV2DeleteOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				Config: testAccNetworkingRouterV2Basic(projectName),
+				Config: testAccNetworkingRouterV2Basic(projectID, region),
 				Check:  testAccCheckNetworkingRouterV2Exists(&found),
 			},
 		},
@@ -499,15 +512,18 @@ func TestAccNetworkingRouterV2ExternalDeletion(t *testing.T) {
 // TestAccNetworkingRouterV2DataSource covers SCN-065-01, SCN-065-02, SCN-065-03
 // and SCN-066-03.
 func TestAccNetworkingRouterV2DataSource(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
+	// The project is shared, so the name the data source searches on must be
+	// unique to this run.
+	routerName := acctest.RandomWithPrefix("tf-acc-router")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingRouterV2DataSource(projectName),
+				Config: testAccNetworkingRouterV2DataSource(projectID, region, routerName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
 						testAccNetworkingRouterV2DataSourceName, "router_id",
@@ -522,7 +538,7 @@ func TestAccNetworkingRouterV2DataSource(t *testing.T) {
 				),
 			},
 			{
-				Config:      testAccNetworkingRouterV2DataSourceNoMatch(projectName),
+				Config:      testAccNetworkingRouterV2DataSourceNoMatch(projectID, region),
 				ExpectError: regexp.MustCompile(`no networking router found`),
 			},
 		},
@@ -532,6 +548,62 @@ func TestAccNetworkingRouterV2DataSource(t *testing.T) {
 // -----------------------------------------------------------------------------
 // Helpers.
 // -----------------------------------------------------------------------------
+
+// networkingRouterV2AttachedInterface remembers an interface attached outside
+// Terraform so a later step can detach it: PreConfig runs before the step's
+// refresh and has no access to the state.
+type networkingRouterV2AttachedInterface struct {
+	client   *vpc.Client
+	routerID string
+	subnetID string
+}
+
+func (attached *networkingRouterV2AttachedInterface) detach() {
+	if attached.client == nil {
+		return
+	}
+
+	_, _ = router.RemoveInterface(context.Background(), attached.client,
+		attached.routerID, router.BySubnet(attached.subnetID))
+}
+
+// testAccCheckNetworkingRouterV2AttachInterfaceOutOfBand attaches the test subnet
+// to the test router without Terraform, which is what makes the router
+// undeletable while the interface is there.
+func testAccCheckNetworkingRouterV2AttachInterfaceOutOfBand(
+	attached *networkingRouterV2AttachedInterface,
+) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		routerState, ok := s.RootModule().Resources[testAccNetworkingRouterV2ResourceName]
+		if !ok {
+			return fmt.Errorf("not found: %s", testAccNetworkingRouterV2ResourceName)
+		}
+		subnetState, ok := s.RootModule().Resources[testAccNetworkingSubnetV2ResourceName]
+		if !ok {
+			return fmt.Errorf("not found: %s", testAccNetworkingSubnetV2ResourceName)
+		}
+
+		client, err := networkingV2Client(
+			testAccProvider.Meta(),
+			routerState.Primary.Attributes["project_id"],
+			routerState.Primary.Attributes["region"],
+		)
+		if err != nil {
+			return err
+		}
+
+		if _, err := router.AddInterface(context.Background(), client,
+			routerState.Primary.ID, router.BySubnet(subnetState.Primary.ID)); err != nil {
+			return err
+		}
+
+		attached.client = client
+		attached.routerID = routerState.Primary.ID
+		attached.subnetID = subnetState.Primary.ID
+
+		return nil
+	}
+}
 
 func testAccCheckNetworkingRouterV2Exists(found *router.Router) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -622,7 +694,7 @@ func testAccCheckNetworkingRouterV2Destroy(s *terraform.State) error {
 			rs.Primary.Attributes["region"],
 		)
 		if err != nil {
-			return nil //nolint:nilerr // the project is gone together with the router
+			return err
 		}
 
 		if _, err := router.Get(context.Background(), client, rs.Primary.ID); err == nil {
@@ -639,94 +711,94 @@ func testAccCheckNetworkingRouterV2Destroy(s *terraform.State) error {
 // Configurations.
 // -----------------------------------------------------------------------------
 
-func testAccNetworkingRouterV2Basic(projectName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingRouterV2Basic(projectID, region string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_router_v2" "router_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingRouterV2Named(projectName, name string, adminStateUp bool) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingRouterV2Named(projectID, region, name string, adminStateUp bool) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_router_v2" "router_tf_acc_test_1" {
-  project_id     = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id     = local.project_id
   region         = "%s"
   name           = "%s"
   description    = "Managed by the acceptance test"
   admin_state_up = %t
   tags           = ["tf-acc", "networking"]
 }
-`, networkingV2TestRegion(), name, adminStateUp)
+`, region, name, adminStateUp)
 }
 
-func testAccNetworkingRouterV2Gateway(projectName, externalNetworkID, extra string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingRouterV2Gateway(projectID, region, externalNetworkID, extra string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_router_v2" "router_tf_acc_test_1" {
-  project_id          = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id          = local.project_id
   region              = "%s"
   external_network_id = "%s"
   %s
 }
-`, networkingV2TestRegion(), externalNetworkID, extra)
+`, region, externalNetworkID, extra)
 }
 
-func testAccNetworkingRouterV2Zone(projectName, zone string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingRouterV2Zone(projectID, region, zone string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_router_v2" "router_tf_acc_test_1" {
-  project_id              = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id              = local.project_id
   region                  = "%s"
   availability_zone_hints = ["%s"]
 }
-`, networkingV2TestRegion(), zone)
+`, region, zone)
 }
 
-func testAccNetworkingRouterV2WithInterface(projectName string) string {
-	return testAccNetworkingRouterV2InterfaceOnly(projectName) + fmt.Sprintf(`
+func testAccNetworkingRouterV2WithInterface(projectID, region string) string {
+	return testAccNetworkingRouterV2InterfaceOnly(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_router_v2" "router_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
 // testAccNetworkingRouterV2InterfaceOnly keeps the network and subnet that the
 // router interface is attached to, without the router resource itself, so the
 // destroy step leaves the interface in place.
-func testAccNetworkingRouterV2InterfaceOnly(projectName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingRouterV2InterfaceOnly(projectID, region string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_network_v2" "network_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = "network-tf-acc-test-1"
 }
 
 resource "selectel_networking_subnet_v2" "subnet_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   network_id = selectel_networking_network_v2.network_tf_acc_test_1.id
   cidr       = "192.168.199.0/24"
 }
-`, networkingV2TestRegion(), networkingV2TestRegion())
+`, region, region)
 }
 
-func testAccNetworkingRouterV2DataSource(projectName string) string {
-	return testAccNetworkingRouterV2Named(projectName, "router-tf-acc-test-1", true) + fmt.Sprintf(`
+func testAccNetworkingRouterV2DataSource(projectID, region, name string) string {
+	return testAccNetworkingRouterV2Named(projectID, region, name, true) + fmt.Sprintf(`
 data "selectel_networking_router_v2" "router_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = selectel_networking_router_v2.router_tf_acc_test_1.name
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingRouterV2DataSourceNoMatch(projectName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingRouterV2DataSourceNoMatch(projectID, region string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 data "selectel_networking_router_v2" "router_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = "tf-acc-no-such-router"
 }
-`, networkingV2TestRegion())
+`, region)
 }

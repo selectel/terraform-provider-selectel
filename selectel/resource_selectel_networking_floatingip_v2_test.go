@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -37,21 +38,24 @@ func networkingFloatingIPV2TestPool(t *testing.T) string {
 	return pool
 }
 
-func networkingFloatingIPV2OptionalTestValues(t *testing.T) (string, string, string) {
-	t.Helper()
-
-	subnetID := os.Getenv("SELECTEL_NETWORKING_FLOATINGIP_SUBNET_ID")
-	dnsName := os.Getenv("SELECTEL_NETWORKING_FLOATINGIP_DNS_NAME")
-	dnsDomain := os.Getenv("SELECTEL_NETWORKING_FLOATINGIP_DNS_DOMAIN")
-	if subnetID == "" || dnsName == "" || dnsDomain == "" {
-		t.Skip(
-			"SELECTEL_NETWORKING_FLOATINGIP_SUBNET_ID, " +
-				"SELECTEL_NETWORKING_FLOATINGIP_DNS_NAME and " +
-				"SELECTEL_NETWORKING_FLOATINGIP_DNS_DOMAIN must be set",
-		)
+// networkingFloatingIPV2OptionalTestValues is the expression naming the subnet an
+// address is allocated from, plus the DNS name recorded with it.
+//
+// The subnet defaults to the first one of the external network, taken from the
+// data source: a project cannot read those subnets, but it can see their
+// identifiers. SELECTEL_NETWORKING_FLOATINGIP_SUBNET_ID overrides it, because an
+// external network may hold subnets no address can be allocated from.
+//
+// The domain is not here at all — it comes from a private DNS zone the
+// configuration creates, since the fork resolves dns_domain against the zones of
+// the project.
+func networkingFloatingIPV2OptionalTestValues() (subnetID, dnsName string) {
+	subnetID = "data.selectel_networking_network_v2.external_tf_acc_test_1.subnets[0]"
+	if configured := os.Getenv("SELECTEL_NETWORKING_FLOATINGIP_SUBNET_ID"); configured != "" {
+		subnetID = strconv.Quote(configured)
 	}
 
-	return subnetID, dnsName, dnsDomain
+	return subnetID, acctest.RandomWithPrefix("tf-acc-fip")
 }
 
 // -----------------------------------------------------------------------------
@@ -192,6 +196,32 @@ func TestNetworkingFloatingIPV2SubnetIDDiffSuppression(t *testing.T) {
 	})
 }
 
+// TestNetworkingFloatingIPV2WriteOnlyDNSFields covers the same rule for dns_name
+// and dns_domain. A live floating IP created with both returns neither in the
+// create response nor in a following read, so they cannot be Computed and a
+// configured value must not be read as a change from an empty stored one —
+// otherwise every plan would release and re-allocate the address.
+func TestNetworkingFloatingIPV2WriteOnlyDNSFields(t *testing.T) {
+	s := resourceNetworkingFloatingIPV2().Schema
+
+	for _, name := range []string{"dns_name", "dns_domain"} {
+		t.Run(name+" is write-only and suppressed against an unknown stored value", func(t *testing.T) {
+			require.Contains(t, s, name)
+			assert.True(t, s[name].Optional)
+			assert.False(t, s[name].Computed, "the API returns nothing to populate it from")
+			assert.True(t, s[name].ForceNew)
+			require.NotNil(t, s[name].DiffSuppressFunc)
+
+			assert.True(t, s[name].DiffSuppressFunc(name, "", "configured", nil),
+				"an unknown stored value must not plan a replacement")
+			assert.False(t, s[name].DiffSuppressFunc(name, "stored", "configured", nil),
+				"a change between two known values is a real change")
+			assert.False(t, s[name].DiffSuppressFunc(name, "stored", "", nil),
+				"clearing a known value is a real change")
+		})
+	}
+}
+
 // TestNetworkingFloatingIPV2DataSourceSelectors covers REQ-094.
 func TestNetworkingFloatingIPV2DataSourceSelectors(t *testing.T) {
 	s := dataSourceNetworkingFloatingIPV2().Schema
@@ -318,16 +348,16 @@ func TestNetworkingFloatingIPV2DataSourceFlattenPreservesTagSelector(t *testing.
 // follow-up plan), SCN-093-01 (import) and SCN-092-01 (delete).
 func TestAccNetworkingFloatingIPV2Basic(t *testing.T) {
 	var found floatingip.FloatingIP
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	pool := networkingFloatingIPV2TestPool(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingFloatingIPV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingFloatingIPV2Basic(projectName, pool),
+				Config: testAccNetworkingFloatingIPV2Basic(projectID, region, pool),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingFloatingIPV2Exists(&found),
 					// The API assigns the address and resolves the pool.
@@ -338,7 +368,7 @@ func TestAccNetworkingFloatingIPV2Basic(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingFloatingIPV2Basic(projectName, pool),
+				Config:   testAccNetworkingFloatingIPV2Basic(projectID, region, pool),
 				PlanOnly: true,
 			},
 			{
@@ -357,26 +387,30 @@ func TestAccNetworkingFloatingIPV2Basic(t *testing.T) {
 // SCN-086-04 and SCN-086-05. SCN-086-06 is covered by the schema test because
 // it must fail before any API request.
 func TestAccNetworkingFloatingIPV2Optional(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	pool := networkingFloatingIPV2TestPool(t)
-	subnetID, dnsName, dnsDomain := networkingFloatingIPV2OptionalTestValues(t)
+	zonePrefix := acctest.RandomWithPrefix("tf-acc-zone")
+	subnetID, dnsName := networkingFloatingIPV2OptionalTestValues()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingFloatingIPV2Destroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccNetworkingFloatingIPV2Optional(
-					projectName, pool, subnetID, dnsName, dnsDomain,
+					projectID, region, pool, zonePrefix, subnetID, dnsName,
 				),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(
 						testAccNetworkingFloatingIPV2ResourceName, "address",
 					),
-					resource.TestCheckResourceAttr(
-						testAccNetworkingFloatingIPV2ResourceName, "subnet_id", subnetID,
-					),
+					// subnet_id, dns_name and dns_domain are deliberately not asserted
+					// here: the API returns none of them, and their diff suppression
+					// keeps a configured value out of state entirely. The empty
+					// follow-up plan of the next step is what shows they reached the
+					// create request without planning a replacement — the behaviour
+					// that was broken before the suppression existed.
 					resource.TestCheckResourceAttr(
 						testAccNetworkingFloatingIPV2ResourceName, "description", "optional attributes",
 					),
@@ -386,17 +420,11 @@ func TestAccNetworkingFloatingIPV2Optional(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						testAccNetworkingFloatingIPV2ResourceName, "all_tags.#", "2",
 					),
-					resource.TestCheckResourceAttr(
-						testAccNetworkingFloatingIPV2ResourceName, "dns_name", dnsName,
-					),
-					resource.TestCheckResourceAttr(
-						testAccNetworkingFloatingIPV2ResourceName, "dns_domain", dnsDomain,
-					),
 				),
 			},
 			{
 				Config: testAccNetworkingFloatingIPV2Optional(
-					projectName, pool, subnetID, dnsName, dnsDomain,
+					projectID, region, pool, zonePrefix, subnetID, dnsName,
 				),
 				PlanOnly: true,
 			},
@@ -407,15 +435,15 @@ func TestAccNetworkingFloatingIPV2Optional(t *testing.T) {
 // TestAccNetworkingFloatingIPV2UnknownPool covers SCN-091-02: an unknown pool
 // fails before any floating IP is created.
 func TestAccNetworkingFloatingIPV2UnknownPool(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingFloatingIPV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccNetworkingFloatingIPV2Basic(projectName, "tf-acc-no-such-pool"),
+				Config:      testAccNetworkingFloatingIPV2Basic(projectID, region, "tf-acc-no-such-pool"),
 				ExpectError: regexp.MustCompile(`does not match any external network`),
 			},
 		},
@@ -425,23 +453,23 @@ func TestAccNetworkingFloatingIPV2UnknownPool(t *testing.T) {
 // TestAccNetworkingFloatingIPV2Update covers SCN-088-01 (description and tags).
 func TestAccNetworkingFloatingIPV2Update(t *testing.T) {
 	var found floatingip.FloatingIP
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	pool := networkingFloatingIPV2TestPool(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingFloatingIPV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingFloatingIPV2Described(projectName, pool, "created by the acceptance test"),
+				Config: testAccNetworkingFloatingIPV2Described(projectID, region, pool, "created by the acceptance test"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingFloatingIPV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingFloatingIPV2ResourceName, "tags.#", "2"),
 				),
 			},
 			{
-				Config: testAccNetworkingFloatingIPV2Described(projectName, pool, "updated by the acceptance test"),
+				Config: testAccNetworkingFloatingIPV2Described(projectID, region, pool, "updated by the acceptance test"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingFloatingIPV2SameID(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingFloatingIPV2ResourceName, "description", "updated by the acceptance test"),
@@ -456,16 +484,16 @@ func TestAccNetworkingFloatingIPV2Update(t *testing.T) {
 // to another port without replacing the floating IP.
 func TestAccNetworkingFloatingIPV2Association(t *testing.T) {
 	var found floatingip.FloatingIP
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	pool := networkingFloatingIPV2TestPool(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingFloatingIPV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingFloatingIPV2Associated(projectName, pool, "port_a", "192.168.199.70"),
+				Config: testAccNetworkingFloatingIPV2Associated(projectID, region, pool, "port_a", "192.168.199.70"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingFloatingIPV2Exists(&found),
 					resource.TestCheckResourceAttrPair(
@@ -478,7 +506,7 @@ func TestAccNetworkingFloatingIPV2Association(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccNetworkingFloatingIPV2Associated(projectName, pool, "port_b", "192.168.199.71"),
+				Config: testAccNetworkingFloatingIPV2Associated(projectID, region, pool, "port_b", "192.168.199.71"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingFloatingIPV2SameID(&found),
 					resource.TestCheckResourceAttrPair(
@@ -491,7 +519,7 @@ func TestAccNetworkingFloatingIPV2Association(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingFloatingIPV2Associated(projectName, pool, "port_b", "192.168.199.71"),
+				Config:   testAccNetworkingFloatingIPV2Associated(projectID, region, pool, "port_b", "192.168.199.71"),
 				PlanOnly: true,
 			},
 		},
@@ -502,30 +530,30 @@ func TestAccNetworkingFloatingIPV2Association(t *testing.T) {
 // SCN-092-02.
 func TestAccNetworkingFloatingIPV2ExternalChanges(t *testing.T) {
 	var found floatingip.FloatingIP
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	pool := networkingFloatingIPV2TestPool(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingFloatingIPV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingFloatingIPV2Described(projectName, pool, "created by the acceptance test"),
+				Config: testAccNetworkingFloatingIPV2Described(projectID, region, pool, "created by the acceptance test"),
 				Check:  testAccCheckNetworkingFloatingIPV2Exists(&found),
 			},
 			{
-				Config:             testAccNetworkingFloatingIPV2Described(projectName, pool, "created by the acceptance test"),
+				Config:             testAccNetworkingFloatingIPV2Described(projectID, region, pool, "created by the acceptance test"),
 				Check:              testAccCheckNetworkingFloatingIPV2DescribeOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				Config:             testAccNetworkingFloatingIPV2Described(projectName, pool, "created by the acceptance test"),
+				Config:             testAccNetworkingFloatingIPV2Described(projectID, region, pool, "created by the acceptance test"),
 				Check:              testAccCheckNetworkingFloatingIPV2DeleteOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				Config: testAccNetworkingFloatingIPV2Described(projectName, pool, "created by the acceptance test"),
+				Config: testAccNetworkingFloatingIPV2Described(projectID, region, pool, "created by the acceptance test"),
 				Check:  testAccCheckNetworkingFloatingIPV2Exists(&found),
 			},
 		},
@@ -534,16 +562,16 @@ func TestAccNetworkingFloatingIPV2ExternalChanges(t *testing.T) {
 
 // TestAccNetworkingFloatingIPV2DataSource covers SCN-094-01 … SCN-094-03.
 func TestAccNetworkingFloatingIPV2DataSource(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	pool := networkingFloatingIPV2TestPool(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingFloatingIPV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingFloatingIPV2DataSource(projectName, pool),
+				Config: testAccNetworkingFloatingIPV2DataSource(projectID, region, pool),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
 						testAccNetworkingFloatingIPV2DataSourceName, "floatingip_id",
@@ -556,7 +584,7 @@ func TestAccNetworkingFloatingIPV2DataSource(t *testing.T) {
 				),
 			},
 			{
-				Config:      testAccNetworkingFloatingIPV2DataSourceNoMatch(projectName),
+				Config:      testAccNetworkingFloatingIPV2DataSourceNoMatch(projectID, region),
 				ExpectError: regexp.MustCompile(`no networking floating ip found`),
 			},
 		},
@@ -639,7 +667,7 @@ func testAccCheckNetworkingFloatingIPV2Destroy(s *terraform.State) error {
 			rs.Primary.Attributes["region"],
 		)
 		if err != nil {
-			return nil //nolint:nilerr // the project is gone together with the address
+			return err
 		}
 
 		if _, err := floatingip.Get(context.Background(), client, rs.Primary.ID); err == nil {
@@ -656,49 +684,91 @@ func testAccCheckNetworkingFloatingIPV2Destroy(s *terraform.State) error {
 // Configurations.
 // -----------------------------------------------------------------------------
 
-func testAccNetworkingFloatingIPV2Basic(projectName, pool string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingFloatingIPV2Basic(projectID, region, pool string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_floatingip_v2" "floatingip_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   pool       = "%s"
 }
-`, networkingV2TestRegion(), pool)
+`, region, pool)
 }
 
-func testAccNetworkingFloatingIPV2Described(projectName, pool, description string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingFloatingIPV2Described(projectID, region, pool, description string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_floatingip_v2" "floatingip_tf_acc_test_1" {
-  project_id  = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id  = local.project_id
   region      = "%s"
   pool        = "%s"
   description = "%s"
   tags        = ["tf-acc", "networking"]
 }
-`, networkingV2TestRegion(), pool, description)
+`, region, pool, description)
 }
 
 func testAccNetworkingFloatingIPV2Optional(
-	projectName, pool, subnetID, dnsName, dnsDomain string,
+	projectID, region, pool, zonePrefix, subnetID, dnsName string,
 ) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
-resource "selectel_networking_floatingip_v2" "floatingip_tf_acc_test_1" {
-  project_id  = selectel_vpc_project_v2.project_tf_acc_test_1.id
-  region      = "%s"
-  pool        = "%s"
-  subnet_id   = "%s"
-  description = "optional attributes"
-  tags        = ["tf-acc", "networking"]
-  dns_name    = "%s"
-  dns_domain  = "%s"
-}
-`, networkingV2TestRegion(), pool, subnetID, dnsName, dnsDomain)
+	return testAccNetworkingV2Base(projectID) +
+		testAccNetworkingV2PrivateDNSZones(region, zonePrefix) + fmt.Sprintf(`
+data "selectel_networking_network_v2" "external_tf_acc_test_1" {
+  project_id = local.project_id
+  region     = "%[1]s"
+  name       = "%[2]s"
+  external   = true
 }
 
-func testAccNetworkingFloatingIPV2Associated(projectName, pool, selectedPort, fixedIP string) string {
-	return testAccNetworkingPortV2Subnet(projectName) + fmt.Sprintf(`
+resource "selectel_networking_floatingip_v2" "floatingip_tf_acc_test_1" {
+  project_id  = local.project_id
+  region      = "%[1]s"
+  pool        = "%[2]s"
+  subnet_id   = %[3]s
+  description = "optional attributes"
+  tags        = ["tf-acc", "networking"]
+  dns_name    = "%[4]s"
+  dns_domain  = selectel_private_dns_zone_v1.zone_tf_acc_test_1.domain
+}
+`, region, pool, subnetID, dnsName)
+}
+
+// testAccNetworkingFloatingIPV2Gateway routes the test subnet to the external
+// network the addresses come from.
+//
+// Neutron refuses to associate a floating IP with a port whose subnet has no path
+// to that external network — "External network ... is not reachable from subnet
+// ..." (HTTP 404) — so every configuration that associates an address needs a
+// router with a gateway and an interface in the subnet. The external network is
+// resolved from its name through the data source, because the pool is a name while
+// the gateway takes an identifier.
+func testAccNetworkingFloatingIPV2Gateway(region, pool string) string {
+	return fmt.Sprintf(`
+data "selectel_networking_network_v2" "external_tf_acc_test_1" {
+  project_id = local.project_id
+  region     = "%[1]s"
+  name       = "%[2]s"
+  external   = true
+}
+
+resource "selectel_networking_router_v2" "router_tf_acc_test_1" {
+  project_id          = local.project_id
+  region              = "%[1]s"
+  external_network_id = data.selectel_networking_network_v2.external_tf_acc_test_1.network_id
+}
+
+resource "selectel_networking_router_interface_v2" "interface_tf_acc_test_1" {
+  project_id = local.project_id
+  region     = "%[1]s"
+  router_id  = selectel_networking_router_v2.router_tf_acc_test_1.id
+  subnet_id  = selectel_networking_subnet_v2.subnet_tf_acc_test_1.id
+}
+`, region, pool)
+}
+
+func testAccNetworkingFloatingIPV2Associated(projectID, region, pool, selectedPort, fixedIP string) string {
+	return testAccNetworkingPortV2Subnet(projectID, region) +
+		testAccNetworkingFloatingIPV2Gateway(region, pool) + fmt.Sprintf(`
 resource "selectel_networking_port_v2" "port_a" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   network_id = selectel_networking_network_v2.network_tf_acc_test_1.id
 
@@ -709,7 +779,7 @@ resource "selectel_networking_port_v2" "port_a" {
 }
 
 resource "selectel_networking_port_v2" "port_b" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   network_id = selectel_networking_network_v2.network_tf_acc_test_1.id
 
@@ -720,31 +790,35 @@ resource "selectel_networking_port_v2" "port_b" {
 }
 
 resource "selectel_networking_floatingip_v2" "floatingip_tf_acc_test_1" {
-  project_id  = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id  = local.project_id
   region      = "%s"
   pool        = "%s"
   port_id     = selectel_networking_port_v2.%s.id
   fixed_ip    = "%s"
+
+  # The route to the external network is what makes the association possible, and
+  # nothing else in this resource refers to it.
+  depends_on = [selectel_networking_router_interface_v2.interface_tf_acc_test_1]
 }
-`, networkingV2TestRegion(), networkingV2TestRegion(), networkingV2TestRegion(), pool, selectedPort, fixedIP)
+`, region, region, region, pool, selectedPort, fixedIP)
 }
 
-func testAccNetworkingFloatingIPV2DataSource(projectName, pool string) string {
-	return testAccNetworkingFloatingIPV2Basic(projectName, pool) + fmt.Sprintf(`
+func testAccNetworkingFloatingIPV2DataSource(projectID, region, pool string) string {
+	return testAccNetworkingFloatingIPV2Basic(projectID, region, pool) + fmt.Sprintf(`
 data "selectel_networking_floatingip_v2" "floatingip_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   address    = selectel_networking_floatingip_v2.floatingip_tf_acc_test_1.address
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingFloatingIPV2DataSourceNoMatch(projectName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingFloatingIPV2DataSourceNoMatch(projectID, region string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 data "selectel_networking_floatingip_v2" "floatingip_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   address    = "203.0.113.254"
 }
-`, networkingV2TestRegion())
+`, region)
 }

@@ -3,11 +3,9 @@ package selectel
 import (
 	"context"
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/vpc-go/pkg/v2/router"
@@ -122,15 +120,15 @@ func TestNetworkingRouterRouteV2Index(t *testing.T) {
 // TestAccNetworkingRouterRouteV2Basic covers SCN-073-01, SCN-073-03, SCN-077-01
 // and SCN-078-03.
 func TestAccNetworkingRouterRouteV2Basic(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterRouteV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingRouterRouteV2Basic(projectName, "10.0.0.0/8"),
+				Config: testAccNetworkingRouterRouteV2Basic(projectID, region, "10.0.0.0/8"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterRouteV2Exists("10.0.0.0/8", "192.168.199.10"),
 					resource.TestCheckResourceAttr(testAccNetworkingRouterRouteV2ResourceName, "destination_cidr", "10.0.0.0/8"),
@@ -139,7 +137,7 @@ func TestAccNetworkingRouterRouteV2Basic(t *testing.T) {
 			},
 			{
 				// SCN-073-03: the follow-up plan is empty.
-				Config:   testAccNetworkingRouterRouteV2Basic(projectName, "10.0.0.0/8"),
+				Config:   testAccNetworkingRouterRouteV2Basic(projectID, region, "10.0.0.0/8"),
 				PlanOnly: true,
 			},
 			{
@@ -151,7 +149,7 @@ func TestAccNetworkingRouterRouteV2Basic(t *testing.T) {
 			{
 				// SCN-074-01: a different destination replaces the route rather
 				// than updating it, and the old entry is removed from the router.
-				Config: testAccNetworkingRouterRouteV2Basic(projectName, "172.16.0.0/12"),
+				Config: testAccNetworkingRouterRouteV2Basic(projectID, region, "172.16.0.0/12"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterRouteV2Exists("172.16.0.0/12", "192.168.199.10"),
 					testAccCheckNetworkingRouterRouteV2Absent("10.0.0.0/8", "192.168.199.10"),
@@ -164,21 +162,21 @@ func TestAccNetworkingRouterRouteV2Basic(t *testing.T) {
 // TestAccNetworkingRouterRouteV2Adopt covers SCN-073-02: an identical entry that
 // already exists is adopted without a conflict and without rewriting routes.
 func TestAccNetworkingRouterRouteV2Adopt(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterRouteV2Destroy,
 		Steps: []resource.TestStep{
 			{
 				// Only the router and the interface, so the route can be added
 				// out of band before the route resource is applied.
-				Config: testAccNetworkingRouterRouteV2Prerequisites(projectName),
+				Config: testAccNetworkingRouterRouteV2Prerequisites(projectID, region),
 				Check:  testAccCheckNetworkingRouterRouteV2AddOutOfBand("10.0.0.0/8", "192.168.199.10"),
 			},
 			{
-				Config: testAccNetworkingRouterRouteV2Basic(projectName, "10.0.0.0/8"),
+				Config: testAccNetworkingRouterRouteV2Basic(projectID, region, "10.0.0.0/8"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterRouteV2Exists("10.0.0.0/8", "192.168.199.10"),
 					// The adopted entry is the only one: routes was not rewritten
@@ -187,7 +185,7 @@ func TestAccNetworkingRouterRouteV2Adopt(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingRouterRouteV2Basic(projectName, "10.0.0.0/8"),
+				Config:   testAccNetworkingRouterRouteV2Basic(projectID, region, "10.0.0.0/8"),
 				PlanOnly: true,
 			},
 		},
@@ -198,19 +196,17 @@ func TestAccNetworkingRouterRouteV2Adopt(t *testing.T) {
 // SCN-075-02: the base check, and the Selectel fork excluding the router's
 // external-network ports from the acceptable next hops.
 func TestAccNetworkingRouterRouteV2NextHopValidation(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
-	externalNetworkID := networkingRouterV2TestExternalNetwork(t)
-
-	externalNextHop := networkingRouterRouteV2TestExternalNextHop(t)
+	projectID, region := networkingV2TestEnv()
+	pool := networkingFloatingIPV2TestPool(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterRouteV2Destroy,
 		Steps: []resource.TestStep{
 			{
 				// SCN-075-01: the next hop is in no subnet the router serves.
-				Config:      testAccNetworkingRouterRouteV2NextHop(projectName, "", "203.0.113.200"),
+				Config:      testAccNetworkingRouterRouteV2NextHop(projectID, region, "", "203.0.113.200"),
 				ExpectError: regexp.MustCompile(`(?i)invalid|not connected|next.?hop`),
 			},
 			{
@@ -218,7 +214,7 @@ func TestAccNetworkingRouterRouteV2NextHopValidation(t *testing.T) {
 				// subnet. Upstream Neutron would accept this; the Selectel fork
 				// rejects it with the same class of error as SCN-075-01, because
 				// external-network ports no longer count.
-				Config:      testAccNetworkingRouterRouteV2NextHop(projectName, externalNetworkID, externalNextHop),
+				Config:      testAccNetworkingRouterRouteV2NextHop(projectID, region, pool, ""),
 				ExpectError: regexp.MustCompile(`(?i)invalid|not connected|next.?hop`),
 			},
 		},
@@ -228,26 +224,26 @@ func TestAccNetworkingRouterRouteV2NextHopValidation(t *testing.T) {
 // TestAccNetworkingRouterRouteV2ExternalRemoval covers SCN-076-01: the route
 // removed from the router outside Terraform leaves the state without an error.
 func TestAccNetworkingRouterRouteV2ExternalRemoval(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterRouteV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingRouterRouteV2Basic(projectName, "10.0.0.0/8"),
+				Config: testAccNetworkingRouterRouteV2Basic(projectID, region, "10.0.0.0/8"),
 				Check:  testAccCheckNetworkingRouterRouteV2Exists("10.0.0.0/8", "192.168.199.10"),
 			},
 			{
 				// The router stays, only its routes are cleared.
-				Config:             testAccNetworkingRouterRouteV2Basic(projectName, "10.0.0.0/8"),
+				Config:             testAccNetworkingRouterRouteV2Basic(projectID, region, "10.0.0.0/8"),
 				Check:              testAccCheckNetworkingRouterRouteV2ClearOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
 			{
 				// The plan re-creates the entry rather than erroring out.
-				Config: testAccNetworkingRouterRouteV2Basic(projectName, "10.0.0.0/8"),
+				Config: testAccNetworkingRouterRouteV2Basic(projectID, region, "10.0.0.0/8"),
 				Check:  testAccCheckNetworkingRouterRouteV2Exists("10.0.0.0/8", "192.168.199.10"),
 			},
 		},
@@ -257,21 +253,6 @@ func TestAccNetworkingRouterRouteV2ExternalRemoval(t *testing.T) {
 // -----------------------------------------------------------------------------
 // Helpers.
 // -----------------------------------------------------------------------------
-
-// networkingRouterRouteV2TestExternalNextHop is an address inside the subnet of
-// the external network used as the router's gateway. It has to be a real address
-// of that subnet, otherwise the test would exercise the base check of SCN-075-01
-// again instead of the fork's exclusion.
-func networkingRouterRouteV2TestExternalNextHop(t *testing.T) string {
-	t.Helper()
-
-	nextHop := os.Getenv("SELECTEL_ROUTER_EXTERNAL_SUBNET_ADDRESS")
-	if nextHop == "" {
-		t.Skip("SELECTEL_ROUTER_EXTERNAL_SUBNET_ADDRESS must be an address inside the external gateway subnet")
-	}
-
-	return nextHop
-}
 
 // testAccNetworkingRouterRouteV2Router returns a client handle and the router the
 // route under test belongs to, resolved from the router resource in the state so
@@ -386,7 +367,7 @@ func testAccCheckNetworkingRouterRouteV2Destroy(s *terraform.State) error {
 			rs.Primary.Attributes["region"],
 		)
 		if err != nil {
-			return nil //nolint:nilerr // the project is gone together with the router
+			return err
 		}
 
 		found, err := router.Get(context.Background(), client, rs.Primary.Attributes["router_id"])
@@ -417,21 +398,21 @@ func testAccCheckNetworkingRouterRouteV2Destroy(s *terraform.State) error {
 
 // testAccNetworkingRouterRouteV2Prerequisites is a router with one internal
 // interface, which is what makes 192.168.199.10 an acceptable next hop.
-func testAccNetworkingRouterRouteV2Prerequisites(projectName string) string {
-	return testAccNetworkingRouterInterfaceV2Base(projectName) + fmt.Sprintf(`
+func testAccNetworkingRouterRouteV2Prerequisites(projectID, region string) string {
+	return testAccNetworkingRouterInterfaceV2Base(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_router_interface_v2" "interface_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   router_id  = selectel_networking_router_v2.router_tf_acc_test_1.id
   subnet_id  = selectel_networking_subnet_v2.subnet_tf_acc_test_1.id
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingRouterRouteV2Basic(projectName, destination string) string {
-	return testAccNetworkingRouterRouteV2Prerequisites(projectName) + fmt.Sprintf(`
+func testAccNetworkingRouterRouteV2Basic(projectID, region, destination string) string {
+	return testAccNetworkingRouterRouteV2Prerequisites(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_router_route_v2" "route_tf_acc_test_1" {
-  project_id       = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id       = local.project_id
   region           = "%s"
   router_id        = selectel_networking_router_v2.router_tf_acc_test_1.id
   destination_cidr = "%s"
@@ -439,47 +420,71 @@ resource "selectel_networking_router_route_v2" "route_tf_acc_test_1" {
 
   depends_on = [selectel_networking_router_interface_v2.interface_tf_acc_test_1]
 }
-`, networkingV2TestRegion(), destination)
+`, region, destination)
 }
 
 // testAccNetworkingRouterRouteV2NextHop optionally attaches an external gateway,
 // which is what distinguishes SCN-075-02 from SCN-075-01.
-func testAccNetworkingRouterRouteV2NextHop(projectName, externalNetworkID, nextHop string) string {
-	gateway := ""
-	if externalNetworkID != "" {
-		gateway = fmt.Sprintf(`external_network_id = "%s"`, externalNetworkID)
+// testAccNetworkingRouterRouteV2NextHop points a route at a next hop that no
+// internal port of the router serves.
+//
+// With an empty pool the router has no gateway and the next hop is the literal
+// address given. With a pool the router takes its gateway from that external
+// network and the next hop becomes an address allocated from it — which is what
+// SCN-075-02 needs: a real address of the external subnet. A project cannot read
+// the subnets of an external network at all (they answer 404), so an allocated
+// floating IP is the only way to name one of their addresses without admin rights.
+func testAccNetworkingRouterRouteV2NextHop(projectID, region, pool, nextHop string) string {
+	gateway, allocation := "", ""
+	if pool != "" {
+		gateway = "external_network_id = data.selectel_networking_network_v2.external_tf_acc_test_1.network_id"
+		nextHop = "${selectel_networking_floatingip_v2.next_hop_tf_acc_test_1.address}"
+		allocation = fmt.Sprintf(`
+data "selectel_networking_network_v2" "external_tf_acc_test_1" {
+  project_id = local.project_id
+  region     = "%[1]s"
+  name       = "%[2]s"
+  external   = true
+}
+
+resource "selectel_networking_floatingip_v2" "next_hop_tf_acc_test_1" {
+  project_id = local.project_id
+  region     = "%[1]s"
+  pool       = "%[2]s"
+}
+`, region, pool)
 	}
 
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+	return testAccNetworkingV2Base(projectID) + allocation + fmt.Sprintf(`
 resource "selectel_networking_network_v2" "network_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   name       = "network-tf-acc-test-1"
 }
 
 resource "selectel_networking_subnet_v2" "subnet_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   network_id = selectel_networking_network_v2.network_tf_acc_test_1.id
   cidr       = "192.168.199.0/24"
 }
 
 resource "selectel_networking_router_v2" "router_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   name       = "router-tf-acc-test-1"
   %[2]s
 }
 
 resource "selectel_networking_router_interface_v2" "interface_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   router_id  = selectel_networking_router_v2.router_tf_acc_test_1.id
   subnet_id  = selectel_networking_subnet_v2.subnet_tf_acc_test_1.id
 }
 
 resource "selectel_networking_router_route_v2" "route_tf_acc_test_1" {
-  project_id       = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id       = local.project_id
   region           = "%[1]s"
   router_id        = selectel_networking_router_v2.router_tf_acc_test_1.id
   destination_cidr = "10.0.0.0/8"
@@ -487,5 +492,5 @@ resource "selectel_networking_router_route_v2" "route_tf_acc_test_1" {
 
   depends_on = [selectel_networking_router_interface_v2.interface_tf_acc_test_1]
 }
-`, networkingV2TestRegion(), gateway, nextHop)
+`, region, gateway, nextHop)
 }

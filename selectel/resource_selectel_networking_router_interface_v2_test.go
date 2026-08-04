@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/vpc-go/pkg/v2/port"
@@ -119,15 +118,15 @@ func TestNetworkingRouterInterfaceV2SubnetFromPort(t *testing.T) {
 // SCN-071-01 and SCN-072-01.
 func TestAccNetworkingRouterInterfaceV2Subnet(t *testing.T) {
 	var found port.Port
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterInterfaceV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingRouterInterfaceV2Subnet(projectName),
+				Config: testAccNetworkingRouterInterfaceV2Subnet(projectID, region),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterInterfaceV2Exists(&found),
 					// SCN-067-01: the API creates the port, and its id is the
@@ -142,7 +141,7 @@ func TestAccNetworkingRouterInterfaceV2Subnet(t *testing.T) {
 			},
 			{
 				// SCN-069-01: the follow-up plan is empty.
-				Config:   testAccNetworkingRouterInterfaceV2Subnet(projectName),
+				Config:   testAccNetworkingRouterInterfaceV2Subnet(projectID, region),
 				PlanOnly: true,
 			},
 			{
@@ -162,15 +161,15 @@ func TestAccNetworkingRouterInterfaceV2Subnet(t *testing.T) {
 // pre-created port, with subnet_id computed from it.
 func TestAccNetworkingRouterInterfaceV2Port(t *testing.T) {
 	var found port.Port
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterInterfaceV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingRouterInterfaceV2Port(projectName),
+				Config: testAccNetworkingRouterInterfaceV2Port(projectID, region),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterInterfaceV2Exists(&found),
 					resource.TestCheckResourceAttrPair(
@@ -186,7 +185,7 @@ func TestAccNetworkingRouterInterfaceV2Port(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingRouterInterfaceV2Port(projectName),
+				Config:   testAccNetworkingRouterInterfaceV2Port(projectID, region),
 				PlanOnly: true,
 			},
 		},
@@ -196,15 +195,15 @@ func TestAccNetworkingRouterInterfaceV2Port(t *testing.T) {
 // TestAccNetworkingRouterInterfaceV2PortFixedIPCount covers SCN-067-03: a port
 // with two fixed IPs is refused before the router is touched.
 func TestAccNetworkingRouterInterfaceV2PortFixedIPCount(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterInterfaceV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccNetworkingRouterInterfaceV2PortTwoFixedIPs(projectName),
+				Config:      testAccNetworkingRouterInterfaceV2PortTwoFixedIPs(projectID, region),
 				ExpectError: regexp.MustCompile(`has 2 fixed ips, a router interface requires exactly one`),
 			},
 		},
@@ -213,21 +212,21 @@ func TestAccNetworkingRouterInterfaceV2PortFixedIPCount(t *testing.T) {
 
 // TestAccNetworkingRouterInterfaceV2Exclusivity covers SCN-068-01 and SCN-068-02.
 func TestAccNetworkingRouterInterfaceV2Exclusivity(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterInterfaceV2Destroy,
 		Steps: []resource.TestStep{
 			{
 				// SCN-068-01: rejected by the schema, before any API call.
-				Config:      testAccNetworkingRouterInterfaceV2Both(projectName),
+				Config:      testAccNetworkingRouterInterfaceV2Both(projectID, region),
 				ExpectError: regexp.MustCompile(`(?s)"subnet_id".*conflicts with.*"port_id"|"port_id".*conflicts with.*"subnet_id"`),
 			},
 			{
 				// SCN-068-02: neither one set.
-				Config:      testAccNetworkingRouterInterfaceV2Neither(projectName),
+				Config:      testAccNetworkingRouterInterfaceV2Neither(projectID, region),
 				ExpectError: regexp.MustCompile(`exactly one of subnet_id or port_id must be set`),
 			},
 		},
@@ -238,25 +237,25 @@ func TestAccNetworkingRouterInterfaceV2Exclusivity(t *testing.T) {
 // interface detached outside Terraform leaves the state without an error.
 func TestAccNetworkingRouterInterfaceV2ExternalDetach(t *testing.T) {
 	var found port.Port
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterInterfaceV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingRouterInterfaceV2Subnet(projectName),
+				Config: testAccNetworkingRouterInterfaceV2Subnet(projectID, region),
 				Check:  testAccCheckNetworkingRouterInterfaceV2Exists(&found),
 			},
 			{
-				Config:             testAccNetworkingRouterInterfaceV2Subnet(projectName),
+				Config:             testAccNetworkingRouterInterfaceV2Subnet(projectID, region),
 				Check:              testAccCheckNetworkingRouterInterfaceV2DetachOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
 			{
 				// The plan re-creates the interface rather than updating it.
-				Config: testAccNetworkingRouterInterfaceV2Subnet(projectName),
+				Config: testAccNetworkingRouterInterfaceV2Subnet(projectID, region),
 				Check:  testAccCheckNetworkingRouterInterfaceV2Exists(&found),
 			},
 		},
@@ -272,17 +271,17 @@ func TestAccNetworkingRouterInterfaceV2ExternalDetach(t *testing.T) {
 // resource's behaviour, and the delete timeout is shortened in the configuration
 // so the blocked case fails in seconds instead of minutes.
 func TestAccNetworkingRouterInterfaceV2ForceDestroy(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingRouterInterfaceV2Destroy,
 		Steps: []resource.TestStep{
 			{
 				// force_destroy=false, plus a route whose next hop is inside the
 				// attached subnet.
-				Config: testAccNetworkingRouterInterfaceV2ForceDestroy(projectName, false),
+				Config: testAccNetworkingRouterInterfaceV2ForceDestroy(projectID, region, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testAccNetworkingRouterInterfaceV2ResourceName, "force_destroy", "false"),
 					testAccCheckNetworkingRouterInterfaceV2AddBlockingRoute(),
@@ -291,15 +290,15 @@ func TestAccNetworkingRouterInterfaceV2ForceDestroy(t *testing.T) {
 			{
 				// SCN-072-02: the detach is retried until the delete timeout and
 				// then reported as an error; the route is not removed.
-				Config:      testAccNetworkingRouterInterfaceV2ForceDestroy(projectName, false),
+				Config:      testAccNetworkingRouterInterfaceV2ForceDestroy(projectID, region, false),
 				Destroy:     true,
-				ExpectError: regexp.MustCompile(`(?i)timeout|conflict|in use|still in use`),
+				ExpectError: regexp.MustCompile(`(?i)timeout|conflict|in ?use|required by one or more routes`),
 			},
 			{
 				// SCN-072-03: force_destroy changes in place — it steers Delete and
 				// has no remote counterpart — and the following destroy clears the
 				// conflicting route and succeeds.
-				Config: testAccNetworkingRouterInterfaceV2ForceDestroy(projectName, true),
+				Config: testAccNetworkingRouterInterfaceV2ForceDestroy(projectID, region, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testAccNetworkingRouterInterfaceV2ResourceName, "force_destroy", "true"),
 					testAccCheckNetworkingRouterInterfaceV2RouteStillPresent(),
@@ -462,7 +461,7 @@ func testAccCheckNetworkingRouterInterfaceV2Destroy(s *terraform.State) error {
 			rs.Primary.Attributes["region"],
 		)
 		if err != nil {
-			return nil //nolint:nilerr // the project is gone together with the interface
+			return err
 		}
 
 		if _, err := port.Get(context.Background(), client, rs.Primary.ID); err == nil {
@@ -481,44 +480,44 @@ func testAccCheckNetworkingRouterInterfaceV2Destroy(s *terraform.State) error {
 
 // testAccNetworkingRouterInterfaceV2Base is the network, subnet and router every
 // interface configuration attaches together.
-func testAccNetworkingRouterInterfaceV2Base(projectName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingRouterInterfaceV2Base(projectID, region string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_network_v2" "network_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   name       = "network-tf-acc-test-1"
 }
 
 resource "selectel_networking_subnet_v2" "subnet_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   network_id = selectel_networking_network_v2.network_tf_acc_test_1.id
   cidr       = "192.168.199.0/24"
 }
 
 resource "selectel_networking_router_v2" "router_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   name       = "router-tf-acc-test-1"
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingRouterInterfaceV2Subnet(projectName string) string {
-	return testAccNetworkingRouterInterfaceV2Base(projectName) + fmt.Sprintf(`
+func testAccNetworkingRouterInterfaceV2Subnet(projectID, region string) string {
+	return testAccNetworkingRouterInterfaceV2Base(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_router_interface_v2" "interface_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   router_id  = selectel_networking_router_v2.router_tf_acc_test_1.id
   subnet_id  = selectel_networking_subnet_v2.subnet_tf_acc_test_1.id
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingRouterInterfaceV2Port(projectName string) string {
-	return testAccNetworkingRouterInterfaceV2Base(projectName) + fmt.Sprintf(`
+func testAccNetworkingRouterInterfaceV2Port(projectID, region string) string {
+	return testAccNetworkingRouterInterfaceV2Base(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   network_id = selectel_networking_network_v2.network_tf_acc_test_1.id
 
@@ -529,18 +528,18 @@ resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
 }
 
 resource "selectel_networking_router_interface_v2" "interface_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   router_id  = selectel_networking_router_v2.router_tf_acc_test_1.id
   port_id    = selectel_networking_port_v2.port_tf_acc_test_1.id
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingRouterInterfaceV2PortTwoFixedIPs(projectName string) string {
-	return testAccNetworkingRouterInterfaceV2Base(projectName) + fmt.Sprintf(`
+func testAccNetworkingRouterInterfaceV2PortTwoFixedIPs(projectID, region string) string {
+	return testAccNetworkingRouterInterfaceV2Base(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   network_id = selectel_networking_network_v2.network_tf_acc_test_1.id
 
@@ -556,18 +555,18 @@ resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
 }
 
 resource "selectel_networking_router_interface_v2" "interface_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   router_id  = selectel_networking_router_v2.router_tf_acc_test_1.id
   port_id    = selectel_networking_port_v2.port_tf_acc_test_1.id
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingRouterInterfaceV2Both(projectName string) string {
-	return testAccNetworkingRouterInterfaceV2Base(projectName) + fmt.Sprintf(`
+func testAccNetworkingRouterInterfaceV2Both(projectID, region string) string {
+	return testAccNetworkingRouterInterfaceV2Base(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   network_id = selectel_networking_network_v2.network_tf_acc_test_1.id
 
@@ -578,31 +577,31 @@ resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
 }
 
 resource "selectel_networking_router_interface_v2" "interface_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   router_id  = selectel_networking_router_v2.router_tf_acc_test_1.id
   subnet_id  = selectel_networking_subnet_v2.subnet_tf_acc_test_1.id
   port_id    = selectel_networking_port_v2.port_tf_acc_test_1.id
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingRouterInterfaceV2Neither(projectName string) string {
-	return testAccNetworkingRouterInterfaceV2Base(projectName) + fmt.Sprintf(`
+func testAccNetworkingRouterInterfaceV2Neither(projectID, region string) string {
+	return testAccNetworkingRouterInterfaceV2Base(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_router_interface_v2" "interface_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   router_id  = selectel_networking_router_v2.router_tf_acc_test_1.id
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
 // testAccNetworkingRouterInterfaceV2ForceDestroy shortens the delete timeout so
 // the blocked-detach case fails fast instead of retrying for the default period.
-func testAccNetworkingRouterInterfaceV2ForceDestroy(projectName string, forceDestroy bool) string {
-	return testAccNetworkingRouterInterfaceV2Base(projectName) + fmt.Sprintf(`
+func testAccNetworkingRouterInterfaceV2ForceDestroy(projectID, region string, forceDestroy bool) string {
+	return testAccNetworkingRouterInterfaceV2Base(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_router_interface_v2" "interface_tf_acc_test_1" {
-  project_id    = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id    = local.project_id
   region        = "%[1]s"
   router_id     = selectel_networking_router_v2.router_tf_acc_test_1.id
   subnet_id     = selectel_networking_subnet_v2.subnet_tf_acc_test_1.id
@@ -612,5 +611,5 @@ resource "selectel_networking_router_interface_v2" "interface_tf_acc_test_1" {
     delete = "45s"
   }
 }
-`, networkingV2TestRegion(), forceDestroy)
+`, region, forceDestroy)
 }

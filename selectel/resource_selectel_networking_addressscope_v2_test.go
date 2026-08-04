@@ -130,15 +130,15 @@ func TestNetworkingAddressScopeV2DataSourceSelectors(t *testing.T) {
 // and SCN-143-01.
 func TestAccNetworkingAddressScopeV2Basic(t *testing.T) {
 	var found addressscope.AddressScope
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingAddressScopeV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingAddressScopeV2Basic(projectName, "scope-1"),
+				Config: testAccNetworkingAddressScopeV2Basic(projectID, region, "scope-1"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingAddressScopeV2Exists(&found),
 					// SCN-137-01: ip_version defaults to 4 and shared comes from
@@ -149,7 +149,7 @@ func TestAccNetworkingAddressScopeV2Basic(t *testing.T) {
 			},
 			{
 				// SCN-138-01: the follow-up plan is empty.
-				Config:   testAccNetworkingAddressScopeV2Basic(projectName, "scope-1"),
+				Config:   testAccNetworkingAddressScopeV2Basic(projectID, region, "scope-1"),
 				PlanOnly: true,
 			},
 			{
@@ -165,15 +165,15 @@ func TestAccNetworkingAddressScopeV2Basic(t *testing.T) {
 // TestAccNetworkingAddressScopeV2IPVersion6 covers SCN-137-02 and SCN-140-01.
 func TestAccNetworkingAddressScopeV2IPVersion6(t *testing.T) {
 	var found addressscope.AddressScope
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingAddressScopeV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingAddressScopeV2Version(projectName, 6),
+				Config: testAccNetworkingAddressScopeV2Version(projectID, region, 6),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingAddressScopeV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingAddressScopeV2ResourceName, "ip_version", "6"),
@@ -181,7 +181,7 @@ func TestAccNetworkingAddressScopeV2IPVersion6(t *testing.T) {
 			},
 			{
 				// SCN-140-01: a different ip_version replaces the scope.
-				Config: testAccNetworkingAddressScopeV2Version(projectName, 4),
+				Config: testAccNetworkingAddressScopeV2Version(projectID, region, 4),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingAddressScopeV2Replaced(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingAddressScopeV2ResourceName, "ip_version", "4"),
@@ -195,19 +195,19 @@ func TestAccNetworkingAddressScopeV2IPVersion6(t *testing.T) {
 // rename happens in place and does not disturb shared.
 func TestAccNetworkingAddressScopeV2Update(t *testing.T) {
 	var found addressscope.AddressScope
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingAddressScopeV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingAddressScopeV2Basic(projectName, "scope-1"),
+				Config: testAccNetworkingAddressScopeV2Basic(projectID, region, "scope-1"),
 				Check:  testAccCheckNetworkingAddressScopeV2Exists(&found),
 			},
 			{
-				Config: testAccNetworkingAddressScopeV2Basic(projectName, "scope-1-renamed"),
+				Config: testAccNetworkingAddressScopeV2Basic(projectID, region, "scope-1-renamed"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingAddressScopeV2SameID(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingAddressScopeV2ResourceName, "name", "scope-1-renamed"),
@@ -222,15 +222,15 @@ func TestAccNetworkingAddressScopeV2Update(t *testing.T) {
 // TestAccNetworkingAddressScopeV2InvalidIPVersion covers SCN-141-02: the value is
 // sent unvalidated and the API's rejection becomes the diagnostic.
 func TestAccNetworkingAddressScopeV2InvalidIPVersion(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingAddressScopeV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccNetworkingAddressScopeV2Version(projectName, 5),
+				Config:      testAccNetworkingAddressScopeV2Version(projectID, region, 5),
 				ExpectError: regexp.MustCompile(`(?i)error creating|invalid|bad request`),
 			},
 		},
@@ -240,29 +240,29 @@ func TestAccNetworkingAddressScopeV2InvalidIPVersion(t *testing.T) {
 // TestAccNetworkingAddressScopeV2ExternalChanges covers SCN-138-02 and SCN-138-03.
 func TestAccNetworkingAddressScopeV2ExternalChanges(t *testing.T) {
 	var found addressscope.AddressScope
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingAddressScopeV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingAddressScopeV2Basic(projectName, "scope-1"),
+				Config: testAccNetworkingAddressScopeV2Basic(projectID, region, "scope-1"),
 				Check:  testAccCheckNetworkingAddressScopeV2Exists(&found),
 			},
 			{
-				Config:             testAccNetworkingAddressScopeV2Basic(projectName, "scope-1"),
+				Config:             testAccNetworkingAddressScopeV2Basic(projectID, region, "scope-1"),
 				Check:              testAccCheckNetworkingAddressScopeV2RenameOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				Config:             testAccNetworkingAddressScopeV2Basic(projectName, "scope-1"),
+				Config:             testAccNetworkingAddressScopeV2Basic(projectID, region, "scope-1"),
 				Check:              testAccCheckNetworkingAddressScopeV2DeleteOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				Config: testAccNetworkingAddressScopeV2Basic(projectName, "scope-1"),
+				Config: testAccNetworkingAddressScopeV2Basic(projectID, region, "scope-1"),
 				Check:  testAccCheckNetworkingAddressScopeV2Exists(&found),
 			},
 		},
@@ -276,16 +276,16 @@ func TestAccNetworkingAddressScopeV2ExternalChanges(t *testing.T) {
 // to outlive the scope for the destroy to hit the conflict — an HCL pool that
 // references the scope would be destroyed first and there would be no conflict.
 func TestAccNetworkingAddressScopeV2DeleteConflict(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	referencing := &networkingAddressScopeV2TestPool{}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingAddressScopeV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingAddressScopeV2Basic(projectName, "scope-1"),
+				Config: testAccNetworkingAddressScopeV2Basic(projectID, region, "scope-1"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(testAccNetworkingAddressScopeV2ResourceName, "id"),
 					testAccCheckNetworkingAddressScopeV2CreatePool(referencing),
@@ -293,14 +293,14 @@ func TestAccNetworkingAddressScopeV2DeleteConflict(t *testing.T) {
 			},
 			{
 				// The scope is still referenced, so the destroy is refused.
-				Config:      testAccNetworkingAddressScopeV2Basic(projectName, "scope-1"),
+				Config:      testAccNetworkingAddressScopeV2Basic(projectID, region, "scope-1"),
 				Destroy:     true,
 				ExpectError: regexp.MustCompile(`(?i)conflict|in use`),
 			},
 			{
 				// Remove the reference so the final destroy — and CheckDestroy —
 				// can succeed.
-				Config: testAccNetworkingAddressScopeV2Basic(projectName, "scope-1"),
+				Config: testAccNetworkingAddressScopeV2Basic(projectID, region, "scope-1"),
 				Check:  testAccCheckNetworkingAddressScopeV2DeletePool(referencing),
 			},
 		},
@@ -310,15 +310,18 @@ func TestAccNetworkingAddressScopeV2DeleteConflict(t *testing.T) {
 // TestAccNetworkingAddressScopeV2DataSource covers SCN-144-01, SCN-144-02 and
 // SCN-144-03.
 func TestAccNetworkingAddressScopeV2DataSource(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
+	// The project is shared, so the name the data source searches on must be
+	// unique to this run.
+	scopeName := acctest.RandomWithPrefix("tf-acc-scope")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingAddressScopeV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingAddressScopeV2DataSource(projectName),
+				Config: testAccNetworkingAddressScopeV2DataSource(projectID, region, scopeName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
 						testAccNetworkingAddressScopeV2DataSourceName, "id",
@@ -336,12 +339,12 @@ func TestAccNetworkingAddressScopeV2DataSource(t *testing.T) {
 				),
 			},
 			{
-				Config:      testAccNetworkingAddressScopeV2DataSourceNoMatch(projectName),
+				Config:      testAccNetworkingAddressScopeV2DataSourceNoMatch(projectID, region),
 				ExpectError: regexp.MustCompile(`no networking address scope found`),
 			},
 			{
 				// SCN-144-03: two scopes match a selector that is not precise.
-				Config:      testAccNetworkingAddressScopeV2DataSourceAmbiguous(projectName),
+				Config:      testAccNetworkingAddressScopeV2DataSourceAmbiguous(projectID, region),
 				ExpectError: regexp.MustCompile(`networking address scopes found`),
 			},
 		},
@@ -506,7 +509,7 @@ func testAccCheckNetworkingAddressScopeV2Destroy(s *terraform.State) error {
 			rs.Primary.Attributes["region"],
 		)
 		if err != nil {
-			return nil //nolint:nilerr // the project is gone together with the scope
+			return err
 		}
 
 		if _, err := addressscope.Get(context.Background(), client, rs.Primary.ID); err == nil {
@@ -523,59 +526,59 @@ func testAccCheckNetworkingAddressScopeV2Destroy(s *terraform.State) error {
 // Configurations.
 // -----------------------------------------------------------------------------
 
-func testAccNetworkingAddressScopeV2Basic(projectName, name string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingAddressScopeV2Basic(projectID, region, name string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_addressscope_v2" "addressscope_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = "%s"
 }
-`, networkingV2TestRegion(), name)
+`, region, name)
 }
 
-func testAccNetworkingAddressScopeV2Version(projectName string, ipVersion int) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingAddressScopeV2Version(projectID, region string, ipVersion int) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_addressscope_v2" "addressscope_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = "scope-tf-acc-test-1"
   ip_version = %d
 }
-`, networkingV2TestRegion(), ipVersion)
+`, region, ipVersion)
 }
 
-func testAccNetworkingAddressScopeV2DataSource(projectName string) string {
-	return testAccNetworkingAddressScopeV2Basic(projectName, "scope-1") + fmt.Sprintf(`
+func testAccNetworkingAddressScopeV2DataSource(projectID, region, name string) string {
+	return testAccNetworkingAddressScopeV2Basic(projectID, region, name) + fmt.Sprintf(`
 data "selectel_networking_addressscope_v2" "addressscope_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = selectel_networking_addressscope_v2.addressscope_tf_acc_test_1.name
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingAddressScopeV2DataSourceNoMatch(projectName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingAddressScopeV2DataSourceNoMatch(projectID, region string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 data "selectel_networking_addressscope_v2" "addressscope_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = "tf-acc-no-such-scope"
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
 // testAccNetworkingAddressScopeV2DataSourceAmbiguous creates two scopes of the
 // same ip_version and searches on that alone.
-func testAccNetworkingAddressScopeV2DataSourceAmbiguous(projectName string) string {
-	return testAccNetworkingAddressScopeV2Basic(projectName, "scope-1") + fmt.Sprintf(`
+func testAccNetworkingAddressScopeV2DataSourceAmbiguous(projectID, region string) string {
+	return testAccNetworkingAddressScopeV2Basic(projectID, region, "scope-1") + fmt.Sprintf(`
 resource "selectel_networking_addressscope_v2" "addressscope_tf_acc_test_2" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   name       = "scope-2"
 }
 
 data "selectel_networking_addressscope_v2" "addressscope_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   ip_version = 4
 
@@ -584,5 +587,5 @@ data "selectel_networking_addressscope_v2" "addressscope_tf_acc_test_1" {
     selectel_networking_addressscope_v2.addressscope_tf_acc_test_2,
   ]
 }
-`, networkingV2TestRegion())
+`, region)
 }

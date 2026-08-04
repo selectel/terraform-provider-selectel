@@ -181,6 +181,41 @@ func TestNetworkingPortV2Expanders(t *testing.T) {
 		assert.Equal(t, raw, flattenNetworkingPortV2ExtraDHCPOptions(options))
 	})
 
+	// An update does not replace the option set, so an option dropped from the
+	// configuration has to be sent with a null value to be removed at all. Without
+	// this, the removal never reaches the API and the next plan is never empty.
+	t.Run("extra dhcp options dropped from the configuration are sent as removals", func(t *testing.T) {
+		option := func(name, value string) interface{} {
+			return map[string]interface{}{"name": name, "value": value, "ip_version": 4}
+		}
+		set := func(items ...interface{}) *schema.Set {
+			nested, ok := resourceNetworkingPortV2().Schema["extra_dhcp_option"].Elem.(*schema.Resource)
+			require.True(t, ok)
+
+			return schema.NewSet(schema.HashResource(nested), items)
+		}
+
+		options := expandNetworkingPortV2ExtraDHCPOptionsUpdate(
+			set(option("tftp-server", "10.0.0.1"), option("bootfile-name", "pxelinux.0")),
+			set(option("tftp-server", "10.0.0.2")),
+		)
+
+		require.Len(t, options, 2)
+
+		byName := make(map[string]port.UpdateExtraDHCPOption, len(options))
+		for _, item := range options {
+			byName[item.Name] = item
+		}
+
+		require.Contains(t, byName, "tftp-server")
+		require.NotNil(t, byName["tftp-server"].Value)
+		assert.Equal(t, "10.0.0.2", *byName["tftp-server"].Value)
+
+		require.Contains(t, byName, "bootfile-name")
+		assert.Nil(t, byName["bootfile-name"].Value,
+			"an option no longer configured must be sent with a null value")
+	})
+
 	t.Run("dns assignment is flattened", func(t *testing.T) {
 		assignments := []port.DNSAssignment{
 			{IPAddress: "192.168.199.10", Hostname: "host-1", FQDN: "host-1.example.com."},

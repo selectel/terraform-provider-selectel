@@ -22,6 +22,11 @@ resource "selectel_networking_port_forwarding_v2" "pf_1" {
   internal_port       = 80
   external_port       = 8080
   protocol            = "tcp"
+
+  # The subnet of the internal port must already have a route to the external
+  # network the floating IP comes from, and no argument of this resource refers to
+  # the router interface that provides it.
+  depends_on = [selectel_networking_router_interface_v2.interface_1]
 }
 ```
 

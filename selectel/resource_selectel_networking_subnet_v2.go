@@ -182,13 +182,20 @@ func resourceNetworkingSubnetV2Create(ctx context.Context, d *schema.ResourceDat
 	}
 
 	enableDHCP := d.Get("enable_dhcp").(bool)
-	dnsPublishFixedIP := d.Get("dns_publish_fixed_ip").(bool)
 
 	request := subnet.CreateRequest{
-		NetworkID:         d.Get("network_id").(string),
-		IPVersion:         d.Get("ip_version").(int),
-		EnableDHCP:        &enableDHCP,
-		DNSPublishFixedIP: &dnsPublishFixedIP,
+		NetworkID:  d.Get("network_id").(string),
+		IPVersion:  d.Get("ip_version").(int),
+		EnableDHCP: &enableDHCP,
+	}
+	// dns_publish_fixed_ip belongs to the subnet-dns-publish-fixed-ip extension,
+	// which a deployment may not have loaded: such a deployment rejects the
+	// attribute itself with "Unrecognized attribute(s) 'dns_publish_fixed_ip'"
+	// (HTTP 400) even when it carries the API default. Sending it only when the
+	// caller asks to publish keeps the documented default of false intact and
+	// stops an unused attribute from making every subnet uncreatable.
+	if dnsPublishFixedIP := d.Get("dns_publish_fixed_ip").(bool); dnsPublishFixedIP {
+		request.DNSPublishFixedIP = &dnsPublishFixedIP
 	}
 	if v, ok := d.GetOk("cidr"); ok {
 		request.CIDR = vpcString(v.(string))

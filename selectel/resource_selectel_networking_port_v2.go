@@ -407,7 +407,9 @@ func resourceNetworkingPortV2Update(ctx context.Context, d *schema.ResourceData,
 		needsUpdate = true
 	}
 	if d.HasChange("extra_dhcp_option") {
-		options := expandNetworkingPortV2ExtraDHCPOptions(d.Get("extra_dhcp_option").(*schema.Set).List())
+		before, after := d.GetChange("extra_dhcp_option")
+		options := expandNetworkingPortV2ExtraDHCPOptionsUpdate(
+			before.(*schema.Set), after.(*schema.Set))
 		request.ExtraDHCPOptions = &options
 		needsUpdate = true
 	}
@@ -625,6 +627,41 @@ func expandNetworkingPortV2ExtraDHCPOptions(raw []interface{}) []port.ExtraDHCPO
 		}
 
 		options = append(options, option)
+	}
+
+	return options
+}
+
+// expandNetworkingPortV2ExtraDHCPOptionsUpdate builds the option list of an update
+// request out of the configured set and the one it replaces.
+//
+// An update does not replace the whole set: an option the request leaves out keeps
+// the value it has, so dropping one from the configuration only takes effect when
+// its name is sent with an explicit null value. Without that, removing an option
+// would leave it on the port and every following plan would ask to remove it again.
+func expandNetworkingPortV2ExtraDHCPOptionsUpdate(before, after *schema.Set) []port.UpdateExtraDHCPOption {
+	configured := expandNetworkingPortV2ExtraDHCPOptions(after.List())
+
+	options := make([]port.UpdateExtraDHCPOption, 0, len(configured))
+	kept := make(map[string]struct{}, len(configured))
+	for _, option := range configured {
+		value := option.Value
+		options = append(options, port.UpdateExtraDHCPOption{
+			Name:      option.Name,
+			Value:     &value,
+			IPVersion: option.IPVersion,
+		})
+		kept[option.Name] = struct{}{}
+	}
+
+	// The name is the key of an option, so a name that is still configured is an
+	// update of that option rather than a removal.
+	for _, option := range expandNetworkingPortV2ExtraDHCPOptions(before.List()) {
+		if _, ok := kept[option.Name]; ok {
+			continue
+		}
+
+		options = append(options, port.UpdateExtraDHCPOption{Name: option.Name})
 	}
 
 	return options

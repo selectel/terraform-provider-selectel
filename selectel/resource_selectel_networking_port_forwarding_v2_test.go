@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/vpc-go/pkg/v2/floatingip"
@@ -108,15 +107,16 @@ func TestNetworkingPortForwardingV2ID(t *testing.T) {
 // follow-up plan) and SCN-053-01 (import by the composite identifier).
 func TestAccNetworkingPortForwardingV2Basic(t *testing.T) {
 	var found floatingip.PortForwarding
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
+	pool := networkingFloatingIPV2TestPool(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortForwardingV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingPortForwardingV2Basic(projectName, 8080, "tcp"),
+				Config: testAccNetworkingPortForwardingV2Basic(projectID, region, pool, 8080, "tcp"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingPortForwardingV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingPortForwardingV2ResourceName, "external_port", "8080"),
@@ -125,7 +125,7 @@ func TestAccNetworkingPortForwardingV2Basic(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingPortForwardingV2Basic(projectName, 8080, "tcp"),
+				Config:   testAccNetworkingPortForwardingV2Basic(projectID, region, pool, 8080, "tcp"),
 				PlanOnly: true,
 			},
 			{
@@ -142,19 +142,20 @@ func TestAccNetworkingPortForwardingV2Basic(t *testing.T) {
 // changes in place, keeping the identifier and the floating IP.
 func TestAccNetworkingPortForwardingV2Update(t *testing.T) {
 	var found floatingip.PortForwarding
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
+	pool := networkingFloatingIPV2TestPool(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortForwardingV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingPortForwardingV2Basic(projectName, 8080, "tcp"),
+				Config: testAccNetworkingPortForwardingV2Basic(projectID, region, pool, 8080, "tcp"),
 				Check:  testAccCheckNetworkingPortForwardingV2Exists(&found),
 			},
 			{
-				Config: testAccNetworkingPortForwardingV2Described(projectName, 9090, "udp"),
+				Config: testAccNetworkingPortForwardingV2Described(projectID, region, pool, 9090, "udp"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingPortForwardingV2SameID(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingPortForwardingV2ResourceName, "external_port", "9090"),
@@ -163,7 +164,7 @@ func TestAccNetworkingPortForwardingV2Update(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingPortForwardingV2Described(projectName, 9090, "udp"),
+				Config:   testAccNetworkingPortForwardingV2Described(projectID, region, pool, 9090, "udp"),
 				PlanOnly: true,
 			},
 		},
@@ -174,15 +175,16 @@ func TestAccNetworkingPortForwardingV2Update(t *testing.T) {
 // the same external port and protocol on the same floating IP is refused by the
 // API.
 func TestAccNetworkingPortForwardingV2Conflict(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
+	pool := networkingFloatingIPV2TestPool(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortForwardingV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccNetworkingPortForwardingV2Duplicate(projectName),
+				Config:      testAccNetworkingPortForwardingV2Duplicate(projectID, region, pool),
 				ExpectError: regexp.MustCompile(`error creating networking port forwarding`),
 			},
 		},
@@ -192,15 +194,16 @@ func TestAccNetworkingPortForwardingV2Conflict(t *testing.T) {
 // TestAccNetworkingPortForwardingV2InvalidValue covers SCN-051-02: the API, not
 // the schema, rejects a malformed protocol.
 func TestAccNetworkingPortForwardingV2InvalidValue(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
+	pool := networkingFloatingIPV2TestPool(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortForwardingV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccNetworkingPortForwardingV2Basic(projectName, 8080, "not-a-protocol"),
+				Config:      testAccNetworkingPortForwardingV2Basic(projectID, region, pool, 8080, "not-a-protocol"),
 				ExpectError: regexp.MustCompile(`error creating networking port forwarding`),
 			},
 		},
@@ -212,24 +215,25 @@ func TestAccNetworkingPortForwardingV2InvalidValue(t *testing.T) {
 // next plan re-creates it.
 func TestAccNetworkingPortForwardingV2ExternalRemoval(t *testing.T) {
 	var found floatingip.PortForwarding
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
+	pool := networkingFloatingIPV2TestPool(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortForwardingV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingPortForwardingV2Basic(projectName, 8080, "tcp"),
+				Config: testAccNetworkingPortForwardingV2Basic(projectID, region, pool, 8080, "tcp"),
 				Check:  testAccCheckNetworkingPortForwardingV2Exists(&found),
 			},
 			{
-				Config:             testAccNetworkingPortForwardingV2Basic(projectName, 8080, "tcp"),
+				Config:             testAccNetworkingPortForwardingV2Basic(projectID, region, pool, 8080, "tcp"),
 				Check:              testAccCheckNetworkingPortForwardingV2DeleteOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				Config: testAccNetworkingPortForwardingV2Basic(projectName, 8080, "tcp"),
+				Config: testAccNetworkingPortForwardingV2Basic(projectID, region, pool, 8080, "tcp"),
 				Check:  testAccCheckNetworkingPortForwardingV2Exists(&found),
 			},
 		},
@@ -328,7 +332,7 @@ func testAccCheckNetworkingPortForwardingV2Destroy(s *terraform.State) error {
 			rs.Primary.Attributes["region"],
 		)
 		if err != nil {
-			return nil //nolint:nilerr // the project is gone together with the rule
+			return err
 		}
 
 		_, err = floatingip.GetPortForwarding(
@@ -349,19 +353,21 @@ func testAccCheckNetworkingPortForwardingV2Destroy(s *terraform.State) error {
 
 // testAccNetworkingPortForwardingV2Base gives the rule a floating IP and an
 // internal port to forward to.
-func testAccNetworkingPortForwardingV2Base(projectName string) string {
-	return testAccNetworkingPortV2FixedIP(projectName, "192.168.199.60") + fmt.Sprintf(`
+func testAccNetworkingPortForwardingV2Base(projectID, region, pool string) string {
+	return testAccNetworkingPortV2FixedIP(projectID, region, "192.168.199.60") +
+		testAccNetworkingFloatingIPV2Gateway(region, pool) + fmt.Sprintf(`
 resource "selectel_networking_floatingip_v2" "floatingip_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
+  pool       = "%s"
 }
-`, networkingV2TestRegion())
+`, region, pool)
 }
 
-func testAccNetworkingPortForwardingV2Basic(projectName string, externalPort int, protocol string) string {
-	return testAccNetworkingPortForwardingV2Base(projectName) + fmt.Sprintf(`
+func testAccNetworkingPortForwardingV2Basic(projectID, region, pool string, externalPort int, protocol string) string {
+	return testAccNetworkingPortForwardingV2Base(projectID, region, pool) + fmt.Sprintf(`
 resource "selectel_networking_port_forwarding_v2" "pf_tf_acc_test_1" {
-  project_id          = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id          = local.project_id
   region              = "%s"
   floatingip_id       = selectel_networking_floatingip_v2.floatingip_tf_acc_test_1.id
   internal_port_id    = selectel_networking_port_v2.port_tf_acc_test_1.id
@@ -369,14 +375,18 @@ resource "selectel_networking_port_forwarding_v2" "pf_tf_acc_test_1" {
   internal_port       = 80
   external_port       = %d
   protocol            = "%s"
+
+  # The route to the external network is what makes the association possible, and
+  # nothing else in this resource refers to it.
+  depends_on = [selectel_networking_router_interface_v2.interface_tf_acc_test_1]
 }
-`, networkingV2TestRegion(), externalPort, protocol)
+`, region, externalPort, protocol)
 }
 
-func testAccNetworkingPortForwardingV2Described(projectName string, externalPort int, protocol string) string {
-	return testAccNetworkingPortForwardingV2Base(projectName) + fmt.Sprintf(`
+func testAccNetworkingPortForwardingV2Described(projectID, region, pool string, externalPort int, protocol string) string {
+	return testAccNetworkingPortForwardingV2Base(projectID, region, pool) + fmt.Sprintf(`
 resource "selectel_networking_port_forwarding_v2" "pf_tf_acc_test_1" {
-  project_id          = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id          = local.project_id
   region              = "%s"
   floatingip_id       = selectel_networking_floatingip_v2.floatingip_tf_acc_test_1.id
   internal_port_id    = selectel_networking_port_v2.port_tf_acc_test_1.id
@@ -385,14 +395,18 @@ resource "selectel_networking_port_forwarding_v2" "pf_tf_acc_test_1" {
   external_port       = %d
   protocol            = "%s"
   description         = "updated by the acceptance test"
+
+  # The route to the external network is what makes the association possible, and
+  # nothing else in this resource refers to it.
+  depends_on = [selectel_networking_router_interface_v2.interface_tf_acc_test_1]
 }
-`, networkingV2TestRegion(), externalPort, protocol)
+`, region, externalPort, protocol)
 }
 
-func testAccNetworkingPortForwardingV2Duplicate(projectName string) string {
-	return testAccNetworkingPortForwardingV2Basic(projectName, 8080, "tcp") + fmt.Sprintf(`
+func testAccNetworkingPortForwardingV2Duplicate(projectID, region, pool string) string {
+	return testAccNetworkingPortForwardingV2Basic(projectID, region, pool, 8080, "tcp") + fmt.Sprintf(`
 resource "selectel_networking_port_forwarding_v2" "pf_tf_acc_test_duplicate" {
-  project_id          = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id          = local.project_id
   region              = "%s"
   floatingip_id       = selectel_networking_floatingip_v2.floatingip_tf_acc_test_1.id
   internal_port_id    = selectel_networking_port_v2.port_tf_acc_test_1.id
@@ -403,5 +417,5 @@ resource "selectel_networking_port_forwarding_v2" "pf_tf_acc_test_duplicate" {
 
   depends_on = [selectel_networking_port_forwarding_v2.pf_tf_acc_test_1]
 }
-`, networkingV2TestRegion())
+`, region)
 }

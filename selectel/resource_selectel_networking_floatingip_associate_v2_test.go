@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -96,15 +95,15 @@ func TestNetworkingFloatingIPAssociateV2Flatten(t *testing.T) {
 // and SCN-101-01. It is intentionally not run without TF_ACC=1.
 func TestAccNetworkingFloatingIPAssociateV2Basic(t *testing.T) {
 	pool := networkingFloatingIPV2TestPool(t)
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingFloatingIPAssociateV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingFloatingIPAssociateV2(projectName, pool, "port_a", ""),
+				Config: testAccNetworkingFloatingIPAssociateV2(projectID, region, pool, "port_a", ""),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(testAccNetworkingFloatingIPAssociateV2ResourceName, "floating_ip"),
 					resource.TestCheckResourceAttrSet(testAccNetworkingFloatingIPAssociateV2ResourceName, "fixed_ip"),
@@ -115,7 +114,7 @@ func TestAccNetworkingFloatingIPAssociateV2Basic(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingFloatingIPAssociateV2(projectName, pool, "port_a", ""),
+				Config:   testAccNetworkingFloatingIPAssociateV2(projectID, region, pool, "port_a", ""),
 				PlanOnly: true,
 			},
 			{
@@ -132,25 +131,25 @@ func TestAccNetworkingFloatingIPAssociateV2Basic(t *testing.T) {
 // floating IP are in-place updates.
 func TestAccNetworkingFloatingIPAssociateV2Update(t *testing.T) {
 	pool := networkingFloatingIPV2TestPool(t)
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	var originalID string
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingFloatingIPAssociateV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingFloatingIPAssociateV2(projectName, pool, "port_a", "192.168.199.70"),
+				Config: testAccNetworkingFloatingIPAssociateV2(projectID, region, pool, "port_a", "192.168.199.70"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingFloatingIPAssociateV2CaptureID(&originalID),
 					resource.TestCheckResourceAttr(testAccNetworkingFloatingIPAssociateV2ResourceName, "fixed_ip", "192.168.199.70"),
 				),
 			},
 			{
-				Config: testAccNetworkingFloatingIPAssociateV2(projectName, pool, "port_b", "192.168.199.71"),
+				Config: testAccNetworkingFloatingIPAssociateV2(projectID, region, pool, "port_b", "192.168.199.71"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckNetworkingFloatingIPAssociateV2ID(originalID),
+					testAccCheckNetworkingFloatingIPAssociateV2ID(&originalID),
 					resource.TestCheckResourceAttr(testAccNetworkingFloatingIPAssociateV2ResourceName, "fixed_ip", "192.168.199.71"),
 					resource.TestCheckResourceAttrPair(
 						testAccNetworkingFloatingIPAssociateV2ResourceName, "port_id",
@@ -166,18 +165,18 @@ func TestAccNetworkingFloatingIPAssociateV2Update(t *testing.T) {
 // refresh observes the detached state and plans to restore the configuration.
 func TestAccNetworkingFloatingIPAssociateV2ExternalDetach(t *testing.T) {
 	pool := networkingFloatingIPV2TestPool(t)
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingFloatingIPAssociateV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingFloatingIPAssociateV2(projectName, pool, "port_a", ""),
+				Config: testAccNetworkingFloatingIPAssociateV2(projectID, region, pool, "port_a", ""),
 			},
 			{
-				Config:             testAccNetworkingFloatingIPAssociateV2(projectName, pool, "port_a", ""),
+				Config:             testAccNetworkingFloatingIPAssociateV2(projectID, region, pool, "port_a", ""),
 				Check:              testAccCheckNetworkingFloatingIPAssociateV2DetachOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
@@ -186,16 +185,26 @@ func TestAccNetworkingFloatingIPAssociateV2ExternalDetach(t *testing.T) {
 }
 
 // TestAccNetworkingFloatingIPAssociateV2ImportMissing covers SCN-101-02.
+//
+// The step carries a configuration even though nothing is applied: an import step
+// needs the resource to be present in the configuration it imports into, and this
+// is the first step, so there is no earlier one to inherit it from. The values are
+// literals that are never used — the import fails while reading the identifier.
 func TestAccNetworkingFloatingIPAssociateV2ImportMissing(t *testing.T) {
+	projectID, region := networkingV2TestEnv()
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
+				Config:        testAccNetworkingFloatingIPAssociateV2Unmanaged(projectID, region),
 				ResourceName:  testAccNetworkingFloatingIPAssociateV2ResourceName,
 				ImportState:   true,
 				ImportStateId: "00000000-0000-0000-0000-000000000000",
-				ExpectError:   regexp.MustCompile(`error getting networking floating ip association`),
+				// Read reports the identifier as absent, so the refusal comes from
+				// Terraform rather than from the provider's own message.
+				ExpectError: regexp.MustCompile(`Cannot import non-existent remote object`),
 			},
 		},
 	})
@@ -213,14 +222,21 @@ func testAccCheckNetworkingFloatingIPAssociateV2CaptureID(target *string) resour
 	}
 }
 
-func testAccCheckNetworkingFloatingIPAssociateV2ID(expected string) resource.TestCheckFunc {
+// testAccCheckNetworkingFloatingIPAssociateV2ID takes a pointer because the checks
+// of every step are built before the first one runs: comparing against a value
+// captured here would compare against the empty string the earlier step had yet to
+// fill in.
+func testAccCheckNetworkingFloatingIPAssociateV2ID(expected *string) resource.TestCheckFunc {
 	return func(state *terraform.State) error {
 		instance, ok := state.RootModule().Resources[testAccNetworkingFloatingIPAssociateV2ResourceName]
 		if !ok {
 			return fmt.Errorf("not found: %s", testAccNetworkingFloatingIPAssociateV2ResourceName)
 		}
-		if instance.Primary.ID != expected {
-			return fmt.Errorf("association was replaced: %s -> %s", expected, instance.Primary.ID)
+		if *expected == "" {
+			return errors.New("the association identifier of the earlier step was not captured")
+		}
+		if instance.Primary.ID != *expected {
+			return fmt.Errorf("association was replaced: %s -> %s", *expected, instance.Primary.ID)
 		}
 
 		return nil
@@ -260,7 +276,7 @@ func testAccCheckNetworkingFloatingIPAssociateV2Destroy(state *terraform.State) 
 			instance.Primary.Attributes["region"],
 		)
 		if err != nil {
-			return nil //nolint:nilerr // project cleanup removed all networking objects
+			return err
 		}
 		found, err := floatingip.Get(context.Background(), client, instance.Primary.ID)
 		if networkingIsNotFound(err) {
@@ -277,17 +293,31 @@ func testAccCheckNetworkingFloatingIPAssociateV2Destroy(state *terraform.State) 
 	return nil
 }
 
+// testAccNetworkingFloatingIPAssociateV2Unmanaged declares the resource without
+// creating anything: it exists so an import step has an address to import into.
+func testAccNetworkingFloatingIPAssociateV2Unmanaged(projectID, region string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
+resource "selectel_networking_floatingip_associate_v2" "association_tf_acc_test_1" {
+  project_id  = local.project_id
+  region      = "%s"
+  floating_ip = "203.0.113.1"
+  port_id     = "00000000-0000-0000-0000-000000000000"
+}
+`, region)
+}
+
 func testAccNetworkingFloatingIPAssociateV2(
-	projectName, pool, selectedPort, fixedIP string,
+	projectID, region, pool, selectedPort, fixedIP string,
 ) string {
 	fixedIPArgument := ""
 	if fixedIP != "" {
 		fixedIPArgument = fmt.Sprintf("\n  fixed_ip    = %q", fixedIP)
 	}
 
-	return testAccNetworkingPortV2Subnet(projectName) + fmt.Sprintf(`
+	return testAccNetworkingPortV2Subnet(projectID, region) +
+		testAccNetworkingFloatingIPV2Gateway(region, pool) + fmt.Sprintf(`
 resource "selectel_networking_port_v2" "port_a" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   network_id = selectel_networking_network_v2.network_tf_acc_test_1.id
 
@@ -298,7 +328,7 @@ resource "selectel_networking_port_v2" "port_a" {
 }
 
 resource "selectel_networking_port_v2" "port_b" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   network_id = selectel_networking_network_v2.network_tf_acc_test_1.id
 
@@ -309,23 +339,27 @@ resource "selectel_networking_port_v2" "port_b" {
 }
 
 resource "selectel_networking_floatingip_v2" "floatingip_for_association" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   pool       = "%s"
 }
 
 resource "selectel_networking_floatingip_associate_v2" "association_tf_acc_test_1" {
-  project_id  = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id  = local.project_id
   region      = "%s"
   floating_ip = selectel_networking_floatingip_v2.floatingip_for_association.address
   port_id     = selectel_networking_port_v2.%s.id%s
+
+  # The route to the external network is what makes the association possible, and
+  # nothing else in this resource refers to it.
+  depends_on = [selectel_networking_router_interface_v2.interface_tf_acc_test_1]
 }
 `,
-		networkingV2TestRegion(),
-		networkingV2TestRegion(),
-		networkingV2TestRegion(),
+		region,
+		region,
+		region,
 		pool,
-		networkingV2TestRegion(),
+		region,
 		selectedPort,
 		fixedIPArgument,
 	)

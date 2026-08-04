@@ -122,16 +122,16 @@ func TestNetworkingSubnetPoolV2DataSourceSelectors(t *testing.T) {
 // follow-up plan), SCN-034-01 (import) and SCN-035-01 (delete).
 func TestAccNetworkingSubnetPoolV2Basic(t *testing.T) {
 	var found subnetpool.SubnetPool
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	poolName := acctest.RandomWithPrefix("tf-acc-pool")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSubnetPoolV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSubnetPoolV2Basic(projectName, poolName),
+				Config: testAccNetworkingSubnetPoolV2Basic(projectID, region, poolName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingSubnetPoolV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingSubnetPoolV2ResourceName, "name", poolName),
@@ -148,7 +148,7 @@ func TestAccNetworkingSubnetPoolV2Basic(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingSubnetPoolV2Basic(projectName, poolName),
+				Config:   testAccNetworkingSubnetPoolV2Basic(projectID, region, poolName),
 				PlanOnly: true,
 			},
 			{
@@ -163,16 +163,16 @@ func TestAccNetworkingSubnetPoolV2Basic(t *testing.T) {
 // TestAccNetworkingSubnetPoolV2OptionalAttributes covers SCN-029-02.
 func TestAccNetworkingSubnetPoolV2OptionalAttributes(t *testing.T) {
 	var found subnetpool.SubnetPool
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	poolName := acctest.RandomWithPrefix("tf-acc-pool")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSubnetPoolV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSubnetPoolV2Full(projectName, poolName),
+				Config: testAccNetworkingSubnetPoolV2Full(projectID, region, poolName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingSubnetPoolV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingSubnetPoolV2ResourceName, "description", "created by the acceptance test"),
@@ -185,7 +185,7 @@ func TestAccNetworkingSubnetPoolV2OptionalAttributes(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingSubnetPoolV2Full(projectName, poolName),
+				Config:   testAccNetworkingSubnetPoolV2Full(projectID, region, poolName),
 				PlanOnly: true,
 			},
 		},
@@ -196,21 +196,21 @@ func TestAccNetworkingSubnetPoolV2OptionalAttributes(t *testing.T) {
 // mutable attribute changes in place, keeping the identifier.
 func TestAccNetworkingSubnetPoolV2Update(t *testing.T) {
 	var found subnetpool.SubnetPool
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	poolName := acctest.RandomWithPrefix("tf-acc-pool")
 	updatedName := acctest.RandomWithPrefix("tf-acc-pool-upd")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSubnetPoolV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSubnetPoolV2Full(projectName, poolName),
+				Config: testAccNetworkingSubnetPoolV2Full(projectID, region, poolName),
 				Check:  testAccCheckNetworkingSubnetPoolV2Exists(&found),
 			},
 			{
-				Config: testAccNetworkingSubnetPoolV2Updated(projectName, updatedName),
+				Config: testAccNetworkingSubnetPoolV2Updated(projectID, region, updatedName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingSubnetPoolV2SameID(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingSubnetPoolV2ResourceName, "name", updatedName),
@@ -228,7 +228,7 @@ func TestAccNetworkingSubnetPoolV2Update(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingSubnetPoolV2Updated(projectName, updatedName),
+				Config:   testAccNetworkingSubnetPoolV2Updated(projectID, region, updatedName),
 				PlanOnly: true,
 			},
 		},
@@ -239,33 +239,33 @@ func TestAccNetworkingSubnetPoolV2Update(t *testing.T) {
 // SCN-035-02.
 func TestAccNetworkingSubnetPoolV2ExternalChanges(t *testing.T) {
 	var found subnetpool.SubnetPool
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	poolName := acctest.RandomWithPrefix("tf-acc-pool")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSubnetPoolV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSubnetPoolV2Basic(projectName, poolName),
+				Config: testAccNetworkingSubnetPoolV2Basic(projectID, region, poolName),
 				Check:  testAccCheckNetworkingSubnetPoolV2Exists(&found),
 			},
 			{
 				// SCN-033-01: an out-of-band rename shows up as drift.
-				Config:             testAccNetworkingSubnetPoolV2Basic(projectName, poolName),
+				Config:             testAccNetworkingSubnetPoolV2Basic(projectID, region, poolName),
 				Check:              testAccCheckNetworkingSubnetPoolV2RenameOutOfBand(&found),
 				ExpectNonEmptyPlan: true,
 			},
 			{
 				// SCN-033-02 and SCN-035-02: an out-of-band delete plans a
 				// re-create instead of failing.
-				Config:             testAccNetworkingSubnetPoolV2Basic(projectName, poolName),
+				Config:             testAccNetworkingSubnetPoolV2Basic(projectID, region, poolName),
 				Check:              testAccCheckNetworkingSubnetPoolV2DeleteOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				Config: testAccNetworkingSubnetPoolV2Basic(projectName, poolName),
+				Config: testAccNetworkingSubnetPoolV2Basic(projectID, region, poolName),
 				Check:  testAccCheckNetworkingSubnetPoolV2Exists(&found),
 			},
 		},
@@ -275,21 +275,21 @@ func TestAccNetworkingSubnetPoolV2ExternalChanges(t *testing.T) {
 // TestAccNetworkingSubnetPoolV2InUse covers SCN-035-03: a pool a subnet still
 // allocates from cannot be deleted, and the resource stays in the state.
 func TestAccNetworkingSubnetPoolV2InUse(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	poolName := acctest.RandomWithPrefix("tf-acc-pool")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSubnetPoolV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSubnetPoolV2WithSubnet(projectName, poolName),
+				Config: testAccNetworkingSubnetPoolV2WithSubnet(projectID, region, poolName),
 			},
 			{
 				// Removing only the pool from the configuration, while the subnet
 				// allocated from it stays, must fail.
-				Config:      testAccNetworkingSubnetPoolV2SubnetOnly(projectName),
+				Config:      testAccNetworkingSubnetPoolV2SubnetOnly(projectID, region),
 				ExpectError: regexp.MustCompile(`error deleting networking subnetpool`),
 			},
 		},
@@ -298,16 +298,16 @@ func TestAccNetworkingSubnetPoolV2InUse(t *testing.T) {
 
 // TestAccNetworkingSubnetPoolV2DataSource covers SCN-036-01 … SCN-036-03.
 func TestAccNetworkingSubnetPoolV2DataSource(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	poolName := acctest.RandomWithPrefix("tf-acc-pool")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSubnetPoolV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSubnetPoolV2DataSource(projectName, poolName),
+				Config: testAccNetworkingSubnetPoolV2DataSource(projectID, region, poolName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testAccNetworkingSubnetPoolV2DataSourceName, "name", poolName),
 					resource.TestCheckResourceAttrPair(
@@ -325,7 +325,7 @@ func TestAccNetworkingSubnetPoolV2DataSource(t *testing.T) {
 			},
 			{
 				// SCN-036-01: zero matches is a diagnostic error.
-				Config:      testAccNetworkingSubnetPoolV2DataSourceNoMatch(projectName),
+				Config:      testAccNetworkingSubnetPoolV2DataSourceNoMatch(projectID, region),
 				ExpectError: regexp.MustCompile(`no networking subnetpool found`),
 			},
 		},
@@ -430,7 +430,7 @@ func testAccCheckNetworkingSubnetPoolV2Destroy(s *terraform.State) error {
 			rs.Primary.Attributes["region"],
 		)
 		if err != nil {
-			return nil //nolint:nilerr // the project is gone together with the pool
+			return err
 		}
 
 		if _, err := subnetpool.Get(context.Background(), client, rs.Primary.ID); err == nil {
@@ -447,21 +447,21 @@ func testAccCheckNetworkingSubnetPoolV2Destroy(s *terraform.State) error {
 // Acceptance test configurations.
 // -----------------------------------------------------------------------------
 
-func testAccNetworkingSubnetPoolV2Basic(projectName, poolName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingSubnetPoolV2Basic(projectID, region, poolName string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_subnetpool_v2" "subnetpool_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = "%s"
   prefixes   = ["192.168.200.0/24"]
 }
-`, networkingV2TestRegion(), poolName)
+`, region, poolName)
 }
 
-func testAccNetworkingSubnetPoolV2Full(projectName, poolName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingSubnetPoolV2Full(projectID, region, poolName string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_subnetpool_v2" "subnetpool_tf_acc_test_1" {
-  project_id        = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id        = local.project_id
   region            = "%s"
   name              = "%s"
   description       = "created by the acceptance test"
@@ -472,13 +472,13 @@ resource "selectel_networking_subnetpool_v2" "subnetpool_tf_acc_test_1" {
   max_prefixlen     = 28
   tags              = ["tf-acc", "networking"]
 }
-`, networkingV2TestRegion(), poolName)
+`, region, poolName)
 }
 
-func testAccNetworkingSubnetPoolV2Updated(projectName, poolName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingSubnetPoolV2Updated(projectID, region, poolName string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_subnetpool_v2" "subnetpool_tf_acc_test_1" {
-  project_id        = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id        = local.project_id
   region            = "%s"
   name              = "%s"
   description       = "updated by the acceptance test"
@@ -489,53 +489,53 @@ resource "selectel_networking_subnetpool_v2" "subnetpool_tf_acc_test_1" {
   max_prefixlen     = 29
   tags              = ["tf-acc"]
 }
-`, networkingV2TestRegion(), poolName)
+`, region, poolName)
 }
 
-func testAccNetworkingSubnetPoolV2WithSubnet(projectName, poolName string) string {
-	return testAccNetworkingSubnetPoolV2Basic(projectName, poolName) + fmt.Sprintf(`
+func testAccNetworkingSubnetPoolV2WithSubnet(projectID, region, poolName string) string {
+	return testAccNetworkingSubnetPoolV2Basic(projectID, region, poolName) + fmt.Sprintf(`
 resource "selectel_networking_network_v2" "network_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = "tf-acc-pool-parent"
 }
 
 resource "selectel_networking_subnet_v2" "subnet_tf_acc_test_1" {
-  project_id    = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id    = local.project_id
   region        = "%s"
   network_id    = selectel_networking_network_v2.network_tf_acc_test_1.id
   subnetpool_id = selectel_networking_subnetpool_v2.subnetpool_tf_acc_test_1.id
   prefix_length = 26
 }
-`, networkingV2TestRegion(), networkingV2TestRegion())
+`, region, region)
 }
 
-func testAccNetworkingSubnetPoolV2SubnetOnly(projectName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingSubnetPoolV2SubnetOnly(projectID, region string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_networking_network_v2" "network_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = "tf-acc-pool-parent"
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingSubnetPoolV2DataSource(projectName, poolName string) string {
-	return testAccNetworkingSubnetPoolV2Basic(projectName, poolName) + fmt.Sprintf(`
+func testAccNetworkingSubnetPoolV2DataSource(projectID, region, poolName string) string {
+	return testAccNetworkingSubnetPoolV2Basic(projectID, region, poolName) + fmt.Sprintf(`
 data "selectel_networking_subnetpool_v2" "subnetpool_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = selectel_networking_subnetpool_v2.subnetpool_tf_acc_test_1.name
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingSubnetPoolV2DataSourceNoMatch(projectName string) string {
-	return testAccNetworkingNetworkV2Project(projectName) + fmt.Sprintf(`
+func testAccNetworkingSubnetPoolV2DataSourceNoMatch(projectID, region string) string {
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 data "selectel_networking_subnetpool_v2" "subnetpool_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = "tf-acc-no-such-pool"
 }
-`, networkingV2TestRegion())
+`, region)
 }

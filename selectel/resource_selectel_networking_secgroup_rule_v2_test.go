@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -236,15 +235,15 @@ func TestNetworkingSecGroupRuleV2ExpandPortRange(t *testing.T) {
 // and SCN-118-01.
 func TestAccNetworkingSecGroupRuleV2Basic(t *testing.T) {
 	var found securitygroup.SecurityGroupRule
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSecGroupRuleV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSecGroupRuleV2IngressPrefix(projectName, "192.168.199.0/24"),
+				Config: testAccNetworkingSecGroupRuleV2IngressPrefix(projectID, region, "192.168.199.0/24"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingSecGroupRuleV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingSecGroupRuleV2ResourceName, "direction", "ingress"),
@@ -257,7 +256,7 @@ func TestAccNetworkingSecGroupRuleV2Basic(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingSecGroupRuleV2IngressPrefix(projectName, "192.168.199.0/24"),
+				Config:   testAccNetworkingSecGroupRuleV2IngressPrefix(projectID, region, "192.168.199.0/24"),
 				PlanOnly: true,
 			},
 			{
@@ -273,19 +272,19 @@ func TestAccNetworkingSecGroupRuleV2Basic(t *testing.T) {
 // TestAccNetworkingSecGroupRuleV2UpperCasePrefix covers SCN-115-01's own example:
 // an IPv6 prefix written in upper case must not produce a permanent diff.
 func TestAccNetworkingSecGroupRuleV2UpperCasePrefix(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSecGroupRuleV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSecGroupRuleV2IPv6Prefix(projectName, "2001:558:FC00::/39"),
+				Config: testAccNetworkingSecGroupRuleV2IPv6Prefix(projectID, region, "2001:558:FC00::/39"),
 			},
 			{
 				// The API stored it lowercased; the plan must still be empty.
-				Config:   testAccNetworkingSecGroupRuleV2IPv6Prefix(projectName, "2001:558:FC00::/39"),
+				Config:   testAccNetworkingSecGroupRuleV2IPv6Prefix(projectID, region, "2001:558:FC00::/39"),
 				PlanOnly: true,
 			},
 		},
@@ -296,15 +295,15 @@ func TestAccNetworkingSecGroupRuleV2UpperCasePrefix(t *testing.T) {
 // references another security group as its source.
 func TestAccNetworkingSecGroupRuleV2RemoteGroup(t *testing.T) {
 	var found securitygroup.SecurityGroupRule
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSecGroupRuleV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSecGroupRuleV2RemoteGroup(projectName),
+				Config: testAccNetworkingSecGroupRuleV2RemoteGroup(projectID, region),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingSecGroupRuleV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingSecGroupRuleV2ResourceName, "direction", "egress"),
@@ -316,37 +315,74 @@ func TestAccNetworkingSecGroupRuleV2RemoteGroup(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingSecGroupRuleV2RemoteGroup(projectName),
+				Config:   testAccNetworkingSecGroupRuleV2RemoteGroup(projectID, region),
 				PlanOnly: true,
 			},
 		},
 	})
 }
 
-// TestAccNetworkingSecGroupRuleV2LocalValidation covers SCN-112-01 and SCN-112-02:
+// TestAccNetworkingSecGroupRuleV2LocalValidation covers SCN-112-02 and SCN-112-03:
 // the schema rejects these before any API call.
 func TestAccNetworkingSecGroupRuleV2LocalValidation(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSecGroupRuleV2Destroy,
 		Steps: []resource.TestStep{
 			{
 				// Both remote selectors at once.
-				Config:      testAccNetworkingSecGroupRuleV2BothRemotes(projectName),
+				Config:      testAccNetworkingSecGroupRuleV2BothRemotes(projectID, region),
 				ExpectError: regexp.MustCompile(`(?s)"remote_group_id".*conflicts with.*"remote_ip_prefix"|"remote_ip_prefix".*conflicts with.*"remote_group_id"`),
 			},
 			{
 				// A port range without a protocol.
-				Config:      testAccNetworkingSecGroupRuleV2PortRangeWithoutProtocol(projectName),
+				Config:      testAccNetworkingSecGroupRuleV2PortRangeWithoutProtocol(projectID, region),
 				ExpectError: regexp.MustCompile(`(?s)"port_range_min".*all of .*protocol|protocol.*must be specified`),
 			},
 			{
-				// Only one bound of the range.
-				Config:      testAccNetworkingSecGroupRuleV2SingleBound(projectName),
-				ExpectError: regexp.MustCompile(`(?s)port_range_ma(x|in).*all of|must be specified`),
+				// SCN-112-03: port_range_max without port_range_min. The reverse is
+				// deliberately allowed — see TestAccNetworkingSecGroupRuleV2ICMPType.
+				Config:      testAccNetworkingSecGroupRuleV2MaxWithoutMin(projectID, region),
+				ExpectError: regexp.MustCompile(`(?s)port_range_max.*all of|must be specified`),
+			},
+			{
+				// A rejected configuration is never applied, so the last step has to
+				// leave a valid one behind: the framework destroys the configuration
+				// of the final step, and a configuration that fails validation cannot
+				// be destroyed.
+				Config: testAccNetworkingSecGroupRuleV2IngressPrefix(projectID, region, "192.168.0.0/16"),
+			},
+		},
+	})
+}
+
+// TestAccNetworkingSecGroupRuleV2ICMPType covers SCN-112-04: a single
+// port_range_min is an ICMP type without a code, so local validation must accept
+// it and the rule must be created. This is the asymmetry SCN-112-03 rests on — the
+// same lone bound with a TCP protocol is rejected by the API, not by the schema.
+func TestAccNetworkingSecGroupRuleV2ICMPType(t *testing.T) {
+	var found securitygroup.SecurityGroupRule
+	projectID, region := networkingV2TestEnv()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckNetworkingSecGroupRuleV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNetworkingSecGroupRuleV2ICMPType(projectID, region),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckNetworkingSecGroupRuleV2Exists(&found),
+					resource.TestCheckResourceAttr(testAccNetworkingSecGroupRuleV2ResourceName, "protocol", "icmp"),
+					resource.TestCheckResourceAttr(testAccNetworkingSecGroupRuleV2ResourceName, "port_range_min", "8"),
+				),
+			},
+			{
+				Config:   testAccNetworkingSecGroupRuleV2ICMPType(projectID, region),
+				PlanOnly: true,
 			},
 		},
 	})
@@ -355,21 +391,21 @@ func TestAccNetworkingSecGroupRuleV2LocalValidation(t *testing.T) {
 // TestAccNetworkingSecGroupRuleV2APIValidation covers SCN-113-01 and SCN-113-02:
 // values the schema passes through and the API rejects.
 func TestAccNetworkingSecGroupRuleV2APIValidation(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSecGroupRuleV2Destroy,
 		Steps: []resource.TestStep{
 			{
 				// SCN-113-01: port_range_min greater than port_range_max.
-				Config:      testAccNetworkingSecGroupRuleV2PortRange(projectName, 100, 50),
+				Config:      testAccNetworkingSecGroupRuleV2PortRange(projectID, region, 100, 50),
 				ExpectError: regexp.MustCompile(`(?i)error creating|invalid|bad request`),
 			},
 			{
 				// SCN-113-02: an IPv6 prefix with ethertype IPv4.
-				Config:      testAccNetworkingSecGroupRuleV2EtherTypeMismatch(projectName),
+				Config:      testAccNetworkingSecGroupRuleV2EtherTypeMismatch(projectID, region),
 				ExpectError: regexp.MustCompile(`(?i)error creating|invalid|ethertype|conflict`),
 			},
 		},
@@ -379,15 +415,15 @@ func TestAccNetworkingSecGroupRuleV2APIValidation(t *testing.T) {
 // TestAccNetworkingSecGroupRuleV2Duplicate covers SCN-114-01: an identical rule
 // on the same group is refused by the API.
 func TestAccNetworkingSecGroupRuleV2Duplicate(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSecGroupRuleV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccNetworkingSecGroupRuleV2Duplicate(projectName),
+				Config:      testAccNetworkingSecGroupRuleV2Duplicate(projectID, region),
 				ExpectError: regexp.MustCompile(`(?i)already exists|conflict|duplicate`),
 			},
 		},
@@ -398,24 +434,24 @@ func TestAccNetworkingSecGroupRuleV2Duplicate(t *testing.T) {
 // removed outside Terraform leaves the state without an error.
 func TestAccNetworkingSecGroupRuleV2ExternalDeletion(t *testing.T) {
 	var found securitygroup.SecurityGroupRule
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSecGroupRuleV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSecGroupRuleV2IngressPrefix(projectName, "192.168.199.0/24"),
+				Config: testAccNetworkingSecGroupRuleV2IngressPrefix(projectID, region, "192.168.199.0/24"),
 				Check:  testAccCheckNetworkingSecGroupRuleV2Exists(&found),
 			},
 			{
-				Config:             testAccNetworkingSecGroupRuleV2IngressPrefix(projectName, "192.168.199.0/24"),
+				Config:             testAccNetworkingSecGroupRuleV2IngressPrefix(projectID, region, "192.168.199.0/24"),
 				Check:              testAccCheckNetworkingSecGroupRuleV2DeleteOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				Config: testAccNetworkingSecGroupRuleV2IngressPrefix(projectName, "192.168.199.0/24"),
+				Config: testAccNetworkingSecGroupRuleV2IngressPrefix(projectID, region, "192.168.199.0/24"),
 				Check:  testAccCheckNetworkingSecGroupRuleV2Exists(&found),
 			},
 		},
@@ -467,7 +503,7 @@ func testAccCheckNetworkingSecGroupRuleV2Destroy(s *terraform.State) error {
 			rs.Primary.Attributes["region"],
 		)
 		if err != nil {
-			return nil //nolint:nilerr // the project is gone together with the rule
+			return err
 		}
 
 		if _, err := securitygroup.GetRule(context.Background(), client, rs.Primary.ID); err == nil {
@@ -484,10 +520,10 @@ func testAccCheckNetworkingSecGroupRuleV2Destroy(s *terraform.State) error {
 // Configurations.
 // -----------------------------------------------------------------------------
 
-func testAccNetworkingSecGroupRuleV2IngressPrefix(projectName, prefix string) string {
-	return testAccNetworkingSecGroupV2Basic(projectName, "secgroup-1") + fmt.Sprintf(`
+func testAccNetworkingSecGroupRuleV2IngressPrefix(projectID, region, prefix string) string {
+	return testAccNetworkingSecGroupV2Basic(projectID, region, "secgroup-1") + fmt.Sprintf(`
 resource "selectel_networking_secgroup_rule_v2" "rule_tf_acc_test_1" {
-  project_id        = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id        = local.project_id
   region            = "%s"
   security_group_id = selectel_networking_secgroup_v2.secgroup_tf_acc_test_1.id
   direction         = "ingress"
@@ -497,13 +533,13 @@ resource "selectel_networking_secgroup_rule_v2" "rule_tf_acc_test_1" {
   port_range_max    = 22
   remote_ip_prefix  = "%s"
 }
-`, networkingV2TestRegion(), prefix)
+`, region, prefix)
 }
 
-func testAccNetworkingSecGroupRuleV2IPv6Prefix(projectName, prefix string) string {
-	return testAccNetworkingSecGroupV2Basic(projectName, "secgroup-1") + fmt.Sprintf(`
+func testAccNetworkingSecGroupRuleV2IPv6Prefix(projectID, region, prefix string) string {
+	return testAccNetworkingSecGroupV2Basic(projectID, region, "secgroup-1") + fmt.Sprintf(`
 resource "selectel_networking_secgroup_rule_v2" "rule_tf_acc_test_1" {
-  project_id        = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id        = local.project_id
   region            = "%s"
   security_group_id = selectel_networking_secgroup_v2.secgroup_tf_acc_test_1.id
   direction         = "ingress"
@@ -513,32 +549,32 @@ resource "selectel_networking_secgroup_rule_v2" "rule_tf_acc_test_1" {
   port_range_max    = 443
   remote_ip_prefix  = "%s"
 }
-`, networkingV2TestRegion(), prefix)
+`, region, prefix)
 }
 
-func testAccNetworkingSecGroupRuleV2RemoteGroup(projectName string) string {
-	return testAccNetworkingSecGroupV2Basic(projectName, "secgroup-1") + fmt.Sprintf(`
+func testAccNetworkingSecGroupRuleV2RemoteGroup(projectID, region string) string {
+	return testAccNetworkingSecGroupV2Basic(projectID, region, "secgroup-1") + fmt.Sprintf(`
 resource "selectel_networking_secgroup_v2" "secgroup_tf_acc_test_2" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%[1]s"
   name       = "secgroup-2"
 }
 
 resource "selectel_networking_secgroup_rule_v2" "rule_tf_acc_test_1" {
-  project_id        = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id        = local.project_id
   region            = "%[1]s"
   security_group_id = selectel_networking_secgroup_v2.secgroup_tf_acc_test_1.id
   direction         = "egress"
   ethertype         = "IPv4"
   remote_group_id   = selectel_networking_secgroup_v2.secgroup_tf_acc_test_2.id
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingSecGroupRuleV2BothRemotes(projectName string) string {
-	return testAccNetworkingSecGroupV2Basic(projectName, "secgroup-1") + fmt.Sprintf(`
+func testAccNetworkingSecGroupRuleV2BothRemotes(projectID, region string) string {
+	return testAccNetworkingSecGroupV2Basic(projectID, region, "secgroup-1") + fmt.Sprintf(`
 resource "selectel_networking_secgroup_rule_v2" "rule_tf_acc_test_1" {
-  project_id        = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id        = local.project_id
   region            = "%s"
   security_group_id = selectel_networking_secgroup_v2.secgroup_tf_acc_test_1.id
   direction         = "ingress"
@@ -546,13 +582,13 @@ resource "selectel_networking_secgroup_rule_v2" "rule_tf_acc_test_1" {
   remote_group_id   = selectel_networking_secgroup_v2.secgroup_tf_acc_test_1.id
   remote_ip_prefix  = "192.168.199.0/24"
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingSecGroupRuleV2PortRangeWithoutProtocol(projectName string) string {
-	return testAccNetworkingSecGroupV2Basic(projectName, "secgroup-1") + fmt.Sprintf(`
+func testAccNetworkingSecGroupRuleV2PortRangeWithoutProtocol(projectID, region string) string {
+	return testAccNetworkingSecGroupV2Basic(projectID, region, "secgroup-1") + fmt.Sprintf(`
 resource "selectel_networking_secgroup_rule_v2" "rule_tf_acc_test_1" {
-  project_id        = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id        = local.project_id
   region            = "%s"
   security_group_id = selectel_networking_secgroup_v2.secgroup_tf_acc_test_1.id
   direction         = "ingress"
@@ -560,27 +596,41 @@ resource "selectel_networking_secgroup_rule_v2" "rule_tf_acc_test_1" {
   port_range_min    = 22
   port_range_max    = 22
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingSecGroupRuleV2SingleBound(projectName string) string {
-	return testAccNetworkingSecGroupV2Basic(projectName, "secgroup-1") + fmt.Sprintf(`
+func testAccNetworkingSecGroupRuleV2ICMPType(projectID, region string) string {
+	return testAccNetworkingSecGroupV2Basic(projectID, region, "secgroup-1") + fmt.Sprintf(`
 resource "selectel_networking_secgroup_rule_v2" "rule_tf_acc_test_1" {
-  project_id        = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id        = local.project_id
+  region            = "%s"
+  security_group_id = selectel_networking_secgroup_v2.secgroup_tf_acc_test_1.id
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "icmp"
+  port_range_min    = 8
+}
+`, region)
+}
+
+func testAccNetworkingSecGroupRuleV2MaxWithoutMin(projectID, region string) string {
+	return testAccNetworkingSecGroupV2Basic(projectID, region, "secgroup-1") + fmt.Sprintf(`
+resource "selectel_networking_secgroup_rule_v2" "rule_tf_acc_test_1" {
+  project_id        = local.project_id
   region            = "%s"
   security_group_id = selectel_networking_secgroup_v2.secgroup_tf_acc_test_1.id
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
-  port_range_min    = 22
+  port_range_max    = 22
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingSecGroupRuleV2PortRange(projectName string, minPort, maxPort int) string {
-	return testAccNetworkingSecGroupV2Basic(projectName, "secgroup-1") + fmt.Sprintf(`
+func testAccNetworkingSecGroupRuleV2PortRange(projectID, region string, minPort, maxPort int) string {
+	return testAccNetworkingSecGroupV2Basic(projectID, region, "secgroup-1") + fmt.Sprintf(`
 resource "selectel_networking_secgroup_rule_v2" "rule_tf_acc_test_1" {
-  project_id        = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id        = local.project_id
   region            = "%s"
   security_group_id = selectel_networking_secgroup_v2.secgroup_tf_acc_test_1.id
   direction         = "ingress"
@@ -589,28 +639,28 @@ resource "selectel_networking_secgroup_rule_v2" "rule_tf_acc_test_1" {
   port_range_min    = %d
   port_range_max    = %d
 }
-`, networkingV2TestRegion(), minPort, maxPort)
+`, region, minPort, maxPort)
 }
 
-func testAccNetworkingSecGroupRuleV2EtherTypeMismatch(projectName string) string {
-	return testAccNetworkingSecGroupV2Basic(projectName, "secgroup-1") + fmt.Sprintf(`
+func testAccNetworkingSecGroupRuleV2EtherTypeMismatch(projectID, region string) string {
+	return testAccNetworkingSecGroupV2Basic(projectID, region, "secgroup-1") + fmt.Sprintf(`
 resource "selectel_networking_secgroup_rule_v2" "rule_tf_acc_test_1" {
-  project_id        = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id        = local.project_id
   region            = "%s"
   security_group_id = selectel_networking_secgroup_v2.secgroup_tf_acc_test_1.id
   direction         = "ingress"
   ethertype         = "IPv4"
   remote_ip_prefix  = "2001:db8::/64"
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
 // testAccNetworkingSecGroupRuleV2Duplicate declares two rules with the same
 // comparable fields on the same group.
-func testAccNetworkingSecGroupRuleV2Duplicate(projectName string) string {
-	return testAccNetworkingSecGroupRuleV2IngressPrefix(projectName, "192.168.199.0/24") + fmt.Sprintf(`
+func testAccNetworkingSecGroupRuleV2Duplicate(projectID, region string) string {
+	return testAccNetworkingSecGroupRuleV2IngressPrefix(projectID, region, "192.168.199.0/24") + fmt.Sprintf(`
 resource "selectel_networking_secgroup_rule_v2" "rule_tf_acc_test_2" {
-  project_id        = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id        = local.project_id
   region            = "%s"
   security_group_id = selectel_networking_secgroup_v2.secgroup_tf_acc_test_1.id
   direction         = "ingress"
@@ -622,5 +672,5 @@ resource "selectel_networking_secgroup_rule_v2" "rule_tf_acc_test_2" {
 
   depends_on = [selectel_networking_secgroup_rule_v2.rule_tf_acc_test_1]
 }
-`, networkingV2TestRegion())
+`, region)
 }

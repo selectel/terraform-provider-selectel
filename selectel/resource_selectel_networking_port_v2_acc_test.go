@@ -22,15 +22,15 @@ const (
 // plan), SCN-046-01 (import) and SCN-045-01 (delete).
 func TestAccNetworkingPortV2Basic(t *testing.T) {
 	var found port.Port
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingPortV2Basic(projectName),
+				Config: testAccNetworkingPortV2Basic(projectID, region),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingPortV2Exists(&found),
 					// The API assigns these when the configuration leaves them out.
@@ -48,7 +48,7 @@ func TestAccNetworkingPortV2Basic(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingPortV2Basic(projectName),
+				Config:   testAccNetworkingPortV2Basic(projectID, region),
 				PlanOnly: true,
 			},
 			{
@@ -65,15 +65,15 @@ func TestAccNetworkingPortV2Basic(t *testing.T) {
 // TestAccNetworkingPortV2FixedIP covers SCN-038-01 and SCN-038-02.
 func TestAccNetworkingPortV2FixedIP(t *testing.T) {
 	var found port.Port
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingPortV2FixedIP(projectName, "192.168.199.50"),
+				Config: testAccNetworkingPortV2FixedIP(projectID, region, "192.168.199.50"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingPortV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingPortV2ResourceName, "all_fixed_ips.#", "1"),
@@ -81,12 +81,12 @@ func TestAccNetworkingPortV2FixedIP(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingPortV2FixedIP(projectName, "192.168.199.50"),
+				Config:   testAccNetworkingPortV2FixedIP(projectID, region, "192.168.199.50"),
 				PlanOnly: true,
 			},
 			{
 				// SCN-041-04: the address set changes in place.
-				Config: testAccNetworkingPortV2FixedIP(projectName, "192.168.199.51"),
+				Config: testAccNetworkingPortV2FixedIP(projectID, region, "192.168.199.51"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingPortV2SameID(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingPortV2ResourceName, "all_fixed_ips.0.ip_address", "192.168.199.51"),
@@ -100,22 +100,22 @@ func TestAccNetworkingPortV2FixedIP(t *testing.T) {
 // port without any address even though a DHCP subnet exists.
 func TestAccNetworkingPortV2NoFixedIP(t *testing.T) {
 	var found port.Port
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingPortV2NoFixedIP(projectName),
+				Config: testAccNetworkingPortV2NoFixedIP(projectID, region),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingPortV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingPortV2ResourceName, "all_fixed_ips.#", "0"),
 				),
 			},
 			{
-				Config:   testAccNetworkingPortV2NoFixedIP(projectName),
+				Config:   testAccNetworkingPortV2NoFixedIP(projectID, region),
 				PlanOnly: true,
 			},
 		},
@@ -126,22 +126,22 @@ func TestAccNetworkingPortV2NoFixedIP(t *testing.T) {
 // SCN-041-02 and SCN-041-03.
 func TestAccNetworkingPortV2SecurityGroups(t *testing.T) {
 	var found port.Port
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingPortV2NoSecurityGroups(projectName),
+				Config: testAccNetworkingPortV2NoSecurityGroups(projectID, region),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingPortV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingPortV2ResourceName, "all_security_group_ids.#", "0"),
 				),
 			},
 			{
-				Config:   testAccNetworkingPortV2NoSecurityGroups(projectName),
+				Config:   testAccNetworkingPortV2NoSecurityGroups(projectID, region),
 				PlanOnly: true,
 			},
 		},
@@ -152,16 +152,16 @@ func TestAccNetworkingPortV2SecurityGroups(t *testing.T) {
 // the binding.vnic_type part of SCN-041-05.
 func TestAccNetworkingPortV2ExtendedAttributes(t *testing.T) {
 	var found port.Port
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	portName := acctest.RandomWithPrefix("tf-acc-port")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingPortV2Extended(projectName, portName),
+				Config: testAccNetworkingPortV2Extended(projectID, region, portName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingPortV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingPortV2ResourceName, "name", portName),
@@ -172,7 +172,7 @@ func TestAccNetworkingPortV2ExtendedAttributes(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingPortV2Extended(projectName, portName),
+				Config:   testAccNetworkingPortV2Extended(projectID, region, portName),
 				PlanOnly: true,
 			},
 		},
@@ -182,21 +182,21 @@ func TestAccNetworkingPortV2ExtendedAttributes(t *testing.T) {
 // TestAccNetworkingPortV2Update covers SCN-041-01 and SCN-041-05.
 func TestAccNetworkingPortV2Update(t *testing.T) {
 	var found port.Port
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	portName := acctest.RandomWithPrefix("tf-acc-port")
 	updatedName := acctest.RandomWithPrefix("tf-acc-port-upd")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingPortV2Extended(projectName, portName),
+				Config: testAccNetworkingPortV2Extended(projectID, region, portName),
 				Check:  testAccCheckNetworkingPortV2Exists(&found),
 			},
 			{
-				Config: testAccNetworkingPortV2ExtendedUpdated(projectName, updatedName),
+				Config: testAccNetworkingPortV2ExtendedUpdated(projectID, region, updatedName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingPortV2SameID(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingPortV2ResourceName, "name", updatedName),
@@ -208,7 +208,7 @@ func TestAccNetworkingPortV2Update(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingPortV2ExtendedUpdated(projectName, updatedName),
+				Config:   testAccNetworkingPortV2ExtendedUpdated(projectID, region, updatedName),
 				PlanOnly: true,
 			},
 		},
@@ -219,30 +219,30 @@ func TestAccNetworkingPortV2Update(t *testing.T) {
 // SCN-045-02.
 func TestAccNetworkingPortV2ExternalChanges(t *testing.T) {
 	var found port.Port
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	portName := acctest.RandomWithPrefix("tf-acc-port")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingPortV2Named(projectName, portName),
+				Config: testAccNetworkingPortV2Named(projectID, region, portName),
 				Check:  testAccCheckNetworkingPortV2Exists(&found),
 			},
 			{
-				Config:             testAccNetworkingPortV2Named(projectName, portName),
+				Config:             testAccNetworkingPortV2Named(projectID, region, portName),
 				Check:              testAccCheckNetworkingPortV2RenameOutOfBand(&found),
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				Config:             testAccNetworkingPortV2Named(projectName, portName),
+				Config:             testAccNetworkingPortV2Named(projectID, region, portName),
 				Check:              testAccCheckNetworkingPortV2DeleteOutOfBand(),
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				Config: testAccNetworkingPortV2Named(projectName, portName),
+				Config: testAccNetworkingPortV2Named(projectID, region, portName),
 				Check:  testAccCheckNetworkingPortV2Exists(&found),
 			},
 		},
@@ -252,16 +252,16 @@ func TestAccNetworkingPortV2ExternalChanges(t *testing.T) {
 // TestAccNetworkingPortV2DataSource covers SCN-047-01 … SCN-047-03, including the
 // two partial-match selectors.
 func TestAccNetworkingPortV2DataSource(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 	portName := acctest.RandomWithPrefix("tf-acc-port")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingPortV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingPortV2DataSource(projectName, portName),
+				Config: testAccNetworkingPortV2DataSource(projectID, region, portName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testAccNetworkingPortV2DataSourceName, "name", portName),
 					resource.TestCheckResourceAttrPair(
@@ -275,7 +275,7 @@ func TestAccNetworkingPortV2DataSource(t *testing.T) {
 				),
 			},
 			{
-				Config:      testAccNetworkingPortV2DataSourceNoMatch(projectName),
+				Config:      testAccNetworkingPortV2DataSourceNoMatch(projectID, region),
 				ExpectError: regexp.MustCompile(`no networking port found`),
 			},
 		},
@@ -380,7 +380,7 @@ func testAccCheckNetworkingPortV2Destroy(s *terraform.State) error {
 			rs.Primary.Attributes["region"],
 		)
 		if err != nil {
-			return nil //nolint:nilerr // the project is gone together with the port
+			return err
 		}
 
 		if _, err := port.Get(context.Background(), client, rs.Primary.ID); err == nil {
@@ -398,39 +398,39 @@ func testAccCheckNetworkingPortV2Destroy(s *terraform.State) error {
 // -----------------------------------------------------------------------------
 
 // testAccNetworkingPortV2Subnet gives the port a network with a DHCP subnet.
-func testAccNetworkingPortV2Subnet(projectName string) string {
-	return testAccNetworkingSubnetV2Basic(projectName, "192.168.199.0/24")
+func testAccNetworkingPortV2Subnet(projectID, region string) string {
+	return testAccNetworkingSubnetV2Basic(projectID, region, "192.168.199.0/24")
 }
 
-func testAccNetworkingPortV2Basic(projectName string) string {
-	return testAccNetworkingPortV2Subnet(projectName) + fmt.Sprintf(`
+func testAccNetworkingPortV2Basic(projectID, region string) string {
+	return testAccNetworkingPortV2Subnet(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   network_id = selectel_networking_network_v2.network_tf_acc_test_1.id
 
   depends_on = [selectel_networking_subnet_v2.subnet_tf_acc_test_1]
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingPortV2Named(projectName, portName string) string {
-	return testAccNetworkingPortV2Subnet(projectName) + fmt.Sprintf(`
+func testAccNetworkingPortV2Named(projectID, region, portName string) string {
+	return testAccNetworkingPortV2Subnet(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   network_id = selectel_networking_network_v2.network_tf_acc_test_1.id
   name       = "%s"
 
   depends_on = [selectel_networking_subnet_v2.subnet_tf_acc_test_1]
 }
-`, networkingV2TestRegion(), portName)
+`, region, portName)
 }
 
-func testAccNetworkingPortV2FixedIP(projectName, address string) string {
-	return testAccNetworkingPortV2Subnet(projectName) + fmt.Sprintf(`
+func testAccNetworkingPortV2FixedIP(projectID, region, address string) string {
+	return testAccNetworkingPortV2Subnet(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   network_id = selectel_networking_network_v2.network_tf_acc_test_1.id
 
@@ -439,39 +439,39 @@ resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
     ip_address = "%s"
   }
 }
-`, networkingV2TestRegion(), address)
+`, region, address)
 }
 
-func testAccNetworkingPortV2NoFixedIP(projectName string) string {
-	return testAccNetworkingPortV2Subnet(projectName) + fmt.Sprintf(`
+func testAccNetworkingPortV2NoFixedIP(projectID, region string) string {
+	return testAccNetworkingPortV2Subnet(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
-  project_id  = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id  = local.project_id
   region      = "%s"
   network_id  = selectel_networking_network_v2.network_tf_acc_test_1.id
   no_fixed_ip = true
 
   depends_on = [selectel_networking_subnet_v2.subnet_tf_acc_test_1]
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingPortV2NoSecurityGroups(projectName string) string {
-	return testAccNetworkingPortV2Subnet(projectName) + fmt.Sprintf(`
+func testAccNetworkingPortV2NoSecurityGroups(projectID, region string) string {
+	return testAccNetworkingPortV2Subnet(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
-  project_id         = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id         = local.project_id
   region             = "%s"
   network_id         = selectel_networking_network_v2.network_tf_acc_test_1.id
   no_security_groups = true
 
   depends_on = [selectel_networking_subnet_v2.subnet_tf_acc_test_1]
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingPortV2Extended(projectName, portName string) string {
-	return testAccNetworkingPortV2Subnet(projectName) + fmt.Sprintf(`
+func testAccNetworkingPortV2Extended(projectID, region, portName string) string {
+	return testAccNetworkingPortV2Subnet(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
-  project_id     = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id     = local.project_id
   region         = "%s"
   network_id     = selectel_networking_network_v2.network_tf_acc_test_1.id
   name           = "%s"
@@ -501,13 +501,13 @@ resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
     vnic_type = "normal"
   }
 }
-`, networkingV2TestRegion(), portName)
+`, region, portName)
 }
 
-func testAccNetworkingPortV2ExtendedUpdated(projectName, portName string) string {
-	return testAccNetworkingPortV2Subnet(projectName) + fmt.Sprintf(`
+func testAccNetworkingPortV2ExtendedUpdated(projectID, region, portName string) string {
+	return testAccNetworkingPortV2Subnet(projectID, region) + fmt.Sprintf(`
 resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
-  project_id     = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id     = local.project_id
   region         = "%s"
   network_id     = selectel_networking_network_v2.network_tf_acc_test_1.id
   name           = "%s"
@@ -536,25 +536,25 @@ resource "selectel_networking_port_v2" "port_tf_acc_test_1" {
     vnic_type = "normal"
   }
 }
-`, networkingV2TestRegion(), portName)
+`, region, portName)
 }
 
-func testAccNetworkingPortV2DataSource(projectName, portName string) string {
-	return testAccNetworkingPortV2Named(projectName, portName) + fmt.Sprintf(`
+func testAccNetworkingPortV2DataSource(projectID, region, portName string) string {
+	return testAccNetworkingPortV2Named(projectID, region, portName) + fmt.Sprintf(`
 data "selectel_networking_port_v2" "port_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = selectel_networking_port_v2.port_tf_acc_test_1.name
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingPortV2DataSourceNoMatch(projectName string) string {
-	return testAccNetworkingPortV2Subnet(projectName) + fmt.Sprintf(`
+func testAccNetworkingPortV2DataSourceNoMatch(projectID, region string) string {
+	return testAccNetworkingPortV2Subnet(projectID, region) + fmt.Sprintf(`
 data "selectel_networking_port_v2" "port_tf_acc_test_1" {
-  project_id = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id = local.project_id
   region     = "%s"
   name       = "tf-acc-no-such-port"
 }
-`, networkingV2TestRegion())
+`, region)
 }

@@ -122,17 +122,26 @@ func TestNetworkingSDKContract(t *testing.T) {
 	})
 
 	t.Run("port accepts extra_dhcp_opts and binding vnic_type on create and update", func(t *testing.T) {
-		options := []port.ExtraDHCPOption{{Name: "tftp-server", Value: "10.0.0.1"}}
+		value := "10.0.0.1"
+		options := []port.ExtraDHCPOption{{Name: "tftp-server", Value: value}}
 		vnicType := "normal"
 
+		// An update takes the option type whose value is nullable, because a removal
+		// is expressed as a name with a null value.
+		updateOptions := []port.UpdateExtraDHCPOption{
+			{Name: "tftp-server", Value: &value},
+			{Name: "bootfile-name"},
+		}
+
 		createReq := port.CreateRequest{ExtraDHCPOptions: &options, BindingVNICType: &vnicType}
-		updateReq := port.UpdateRequest{ExtraDHCPOptions: &options, BindingVNICType: &vnicType}
+		updateReq := port.UpdateRequest{ExtraDHCPOptions: &updateOptions, BindingVNICType: &vnicType}
 
 		require.NotNil(t, createReq.ExtraDHCPOptions)
 		require.NotNil(t, createReq.BindingVNICType)
 		require.NotNil(t, updateReq.ExtraDHCPOptions)
 		require.NotNil(t, updateReq.BindingVNICType)
 		assert.Equal(t, "tftp-server", (*createReq.ExtraDHCPOptions)[0].Name)
+		assert.Nil(t, (*updateReq.ExtraDHCPOptions)[1].Value)
 	})
 
 	t.Run("router accepts flavor_id on create only", func(t *testing.T) {

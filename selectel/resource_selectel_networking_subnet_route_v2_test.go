@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/subnet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -125,15 +125,15 @@ func TestNetworkingSubnetRouteV2Index(t *testing.T) {
 // TestAccNetworkingSubnetRouteV2Basic covers SCN-023-01, SCN-023-02 (empty
 // follow-up plan) and SCN-028-01 (import by the composite identifier).
 func TestAccNetworkingSubnetRouteV2Basic(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSubnetRouteV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSubnetRouteV2Basic(projectName, "10.0.0.0/8", "192.168.199.10"),
+				Config: testAccNetworkingSubnetRouteV2Basic(projectID, region, "10.0.0.0/8", "192.168.199.10"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingSubnetRouteV2Exists("10.0.0.0/8", "192.168.199.10"),
 					resource.TestCheckResourceAttr(testAccNetworkingSubnetRouteV2ResourceName, "destination_cidr", "10.0.0.0/8"),
@@ -141,7 +141,7 @@ func TestAccNetworkingSubnetRouteV2Basic(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingSubnetRouteV2Basic(projectName, "10.0.0.0/8", "192.168.199.10"),
+				Config:   testAccNetworkingSubnetRouteV2Basic(projectID, region, "10.0.0.0/8", "192.168.199.10"),
 				PlanOnly: true,
 			},
 			{
@@ -156,19 +156,19 @@ func TestAccNetworkingSubnetRouteV2Basic(t *testing.T) {
 // TestAccNetworkingSubnetRouteV2ForceNew covers SCN-023-03: changing the route
 // pair replaces the resource instead of updating it.
 func TestAccNetworkingSubnetRouteV2ForceNew(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSubnetRouteV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSubnetRouteV2Basic(projectName, "10.0.0.0/8", "192.168.199.10"),
+				Config: testAccNetworkingSubnetRouteV2Basic(projectID, region, "10.0.0.0/8", "192.168.199.10"),
 				Check:  testAccCheckNetworkingSubnetRouteV2Exists("10.0.0.0/8", "192.168.199.10"),
 			},
 			{
-				Config: testAccNetworkingSubnetRouteV2Basic(projectName, "172.16.0.0/12", "192.168.199.10"),
+				Config: testAccNetworkingSubnetRouteV2Basic(projectID, region, "172.16.0.0/12", "192.168.199.10"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingSubnetRouteV2Exists("172.16.0.0/12", "192.168.199.10"),
 					// The replaced route is gone from the subnet.
@@ -183,15 +183,15 @@ func TestAccNetworkingSubnetRouteV2ForceNew(t *testing.T) {
 // resource leaves other host_routes alone, and SCN-024-02: the same destination
 // with a different next hop is a separate route, not a conflict.
 func TestAccNetworkingSubnetRouteV2Coexist(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSubnetRouteV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSubnetRouteV2Pair(projectName),
+				Config: testAccNetworkingSubnetRouteV2Pair(projectID, region),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingSubnetRouteV2Exists("10.0.0.0/8", "192.168.199.10"),
 					testAccCheckNetworkingSubnetRouteV2Exists("10.0.0.0/8", "192.168.199.11"),
@@ -199,7 +199,7 @@ func TestAccNetworkingSubnetRouteV2Coexist(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccNetworkingSubnetRouteV2Pair(projectName),
+				Config:   testAccNetworkingSubnetRouteV2Pair(projectID, region),
 				PlanOnly: true,
 			},
 		},
@@ -209,15 +209,15 @@ func TestAccNetworkingSubnetRouteV2Coexist(t *testing.T) {
 // TestAccNetworkingSubnetRouteV2Conflict covers SCN-024-01: an exact duplicate
 // of an existing entry is refused without touching host_routes.
 func TestAccNetworkingSubnetRouteV2Conflict(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSubnetRouteV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccNetworkingSubnetRouteV2Duplicate(projectName),
+				Config:      testAccNetworkingSubnetRouteV2Duplicate(projectID, region),
 				ExpectError: regexp.MustCompile(`already exists on subnet`),
 			},
 		},
@@ -227,15 +227,15 @@ func TestAccNetworkingSubnetRouteV2Conflict(t *testing.T) {
 // TestAccNetworkingSubnetRouteV2InvalidValues covers SCN-025-01: the API, not the
 // schema, rejects a malformed route, and no resource appears in the state.
 func TestAccNetworkingSubnetRouteV2InvalidValues(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSubnetRouteV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccNetworkingSubnetRouteV2Basic(projectName, "not-a-cidr", "192.168.199.10"),
+				Config:      testAccNetworkingSubnetRouteV2Basic(projectID, region, "not-a-cidr", "192.168.199.10"),
 				ExpectError: regexp.MustCompile(`error creating networking subnet route`),
 			},
 		},
@@ -246,21 +246,32 @@ func TestAccNetworkingSubnetRouteV2InvalidValues(t *testing.T) {
 // subnet exists, a route that disappeared outside Terraform is reported as an
 // error rather than silently dropped from the state.
 func TestAccNetworkingSubnetRouteV2ExternalRemoval(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID, region := networkingV2TestEnv()
+	var removed networkingSubnetRouteV2Removed
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckNetworkingSubnetRouteV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSubnetRouteV2Basic(projectName, "10.0.0.0/8", "192.168.199.10"),
+				Config: testAccNetworkingSubnetRouteV2Basic(projectID, region, "10.0.0.0/8", "192.168.199.10"),
 				Check:  testAccCheckNetworkingSubnetRouteV2Exists("10.0.0.0/8", "192.168.199.10"),
 			},
 			{
-				Config:      testAccNetworkingSubnetRouteV2Basic(projectName, "10.0.0.0/8", "192.168.199.10"),
-				Check:       testAccCheckNetworkingSubnetRouteV2RemoveOutOfBand("10.0.0.0/8", "192.168.199.10"),
+				// SCN-027-01: the refresh after the removal reports the route as gone.
+				Config:      testAccNetworkingSubnetRouteV2Basic(projectID, region, "10.0.0.0/8", "192.168.199.10"),
+				Check:       testAccCheckNetworkingSubnetRouteV2RemoveOutOfBand("10.0.0.0/8", "192.168.199.10", &removed),
 				ExpectError: regexp.MustCompile(`no longer present on subnet`),
+			},
+			{
+				// SCN-027-02 says Delete of an absent route is an error too, so the
+				// route has to come back before the framework destroys anything —
+				// otherwise the run ends with an unremovable resource rather than
+				// with the finding this test is about.
+				PreConfig: removed.restore,
+				Config:    testAccNetworkingSubnetRouteV2Basic(projectID, region, "10.0.0.0/8", "192.168.199.10"),
+				Check:     testAccCheckNetworkingSubnetRouteV2Exists("10.0.0.0/8", "192.168.199.10"),
 			},
 		},
 	})
@@ -341,7 +352,31 @@ func testAccCheckNetworkingSubnetRouteV2Count(want int) resource.TestCheckFunc {
 
 // testAccCheckNetworkingSubnetRouteV2RemoveOutOfBand drops the route from the
 // subnet without Terraform, producing the disappearance SCN-027-01 describes.
-func testAccCheckNetworkingSubnetRouteV2RemoveOutOfBand(destination, nextHop string) resource.TestCheckFunc {
+// networkingSubnetRouteV2Removed remembers what an out-of-band removal took away.
+// REQ-027 makes both Read and Delete report an absent route as a diagnostic error,
+// so a test that removes one cannot be cleaned up by Terraform: the route has to be
+// put back first, and PreConfig — the only hook that runs before a step's refresh —
+// has no access to the state.
+type networkingSubnetRouteV2Removed struct {
+	client   *vpc.Client
+	subnetID string
+	routes   []subnet.HostRoute
+}
+
+// restore puts the recorded host routes back on the subnet.
+func (removed *networkingSubnetRouteV2Removed) restore() {
+	if removed.client == nil {
+		return
+	}
+
+	_, _ = subnet.Update(context.Background(), removed.client, removed.subnetID, subnet.UpdateRequest{
+		HostRoutes: &removed.routes,
+	})
+}
+
+func testAccCheckNetworkingSubnetRouteV2RemoveOutOfBand(
+	destination, nextHop string, removed *networkingSubnetRouteV2Removed,
+) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[testAccNetworkingSubnetV2ResourceName]
 		if !ok {
@@ -360,6 +395,11 @@ func testAccCheckNetworkingSubnetRouteV2RemoveOutOfBand(destination, nextHop str
 		found, err := subnet.Get(context.Background(), client, rs.Primary.ID)
 		if err != nil {
 			return err
+		}
+
+		if removed != nil {
+			removed.client, removed.subnetID = client, rs.Primary.ID
+			removed.routes = append([]subnet.HostRoute(nil), found.HostRoutes...)
 		}
 
 		route := subnet.HostRoute{Destination: destination, NextHop: nextHop}
@@ -392,7 +432,7 @@ func testAccCheckNetworkingSubnetRouteV2Destroy(s *terraform.State) error {
 			rs.Primary.Attributes["region"],
 		)
 		if err != nil {
-			return nil //nolint:nilerr // the project is gone together with the subnet
+			return err
 		}
 
 		subnetID, route, err := parseNetworkingSubnetRouteV2ID(rs.Primary.ID)
@@ -421,22 +461,22 @@ func testAccCheckNetworkingSubnetRouteV2Destroy(s *terraform.State) error {
 // Acceptance test configurations.
 // -----------------------------------------------------------------------------
 
-func testAccNetworkingSubnetRouteV2Basic(projectName, destination, nextHop string) string {
-	return testAccNetworkingSubnetV2Basic(projectName, "192.168.199.0/24") + fmt.Sprintf(`
+func testAccNetworkingSubnetRouteV2Basic(projectID, region, destination, nextHop string) string {
+	return testAccNetworkingSubnetV2Basic(projectID, region, "192.168.199.0/24") + fmt.Sprintf(`
 resource "selectel_networking_subnet_route_v2" "route_tf_acc_test_1" {
-  project_id       = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id       = local.project_id
   region           = "%s"
   subnet_id        = selectel_networking_subnet_v2.subnet_tf_acc_test_1.id
   destination_cidr = "%s"
   next_hop         = "%s"
 }
-`, networkingV2TestRegion(), destination, nextHop)
+`, region, destination, nextHop)
 }
 
-func testAccNetworkingSubnetRouteV2Pair(projectName string) string {
-	return testAccNetworkingSubnetRouteV2Basic(projectName, "10.0.0.0/8", "192.168.199.10") + fmt.Sprintf(`
+func testAccNetworkingSubnetRouteV2Pair(projectID, region string) string {
+	return testAccNetworkingSubnetRouteV2Basic(projectID, region, "10.0.0.0/8", "192.168.199.10") + fmt.Sprintf(`
 resource "selectel_networking_subnet_route_v2" "route_tf_acc_test_2" {
-  project_id       = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id       = local.project_id
   region           = "%s"
   subnet_id        = selectel_networking_subnet_v2.subnet_tf_acc_test_1.id
   destination_cidr = "10.0.0.0/8"
@@ -444,13 +484,13 @@ resource "selectel_networking_subnet_route_v2" "route_tf_acc_test_2" {
 
   depends_on = [selectel_networking_subnet_route_v2.route_tf_acc_test_1]
 }
-`, networkingV2TestRegion())
+`, region)
 }
 
-func testAccNetworkingSubnetRouteV2Duplicate(projectName string) string {
-	return testAccNetworkingSubnetRouteV2Basic(projectName, "10.0.0.0/8", "192.168.199.10") + fmt.Sprintf(`
+func testAccNetworkingSubnetRouteV2Duplicate(projectID, region string) string {
+	return testAccNetworkingSubnetRouteV2Basic(projectID, region, "10.0.0.0/8", "192.168.199.10") + fmt.Sprintf(`
 resource "selectel_networking_subnet_route_v2" "route_tf_acc_test_duplicate" {
-  project_id       = selectel_vpc_project_v2.project_tf_acc_test_1.id
+  project_id       = local.project_id
   region           = "%s"
   subnet_id        = selectel_networking_subnet_v2.subnet_tf_acc_test_1.id
   destination_cidr = "10.0.0.0/8"
@@ -458,5 +498,5 @@ resource "selectel_networking_subnet_route_v2" "route_tf_acc_test_duplicate" {
 
   depends_on = [selectel_networking_subnet_route_v2.route_tf_acc_test_1]
 }
-`, networkingV2TestRegion())
+`, region)
 }
