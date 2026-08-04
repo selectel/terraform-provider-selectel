@@ -19,7 +19,7 @@ func TestServersMapsFromStructs(t *testing.T) {
 			Status: "ACTIVE",
 		},
 	}
-	expectedServersMaps := []map[string]interface{}{
+	expectedServersMaps := []map[string]any{
 		{
 			"id":     "a208023f-69fe-4a9e-8285-dd44e94a854a",
 			"name":   "fake",
@@ -396,7 +396,7 @@ func TestApiPartitionsConfigToSchema(t *testing.T) {
 				Type:     "partition",
 				Device:   "afa399ed-5bdb-5a40-8bb1-a9e181d2a85b",
 				Size:     -1.0,
-				Priority: ptr(1),
+				Priority: new(1),
 			},
 			"a2fc56c2-4788-320a-abef-17033ebdec41": {
 				Type: "soft_raid",
@@ -410,13 +410,13 @@ func TestApiPartitionsConfigToSchema(t *testing.T) {
 				Type:     "partition",
 				Device:   "258611b6-0647-5f3c-a2ec-b686355e58b5",
 				Size:     1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"2ceae753-dacd-ce55-2cb0-cd017ea30487": {
 				Type:     "partition",
 				Device:   "afa399ed-5bdb-5a40-8bb1-a9e181d2a85b",
 				Size:     -1.0,
-				Priority: ptr(1),
+				Priority: new(1),
 			},
 			"258611b6-0647-5f3c-a2ec-b686355e58b5": {
 				Type: "local_drive",
@@ -429,7 +429,7 @@ func TestApiPartitionsConfigToSchema(t *testing.T) {
 				Type:     "partition",
 				Device:   "258611b6-0647-5f3c-a2ec-b686355e58b5",
 				Size:     -1.0,
-				Priority: ptr(1),
+				Priority: new(1),
 			},
 			"134521be-a522-109b-6d05-23973eeb9a32": {
 				Type:   "filesystem",
@@ -447,7 +447,7 @@ func TestApiPartitionsConfigToSchema(t *testing.T) {
 		config := result[0]
 
 		// Check soft raids - should be 1 since both RAIDs have same disk type and level
-		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]interface{})
+		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]any)
 		require.True(t, ok)
 		require.Len(t, softRaids, 1, "should have 1 RAID (both RAIDs have same disk type and level)")
 
@@ -464,11 +464,11 @@ func TestApiPartitionsConfigToSchema(t *testing.T) {
 		diskConfigs, hasDiskConfigs := config[dedicatedServerSchemaKeyDiskConfig]
 		assert.False(t, hasDiskConfigs || diskConfigs != nil, "disk_config should not be present when all disks are in RAID")
 
-		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]any)
 		require.True(t, ok)
 		require.Len(t, diskPartitions, 2)
 
-		var bootPartition, rootPartition map[string]interface{}
+		var bootPartition, rootPartition map[string]any
 		for _, dp := range diskPartitions {
 			if mount, ok := dp[dedicatedServerSchemaKeyMount].(string); ok {
 				if mount == "/boot" {
@@ -522,7 +522,7 @@ func TestApiPartitionsConfigToSchema(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk1",
 				Size:     1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"fs1": {
 				Type:   "filesystem",
@@ -538,11 +538,11 @@ func TestApiPartitionsConfigToSchema(t *testing.T) {
 		require.Len(t, result, 1)
 
 		config := result[0]
-		diskConfigs, ok := config[dedicatedServerSchemaKeyDiskConfig].([]map[string]interface{})
+		diskConfigs, ok := config[dedicatedServerSchemaKeyDiskConfig].([]map[string]any)
 		require.True(t, ok)
 		assert.Len(t, diskConfigs, 1)
 
-		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]any)
 		require.True(t, ok)
 		assert.Len(t, diskPartitions, 1)
 	})
@@ -585,26 +585,26 @@ func TestApiPartitionsConfigToSchema(t *testing.T) {
 				Type:     "partition",
 				Device:   "nvme-drive1",
 				Size:     1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"nvme-root-part": {
 				Type:     "partition",
 				Device:   "nvme-drive2",
 				Size:     -1.0,
-				Priority: ptr(1),
+				Priority: new(1),
 			},
 			// HDD partitions (backup)
 			"hdd-backup-part1": {
 				Type:     "partition",
 				Device:   "hdd-drive1",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"hdd-backup-part2": {
 				Type:     "partition",
 				Device:   "hdd-drive2",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			// RAID arrays
 			"nvme-boot-raid": {
@@ -651,7 +651,7 @@ func TestApiPartitionsConfigToSchema(t *testing.T) {
 		config := result[0]
 
 		// Should have 2 RAID configs: one for NVMe, one for HDD
-		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]interface{})
+		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]any)
 		require.True(t, ok)
 		require.Len(t, softRaids, 2)
 
@@ -678,7 +678,7 @@ func TestApiPartitionsConfigToSchema(t *testing.T) {
 		assert.Equal(t, 2, hddCount, "HDD RAID should have 2 disks")
 
 		// Should have 3 partitions
-		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]any)
 		require.True(t, ok)
 		require.Len(t, diskPartitions, 3)
 	})
@@ -699,7 +699,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk1",
 				Size:     1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"fs1": {
 				Type:   "filesystem",
@@ -711,7 +711,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk1",
 				Size:     -1.0,
-				Priority: ptr(1),
+				Priority: new(1),
 			},
 			"fs2": {
 				Type:   "filesystem",
@@ -729,16 +729,16 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		config := result[0]
 
 		// No RAID configs (or empty array)
-		softRaids, hasSoftRaids := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]interface{})
+		softRaids, hasSoftRaids := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]any)
 		assert.True(t, !hasSoftRaids || len(softRaids) == 0)
 
 		// Has disk_config
-		diskConfigs, ok := config[dedicatedServerSchemaKeyDiskConfig].([]map[string]interface{})
+		diskConfigs, ok := config[dedicatedServerSchemaKeyDiskConfig].([]map[string]any)
 		require.True(t, ok)
 		assert.Len(t, diskConfigs, 1)
 
 		// Has partitions
-		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]any)
 		require.True(t, ok)
 		assert.Len(t, diskPartitions, 2)
 	})
@@ -757,7 +757,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk1",
 				Size:     1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"fs_boot": {
 				Type:   "filesystem",
@@ -769,7 +769,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk1",
 				Size:     100.0,
-				Priority: ptr(1),
+				Priority: new(1),
 			},
 			"fs_root": {
 				Type:   "filesystem",
@@ -781,7 +781,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk1",
 				Size:     -1.0,
-				Priority: ptr(2),
+				Priority: new(2),
 			},
 			"fs_home": {
 				Type:   "filesystem",
@@ -798,7 +798,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		require.Len(t, result, 1)
 
 		config := result[0]
-		partitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		partitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]any)
 		require.True(t, ok)
 
 		// Must be exactly 2 — /boot must be filtered out
@@ -820,18 +820,18 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 			"hdd1": {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 2000, Type: "HDD SATA"}},
 			"hdd2": {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 2000, Type: "HDD SATA"}},
 			// ssd1: /boot + /
-			"p-ssd1-boot": {Type: "partition", Device: "ssd1", Size: 1.0, Priority: ptr(0)},
+			"p-ssd1-boot": {Type: "partition", Device: "ssd1", Size: 1.0, Priority: new(0)},
 			"fs-boot":     {Type: "filesystem", Device: "p-ssd1-boot", FSType: "ext3", Mount: "/boot"},
-			"p-ssd1-root": {Type: "partition", Device: "ssd1", Size: -1.0, Priority: ptr(1)},
+			"p-ssd1-root": {Type: "partition", Device: "ssd1", Size: -1.0, Priority: new(1)},
 			"fs-root":     {Type: "filesystem", Device: "p-ssd1-root", FSType: "ext4", Mount: "/"},
 			// ssd2: /var
-			"p-ssd2-var": {Type: "partition", Device: "ssd2", Size: -1.0, Priority: ptr(0)},
+			"p-ssd2-var": {Type: "partition", Device: "ssd2", Size: -1.0, Priority: new(0)},
 			"fs-var":     {Type: "filesystem", Device: "p-ssd2-var", FSType: "ext4", Mount: "/var"},
 			// hdd1: /backup
-			"p-hdd1-bk": {Type: "partition", Device: "hdd1", Size: -1.0, Priority: ptr(0)},
+			"p-hdd1-bk": {Type: "partition", Device: "hdd1", Size: -1.0, Priority: new(0)},
 			"fs-backup": {Type: "filesystem", Device: "p-hdd1-bk", FSType: "ext4", Mount: "/backup"},
 			// hdd2: /system-backup
-			"p-hdd2-sb": {Type: "partition", Device: "hdd2", Size: -1.0, Priority: ptr(0)},
+			"p-hdd2-sb": {Type: "partition", Device: "hdd2", Size: -1.0, Priority: new(0)},
 			"fs-sysbk":  {Type: "filesystem", Device: "p-hdd2-sb", FSType: "ext4", Mount: "/system-backup"},
 		}
 
@@ -852,7 +852,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		config := result[0]
 
 		// Must have 4 disk_configs in user-config order
-		diskConfigs, ok := config[dedicatedServerSchemaKeyDiskConfig].([]map[string]interface{})
+		diskConfigs, ok := config[dedicatedServerSchemaKeyDiskConfig].([]map[string]any)
 		require.True(t, ok)
 		require.Len(t, diskConfigs, 4)
 
@@ -863,12 +863,12 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		assert.Equal(t, []string{"system", "data", "backup", "system-backup"}, names)
 
 		// disk_partitions must reference correct disk_names
-		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]any)
 		require.True(t, ok)
 		require.Len(t, diskPartitions, 5)
 
 		// Check /var partition has disk_name = "data"
-		var varPartition map[string]interface{}
+		var varPartition map[string]any
 		for _, dp := range diskPartitions {
 			if dp[dedicatedServerSchemaKeyMount] == "/var" {
 				varPartition = dp
@@ -879,7 +879,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		assert.Equal(t, "data", varPartition[dedicatedServerSchemaKeyDiskName])
 
 		// Check /system-backup partition has disk_name = "system-backup"
-		var sbPartition map[string]interface{}
+		var sbPartition map[string]any
 		for _, dp := range diskPartitions {
 			if dp[dedicatedServerSchemaKeyMount] == "/system-backup" {
 				sbPartition = dp
@@ -899,15 +899,15 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 			"disk2":   {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 480, Type: "SSD SATA"}},
 			"disk3":   {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 2000, Type: "HDD SATA"}},
 			"disk4":   {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 2000, Type: "HDD SATA"}},
-			"p1a":     {Type: "partition", Device: "disk1", Size: 1.0, Priority: ptr(0)},
+			"p1a":     {Type: "partition", Device: "disk1", Size: 1.0, Priority: new(0)},
 			"fs-boot": {Type: "filesystem", Device: "p1a", FSType: "ext3", Mount: "/boot"},
-			"p1b":     {Type: "partition", Device: "disk1", Size: -1.0, Priority: ptr(1)},
+			"p1b":     {Type: "partition", Device: "disk1", Size: -1.0, Priority: new(1)},
 			"fs-root": {Type: "filesystem", Device: "p1b", FSType: "ext4", Mount: "/"},
-			"p2":      {Type: "partition", Device: "disk2", Size: -1.0, Priority: ptr(0)},
+			"p2":      {Type: "partition", Device: "disk2", Size: -1.0, Priority: new(0)},
 			"fs-var":  {Type: "filesystem", Device: "p2", FSType: "ext4", Mount: "/var"},
-			"p3":      {Type: "partition", Device: "disk3", Size: -1.0, Priority: ptr(0)},
+			"p3":      {Type: "partition", Device: "disk3", Size: -1.0, Priority: new(0)},
 			"fs-bk":   {Type: "filesystem", Device: "p3", FSType: "ext4", Mount: "/backup"},
-			"p4":      {Type: "partition", Device: "disk4", Size: -1.0, Priority: ptr(0)},
+			"p4":      {Type: "partition", Device: "disk4", Size: -1.0, Priority: new(0)},
 			"fs-sb":   {Type: "filesystem", Device: "p4", FSType: "ext4", Mount: "/system-backup"},
 		}
 
@@ -922,7 +922,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, result, 1)
 
-		diskPartitions, ok := result[0][dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		diskPartitions, ok := result[0][dedicatedServerSchemaKeyDiskPartitions].([]map[string]any)
 		require.True(t, ok)
 		require.Len(t, diskPartitions, 5)
 
@@ -971,7 +971,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk1",
 				Size:     1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"fs1-1": {
 				Type:   "filesystem",
@@ -983,7 +983,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk1",
 				Size:     -1.0,
-				Priority: ptr(1),
+				Priority: new(1),
 			},
 			"fs1-2": {
 				Type:   "filesystem",
@@ -996,7 +996,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk2",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"fs2-1": {
 				Type:   "filesystem",
@@ -1009,7 +1009,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk3",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"fs3-1": {
 				Type:   "filesystem",
@@ -1022,7 +1022,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk4",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"fs4-1": {
 				Type:   "filesystem",
@@ -1039,17 +1039,17 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		config := result[0]
 
 		// No RAID configs (or empty array)
-		softRaids, hasSoftRaids := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]interface{})
+		softRaids, hasSoftRaids := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]any)
 		assert.True(t, !hasSoftRaids || len(softRaids) == 0)
 
 		// One disk_config per physical disk (all same type "HDD SATA")
-		diskConfigs, ok := config[dedicatedServerSchemaKeyDiskConfig].([]map[string]interface{})
+		diskConfigs, ok := config[dedicatedServerSchemaKeyDiskConfig].([]map[string]any)
 		require.True(t, ok)
 		assert.Len(t, diskConfigs, 4)
 		assert.Equal(t, "HDD SATA", diskConfigs[0][dedicatedServerSchemaKeyDiskType])
 
 		// Has partitions for all disks
-		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]any)
 		require.True(t, ok)
 		assert.GreaterOrEqual(t, len(diskPartitions), 4)
 	})
@@ -1091,25 +1091,25 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk1",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid10-part2": {
 				Type:     "partition",
 				Device:   "disk2",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid10-part3": {
 				Type:     "partition",
 				Device:   "disk3",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid10-part4": {
 				Type:     "partition",
 				Device:   "disk4",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			// RAID10 array
 			"raid10-array": {
@@ -1133,7 +1133,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		config := result[0]
 
 		// Single RAID10 config
-		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]interface{})
+		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]any)
 		require.True(t, ok)
 		require.Len(t, softRaids, 1)
 		assert.Equal(t, "new-raid10", softRaids[0][dedicatedServerSchemaKeyName])
@@ -1146,7 +1146,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		assert.False(t, hasDiskConfigs)
 
 		// Has root partition
-		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]any)
 		require.True(t, ok)
 		assert.Len(t, diskPartitions, 1)
 		assert.Equal(t, "/", diskPartitions[0][dedicatedServerSchemaKeyMount])
@@ -1190,25 +1190,25 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk1",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid0-part2": {
 				Type:     "partition",
 				Device:   "disk2",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid0-part3": {
 				Type:     "partition",
 				Device:   "disk3",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid0-part4": {
 				Type:     "partition",
 				Device:   "disk4",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			// RAID0 array
 			"raid0-array": {
@@ -1232,14 +1232,14 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		config := result[0]
 
 		// Single RAID0 config with 4 disks
-		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]interface{})
+		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]any)
 		require.True(t, ok)
 		require.Len(t, softRaids, 1)
 		assert.Equal(t, "new-raid0", softRaids[0][dedicatedServerSchemaKeyName])
 		assert.Equal(t, 4, softRaids[0][dedicatedServerSchemaKeyDiskCount])
 
 		// Root partition should have size -1 (not multiplied)
-		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]any)
 		require.True(t, ok)
 		require.Len(t, diskPartitions, 1)
 		assert.Equal(t, float64(-1), diskPartitions[0][dedicatedServerSchemaKeySize])
@@ -1282,13 +1282,13 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk1",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid1b-part": {
 				Type:     "partition",
 				Device:   "disk2",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid1-array1": {
 				Type:    "soft_raid",
@@ -1306,13 +1306,13 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk3",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid2b-part": {
 				Type:     "partition",
 				Device:   "disk4",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid2-array": {
 				Type:    "soft_raid",
@@ -1334,14 +1334,14 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		config := result[0]
 
 		// Single RAID1 config (merged, 4 disks total)
-		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]interface{})
+		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]any)
 		require.True(t, ok)
 		require.Len(t, softRaids, 1)
 		assert.Equal(t, "new-raid1", softRaids[0][dedicatedServerSchemaKeyName])
 		assert.Equal(t, 4, softRaids[0][dedicatedServerSchemaKeyDiskCount])
 
 		// Two partitions
-		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]any)
 		require.True(t, ok)
 		assert.Len(t, diskPartitions, 2)
 	})
@@ -1383,13 +1383,13 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk1",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid0a-part2": {
 				Type:     "partition",
 				Device:   "disk2",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid0-array1": {
 				Type:    "soft_raid",
@@ -1407,13 +1407,13 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk3",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid0b-part2": {
 				Type:     "partition",
 				Device:   "disk4",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid0-array2": {
 				Type:    "soft_raid",
@@ -1435,7 +1435,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		config := result[0]
 
 		// Single RAID0 config (merged, 4 disks total)
-		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]interface{})
+		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]any)
 		require.True(t, ok)
 		require.Len(t, softRaids, 1)
 		assert.Equal(t, "new-raid0", softRaids[0][dedicatedServerSchemaKeyName])
@@ -1479,13 +1479,13 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk1",
 				Size:     1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid1-part2": {
 				Type:     "partition",
 				Device:   "disk2",
 				Size:     1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid1-array": {
 				Type:    "soft_raid",
@@ -1502,13 +1502,13 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk1",
 				Size:     -1.0,
-				Priority: ptr(1),
+				Priority: new(1),
 			},
 			"raid1-part4": {
 				Type:     "partition",
 				Device:   "disk2",
 				Size:     -1.0,
-				Priority: ptr(1),
+				Priority: new(1),
 			},
 			"raid1-array2": {
 				Type:    "soft_raid",
@@ -1530,7 +1530,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		config := result[0]
 
 		// Single RAID1 config (2 disks)
-		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]interface{})
+		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]any)
 		require.True(t, ok)
 		require.Len(t, softRaids, 1)
 		assert.Equal(t, 2, softRaids[0][dedicatedServerSchemaKeyDiskCount])
@@ -1578,13 +1578,13 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk1",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid1-part2": {
 				Type:     "partition",
 				Device:   "disk2",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid1-array": {
 				Type:    "soft_raid",
@@ -1602,7 +1602,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk3",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"fs-data": {
 				Type:   "filesystem",
@@ -1619,18 +1619,18 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		config := result[0]
 
 		// Single RAID1 config (2 disks)
-		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]interface{})
+		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]any)
 		require.True(t, ok)
 		require.Len(t, softRaids, 1)
 		assert.Equal(t, 2, softRaids[0][dedicatedServerSchemaKeyDiskCount])
 
 		// disk_config for disk3 and disk4 (same type, merged)
-		diskConfigs, ok := config[dedicatedServerSchemaKeyDiskConfig].([]map[string]interface{})
+		diskConfigs, ok := config[dedicatedServerSchemaKeyDiskConfig].([]map[string]any)
 		require.True(t, ok)
 		assert.Len(t, diskConfigs, 1)
 
 		// Partitions for root and data
-		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]any)
 		require.True(t, ok)
 		assert.GreaterOrEqual(t, len(diskPartitions), 2)
 	})
@@ -1672,13 +1672,13 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk1",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid0-part2": {
 				Type:     "partition",
 				Device:   "disk2",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid0-array": {
 				Type:    "soft_raid",
@@ -1696,13 +1696,13 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Type:     "partition",
 				Device:   "disk3",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid1-part2": {
 				Type:     "partition",
 				Device:   "disk4",
 				Size:     -1.0,
-				Priority: ptr(0),
+				Priority: new(0),
 			},
 			"raid1-array": {
 				Type:    "soft_raid",
@@ -1724,7 +1724,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		config := result[0]
 
 		// Two RAID configs: raid0 and raid1
-		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]interface{})
+		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]any)
 		require.True(t, ok)
 		require.Len(t, softRaids, 2)
 
@@ -1745,7 +1745,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		assert.True(t, raid1Found, "RAID1 should be present")
 
 		// Two partitions
-		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]any)
 		require.True(t, ok)
 		assert.Len(t, diskPartitions, 2)
 	})
@@ -1771,8 +1771,8 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Match: &dedicated.PartitionConfigItemMatch{Size: 4000, Type: "HDD SATA"},
 			},
 			// RAID1 member partitions (one per physical disk)
-			"raid1-part1": {Type: "partition", Device: "disk1", Size: -1.0, Priority: ptr(0)},
-			"raid1-part2": {Type: "partition", Device: "disk2", Size: -1.0, Priority: ptr(0)},
+			"raid1-part1": {Type: "partition", Device: "disk1", Size: -1.0, Priority: new(0)},
+			"raid1-part2": {Type: "partition", Device: "disk2", Size: -1.0, Priority: new(0)},
 			// RAID1 array
 			"raid1-array": {
 				Type:    "soft_raid",
@@ -1780,14 +1780,14 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 				Level:   "raid1",
 			},
 			// Partitions on RAID1
-			"p-boot":  {Type: "partition", Device: "raid1-array", Size: 1.0, Priority: ptr(0)},
+			"p-boot":  {Type: "partition", Device: "raid1-array", Size: 1.0, Priority: new(0)},
 			"fs-boot": {Type: "filesystem", Device: "p-boot", FSType: "ext3", Mount: "/boot"},
-			"p-root":  {Type: "partition", Device: "raid1-array", Size: -1.0, Priority: ptr(1)},
+			"p-root":  {Type: "partition", Device: "raid1-array", Size: -1.0, Priority: new(1)},
 			"fs-root": {Type: "filesystem", Device: "p-root", FSType: "ext4", Mount: "/"},
 			// Partitions on separate HDD disks
-			"p-app":  {Type: "partition", Device: "disk3", Size: -1.0, Priority: ptr(0)},
+			"p-app":  {Type: "partition", Device: "disk3", Size: -1.0, Priority: new(0)},
 			"fs-app": {Type: "filesystem", Device: "p-app", FSType: "xfs", Mount: "/app"},
-			"p-log":  {Type: "partition", Device: "disk4", Size: -1.0, Priority: ptr(0)},
+			"p-log":  {Type: "partition", Device: "disk4", Size: -1.0, Priority: new(0)},
 			"fs-log": {Type: "filesystem", Device: "p-log", FSType: "ext4", Mount: "/var/log"},
 		}
 
@@ -1805,7 +1805,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		config := result[0]
 
 		// soft_raid_config must use preserved name "boot-raid"
-		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]interface{})
+		softRaids, ok := config[dedicatedServerSchemaKeySoftRaidConfig].([]map[string]any)
 		require.True(t, ok)
 		require.Len(t, softRaids, 1)
 		assert.Equal(t, "boot-raid", softRaids[0][dedicatedServerSchemaKeyName])
@@ -1814,7 +1814,7 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 		assert.Equal(t, 2, softRaids[0][dedicatedServerSchemaKeyDiskCount])
 
 		// disk_partitions on RAID must reference "boot-raid", not "new-raid1"
-		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]interface{})
+		diskPartitions, ok := config[dedicatedServerSchemaKeyDiskPartitions].([]map[string]any)
 		require.True(t, ok)
 		for _, p := range diskPartitions {
 			mount, _ := p[dedicatedServerSchemaKeyMount].(string)
@@ -1824,10 +1824,6 @@ func TestApiPartitionsConfigToSchema_Comprehensive(t *testing.T) {
 			}
 		}
 	})
-}
-
-func ptr(v int) *int {
-	return &v
 }
 
 func TestResourceDedicatedServerV1ReadExistingRaidNames(t *testing.T) {

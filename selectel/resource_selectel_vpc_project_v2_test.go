@@ -240,12 +240,12 @@ func TestResourceVPCProjectV2QuotasOptsFromSet(t *testing.T) {
 	resourceQuotas := &schema.Set{
 		F: resourceQuotasHashSetFunc(),
 	}
-	resourceQuotas.Add(map[string]interface{}{
+	resourceQuotas.Add(map[string]any{
 		"region": region,
 		"zone":   zone,
 		"value":  100,
 	})
-	quotaSet.Add(map[string]interface{}{
+	quotaSet.Add(map[string]any{
 		"resource_name":   "volume_gigabytes_fast",
 		"resource_quotas": resourceQuotas,
 	})
@@ -280,12 +280,12 @@ func TestResourceVPCProjectV2QuotasOptsFromListNoName(t *testing.T) {
 	resourceQuotas := &schema.Set{
 		F: resourceQuotasHashSetFunc(),
 	}
-	resourceQuotas.Add(map[string]interface{}{
+	resourceQuotas.Add(map[string]any{
 		"region": "ru-3",
 		"zone":   "ru-3a",
 		"value":  100,
 	})
-	quotaSet.Add(map[string]interface{}{
+	quotaSet.Add(map[string]any{
 		"resource_quotas": resourceQuotas,
 	})
 
@@ -298,8 +298,8 @@ func TestResourceVPCProjectV2QuotasOptsFromListNoName(t *testing.T) {
 func TestResourceVPCProjectV2QuotasOptsFromListNoQuotas(t *testing.T) {
 	quotaSet := schema.NewSet(
 		schema.HashResource(resourceVPCProjectV2().Schema["quotas"].Elem.(*schema.Resource)),
-		[]interface{}{
-			map[string]interface{}{
+		[]any{
+			map[string]any{
 				"resource_name": "volume_gigabytes_fast",
 			},
 		})
@@ -311,7 +311,7 @@ func TestResourceVPCProjectV2QuotasOptsFromListNoQuotas(t *testing.T) {
 }
 
 func TestResourceProjectV2UpdateThemeOptsFromMap(t *testing.T) {
-	themeOptsMap := map[string]interface{}{
+	themeOptsMap := map[string]any{
 		"color": "FF0000",
 		"logo":  "fake.png",
 	}

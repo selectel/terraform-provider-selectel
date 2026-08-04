@@ -38,7 +38,7 @@ func resourceDBaaSDatastoreV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -77,7 +77,7 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 		NodeCount:   d.Get("node_count").(int),
 		Pooler:      pooler,
 		Restore:     restore,
-		Config:      d.Get("config").(map[string]interface{}),
+		Config:      d.Get("config").(map[string]any),
 		FloatingIPs: floatingIPsSchema,
 	}
 
@@ -138,7 +138,7 @@ func resourceDBaaSDatastoreV1Create(ctx context.Context, d *schema.ResourceData,
 	return resourceDBaaSDatastoreV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -188,7 +188,7 @@ func resourceDBaaSDatastoreV1Read(ctx context.Context, d *schema.ResourceData, m
 }
 
 //nolint:gocognit
-func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -257,7 +257,7 @@ func resourceDBaaSDatastoreV1Update(ctx context.Context, d *schema.ResourceData,
 	return resourceDBaaSDatastoreV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSDatastoreV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSDatastoreV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -287,7 +287,7 @@ func resourceDBaaSDatastoreV1Delete(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceDBaaSDatastoreV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSDatastoreV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")

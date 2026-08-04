@@ -584,7 +584,7 @@ func Test_resourceDedicatedServerV1UpdateValidatePreconditions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			res := resourceDedicatedServerV1()
 
-			initMap := map[string]interface{}{}
+			initMap := map[string]any{}
 			for _, key := range tt.changes {
 				initMap[key] = "changed"
 			}
@@ -667,7 +667,7 @@ func TestDedicatedServerV1ImportState_WithProjectID(t *testing.T) {
 		ProjectID: "test-project-id",
 	}
 
-	meta := interface{}(config)
+	meta := any(config)
 
 	result, err := resourceDedicatedServerV1ImportState(context.Background(), d, meta)
 
@@ -685,7 +685,7 @@ func TestDedicatedServerV1ImportState_WithoutProjectID(t *testing.T) {
 		ProjectID: "",
 	}
 
-	meta := interface{}(config)
+	meta := any(config)
 
 	result, err := resourceDedicatedServerV1ImportState(context.Background(), d, meta)
 

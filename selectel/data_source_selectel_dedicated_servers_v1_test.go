@@ -362,8 +362,8 @@ func TestExpandDedicatedServersSearchFilter(t *testing.T) {
 	resource := dataSourceDedicatedServersV1()
 	d := resource.TestResourceData()
 
-	filterSet := schema.NewSet(schema.HashResource(resource.Schema["filter"].Elem.(*schema.Resource)), []interface{}{})
-	filterSet.Add(map[string]interface{}{
+	filterSet := schema.NewSet(schema.HashResource(resource.Schema["filter"].Elem.(*schema.Resource)), []any{})
+	filterSet.Add(map[string]any{
 		"name":           "test-server",
 		"ip":             "192.168.1.100",
 		"location_id":    "loc-uuid-123",
@@ -437,7 +437,7 @@ func TestFlattenDedicatedServers(t *testing.T) {
 
 	assert.Len(t, result, 2)
 
-	server1 := result[0].(map[string]interface{})
+	server1 := result[0].(map[string]any)
 	assert.Equal(t, "server-uuid-1", server1["id"])
 	assert.Equal(t, "my-web-server-01", server1["name"])
 	assert.Equal(t, "config-uuid-1", server1["configuration_id"])
@@ -449,7 +449,7 @@ func TestFlattenDedicatedServers(t *testing.T) {
 	privateIPs1 := server1["reserved_private_ips"].([]string)
 	assert.Contains(t, privateIPs1, "10.0.0.5")
 
-	server2 := result[1].(map[string]interface{})
+	server2 := result[1].(map[string]any)
 	assert.Equal(t, "server-uuid-2", server2["id"])
 	assert.Equal(t, "my-db-server-02", server2["name"])
 	assert.Equal(t, "config-uuid-2", server2["configuration_id"])
@@ -476,7 +476,7 @@ func TestFlattenDedicatedServers_NoIPs(t *testing.T) {
 	result := flattenDedicatedServers(servers, nil, nil, map[string]string{}, map[string]string{})
 
 	assert.Len(t, result, 1)
-	server1 := result[0].(map[string]interface{})
+	server1 := result[0].(map[string]any)
 	assert.Equal(t, "EL50-SSD", server1["name"], "falls back to server.Info when UserDesc is empty")
 	assert.Equal(t, "", server1["configuration"], "empty when UUID not in map")
 	assert.Equal(t, "", server1["location"], "empty when UUID not in map")
@@ -586,7 +586,7 @@ func TestFlattenDedicatedServers_UsesCustomName(t *testing.T) {
 	result := flattenDedicatedServers(servers, publicIPs, privateIPs, configNames, locationNames)
 	require.Len(t, result, 2)
 
-	s1 := result[0].(map[string]interface{})
+	s1 := result[0].(map[string]any)
 	assert.Equal(t, "my-prod-server", s1["name"], "name must be the user-assigned UserDesc value")
 	assert.Equal(t, "EL50 SSD", s1["configuration"])
 	assert.Equal(t, "Moscow", s1["location"])
@@ -595,7 +595,7 @@ func TestFlattenDedicatedServers_UsesCustomName(t *testing.T) {
 	assert.Contains(t, s1["reserved_public_ips"].([]string), "178.72.1.1")
 	assert.Contains(t, s1["reserved_private_ips"].([]string), "10.0.0.5")
 
-	s2 := result[1].(map[string]interface{})
+	s2 := result[1].(map[string]any)
 	assert.Equal(t, "my-staging-server", s2["name"])
 }
 

@@ -96,7 +96,7 @@ func resourceGlobalRouterDedicatedNetworkV1() *schema.Resource {
 	}
 }
 
-func resourceGlobalRouterDedicatedNetworkV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceGlobalRouterDedicatedNetworkV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getGlobalRouterClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -139,7 +139,7 @@ func resourceGlobalRouterDedicatedNetworkV1Create(ctx context.Context, d *schema
 	return resourceGlobalRouterDedicatedNetworkV1Read(ctx, d, meta)
 }
 
-func resourceGlobalRouterDedicatedNetworkV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceGlobalRouterDedicatedNetworkV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getGlobalRouterClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -170,7 +170,7 @@ func resourceGlobalRouterDedicatedNetworkV1Read(ctx context.Context, d *schema.R
 	return nil
 }
 
-func resourceGlobalRouterDedicatedNetworkV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceGlobalRouterDedicatedNetworkV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getGlobalRouterClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -215,7 +215,7 @@ func resourceGlobalRouterDedicatedNetworkV1Update(ctx context.Context, d *schema
 	return nil
 }
 
-func resourceGlobalRouterDedicatedNetworkV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceGlobalRouterDedicatedNetworkV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getGlobalRouterClient(meta)
 	if diagErr != nil {
 		return diagErr

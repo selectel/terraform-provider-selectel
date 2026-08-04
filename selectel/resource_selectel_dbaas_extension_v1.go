@@ -33,7 +33,7 @@ func resourceDBaaSExtensionV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSExtensionV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSExtensionV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -63,7 +63,7 @@ func resourceDBaaSExtensionV1Create(ctx context.Context, d *schema.ResourceData,
 	return resourceDBaaSExtensionV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSExtensionV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSExtensionV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -82,7 +82,7 @@ func resourceDBaaSExtensionV1Read(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func resourceDBaaSExtensionV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSExtensionV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -112,7 +112,7 @@ func resourceDBaaSExtensionV1Delete(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceDBaaSExtensionV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSExtensionV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")

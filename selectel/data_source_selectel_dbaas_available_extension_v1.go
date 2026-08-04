@@ -70,7 +70,7 @@ func dataSourceDBaaSAvailableExtensionV1() *schema.Resource {
 	}
 }
 
-func dataSourceDBaaSAvailableExtensionV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceDBaaSAvailableExtensionV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -112,7 +112,7 @@ func expandAvailableExtensionSearchFilter(filterSet *schema.Set) (availableExten
 		return filter, nil
 	}
 
-	resourceFilterMap := filterSet.List()[0].(map[string]interface{})
+	resourceFilterMap := filterSet.List()[0].(map[string]any)
 
 	name, ok := resourceFilterMap["name"]
 	if ok {
@@ -137,10 +137,10 @@ func filterAvailableExtensionByName(availableExtensions []dbaas.AvailableExtensi
 	return filteredAvailableExtensions
 }
 
-func flattenAvailableExtensions(availableExtensions []dbaas.AvailableExtension) []interface{} {
-	availableExtensionsList := make([]interface{}, len(availableExtensions))
+func flattenAvailableExtensions(availableExtensions []dbaas.AvailableExtension) []any {
+	availableExtensionsList := make([]any, len(availableExtensions))
 	for i, availableExtension := range availableExtensions {
-		availableExtensionsMap := make(map[string]interface{})
+		availableExtensionsMap := make(map[string]any)
 		availableExtensionsMap["id"] = availableExtension.ID
 		availableExtensionsMap["name"] = availableExtension.Name
 		availableExtensionsMap["datastore_type_ids"] = availableExtension.DatastoreTypeIDs

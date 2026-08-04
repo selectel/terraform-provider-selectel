@@ -200,17 +200,17 @@ func resourceMKSNodegroupV1() *schema.Resource {
 		},
 		CustomizeDiff: customdiff.All(
 			// We need to recreate nodegroup if flavor changed.
-			customdiff.ForceNewIfChange("flavor_id", func(_ context.Context, oldVersion, newVersion, _ interface{}) bool {
+			customdiff.ForceNewIfChange("flavor_id", func(_ context.Context, oldVersion, newVersion, _ any) bool {
 				return oldVersion.(string) != newVersion.(string)
 			}),
-			customdiff.ForceNewIfChange("local_volume", func(_ context.Context, oldVersion, newVersion, _ interface{}) bool {
+			customdiff.ForceNewIfChange("local_volume", func(_ context.Context, oldVersion, newVersion, _ any) bool {
 				return oldVersion.(bool) != newVersion.(bool)
 			}),
 		),
 	}
 }
 
-func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	clusterID := d.Get("cluster_id").(string)
 	selMutexKV.Lock(clusterID)
 	defer selMutexKV.Unlock(clusterID)
@@ -320,10 +320,10 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 		}
 	}
 
-	labels := d.Get("labels").(map[string]interface{})
+	labels := d.Get("labels").(map[string]any)
 	createOpts.Labels = expandMKSNodegroupV1Labels(labels)
 
-	taints := d.Get("taints").([]interface{})
+	taints := d.Get("taints").([]any)
 	createOpts.Taints = expandMKSNodegroupV1Taints(taints)
 
 	log.Print(msgCreate(objectNodegroup, createOpts))
@@ -347,7 +347,7 @@ func resourceMKSNodegroupV1Create(ctx context.Context, d *schema.ResourceData, m
 	return resourceMKSNodegroupV1Read(ctx, d, meta)
 }
 
-func resourceMKSNodegroupV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMKSNodegroupV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	clusterID, nodegroupID, err := mksNodegroupV1ParseID(d.Id())
 	if err != nil {
 		d.SetId("")
@@ -405,7 +405,7 @@ func resourceMKSNodegroupV1Read(ctx context.Context, d *schema.ResourceData, met
 	return nil
 }
 
-func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	clusterID, nodegroupID, err := mksNodegroupV1ParseID(d.Id())
 	if err != nil {
 		d.SetId("")
@@ -440,13 +440,13 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 	)
 
 	if d.HasChange("labels") {
-		labels := d.Get("labels").(map[string]interface{})
+		labels := d.Get("labels").(map[string]any)
 		updateOpts.Labels = expandMKSNodegroupV1Labels(labels)
 		hasChanged = true
 	}
 
 	if d.HasChange("taints") {
-		taints := d.Get("taints").([]interface{})
+		taints := d.Get("taints").([]any)
 		updateOpts.Taints = expandMKSNodegroupV1Taints(taints)
 		hasChanged = true
 	}
@@ -540,7 +540,7 @@ func resourceMKSNodegroupV1Update(ctx context.Context, d *schema.ResourceData, m
 	return resourceMKSNodegroupV1Read(ctx, d, meta)
 }
 
-func resourceMKSNodegroupV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMKSNodegroupV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	clusterID, nodegroupID, err := mksNodegroupV1ParseID(d.Id())
 	if err != nil {
 		d.SetId("")
@@ -564,7 +564,7 @@ func resourceMKSNodegroupV1Delete(ctx context.Context, d *schema.ResourceData, m
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{strconv.Itoa(http.StatusOK)},
 		Target:  []string{strconv.Itoa(http.StatusNotFound)},
-		Refresh: func() (result interface{}, state string, err error) {
+		Refresh: func() (result any, state string, err error) {
 			result, response, err := nodegroup.Get(ctx, mksClient, clusterID, nodegroupID)
 			if err != nil {
 				if response != nil {
@@ -590,7 +590,7 @@ func resourceMKSNodegroupV1Delete(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func resourceMKSNodegroupV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceMKSNodegroupV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")

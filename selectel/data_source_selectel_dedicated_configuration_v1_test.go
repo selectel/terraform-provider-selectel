@@ -193,8 +193,8 @@ func TestExpandDedicatedConfigurationsSearchFilter(t *testing.T) {
 						},
 					},
 				}
-				filterSet := schema.NewSet(schema.HashResource(filterSchema), []interface{}{})
-				filterSet.Add(map[string]interface{}{
+				filterSet := schema.NewSet(schema.HashResource(filterSchema), []any{})
+				filterSet.Add(map[string]any{
 					"name":        "test-name",
 					"location_id": "",
 				})

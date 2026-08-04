@@ -57,7 +57,7 @@ func dataSourceMKSFeatureGatesV1() *schema.Resource {
 	}
 }
 
-func dataSourceMKSFeatureGateV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceMKSFeatureGateV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	mksClient, diagErr := getMKSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -84,7 +84,7 @@ func dataSourceMKSFeatureGateV1Read(ctx context.Context, d *schema.ResourceData,
 		return nil
 	}
 
-	filterMap := filterSet.List()[0].(map[string]interface{})
+	filterMap := filterSet.List()[0].(map[string]any)
 	kubeVersion := filterMap["kube_version"].(string)
 
 	if kubeVersion == "" {
@@ -176,7 +176,7 @@ func dataSourceMKSAdmissionControllersV1() *schema.Resource {
 	}
 }
 
-func dataSourceMKSAdmissionControllersV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceMKSAdmissionControllersV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	mksClient, diagErr := getMKSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -203,7 +203,7 @@ func dataSourceMKSAdmissionControllersV1Read(ctx context.Context, d *schema.Reso
 		return nil
 	}
 
-	filterMap := filterSet.List()[0].(map[string]interface{})
+	filterMap := filterSet.List()[0].(map[string]any)
 	kubeVersion := filterMap["kube_version"].(string)
 
 	if kubeVersion == "" {

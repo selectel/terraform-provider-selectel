@@ -60,7 +60,7 @@ func resourceDedicatedServerV1CustomizeDiff(_ context.Context, d *schema.Resourc
 	return nil
 }
 
-func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDedicatedServerV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
@@ -532,23 +532,23 @@ func resourceDedicatedServerV1ReadExistingDiskNames(d *schema.ResourceData) map[
 		return result
 	}
 
-	pList, ok := rawList.([]interface{})
+	pList, ok := rawList.([]any)
 	if !ok || len(pList) == 0 {
 		return result
 	}
 
-	pMap, ok := pList[0].(map[string]interface{})
+	pMap, ok := pList[0].(map[string]any)
 	if !ok {
 		return result
 	}
 
-	dcRaw, ok := pMap[dedicatedServerSchemaKeyDiskConfig].([]interface{})
+	dcRaw, ok := pMap[dedicatedServerSchemaKeyDiskConfig].([]any)
 	if !ok {
 		return result
 	}
 
 	for _, itemRaw := range dcRaw {
-		item, ok := itemRaw.(map[string]interface{})
+		item, ok := itemRaw.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -571,24 +571,24 @@ func resourceDedicatedServerV1ReadExistingDiskPartitionMounts(d *schema.Resource
 		return nil
 	}
 
-	pList, ok := rawList.([]interface{})
+	pList, ok := rawList.([]any)
 	if !ok || len(pList) == 0 {
 		return nil
 	}
 
-	pMap, ok := pList[0].(map[string]interface{})
+	pMap, ok := pList[0].(map[string]any)
 	if !ok {
 		return nil
 	}
 
-	dpRaw, ok := pMap[dedicatedServerSchemaKeyDiskPartitions].([]interface{})
+	dpRaw, ok := pMap[dedicatedServerSchemaKeyDiskPartitions].([]any)
 	if !ok {
 		return nil
 	}
 
 	mounts := make([]string, 0, len(dpRaw))
 	for _, itemRaw := range dpRaw {
-		item, ok := itemRaw.(map[string]interface{})
+		item, ok := itemRaw.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -609,24 +609,24 @@ func resourceDedicatedServerV1ReadExistingDiskNameByMount(d *schema.ResourceData
 		return nil
 	}
 
-	pList, ok := rawList.([]interface{})
+	pList, ok := rawList.([]any)
 	if !ok || len(pList) == 0 {
 		return nil
 	}
 
-	pMap, ok := pList[0].(map[string]interface{})
+	pMap, ok := pList[0].(map[string]any)
 	if !ok {
 		return nil
 	}
 
-	dpRaw, ok := pMap[dedicatedServerSchemaKeyDiskPartitions].([]interface{})
+	dpRaw, ok := pMap[dedicatedServerSchemaKeyDiskPartitions].([]any)
 	if !ok {
 		return nil
 	}
 
 	result := make(map[string]string)
 	for _, itemRaw := range dpRaw {
-		item, ok := itemRaw.(map[string]interface{})
+		item, ok := itemRaw.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -653,24 +653,24 @@ func resourceDedicatedServerV1ReadExistingDiskConfigOrder(d *schema.ResourceData
 		return nil
 	}
 
-	pList, ok := rawList.([]interface{})
+	pList, ok := rawList.([]any)
 	if !ok || len(pList) == 0 {
 		return nil
 	}
 
-	pMap, ok := pList[0].(map[string]interface{})
+	pMap, ok := pList[0].(map[string]any)
 	if !ok {
 		return nil
 	}
 
-	dcRaw, ok := pMap[dedicatedServerSchemaKeyDiskConfig].([]interface{})
+	dcRaw, ok := pMap[dedicatedServerSchemaKeyDiskConfig].([]any)
 	if !ok {
 		return nil
 	}
 
 	names := make([]string, 0, len(dcRaw))
 	for _, itemRaw := range dcRaw {
-		item, ok := itemRaw.(map[string]interface{})
+		item, ok := itemRaw.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -694,23 +694,23 @@ func resourceDedicatedServerV1ReadExistingRaidNames(d *schema.ResourceData) map[
 		return result
 	}
 
-	pList, ok := rawList.([]interface{})
+	pList, ok := rawList.([]any)
 	if !ok || len(pList) == 0 {
 		return result
 	}
 
-	pMap, ok := pList[0].(map[string]interface{})
+	pMap, ok := pList[0].(map[string]any)
 	if !ok {
 		return result
 	}
 
-	srCfgRaw, ok := pMap[dedicatedServerSchemaKeySoftRaidConfig].([]interface{})
+	srCfgRaw, ok := pMap[dedicatedServerSchemaKeySoftRaidConfig].([]any)
 	if !ok {
 		return result
 	}
 
 	for _, itemRaw := range srCfgRaw {
-		item, ok := itemRaw.(map[string]interface{})
+		item, ok := itemRaw.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -735,24 +735,24 @@ func resourceDedicatedServerV1ReadExistingRaidConfigOrder(d *schema.ResourceData
 		return nil
 	}
 
-	pList, ok := rawList.([]interface{})
+	pList, ok := rawList.([]any)
 	if !ok || len(pList) == 0 {
 		return nil
 	}
 
-	pMap, ok := pList[0].(map[string]interface{})
+	pMap, ok := pList[0].(map[string]any)
 	if !ok {
 		return nil
 	}
 
-	srCfgRaw, ok := pMap[dedicatedServerSchemaKeySoftRaidConfig].([]interface{})
+	srCfgRaw, ok := pMap[dedicatedServerSchemaKeySoftRaidConfig].([]any)
 	if !ok {
 		return nil
 	}
 
 	names := make([]string, 0, len(srCfgRaw))
 	for _, itemRaw := range srCfgRaw {
-		item, ok := itemRaw.(map[string]interface{})
+		item, ok := itemRaw.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -765,7 +765,7 @@ func resourceDedicatedServerV1ReadExistingRaidConfigOrder(d *schema.ResourceData
 	return names
 }
 
-func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
@@ -907,7 +907,7 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceDedicatedServerV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDedicatedServerV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dsClient, diagErr := getDedicatedClient(d, meta, true)
 	if diagErr != nil {
 		return diagErr
@@ -1348,7 +1348,7 @@ func resourceDedicatedServerV1UpdateValidatePreconditionsAdditionalOSParams(
 	return nil
 }
 
-func resourceDedicatedServerV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDedicatedServerV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("project_id must be set for the resource import")

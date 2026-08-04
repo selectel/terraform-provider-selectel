@@ -52,7 +52,7 @@ func resourceIAMOIDCFederationGroupMappingsV1() *schema.Resource {
 	}
 }
 
-func resourceIAMOIDCFederationGroupMappingsV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMOIDCFederationGroupMappingsV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -73,7 +73,7 @@ func resourceIAMOIDCFederationGroupMappingsV1Create(ctx context.Context, d *sche
 	return resourceIAMOIDCFederationGroupMappingsV1Read(ctx, d, meta)
 }
 
-func resourceIAMOIDCFederationGroupMappingsV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMOIDCFederationGroupMappingsV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -104,7 +104,7 @@ func resourceIAMOIDCFederationGroupMappingsV1Read(ctx context.Context, d *schema
 	return nil
 }
 
-func resourceIAMOIDCFederationGroupMappingsV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMOIDCFederationGroupMappingsV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -129,7 +129,7 @@ func resourceIAMOIDCFederationGroupMappingsV1Update(ctx context.Context, d *sche
 	return resourceIAMOIDCFederationGroupMappingsV1Read(ctx, d, meta)
 }
 
-func resourceIAMOIDCFederationGroupMappingsV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMOIDCFederationGroupMappingsV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -159,12 +159,12 @@ func resourceIAMOIDCFederationGroupMappingsV1Delete(ctx context.Context, d *sche
 }
 
 func expandOIDCFederationGroupMappings(d *schema.ResourceData) groupmappings.GroupMappingsRequest {
-	rawMappings := d.Get("group_mapping").([]interface{})
+	rawMappings := d.Get("group_mapping").([]any)
 
 	mappings := make([]groupmappings.GroupMapping, 0, len(rawMappings))
 
 	for _, raw := range rawMappings {
-		mappingData := raw.(map[string]interface{})
+		mappingData := raw.(map[string]any)
 
 		mappings = append(mappings, groupmappings.GroupMapping{
 			InternalGroupID: mappingData["internal_group_id"].(string),
@@ -177,11 +177,11 @@ func expandOIDCFederationGroupMappings(d *schema.ResourceData) groupmappings.Gro
 	}
 }
 
-func flattenOIDCFederationGroupMappings(mappings []groupmappings.GroupMapping) []interface{} {
-	result := make([]interface{}, 0, len(mappings))
+func flattenOIDCFederationGroupMappings(mappings []groupmappings.GroupMapping) []any {
+	result := make([]any, 0, len(mappings))
 
 	for _, mapping := range mappings {
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"internal_group_id": mapping.InternalGroupID,
 			"external_group_id": mapping.ExternalGroupID,
 		})

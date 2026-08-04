@@ -16,7 +16,7 @@ const (
 	domainsV1DefaultRetry        = 5
 )
 
-func getDomainsClient(meta interface{}) (*domainsV1.ServiceClient, error) {
+func getDomainsClient(meta any) (*domainsV1.ServiceClient, error) {
 	config := meta.(*Config)
 
 	selvpcClient, err := config.GetSelVPCClient()
@@ -72,14 +72,10 @@ func domainsV1ParseDomainRecordIDsPair(id string) (int, int, error) {
 	return domainID, recordID, nil
 }
 
-func getIntPtrOrNil(v interface{}) *int {
+func getIntPtrOrNil(v any) *int {
 	if v == nil {
 		return nil
 	}
 
-	return intPtr(v.(int))
-}
-
-func intPtr(v int) *int {
-	return &v
+	return new(v.(int))
 }

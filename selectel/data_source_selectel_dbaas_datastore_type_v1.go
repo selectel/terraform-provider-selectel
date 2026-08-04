@@ -65,7 +65,7 @@ func dataSourceDBaaSDatastoreTypeV1() *schema.Resource {
 	}
 }
 
-func dataSourceDBaaSDatastoreTypeV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceDBaaSDatastoreTypeV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -108,7 +108,7 @@ func expandDatastoreTypeSearchFilter(filterSet *schema.Set) (datastoreTypeSearch
 		return filter, nil
 	}
 
-	resourceFilterMap := filterSet.List()[0].(map[string]interface{})
+	resourceFilterMap := filterSet.List()[0].(map[string]any)
 
 	engine, ok := resourceFilterMap["engine"]
 	if ok {
@@ -153,10 +153,10 @@ func filterDatastoreTypesByEngine(datastoreTypes []dbaas.DatastoreType, engine s
 	return filteredDatastoreTypes
 }
 
-func flattenDBaaSDatastoreTypes(datastoreTypes []dbaas.DatastoreType) []interface{} {
-	datastoreTypesList := make([]interface{}, len(datastoreTypes))
+func flattenDBaaSDatastoreTypes(datastoreTypes []dbaas.DatastoreType) []any {
+	datastoreTypesList := make([]any, len(datastoreTypes))
 	for i, datastoreType := range datastoreTypes {
-		datastoreTypesMap := make(map[string]interface{})
+		datastoreTypesMap := make(map[string]any)
 		datastoreTypesMap["id"] = datastoreType.ID
 		datastoreTypesMap["engine"] = datastoreType.Engine
 		datastoreTypesMap["version"] = datastoreType.Version

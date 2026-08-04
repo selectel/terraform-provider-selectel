@@ -131,14 +131,14 @@ func resourceSecretsManagerCertificateV1() *schema.Resource {
 	}
 }
 
-func resourceSecretsManagerCertificateV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSecretsManagerCertificateV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	cl, diagErr := getSecretsManagerClient(d, meta)
 	if diagErr != nil {
 		return diagErr
 	}
 
 	name := d.Get("name").(string)
-	rawCertificates := d.Get("certificates").([]interface{})
+	rawCertificates := d.Get("certificates").([]any)
 	certificates := convertToStringSlice(rawCertificates)
 
 	privateKey := d.Get("private_key").(string)
@@ -163,7 +163,7 @@ func resourceSecretsManagerCertificateV1Create(ctx context.Context, d *schema.Re
 	return resourceSecretsManagerCertificateV1Read(ctx, d, meta)
 }
 
-func resourceSecretsManagerCertificateV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSecretsManagerCertificateV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	cl, diagErr := getSecretsManagerClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -187,7 +187,7 @@ func resourceSecretsManagerCertificateV1Read(ctx context.Context, d *schema.Reso
 	return nil
 }
 
-func resourceSecretsManagerCertificateV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSecretsManagerCertificateV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	cl, diagErr := getSecretsManagerClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -205,7 +205,7 @@ func resourceSecretsManagerCertificateV1Update(ctx context.Context, d *schema.Re
 	}
 
 	if d.HasChange("certificates") || d.HasChange("private_key") {
-		rawCertificates := d.Get("certificates").([]interface{})
+		rawCertificates := d.Get("certificates").([]any)
 		certificates := convertToStringSlice(rawCertificates)
 
 		upd := certs.UpdateCertificateVersionRequest{
@@ -226,7 +226,7 @@ func resourceSecretsManagerCertificateV1Update(ctx context.Context, d *schema.Re
 	return resourceSecretsManagerCertificateV1Read(ctx, d, meta)
 }
 
-func resourceSecretsManagerCertificateV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSecretsManagerCertificateV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	cl, diagErr := getSecretsManagerClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -245,7 +245,7 @@ func resourceSecretsManagerCertificateV1Delete(ctx context.Context, d *schema.Re
 // resourceSecretsManagerCertificateV1ImportState —  helper used in Importer: &schema.ResourceImporter
 // to avoid difficulties occurred with required INFRA_PROJECT_ID env in
 // resourceSecretsManagerCertificateV1Read when uising schema.ImportStatePassthroughContext.
-func resourceSecretsManagerCertificateV1ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceSecretsManagerCertificateV1ImportState(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")
@@ -260,9 +260,9 @@ func resourceSecretsManagerCertificateV1ImportState(ctx context.Context, d *sche
 }
 
 // convertSMIssuedByToList — helper for setting "issued_by" attribute with nested structure.
-func convertSMIssuedByToList(ib certs.IssuedBy) []interface{} {
-	return []interface{}{
-		map[string]interface{}{
+func convertSMIssuedByToList(ib certs.IssuedBy) []any {
+	return []any{
+		map[string]any{
 			"country":        convertToInterfaceSlice(ib.Country),
 			"locality":       convertToInterfaceSlice(ib.Locality),
 			"serial_number":  ib.SerialNumber,
@@ -272,9 +272,9 @@ func convertSMIssuedByToList(ib certs.IssuedBy) []interface{} {
 }
 
 // convertValidityToList — helper for setting "validity" attribute with nested structure.
-func convertSMValidityToList(validity certs.Validity) []interface{} {
-	return []interface{}{
-		map[string]interface{}{
+func convertSMValidityToList(validity certs.Validity) []any {
+	return []any{
+		map[string]any{
 			"basic_constraints": validity.BasicConstraints,
 			"not_after":         validity.NotAfter,
 			"not_before":        validity.NotBefore,

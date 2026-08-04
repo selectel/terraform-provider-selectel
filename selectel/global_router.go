@@ -16,7 +16,7 @@ var (
 		"your query returned more than one result. please try a more specific search criteria")
 )
 
-func getGlobalRouterClient(meta interface{}) (*globalrouter.ServiceClient, diag.Diagnostics) {
+func getGlobalRouterClient(meta any) (*globalrouter.ServiceClient, diag.Diagnostics) {
 	config := meta.(*Config)
 	selvpcClient, err := config.GetSelVPCClient()
 	if err != nil {

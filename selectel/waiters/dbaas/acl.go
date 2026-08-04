@@ -43,7 +43,7 @@ func WaitForDBaaSACLV1ActiveState(
 }
 
 func DBaaSACLV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, aclID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		d, err := client.ACL(ctx, aclID)
 		if err != nil {
 			var dbaasError *dbaas.DBaaSAPIError
@@ -59,7 +59,7 @@ func DBaaSACLV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, ac
 }
 
 func dbaasACLV1StateRefreshFunc(ctx context.Context, client *dbaas.API, aclID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		d, err := client.ACL(ctx, aclID)
 		if err != nil {
 			return nil, "", err

@@ -46,7 +46,7 @@ func resourceVPCKeypairV2() *schema.Resource {
 	}
 }
 
-func resourceVPCKeypairV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCKeypairV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*Config)
 	selvpcClient, err := config.GetSelVPCClient()
 	if err != nil {
@@ -80,7 +80,7 @@ func resourceVPCKeypairV2Create(ctx context.Context, d *schema.ResourceData, met
 	return resourceVPCKeypairV2Read(ctx, d, meta)
 }
 
-func resourceVPCKeypairV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCKeypairV2Read(_ context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*Config)
 	selvpcClient, err := config.GetSelVPCClient()
 	if err != nil {
@@ -114,7 +114,7 @@ func resourceVPCKeypairV2Read(_ context.Context, d *schema.ResourceData, meta in
 	return nil
 }
 
-func resourceVPCKeypairV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCKeypairV2Delete(_ context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*Config)
 	selvpcClient, err := config.GetSelVPCClient()
 	if err != nil {

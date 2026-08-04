@@ -126,7 +126,7 @@ func resourceVPCProjectV2() *schema.Resource {
 	}
 }
 
-func resourceVPCProjectV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCProjectV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*Config)
 
 	selvpcClient, err := config.GetSelVPCClient()
@@ -169,7 +169,7 @@ func resourceVPCProjectV2Create(ctx context.Context, d *schema.ResourceData, met
 	return resourceVPCProjectV2Read(ctx, d, meta)
 }
 
-func resourceVPCProjectV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCProjectV2Read(_ context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*Config)
 	selvpcClient, err := config.GetSelVPCClient()
 	if err != nil {
@@ -211,7 +211,7 @@ func resourceVPCProjectV2Read(_ context.Context, d *schema.ResourceData, meta in
 	return nil
 }
 
-func resourceVPCProjectV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCProjectV2Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*Config)
 	selvpcClient, err := config.GetSelVPCClient()
 	if err != nil {
@@ -232,7 +232,7 @@ func resourceVPCProjectV2Update(ctx context.Context, d *schema.ResourceData, met
 	}
 	if d.HasChange("theme") {
 		hasChange, projectChange = true, true
-		themeMap := d.Get("theme").(map[string]interface{})
+		themeMap := d.Get("theme").(map[string]any)
 		updateThemeOpts := resourceProjectV2UpdateThemeOptsFromMap(themeMap)
 		projectOpts.Theme = updateThemeOpts
 	}
@@ -271,7 +271,7 @@ func resourceVPCProjectV2Update(ctx context.Context, d *schema.ResourceData, met
 	return resourceVPCProjectV2Read(ctx, d, meta)
 }
 
-func resourceVPCProjectV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCProjectV2Delete(_ context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*Config)
 	selvpcClient, err := config.GetSelVPCClient()
 	if err != nil {

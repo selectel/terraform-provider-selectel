@@ -447,7 +447,7 @@ func TestFlattenMKSNodegroupV1Nodes(t *testing.T) {
 		},
 	}
 
-	expected := []map[string]interface{}{
+	expected := []map[string]any{
 		{
 			"id":       "94838b31-9ae0-4a23-88ad-256e4f13d345",
 			"ip":       "198.51.100.101",
@@ -483,18 +483,18 @@ func TestFlattenMKSNodegroupV1Taints(t *testing.T) {
 		},
 	}
 
-	expected := []interface{}{
-		map[string]interface{}{
+	expected := []any{
+		map[string]any{
 			"key":    "test-key-0",
 			"value":  "test-value-0",
 			"effect": "NoSchedule",
 		},
-		map[string]interface{}{
+		map[string]any{
 			"key":    "test-key-1",
 			"value":  "test-value-1",
 			"effect": "NoExecute",
 		},
-		map[string]interface{}{
+		map[string]any{
 			"key":    "test-key-2",
 			"value":  "test-value-2",
 			"effect": "PreferNoSchedule",
@@ -506,7 +506,7 @@ func TestFlattenMKSNodegroupV1Taints(t *testing.T) {
 }
 
 func TestExpandMKSNodegroupV1Labels(t *testing.T) {
-	labels := map[string]interface{}{
+	labels := map[string]any{
 		"label-key0": "label-value0",
 		"label-key1": "label-value1",
 		"label-key2": "label-value2",
@@ -522,18 +522,18 @@ func TestExpandMKSNodegroupV1Labels(t *testing.T) {
 }
 
 func TestExpandMKSNodegroupV1Taints(t *testing.T) {
-	taints := []interface{}{
-		map[string]interface{}{
+	taints := []any{
+		map[string]any{
 			"key":    "test-key-0",
 			"value":  "test-value-0",
 			"effect": "NoSchedule",
 		},
-		map[string]interface{}{
+		map[string]any{
 			"key":    "test-key-1",
 			"value":  "test-value-1",
 			"effect": "NoExecute",
 		},
-		map[string]interface{}{
+		map[string]any{
 			"key":    "test-key-2",
 			"value":  "test-value-2",
 			"effect": "PreferNoSchedule",

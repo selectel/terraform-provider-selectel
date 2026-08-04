@@ -38,7 +38,7 @@ func resourceDBaaSMySQLDatastoreV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSMySQLDatastoreV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSMySQLDatastoreV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -75,7 +75,7 @@ func resourceDBaaSMySQLDatastoreV1Create(ctx context.Context, d *schema.Resource
 		SubnetID:    d.Get("subnet_id").(string),
 		NodeCount:   d.Get("node_count").(int),
 		Restore:     restore,
-		Config:      d.Get("config").(map[string]interface{}),
+		Config:      d.Get("config").(map[string]any),
 		FloatingIPs: floatingIPsSchema,
 	}
 
@@ -131,7 +131,7 @@ func resourceDBaaSMySQLDatastoreV1Create(ctx context.Context, d *schema.Resource
 	return resourceDBaaSMySQLDatastoreV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSMySQLDatastoreV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSMySQLDatastoreV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -179,7 +179,7 @@ func resourceDBaaSMySQLDatastoreV1Read(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func resourceDBaaSMySQLDatastoreV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSMySQLDatastoreV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -236,7 +236,7 @@ func resourceDBaaSMySQLDatastoreV1Update(ctx context.Context, d *schema.Resource
 	return resourceDBaaSMySQLDatastoreV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSMySQLDatastoreV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSMySQLDatastoreV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -266,7 +266,7 @@ func resourceDBaaSMySQLDatastoreV1Delete(ctx context.Context, d *schema.Resource
 	return nil
 }
 
-func resourceDBaaSMySQLDatastoreV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSMySQLDatastoreV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")

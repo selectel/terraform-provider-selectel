@@ -8,7 +8,7 @@ import (
 	cloudbackup "github.com/selectel/cloudbackup-go/pkg/v2"
 )
 
-func getScheduledBackupClient(d *schema.ResourceData, meta interface{}) (*cloudbackup.ServiceClient, diag.Diagnostics) {
+func getScheduledBackupClient(d *schema.ResourceData, meta any) (*cloudbackup.ServiceClient, diag.Diagnostics) {
 	config := meta.(*Config)
 	projectID := d.Get("project_id").(string)
 	region := d.Get("region").(string)

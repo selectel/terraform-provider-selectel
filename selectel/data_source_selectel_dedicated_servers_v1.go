@@ -202,7 +202,7 @@ func expandDedicatedServersSearchFilter(d *schema.ResourceData) dedicatedServers
 		return filter
 	}
 
-	m := filterSet.List()[0].(map[string]interface{})
+	m := filterSet.List()[0].(map[string]any)
 
 	if v, ok := m["name"]; ok {
 		filter.name = v.(string)

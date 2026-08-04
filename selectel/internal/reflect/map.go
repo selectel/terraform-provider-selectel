@@ -20,12 +20,12 @@ func StructToMap(v any) (map[string]any, error) {
 	return result, nil
 }
 
-func IsSetContainsSubset(subset map[string]interface{}, set any) bool {
+func IsSetContainsSubset(subset map[string]any, set any) bool {
 	return match(subset, reflect.ValueOf(set))
 }
 
-func match(subset map[string]interface{}, val reflect.Value) bool {
-	if val.Kind() == reflect.Ptr { //nolint:govet
+func match(subset map[string]any, val reflect.Value) bool {
+	if val.Kind() == reflect.Pointer {
 		val = val.Elem()
 	}
 
@@ -88,10 +88,10 @@ func match(subset map[string]interface{}, val reflect.Value) bool {
 
 func matchValue(subsetValue any, setValue any) bool {
 	switch subsetValueTyped := subsetValue.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		return IsSetContainsSubset(subsetValueTyped, setValue)
 
-	case []interface{}:
+	case []any:
 		setSlice, ok := toSlice(setValue)
 		if !ok {
 			return false
@@ -104,14 +104,14 @@ func matchValue(subsetValue any, setValue any) bool {
 	}
 }
 
-func toSlice(v any) ([]interface{}, bool) {
+func toSlice(v any) ([]any, bool) {
 	val := reflect.ValueOf(v)
 
 	if val.Kind() != reflect.Slice && val.Kind() != reflect.Array {
 		return nil, false
 	}
 
-	var result []interface{}
+	var result []any
 	for i := 0; i < val.Len(); i++ {
 		result = append(result, val.Index(i).Interface())
 	}
@@ -119,20 +119,20 @@ func toSlice(v any) ([]interface{}, bool) {
 	return result, true
 }
 
-func isArrayContainsSubarray(subarray, array []interface{}) bool {
+func isArrayContainsSubarray(subarray, array []any) bool {
 	for _, subarrayElement := range subarray {
 		found := false
 		for _, arrayElement := range array {
 			switch subarrayElementTyped := subarrayElement.(type) {
-			case map[string]interface{}:
-				arrayElementTyped, ok := arrayElement.(map[string]interface{})
+			case map[string]any:
+				arrayElementTyped, ok := arrayElement.(map[string]any)
 				if ok && IsSetContainsSubset(subarrayElementTyped, arrayElementTyped) {
 					found = true
 					break
 				}
 
-			case []interface{}:
-				arrayElementTyped, ok := arrayElement.([]interface{})
+			case []any:
+				arrayElementTyped, ok := arrayElement.([]any)
 				if ok && isArrayContainsSubarray(subarrayElementTyped, arrayElementTyped) {
 					found = true
 					break

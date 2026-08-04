@@ -57,7 +57,7 @@ func resourceIAMS3CredentialsV1() *schema.Resource {
 	}
 }
 
-func resourceIAMS3CredentialsV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMS3CredentialsV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -83,7 +83,7 @@ func resourceIAMS3CredentialsV1Create(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func resourceIAMS3CredentialsV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMS3CredentialsV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -116,7 +116,7 @@ func resourceIAMS3CredentialsV1Read(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceIAMS3CredentialsV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIAMS3CredentialsV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
@@ -131,7 +131,7 @@ func resourceIAMS3CredentialsV1Delete(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func resourceIAMS3CredentialsV1ImportState(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+func resourceIAMS3CredentialsV1ImportState(_ context.Context, d *schema.ResourceData, _ any) ([]*schema.ResourceData, error) {
 	var v string
 	if v = os.Getenv("OS_S3_CREDENTIALS_USER_ID"); v == "" {
 		return nil, fmt.Errorf("no OS_S3_CREDENTIALS_USER_ID environment variable was found, provide one to use import")

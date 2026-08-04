@@ -38,7 +38,7 @@ func WaitForPlanV2StartedState(
 }
 
 func planV2RefreshFunc(ctx context.Context, client *cloudbackup.ServiceClient, id string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		p, _, err := client.Plan(ctx, id)
 		if err != nil {
 			return nil, "", err
@@ -74,7 +74,7 @@ func WaitForPlanV2Deleted(
 }
 
 func planV2DeleteRefreshFunc(ctx context.Context, client *cloudbackup.ServiceClient, id string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		p, resp, err := client.Plan(ctx, id)
 		switch {
 		case resp != nil && resp.StatusCode == http.StatusNotFound:

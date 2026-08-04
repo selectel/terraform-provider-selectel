@@ -34,7 +34,7 @@ func resourceDBaaSDatabaseV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSDatabaseV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSDatabaseV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -66,7 +66,7 @@ func resourceDBaaSDatabaseV1Create(ctx context.Context, d *schema.ResourceData, 
 	return resourceDBaaSDatabaseV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSDatabaseV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSDatabaseV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -93,7 +93,7 @@ func resourceDBaaSDatabaseV1Read(ctx context.Context, d *schema.ResourceData, me
 	return nil
 }
 
-func resourceDBaaSDatabaseV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSDatabaseV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -121,7 +121,7 @@ func resourceDBaaSDatabaseV1Update(ctx context.Context, d *schema.ResourceData, 
 	return resourceDBaaSDatabaseV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSDatabaseV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSDatabaseV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -151,7 +151,7 @@ func resourceDBaaSDatabaseV1Delete(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceDBaaSDatabaseV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSDatabaseV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")

@@ -43,7 +43,7 @@ func WaitForDBaaSDatabaseV1ActiveState(
 }
 
 func DBaaSDatabaseV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, datastoreID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		d, err := client.Database(ctx, datastoreID)
 		if err != nil {
 			var dbaasError *dbaas.DBaaSAPIError
@@ -59,7 +59,7 @@ func DBaaSDatabaseV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.AP
 }
 
 func dbaasDatabaseV1StateRefreshFunc(ctx context.Context, client *dbaas.API, databaseID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		d, err := client.Database(ctx, databaseID)
 		if err != nil {
 			return nil, "", err

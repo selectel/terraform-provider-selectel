@@ -55,7 +55,7 @@ func dataSourceMKSKubeconfigV1() *schema.Resource {
 	}
 }
 
-func dataSourceMKSKubeconfigV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceMKSKubeconfigV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	mksClient, diagErr := getMKSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
