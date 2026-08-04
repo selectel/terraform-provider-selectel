@@ -41,10 +41,6 @@ resource "selectel_networking_floatingip_v2" "floatingip_1" {
 
 * `fixed_ip` - (Optional, Computed) Address of `port_id` traffic is forwarded to, which must be one of the fixed IPs of that port. Use it when the port has more than one address. Can be changed without replacement.
 
-* `dns_name` - (Optional, Computed) DNS name of the floating IP. Changing this creates a new floating IP.
-
-* `dns_domain` - (Optional, Computed) DNS domain of the floating IP. A fully-qualified (unambiguous) name must have a dot at the end, for example, `example.com.` — a value without it is rejected at plan. Changing this creates a new floating IP.
-
 * `tags` - (Optional) Tags of the floating IP that are managed by Terraform.
 
 ~> **Note:** A specific address cannot be requested: the API always assigns one from `pool`. To keep an address, keep the resource — the address is released only when the floating IP is deleted.

@@ -81,11 +81,6 @@ func dataSourceNetworkingSubnetV2() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.StringInSlice(networkingSubnetV2IPv6Modes, false),
 			},
-			"subnetpool_id": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
 			"tags": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -139,10 +134,6 @@ func dataSourceNetworkingSubnetV2() *schema.Resource {
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"dns_publish_fixed_ip": {
-				Type:     schema.TypeBool,
-				Computed: true,
-			},
 			"all_tags": {
 				Type:     schema.TypeSet,
 				Computed: true,
@@ -172,7 +163,6 @@ func dataSourceNetworkingSubnetV2Read(ctx context.Context, d *schema.ResourceDat
 		"gateway_ip":        "gateway_ip",
 		"ipv6_address_mode": "ipv6_address_mode",
 		"ipv6_ra_mode":      "ipv6_ra_mode",
-		"subnetpool_id":     "subnetpool_id",
 	} {
 		if v, ok := d.GetOk(schemaKey); ok {
 			filters[queryKey] = []string{v.(string)}
@@ -220,8 +210,6 @@ func dataSourceNetworkingSubnetV2Read(ctx context.Context, d *schema.ResourceDat
 	d.Set("enable_dhcp", result.EnableDHCP)
 	d.Set("ipv6_address_mode", derefString(result.IPv6AddressMode))
 	d.Set("ipv6_ra_mode", derefString(result.IPv6RAMode))
-	d.Set("subnetpool_id", derefString(result.SubnetPoolID))
-	d.Set("dns_publish_fixed_ip", result.DNSPublishFixedIP)
 	d.Set("blocked", result.Blocked)
 
 	if err := d.Set("dns_nameservers", result.DNSNameservers); err != nil {

@@ -52,10 +52,6 @@ You can combine any of the following selectors. The floating IP must match all o
 
 * `router_id` - Unique identifier of the router that routes the address.
 
-* `dns_name` - DNS name of the floating IP.
-
-* `dns_domain` - DNS domain of the floating IP.
-
 * `all_tags` - All tags of the floating IP.
 
 * `qos_policy_id` - Unique identifier of the QoS policy associated with the floating IP.

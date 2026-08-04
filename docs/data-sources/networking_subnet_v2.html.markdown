@@ -50,8 +50,6 @@ You can combine any of the following selectors. The subnet must match all of the
 
 * `ipv6_ra_mode` - (Optional) IPv6 router advertisement mode, with the same values as `ipv6_address_mode`.
 
-* `subnetpool_id` - (Optional) Unique identifier of the subnet pool the CIDR was allocated from.
-
 * `tags` - (Optional) Tags that the subnet must have.
 
 ## Attributes Reference
@@ -59,8 +57,6 @@ You can combine any of the following selectors. The subnet must match all of the
 * `enable_dhcp` - Specifies whether DHCP is enabled for the subnet.
 
 * `dns_nameservers` - DNS name servers of the subnet.
-
-* `dns_publish_fixed_ip` - Specifies whether the fixed IPs of the subnet are published to the DNS service.
 
 * `allocation_pools` - Address ranges available for allocation:
 

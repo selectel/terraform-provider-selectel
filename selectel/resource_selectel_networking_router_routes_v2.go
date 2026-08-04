@@ -144,11 +144,12 @@ func resourceNetworkingRouterRoutesV2Update(ctx context.Context, d *schema.Resou
 		Routes: &desired,
 	}); err != nil {
 		// The plugin SDK keeps the rejected set in state until the next refresh,
-		// which Read then corrects. Re-reading here does not help: the values Set
-		// during a failed Update are discarded (verified against a live rejection).
-		// The consequence is documented on the resource: destroying right after a
-		// rejected apply, without a refresh in between, removes only the rejected
-		// entries and leaves the router's real routes in place.
+		// which Read then corrects. Re-reading here does not help: what Read sets
+		// during a failed Update is discarded — tried against a live rejection, the
+		// stale set stayed in state either way. The consequence to know is that a
+		// destroy issued straight after a rejected apply, with no refresh in
+		// between, removes only the rejected entries and leaves the router's real
+		// routes in place, which in turn keeps its interfaces undeletable.
 		return diag.FromErr(errUpdatingObject(networkingRouterRoutesV2Object, routerID, err))
 	}
 

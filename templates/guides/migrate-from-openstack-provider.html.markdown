@@ -23,7 +23,6 @@ Each row maps one source resource type to the resource that replaces it. Every s
 | `openstack_networking_network_v2` | `selectel_networking_network_v2` | `selectel_networking_network_v2` |
 | `openstack_networking_subnet_v2` | `selectel_networking_subnet_v2` | `selectel_networking_subnet_v2` |
 | `openstack_networking_subnet_route_v2` | `selectel_networking_subnet_route_v2` | none |
-| `openstack_networking_subnetpool_v2` | `selectel_networking_subnetpool_v2` | `selectel_networking_subnetpool_v2` |
 | `openstack_networking_port_v2` | `selectel_networking_port_v2` | `selectel_networking_port_v2` |
 | `openstack_networking_portforwarding_v2` | `selectel_networking_port_forwarding_v2` | none |
 | `openstack_networking_router_v2` | `selectel_networking_router_v2` | `selectel_networking_router_v2` |
@@ -36,7 +35,6 @@ Each row maps one source resource type to the resource that replaces it. Every s
 | `openstack_networking_secgroup_rule_v2` | `selectel_networking_secgroup_rule_v2` | none |
 | `openstack_networking_port_secgroup_associate_v2` | `selectel_networking_port_secgroup_associate_v2` | none |
 | `openstack_networking_rbac_policy_v2` | `selectel_networking_rbac_policy_v2` | none |
-| `openstack_networking_addressscope_v2` | `selectel_networking_addressscope_v2` | `selectel_networking_addressscope_v2` |
 
 Eight of the seventeen entities get a data source, listed in the third column. The other nine get none: they are link resources — a route entry, an interface, an association, a policy — with no independent object to search for. That matches the upstream provider, which does not offer data sources for them either.
 

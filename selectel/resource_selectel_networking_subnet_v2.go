@@ -47,25 +47,14 @@ func resourceNetworkingSubnetV2() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			// The subnet always carries its own CIDR: subnet pools are not part of
+			// this provider, so there is no other source for one.
 			"cidr": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Computed:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"prefix_length"},
-				ValidateFunc:  validateNetworkingSubnetV2CIDR,
-			},
-			"prefix_length": {
-				Type:          schema.TypeInt,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"cidr"},
-				RequiredWith:  []string{"subnetpool_id"},
-			},
-			"subnetpool_id": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				ValidateFunc: validateNetworkingSubnetV2CIDR,
 			},
 			"name": {
 				Type:     schema.TypeString,
@@ -139,11 +128,6 @@ func resourceNetworkingSubnetV2() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice(networkingSubnetV2IPv6Modes, false),
 			},
-			"dns_publish_fixed_ip": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
-			},
 			"tags": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -188,23 +172,8 @@ func resourceNetworkingSubnetV2Create(ctx context.Context, d *schema.ResourceDat
 		IPVersion:  d.Get("ip_version").(int),
 		EnableDHCP: &enableDHCP,
 	}
-	// dns_publish_fixed_ip belongs to the subnet-dns-publish-fixed-ip extension,
-	// which a deployment may not have loaded: such a deployment rejects the
-	// attribute itself with "Unrecognized attribute(s) 'dns_publish_fixed_ip'"
-	// (HTTP 400) even when it carries the API default. Sending it only when the
-	// caller asks to publish keeps the documented default of false intact and
-	// stops an unused attribute from making every subnet uncreatable.
-	if dnsPublishFixedIP := d.Get("dns_publish_fixed_ip").(bool); dnsPublishFixedIP {
-		request.DNSPublishFixedIP = &dnsPublishFixedIP
-	}
 	if v, ok := d.GetOk("cidr"); ok {
 		request.CIDR = vpcString(v.(string))
-	}
-	if v, ok := d.GetOk("subnetpool_id"); ok {
-		request.SubnetPoolID = vpcString(v.(string))
-	}
-	if v, ok := d.GetOk("prefix_length"); ok {
-		request.PrefixLength = vpcInt(v.(int))
 	}
 	if v, ok := d.GetOk("name"); ok {
 		request.Name = vpcString(v.(string))
@@ -298,11 +267,6 @@ func resourceNetworkingSubnetV2Update(ctx context.Context, d *schema.ResourceDat
 		request.EnableDHCP = &enableDHCP
 		needsUpdate = true
 	}
-	if d.HasChange("dns_publish_fixed_ip") {
-		dnsPublishFixedIP := d.Get("dns_publish_fixed_ip").(bool)
-		request.DNSPublishFixedIP = &dnsPublishFixedIP
-		needsUpdate = true
-	}
 	if d.HasChange("allocation_pool") {
 		pools := expandNetworkingSubnetV2AllocationPools(d.Get("allocation_pool").(*schema.Set).List())
 		request.AllocationPools = &pools
@@ -377,8 +341,6 @@ func flattenNetworkingSubnetV2(d *schema.ResourceData, found *subnet.Subnet) {
 	d.Set("enable_dhcp", found.EnableDHCP)
 	d.Set("ipv6_address_mode", derefString(found.IPv6AddressMode))
 	d.Set("ipv6_ra_mode", derefString(found.IPv6RAMode))
-	d.Set("subnetpool_id", derefString(found.SubnetPoolID))
-	d.Set("dns_publish_fixed_ip", found.DNSPublishFixedIP)
 	d.Set("blocked", found.Blocked)
 
 	if err := d.Set("allocation_pool", flattenNetworkingSubnetV2AllocationPools(found.AllocationPools)); err != nil {
@@ -419,10 +381,6 @@ func validateNetworkingSubnetV2CIDR(v interface{}, k string) ([]string, []error)
 // validateNetworkingSubnetV2Config rejects the configuration errors that the
 // schema itself cannot express, before any API call happens.
 func validateNetworkingSubnetV2Config(d *schema.ResourceData) error {
-	if d.Get("prefix_length").(int) != 0 && d.Get("subnetpool_id").(string) == "" {
-		return fmt.Errorf("prefix_length requires subnetpool_id to be set")
-	}
-
 	nameservers := expandToStringSlice(d.Get("dns_nameservers").([]interface{}))
 	seen := make(map[string]struct{}, len(nameservers))
 	for _, nameserver := range nameservers {

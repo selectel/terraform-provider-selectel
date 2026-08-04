@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -23,9 +22,10 @@ const testAccNetworkingSubnetV2ResourceName = "selectel_networking_subnet_v2.sub
 // Schema unit tests.
 // -----------------------------------------------------------------------------
 
-// TestNetworkingSubnetV2SchemaOwnership covers REQ-022: service_types and
-// blocked are admin-managed, and segment_id is out of the schema entirely
-// because the SDK does not return it.
+// TestNetworkingSubnetV2SchemaOwnership covers REQ-022: service_types and blocked
+// are admin-managed, and segment_id is out of the schema entirely because the SDK
+// does not return it. Subnet pools are not shipped, so the attributes that would
+// draw a subnet from one are absent too.
 func TestNetworkingSubnetV2SchemaOwnership(t *testing.T) {
 	s := resourceNetworkingSubnetV2().Schema
 
@@ -46,9 +46,12 @@ func TestNetworkingSubnetV2SchemaOwnership(t *testing.T) {
 		})
 	}
 
-	t.Run("segment_id and host_routes are not part of the resource", func(t *testing.T) {
-		assert.NotContains(t, s, "segment_id")
-		assert.NotContains(t, s, "host_routes")
+	// Subnet pools are not part of this provider, so a subnet cannot be created
+	// from one and the two attributes that would do it are absent.
+	t.Run("segment_id, host_routes, subnetpool_id and prefix_length are not part of the resource", func(t *testing.T) {
+		for _, name := range []string{"segment_id", "host_routes", "subnetpool_id", "prefix_length"} {
+			assert.NotContains(t, s, name)
+		}
 	})
 
 	// REQ-016: exactly these attributes replace the resource, including the two
@@ -62,23 +65,19 @@ func TestNetworkingSubnetV2SchemaOwnership(t *testing.T) {
 		}
 
 		assert.ElementsMatch(t, []string{
-			"project_id", "region", "network_id", "cidr", "prefix_length",
-			"subnetpool_id", "ip_version", "ipv6_address_mode", "ipv6_ra_mode",
+			"project_id", "region", "network_id", "cidr",
+			"ip_version", "ipv6_address_mode", "ipv6_ra_mode",
 		}, forceNew)
 	})
 
 	// REQ-018: the two mutually exclusive pairs are rejected by the schema.
 	t.Run("mutually exclusive attributes conflict", func(t *testing.T) {
-		assert.Equal(t, []string{"prefix_length"}, s["cidr"].ConflictsWith)
-		assert.Equal(t, []string{"cidr"}, s["prefix_length"].ConflictsWith)
 		assert.Equal(t, []string{"no_gateway"}, s["gateway_ip"].ConflictsWith)
 		assert.Equal(t, []string{"gateway_ip"}, s["no_gateway"].ConflictsWith)
-		assert.Equal(t, []string{"subnetpool_id"}, s["prefix_length"].RequiredWith)
 	})
 
 	t.Run("defaults match the api", func(t *testing.T) {
 		assert.Equal(t, true, s["enable_dhcp"].Default)
-		assert.Equal(t, false, s["dns_publish_fixed_ip"].Default)
 		assert.Equal(t, networkingSubnetV2IPVersion4, s["ip_version"].Default)
 	})
 }
@@ -119,15 +118,6 @@ func TestNetworkingSubnetV2ConfigValidation(t *testing.T) {
 	newData := func(raw map[string]interface{}) *schema.ResourceData {
 		return schema.TestResourceDataRaw(t, resourceNetworkingSubnetV2().Schema, raw)
 	}
-
-	t.Run("prefix_length without subnetpool_id is rejected", func(t *testing.T) {
-		err := validateNetworkingSubnetV2Config(newData(map[string]interface{}{
-			"prefix_length": 24,
-		}))
-
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "subnetpool_id")
-	})
 
 	t.Run("duplicate dns_nameservers are rejected", func(t *testing.T) {
 		err := validateNetworkingSubnetV2Config(newData(map[string]interface{}{
@@ -182,9 +172,8 @@ func TestNetworkingSubnetV2HostRoutes(t *testing.T) {
 // Acceptance tests against a staging environment (TF_ACC=1).
 // -----------------------------------------------------------------------------
 
-// TestAccNetworkingSubnetV2Basic covers SCN-013-01 and SCN-013-02 (create with
-// an explicit CIDR and via a subnet pool), SCN-020-01 (import) and SCN-019-01
-// (delete).
+// TestAccNetworkingSubnetV2Basic covers SCN-013-01 (create with an explicit CIDR),
+// SCN-020-01 (import) and SCN-019-01 (delete).
 func TestAccNetworkingSubnetV2Basic(t *testing.T) {
 	var found subnet.Subnet
 	projectID, region := networkingV2TestEnv()
@@ -274,49 +263,6 @@ func TestAccNetworkingSubnetV2NoGateway(t *testing.T) {
 			{
 				Config:   testAccNetworkingSubnetV2NoGateway(projectID, region),
 				PlanOnly: true,
-			},
-		},
-	})
-}
-
-// TestAccNetworkingSubnetV2DNSPublishFixedIP covers SCN-014-07 and SCN-015-05:
-// dns_publish_fixed_ip is accepted on create and changed without a replacement.
-//
-// The attribute belongs to the subnet-dns-publish-fixed-ip extension. A
-// deployment without it rejects the attribute outright with "Unrecognized
-// attribute(s) 'dns_publish_fixed_ip'" (HTTP 400), so the test runs only where the
-// environment states the extension is loaded.
-func TestAccNetworkingSubnetV2DNSPublishFixedIP(t *testing.T) {
-	projectID, region := networkingV2TestEnv()
-
-	if os.Getenv("SELECTEL_NETWORKING_DNS_PUBLISH_FIXED_IP") == "" {
-		t.Skip(
-			"SELECTEL_NETWORKING_DNS_PUBLISH_FIXED_IP must be set for a deployment " +
-				"that loads the subnet-dns-publish-fixed-ip extension",
-		)
-	}
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
-		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckNetworkingSubnetV2Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccNetworkingSubnetV2DNSPublishFixedIP(projectID, region, true),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "dns_publish_fixed_ip", "true"),
-				),
-			},
-			{
-				Config:   testAccNetworkingSubnetV2DNSPublishFixedIP(projectID, region, true),
-				PlanOnly: true,
-			},
-			{
-				// SCN-015-05: the attribute is mutable, so the subnet is not replaced.
-				Config: testAccNetworkingSubnetV2DNSPublishFixedIP(projectID, region, false),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "dns_publish_fixed_ip", "false"),
-				),
 			},
 		},
 	})
@@ -629,18 +575,6 @@ resource "selectel_networking_subnet_v2" "subnet_tf_acc_test_1" {
   no_gateway = true
 }
 `, region)
-}
-
-func testAccNetworkingSubnetV2DNSPublishFixedIP(projectID, region string, publish bool) string {
-	return testAccNetworkingSubnetV2Network(projectID, region) + fmt.Sprintf(`
-resource "selectel_networking_subnet_v2" "subnet_tf_acc_test_1" {
-  project_id           = local.project_id
-  region               = "%s"
-  network_id           = selectel_networking_network_v2.network_tf_acc_test_1.id
-  cidr                 = "192.168.199.0/24"
-  dns_publish_fixed_ip = %t
-}
-`, region, publish)
 }
 
 func testAccNetworkingSubnetV2OptionalAttributes(projectID, region, subnetName string) string {

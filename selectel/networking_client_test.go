@@ -104,23 +104,9 @@ func TestNetworkingV2Client(t *testing.T) {
 }
 
 // TestNetworkingSDKContract is the verification of TASK-172: it compiles only if
-// the four attributes agreed with the SDK owner are present in the SDK's write
-// models, and it asserts the one that is deliberately create-only.
-//
-// The provider's specs require dns_publish_fixed_ip on subnet (REQ-014/REQ-015),
-// extra_dhcp_opts and binding:vnic_type on port (REQ-040/REQ-041) and a
-// create-only flavor_id on router (REQ-057/REQ-059).
+// the attributes agreed with the SDK owner are present in the SDK's write models,
+// and it asserts the ones that are deliberately create-only or read-only.
 func TestNetworkingSDKContract(t *testing.T) {
-	t.Run("subnet accepts dns_publish_fixed_ip on create and update", func(t *testing.T) {
-		enabled := true
-		createReq := subnet.CreateRequest{DNSPublishFixedIP: &enabled}
-		updateReq := subnet.UpdateRequest{DNSPublishFixedIP: &enabled}
-
-		require.NotNil(t, createReq.DNSPublishFixedIP)
-		require.NotNil(t, updateReq.DNSPublishFixedIP)
-		assert.True(t, *createReq.DNSPublishFixedIP)
-	})
-
 	t.Run("port accepts extra_dhcp_opts and binding vnic_type on create and update", func(t *testing.T) {
 		value := "10.0.0.1"
 		options := []port.ExtraDHCPOption{{Name: "tftp-server", Value: value}}

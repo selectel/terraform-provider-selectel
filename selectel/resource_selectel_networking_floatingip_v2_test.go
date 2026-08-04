@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strconv"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -38,24 +36,11 @@ func networkingFloatingIPV2TestPool(t *testing.T) string {
 	return pool
 }
 
-// networkingFloatingIPV2OptionalTestValues is the expression naming the subnet an
-// address is allocated from, plus the DNS name recorded with it.
-//
-// The subnet defaults to the first one of the external network, taken from the
-// data source: a project cannot read those subnets, but it can see their
-// identifiers. SELECTEL_NETWORKING_FLOATINGIP_SUBNET_ID overrides it, because an
-// external network may hold subnets no address can be allocated from.
-//
-// The domain is not here at all — it comes from a private DNS zone the
-// configuration creates, since the fork resolves dns_domain against the zones of
-// the project.
-func networkingFloatingIPV2OptionalTestValues() (subnetID, dnsName string) {
-	subnetID = "data.selectel_networking_network_v2.external_tf_acc_test_1.subnets[0]"
-	if configured := os.Getenv("SELECTEL_NETWORKING_FLOATINGIP_SUBNET_ID"); configured != "" {
-		subnetID = strconv.Quote(configured)
-	}
-
-	return subnetID, acctest.RandomWithPrefix("tf-acc-fip")
+// networkingFloatingIPV2TestSubnet is the expression naming the subnet an address
+// is allocated from: the first one of the external network, taken from the data
+// source. A project cannot read those subnets, but it can see their identifiers.
+func networkingFloatingIPV2TestSubnet() string {
+	return "data.selectel_networking_network_v2.external_tf_acc_test_1.subnets[0]"
 }
 
 // -----------------------------------------------------------------------------
@@ -87,7 +72,7 @@ func TestNetworkingFloatingIPV2Schema(t *testing.T) {
 		}
 
 		assert.ElementsMatch(t, []string{
-			"project_id", "region", "pool", "subnet_id", "dns_name", "dns_domain",
+			"project_id", "region", "pool", "subnet_id",
 		}, forceNew)
 	})
 
@@ -118,26 +103,6 @@ func TestNetworkingFloatingIPV2Schema(t *testing.T) {
 	t.Run("subnet_ids is not exposed", func(t *testing.T) {
 		assert.NotContains(t, s, "subnet_ids")
 	})
-}
-
-// TestNetworkingFloatingIPV2DNSDomainValidation covers the FQDN rule of REQ-086.
-func TestNetworkingFloatingIPV2DNSDomainValidation(t *testing.T) {
-	validate := resourceNetworkingFloatingIPV2().Schema["dns_domain"].ValidateFunc
-	require.NotNil(t, validate)
-
-	t.Run("rejects a domain without a trailing dot", func(t *testing.T) {
-		_, errs := validate("example.com", "dns_domain")
-
-		require.NotEmpty(t, errs)
-		assert.Contains(t, errs[0].Error(), "dot at the end")
-	})
-
-	for _, value := range []string{"", "example.com."} {
-		t.Run("accepts "+value, func(t *testing.T) {
-			_, errs := validate(value, "dns_domain")
-			assert.Empty(t, errs)
-		})
-	}
 }
 
 // TestNetworkingFloatingIPV2SubnetIDDiffSuppression covers SCN-089-04: after an
@@ -194,32 +159,6 @@ func TestNetworkingFloatingIPV2SubnetIDDiffSuppression(t *testing.T) {
 		assert.False(t, s["subnet_id"].Computed)
 		assert.True(t, s["subnet_id"].ForceNew)
 	})
-}
-
-// TestNetworkingFloatingIPV2WriteOnlyDNSFields covers the same rule for dns_name
-// and dns_domain. A live floating IP created with both returns neither in the
-// create response nor in a following read, so they cannot be Computed and a
-// configured value must not be read as a change from an empty stored one —
-// otherwise every plan would release and re-allocate the address.
-func TestNetworkingFloatingIPV2WriteOnlyDNSFields(t *testing.T) {
-	s := resourceNetworkingFloatingIPV2().Schema
-
-	for _, name := range []string{"dns_name", "dns_domain"} {
-		t.Run(name+" is write-only and suppressed against an unknown stored value", func(t *testing.T) {
-			require.Contains(t, s, name)
-			assert.True(t, s[name].Optional)
-			assert.False(t, s[name].Computed, "the API returns nothing to populate it from")
-			assert.True(t, s[name].ForceNew)
-			require.NotNil(t, s[name].DiffSuppressFunc)
-
-			assert.True(t, s[name].DiffSuppressFunc(name, "", "configured", nil),
-				"an unknown stored value must not plan a replacement")
-			assert.False(t, s[name].DiffSuppressFunc(name, "stored", "configured", nil),
-				"a change between two known values is a real change")
-			assert.False(t, s[name].DiffSuppressFunc(name, "stored", "", nil),
-				"clearing a known value is a real change")
-		})
-	}
 }
 
 // TestNetworkingFloatingIPV2DataSourceSelectors covers REQ-094.
@@ -389,8 +328,7 @@ func TestAccNetworkingFloatingIPV2Basic(t *testing.T) {
 func TestAccNetworkingFloatingIPV2Optional(t *testing.T) {
 	projectID, region := networkingV2TestEnv()
 	pool := networkingFloatingIPV2TestPool(t)
-	zonePrefix := acctest.RandomWithPrefix("tf-acc-zone")
-	subnetID, dnsName := networkingFloatingIPV2OptionalTestValues()
+	subnetID := networkingFloatingIPV2TestSubnet()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
@@ -398,19 +336,15 @@ func TestAccNetworkingFloatingIPV2Optional(t *testing.T) {
 		CheckDestroy:      testAccCheckNetworkingFloatingIPV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingFloatingIPV2Optional(
-					projectID, region, pool, zonePrefix, subnetID, dnsName,
-				),
+				Config: testAccNetworkingFloatingIPV2Optional(projectID, region, pool, subnetID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(
 						testAccNetworkingFloatingIPV2ResourceName, "address",
 					),
-					// subnet_id, dns_name and dns_domain are deliberately not asserted
-					// here: the API returns none of them, and their diff suppression
-					// keeps a configured value out of state entirely. The empty
-					// follow-up plan of the next step is what shows they reached the
-					// create request without planning a replacement — the behaviour
-					// that was broken before the suppression existed.
+					// subnet_id is deliberately not asserted: the API does not return
+					// it, and its diff suppression keeps a configured value out of
+					// state. The empty follow-up plan of the next step is what shows
+					// it reached the create request without planning a replacement.
 					resource.TestCheckResourceAttr(
 						testAccNetworkingFloatingIPV2ResourceName, "description", "optional attributes",
 					),
@@ -423,9 +357,7 @@ func TestAccNetworkingFloatingIPV2Optional(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccNetworkingFloatingIPV2Optional(
-					projectID, region, pool, zonePrefix, subnetID, dnsName,
-				),
+				Config:   testAccNetworkingFloatingIPV2Optional(projectID, region, pool, subnetID),
 				PlanOnly: true,
 			},
 		},
@@ -707,10 +639,9 @@ resource "selectel_networking_floatingip_v2" "floatingip_tf_acc_test_1" {
 }
 
 func testAccNetworkingFloatingIPV2Optional(
-	projectID, region, pool, zonePrefix, subnetID, dnsName string,
+	projectID, region, pool, subnetID string,
 ) string {
-	return testAccNetworkingV2Base(projectID) +
-		testAccNetworkingV2PrivateDNSZones(region, zonePrefix) + fmt.Sprintf(`
+	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
 data "selectel_networking_network_v2" "external_tf_acc_test_1" {
   project_id = local.project_id
   region     = "%[1]s"
@@ -725,10 +656,8 @@ resource "selectel_networking_floatingip_v2" "floatingip_tf_acc_test_1" {
   subnet_id   = %[3]s
   description = "optional attributes"
   tags        = ["tf-acc", "networking"]
-  dns_name    = "%[4]s"
-  dns_domain  = selectel_private_dns_zone_v1.zone_tf_acc_test_1.domain
 }
-`, region, pool, subnetID, dnsName)
+`, region, pool, subnetID)
 }
 
 // testAccNetworkingFloatingIPV2Gateway routes the test subnet to the external

@@ -73,14 +73,6 @@ func dataSourceNetworkingFloatingIPV2() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"dns_name": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"dns_domain": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"all_tags": {
 				Type:     schema.TypeSet,
 				Computed: true,

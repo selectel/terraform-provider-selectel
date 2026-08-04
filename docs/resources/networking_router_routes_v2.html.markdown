@@ -64,6 +64,8 @@ Every `next_hop` must be an address in a subnet served by one of the router's **
 
 Destroying the resource removes only the routes recorded in its state; anything else on the router stays. If the state holds no routes, the destroy makes no API call. If the router is already gone, or the managed routes are already absent, the destroy succeeds without an error.
 
+Run a plan or an apply before destroying if the previous apply was rejected by the API. The rejected list stays in state until a refresh replaces it with the router's actual one, so a destroy in between removes only the rejected entries and leaves the routes the router really has — and those routes keep the router's interfaces from being deleted until they are removed.
+
 ## Import
 
 You can import the route set by the identifier of its router:

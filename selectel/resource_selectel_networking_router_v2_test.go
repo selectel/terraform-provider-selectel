@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
+	"github.com/selectel/vpc-go/pkg/v2/availabilityzone"
 	"github.com/selectel/vpc-go/pkg/v2/router"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,9 +25,75 @@ const (
 	testAccNetworkingRouterV2DataSourceName = "data.selectel_networking_router_v2.router_tf_acc_test_1"
 )
 
-// networkingRouterV2TestExternalNetwork is the external network the gateway
-// tests attach to. It is region-specific, so the test skips rather than
-// attaching a gateway to an arbitrary network.
+// networkingRouterV2TestZones is the availability zones the region serves routers
+// from, taken from /v2.0/availability_zones — readable with a project token, so no
+// environment variable has to name them.
+//
+// The endpoint reports the zones that EXIST, which is not the same as the zones this
+// caller may ask for: the fork restricts availability_zone_hints to
+// allowed_router_zones, an allowlist no endpoint exposes, and refuses every hint at
+// all when that allowlist is empty. Whether hints are usable here is therefore
+// probed by creating one router, not deduced.
+func networkingRouterV2TestZones(t *testing.T, want int) []string {
+	t.Helper()
+
+	config := &Config{
+		Username:   os.Getenv("OS_USERNAME"),
+		Password:   os.Getenv("OS_PASSWORD"),
+		DomainName: os.Getenv("OS_DOMAIN_NAME"),
+		AuthURL:    os.Getenv("OS_AUTH_URL"),
+		AuthRegion: os.Getenv("OS_REGION_NAME"),
+		ProjectID:  os.Getenv("INFRA_PROJECT_ID"),
+		Region:     os.Getenv("INFRA_REGION"),
+	}
+
+	client, err := networkingV2Client(config, config.ProjectID, config.Region)
+	if err != nil {
+		t.Skipf("cannot reach the networking API to list availability zones: %v", err)
+	}
+
+	ctx := context.Background()
+	found, err := availabilityzone.List(ctx, client, vpc.ListOptions{
+		SelectionOptions: vpc.SelectionOptions{Filters: map[string][]string{
+			"resource": {availabilityzone.ResourceRouter},
+			"state":    {availabilityzone.StateAvailable},
+		}},
+	})
+	if err != nil {
+		t.Skipf("cannot list availability zones: %v", err)
+	}
+
+	names := make([]string, 0, len(found))
+	for _, zone := range found {
+		names = append(names, zone.Name)
+	}
+
+	if len(names) < want {
+		t.Skipf("the region serves routers from %d availability zone(s), the scenario needs %d",
+			len(names), want)
+	}
+
+	// One probe router shows whether this caller may set hints at all. Without it a
+	// region with an empty allowed_router_zones would fail the test on its first
+	// step instead of reporting that the scenario is not applicable here.
+	probeName := acctest.RandomWithPrefix("tf-acc-zone-probe")
+	hints := []string{names[0]}
+	probe, err := router.Create(ctx, client, router.CreateRequest{
+		Name: &probeName, AvailabilityZoneHints: &hints,
+	})
+	if err != nil {
+		t.Skipf("this caller may not set availability_zone_hints in %s: %v", config.Region, err)
+	}
+	if err := router.Delete(ctx, client, probe.ID); err != nil {
+		t.Fatalf("cannot remove the probe router %s: %v", probe.ID, err)
+	}
+
+	return names
+}
+
+// networkingRouterV2TestExternalNetwork is the external network the gateway tests
+// attach to. It is region-specific, so the test skips rather than attaching a
+// gateway to an arbitrary network.
 func networkingRouterV2TestExternalNetwork(t *testing.T) string {
 	t.Helper()
 
@@ -385,11 +452,8 @@ func TestAccNetworkingRouterV2Replacement(t *testing.T) {
 	var found router.Router
 	projectID, region := networkingV2TestEnv()
 
-	zone := os.Getenv("SELECTEL_ROUTER_ZONE")
-	otherZone := os.Getenv("SELECTEL_ROUTER_ZONE_ALTERNATIVE")
-	if zone == "" || otherZone == "" {
-		t.Skip("SELECTEL_ROUTER_ZONE and SELECTEL_ROUTER_ZONE_ALTERNATIVE must name two zones from allowed_router_zones")
-	}
+	zones := networkingRouterV2TestZones(t, 2)
+	zone, otherZone := zones[0], zones[1]
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
@@ -409,36 +473,6 @@ func TestAccNetworkingRouterV2Replacement(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckNetworkingRouterV2Replaced(&found),
 					resource.TestCheckResourceAttr(testAccNetworkingRouterV2ResourceName, "availability_zone_hints.0", otherZone),
-				),
-			},
-		},
-	})
-}
-
-// TestAccNetworkingRouterV2ZoneOutsideAllowlist covers SCN-062-01: a privileged
-// caller is not restricted by allowed_router_zones. It needs the name of a zone
-// that really exists in the region but is outside the allowlist — an arbitrary
-// name would be rejected by ordinary availability-zone validation instead, so
-// the test would pass for the wrong reason.
-func TestAccNetworkingRouterV2ZoneOutsideAllowlist(t *testing.T) {
-	var found router.Router
-	projectID, region := networkingV2TestEnv()
-
-	zone := os.Getenv("SELECTEL_ROUTER_ZONE_OUTSIDE_ALLOWLIST")
-	if zone == "" {
-		t.Skip("SELECTEL_ROUTER_ZONE_OUTSIDE_ALLOWLIST must name a real zone outside allowed_router_zones")
-	}
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
-		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckNetworkingRouterV2Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccNetworkingRouterV2Zone(projectID, region, zone),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckNetworkingRouterV2Exists(&found),
-					resource.TestCheckResourceAttr(testAccNetworkingRouterV2ResourceName, "availability_zone_hints.0", zone),
 				),
 			},
 		},

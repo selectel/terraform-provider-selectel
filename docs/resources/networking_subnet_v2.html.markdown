@@ -39,11 +39,7 @@ resource "selectel_networking_subnet_v2" "subnet_1" {
 
 * `network_id` - (Required) Unique identifier of the parent network. Changing this creates a new subnet.
 
-* `cidr` - (Optional) CIDR of the subnet. Must be the network address of its own prefix, for example, `192.168.199.0/24` and not `192.168.199.5/24`; any other value is rejected before the API is called. Conflicts with `prefix_length`. Changing this creates a new subnet. If you do not specify a CIDR, specify `subnetpool_id` and `prefix_length` instead, and the API allocates one.
-
-* `subnetpool_id` - (Optional) Unique identifier of the subnet pool the CIDR is allocated from. Changing this creates a new subnet.
-
-* `prefix_length` - (Optional) Prefix length to allocate from `subnetpool_id`. Requires `subnetpool_id` and conflicts with `cidr`. Changing this creates a new subnet.
+* `cidr` - (Optional) CIDR of the subnet. Must be the network address of its own prefix, for example, `192.168.199.0/24` and not `192.168.199.5/24`; any other value is rejected before the API is called. Changing this creates a new subnet.
 
 * `name` - (Optional) Name of the subnet. If you do not specify a name, the API assigns one.
 
@@ -58,8 +54,6 @@ resource "selectel_networking_subnet_v2" "subnet_1" {
 * `enable_dhcp` - (Optional) Specifies whether DHCP is enabled for the subnet. The default value is `true`.
 
 * `dns_nameservers` - (Optional) DNS name servers of the subnet, in order. Duplicate entries are rejected before the API is called.
-
-* `dns_publish_fixed_ip` - (Optional) Specifies whether the fixed IPs of the subnet are published to the DNS service. The default value is `false`.
 
 * `allocation_pool` - (Optional) Address ranges available for allocation. You can specify several pools:
 

@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"regexp"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -20,33 +18,18 @@ import (
 
 const testAccNetworkingRBACPolicyV2ResourceName = "selectel_networking_rbac_policy_v2.rbac_tf_acc_test_1"
 
-// networkingRBACPolicyV2Targets is where the policy grants access to. A grant
-// needs real second and third tenants, so by default the configuration creates two
-// empty projects itself and needs nothing from the environment.
-//
-// SELECTEL_RBAC_TARGET_PROJECT_ID and SELECTEL_RBAC_TARGET_PROJECT_ID_ALTERNATIVE
-// point the tests at existing projects instead. That escape hatch exists because
-// the Resell project API is not always reliable: a 500 on reading or deleting a
-// freshly created project both fails the test and leaves an orphaned project
-// behind, which pointing at two long-lived projects avoids.
+// networkingRBACPolicyV2Targets is where the policy grants access to. A grant needs
+// real second and third tenants, and an empty project costs nothing to create, so
+// the configuration creates two of its own and the tests need nothing from the
+// environment beyond the project and the region they run in.
 type networkingRBACPolicyV2Targets struct {
-	// prefix names the projects the configuration creates; empty means it creates
-	// none and the targets below are literal identifiers.
+	// prefix names the projects the configuration creates.
 	prefix string
 	first  string
 	second string
 }
 
 func networkingRBACPolicyV2TestTargets() networkingRBACPolicyV2Targets {
-	first := os.Getenv("SELECTEL_RBAC_TARGET_PROJECT_ID")
-	second := os.Getenv("SELECTEL_RBAC_TARGET_PROJECT_ID_ALTERNATIVE")
-	if first != "" && second != "" {
-		return networkingRBACPolicyV2Targets{
-			first:  strconv.Quote(first),
-			second: strconv.Quote(second),
-		}
-	}
-
 	return networkingRBACPolicyV2Targets{
 		prefix: acctest.RandomWithPrefix("tf-acc-rbac-target"),
 		first:  testAccNetworkingRBACPolicyV2FirstTarget + ".id",
@@ -54,23 +37,12 @@ func networkingRBACPolicyV2TestTargets() networkingRBACPolicyV2Targets {
 	}
 }
 
-// check asserts that target_tenant points at the given target, whether that is a
-// project the configuration created or an identifier taken from the environment.
+// check asserts that target_tenant points at the project the configuration created.
 func (targets networkingRBACPolicyV2Targets) check(target string) resource.TestCheckFunc {
-	if targets.prefix != "" {
-		return resource.TestCheckResourceAttrPair(
-			testAccNetworkingRBACPolicyV2ResourceName, "target_tenant",
-			strings.TrimSuffix(target, ".id"), "id",
-		)
-	}
-
-	value, err := strconv.Unquote(target)
-	if err != nil {
-		value = target
-	}
-
-	return resource.TestCheckResourceAttr(
-		testAccNetworkingRBACPolicyV2ResourceName, "target_tenant", value)
+	return resource.TestCheckResourceAttrPair(
+		testAccNetworkingRBACPolicyV2ResourceName, "target_tenant",
+		strings.TrimSuffix(target, ".id"), "id",
+	)
 }
 
 // -----------------------------------------------------------------------------
