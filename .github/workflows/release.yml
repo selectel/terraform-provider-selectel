@@ -15,24 +15,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
+        # NOTE: to update the version, use `make pin-sha-tags`.
         uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
 
       - name: Unshallow
         run: git fetch --prune --unshallow
 
       - name: Set up Go
+        # NOTE: to update the version, use `make pin-sha-tags`.
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version: "1.26"
 
       - name: Import GPG key
         id: import_gpg
+        # NOTE: to update the version, use `make pin-sha-tags`.
         uses: paultyng/ghaction-import-gpg@53deb67fe3b05af114ad9488a4da7b782455d588 # v2.1.0
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           PASSPHRASE: ${{ secrets.PASSPHRASE }}
 
       - name: Run GoReleaser
+        # NOTE: to update the version, use `make pin-sha-tags`.
         uses: goreleaser/goreleaser-action@b953231f81b8dfd023c58e0854a721e35037f28b # v2
         with:
           version: latest

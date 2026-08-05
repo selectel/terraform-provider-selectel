@@ -14,14 +14,17 @@ jobs:
 
     steps:
       - name: Checkout
+        # NOTE: to update the version, use `make pin-sha-tags`.
         uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
 
       - name: Set up Go
+        # NOTE: to update the version, use `make pin-sha-tags`.
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version: "1.26"
 
       - name: Set up Terraform
+        # NOTE: to update the version, use `make pin-sha-tags`.
         uses: hashicorp/setup-terraform@633666f66e0061ca3b725c73b2ec20cd13a8fdd1 # v2
         with:
           terraform_wrapper: false
