@@ -202,7 +202,7 @@ If you forget the server password, you can [reset and restore it](https://github
 
 * `public_subnet_ip` - (Optional) Public IP address to assign to the server within the public subnet.
 
-* `private_subnet_id` - (Optional) Unique identifier of the private subnet to connect to the server. Changing this deletes the existing server and creates a new server. Retrieved from the [selectel_dedicated_private_subnet_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dedicated_private_subnet_v1) data source.
+* `private_subnet_id` - (Optional) Unique identifier of the private subnet to connect to the server. Retrieved from the [selectel_dedicated_private_subnet_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dedicated_private_subnet_v1) data source
 
 * `private_subnet_ip` - (Optional) Private IP address to assign to the server within the private subnet. Must be used together with private_subnet_id.
 

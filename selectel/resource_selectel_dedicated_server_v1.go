@@ -962,6 +962,13 @@ func resourceDedicatedServerV1UpdateWithStateRollback(
 		return diag.FromErr(errUpdatingObject(objectDedicatedServer, d.Id(), err))
 	}
 
+	// Refresh computed attributes (e.g. private_ip) after OS installation.
+	ips, err := resourceDedicatedServerGetReservedIPs(ctx, dsClient, d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	_ = d.Set(dedicatedServerSchemaPrivateIP, ips.privateIP)
+
 	// Apply power_state after OS installation if specified
 	if powerState, ok := d.GetOk(dedicatedServerSchemaKeyPowerState); ok {
 		state := powerState.(string)
@@ -985,15 +992,17 @@ func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData
 		oldPrivateSubnetID, newPrivateSubnetID = d.GetChange(dedicatedServerSchemaKeyPrivateSubnetID)
 	)
 
-	if oldPrivateSubnetID.(string) == "" && newPrivateSubnetID.(string) != "" {
+	// Reserve the private IP in the subnet when private subnet params change.
+	if newPrivateSubnetID.(string) != "" &&
+		(d.HasChange(dedicatedServerSchemaKeyPrivateSubnetID) || d.HasChange(dedicatedServerSchemaKeyPrivateSubnetIP)) {
 		_, _, err := dsClient.AddIPInNetworkLocalSubnet(ctx, newPrivateSubnetID.(string), d.Id(), privateSubnetIP)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
-	// If only private_subnet_id changed, no need to reinstall OS
-	onlyPrivateSubnetChanged := d.HasChange(dedicatedServerSchemaKeyPrivateSubnetID) &&
+	// If only private subnet params changed, no need to reinstall OS.
+	onlyPrivateSubnetChanged := (d.HasChange(dedicatedServerSchemaKeyPrivateSubnetID) || d.HasChange(dedicatedServerSchemaKeyPrivateSubnetIP)) &&
 		!d.HasChange(dedicatedServerSchemaKeyOSID) &&
 		!d.HasChange(dedicatedServerSchemaKeyOSHostName) &&
 		!d.HasChange(dedicatedServerSchemaKeyOSSSHKey) &&
@@ -1048,6 +1057,35 @@ func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData
 			UserData:         userData,
 		}
 	)
+
+	// Populate local IPv4 fields for auto-installation when a private subnet is configured.
+	newPrivateSubnetIDStr := newPrivateSubnetID.(string)
+	if newPrivateSubnetIDStr != "" {
+		localSubnet, _, err := dsClient.GetNetworkLocalSubnet(ctx, newPrivateSubnetIDStr)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error getting local subnet %s: %w", newPrivateSubnetIDStr, err))
+		}
+
+		netmask, err := localSubnetNetmask(localSubnet)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error computing netmask for local subnet %s: %w", newPrivateSubnetIDStr, err))
+		}
+
+		gateway, err := localSubnetIPv4Gateway(localSubnet.Subnet)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error computing gateway for local subnet %s: %w", newPrivateSubnetIDStr, err))
+		}
+
+		payload.LocalIPv4Address = new(privateSubnetIP)
+		payload.LocalIPv4Netmask = new(netmask)
+		payload.LocalIPv4Gateway = new(gateway)
+	} else if oldPrivateSubnetID.(string) != "" {
+		// Private subnet is being removed — send nil to clear local IPv4 config in the OS.
+		// *string nil marshals to JSON null, which signals the API to remove the configuration.
+		payload.LocalIPv4Address = nil
+		payload.LocalIPv4Netmask = nil
+		payload.LocalIPv4Gateway = nil
+	}
 
 	log.Print(msgUpdate(objectDedicatedServer, d.Id(), payload.CopyWithoutSensitiveData()))
 
@@ -1357,4 +1395,45 @@ func resourceDedicatedServerV1ImportState(_ context.Context, d *schema.ResourceD
 	_ = d.Set("project_id", config.ProjectID)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+// localSubnetNetmask returns the dotted-decimal netmask for a LocalSubnet.
+// It uses the Netmask field from the API response if available, otherwise
+// computes it from the CIDR Subnet field.
+func localSubnetNetmask(ls *dedicated.LocalSubnet) (string, error) {
+	if ls.Netmask != nil {
+		return ls.Netmask.String(), nil
+	}
+
+	// Fallback: compute from CIDR.
+	_, ipNet, err := net.ParseCIDR(ls.Subnet)
+	if err != nil {
+		return "", fmt.Errorf("error parsing local subnet CIDR %s: %w", ls.Subnet, err)
+	}
+
+	if len(ipNet.Mask) != 4 {
+		return "", fmt.Errorf("unsupported netmask length %d for local subnet %s", len(ipNet.Mask), ls.Subnet)
+	}
+
+	return fmt.Sprintf("%d.%d.%d.%d", ipNet.Mask[0], ipNet.Mask[1], ipNet.Mask[2], ipNet.Mask[3]), nil
+}
+
+// localSubnetIPv4Gateway computes the gateway IP for a local/private subnet
+// from its CIDR. For local subnets, the gateway is the first usable IP
+// (network address + 1).
+func localSubnetIPv4Gateway(cidr string) (string, error) {
+	ip, _, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return "", fmt.Errorf("error parsing local subnet CIDR %s: %w", cidr, err)
+	}
+
+	ip4 := ip.To4()
+	if ip4 == nil {
+		return "", fmt.Errorf("local subnet %s is not an IPv4 CIDR", cidr)
+	}
+
+	// Gateway is network address + 1 for local subnets.
+	gateway := net.IP([]byte{ip4[0], ip4[1], ip4[2], ip4[3] + 1})
+
+	return gateway.String(), nil
 }
