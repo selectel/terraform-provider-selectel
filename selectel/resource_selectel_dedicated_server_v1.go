@@ -1076,9 +1076,9 @@ func resourceDedicatedServerV1Update(ctx context.Context, d *schema.ResourceData
 			return diag.FromErr(fmt.Errorf("error computing gateway for local subnet %s: %w", newPrivateSubnetIDStr, err))
 		}
 
-		payload.LocalIPv4Address = dedicated.StringPtr(privateSubnetIP)
-		payload.LocalIPv4Netmask = dedicated.StringPtr(netmask)
-		payload.LocalIPv4Gateway = dedicated.StringPtr(gateway)
+		payload.LocalIPv4Address = new(privateSubnetIP)
+		payload.LocalIPv4Netmask = new(netmask)
+		payload.LocalIPv4Gateway = new(gateway)
 	} else if oldPrivateSubnetID.(string) != "" {
 		// Private subnet is being removed — send nil to clear local IPv4 config in the OS.
 		// *string nil marshals to JSON null, which signals the API to remove the configuration.
