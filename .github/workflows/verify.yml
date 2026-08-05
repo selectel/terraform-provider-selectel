@@ -10,6 +10,7 @@ jobs:
   tests:
     runs-on: ubuntu-24.04
     steps:
+      # NOTE: to update the version, use `make pin-sha-tags`.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
@@ -19,25 +20,21 @@ jobs:
   golangci-lint:
     runs-on: ubuntu-24.04
     steps:
+      # NOTE: to update the version, use `make pin-sha-tags`.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version: "1.26"
+      # NOTE: to update the version, use `make pin-sha-tags`.
       - uses: golangci/golangci-lint-action@9fae48acfc02a90574d7c304a1758ef9895495fa # v7
         with:
           # NOTE: If you update the version, don't forget to update the Makefile.
           version: v2.12.2
 
-  pin-sha-tags:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - run: npx pin-github-action .github/workflows/
-      - run: git diff --exit-code
-
   tidy:
     runs-on: ubuntu-24.04
     steps:
+      # NOTE: to update the version, use `make pin-sha-tags`.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
@@ -48,6 +45,7 @@ jobs:
   go-fix:
     runs-on: ubuntu-24.04
     steps:
+      # NOTE: to update the version, use `make pin-sha-tags`.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
