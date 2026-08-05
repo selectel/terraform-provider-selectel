@@ -35,7 +35,7 @@ func dataSourceGlobalRouterQuotaV1() *schema.Resource {
 	}
 }
 
-func dataSourceGlobalRouterQuotaV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceGlobalRouterQuotaV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getGlobalRouterClient(meta)
 	if diagErr != nil {
 		return diagErr

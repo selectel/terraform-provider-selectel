@@ -34,7 +34,7 @@ func resourceDBaaSKafkaTopicV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSTopicV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSTopicV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -64,7 +64,7 @@ func resourceDBaaSTopicV1Create(ctx context.Context, d *schema.ResourceData, met
 	return resourceDBaaSTopicV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSTopicV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSTopicV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -83,7 +83,7 @@ func resourceDBaaSTopicV1Read(ctx context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
-func resourceDBaaSTopicV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSTopicV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -112,7 +112,7 @@ func resourceDBaaSTopicV1Update(ctx context.Context, d *schema.ResourceData, met
 	return resourceDBaaSTopicV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSTopicV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSTopicV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -142,7 +142,7 @@ func resourceDBaaSTopicV1Delete(ctx context.Context, d *schema.ResourceData, met
 	return nil
 }
 
-func resourceDBaaSTopicV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSTopicV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")

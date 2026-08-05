@@ -33,7 +33,7 @@ func resourceDBaaSMySQLDatabaseV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSMySQLDatabaseV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSMySQLDatabaseV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -62,7 +62,7 @@ func resourceDBaaSMySQLDatabaseV1Create(ctx context.Context, d *schema.ResourceD
 	return resourceDBaaSMySQLDatabaseV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSMySQLDatabaseV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSMySQLDatabaseV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -80,7 +80,7 @@ func resourceDBaaSMySQLDatabaseV1Read(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func resourceDBaaSMySQLDatabaseV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSMySQLDatabaseV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -110,7 +110,7 @@ func resourceDBaaSMySQLDatabaseV1Delete(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
-func resourceDBaaSMySQLDatabaseV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSMySQLDatabaseV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")

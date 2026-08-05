@@ -50,7 +50,7 @@ func resourceCRaaSRegistryV1() *schema.Resource {
 	}
 }
 
-func resourceCRaaSRegistryV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceCRaaSRegistryV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	craasClient, diagErr := getCRaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -76,7 +76,7 @@ func resourceCRaaSRegistryV1Create(ctx context.Context, d *schema.ResourceData, 
 	return resourceCRaaSRegistryV1Read(ctx, d, meta)
 }
 
-func resourceCRaaSRegistryV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceCRaaSRegistryV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	craasClient, diagErr := getCRaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -107,7 +107,7 @@ func resourceCRaaSRegistryV1Read(ctx context.Context, d *schema.ResourceData, me
 	return nil
 }
 
-func resourceCRaaSRegistryV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceCRaaSRegistryV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	craasClient, diagErr := getCRaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -123,7 +123,7 @@ func resourceCRaaSRegistryV1Delete(ctx context.Context, d *schema.ResourceData, 
 		Pending: []string{strconv.Itoa(http.StatusOK)},
 		Target:  []string{strconv.Itoa(http.StatusNotFound)},
 		Timeout: d.Timeout(schema.TimeoutDelete),
-		Refresh: func() (result interface{}, state string, err error) {
+		Refresh: func() (result any, state string, err error) {
 			result, response, err := registry.Get(ctx, craasClient, d.Id())
 			if err != nil {
 				if response != nil {
@@ -148,7 +148,7 @@ func resourceCRaaSRegistryV1Delete(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceCRaaSRegistryV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceCRaaSRegistryV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the CRaaS registry resource import")

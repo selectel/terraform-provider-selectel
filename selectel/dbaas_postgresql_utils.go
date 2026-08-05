@@ -11,10 +11,10 @@ import (
 )
 
 func parsePoolerSet(poolerSet *schema.Set) (string, int, error) {
-	var resourceModeRaw, resourceSizeRaw interface{}
+	var resourceModeRaw, resourceSizeRaw any
 	var ok bool
 
-	resourcePoolerMap := poolerSet.List()[0].(map[string]interface{})
+	resourcePoolerMap := poolerSet.List()[0].(map[string]any)
 	if resourceModeRaw, ok = resourcePoolerMap["mode"]; !ok {
 		return "", 0, errors.New("pooler.mode value isn't provided")
 	}

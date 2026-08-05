@@ -38,7 +38,7 @@ func resourceDBaaSPostgreSQLDatastoreV1() *schema.Resource {
 	}
 }
 
-func resourceDBaaSPostgreSQLDatastoreV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLDatastoreV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -83,7 +83,7 @@ func resourceDBaaSPostgreSQLDatastoreV1Create(ctx context.Context, d *schema.Res
 		NodeCount:   d.Get("node_count").(int),
 		Pooler:      pooler,
 		Restore:     restore,
-		Config:      d.Get("config").(map[string]interface{}),
+		Config:      d.Get("config").(map[string]any),
 		FloatingIPs: floatingIPsSchema,
 	}
 
@@ -139,7 +139,7 @@ func resourceDBaaSPostgreSQLDatastoreV1Create(ctx context.Context, d *schema.Res
 	return resourceDBaaSPostgreSQLDatastoreV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSPostgreSQLDatastoreV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLDatastoreV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -187,7 +187,7 @@ func resourceDBaaSPostgreSQLDatastoreV1Read(ctx context.Context, d *schema.Resou
 	return nil
 }
 
-func resourceDBaaSPostgreSQLDatastoreV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLDatastoreV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -250,7 +250,7 @@ func resourceDBaaSPostgreSQLDatastoreV1Update(ctx context.Context, d *schema.Res
 	return resourceDBaaSPostgreSQLDatastoreV1Read(ctx, d, meta)
 }
 
-func resourceDBaaSPostgreSQLDatastoreV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDBaaSPostgreSQLDatastoreV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -280,7 +280,7 @@ func resourceDBaaSPostgreSQLDatastoreV1Delete(ctx context.Context, d *schema.Res
 	return nil
 }
 
-func resourceDBaaSPostgreSQLDatastoreV1ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDBaaSPostgreSQLDatastoreV1ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, errors.New("INFRA_PROJECT_ID must be set for the resource import")

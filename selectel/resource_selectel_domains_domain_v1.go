@@ -33,7 +33,7 @@ func resourceDomainsDomainV1() *schema.Resource {
 	}
 }
 
-func resourceDomainsDomainV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsDomainV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getDomainsClient(meta)
 	if err != nil {
 		return diag.FromErr(err)
@@ -54,7 +54,7 @@ func resourceDomainsDomainV1Create(ctx context.Context, d *schema.ResourceData, 
 	return resourceDomainsDomainV1Read(ctx, d, meta)
 }
 
-func resourceDomainsDomainV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsDomainV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getDomainsClient(meta)
 	if err != nil {
 		return diag.FromErr(err)
@@ -83,7 +83,7 @@ func resourceDomainsDomainV1Read(ctx context.Context, d *schema.ResourceData, me
 	return nil
 }
 
-func resourceDomainsDomainV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainsDomainV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getDomainsClient(meta)
 	if err != nil {
 		return diag.FromErr(err)

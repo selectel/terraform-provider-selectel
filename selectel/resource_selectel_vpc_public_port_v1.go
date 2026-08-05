@@ -73,7 +73,7 @@ func resourceVPCPublicPortV1() *schema.Resource {
 func resourceVPCPublicPortV1Create(
 	ctx context.Context,
 	d *schema.ResourceData,
-	meta interface{},
+	meta any,
 ) diag.Diagnostics {
 	client, diagErr := getPublicNetAPIClient(d, meta)
 	if diagErr != nil {
@@ -106,7 +106,7 @@ func resourceVPCPublicPortV1Create(
 	return nil
 }
 
-func resourceVPCPublicPortV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCPublicPortV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getPublicNetAPIClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -130,7 +130,7 @@ func resourceVPCPublicPortV1Read(ctx context.Context, d *schema.ResourceData, me
 	return nil
 }
 
-func resourceVPCPublicPortV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCPublicPortV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	if !d.HasChanges("description", "admin_state_up", "security_group_ids") {
 		return nil
 	}
@@ -171,7 +171,7 @@ func resourceVPCPublicPortV1Update(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceVPCPublicPortV1Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCPublicPortV1Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getPublicNetAPIClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -194,7 +194,7 @@ func resourceVPCPublicPortV1Delete(ctx context.Context, d *schema.ResourceData, 
 func resourceVPCPublicPortV1ImportState(
 	_ context.Context,
 	d *schema.ResourceData,
-	meta interface{},
+	meta any,
 ) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 

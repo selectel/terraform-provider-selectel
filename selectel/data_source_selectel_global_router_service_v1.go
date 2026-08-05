@@ -29,7 +29,7 @@ func dataSourceGlobalRouterServiceV1() *schema.Resource {
 	}
 }
 
-func dataSourceGlobalRouterServiceV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceGlobalRouterServiceV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, diagErr := getGlobalRouterClient(meta)
 	if diagErr != nil {
 		return diagErr

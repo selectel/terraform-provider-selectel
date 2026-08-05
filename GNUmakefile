@@ -1,6 +1,6 @@
 TEST?=$$(go list ./...)
 GOFMT_FILES?=$$(find . -name '*.go')
-GOLANGCI_VERSION?=v2.4.0
+GOLANGCI_VERSION?=v2.12.2
 WEBSITE_REPO=github.com/hashicorp/terraform-website
 PKG_NAME=selectel
 
@@ -8,6 +8,9 @@ default: build
 
 golangci-lint:
 	docker run --rm -v ${PWD}:/app:ro -w /app golangci/golangci-lint:$(GOLANGCI_VERSION) golangci-lint run
+
+go-fix:
+	go fix ./...
 
 build:
 	go build
@@ -84,4 +87,4 @@ pin-sha-tags:
 		-v ${PWD}/.github/workflows:/workflows \
 		mheap/pin-github-action@sha256:1a336147444c5be62b5bade8a7b82d971d138aac3c799f9ad72d0598331210aa .
 
-.PHONY: golangci-lint build test testacc fmt test-compile trivy semgrep pin-sha-tags website website-test
+.PHONY: golangci-lint go-fix build test testacc fmt test-compile trivy semgrep pin-sha-tags website website-test

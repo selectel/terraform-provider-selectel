@@ -19,7 +19,7 @@ const (
 
 func getPublicNetAPIClient(
 	d *schema.ResourceData,
-	meta interface{},
+	meta any,
 ) (*publicnetapi.PublicNetAPIClient, diag.Diagnostics) {
 	config := meta.(*Config)
 	projectID := d.Get("project_id").(string)

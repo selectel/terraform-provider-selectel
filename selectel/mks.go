@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -93,7 +94,7 @@ func waitForMKSNodegroupV1ActiveState(
 func mksNodegroupV1StateRefreshFunc(
 	ctx context.Context, client *v1.ServiceClient, clusterID, nodegroupID string,
 ) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		ng, _, err := nodegroup.Get(ctx, client, clusterID, nodegroupID)
 		if err != nil {
 			return nil, "", err
@@ -106,7 +107,7 @@ func mksNodegroupV1StateRefreshFunc(
 func mksClusterV1StateRefreshFunc(
 	ctx context.Context, client *v1.ServiceClient, clusterID string,
 ) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		c, _, err := cluster.Get(ctx, client, clusterID)
 		if err != nil {
 			return nil, "", err
@@ -486,10 +487,10 @@ func mksNodegroupV1ParseID(id string) (string, string, error) {
 	return parts[0], parts[1], nil
 }
 
-func flattenMKSNodegroupV1Nodes(views []*node.View) []map[string]interface{} {
-	nodes := make([]map[string]interface{}, len(views))
+func flattenMKSNodegroupV1Nodes(views []*node.View) []map[string]any {
+	nodes := make([]map[string]any, len(views))
 	for i, view := range views {
-		nodes[i] = make(map[string]interface{})
+		nodes[i] = make(map[string]any)
 		nodes[i]["id"] = view.ID
 		nodes[i]["ip"] = view.IP
 		nodes[i]["hostname"] = view.Hostname
@@ -498,10 +499,10 @@ func flattenMKSNodegroupV1Nodes(views []*node.View) []map[string]interface{} {
 	return nodes
 }
 
-func flattenMKSNodegroupV1Taints(views []nodegroup.Taint) []interface{} {
-	taints := make([]interface{}, len(views))
+func flattenMKSNodegroupV1Taints(views []nodegroup.Taint) []any {
+	taints := make([]any, len(views))
 	for i, view := range views {
-		taints[i] = map[string]interface{}{
+		taints[i] = map[string]any{
 			"key":    view.Key,
 			"value":  view.Value,
 			"effect": string(view.Effect),
@@ -511,10 +512,10 @@ func flattenMKSNodegroupV1Taints(views []nodegroup.Taint) []interface{} {
 	return taints
 }
 
-func flattenFeatureGates(views []*kubeoptions.View) []interface{} {
-	availableFeatureGates := make([]interface{}, len(views))
+func flattenFeatureGates(views []*kubeoptions.View) []any {
+	availableFeatureGates := make([]any, len(views))
 	for i, fg := range views {
-		availableFeatureGates[i] = map[string]interface{}{
+		availableFeatureGates[i] = map[string]any{
 			"kube_version": fg.KubeVersion,
 			"names":        fg.Names,
 		}
@@ -523,9 +524,9 @@ func flattenFeatureGates(views []*kubeoptions.View) []interface{} {
 	return availableFeatureGates
 }
 
-func flattenFeatureGatesFromSlice(kubeVersion string, featureGates []string) []interface{} {
-	availableFeatureGates := make([]interface{}, 1)
-	availableFeatureGates[0] = map[string]interface{}{
+func flattenFeatureGatesFromSlice(kubeVersion string, featureGates []string) []any {
+	availableFeatureGates := make([]any, 1)
+	availableFeatureGates[0] = map[string]any{
 		"kube_version": kubeVersion,
 		"names":        featureGates,
 	}
@@ -533,10 +534,10 @@ func flattenFeatureGatesFromSlice(kubeVersion string, featureGates []string) []i
 	return availableFeatureGates
 }
 
-func flattenAdmissionControllers(views []*kubeoptions.View) []interface{} {
-	availableAdmissionControllers := make([]interface{}, len(views))
+func flattenAdmissionControllers(views []*kubeoptions.View) []any {
+	availableAdmissionControllers := make([]any, len(views))
 	for i, ac := range views {
-		availableAdmissionControllers[i] = map[string]interface{}{
+		availableAdmissionControllers[i] = map[string]any{
 			"kube_version": ac.KubeVersion,
 			"names":        ac.Names,
 		}
@@ -545,9 +546,9 @@ func flattenAdmissionControllers(views []*kubeoptions.View) []interface{} {
 	return availableAdmissionControllers
 }
 
-func flattenAdmissionControllersFromSlice(kubeVersion string, admissionControllers []string) []interface{} {
-	availableAdmissionControllers := make([]interface{}, 1)
-	availableAdmissionControllers[0] = map[string]interface{}{
+func flattenAdmissionControllersFromSlice(kubeVersion string, admissionControllers []string) []any {
+	availableAdmissionControllers := make([]any, 1)
+	availableAdmissionControllers[0] = map[string]any{
 		"kube_version": kubeVersion,
 		"names":        admissionControllers,
 	}
@@ -555,8 +556,8 @@ func flattenAdmissionControllersFromSlice(kubeVersion string, admissionControlle
 	return availableAdmissionControllers
 }
 
-func flattenMKSClusterV1OIDC(view *cluster.GetView) []interface{} {
-	return []interface{}{map[string]interface{}{
+func flattenMKSClusterV1OIDC(view *cluster.GetView) []any {
+	return []any{map[string]any{
 		"enabled":        view.KubernetesOptions.OIDC.Enabled,
 		"provider_name":  view.KubernetesOptions.OIDC.ProviderName,
 		"issuer_url":     view.KubernetesOptions.OIDC.IssuerURL,
@@ -588,11 +589,11 @@ func flattenMKSClusterV1CNICiliumSettings(view *cluster.GetView) []any {
 	}}
 }
 
-func expandMKSNodegroupV1Taints(taints []interface{}) []nodegroup.Taint {
+func expandMKSNodegroupV1Taints(taints []any) []nodegroup.Taint {
 	result := make([]nodegroup.Taint, len(taints))
 	for i := range taints {
 		taint := nodegroup.Taint{}
-		obj := taints[i].(map[string]interface{})
+		obj := taints[i].(map[string]any)
 		taint.Key = obj["key"].(string)
 		taint.Value = obj["value"].(string)
 
@@ -611,7 +612,7 @@ func expandMKSNodegroupV1Taints(taints []interface{}) []nodegroup.Taint {
 	return result
 }
 
-func expandMKSNodegroupV1Labels(labels map[string]interface{}) map[string]string {
+func expandMKSNodegroupV1Labels(labels map[string]any) map[string]string {
 	result := make(map[string]string)
 
 	for k, v := range labels {
@@ -628,7 +629,7 @@ func expandMKSClusterV1OIDC(d *schema.ResourceData) cluster.OIDC {
 	}
 
 	// Resource always comes with only first element because of validation
-	resourceMap := nestedResource[0].(map[string]interface{})
+	resourceMap := nestedResource[0].(map[string]any)
 
 	return cluster.OIDC{
 		Enabled:       resourceMap["enabled"].(bool),
@@ -663,11 +664,9 @@ func expandAndValidateMKSClusterV1OIDC(d *schema.ResourceData) (cluster.OIDC, er
 	oidc := expandMKSClusterV1OIDC(d)
 
 	if oidc.Enabled {
-		for _, s := range []string{oidc.ProviderName, oidc.IssuerURL, oidc.ClientID} {
-			if s == "" {
-				return cluster.OIDC{}, errors.New("\"provider_name\", \"issuer_url\" and \"client_id\" " +
-					"should not be empty in case of enabled oidc")
-			}
+		if slices.Contains([]string{oidc.ProviderName, oidc.IssuerURL, oidc.ClientID}, "") {
+			return cluster.OIDC{}, errors.New("\"provider_name\", \"issuer_url\" and \"client_id\" " +
+				"should not be empty in case of enabled oidc")
 		}
 	} else {
 		for _, s := range []string{oidc.ProviderName, oidc.IssuerURL, oidc.ClientID, oidc.UsernameClaim, oidc.GroupsClaim} {
@@ -699,7 +698,7 @@ func expandAndValidateMKSClusterV1CNICiliumSettings(
 	return cniCiliumSettings, nil
 }
 
-func getMKSClient(d *schema.ResourceData, meta interface{}) (*v1.ServiceClient, diag.Diagnostics) {
+func getMKSClient(d *schema.ResourceData, meta any) (*v1.ServiceClient, diag.Diagnostics) {
 	config := meta.(*Config)
 	projectID := d.Get("project_id").(string)
 	region := d.Get("region").(string)
@@ -723,7 +722,7 @@ func getMKSClient(d *schema.ResourceData, meta interface{}) (*v1.ServiceClient, 
 	return mksClient, nil
 }
 
-func interfaceListChecksum(items []interface{}) (string, error) {
+func interfaceListChecksum(items []any) (string, error) {
 	flatItems := make([]string, len(items))
 	for i, item := range items {
 		flatItems[i] = fmt.Sprintf("%v", item)

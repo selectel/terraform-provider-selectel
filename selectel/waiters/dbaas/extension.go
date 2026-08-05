@@ -42,7 +42,7 @@ func WaitForDBaaSExtensionV1ActiveState(
 }
 
 func DBaaSExtensionV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.API, extensionID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		d, err := client.Extension(ctx, extensionID)
 		if err != nil {
 			var dbaasError *dbaas.DBaaSAPIError
@@ -58,7 +58,7 @@ func DBaaSExtensionV1DeleteStateRefreshFunc(ctx context.Context, client *dbaas.A
 }
 
 func dbaasExtensionV1StateRefreshFunc(ctx context.Context, client *dbaas.API, extensionID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		d, err := client.Extension(ctx, extensionID)
 		if err != nil {
 			return nil, "", err

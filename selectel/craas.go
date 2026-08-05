@@ -54,7 +54,7 @@ func waitForCRaaSRegistryV1StableState(
 func craasRegistryV1StateRefreshFunc(
 	ctx context.Context, client *clientv1.ServiceClient, registryID string,
 ) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		r, _, err := registry.Get(ctx, client, registryID)
 		if err != nil {
 			return nil, "", err
@@ -64,7 +64,7 @@ func craasRegistryV1StateRefreshFunc(
 	}
 }
 
-func getCRaaSClient(d *schema.ResourceData, meta interface{}) (*clientv1.ServiceClient, diag.Diagnostics) {
+func getCRaaSClient(d *schema.ResourceData, meta any) (*clientv1.ServiceClient, diag.Diagnostics) {
 	config := meta.(*Config)
 	selvpcClient, err := config.GetSelVPCClientWithProjectScope(d.Get("project_id").(string))
 	if err != nil {
@@ -81,7 +81,7 @@ func getCRaaSClient(d *schema.ResourceData, meta interface{}) (*clientv1.Service
 	return craasClient, nil
 }
 
-func getCRaaSClientV2(d *schema.ResourceData, meta interface{}) (*clientv2.ServiceClient, diag.Diagnostics) {
+func getCRaaSClientV2(d *schema.ResourceData, meta any) (*clientv2.ServiceClient, diag.Diagnostics) {
 	config := meta.(*Config)
 	selvpcClient, err := config.GetSelVPCClientWithProjectScope(d.Get("project_id").(string))
 	if err != nil {

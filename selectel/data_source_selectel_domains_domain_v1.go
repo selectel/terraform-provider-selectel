@@ -26,7 +26,7 @@ func dataSourceDomainsDomainV1() *schema.Resource {
 	}
 }
 
-func dataSourceDomainsDomainV1Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceDomainsDomainV1Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getDomainsClient(meta)
 	if err != nil {
 		return diag.FromErr(err)

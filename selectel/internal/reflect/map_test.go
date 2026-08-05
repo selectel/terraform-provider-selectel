@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func jsonToMap(t *testing.T, s string) map[string]interface{} {
-	var m map[string]interface{}
+func jsonToMap(t *testing.T, s string) map[string]any {
+	var m map[string]any
 	err := json.Unmarshal([]byte(s), &m)
 	require.NoError(t, err)
 
@@ -107,8 +107,8 @@ func TestStructToMap(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		input   interface{}
-		want    map[string]interface{}
+		input   any
+		want    map[string]any
 		wantErr bool
 	}{
 		{
@@ -119,7 +119,7 @@ func TestStructToMap(t *testing.T) {
 				FieldC:          true,
 				unexportedField: "should_be_ignored",
 			},
-			want: map[string]interface{}{
+			want: map[string]any{
 				"field_a": "test_value",
 				"field_b": 42.0, // JSON unmarshals numbers as float64
 				"field_c": true,
@@ -144,16 +144,16 @@ func TestStructToMap(t *testing.T) {
 					},
 				},
 			},
-			want: map[string]interface{}{
+			want: map[string]any{
 				"name":  "parent",
 				"value": 100.0, // JSON unmarshals numbers as float64
-				"children": []interface{}{
-					map[string]interface{}{
+				"children": []any{
+					map[string]any{
 						"field_a": "child1",
 						"field_b": 1.0,
 						"field_c": true,
 					},
-					map[string]interface{}{
+					map[string]any{
 						"field_a": "child2",
 						"field_b": 2.0,
 						"field_c": false,
@@ -165,7 +165,7 @@ func TestStructToMap(t *testing.T) {
 		{
 			name:    "EmptyStruct",
 			input:   struct{}{},
-			want:    map[string]interface{}{},
+			want:    map[string]any{},
 			wantErr: false,
 		},
 		{
@@ -177,8 +177,8 @@ func TestStructToMap(t *testing.T) {
 				Array: []int{1, 2, 3},
 				Name:  "test",
 			},
-			want: map[string]interface{}{
-				"array": []interface{}{1.0, 2.0, 3.0}, // Numbers become float64 in JSON unmarshaling
+			want: map[string]any{
+				"array": []any{1.0, 2.0, 3.0}, // Numbers become float64 in JSON unmarshaling
 				"name":  "test",
 			},
 			wantErr: false,
@@ -190,7 +190,7 @@ func TestStructToMap(t *testing.T) {
 				FieldB: 999,
 				FieldC: false,
 			},
-			want: map[string]interface{}{
+			want: map[string]any{
 				"field_a": "pointer_value",
 				"field_b": 999.0,
 				"field_c": false,

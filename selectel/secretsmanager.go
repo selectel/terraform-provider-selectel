@@ -8,7 +8,7 @@ import (
 	"github.com/selectel/secretsmanager-go"
 )
 
-func getSecretsManagerClient(d *schema.ResourceData, meta interface{}) (*secretsmanager.Client, diag.Diagnostics) {
+func getSecretsManagerClient(d *schema.ResourceData, meta any) (*secretsmanager.Client, diag.Diagnostics) {
 	config := meta.(*Config)
 
 	selvpcClient, err := config.GetSelVPCClientWithProjectScope(d.Get("project_id").(string))
@@ -41,7 +41,7 @@ func getSecretsManagerClient(d *schema.ResourceData, meta interface{}) (*secrets
 	return cl, nil
 }
 
-func getSecretsManagerClientForAccImportTests(meta interface{}) (*secretsmanager.Client, diag.Diagnostics) {
+func getSecretsManagerClientForAccImportTests(meta any) (*secretsmanager.Client, diag.Diagnostics) {
 	config := meta.(*Config)
 
 	selvpcClient, err := config.GetSelVPCClientWithProjectScope(config.ProjectID)
@@ -61,7 +61,7 @@ func getSecretsManagerClientForAccImportTests(meta interface{}) (*secretsmanager
 	return cl, nil
 }
 
-func convertToStringSlice(sl []interface{}) []string {
+func convertToStringSlice(sl []any) []string {
 	result := make([]string, len(sl))
 	for i := range sl {
 		result[i] = sl[i].(string)
@@ -70,8 +70,8 @@ func convertToStringSlice(sl []interface{}) []string {
 	return result
 }
 
-func convertToInterfaceSlice(sl []string) []interface{} {
-	result := make([]interface{}, len(sl))
+func convertToInterfaceSlice(sl []string) []any {
+	result := make([]any, len(sl))
 	for i := range sl {
 		result[i] = sl[i]
 	}

@@ -72,7 +72,7 @@ func resourceCRaaSTokenV2() *schema.Resource {
 	}
 }
 
-func resourceCRaaSTokenV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceCRaaSTokenV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	craasClient, diagErr := getCRaaSClientV2(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -82,7 +82,7 @@ func resourceCRaaSTokenV2Create(ctx context.Context, d *schema.ResourceData, met
 	modeRW := d.Get("mode_rw").(bool)
 	allRegistries := d.Get("all_registries").(bool)
 	isSet := d.Get("is_set").(bool)
-	registries := d.Get("registry_ids").([]interface{})
+	registries := d.Get("registry_ids").([]any)
 	registriesIDs := make([]string, len(registries))
 	for i, v := range registries {
 		registriesIDs[i] = v.(string)
@@ -120,7 +120,7 @@ func resourceCRaaSTokenV2Create(ctx context.Context, d *schema.ResourceData, met
 	return resourceCRaaSTokenV2Read(ctx, d, meta)
 }
 
-func resourceCRaaSTokenV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceCRaaSTokenV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	craasClient, diagErr := getCRaaSClientV2(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -151,7 +151,7 @@ func resourceCRaaSTokenV2Read(ctx context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
-func resourceCRaaSTokenV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceCRaaSTokenV2Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	craasClient, diagErr := getCRaaSClientV2(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -170,7 +170,7 @@ func resourceCRaaSTokenV2Delete(ctx context.Context, d *schema.ResourceData, met
 	return nil
 }
 
-func resourceCRaaSTokenV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceCRaaSTokenV2Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	craasClient, diagErr := getCRaaSClientV2(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -181,7 +181,7 @@ func resourceCRaaSTokenV2Update(ctx context.Context, d *schema.ResourceData, met
 	)
 	name := d.Get("name").(string)
 	sc.AllRegistries = d.Get("all_registries").(bool)
-	registries := d.Get("registry_ids").([]interface{})
+	registries := d.Get("registry_ids").([]any)
 	sc.RegistryIDs = make([]string, len(registries))
 	for i, v := range registries {
 		sc.RegistryIDs[i] = v.(string)
