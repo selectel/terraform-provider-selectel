@@ -8,7 +8,7 @@ description: |-
 
 # Migrating networking resources from terraform-provider-openstack
 
-The Selectel provider now manages Neutron networking resources natively, in its own `networking` domain. If you currently manage those resources through `terraform-provider-openstack`, this guide shows how to move them over without recreating anything in the cloud.
+The Selectel provider now manages Neutron networking resources natively in its `vpc` domain. If you currently manage those resources through `terraform-provider-openstack`, this guide shows how to move them over without recreating anything in the cloud.
 
 The Selectel cloud runs a patched Neutron with plugins that have no upstream equivalent, and it restricts who may change which attribute through granular VPC roles. The native resources are built for that; the upstream provider cannot be, because its schema assumes upstream Neutron and administrator privileges. That difference is what makes the migration worth doing — and it is also why a few attributes behave differently after you migrate. Those are listed under [Schema differences](#schema-differences).
 
@@ -20,23 +20,25 @@ Each row maps one source resource type to the resource that replaces it. Every s
 
 | terraform-provider-openstack | terraform-provider-selectel | Data source |
 | ---------------------------- | --------------------------- | ----------- |
-| `openstack_networking_network_v2` | `selectel_networking_network_v2` | `selectel_networking_network_v2` |
-| `openstack_networking_subnet_v2` | `selectel_networking_subnet_v2` | `selectel_networking_subnet_v2` |
-| `openstack_networking_subnet_route_v2` | `selectel_networking_subnet_route_v2` | none |
-| `openstack_networking_port_v2` | `selectel_networking_port_v2` | `selectel_networking_port_v2` |
-| `openstack_networking_portforwarding_v2` | `selectel_networking_port_forwarding_v2` | none |
-| `openstack_networking_router_v2` | `selectel_networking_router_v2` | `selectel_networking_router_v2` |
-| `openstack_networking_router_interface_v2` | `selectel_networking_router_interface_v2` | none |
-| `openstack_networking_router_route_v2` | `selectel_networking_router_route_v2` | none |
-| `openstack_networking_router_routes_v2` | `selectel_networking_router_routes_v2` | none |
-| `openstack_networking_floatingip_v2` | `selectel_networking_floatingip_v2` | `selectel_networking_floatingip_v2` |
-| `openstack_networking_floatingip_associate_v2` | `selectel_networking_floatingip_associate_v2` | none |
-| `openstack_networking_secgroup_v2` | `selectel_networking_secgroup_v2` | `selectel_networking_secgroup_v2` |
-| `openstack_networking_secgroup_rule_v2` | `selectel_networking_secgroup_rule_v2` | none |
-| `openstack_networking_port_secgroup_associate_v2` | `selectel_networking_port_secgroup_associate_v2` | none |
-| `openstack_networking_rbac_policy_v2` | `selectel_networking_rbac_policy_v2` | none |
+| `openstack_networking_network_v2` | `selectel_vpc_network_v2` | `selectel_networking_network_v2` |
+| `openstack_networking_subnet_v2` | `selectel_vpc_network_subnet_v2` | `selectel_networking_subnet_v2` |
+| `openstack_networking_subnet_route_v2` | `selectel_vpc_network_subnet_route_v2` | none |
+| `openstack_networking_port_v2` | `selectel_vpc_port_v2` | `selectel_networking_port_v2` |
+| `openstack_networking_portforwarding_v2` | `selectel_vpc_port_forwarding_v2` | none |
+| `openstack_networking_router_v2` | `selectel_vpc_router_v2` | `selectel_networking_router_v2` |
+| `openstack_networking_router_interface_v2` | `selectel_vpc_router_interface_v2` | none |
+| `openstack_networking_router_route_v2` | `selectel_vpc_router_route_v2` | none |
+| `openstack_networking_router_routes_v2` | `selectel_vpc_router_routes_v2` | none |
+| `openstack_networking_floatingip_v2` | `selectel_vpc_floatingip_v2` | `selectel_networking_floatingip_v2` |
+| `openstack_networking_floatingip_associate_v2` | `selectel_vpc_floatingip_associate_v2` | none |
+| `openstack_networking_secgroup_v2` | `selectel_vpc_secgroup_v2` | `selectel_networking_secgroup_v2` |
+| `openstack_networking_secgroup_rule_v2` | `selectel_vpc_secgroup_rule_v2` | none |
+| `openstack_networking_port_secgroup_associate_v2` | `selectel_vpc_port_secgroup_associate_v2` | none |
+| `openstack_networking_rbac_policy_v2` | `selectel_vpc_rbac_policy_v2` | none |
 
-Eight of the seventeen entities get a data source, listed in the third column. The other nine get none: they are link resources — a route entry, an interface, an association, a policy — with no independent object to search for. That matches the upstream provider, which does not offer data sources for them either.
+Six of the fifteen entities get a data source, listed in the third column. The others are primarily link resources — a route entry, an interface, an association, or a policy — with no independent object to search for.
+
+~> **Note:** Floating IP allocation remains managed by `selectel_vpc_floatingip_v2`. The read-only `selectel_networking_floatingip_v2` data source exposes its Neutron state, while `selectel_vpc_floatingip_associate_v2` manages the association with a port.
 
 ### Resources this guide does not cover
 
@@ -54,16 +56,11 @@ Address groups deserve a word, because the upstream provider does offer `opensta
 
 ~> **Note:** Nothing in your existing configuration is deleted by this migration. Resources that stay with the upstream provider keep working alongside the native ones; both talk to the same Neutron.
 
-## Choosing a migration path
+## Migration procedure
 
-There are two ways to move a resource, and which one applies to you is a question of access, not preference:
+Changing from `openstack_networking_*` to `selectel_vpc_*` changes the Terraform resource type. `terraform state mv` cannot do that: its source and destination must have the same resource type. Use `terraform state rm` followed by `terraform import` instead. These commands change only Terraform state and leave the Neutron object untouched.
 
-* **`terraform state mv`** — use this when you have direct access to the state file that already manages the resource, and you are keeping that same state. This is the common case.
-* **`terraform import`** — use this when you do not: the resource was never under Terraform management, the state file is not available to you, or you are moving the configuration into a different state or workspace.
-
-Both leave the object in Neutron untouched. Neither recreates anything.
-
-## Migrating with `terraform state mv`
+## Migrating an object already in the current state
 
 Before you start, make sure the `selectel` provider is configured in your configuration, and back up your state file.
 
@@ -78,20 +75,32 @@ resource "openstack_networking_network_v2" "example" {
 **Step 1 — update the configuration.** Change the resource type, and add the `project_id` and `region` the native resources require:
 
 ```hcl
-resource "selectel_networking_network_v2" "example" {
+resource "selectel_vpc_network_v2" "example" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-3"
   name       = "example"
 }
 ```
 
-**Step 2 — move the state entry:**
+**Step 2 — stop tracking the old resource address:**
 
 ```bash
-terraform state mv openstack_networking_network_v2.example selectel_networking_network_v2.example
+terraform state rm openstack_networking_network_v2.example
 ```
 
-**Step 3 — check the plan:**
+This does not delete the network in Neutron. It only removes its old provider binding from state.
+
+**Step 3 — import the same object under the new type:**
+
+```bash
+export INFRA_PROJECT_ID=<project_id>
+export INFRA_REGION=<region>
+terraform import selectel_vpc_network_v2.example <network_id>
+```
+
+Record the object ID with `terraform state show` before removing the old binding.
+
+**Step 4 — check the plan:**
 
 ```bash
 terraform plan
@@ -101,16 +110,16 @@ For the attributes the two schemas share, the plan shows no destroy and no creat
 
 Repeat for each resource, then run `terraform apply` once you are satisfied with the plan.
 
-~> **Warning:** Updating the `.tf` file is mandatory, not optional. If you run `terraform state mv` and leave the old resource type in the configuration, the state and the configuration disagree about the type: Terraform sees a state entry of the new type with no configuration, and a configuration entry of the old type with no state. The plan will then propose **destroying** the resource under the old type and **creating** it under the new one. Do both steps, in either order, before you apply.
+~> **Warning:** Back up the state first, record the remote object ID, and do not run `terraform apply` between `state rm` and `import`. Updating the `.tf` file is mandatory: leaving the old resource block would make Terraform plan a new object under the old type.
 
 ## Migrating with `terraform import`
 
-Use this path when `terraform state mv` does not apply.
+Use the same import operation when the object was never tracked in this state or is moving to another state/workspace; the `state rm` step is simply unnecessary.
 
 **Step 1 — write the configuration** for the native resource, as it should look after the migration:
 
 ```hcl
-resource "selectel_networking_router_v2" "example" {
+resource "selectel_vpc_router_v2" "example" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-3"
   name       = "example"
@@ -132,16 +141,16 @@ export OS_USERNAME=<username>
 export OS_PASSWORD=<password>
 export INFRA_PROJECT_ID=<project_id>
 export INFRA_REGION=<region>
-terraform import selectel_networking_router_v2.example 1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809
+terraform import selectel_vpc_router_v2.example 1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809
 ```
 
-The native resources take `project_id` and `region` from `INFRA_PROJECT_ID` and `INFRA_REGION` during import rather than from the import string, and the import fails if those variables are not set. A few resources use a composite import identifier instead of a plain one — `selectel_networking_router_route_v2` and `selectel_networking_subnet_route_v2` identify one entry of a list, so they take `<parent_id>-route-<destination_cidr>-<next_hop>`. Each resource page documents its own import format.
+The native resources take `project_id` and `region` from `INFRA_PROJECT_ID` and `INFRA_REGION` during import rather than from the import string, and the import fails if those variables are not set. A few resources use a composite import identifier instead of a plain one — `selectel_vpc_router_route_v2` and `selectel_vpc_network_subnet_route_v2` identify one entry of a list, so they take `<parent_id>-route-<destination_cidr>-<next_hop>`. Each resource page documents its own import format.
 
 **Step 4 — check the plan.** With a matching configuration, `terraform plan` shows no changes for the attributes the two schemas share.
 
 ## Schema differences
 
-The native resources are not a field-for-field copy of the upstream ones, in two directions. Neither `terraform state mv` nor `terraform import` fills these in from your old configuration — moving the state is not by itself a complete transfer of functionality.
+The native resources are not a field-for-field copy of the upstream ones, in two directions. Import does not fill these values into your configuration, so importing the object is not by itself a complete transfer of functionality.
 
 ### Attributes that are new, and read-only
 
@@ -153,9 +162,8 @@ The Selectel Neutron carries attributes the upstream schema has no place for. Th
 | subnet | `blocked` |
 | port | `blocked`, `dhcp_blocked` |
 | router | `blocked` |
-| floating IP | `blocked` |
 
-A security group has no `blocked` attribute — the `service-resource` plugin adds `blocked` to networks, routers, subnets, ports and floating IPs only. It does gain a read-only `shared`, which reports whether an RBAC policy grants another project access to the group; you manage that with `selectel_networking_rbac_policy_v2`, not on the group itself.
+A security group has no `blocked` attribute. It does gain a read-only `shared`, which reports whether an RBAC policy grants another project access to the group; you manage that with `selectel_vpc_rbac_policy_v2`, not on the group itself.
 
 After a migration these appear in your state with the values the platform reports. A change made to one of them outside Terraform — an administrator blocking a network, say — is recorded on the next refresh and does not produce a permanent diff.
 
@@ -171,14 +179,12 @@ The cloud's Neutron policy reserves some attributes for the Keystone admin role,
 | subnet | — | `service_types`, `segment_id` |
 | port | `port_security_enabled`, `qos_policy_id` | `binding.host_id`, `binding.profile` |
 | router | `external_fixed_ip`, gateway `qos_policy_id` | `distributed`, `ha`, `external_subnet_ids` |
-| floating IP | `qos_policy_id` | `address` (always assigned by the API), `subnet_ids` |
 | subnet pool | `shared`, `is_default` | — |
 | address scope | `shared` | — |
 
 Two of these are worth expanding on:
 
 * **Router `distributed` and `ha`** are not exposed even as read-only values. The policy reserves not only writing them but *reading* them for the administrator, so an ordinary caller never receives the fields at all — reporting `false` would state something the provider has not been told.
-* **Floating IP `address`** cannot be requested. The API always assigns the address from the pool. If you migrate a floating IP, the address it already has is preserved — the object is not recreated — but you cannot pin it in the configuration, and a resource that is destroyed and recreated gets a new address.
 
 ### Behaviour that differs from upstream Neutron
 
@@ -189,6 +195,6 @@ Two behaviours come from patches in the Selectel Neutron and will differ from wh
 
 ## No automated tooling
 
-This change ships no migration tool: no generator for `terraform state mv` commands, no bulk-import script, no conversion utility for `.tf` files.
+This change ships no migration tool: no generator for `state rm`/`import` commands, no bulk-import script, no conversion utility for `.tf` files.
 
-Migration is manual and per-resource. If you manage dozens of subnets, you run the `state mv` or `import` step for each of them, from the instructions above. That is the intended way to work through it, not a gap — each step is a small, reversible state operation you can check with `terraform plan` before applying anything.
+Migration is manual and per-resource. If you manage dozens of subnets, you run the `state rm` and `import` steps for each of them. That is the intended workflow; check every imported object with `terraform plan` before applying anything.

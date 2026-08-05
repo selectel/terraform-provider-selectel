@@ -172,7 +172,7 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
 }
 
-resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
+resource "selectel_vpc_public_subnet_v2" "subnet_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
 }
@@ -191,7 +191,7 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
   type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
-  subnet_id = "${selectel_vpc_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
+  subnet_id = "${selectel_vpc_public_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
   node_count = "%d"
   flavor {
     vcpus = 2
@@ -213,7 +213,7 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
 }
 
-resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
+resource "selectel_vpc_public_subnet_v2" "subnet_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
 }
@@ -232,7 +232,7 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
   type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
-  subnet_id = "${selectel_vpc_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
+  subnet_id = "${selectel_vpc_public_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
   node_count = "%d"
   flavor {
     vcpus = 2
@@ -254,7 +254,7 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
 }
 
-resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
+resource "selectel_vpc_public_subnet_v2" "subnet_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
 }
@@ -273,7 +273,7 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
   type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
-  subnet_id = "${selectel_vpc_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
+  subnet_id = "${selectel_vpc_public_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
   node_count = "%d"
   flavor {
     vcpus = 2
@@ -299,7 +299,7 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
 }
 
-resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
+resource "selectel_vpc_public_subnet_v2" "subnet_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
 }
@@ -318,7 +318,7 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
   type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
-  subnet_id = "${selectel_vpc_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
+  subnet_id = "${selectel_vpc_public_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
   node_count = "%d"
   flavor {
     vcpus = 2
@@ -344,7 +344,7 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
 }
 
-resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
+resource "selectel_vpc_public_subnet_v2" "subnet_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
 }
@@ -363,7 +363,7 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
   type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
-  subnet_id = "${selectel_vpc_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
+  subnet_id = "${selectel_vpc_public_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
   node_count = "%d"
   flavor {
     vcpus = 2
@@ -389,7 +389,7 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
 }
 
-resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
+resource "selectel_vpc_public_subnet_v2" "subnet_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
 }
@@ -408,7 +408,7 @@ resource "selectel_dbaas_postgresql_datastore_v1" "datastore_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
   type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
-  subnet_id = "${selectel_vpc_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
+  subnet_id = "${selectel_vpc_public_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
   node_count = "%d"
   flavor {
     vcpus = 2

@@ -69,6 +69,40 @@ func TestProvider(t *testing.T) {
 	}
 }
 
+func TestProviderVPCNetworkingRegistration(t *testing.T) {
+	provider := Provider("test")
+
+	for _, name := range []string{
+		"selectel_vpc_network_v2",
+		"selectel_vpc_network_subnet_v2",
+		"selectel_vpc_network_subnet_route_v2",
+		"selectel_vpc_port_v2",
+		"selectel_vpc_port_forwarding_v2",
+		"selectel_vpc_port_secgroup_associate_v2",
+		"selectel_vpc_floatingip_associate_v2",
+		"selectel_vpc_router_v2",
+		"selectel_vpc_router_interface_v2",
+		"selectel_vpc_router_route_v2",
+		"selectel_vpc_router_routes_v2",
+		"selectel_vpc_rbac_policy_v2",
+		"selectel_vpc_secgroup_v2",
+		"selectel_vpc_secgroup_rule_v2",
+		"selectel_vpc_subnet_v2",
+		"selectel_vpc_public_subnet_v2",
+	} {
+		if _, ok := provider.ResourcesMap[name]; !ok {
+			t.Errorf("expected managed resource %s to be registered", name)
+		}
+	}
+
+	if _, ok := provider.ResourcesMap["selectel_networking_floatingip_v2"]; ok {
+		t.Error("selectel_networking_floatingip_v2 must not be registered as a managed resource")
+	}
+	if _, ok := provider.DataSourcesMap["selectel_networking_floatingip_v2"]; !ok {
+		t.Error("selectel_networking_floatingip_v2 must remain registered as a data source")
+	}
+}
+
 func testAccSelectelPreCheck(t *testing.T) {
 	if v := os.Getenv("OS_DOMAIN_NAME"); v == "" {
 		t.Fatal("OS_DOMAIN_NAME must be set for acceptance tests")

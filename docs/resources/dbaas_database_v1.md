@@ -16,7 +16,7 @@ Manages a V1 database resource within Selectel Managed Databases Service.
 resource "selectel_vpc_project_v2" "project_1" {
 }
 
-resource "selectel_vpc_subnet_v2" "subnet" {
+resource "selectel_vpc_public_subnet_v2" "subnet" {
   project_id   = "${selectel_vpc_project_v2.project_1.id}"
   region       = "ru-3"
 }
@@ -35,7 +35,7 @@ resource "selectel_dbaas_datastore_v1" "datastore_1" {
   project_id   = "${selectel_vpc_project_v2.project_1.id}"
   region       = "ru-3"
   type_id      = data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id
-  subnet_id    = "${selectel_vpc_subnet_v2.subnet.subnet_id}"
+  subnet_id    = "${selectel_vpc_public_subnet_v2.subnet.subnet_id}"
   node_count   = 3
   flavor {
     vcpus = 4

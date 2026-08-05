@@ -10,7 +10,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/floatingip"
+	"github.com/selectel/vpc-go/pkg/v2/network"
 )
+
+const networkingFloatingIPV2Object = "networking floating ip"
 
 func dataSourceNetworkingFloatingIPV2() *schema.Resource {
 	return &schema.Resource{
@@ -153,5 +156,54 @@ func networkingFloatingIPV2DataSourceResult(found []floatingip.FloatingIP) (*flo
 		return nil, fmt.Errorf(
 			"%d %ss found for the given search criteria, please specify a more precise search",
 			len(found), networkingFloatingIPV2Object)
+	}
+}
+
+// resolveNetworkingFloatingIPV2Pool maps an external network name to its
+// identifier for data-source filtering.
+func resolveNetworkingFloatingIPV2Pool(
+	ctx context.Context, client *vpc.Client, pool string,
+) (string, error) {
+	found, err := network.List(ctx, client, vpc.ListOptions{
+		SelectionOptions: vpc.SelectionOptions{Filters: map[string][]string{
+			"name":            {pool},
+			"router:external": {"true"},
+		}},
+	})
+	if err != nil {
+		return "", errGettingObjects(networkingNetworkV2Object, err)
+	}
+
+	return networkingFloatingIPV2PoolID(found, pool)
+}
+
+func networkingFloatingIPV2PoolID(found []network.Network, pool string) (string, error) {
+	switch len(found) {
+	case 0:
+		return "", fmt.Errorf(
+			"pool '%s' does not match any external network in this project and region", pool)
+	case 1:
+		return found[0].ID, nil
+	default:
+		return "", fmt.Errorf(
+			"pool '%s' matches %d external networks, please use a pool name that is unique",
+			pool, len(found))
+	}
+}
+
+// flattenNetworkingFloatingIPV2 writes a Neutron floating IP into data-source state.
+func flattenNetworkingFloatingIPV2(d *schema.ResourceData, found *floatingip.FloatingIP) {
+	d.Set("address", found.FloatingIPAddress)
+	d.Set("floating_network_id", found.FloatingNetworkID)
+	d.Set("port_id", derefString(found.PortID))
+	d.Set("fixed_ip", derefString(found.FixedIPAddress))
+	d.Set("router_id", derefString(found.RouterID))
+	d.Set("description", found.Description)
+	d.Set("status", found.Status)
+	d.Set("qos_policy_id", derefString(found.QoSPolicyID))
+	d.Set("blocked", found.Blocked)
+
+	if err := d.Set("all_tags", found.Tags); err != nil {
+		log.Print(errSettingComplexAttr("all_tags", err))
 	}
 }

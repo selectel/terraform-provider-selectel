@@ -6,9 +6,13 @@ description: |-
 
 # selectel\_vpc\_subnet_v2
 
+~> **Deprecated:** Use [selectel\_vpc\_public\_subnet\_v2](vpc_public_subnet_v2.html) for new configurations. Existing configurations can continue using this resource.
+
+~> Do not manage the same public subnet with both `selectel_vpc_subnet_v2` and `selectel_vpc_public_subnet_v2`. They address the same remote object and must not be declared together.
+
 Creates and manages a public subnet using public API v2. For more information about public subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/servers/networks/about-networks/).
 
-For private networks and subnets, use [openstack\_networking\_network\_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_network_v2) and [openstack\_networking\_subnet\_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_subnet_v2) resources of the OpenStack provider.
+For project networks and their subnets, use [selectel\_vpc\_network\_v2](vpc_network_v2.html) and [selectel\_vpc\_network\_subnet\_v2](vpc_network_subnet_v2.html).
 
 Resource creates a public OpenStack subnet in a service OpenStack network. You cannot select a network during subnet creation, and you cannot modify service network settings.
 
