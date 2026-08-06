@@ -1,4 +1,15 @@
-## 8.2.4 (July, 31, 2026)
+## 8.3.0 (August 6, 2026)
+
+BUG FIXES:
+
+* `selectel_dedicated_server_v1`: fix an issue where `private_subnet_id` and `private_subnet_ip` were not applied during OS reinstallation. ([#410](https://github.com/selectel/terraform-provider-selectel/pull/410))
+
+IMPROVEMENTS:
+
+* Update Go version to 1.26 ([#416](https://github.com/selectel/terraform-provider-selectel/pull/416))
+* Add `go fix ./...` check to CI workflow ([#416](https://github.com/selectel/terraform-provider-selectel/pull/416))
+
+## 8.2.4 (July 31, 2026)
 
 IMPROVEMENTS:
 
