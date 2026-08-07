@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html"
 	"log"
 	"net"
 	"net/http"
@@ -809,7 +810,7 @@ func resourceDedicatedServerV1Read(ctx context.Context, d *schema.ResourceData, 
 		))
 	}
 
-	_ = d.Set("user_data", resourceOS.UserData)
+	_ = d.Set("user_data", html.UnescapeString(resourceOS.UserData))
 
 	keys, _, err := dsClient.SSHKeys(ctx)
 	if err != nil {
