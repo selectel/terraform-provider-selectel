@@ -3,6 +3,7 @@ package selectel
 import (
 	"context"
 	"fmt"
+	"html"
 	"net/http"
 	"strings"
 	"testing"
@@ -879,6 +880,64 @@ func Test_resourceDedicatedServerGetPrivateVlan(t *testing.T) {
 			} else if assert.NotNil(t, vlan) {
 				assert.Equal(t, *tt.wantVlan, *vlan)
 			}
+		})
+	}
+}
+
+func TestUserDataHTMLEntityDecoding(t *testing.T) {
+	// Verify that html.UnescapeString correctly decodes HTML entities
+	// that the API returns in user_data, preventing state drift.
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "quot_entity",
+			input:    "path: &quot;/root/my-text-file&quot;",
+			expected: "path: \"/root/my-text-file\"",
+		},
+		{
+			name:     "amp_entity",
+			input:    "foo &amp; bar",
+			expected: "foo & bar",
+		},
+		{
+			name:     "lt_gt_entities",
+			input:    "if x &lt; y &amp;&amp; y &gt; z",
+			expected: "if x < y && y > z",
+		},
+		{
+			name:     "already_unescaped",
+			input:    "path: \"/root/my-text-file\"",
+			expected: "path: \"/root/my-text-file\"",
+		},
+		{
+			name:     "mixed_cloud_config",
+			input:    "write_files:\n  - path: &quot;/root/my-text-file&quot;\n    permissions: &quot;0644&quot;",
+			expected: "write_files:\n  - path: \"/root/my-text-file\"\n    permissions: \"0644\"",
+		},
+		{
+			name:     "no_double_decode",
+			input:    "&amp;amp;",
+			expected: "&amp;",
+		},
+		{
+			name:     "numeric_entity",
+			input:    "it&#39;s a test",
+			expected: "it's a test",
+		},
+		{
+			name:     "empty_string",
+			input:    "",
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := html.UnescapeString(tt.input)
+			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
