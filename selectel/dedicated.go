@@ -889,7 +889,7 @@ func apiPartitionsConfigToSchema(
 
 	softRaids := buildSoftRaids(apiCfg, raidNamesByID, diskInRaid, existingRaidNamesByKey, existingRaidConfigOrder)
 	diskConfigs := buildDiskConfigs(apiCfg, diskNamesByID, diskInRaid, existingNamesByType, existingDiskNameByMount, existingDiskConfigOrder)
-	diskPartitions := buildDiskPartitions(apiCfg, raidNamesByID, diskNamesByID, existingMounts)
+	diskPartitions := buildDiskPartitions(apiCfg, raidNamesByID, diskNamesByID, existingMounts, existingDiskNameByMount)
 
 	result := map[string]any{
 		dedicatedServerSchemaKeySoftRaidConfig: softRaids,
@@ -1069,6 +1069,17 @@ func findMountsForDrive(apiCfg dedicated.PartitionsConfig, driveID string) []str
 		}
 	}
 
+	// Fallback: direct filesystem → local_drive reference.
+	// Non-RAID configs may omit intermediate partition items, so filesystem.Device
+	// points directly to the local_drive ID.
+	if len(mounts) == 0 {
+		for _, fsItem := range apiCfg {
+			if fsItem.Type == partitionTypeFilesystem && fsItem.Device == driveID {
+				mounts = append(mounts, fsItem.Mount)
+			}
+		}
+	}
+
 	return mounts
 }
 
@@ -1212,9 +1223,12 @@ func mountSortPriority(mount string) int {
 
 // buildDiskPartitions creates disk_partitions entries from filesystem items.
 // When existingMounts is non-empty only partitions whose mount appears in that set are returned.
+// existingDiskNameByMount is used as a fallback to preserve disk_name when the API graph
+// doesn't resolve it (e.g. non-RAID configs without intermediate partition items).
 func buildDiskPartitions(
 	apiCfg dedicated.PartitionsConfig, raidNamesByID, diskNamesByID map[string]string,
 	existingMounts []string,
+	existingDiskNameByMount map[string]string,
 ) []map[string]any {
 	diskPartitions := make([]map[string]any, 0)
 
@@ -1247,9 +1261,36 @@ func buildDiskPartitions(
 			applyDeviceConfig(apiCfg, item.Device, partition, raidNamesByID, diskNamesByID)
 		}
 
+		applyDiskNameFallback(partition, item.Mount, existingDiskNameByMount)
+
 		diskPartitions = append(diskPartitions, partition)
 	}
 
+	sortDiskPartitions(diskPartitions, existingMounts)
+
+	return diskPartitions
+}
+
+// applyDiskNameFallback sets disk_name from existingDiskNameByMount when
+// applyDeviceConfig couldn't resolve it (e.g. non-RAID without partition items).
+func applyDiskNameFallback(
+	partition map[string]any, mount string, existingDiskNameByMount map[string]string,
+) {
+	if _, ok := partition[dedicatedServerSchemaKeyDiskName]; ok {
+		return
+	}
+	if existingDiskNameByMount == nil {
+		return
+	}
+	if name, found := existingDiskNameByMount[mount]; found && name != "" {
+		partition[dedicatedServerSchemaKeyDiskName] = name
+	}
+}
+
+// sortDiskPartitions sorts disk partitions by mount order.
+// When existingMounts is provided, partitions are sorted to match that order;
+// otherwise they are sorted by mount priority (/, /boot, then alphabetical).
+func sortDiskPartitions(diskPartitions []map[string]any, existingMounts []string) {
 	if len(existingMounts) > 0 {
 		mountIdx := make(map[string]int, len(existingMounts))
 		for i, m := range existingMounts {
@@ -1285,8 +1326,6 @@ func buildDiskPartitions(
 			return strings.Compare(mountA, mountB)
 		})
 	}
-
-	return diskPartitions
 }
 
 // applyDeviceConfig applies disk_name or raid configuration based on device type.
