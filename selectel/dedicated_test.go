@@ -1837,6 +1837,7 @@ func TestResourceDedicatedServerV1ReadExistingRaidConfigOrder(t *testing.T) {
 		_ = resourceDedicatedServerV1ReadExistingRaidConfigOrder
 	})
 }
+
 func TestFindMountsForDrive_DirectFilesystemReference(t *testing.T) {
 	// Non-RAID config where filesystem.Device points directly to local_drive
 	// (no intermediate partition items).
