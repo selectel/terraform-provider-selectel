@@ -679,6 +679,35 @@ func expandAndValidateMKSClusterV1OIDC(d *schema.ResourceData) (cluster.OIDC, er
 	return oidc, nil
 }
 
+// expandMKSClusterV1KubernetesOptions builds the whole kubernetes_options object from the config:
+// the API replaces it as a whole, so a partially filled struct turns off the options it omits.
+func expandMKSClusterV1KubernetesOptions(d *schema.ResourceData) (*cluster.KubernetesOptions, error) {
+	featureGates, err := getSetAsStrings(d, featureGatesKey)
+	if err != nil {
+		return nil, err
+	}
+
+	admissionControllers, err := getSetAsStrings(d, admissionControllersKey)
+	if err != nil {
+		return nil, err
+	}
+
+	oidc, err := expandAndValidateMKSClusterV1OIDC(d)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cluster.KubernetesOptions{
+		EnablePodSecurityPolicy: d.Get("enable_pod_security_policy").(bool),
+		FeatureGates:            featureGates,
+		AdmissionControllers:    admissionControllers,
+		AuditLogs: cluster.AuditLogs{
+			Enabled: d.Get("enable_audit_logs").(bool),
+		},
+		OIDC: oidc,
+	}, nil
+}
+
 func expandAndValidateMKSClusterV1CNICiliumSettings(
 	d *schema.ResourceData, cniType cluster.CNIType,
 ) (*cluster.CNICiliumSettings, error) {
