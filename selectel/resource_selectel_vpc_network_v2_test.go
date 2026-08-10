@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	testAccNetworkingNetworkV2ResourceName   = "selectel_vpc_network_v2.network_tf_acc_test_1"
-	testAccNetworkingNetworkV2DataSourceName = "data.selectel_networking_network_v2.network_tf_acc_test_1"
+	testAccNetworkingNetworkV2ResourceName = "selectel_vpc_network_v2.network_tf_acc_test_1"
+	testAccVPCNetworkV2DataSourceName      = "data.selectel_vpc_network_v2.network_tf_acc_test_1"
 )
 
 // networkingV2TestEnv is the project and the region every networking acceptance
@@ -126,7 +126,7 @@ func TestNetworkingNetworkV2DNSDomainValidation(t *testing.T) {
 // TestNetworkingNetworkV2DataSourceSelectors checks that no admin-managed
 // attribute is offered as a data source selector (REQ-012).
 func TestNetworkingNetworkV2DataSourceSelectors(t *testing.T) {
-	s := dataSourceNetworkingNetworkV2().Schema
+	s := dataSourceVPCNetworkV2().Schema
 
 	selectors := make([]string, 0)
 	for name, attr := range s {
@@ -403,31 +403,31 @@ func TestAccNetworkingNetworkV2DataSource(t *testing.T) {
 		CheckDestroy:      testAccCheckNetworkingNetworkV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingNetworkV2DataSource(projectID, region, networkName),
+				Config: testAccVPCNetworkV2DataSource(projectID, region, networkName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(testAccNetworkingNetworkV2DataSourceName, "name", networkName),
+					resource.TestCheckResourceAttr(testAccVPCNetworkV2DataSourceName, "name", networkName),
 					resource.TestCheckResourceAttrPair(
-						testAccNetworkingNetworkV2DataSourceName, "network_id",
+						testAccVPCNetworkV2DataSourceName, "network_id",
 						testAccNetworkingNetworkV2ResourceName, "id",
 					),
 					// The data source reports the same admin-managed values.
 					resource.TestCheckResourceAttrPair(
-						testAccNetworkingNetworkV2DataSourceName, "blocked",
+						testAccVPCNetworkV2DataSourceName, "blocked",
 						testAccNetworkingNetworkV2ResourceName, "blocked",
 					),
 					resource.TestCheckResourceAttrPair(
-						testAccNetworkingNetworkV2DataSourceName, "shared",
+						testAccVPCNetworkV2DataSourceName, "shared",
 						testAccNetworkingNetworkV2ResourceName, "shared",
 					),
 					resource.TestCheckResourceAttrPair(
-						testAccNetworkingNetworkV2DataSourceName, "provider_network_type",
+						testAccVPCNetworkV2DataSourceName, "provider_network_type",
 						testAccNetworkingNetworkV2ResourceName, "provider_network_type",
 					),
 				),
 			},
 			{
 				// SCN-012-02: nothing matches, so the read fails explicitly.
-				Config:      testAccNetworkingNetworkV2DataSourceNoMatch(projectID, region),
+				Config:      testAccVPCNetworkV2DataSourceNoMatch(projectID, region),
 				ExpectError: regexp.MustCompile(`no networking network found`),
 			},
 		},
@@ -692,9 +692,9 @@ resource "selectel_vpc_network_v2" "network_tf_acc_test_1" {
 `, region, networkName, zone)
 }
 
-func testAccNetworkingNetworkV2DataSource(projectID, region, networkName string) string {
+func testAccVPCNetworkV2DataSource(projectID, region, networkName string) string {
 	return testAccNetworkingNetworkV2OptionalAttributes(projectID, region, networkName) + fmt.Sprintf(`
-data "selectel_networking_network_v2" "network_tf_acc_test_1" {
+data "selectel_vpc_network_v2" "network_tf_acc_test_1" {
   project_id = local.project_id
   region     = "%s"
   name       = selectel_vpc_network_v2.network_tf_acc_test_1.name
@@ -702,9 +702,9 @@ data "selectel_networking_network_v2" "network_tf_acc_test_1" {
 `, region)
 }
 
-func testAccNetworkingNetworkV2DataSourceNoMatch(projectID, region string) string {
+func testAccVPCNetworkV2DataSourceNoMatch(projectID, region string) string {
 	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
-data "selectel_networking_network_v2" "network_tf_acc_test_1" {
+data "selectel_vpc_network_v2" "network_tf_acc_test_1" {
   project_id = local.project_id
   region     = "%s"
   name       = "tf-acc-no-such-network"

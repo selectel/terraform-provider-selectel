@@ -22,7 +22,7 @@ resource "selectel_vpc_router_v2" "router_1" {
   description = "Managed by Terraform"
   tags        = ["production", "networking"]
 
-  external_network_id = data.selectel_networking_network_v2.external.id
+  external_network_id = data.selectel_vpc_network_v2.external.id
   enable_snat         = true
 }
 ```

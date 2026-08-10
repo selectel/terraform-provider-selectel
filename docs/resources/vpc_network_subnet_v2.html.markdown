@@ -75,7 +75,7 @@ resource "selectel_vpc_network_subnet_v2" "subnet_1" {
 
 * `blocked` - Specifies whether the subnet is administratively blocked. Read-only.
 
-~> **Note:** To read the full list of routes of a subnet, including routes added by other resources, use the [selectel_networking_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/networking_subnet_v2) data source, which exports `host_routes`.
+~> **Note:** To read the full list of routes of a subnet, including routes added by other resources, use the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/vpc_network_subnet_v2) data source, which exports `host_routes`.
 
 ## Import
 

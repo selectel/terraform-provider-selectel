@@ -13,9 +13,9 @@ import (
 	"github.com/selectel/vpc-go/pkg/v2/securitygroup"
 )
 
-func dataSourceNetworkingSecGroupV2() *schema.Resource {
+func dataSourceVPCSecGroupV2() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceNetworkingSecGroupV2Read,
+		ReadContext: dataSourceVPCSecGroupV2Read,
 		Schema: map[string]*schema.Schema{
 			"project_id": {
 				Type:     schema.TypeString,
@@ -68,7 +68,7 @@ func dataSourceNetworkingSecGroupV2() *schema.Resource {
 	}
 }
 
-func dataSourceNetworkingSecGroupV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceVPCSecGroupV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)

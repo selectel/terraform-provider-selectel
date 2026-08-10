@@ -477,7 +477,7 @@ resource "selectel_vpc_floatingip_v2" "next_hop_tf_acc_test_1" {
   region     = "%[1]s"
 }
 
-data "selectel_networking_floatingip_v2" "next_hop_tf_acc_test_1" {
+data "selectel_vpc_floatingip_v2" "next_hop_tf_acc_test_1" {
   project_id    = local.project_id
   region        = "%[1]s"
   floatingip_id = selectel_vpc_floatingip_v2.next_hop_tf_acc_test_1.id
@@ -500,7 +500,7 @@ resource "selectel_vpc_router_v2" "router_tf_acc_test_1" {
   project_id          = local.project_id
   region              = "%[1]s"
   name                = "router-tf-acc-test-1"
-  external_network_id = data.selectel_networking_floatingip_v2.next_hop_tf_acc_test_1.floating_network_id
+  external_network_id = data.selectel_vpc_floatingip_v2.next_hop_tf_acc_test_1.floating_network_id
 }
 
 resource "selectel_vpc_router_interface_v2" "interface_tf_acc_test_1" {

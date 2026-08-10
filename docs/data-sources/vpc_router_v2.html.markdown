@@ -1,7 +1,7 @@
 ---
 layout: "selectel"
-page_title: "Selectel: selectel_networking_router_v2"
-sidebar_current: "docs-selectel-datasource-networking-router-v2"
+page_title: "Selectel: selectel_vpc_router_v2"
+sidebar_current: "docs-selectel-datasource-vpc-router-v2"
 description: |-
   Provides information about a router in the Selectel cloud using Neutron API v2.0.
 ---
@@ -15,7 +15,7 @@ The data source returns exactly one router. If no router matches the selectors, 
 ## Example Usage
 
 ```hcl
-data "selectel_networking_router_v2" "router_1" {
+data "selectel_vpc_router_v2" "router_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-3"
   name       = "router-1"

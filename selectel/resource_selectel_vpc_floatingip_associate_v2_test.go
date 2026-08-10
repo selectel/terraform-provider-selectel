@@ -317,7 +317,7 @@ resource "selectel_vpc_floatingip_v2" "floatingip_for_association" {
   region     = "%[1]s"
 }
 
-data "selectel_networking_floatingip_v2" "floatingip_for_association" {
+data "selectel_vpc_floatingip_v2" "floatingip_for_association" {
   project_id    = local.project_id
   region        = "%[1]s"
   floatingip_id = selectel_vpc_floatingip_v2.floatingip_for_association.id
@@ -326,7 +326,7 @@ data "selectel_networking_floatingip_v2" "floatingip_for_association" {
 resource "selectel_vpc_router_v2" "router_tf_acc_test_1" {
   project_id          = local.project_id
   region              = "%[1]s"
-  external_network_id = data.selectel_networking_floatingip_v2.floatingip_for_association.floating_network_id
+  external_network_id = data.selectel_vpc_floatingip_v2.floatingip_for_association.floating_network_id
 }
 
 resource "selectel_vpc_router_interface_v2" "interface_tf_acc_test_1" {

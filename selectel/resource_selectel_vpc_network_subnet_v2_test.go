@@ -384,24 +384,24 @@ func TestAccNetworkingSubnetV2DataSource(t *testing.T) {
 		CheckDestroy:      testAccCheckNetworkingSubnetV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSubnetV2DataSource(projectID, region, subnetName),
+				Config: testAccVPCNetworkSubnetV2DataSource(projectID, region, subnetName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.selectel_networking_subnet_v2.subnet_tf_acc_test_1", "name", subnetName),
+					resource.TestCheckResourceAttr("data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "name", subnetName),
 					resource.TestCheckResourceAttrPair(
-						"data.selectel_networking_subnet_v2.subnet_tf_acc_test_1", "subnet_id",
+						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "subnet_id",
 						testAccNetworkingSubnetV2ResourceName, "id",
 					),
 					// host_routes is exported by the data source only.
 					resource.TestCheckResourceAttrSet(
-						"data.selectel_networking_subnet_v2.subnet_tf_acc_test_1", "host_routes.#"),
+						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "host_routes.#"),
 					resource.TestCheckResourceAttrPair(
-						"data.selectel_networking_subnet_v2.subnet_tf_acc_test_1", "blocked",
+						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "blocked",
 						testAccNetworkingSubnetV2ResourceName, "blocked",
 					),
 				),
 			},
 			{
-				Config:      testAccNetworkingSubnetV2DataSourceNoMatch(projectID, region),
+				Config:      testAccVPCNetworkSubnetV2DataSourceNoMatch(projectID, region),
 				ExpectError: regexp.MustCompile(`no networking subnet found`),
 			},
 		},
@@ -621,9 +621,9 @@ resource "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
 `, region, subnetName)
 }
 
-func testAccNetworkingSubnetV2DataSource(projectID, region, subnetName string) string {
+func testAccVPCNetworkSubnetV2DataSource(projectID, region, subnetName string) string {
 	return testAccNetworkingSubnetV2OptionalAttributes(projectID, region, subnetName) + fmt.Sprintf(`
-data "selectel_networking_subnet_v2" "subnet_tf_acc_test_1" {
+data "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
   project_id = local.project_id
   region     = "%s"
   name       = selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1.name
@@ -631,9 +631,9 @@ data "selectel_networking_subnet_v2" "subnet_tf_acc_test_1" {
 `, region)
 }
 
-func testAccNetworkingSubnetV2DataSourceNoMatch(projectID, region string) string {
+func testAccVPCNetworkSubnetV2DataSourceNoMatch(projectID, region string) string {
 	return testAccNetworkingSubnetV2Network(projectID, region) + fmt.Sprintf(`
-data "selectel_networking_subnet_v2" "subnet_tf_acc_test_1" {
+data "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
   project_id = local.project_id
   region     = "%s"
   name       = "tf-acc-no-such-subnet"

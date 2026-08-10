@@ -69,7 +69,7 @@ Every argument is immutable: changing any of them creates a new rule, because a 
 
 ~> **Note:** `remote_group_id` and `remote_ip_prefix` are mutually exclusive — set at most one. Setting neither means the rule is not restricted by source address.
 
-~> **Note:** `remote_address_group_id` is not supported. Address groups cannot be created by a project member in the Selectel cloud, so there would be nothing for a rule to reference — see the [migration guide](../guides/migrate-from-openstack-provider.html) for the details.
+~> **Note:** `remote_address_group_id` is not supported in the Selectel cloud.
 
 ## Attributes Reference
 

@@ -73,6 +73,7 @@ func TestProviderVPCNetworkingRegistration(t *testing.T) {
 	provider := Provider("test")
 
 	for _, name := range []string{
+		"selectel_vpc_floatingip_v2",
 		"selectel_vpc_network_v2",
 		"selectel_vpc_network_subnet_v2",
 		"selectel_vpc_network_subnet_route_v2",
@@ -95,11 +96,17 @@ func TestProviderVPCNetworkingRegistration(t *testing.T) {
 		}
 	}
 
-	if _, ok := provider.ResourcesMap["selectel_networking_floatingip_v2"]; ok {
-		t.Error("selectel_networking_floatingip_v2 must not be registered as a managed resource")
+	for _, name := range []string{
+		"selectel_vpc_network_v2",
+		"selectel_vpc_network_subnet_v2",
+		"selectel_vpc_port_v2",
+		"selectel_vpc_floatingip_v2",
+		"selectel_vpc_router_v2",
+		"selectel_vpc_secgroup_v2",
+	} {
+		if _, ok := provider.DataSourcesMap[name]; !ok {
+			t.Errorf("expected data source %s to be registered", name)
 	}
-	if _, ok := provider.DataSourcesMap["selectel_networking_floatingip_v2"]; !ok {
-		t.Error("selectel_networking_floatingip_v2 must remain registered as a data source")
 	}
 }
 

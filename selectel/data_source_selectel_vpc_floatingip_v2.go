@@ -15,9 +15,9 @@ import (
 
 const networkingFloatingIPV2Object = "networking floating ip"
 
-func dataSourceNetworkingFloatingIPV2() *schema.Resource {
+func dataSourceVPCFloatingIPV2() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceNetworkingFloatingIPV2Read,
+		ReadContext: dataSourceVPCFloatingIPV2Read,
 		Schema: map[string]*schema.Schema{
 			"project_id": {
 				Type:     schema.TypeString,
@@ -93,7 +93,7 @@ func dataSourceNetworkingFloatingIPV2() *schema.Resource {
 	}
 }
 
-func dataSourceNetworkingFloatingIPV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceVPCFloatingIPV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)

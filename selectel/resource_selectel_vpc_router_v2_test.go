@@ -22,8 +22,8 @@ import (
 
 const (
 	testAccNetworkingRouterV2ResourceName             = "selectel_vpc_router_v2.router_tf_acc_test_1"
-	testAccNetworkingRouterV2DataSourceName           = "data.selectel_networking_router_v2.router_tf_acc_test_1"
-	testAccNetworkingRouterV2FloatingIPDataSourceName = "data.selectel_networking_floatingip_v2.gateway_tf_acc_test_1"
+	testAccVPCRouterV2DataSourceName                  = "data.selectel_vpc_router_v2.router_tf_acc_test_1"
+	testAccNetworkingRouterV2FloatingIPDataSourceName = "data.selectel_vpc_floatingip_v2.gateway_tf_acc_test_1"
 )
 
 // networkingRouterV2TestZones is the availability zones the region serves routers
@@ -238,7 +238,7 @@ func TestNetworkingRouterV2FlattenGateway(t *testing.T) {
 
 // TestNetworkingRouterV2DataSourceSelectors covers REQ-065.
 func TestNetworkingRouterV2DataSourceSelectors(t *testing.T) {
-	s := dataSourceNetworkingRouterV2().Schema
+	s := dataSourceVPCRouterV2().Schema
 
 	selectors := make([]string, 0)
 	for name, attr := range s {
@@ -547,22 +547,22 @@ func TestAccNetworkingRouterV2DataSource(t *testing.T) {
 		CheckDestroy:      testAccCheckNetworkingRouterV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingRouterV2DataSource(projectID, region, routerName),
+				Config: testAccVPCRouterV2DataSource(projectID, region, routerName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
-						testAccNetworkingRouterV2DataSourceName, "router_id",
+						testAccVPCRouterV2DataSourceName, "router_id",
 						testAccNetworkingRouterV2ResourceName, "id",
 					),
 					// SCN-066-03: the same blocked value as the resource reports.
 					resource.TestCheckResourceAttrPair(
-						testAccNetworkingRouterV2DataSourceName, "blocked",
+						testAccVPCRouterV2DataSourceName, "blocked",
 						testAccNetworkingRouterV2ResourceName, "blocked",
 					),
-					resource.TestCheckResourceAttrSet(testAccNetworkingRouterV2DataSourceName, "routes.#"),
+					resource.TestCheckResourceAttrSet(testAccVPCRouterV2DataSourceName, "routes.#"),
 				),
 			},
 			{
-				Config:      testAccNetworkingRouterV2DataSourceNoMatch(projectID, region),
+				Config:      testAccVPCRouterV2DataSourceNoMatch(projectID, region),
 				ExpectError: regexp.MustCompile(`no networking router found`),
 			},
 		},
@@ -764,7 +764,7 @@ resource "selectel_vpc_floatingip_v2" "gateway_tf_acc_test_1" {
   region     = "%s"
 }
 
-data "selectel_networking_floatingip_v2" "gateway_tf_acc_test_1" {
+data "selectel_vpc_floatingip_v2" "gateway_tf_acc_test_1" {
   project_id    = local.project_id
   region        = "%s"
   floatingip_id = selectel_vpc_floatingip_v2.gateway_tf_acc_test_1.id
@@ -777,7 +777,7 @@ func testAccNetworkingRouterV2Gateway(projectID, region, extra string) string {
 resource "selectel_vpc_router_v2" "router_tf_acc_test_1" {
   project_id          = local.project_id
   region              = "%s"
-  external_network_id = data.selectel_networking_floatingip_v2.gateway_tf_acc_test_1.floating_network_id
+  external_network_id = data.selectel_vpc_floatingip_v2.gateway_tf_acc_test_1.floating_network_id
   %s
 }
 `, region, extra)
@@ -831,9 +831,9 @@ resource "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
 `, region, region)
 }
 
-func testAccNetworkingRouterV2DataSource(projectID, region, name string) string {
+func testAccVPCRouterV2DataSource(projectID, region, name string) string {
 	return testAccNetworkingRouterV2Named(projectID, region, name, true) + fmt.Sprintf(`
-data "selectel_networking_router_v2" "router_tf_acc_test_1" {
+data "selectel_vpc_router_v2" "router_tf_acc_test_1" {
   project_id = local.project_id
   region     = "%s"
   name       = selectel_vpc_router_v2.router_tf_acc_test_1.name
@@ -841,9 +841,9 @@ data "selectel_networking_router_v2" "router_tf_acc_test_1" {
 `, region)
 }
 
-func testAccNetworkingRouterV2DataSourceNoMatch(projectID, region string) string {
+func testAccVPCRouterV2DataSourceNoMatch(projectID, region string) string {
 	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
-data "selectel_networking_router_v2" "router_tf_acc_test_1" {
+data "selectel_vpc_router_v2" "router_tf_acc_test_1" {
   project_id = local.project_id
   region     = "%s"
   name       = "tf-acc-no-such-router"

@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	testAccNetworkingSecGroupV2ResourceName   = "selectel_vpc_secgroup_v2.secgroup_tf_acc_test_1"
-	testAccNetworkingSecGroupV2DataSourceName = "data.selectel_networking_secgroup_v2.secgroup_tf_acc_test_1"
+	testAccNetworkingSecGroupV2ResourceName = "selectel_vpc_secgroup_v2.secgroup_tf_acc_test_1"
+	testAccVPCSecGroupV2DataSourceName      = "data.selectel_vpc_secgroup_v2.secgroup_tf_acc_test_1"
 )
 
 // -----------------------------------------------------------------------------
@@ -189,7 +189,7 @@ func TestNetworkingSecGroupV2SetIDBeforeNonAtomicSteps(t *testing.T) {
 
 // TestNetworkingSecGroupV2DataSourceSelectors covers REQ-108.
 func TestNetworkingSecGroupV2DataSourceSelectors(t *testing.T) {
-	s := dataSourceNetworkingSecGroupV2().Schema
+	s := dataSourceVPCSecGroupV2().Schema
 
 	selectors := make([]string, 0)
 	for name, attr := range s {
@@ -400,24 +400,24 @@ func TestAccNetworkingSecGroupV2DataSource(t *testing.T) {
 		CheckDestroy:      testAccCheckNetworkingSecGroupV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSecGroupV2DataSource(projectID, region, secGroupName),
+				Config: testAccVPCSecGroupV2DataSource(projectID, region, secGroupName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
-						testAccNetworkingSecGroupV2DataSourceName, "secgroup_id",
+						testAccVPCSecGroupV2DataSourceName, "secgroup_id",
 						testAccNetworkingSecGroupV2ResourceName, "id",
 					),
 					resource.TestCheckResourceAttrPair(
-						testAccNetworkingSecGroupV2DataSourceName, "shared",
+						testAccVPCSecGroupV2DataSourceName, "shared",
 						testAccNetworkingSecGroupV2ResourceName, "shared",
 					),
 					resource.TestCheckResourceAttrPair(
-						testAccNetworkingSecGroupV2DataSourceName, "security_group_rules.#",
+						testAccVPCSecGroupV2DataSourceName, "security_group_rules.#",
 						testAccNetworkingSecGroupV2ResourceName, "security_group_rules.#",
 					),
 				),
 			},
 			{
-				Config:      testAccNetworkingSecGroupV2DataSourceNoMatch(projectID, region),
+				Config:      testAccVPCSecGroupV2DataSourceNoMatch(projectID, region),
 				ExpectError: regexp.MustCompile(`no networking security group found`),
 			},
 		},
@@ -678,9 +678,9 @@ resource "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
 `, region)
 }
 
-func testAccNetworkingSecGroupV2DataSource(projectID, region, name string) string {
+func testAccVPCSecGroupV2DataSource(projectID, region, name string) string {
 	return testAccNetworkingSecGroupV2Basic(projectID, region, name) + fmt.Sprintf(`
-data "selectel_networking_secgroup_v2" "secgroup_tf_acc_test_1" {
+data "selectel_vpc_secgroup_v2" "secgroup_tf_acc_test_1" {
   project_id = local.project_id
   region     = "%s"
   name       = selectel_vpc_secgroup_v2.secgroup_tf_acc_test_1.name
@@ -688,9 +688,9 @@ data "selectel_networking_secgroup_v2" "secgroup_tf_acc_test_1" {
 `, region)
 }
 
-func testAccNetworkingSecGroupV2DataSourceNoMatch(projectID, region string) string {
+func testAccVPCSecGroupV2DataSourceNoMatch(projectID, region string) string {
 	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
-data "selectel_networking_secgroup_v2" "secgroup_tf_acc_test_1" {
+data "selectel_vpc_secgroup_v2" "secgroup_tf_acc_test_1" {
   project_id = local.project_id
   region     = "%s"
   name       = "tf-acc-no-such-secgroup"

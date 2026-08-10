@@ -1,7 +1,7 @@
 ---
 layout: "selectel"
-page_title: "Selectel: selectel_networking_subnet_v2"
-sidebar_current: "docs-selectel-datasource-networking-subnet-v2"
+page_title: "Selectel: selectel_vpc_network_subnet_v2"
+sidebar_current: "docs-selectel-datasource-vpc-network-subnet-v2"
 description: |-
   Provides information about a subnet in the Selectel cloud using Neutron API v2.0.
 ---
@@ -15,7 +15,7 @@ The data source returns exactly one subnet. If no subnet matches the selectors, 
 ## Example Usage
 
 ```hcl
-data "selectel_networking_subnet_v2" "subnet_1" {
+data "selectel_vpc_network_subnet_v2" "subnet_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-3"
   cidr       = "192.168.199.0/24"

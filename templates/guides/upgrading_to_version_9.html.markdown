@@ -1,14 +1,14 @@
 ---
 layout: "selectel"
-page_title: "Migrating networking resources from terraform-provider-openstack"
-sidebar_current: "docs-selectel-guide-migrate-from-openstack-provider"
+page_title: "Upgrading to version 9.0.0"
+sidebar_current: "docs-selectel-guide-upgrade-guide-v9"
 description: |-
-  How to move existing Neutron networking resources from terraform-provider-openstack to the native networking resources of the Selectel provider.
+  How to upgrade Selectel Terraform Provider to version 9.0.0 and move existing Neutron networking resources from terraform-provider-openstack to the native VPC resources of the Selectel provider.
 ---
 
-# Migrating networking resources from terraform-provider-openstack
+# Upgrading to version 9.0.0
 
-The Selectel provider now manages Neutron networking resources natively in its `vpc` domain. If you currently manage those resources through `terraform-provider-openstack`, this guide shows how to move them over without recreating anything in the cloud.
+Version 9.0.0 of the Selectel provider manages networking resources natively in its `vpc` domain. This guide explains how to upgrade to version 9.0.0 and move resources currently managed through `terraform-provider-openstack` without recreating anything in the cloud.
 
 The Selectel cloud runs a patched Neutron with plugins that have no upstream equivalent, and it restricts who may change which attribute through granular VPC roles. The native resources are built for that; the upstream provider cannot be, because its schema assumes upstream Neutron and administrator privileges. That difference is what makes the migration worth doing — and it is also why a few attributes behave differently after you migrate. Those are listed under [Schema differences](#schema-differences).
 
@@ -20,41 +20,25 @@ Each row maps one source resource type to the resource that replaces it. Every s
 
 | terraform-provider-openstack | terraform-provider-selectel | Data source |
 | ---------------------------- | --------------------------- | ----------- |
-| `openstack_networking_network_v2` | `selectel_vpc_network_v2` | `selectel_networking_network_v2` |
-| `openstack_networking_subnet_v2` | `selectel_vpc_network_subnet_v2` | `selectel_networking_subnet_v2` |
+| `openstack_networking_network_v2` | `selectel_vpc_network_v2` | `selectel_vpc_network_v2` |
+| `openstack_networking_subnet_v2` | `selectel_vpc_network_subnet_v2` | `selectel_vpc_network_subnet_v2` |
 | `openstack_networking_subnet_route_v2` | `selectel_vpc_network_subnet_route_v2` | none |
-| `openstack_networking_port_v2` | `selectel_vpc_port_v2` | `selectel_networking_port_v2` |
+| `openstack_networking_port_v2` | `selectel_vpc_port_v2` | `selectel_vpc_port_v2` |
 | `openstack_networking_portforwarding_v2` | `selectel_vpc_port_forwarding_v2` | none |
-| `openstack_networking_router_v2` | `selectel_vpc_router_v2` | `selectel_networking_router_v2` |
+| `openstack_networking_router_v2` | `selectel_vpc_router_v2` | `selectel_vpc_router_v2` |
 | `openstack_networking_router_interface_v2` | `selectel_vpc_router_interface_v2` | none |
 | `openstack_networking_router_route_v2` | `selectel_vpc_router_route_v2` | none |
 | `openstack_networking_router_routes_v2` | `selectel_vpc_router_routes_v2` | none |
-| `openstack_networking_floatingip_v2` | `selectel_vpc_floatingip_v2` | `selectel_networking_floatingip_v2` |
+| `openstack_networking_floatingip_v2` | `selectel_vpc_floatingip_v2` | `selectel_vpc_floatingip_v2` |
 | `openstack_networking_floatingip_associate_v2` | `selectel_vpc_floatingip_associate_v2` | none |
-| `openstack_networking_secgroup_v2` | `selectel_vpc_secgroup_v2` | `selectel_networking_secgroup_v2` |
+| `openstack_networking_secgroup_v2` | `selectel_vpc_secgroup_v2` | `selectel_vpc_secgroup_v2` |
 | `openstack_networking_secgroup_rule_v2` | `selectel_vpc_secgroup_rule_v2` | none |
 | `openstack_networking_port_secgroup_associate_v2` | `selectel_vpc_port_secgroup_associate_v2` | none |
 | `openstack_networking_rbac_policy_v2` | `selectel_vpc_rbac_policy_v2` | none |
 
 Six of the fifteen entities get a data source, listed in the third column. The others are primarily link resources — a route entry, an interface, an association, or a policy — with no independent object to search for.
 
-~> **Note:** Floating IP allocation remains managed by `selectel_vpc_floatingip_v2`. The read-only `selectel_networking_floatingip_v2` data source exposes its Neutron state, while `selectel_vpc_floatingip_associate_v2` manages the association with a port.
-
-### Resources this guide does not cover
-
-The following are **not** part of this migration and stay under `terraform-provider-openstack`. You will not find rows for them above:
-
-* Neutron trunks and network segments
-* Quotas
-* QoS policies and QoS rules (bandwidth-limit, DSCP-marking, minimum-bandwidth)
-* BGP peers and BGP speakers
-* FWaaS resources — firewall groups, policies and rules
-* `bmnet` devices, and the `bmnet:*` attributes on a network
-* **Address groups**, and the `remote_address_group_id` attribute of a security group rule
-
-Address groups deserve a word, because the upstream provider does offer `openstack_networking_address_group_v2`. In the Selectel cloud, creating, updating and deleting an address group is restricted to the cloud administrator: the deployed Neutron policy registers only `get_address_group`, and an unregistered policy rule denies the action rather than allowing it. Reading existing address groups is permitted, so a future change may add a data source, but there is nothing here for a project member to manage. Because a security group rule can only usefully reference an address group you can create, `remote_address_group_id` is left out with it.
-
-~> **Note:** Nothing in your existing configuration is deleted by this migration. Resources that stay with the upstream provider keep working alongside the native ones; both talk to the same Neutron.
+Networking resources that are not listed in the [Resource mapping](#resource-mapping) are not supported in the Selectel cloud.
 
 ## Migration procedure
 
@@ -131,7 +115,7 @@ resource "selectel_vpc_router_v2" "example" {
 * If the resource is in a state file you can read: `terraform state show openstack_networking_router_v2.example` and take `id`.
 * From the [Control panel](https://my.selectel.ru/), on the page of the object.
 * With the OpenStack CLI against the same project — for example `openstack router list`.
-* With a data source, where one exists — read `selectel_networking_router_v2` by `name` and use its `router_id`.
+* With a data source, where one exists — read `selectel_vpc_router_v2` by `name` and use its `router_id`.
 
 **Step 3 — import it:**
 

@@ -1,7 +1,7 @@
 ---
 layout: "selectel"
-page_title: "Selectel: selectel_networking_port_v2"
-sidebar_current: "docs-selectel-datasource-networking-port-v2"
+page_title: "Selectel: selectel_vpc_port_v2"
+sidebar_current: "docs-selectel-datasource-vpc-port-v2"
 description: |-
   Provides information about a port in the Selectel cloud using Neutron API v2.0.
 ---
@@ -15,7 +15,7 @@ The data source returns exactly one port. If no port matches the selectors, or i
 ## Example Usage
 
 ```hcl
-data "selectel_networking_port_v2" "port_1" {
+data "selectel_vpc_port_v2" "port_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-3"
   fixed_ip   = "192.168.199.50"

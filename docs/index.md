@@ -1,18 +1,20 @@
 ---
+layout: "selectel"
 page_title: "Provider: Selectel"
-description: |-
-  Use the Selectel provider to manage Selectel products.
+sidebar_current: "docs-selectel-index"
 ---
 
 # Selectel provider
 
-Use the Selectel provider to manage [Selectel products](https://docs.selectel.ru/en/terraform/providers/).
+To manage Selectel product resources, use the [Selectel provider](https://docs.selectel.ru/en/terraform/providers/).
 
-To manage resources available via OpenStack API, use [OpenStack Terraform provider](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest).
+Starting with version 9.0.0, we recommend using the [OpenStack Terraform provider](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest) only for resources that are not yet available in the Selectel provider.
+
+Backward compatibility is not guaranteed. Some Selectel functionality may be unavailable or implemented differently in the OpenStack Terraform provider. If you are upgrading to version 9.0.0 or later, follow our guides for example [upgrading to version 9](/docs/providers/selectel/index.html#) to migrate your resources to the Selectel provider.
 
 ## Example Usage
 
-```terraform
+```hcl
 terraform {
   required_providers {
     selectel = {
@@ -30,7 +32,7 @@ resource "selectel_vpc_project_v2" "project_1" {
 
 ## Authentication (6.0.0 and later)
 
-```terraform
+```hcl
 # Configure the Selectel provider
 
 provider "selectel" {
@@ -62,7 +64,7 @@ provider "selectel" {
 
 ## Authentication (4.0.0 up to 5.*)
 
-```terraform
+```hcl
 # Configure the Selectel provider
 
 provider "selectel" {
@@ -92,7 +94,7 @@ provider "selectel" {
 
 ## Authentication (up to 3.11.0)
 
-```terraform
+```hcl
 # Configure the Selectel provider
 
 provider "selectel" {

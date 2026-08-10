@@ -436,7 +436,7 @@ resource "selectel_vpc_router_route_v2" "route_tf_acc_test_1" {
 func testAccNetworkingRouterRouteV2NextHop(projectID, region string, withExternal bool, nextHop string) string {
 	gateway, allocation := "", ""
 	if withExternal {
-		gateway = "external_network_id = data.selectel_networking_floatingip_v2.next_hop_tf_acc_test_1.floating_network_id"
+		gateway = "external_network_id = data.selectel_vpc_floatingip_v2.next_hop_tf_acc_test_1.floating_network_id"
 		nextHop = "${selectel_vpc_floatingip_v2.next_hop_tf_acc_test_1.floating_ip_address}"
 		allocation = fmt.Sprintf(`
 resource "selectel_vpc_floatingip_v2" "next_hop_tf_acc_test_1" {
@@ -444,7 +444,7 @@ resource "selectel_vpc_floatingip_v2" "next_hop_tf_acc_test_1" {
   region     = "%s"
 }
 
-data "selectel_networking_floatingip_v2" "next_hop_tf_acc_test_1" {
+data "selectel_vpc_floatingip_v2" "next_hop_tf_acc_test_1" {
   project_id    = local.project_id
   region        = "%s"
   floatingip_id = selectel_vpc_floatingip_v2.next_hop_tf_acc_test_1.id

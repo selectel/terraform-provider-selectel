@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	testAccNetworkingPortV2ResourceName   = "selectel_vpc_port_v2.port_tf_acc_test_1"
-	testAccNetworkingPortV2DataSourceName = "data.selectel_networking_port_v2.port_tf_acc_test_1"
+	testAccNetworkingPortV2ResourceName = "selectel_vpc_port_v2.port_tf_acc_test_1"
+	testAccVPCPortV2DataSourceName      = "data.selectel_vpc_port_v2.port_tf_acc_test_1"
 )
 
 // TestAccNetworkingPortV2Basic covers SCN-037-01, SCN-037-02 (empty follow-up
@@ -261,21 +261,21 @@ func TestAccNetworkingPortV2DataSource(t *testing.T) {
 		CheckDestroy:      testAccCheckNetworkingPortV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingPortV2DataSource(projectID, region, portName),
+				Config: testAccVPCPortV2DataSource(projectID, region, portName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(testAccNetworkingPortV2DataSourceName, "name", portName),
+					resource.TestCheckResourceAttr(testAccVPCPortV2DataSourceName, "name", portName),
 					resource.TestCheckResourceAttrPair(
-						testAccNetworkingPortV2DataSourceName, "port_id",
+						testAccVPCPortV2DataSourceName, "port_id",
 						testAccNetworkingPortV2ResourceName, "id",
 					),
 					resource.TestCheckResourceAttrPair(
-						testAccNetworkingPortV2DataSourceName, "blocked",
+						testAccVPCPortV2DataSourceName, "blocked",
 						testAccNetworkingPortV2ResourceName, "blocked",
 					),
 				),
 			},
 			{
-				Config:      testAccNetworkingPortV2DataSourceNoMatch(projectID, region),
+				Config:      testAccVPCPortV2DataSourceNoMatch(projectID, region),
 				ExpectError: regexp.MustCompile(`no networking port found`),
 			},
 		},
@@ -539,9 +539,9 @@ resource "selectel_vpc_port_v2" "port_tf_acc_test_1" {
 `, region, portName)
 }
 
-func testAccNetworkingPortV2DataSource(projectID, region, portName string) string {
+func testAccVPCPortV2DataSource(projectID, region, portName string) string {
 	return testAccNetworkingPortV2Named(projectID, region, portName) + fmt.Sprintf(`
-data "selectel_networking_port_v2" "port_tf_acc_test_1" {
+data "selectel_vpc_port_v2" "port_tf_acc_test_1" {
   project_id = local.project_id
   region     = "%s"
   name       = selectel_vpc_port_v2.port_tf_acc_test_1.name
@@ -549,9 +549,9 @@ data "selectel_networking_port_v2" "port_tf_acc_test_1" {
 `, region)
 }
 
-func testAccNetworkingPortV2DataSourceNoMatch(projectID, region string) string {
+func testAccVPCPortV2DataSourceNoMatch(projectID, region string) string {
 	return testAccNetworkingPortV2Subnet(projectID, region) + fmt.Sprintf(`
-data "selectel_networking_port_v2" "port_tf_acc_test_1" {
+data "selectel_vpc_port_v2" "port_tf_acc_test_1" {
   project_id = local.project_id
   region     = "%s"
   name       = "tf-acc-no-such-port"

@@ -14,9 +14,9 @@ import (
 	"github.com/selectel/vpc-go/pkg/v2/subnet"
 )
 
-func dataSourceNetworkingSubnetV2() *schema.Resource {
+func dataSourceVPCNetworkSubnetV2() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceNetworkingSubnetV2Read,
+		ReadContext: dataSourceVPCNetworkSubnetV2Read,
 		Schema: map[string]*schema.Schema{
 			"project_id": {
 				Type:     schema.TypeString,
@@ -147,7 +147,7 @@ func dataSourceNetworkingSubnetV2() *schema.Resource {
 	}
 }
 
-func dataSourceNetworkingSubnetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceVPCNetworkSubnetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)

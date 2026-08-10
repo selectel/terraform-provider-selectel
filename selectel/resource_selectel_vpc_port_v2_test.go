@@ -252,7 +252,7 @@ func TestNetworkingPortV2VNICTypeReader(t *testing.T) {
 // TestNetworkingPortV2DataSourceSelectors covers REQ-047: the partial-match
 // selectors are applied locally, and no admin-managed attribute is selectable.
 func TestNetworkingPortV2DataSourceSelectors(t *testing.T) {
-	s := dataSourceNetworkingPortV2().Schema
+	s := dataSourceVPCPortV2().Schema
 
 	selectors := make([]string, 0)
 	for name, attr := range s {
@@ -292,7 +292,7 @@ func TestNetworkingPortV2Filter(t *testing.T) {
 	}
 
 	newData := func(raw map[string]interface{}) *schema.ResourceData {
-		return schema.TestResourceDataRaw(t, dataSourceNetworkingPortV2().Schema, raw)
+		return schema.TestResourceDataRaw(t, dataSourceVPCPortV2().Schema, raw)
 	}
 
 	t.Run("fixed_ip matches one of several addresses", func(t *testing.T) {

@@ -11,7 +11,7 @@ import (
 )
 
 func TestNetworkingFloatingIPV2DataSourceSelectors(t *testing.T) {
-	s := dataSourceNetworkingFloatingIPV2().Schema
+	s := dataSourceVPCFloatingIPV2().Schema
 
 	selectors := make([]string, 0)
 	for name, attr := range s {
@@ -81,7 +81,7 @@ func TestNetworkingFloatingIPV2DataSourceResult(t *testing.T) {
 }
 
 func TestNetworkingFloatingIPV2DataSourceFlattenPreservesTagSelector(t *testing.T) {
-	d := schema.TestResourceDataRaw(t, dataSourceNetworkingFloatingIPV2().Schema, map[string]interface{}{
+	d := schema.TestResourceDataRaw(t, dataSourceVPCFloatingIPV2().Schema, map[string]interface{}{
 		"project_id": "project-id",
 		"region":     "ru-3",
 		"tags":       []interface{}{"selector"},

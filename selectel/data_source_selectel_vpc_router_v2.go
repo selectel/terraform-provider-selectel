@@ -13,9 +13,9 @@ import (
 	"github.com/selectel/vpc-go/pkg/v2/router"
 )
 
-func dataSourceNetworkingRouterV2() *schema.Resource {
+func dataSourceVPCRouterV2() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceNetworkingRouterV2Read,
+		ReadContext: dataSourceVPCRouterV2Read,
 		Schema: map[string]*schema.Schema{
 			"project_id": {
 				Type:     schema.TypeString,
@@ -124,7 +124,7 @@ func dataSourceNetworkingRouterV2() *schema.Resource {
 	}
 }
 
-func dataSourceNetworkingRouterV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceVPCRouterV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
