@@ -3,16 +3,14 @@ layout: "selectel"
 page_title: "Upgrading to version 9.0.0"
 sidebar_current: "docs-selectel-guide-upgrade-guide-v9"
 description: |-
-  How to upgrade Selectel Terraform Provider to version 9.0.0 and move existing Neutron networking resources from terraform-provider-openstack to the native VPC resources of the Selectel provider.
+  How to upgrade Selectel Terraform Provider to version 9.0.0 and move existing networking resources from terraform-provider-openstack to the native VPC resources of the Selectel provider.
 ---
 
 # Upgrading to version 9.0.0
 
-Version 9.0.0 of the Selectel provider manages networking resources natively in its `vpc` domain. This guide explains how to upgrade to version 9.0.0 and move resources currently managed through `terraform-provider-openstack` without recreating anything in the cloud.
+Version 9.0.0 of the Selectel provider manages networking resources natively in its `vpc` (Virtual Private Cloud) domain. This guide explains how to upgrade to version 9.0.0 and move resources currently managed through `terraform-provider-openstack` without recreating anything in the VPC.
 
-The Selectel cloud runs a patched Neutron with plugins that have no upstream equivalent, and it restricts who may change which attribute through granular VPC roles. The native resources are built for that; the upstream provider cannot be, because its schema assumes upstream Neutron and administrator privileges. That difference is what makes the migration worth doing — and it is also why a few attributes behave differently after you migrate. Those are listed under [Schema differences](#schema-differences).
-
-~> **Note:** There is no automated migration tool. See [No automated tooling](#no-automated-tooling).
+The Selectel VPC give access to resources through OpenStack compatible API, but sometimes API has a behavior with no upstream equivalent. Those are listed under [Schema differences](#schema-differences).
 
 ## Resource mapping
 
@@ -38,11 +36,11 @@ Each row maps one source resource type to the resource that replaces it. Every s
 
 Six of the fifteen entities get a data source, listed in the third column. The others are primarily link resources — a route entry, an interface, an association, or a policy — with no independent object to search for.
 
-Networking resources that are not listed in the [Resource mapping](#resource-mapping) are not supported in the Selectel cloud.
+Networking resources that are not listed in the [Resource mapping](#resource-mapping) are not supported in the Selectel VPC.
 
 ## Migration procedure
 
-Changing from `openstack_networking_*` to `selectel_vpc_*` changes the Terraform resource type. `terraform state mv` cannot do that: its source and destination must have the same resource type. Use `terraform state rm` followed by `terraform import` instead. These commands change only Terraform state and leave the Neutron object untouched.
+Changing from `openstack_networking_*` to `selectel_vpc_*` changes the Terraform resource type. `terraform state mv` cannot do that: its source and destination must have the same resource type. Use `terraform state rm` followed by `terraform import` instead. These commands change only Terraform state and leave the networking resource untouched in the VPC.
 
 ## Migrating an object already in the current state
 
@@ -72,7 +70,7 @@ resource "selectel_vpc_network_v2" "example" {
 terraform state rm openstack_networking_network_v2.example
 ```
 
-This does not delete the network in Neutron. It only removes its old provider binding from state.
+This does not delete the network in the VPC. It only removes its old provider binding from state.
 
 **Step 3 — import the same object under the new type:**
 
@@ -132,13 +130,9 @@ The native resources take `project_id` and `region` from `INFRA_PROJECT_ID` and 
 
 **Step 4 — check the plan.** With a matching configuration, `terraform plan` shows no changes for the attributes the two schemas share.
 
-## Schema differences
-
-The native resources are not a field-for-field copy of the upstream ones, in two directions. Import does not fill these values into your configuration, so importing the object is not by itself a complete transfer of functionality.
-
 ### Attributes that are new, and read-only
 
-The Selectel Neutron carries attributes the upstream schema has no place for. They report platform state; the provider reflects them and never sends them, so there is nothing for you to add to your configuration:
+The Selectel VPC carries attributes the upstream schema has no place for. They report platform state; the provider reflects them and never sends them, so there is nothing for you to add to your configuration:
 
 | Entity | New read-only attributes |
 | ------ | ------------------------ |
@@ -153,8 +147,6 @@ After a migration these appear in your state with the values the platform report
 
 ### Attributes the upstream provider lets you set, and these do not
 
-The cloud's Neutron policy reserves some attributes for the Keystone admin role, granting them to none of the granular VPC roles. Where the upstream schema accepts them as arguments, the native schema exposes them read-only, or not at all.
-
 ~> **Warning:** Remove these lines from your configuration as you migrate. Left in place, `terraform plan` fails with an unsupported-argument error, because the attribute is not a configuration argument of the new resource. The actual values stay under the platform's control.
 
 | Entity | Read-only in the native resource | Not exposed at all |
@@ -165,17 +157,6 @@ The cloud's Neutron policy reserves some attributes for the Keystone admin role,
 | router | `external_fixed_ip`, gateway `qos_policy_id` | `distributed`, `ha`, `external_subnet_ids` |
 | subnet pool | `shared`, `is_default` | — |
 | address scope | `shared` | — |
-
-Two of these are worth expanding on:
-
-* **Router `distributed` and `ha`** are not exposed even as read-only values. The policy reserves not only writing them but *reading* them for the administrator, so an ordinary caller never receives the fields at all — reporting `false` would state something the provider has not been told.
-
-### Behaviour that differs from upstream Neutron
-
-Two behaviours come from patches in the Selectel Neutron and will differ from what you are used to, whichever migration path you take:
-
-* **Router availability zones.** A caller without the administrator role may only use `availability_zone_hints` values from the region's allowlist. A value outside a non-empty allowlist fails with an authorization error; an unset allowlist fails with a not-found error.
-* **Static route next hops.** A router's ports on external networks are excluded when Neutron decides which next hops are acceptable. An address inside the router's external gateway subnet is therefore refused, even though upstream Neutron accepts it. If you have such a route today under the upstream provider, it will not apply here.
 
 ## No automated tooling
 
