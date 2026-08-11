@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_network_v2"
 sidebar_current: "docs-selectel-datasource-vpc-network-v2"
 description: |-
-  Provides information about a private network in the Selectel cloud using Neutron API v2.0.
+  Provides information about a private network in the Selectel cloud using VPC API v2.0.
 ---
 
 # selectel\_networking\_network\_v2
@@ -50,7 +50,7 @@ You can combine any of the following selectors. The network must match all of th
 
 * `admin_state_up` - Administrative state of the network.
 
-* `dns_domain` - DNS domain of the network.
+* `dns_domain` - DNS domain of the network. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/)
 
 * `availability_zone_hints` - Availability zones that host the network services.
 
@@ -74,6 +74,4 @@ You can combine any of the following selectors. The network must match all of th
 
 * `is_public` - Specifies whether the network is public.
 
-* `is_dns_enabled` - Specifies whether the DNS service is enabled for the network.
-
-~> **Note:** The returned attributes report the actual state of the network and cannot be used to change it. The attributes the cloud's Neutron policy reserves for the Keystone admin role are returned here but are not available as selectors.
+* `is_dns_enabled` - Specifies whether the Private DNS service is enabled for the network. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/)

@@ -3,14 +3,14 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_network_v2"
 sidebar_current: "docs-selectel-resource-vpc-network-v2"
 description: |-
-  Creates and manages a private network in the Selectel cloud using Neutron API v2.0.
+  Creates and manages a private network in the Selectel cloud using VPC API v2.0.
 ---
 
 # selectel\_vpc\_network\_v2
 
-Creates and manages a private network using Neutron API v2.0. For more information about networks, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/servers/networks/about-networks/).
+Creates and manages a private network using VPC API v2.0. For more information about networks, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/servers/networks/about-networks/).
 
-~> **Note:** This resource exposes fewer configuration arguments than `openstack_networking_network_v2` of the OpenStack provider. The Neutron policy of the Selectel cloud reserves `shared`, `external`, `mtu`, `port_security_enabled`, `qos_policy_id` and the provider network binding for the Keystone admin role, which no granular Selectel VPC role grants, so this resource reports them as read-only attributes instead of accepting them as arguments. If you are migrating a configuration from the OpenStack provider, remove those arguments.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow our guides for example [upgrading to version 9](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -36,7 +36,7 @@ resource "selectel_vpc_network_v2" "network_1" {
 
 * `admin_state_up` - (Optional) Administrative state of the network. If `false`, the network does not forward packets. If you do not specify the value, the API assigns one.
 
-* `dns_domain` - (Optional) DNS domain of the network. A non-empty value must be a fully-qualified domain name that ends with a dot, for example, `example.com.`. Any other non-empty value is rejected before the API is called. Available in pools where the Neutron DNS extension is enabled.
+* `dns_domain` - (Optional) DNS domain of the network. A non-empty value must be a fully-qualified domain name that ends with a dot, for example, `example.com.`. Any other non-empty value is rejected before the API is called. Available if Private DNS service is set up. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/)
 
 * `availability_zone_hints` - (Optional) Availability zones that host the network services. Changing this creates a new network.
 
@@ -68,9 +68,7 @@ resource "selectel_vpc_network_v2" "network_1" {
 
 * `is_public` - Specifies whether the network is public.
 
-* `is_dns_enabled` - Specifies whether the DNS service is enabled for the network.
-
-~> **Note:** Every attribute above is read-only. The resource reports the current value, including a value changed outside Terraform, and never plans a change of its own. The `block` and `unblock` actions are likewise not available in Terraform.
+* `is_dns_enabled` - Specifies whether the Prviate DNS service is enabled for the network. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/)
 
 ## Import
 
