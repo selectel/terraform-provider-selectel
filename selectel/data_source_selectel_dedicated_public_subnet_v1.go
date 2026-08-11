@@ -193,8 +193,19 @@ func flattenDedicatedPublicSubnets(subnets dedicated.Subnets, filter dedicatedPu
 		subnetMap["id"] = subnet.UUID
 		subnetMap["network_id"] = subnet.NetworkUUID
 		subnetMap["subnet"] = subnet.Subnet
-		subnetMap["broadcast"] = subnet.Broadcast.String()
-		subnetMap["gateway"] = subnet.Gateway.String()
+
+		broadcast := ""
+		if subnet.Broadcast != nil {
+			broadcast = subnet.Broadcast.String()
+		}
+		subnetMap["broadcast"] = broadcast
+
+		gateway := ""
+		if subnet.Gateway != nil {
+			gateway = subnet.Gateway.String()
+		}
+		subnetMap["gateway"] = gateway
+
 		subnetMap["reserved_vrrp_ips"] = subnet.ReservedVRRPIPAsStrings()
 
 		if filter.ip != "" {
