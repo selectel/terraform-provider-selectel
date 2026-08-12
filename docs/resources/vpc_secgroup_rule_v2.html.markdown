@@ -3,12 +3,14 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_secgroup_rule_v2"
 sidebar_current: "docs-selectel-resource-vpc-secgroup-rule-v2"
 description: |-
-  Creates and manages one rule of a security group in the Selectel cloud using Neutron API v2.0.
+  Creates and manages one rule of a security group in the Selectel cloud using VPC API v2.0.
 ---
 
 # selectel\_vpc\_secgroup\_rule\_v2
 
 Creates and manages exactly one rule of an existing security group, leaving every other rule of that group alone.
+
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -69,19 +71,11 @@ Every argument is immutable: changing any of them creates a new rule, because a 
 
 ~> **Note:** `remote_group_id` and `remote_ip_prefix` are mutually exclusive — set at most one. Setting neither means the rule is not restricted by source address.
 
-~> **Note:** `remote_address_group_id` is not supported in the Selectel cloud.
-
 ## Attributes Reference
 
 No attributes are exported beyond the arguments. The identifier of the resource is the identifier the API assigns to the rule, independent of the identifier of its security group and of any other rule on it.
 
 ## Behavior notes
-
-The provider checks locally, before calling the API, that the required arguments are present, that the two remote selectors are not both set, that a port range comes with a protocol, and that `port_range_max` is not set without `port_range_min`. That asymmetry mirrors the API: for ICMP the two fields are the type and the code, and a type without a code is valid while the reverse is not. Everything else is validated by the API: `port_range_min` greater than `port_range_max`, a `remote_ip_prefix` whose version disagrees with `ethertype`, an unknown `protocol`, or a `remote_group_id` naming a group that does not exist all fail at apply with the error the API returned, and no rule is created.
-
-Creating a rule whose comparable fields — direction, ethertype, protocol, port range, remote group and remote prefix — exactly match a rule already on the group is refused by the API, whether that existing rule came from Terraform, from the group's own provisioning, or from anywhere else. When comparing prefixes, `0.0.0.0/0`, `::/0` and an absent prefix all count as the same unrestricted value.
-
-`remote_ip_prefix` is stored by Neutron in a canonical, lowercased form. A configuration that writes the same network differently — an IPv6 prefix in upper case, or a host address instead of the network address — does not produce a permanent diff: the provider compares the networks, not the strings.
 
 If the rule is removed outside Terraform, or its whole security group is deleted, the resource leaves the state on the next refresh without an error and the next plan re-creates it. A denied access or a transport failure keeps the resource in the state and reports a diagnostic error instead. Destroying a rule that is already gone succeeds without an error.
 

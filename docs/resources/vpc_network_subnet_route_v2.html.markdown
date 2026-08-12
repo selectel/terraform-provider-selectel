@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_network_subnet_route_v2"
 sidebar_current: "docs-selectel-resource-vpc-network-subnet-route-v2"
 description: |-
-  Creates and manages a single route of a subnet in the Selectel cloud using Neutron API v2.0.
+  Creates and manages a single route of a subnet in the Selectel cloud using VPC API v2.0.
 ---
 
 # selectel\_vpc\_network\_subnet\_route\_v2
@@ -11,6 +11,8 @@ description: |-
 Creates and manages a single entry of a subnet's `host_routes` list, without touching the other entries. Use it when different routes of one subnet are owned by different configurations or modules.
 
 ~> **Note:** Adding an entry rewrites the whole `host_routes` list of the subnet, so the provider serializes concurrent routes of the same subnet. Do not manage the same subnet's routes both with this resource and by another means at the same time.
+
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 

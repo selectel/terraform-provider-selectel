@@ -3,12 +3,14 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_port_secgroup_associate_v2"
 sidebar_current: "docs-selectel-resource-vpc-port-secgroup-associate-v2"
 description: |-
-  Associates security groups with an existing port in the Selectel cloud using Neutron API v2.0.
+  Associates security groups with an existing port in the Selectel cloud using VPC API v2.0.
 ---
 
 # selectel\_vpc\_port\_secgroup\_associate\_v2
 
 Associates security groups with an existing port. The resource addresses the port by identifier and never creates or deletes it, nor manages any of its other attributes — use it when the port itself is managed elsewhere, or not by Terraform at all.
+
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -45,13 +47,13 @@ resource "selectel_vpc_port_secgroup_associate_v2" "associate_2" {
 
 * `security_group_ids` - (Required) Identifiers of the security groups this resource manages on the port. Can be changed without replacement.
 
-* `enforce` - (Optional) Selects the mode, `false` by default. Can be changed without replacement.
+* `enforce` - (Optional) Whether to replace or append the list of security groups, specified in the `security_group_ids`. Defaults to `false`.
 
 ## Attributes Reference
 
 * `all_security_group_ids` - The port's complete actual list of security groups, whatever the mode.
 
-## The two modes
+## Enforce modes
 
 **`enforce = false`, the default — additive.** The resource owns only the groups named in `security_group_ids`. Creating it adds them to whatever the port already carries; groups put there by anything else are left alone. An update replaces only the subset the resource previously claimed. Destroying it releases only that subset.
 

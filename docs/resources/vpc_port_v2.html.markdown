@@ -3,14 +3,14 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_port_v2"
 sidebar_current: "docs-selectel-resource-vpc-port-v2"
 description: |-
-  Creates and manages a port in the Selectel cloud using Neutron API v2.0.
+  Creates and manages a port in the Selectel cloud using VPC API v2.0.
 ---
 
 # selectel\_vpc\_port\_v2
 
-Creates and manages a port using Neutron API v2.0.
+Creates and manages a port using VPC API v2.0.
 
-~> **Note:** `port_security_enabled`, `qos_policy_id`, `dhcp_blocked` and `blocked` are writable only by the Keystone admin role, which no granular Selectel VPC role grants, so this resource reports them as read-only. The `binding` block accepts only `vnic_type`: `binding.host_id` and `binding.profile` are reserved for admin and are not exposed at all. If you are migrating a configuration from `openstack_networking_port_v2`, remove those arguments.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -50,7 +50,7 @@ resource "selectel_vpc_port_v2" "port_1" {
 
 * `admin_state_up` - (Optional) Administrative state of the port. If you do not specify the value, the API assigns one.
 
-* `mac_address` - (Optional) MAC address of the port. You may set it at creation; changing it afterwards creates a new port, because only the admin role may update it.
+* `mac_address` - (Optional) MAC address of the port.
 
 * `device_id` - (Optional) Unique identifier of the device the port is attached to. Changing this creates a new port.
 
@@ -112,13 +112,13 @@ resource "selectel_vpc_port_v2" "port_1" {
 
   * `fqdn` - Fully-qualified domain name of the record.
 
-* `port_security_enabled` - Specifies whether port security is enabled. Read-only.
+* `port_security_enabled` - Specifies whether port security is enabled.
 
-* `qos_policy_id` - Unique identifier of the QoS policy associated with the port. Read-only.
+* `qos_policy_id` - Unique identifier of the QoS policy associated with the port.
 
-* `dhcp_blocked` - Specifies whether DHCP is administratively blocked on the port. Read-only.
+* `dhcp_blocked` - Specifies whether DHCP is administratively blocked on the port.
 
-* `blocked` - Specifies whether the port is administratively blocked. Read-only.
+* `blocked` - Specifies whether the port is administratively blocked.
 
 ## Import
 

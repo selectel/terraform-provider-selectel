@@ -3,12 +3,14 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_port_forwarding_v2"
 sidebar_current: "docs-selectel-resource-vpc-port-forwarding-v2"
 description: |-
-  Creates and manages a port-forwarding rule of a floating IP in the Selectel cloud using Neutron API v2.0.
+  Creates and manages a port-forwarding rule of a floating IP in the Selectel cloud using VPC API v2.0.
 ---
 
 # selectel\_vpc\_port\_forwarding\_v2
 
 Creates and manages one port-forwarding rule of a floating IP: traffic arriving at an external port of the floating IP is forwarded to an internal address and port.
+
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -50,8 +52,6 @@ resource "selectel_vpc_port_forwarding_v2" "pf_1" {
 
 * `description` - (Optional) Description of the rule.
 
-~> **Note:** The provider does no local validation of `protocol`, `internal_port` and `external_port`: the values are validated by the API, so an invalid value fails at apply rather than at plan. A rule whose `external_port` and `protocol` pair is already used by another rule of the same floating IP is refused with a diagnostic error.
-
 ## Attributes Reference
 
 No attributes are exported beyond the arguments. The identifier of the resource is the identifier the API assigns to the rule.
@@ -88,5 +88,3 @@ where:
 * `<floatingip_id>` — Unique identifier of the floating IP, for example, `1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809`.
 
 * `<id>` — Unique identifier of the rule, for example, `9f8e7d6c-5b4a-3928-1706-f5e4d3c2b1a0`.
-
-An identifier without exactly one `/` separator and two non-empty parts is rejected locally without calling the API.

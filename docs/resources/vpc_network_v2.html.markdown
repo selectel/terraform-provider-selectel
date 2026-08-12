@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages a private network using VPC API v2.0. For more information about networks, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/servers/networks/about-networks/).
 
-~> **Note:** If you are upgrading to version 9.0.0 or later, follow our guides for example [upgrading to version 9](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from OpenStack Terraform provider to the Selectel provider.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -36,7 +36,7 @@ resource "selectel_vpc_network_v2" "network_1" {
 
 * `admin_state_up` - (Optional) Administrative state of the network. If `false`, the network does not forward packets. If you do not specify the value, the API assigns one.
 
-* `dns_domain` - (Optional) DNS domain of the network. A non-empty value must be a fully-qualified domain name that ends with a dot, for example, `example.com.`. Any other non-empty value is rejected before the API is called. Available if Private DNS service is set up. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/)
+* `dns_domain` - (Optional) DNS domain of the network. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/).
 
 * `availability_zone_hints` - (Optional) Availability zones that host the network services. Changing this creates a new network.
 
@@ -68,7 +68,7 @@ resource "selectel_vpc_network_v2" "network_1" {
 
 * `is_public` - Specifies whether the network is public.
 
-* `is_dns_enabled` - Specifies whether the Prviate DNS service is enabled for the network. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/)
+* `is_dns_enabled` - Specifies whether the Private DNS service is enabled for the network. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/).
 
 ## Import
 

@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_router_route_v2"
 sidebar_current: "docs-selectel-resource-vpc-router-route-v2"
 description: |-
-  Manages one static route of a router in the Selectel cloud using Neutron API v2.0.
+  Manages one static route of a router in the Selectel cloud using VPC API v2.0.
 ---
 
 # selectel\_vpc\_router\_route\_v2
@@ -11,6 +11,8 @@ description: |-
 Manages exactly one static route of a router — one `destination_cidr` and `next_hop` pair — leaving every other route of that router alone.
 
 Use [selectel_vpc_router_routes_v2](vpc_router_routes_v2.html) instead when you want Terraform to own the router's complete route list.
+
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -48,7 +50,7 @@ No attributes are exported beyond the arguments. The identifier of the resource 
 
 ## Behavior notes
 
-`next_hop` must be an address in a subnet served by one of the router's **internal** interfaces. The Selectel Neutron fork excludes the router's ports on external networks when it builds the set of acceptable next hops, so an address inside the router's external gateway subnet is refused — even though upstream Neutron, and the equivalent resource of terraform-provider-openstack against vanilla Neutron, would accept it. Both cases are reported as the same class of error, from the API, and neither changes the router.
+`next_hop` must be an address in a subnet connected to one of the router's internal interfaces. You cannot use an address from the router's external gateway subnet.
 
 Applying a route that already exists on the router with exactly the same pair — for example one added outside Terraform — succeeds and adopts that entry, without rewriting the router's route list and without a conflict error.
 

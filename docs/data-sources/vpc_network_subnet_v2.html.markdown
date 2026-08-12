@@ -3,14 +3,16 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_network_subnet_v2"
 sidebar_current: "docs-selectel-datasource-vpc-network-subnet-v2"
 description: |-
-  Provides information about a subnet in the Selectel cloud using Neutron API v2.0.
+  Provides information about a subnet in the Selectel cloud using VPC API v2.0.
 ---
 
-# selectel\_networking\_subnet\_v2
+# selectel\_vpc\_network\_subnet\_v2
 
 Provides information about a subnet. For more information about networks and subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/servers/networks/about-networks/).
 
 The data source returns exactly one subnet. If no subnet matches the selectors, or if more than one does, the read fails with a diagnostic error instead of picking one arbitrarily.
+
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html#migrating-data-sources) to replace the corresponding OpenStack data source with the Selectel provider data source.
 
 ## Example Usage
 
@@ -64,7 +66,7 @@ You can combine any of the following selectors. The subnet must match all of the
 
   * `end` - Last address of the pool.
 
-* `host_routes` - All routes of the subnet, including the ones added by the [selectel_networking_subnet_route_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/networking_subnet_route_v2) resource:
+* `host_routes` - All routes of the subnet, including the ones added by the [selectel_vpc_network_subnet_route_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_route_v2) resource:
 
   * `destination_cidr` - Destination CIDR of the route.
 
@@ -75,5 +77,3 @@ You can combine any of the following selectors. The subnet must match all of the
 * `all_tags` - All tags of the subnet.
 
 * `blocked` - Specifies whether the subnet is administratively blocked.
-
-~> **Note:** The returned attributes report the actual state of the subnet and cannot be used to change it. `segment_id` is not exposed: the cloud's Neutron policy reserves it for the Keystone admin role and the networking SDK does not return it.

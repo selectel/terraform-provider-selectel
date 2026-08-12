@@ -3,18 +3,18 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_public_subnet_v2"
 sidebar_current: "docs-selectel-resource-vpc-public-subnet-v2"
 description: |-
-  Creates and manages a public subnet for Selectel products using public API v2.
+  Creates and manages a public subnet for Selectel products using VPC API v2.
 ---
 
 # selectel\_vpc\_public\_subnet\_v2
 
-~> Do not manage the same public subnet with both `selectel_vpc_public_subnet_v2` and the deprecated `selectel_vpc_subnet_v2`. They address the same remote object and must not be declared together.
+~> **Note:** To migrate from the deprecated `selectel_vpc_subnet_v2` resource, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html#migrating-the-deprecated-public-subnet-resource). Do not declare both resource types for the same public subnet.
 
-Creates and manages a public subnet using public API v2. For more information about public subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/servers/networks/about-networks/).
+Creates and manages a public subnet using VPC API v2. For more information about public subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/servers/networks/about-networks/).
 
 For project networks and their subnets, use [selectel\_vpc\_network\_v2](vpc_network_v2.html) and [selectel\_vpc\_network\_subnet\_v2](vpc_network_subnet_v2.html).
 
-Resource creates a public OpenStack subnet in a service OpenStack network. You cannot select a network during subnet creation, and you cannot modify service network settings.
+Creates a public subnet in a service network. You cannot select a network during subnet creation or modify service network settings.
 
 ## Example Usage
 
@@ -41,7 +41,7 @@ resource "selectel_vpc_public_subnet_v2" "subnet_1" {
 
 * `cidr` - CIDR of the public subnet.
 
-* `network_id` - Unique identifier of the parent network (a service OpenStack network).
+* `network_id` - Unique identifier of the parent service network.
 
 * `subnet_id` - Unique identifier of the public subnet.
 

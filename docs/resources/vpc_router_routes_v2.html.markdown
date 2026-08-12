@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_router_routes_v2"
 sidebar_current: "docs-selectel-resource-vpc-router-routes-v2"
 description: |-
-  Manages the complete set of static routes of a router in the Selectel cloud using Neutron API v2.0.
+  Manages the complete set of static routes of a router in the Selectel cloud using VPC API v2.0.
 ---
 
 # selectel\_vpc\_router\_routes\_v2
@@ -11,6 +11,8 @@ description: |-
 Manages the **complete** set of static routes of a router. Terraform owns the router's route list: a route added by anything else is reported as drift and removed by the next apply.
 
 Use [selectel_vpc_router_route_v2](vpc_router_route_v2.html) instead when you want to manage individual routes and leave the rest of the list alone. Do not manage the same router with both resources — they will fight over the list.
+
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -60,7 +62,7 @@ No attributes are exported beyond the arguments. The identifier of the resource 
 
 The first apply is additive: it only ensures the declared routes are present, so an existing route is adopted rather than deleted. From the next apply on, the declared list is applied as the router's whole list.
 
-Every `next_hop` must be an address in a subnet served by one of the router's **internal** interfaces. The Selectel Neutron fork excludes the router's ports on external networks when it builds the set of acceptable next hops, so an address inside the router's external gateway subnet is refused — even though upstream Neutron would accept it. The API validates the submitted list as a whole, so one unacceptable next hop rejects every route in that apply and the router keeps the list it already had.
+Every `next_hop` must be an address in a subnet connected to one of the router's internal interfaces. You cannot use an address from the router's external gateway subnet. The API validates the submitted list as a whole, so one invalid next hop rejects every route in that apply.
 
 Destroying the resource removes only the routes recorded in its state; anything else on the router stays. If the state holds no routes, the destroy makes no API call. If the router is already gone, or the managed routes are already absent, the destroy succeeds without an error.
 

@@ -3,14 +3,16 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_router_v2"
 sidebar_current: "docs-selectel-datasource-vpc-router-v2"
 description: |-
-  Provides information about a router in the Selectel cloud using Neutron API v2.0.
+  Provides information about a router in the Selectel cloud using VPC API v2.0.
 ---
 
-# selectel\_networking\_router\_v2
+# selectel\_vpc\_router\_v2
 
 Provides information about a router.
 
 The data source returns exactly one router. If no router matches the selectors, or if more than one does, the read fails with a diagnostic error instead of picking one arbitrarily.
+
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html#migrating-data-sources) to replace the corresponding OpenStack data source with the Selectel provider data source.
 
 ## Example Usage
 
@@ -70,4 +72,4 @@ You can combine any of the following selectors. The router must match all of the
 
 * `blocked` - Specifies whether the router is administratively blocked.
 
-~> **Note:** `routes` reports every static route of the router, whichever resource added it — including [selectel_networking_router_route_v2](../r/networking_router_route_v2.html) and [selectel_networking_router_routes_v2](../r/networking_router_routes_v2.html). The returned attributes report the actual state of the router and cannot be used to change it. `distributed` and `ha` are not exposed: the cloud's Neutron policy reserves reading them for the Keystone admin role, so they are not available to select on or to return.
+~> **Note:** `routes` reports every static route of the router, including routes added by [selectel_vpc_router_route_v2](../r/vpc_router_route_v2.html) and [selectel_vpc_router_routes_v2](../r/vpc_router_routes_v2.html).

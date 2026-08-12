@@ -3,7 +3,7 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_router_v2"
 sidebar_current: "docs-selectel-resource-vpc-router-v2"
 description: |-
-  Creates and manages a router in the Selectel cloud using Neutron API v2.0.
+  Creates and manages a router in the Selectel cloud using VPC API v2.0.
 ---
 
 # selectel\_vpc\_router\_v2
@@ -11,6 +11,8 @@ description: |-
 Creates and manages a router: it routes traffic between the subnets attached to it and, when an external gateway is set, to and from an external network.
 
 Subnets and ports are attached with [selectel_vpc_router_interface_v2](vpc_router_interface_v2.html), and static routes are managed with [selectel_vpc_router_route_v2](vpc_router_route_v2.html) — this resource does not carry them.
+
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -49,8 +51,6 @@ resource "selectel_vpc_router_v2" "router_1" {
 
 * `tags` - (Optional) Tags of the router that are managed by Terraform.
 
-~> **Note:** A caller without the Keystone admin role and without the service role can only use `availability_zone_hints` values from the region's `allowed_router_zones` allowlist. A value outside a non-empty allowlist fails with an authorization error, and an unset allowlist fails with a not-found error — the two are reported as distinct diagnostics, and neither creates the router.
-
 ## Attributes Reference
 
 * `status` - Status of the router, for example, `ACTIVE` or `DOWN`.
@@ -66,10 +66,6 @@ resource "selectel_vpc_router_v2" "router_1" {
 * `all_tags` - All tags of the router, including those assigned outside Terraform.
 
 * `blocked` - Specifies whether the router is administratively blocked.
-
-~> **Note:** The gateway addresses cannot be chosen: the cloud's Neutron policy reserves `external_gateway_info:external_fixed_ips` for the Keystone admin role, so the API selects the subnet and the address and this resource reports the result. `qos_policy_id` of the gateway is reserved the same way and is not exposed. `distributed` and `ha` are not exposed at all — the policy reserves reading them for the admin role too, so an ordinary caller never receives them and there would be no actual value to report.
-
-~> **Note:** While `blocked` is `true`, the API refuses update and delete from a caller without the admin role — including the router owner and the holders of `vpc.admin` and `vpc.external_access.admin` — until an admin unblocks the router.
 
 ## Behavior notes
 

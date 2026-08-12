@@ -3,14 +3,14 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_network_subnet_v2"
 sidebar_current: "docs-selectel-resource-vpc-network-subnet-v2"
 description: |-
-  Creates and manages a subnet in the Selectel cloud using Neutron API v2.0.
+  Creates and manages a subnet in the Selectel cloud using VPC API v2.0.
 ---
 
 # selectel\_vpc\_network\_subnet\_v2
 
-Creates and manages a subnet using Neutron API v2.0. For more information about networks and subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/servers/networks/about-networks/).
+Creates and manages a subnet using VPC API v2.0. For more information about networks and subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/servers/networks/about-networks/).
 
-~> **Note:** `service_types` and `blocked` are writable only by the Keystone admin role, which no granular Selectel VPC role grants, so this resource reports them as read-only attributes. `segment_id` is not available at all. If you are migrating a configuration from `openstack_networking_subnet_v2`, remove those arguments.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -71,9 +71,9 @@ resource "selectel_vpc_network_subnet_v2" "subnet_1" {
 
 * `all_tags` - All tags of the subnet, including the ones added outside Terraform.
 
-* `service_types` - Service types associated with the subnet. Read-only.
+* `service_types` - Service types associated with the subnet.
 
-* `blocked` - Specifies whether the subnet is administratively blocked. Read-only.
+* `blocked` - Specifies whether the subnet is administratively blocked.
 
 ~> **Note:** To read the full list of routes of a subnet, including routes added by other resources, use the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/vpc_network_subnet_v2) data source, which exports `host_routes`.
 

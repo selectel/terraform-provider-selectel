@@ -3,12 +3,14 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_floatingip_associate_v2"
 sidebar_current: "docs-selectel-resource-vpc-floatingip-associate-v2"
 description: |-
-  Associates an existing floating IP with an existing port in the Selectel cloud using Neutron API v2.0.
+  Associates an existing floating IP with an existing port in the Selectel cloud using VPC API v2.0.
 ---
 
 # selectel\_vpc\_floatingip\_associate\_v2
 
 Associates an existing floating IP with an existing port. This resource manages only the association: it does not create or delete the floating IP or the port.
+
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 

@@ -3,16 +3,61 @@ layout: "selectel"
 page_title: "Upgrading to version 9.0.0"
 sidebar_current: "docs-selectel-guide-upgrade-guide-v9"
 description: |-
-  How to upgrade Selectel Terraform Provider to version 9.0.0 and move existing networking resources from terraform-provider-openstack to the native VPC resources of the Selectel provider.
+  How to upgrade Selectel Terraform Provider to version 9.0.0, migrate the deprecated public subnet resource, and move existing networking resources from terraform-provider-openstack.
 ---
 
 # Upgrading to version 9.0.0
 
-Version 9.0.0 of the Selectel provider manages networking resources natively in its `vpc` (Virtual Private Cloud) domain. This guide explains how to upgrade to version 9.0.0 and move resources currently managed through `terraform-provider-openstack` without recreating anything in the VPC.
+Version 9.0.0 of the Selectel provider introduces `selectel_vpc_public_subnet_v2` as a replacement for the deprecated `selectel_vpc_subnet_v2` resource and manages networking resources natively in its `vpc` (Virtual Private Cloud) domain. This guide explains how to migrate both kinds of resources without recreating them.
 
-The Selectel VPC give access to resources through OpenStack compatible API, but sometimes API has a behavior with no upstream equivalent. Those are listed under [Schema differences](#schema-differences).
+The VPC API behavior can differ from the OpenStack API. The differences relevant to migration are listed under [Schema differences](#schema-differences).
 
-## Resource mapping
+## Migrating the deprecated public subnet resource
+
+The `selectel_vpc_subnet_v2` resource is deprecated. Replace it with `selectel_vpc_public_subnet_v2`. Both resource types manage the same kind of public subnet and use the same arguments and attributes.
+
+Terraform cannot use [`terraform state mv`](https://developer.hashicorp.com/terraform/cli/commands/state/mv) when the source and destination have different resource types. Migrate the state with `terraform state rm` and `terraform import` instead. These commands change only Terraform state and do not recreate the public subnet.
+
+Before you start, back up the state and record the public subnet ID:
+
+```bash
+terraform state show selectel_vpc_subnet_v2.example
+```
+
+Change the resource type in the configuration and update every reference to it. Keep the resource name and arguments unchanged:
+
+```hcl
+resource "selectel_vpc_public_subnet_v2" "example" {
+  project_id    = selectel_vpc_project_v2.project_1.id
+  region        = "ru-3"
+  ip_version    = "ipv4"
+  prefix_length = 29
+}
+```
+
+Remove the old resource address from the state:
+
+```bash
+terraform state rm selectel_vpc_subnet_v2.example
+```
+
+Import the same public subnet under the new resource type:
+
+```bash
+export OS_DOMAIN_NAME=<account_id>
+export OS_USERNAME=<username>
+export OS_PASSWORD=<password>
+export INFRA_PROJECT_ID=<project_id>
+terraform import selectel_vpc_public_subnet_v2.example <public_subnet_id>
+```
+
+Run `terraform plan` and make sure Terraform does not plan to create or destroy the public subnet.
+
+~> **Warning:** Do not declare both resource types for the same public subnet. Do not run `terraform apply` between `terraform state rm` and `terraform import`.
+
+## Migrating resources from terraform-provider-openstack
+
+### Resource mapping
 
 Each row maps one source resource type to the resource that replaces it. Every source type has exactly one counterpart.
 
@@ -38,11 +83,27 @@ Six of the fifteen entities get a data source, listed in the third column. The o
 
 Networking resources that are not listed in the [Resource mapping](#resource-mapping) are not supported in the Selectel VPC.
 
-## Migration procedure
+### Migrating data sources
+
+Data sources do not manage the lifecycle of remote objects, so they do not need `terraform state rm` or `terraform import`. Replace the OpenStack data source type with the corresponding Selectel data source from the mapping table, add the required `project_id` and `region` selectors, and update references to its attributes.
+
+For example:
+
+```hcl
+data "selectel_vpc_network_v2" "example" {
+  project_id = selectel_vpc_project_v2.project_1.id
+  region     = "ru-3"
+  name       = "example"
+}
+```
+
+Run `terraform plan` to verify that the new data source selects the expected object and that all references use attributes available in its schema.
+
+### Migrating managed resources
 
 Changing from `openstack_networking_*` to `selectel_vpc_*` changes the Terraform resource type. `terraform state mv` cannot do that: its source and destination must have the same resource type. Use `terraform state rm` followed by `terraform import` instead. These commands change only Terraform state and leave the networking resource untouched in the VPC.
 
-## Migrating an object already in the current state
+### Migrating an object already in the current state
 
 Before you start, make sure the `selectel` provider is configured in your configuration, and back up your state file.
 
@@ -94,7 +155,7 @@ Repeat for each resource, then run `terraform apply` once you are satisfied with
 
 ~> **Warning:** Back up the state first, record the remote object ID, and do not run `terraform apply` between `state rm` and `import`. Updating the `.tf` file is mandatory: leaving the old resource block would make Terraform plan a new object under the old type.
 
-## Migrating with `terraform import`
+### Migrating with `terraform import`
 
 Use the same import operation when the object was never tracked in this state or is moving to another state/workspace; the `state rm` step is simply unnecessary.
 
@@ -130,7 +191,9 @@ The native resources take `project_id` and `region` from `INFRA_PROJECT_ID` and 
 
 **Step 4 — check the plan.** With a matching configuration, `terraform plan` shows no changes for the attributes the two schemas share.
 
-### Attributes that are new, and read-only
+### Schema differences
+
+#### Attributes that are new, and read-only
 
 The Selectel VPC carries attributes the upstream schema has no place for. They report platform state; the provider reflects them and never sends them, so there is nothing for you to add to your configuration:
 
@@ -145,7 +208,7 @@ A security group has no `blocked` attribute. It does gain a read-only `shared`, 
 
 After a migration these appear in your state with the values the platform reports. A change made to one of them outside Terraform — an administrator blocking a network, say — is recorded on the next refresh and does not produce a permanent diff.
 
-### Attributes the upstream provider lets you set, and these do not
+#### Attributes the upstream provider lets you set, and these do not
 
 ~> **Warning:** Remove these lines from your configuration as you migrate. Left in place, `terraform plan` fails with an unsupported-argument error, because the attribute is not a configuration argument of the new resource. The actual values stay under the platform's control.
 
@@ -158,7 +221,7 @@ After a migration these appear in your state with the values the platform report
 | subnet pool | `shared`, `is_default` | — |
 | address scope | `shared` | — |
 
-## No automated tooling
+### No automated tooling
 
 This change ships no migration tool: no generator for `state rm`/`import` commands, no bulk-import script, no conversion utility for `.tf` files.
 

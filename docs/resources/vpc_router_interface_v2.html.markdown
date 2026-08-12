@@ -3,12 +3,14 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_router_interface_v2"
 sidebar_current: "docs-selectel-resource-vpc-router-interface-v2"
 description: |-
-  Attaches a router to a network in the Selectel cloud using Neutron API v2.0.
+  Attaches a router to a network in the Selectel cloud using VPC API v2.0.
 ---
 
 # selectel\_vpc\_router\_interface\_v2
 
 Attaches a router to a network, either through a subnet or through an existing port. The router routes traffic for every subnet attached to it.
+
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -44,13 +46,9 @@ resource "selectel_vpc_router_interface_v2" "interface_2" {
 
 * `subnet_id` - (Optional, Computed) Unique identifier of the subnet to attach. Conflicts with `port_id`. When you attach through `port_id` instead, this is computed from the port. Changing this creates a new interface.
 
-* `port_id` - (Optional, Computed) Unique identifier of the port to attach. Conflicts with `subnet_id`. When you attach through `subnet_id` instead, this is the port the API created for the interface. Changing this creates a new interface.
+* `port_id` - (Optional, Computed) Unique identifier of the port to attach. Conflicts with `subnet_id`. When you attach through `subnet_id` instead, this is the port the API created for the interface.  A port passed as `port_id` must have exactly one fixed IP. Changing this creates a new interface.
 
 * `force_destroy` - (Optional) Specifies whether the interface may be detached by first removing the router's static routes that point into the attached subnet. Defaults to `false`. Can be changed without replacement — it only steers this resource's destroy.
-
-~> **Note:** Set exactly one of `subnet_id` and `port_id`. Setting both is rejected at plan; setting neither is rejected before the router is touched.
-
-~> **Note:** A port passed as `port_id` must have exactly one fixed IP. A port with none, or with more than one, is refused before the router is touched, because Neutron cannot derive the interface subnet from it.
 
 ## Attributes Reference
 
@@ -60,9 +58,7 @@ No attributes are exported beyond the arguments. The identifier of the resource 
 
 Detaching an interface deletes the port the API created for it. If the interface is detached outside Terraform, or its port is deleted, the resource leaves the state on the next refresh without an error and the next plan re-creates it.
 
-Neutron refuses to detach an interface whose subnet is still in use — for example, when the router has static routes whose `next_hop` is an address inside that subnet. With `force_destroy = false` the detach is retried until the delete timeout and then reported as a diagnostic error, and the resource stays in the state. With `force_destroy = true` those routes — and only those, matched by `next_hop` falling inside the subnet's CIDR — are removed from the router first, and the detach is retried until it succeeds or the timeout expires. Routes pointing anywhere else are never touched.
-
-A delete timeout can be set with a [`timeouts` block](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts); it defaults to 10 minutes.
+The API refuses to detach an interface whose subnet is still in use — for example, when the router has static routes whose `next_hop` is an address inside that subnet. With `force_destroy = false`, the detach is retried until the delete timeout. With `force_destroy = true`, the routes whose `next_hop` belongs to the subnet are removed first, and then the interface is detached.
 
 ## Import
 

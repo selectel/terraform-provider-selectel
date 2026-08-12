@@ -6,11 +6,13 @@ description: |-
   Provides information about a private network in the Selectel cloud using VPC API v2.0.
 ---
 
-# selectel\_networking\_network\_v2
+# selectel\_vpc\_network\_v2
 
 Provides information about a private network. For more information about networks, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/servers/networks/about-networks/).
 
 The data source returns exactly one network. If no network matches the selectors, or if more than one does, the read fails with a diagnostic error instead of picking one arbitrarily.
+
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html#migrating-data-sources) to replace the corresponding OpenStack data source with the Selectel provider data source.
 
 ## Example Usage
 
@@ -50,7 +52,7 @@ You can combine any of the following selectors. The network must match all of th
 
 * `admin_state_up` - Administrative state of the network.
 
-* `dns_domain` - DNS domain of the network. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/)
+* `dns_domain` - DNS domain of the network. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/).
 
 * `availability_zone_hints` - Availability zones that host the network services.
 
@@ -74,4 +76,4 @@ You can combine any of the following selectors. The network must match all of th
 
 * `is_public` - Specifies whether the network is public.
 
-* `is_dns_enabled` - Specifies whether the Private DNS service is enabled for the network. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/)
+* `is_dns_enabled` - Specifies whether the Private DNS service is enabled for the network. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/).
