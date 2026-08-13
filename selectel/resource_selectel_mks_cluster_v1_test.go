@@ -99,6 +99,54 @@ func TestAccMKSClusterV1Basic(t *testing.T) {
 	})
 }
 
+// TestAccMKSClusterV1KubeOptionsPartialUpdate changes one kubernetes option and checks the rest survive.
+func TestAccMKSClusterV1KubeOptionsPartialUpdate(t *testing.T) {
+	var (
+		mksCluster cluster.GetView
+		project    projects.Project
+	)
+
+	projectName := acctest.RandomWithPrefix("tf-acc")
+	clusterName := acctest.RandomWithPrefix("tf-acc-cl")
+	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
+	maintenanceWindowStart := testAccMKSClusterV1GetMaintenanceWindowStart(12 * time.Hour)
+	featureGates := testDefaultFeatureGates(t)[:1]
+	admissionControllers := testDefaultAdmissionControllers(t)[:1]
+
+	checkKubeOptionsKept := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "feature_gates.0", featureGates[0]),
+		resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "admission_controllers.0", admissionControllers[0]),
+		resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.enabled", "true"),
+		resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.provider_name", "kubernetes"),
+		resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.issuer_url", "https://keycloak.example.com/realms/kubernetes"),
+		resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.client_id", "test"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMKSClusterV1KubeOptions(projectName, clusterName, kubeVersion, maintenanceWindowStart, featureGates, admissionControllers, true),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccCheckMKSClusterV1Exists("selectel_mks_cluster_v1.cluster_tf_acc_test_1", &mksCluster),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_audit_logs", "true"),
+					checkKubeOptionsKept,
+				),
+			},
+			{
+				Config: testAccMKSClusterV1KubeOptions(projectName, clusterName, kubeVersion, maintenanceWindowStart, featureGates, admissionControllers, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "enable_audit_logs", "false"),
+					checkKubeOptionsKept,
+				),
+			},
+		},
+	})
+}
+
 func TestAccMKSClusterV1Zonal(t *testing.T) {
 	var (
 		mksCluster cluster.GetView
@@ -377,6 +425,33 @@ resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
   admission_controllers             = [%s]
   enable_audit_logs                 = true
 }`, projectName, clusterName, kubeVersion, maintenanceWindowStart, flatFeatureGates, flatAdmissionControllers)
+}
+
+func testAccMKSClusterV1KubeOptions(
+	projectName, clusterName, kubeVersion, maintenanceWindowStart string,
+	featureGates, admissionControllers []string, enableAuditLogs bool,
+) string {
+	return fmt.Sprintf(`
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
+  name        = "%s"
+}
+resource "selectel_mks_cluster_v1" "cluster_tf_acc_test_1" {
+  name                     = "%s"
+  kube_version             = "%s"
+  project_id               = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region                   = "ru-9"
+  maintenance_window_start = "%s"
+  feature_gates            = [%s]
+  admission_controllers    = [%s]
+  enable_audit_logs        = %t
+  oidc {
+    enabled       = true
+    provider_name = "kubernetes"
+    client_id     = "test"
+    issuer_url    = "https://keycloak.example.com/realms/kubernetes"
+  }
+}`, projectName, clusterName, kubeVersion, maintenanceWindowStart,
+		flatStringsListWithQuotes(featureGates), flatStringsListWithQuotes(admissionControllers), enableAuditLogs)
 }
 
 func testAccMKSClusterV1Zonal(projectName, clusterName, kubeVersion, maintenanceWindowStart string) string {

@@ -294,10 +294,8 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 
 	// Prepare cluster create options.
 	enableAutorepair := d.Get("enable_autorepair").(bool)
-	enablePodSecurityPolicy := d.Get("enable_pod_security_policy").(bool)
 	zonal := d.Get("zonal").(bool)
 	privateKubeAPI := d.Get("private_kube_api").(bool)
-	enableAuditLogs := d.Get("enable_audit_logs").(bool)
 
 	clusterType := inferClusterType(d, zonal)
 
@@ -312,19 +310,9 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 			"set to false in case of basic cluster"))
 	}
 
-	featureGates, err := getSetAsStrings(d, featureGatesKey)
+	kubeOptions, err := expandMKSClusterV1KubernetesOptions(d)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectCluster, err))
-	}
-
-	admissionControllers, err := getSetAsStrings(d, admissionControllersKey)
-	if err != nil {
-		return diag.FromErr(errCreatingObject(objectCluster, err))
-	}
-
-	oidc, err := expandAndValidateMKSClusterV1OIDC(d)
-	if err != nil {
-		return diag.FromErr(err)
 	}
 
 	cniType := cluster.CNIType(strings.ToUpper(d.Get("cni_type").(string)))
@@ -342,20 +330,12 @@ func resourceMKSClusterV1Create(ctx context.Context, d *schema.ResourceData, met
 		EnableAutorepair:              &enableAutorepair,
 		EnablePatchVersionAutoUpgrade: &enablePatchVersionAutoUpgrade,
 		Region:                        region,
-		KubernetesOptions: &cluster.KubernetesOptions{
-			EnablePodSecurityPolicy: enablePodSecurityPolicy,
-			FeatureGates:            featureGates,
-			AdmissionControllers:    admissionControllers,
-			AuditLogs: cluster.AuditLogs{
-				Enabled: enableAuditLogs,
-			},
-			OIDC: oidc,
-		},
-		ClusterType:       &clusterType,
-		Zonal:             &zonal,
-		PrivateKubeAPI:    &privateKubeAPI,
-		CNIType:           cniType,
-		CNICiliumSettings: cniCiliumSettings,
+		KubernetesOptions:             kubeOptions,
+		ClusterType:                   &clusterType,
+		Zonal:                         &zonal,
+		PrivateKubeAPI:                &privateKubeAPI,
+		CNIType:                       cniType,
+		CNICiliumSettings:             cniCiliumSettings,
 	}
 
 	projectQuotas, _, err := quotas.GetProjectQuotas(
@@ -428,6 +408,8 @@ func resourceMKSClusterV1Read(ctx context.Context, d *schema.ResourceData, meta 
 	d.Set("cni_cilium_settings", flattenMKSClusterV1CNICiliumSettings(mksCluster))
 	d.Set("enable_audit_logs", mksCluster.KubernetesOptions.AuditLogs.Enabled)
 	d.Set("oidc", flattenMKSClusterV1OIDC(mksCluster))
+	d.Set(featureGatesKey, mksCluster.KubernetesOptions.FeatureGates)
+	d.Set(admissionControllersKey, mksCluster.KubernetesOptions.AdmissionControllers)
 
 	return nil
 }
@@ -457,38 +439,15 @@ func resourceMKSClusterV1Update(ctx context.Context, d *schema.ResourceData, met
 		updateOpts.EnablePatchVersionAutoUpgrade = &v
 	}
 
-	kubeOptions := new(cluster.KubernetesOptions)
-	if d.HasChange("enable_pod_security_policy") {
-		v := d.Get("enable_pod_security_policy").(bool)
-		kubeOptions.EnablePodSecurityPolicy = v
-	}
-	if d.HasChange(featureGatesKey) {
-		v, err := getSetAsStrings(d, featureGatesKey)
+	// Leave nil unless one of the options changed, so an unrelated update doesn't touch them.
+	if d.HasChanges("enable_pod_security_policy", featureGatesKey, admissionControllersKey, "enable_audit_logs", "oidc") {
+		kubeOptions, err := expandMKSClusterV1KubernetesOptions(d)
 		if err != nil {
-			return diag.FromErr(errCreatingObject(objectCluster, err))
+			return diag.FromErr(errUpdatingObject(objectCluster, d.Id(), err))
 		}
-		kubeOptions.FeatureGates = v
-	}
-	if d.HasChange(admissionControllersKey) {
-		v, err := getSetAsStrings(d, admissionControllersKey)
-		if err != nil {
-			return diag.FromErr(errCreatingObject(objectCluster, err))
-		}
-		kubeOptions.AdmissionControllers = v
-	}
-	if d.HasChange("enable_audit_logs") {
-		v := d.Get("enable_audit_logs").(bool)
-		kubeOptions.AuditLogs.Enabled = v
-	}
-	if d.HasChange("oidc") {
-		oidc, err := expandAndValidateMKSClusterV1OIDC(d)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		kubeOptions.OIDC = oidc
-	}
 
-	updateOpts.KubernetesOptions = kubeOptions
+		updateOpts.KubernetesOptions = kubeOptions
+	}
 
 	if updateOpts != (cluster.UpdateOpts{}) {
 		log.Print(msgUpdate(objectCluster, d.Id(), updateOpts))

@@ -1,3 +1,10 @@
+## 8.3.1 (August 10, 2026)
+
+BUG FIXES:
+
+* `selectel_mks_cluster_v1`: fix `oidc`, `feature_gates`, `admission_controllers` and `enable_pod_security_policy` being reset when another kubernetes option is changed. ([#420](https://github.com/selectel/terraform-provider-selectel/pull/420))
+* `selectel_mks_cluster_v1`: read `feature_gates` and `admission_controllers` back from the API. ([#420](https://github.com/selectel/terraform-provider-selectel/pull/420))
+
 ## 8.3.0 (August 6, 2026)
 
 BUG FIXES:
