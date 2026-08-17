@@ -20,6 +20,7 @@ import (
 const (
 	testAccVPCPortV2ResourceName   = "selectel_vpc_port_v2.port_tf_acc_test_1"
 	testAccVPCPortV2DataSourceName = "data.selectel_vpc_port_v2.port_tf_acc_test_1"
+	testAccVPCPortV2FixedIPAddress = "192.168.199.42"
 )
 
 func TestAccVPCPortV2Basic(t *testing.T) {
@@ -74,6 +75,9 @@ func TestAccVPCPortV2ExtendedAttributes(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCPortV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "name", portName),
+					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "fixed_ip.0.ip_address", testAccVPCPortV2FixedIPAddress),
+					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "all_fixed_ips.0.ip_address", testAccVPCPortV2FixedIPAddress),
+					resource.TestCheckResourceAttrSet(testAccVPCPortV2ResourceName, "all_fixed_ips.0.subnet_id"),
 					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "allowed_address_pairs.#", "1"),
 					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "extra_dhcp_option.#", "2"),
 					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "tags.#", "2"),
@@ -289,7 +293,7 @@ resource "selectel_vpc_port_v2" "port_tf_acc_test_1" {
   tags           = ["tf-acc", "VPC"]
 
   fixed_ip {
-    subnet_id = selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1.id
+    ip_address = "%s"
   }
 
   allowed_address_pairs {
@@ -305,8 +309,10 @@ resource "selectel_vpc_port_v2" "port_tf_acc_test_1" {
     name  = "bootfile-name"
     value = "pxelinux.0"
   }
+
+  depends_on = [selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1]
 }
-`, region, portName)
+`, region, portName, testAccVPCPortV2FixedIPAddress)
 }
 
 func testAccVPCPortV2ExtendedUpdated(projectID, region, portName string) string {
