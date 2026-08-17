@@ -63,44 +63,8 @@ func dataSourceVPCRouterV2() *schema.Resource {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			"external_fixed_ip": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"subnet_id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"ip_address": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
-			},
-			// routes reports every route of the router, whichever resource added
-			// it: the managed router resource does not carry routes at all.
-			"routes": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"destination_cidr": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"next_hop": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
-			},
-			"flavor_id": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
+			"external_fixed_ip": vpcComputedFixedIPsSchema(),
+			"routes":            vpcComputedRoutesSchema(),
 			"availability_zone_hints": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -125,7 +89,7 @@ func dataSourceVPCRouterV2() *schema.Resource {
 }
 
 func dataSourceVPCRouterV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -141,7 +105,7 @@ func dataSourceVPCRouterV2Read(ctx context.Context, d *schema.ResourceData, meta
 			filters[queryKey] = []string{v.(string)}
 		}
 	}
-	if v, ok := d.GetOkExists("admin_state_up"); ok { //nolint:staticcheck // GetOkExists distinguishes an explicit false from an unset bool
+	if v, ok := d.GetOkExists("admin_state_up"); ok { //nolint:staticcheck
 		filters["admin_state_up"] = []string{strconv.FormatBool(v.(bool))}
 	}
 	if v, ok := d.GetOk("tags"); ok {
@@ -152,37 +116,37 @@ func dataSourceVPCRouterV2Read(ctx context.Context, d *schema.ResourceData, meta
 		SelectionOptions: vpc.SelectionOptions{Filters: filters},
 	})
 	if err != nil {
-		return diag.FromErr(errGettingObjects(networkingRouterV2Object, err))
+		return diag.FromErr(errGettingObjects(vpcRouterV2Object, err))
 	}
 
 	switch len(found) {
 	case 0:
 		return diag.FromErr(fmt.Errorf(
 			"no %s found for the given search criteria, please adjust them and try again",
-			networkingRouterV2Object))
+			vpcRouterV2Object))
 	case 1:
 	default:
 		return diag.FromErr(fmt.Errorf(
 			"%d %ss found for the given search criteria, please specify a more precise search",
-			len(found), networkingRouterV2Object))
+			len(found), vpcRouterV2Object))
 	}
 
 	result := found[0]
 
 	d.SetId(result.ID)
 	d.Set("router_id", result.ID)
-	flattenNetworkingRouterV2(d, &result)
+	flattenVPCRouterV2(d, &result)
 
-	if err := d.Set("routes", flattenNetworkingRouterV2Routes(result.Routes)); err != nil {
+	if err := d.Set("routes", flattenVPCRouterV2Routes(result.Routes)); err != nil {
 		log.Print(errSettingComplexAttr("routes", err))
 	}
 
-	log.Printf("[DEBUG] found networking router %s", result.ID)
+	log.Printf("[DEBUG] found VPC router %s", result.ID)
 
 	return nil
 }
 
-func flattenNetworkingRouterV2Routes(routes []router.Route) []interface{} {
+func flattenVPCRouterV2Routes(routes []router.Route) []interface{} {
 	result := make([]interface{}, 0, len(routes))
 	for _, route := range routes {
 		result = append(result, map[string]interface{}{

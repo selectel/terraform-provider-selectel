@@ -69,7 +69,7 @@ func TestProvider(t *testing.T) {
 	}
 }
 
-func TestProviderVPCNetworkingRegistration(t *testing.T) {
+func TestProviderVPCRegistration(t *testing.T) {
 	provider := Provider("test")
 
 	for _, name := range []string{
@@ -88,7 +88,6 @@ func TestProviderVPCNetworkingRegistration(t *testing.T) {
 		"selectel_vpc_rbac_policy_v2",
 		"selectel_vpc_secgroup_v2",
 		"selectel_vpc_secgroup_rule_v2",
-		"selectel_vpc_subnet_v2",
 		"selectel_vpc_public_subnet_v2",
 	} {
 		if _, ok := provider.ResourcesMap[name]; !ok {
@@ -100,7 +99,6 @@ func TestProviderVPCNetworkingRegistration(t *testing.T) {
 		"selectel_vpc_network_v2",
 		"selectel_vpc_network_subnet_v2",
 		"selectel_vpc_port_v2",
-		"selectel_vpc_floatingip_v2",
 		"selectel_vpc_router_v2",
 		"selectel_vpc_secgroup_v2",
 	} {
@@ -131,10 +129,6 @@ func testAccSelectelPreCheckWithProjectID(t *testing.T) {
 	}
 }
 
-// testAccSelectelPreCheckWithProjectIDAndRegion guards the tests that run in a
-// pre-existing project of a specific region: both are taken from the
-// environment, so an unset variable must stop the test instead of sending it to
-// a project or a region nobody chose.
 func testAccSelectelPreCheckWithProjectIDAndRegion(t *testing.T) {
 	testAccSelectelPreCheckWithProjectID(t)
 	if v := os.Getenv("INFRA_REGION"); v == "" {

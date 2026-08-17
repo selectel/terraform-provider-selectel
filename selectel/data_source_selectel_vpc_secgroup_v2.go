@@ -69,7 +69,7 @@ func dataSourceVPCSecGroupV2() *schema.Resource {
 }
 
 func dataSourceVPCSecGroupV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -95,28 +95,28 @@ func dataSourceVPCSecGroupV2Read(ctx context.Context, d *schema.ResourceData, me
 		SelectionOptions: vpc.SelectionOptions{Filters: filters},
 	})
 	if err != nil {
-		return diag.FromErr(errGettingObjects(networkingSecGroupV2Object, err))
+		return diag.FromErr(errGettingObjects(vpcSecGroupV2Object, err))
 	}
 
 	switch len(found) {
 	case 0:
 		return diag.FromErr(fmt.Errorf(
 			"no %s found for the given search criteria, please adjust them and try again",
-			networkingSecGroupV2Object))
+			vpcSecGroupV2Object))
 	case 1:
 	default:
 		return diag.FromErr(fmt.Errorf(
 			"%d %ss found for the given search criteria, please specify a more precise search",
-			len(found), networkingSecGroupV2Object))
+			len(found), vpcSecGroupV2Object))
 	}
 
 	result := found[0]
 
 	d.SetId(result.ID)
 	d.Set("secgroup_id", result.ID)
-	flattenNetworkingSecGroupV2(d, &result)
+	flattenVPCSecGroupV2(d, &result)
 
-	log.Printf("[DEBUG] found networking security group %s", result.ID)
+	log.Printf("[DEBUG] found VPC security group %s", result.ID)
 
 	return nil
 }

@@ -3,14 +3,15 @@ package selectel
 import (
 	"context"
 	"log"
-	"sort"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/port"
 )
 
-const networkingPortSecGroupAssociateV2Object = "networking port security group association"
+const vpcPortSecGroupAssociateV2Object = "VPC port security group association"
 
 func resourceVPCPortSecGroupAssociateV2() *schema.Resource {
 	return &schema.Resource{
@@ -32,8 +33,6 @@ func resourceVPCPortSecGroupAssociateV2() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-			// The resource addresses an existing port and never creates or
-			// deletes it, nor owns any of its other attributes.
 			"port_id": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -44,14 +43,11 @@ func resourceVPCPortSecGroupAssociateV2() *schema.Resource {
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			// false adds the listed groups to whatever the port already has;
-			// true makes this resource the sole authority over the port's list.
 			"enforce": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
 			},
-			// Always the port's full actual list, whatever enforce is set to.
 			"all_security_group_ids": {
 				Type:     schema.TypeSet,
 				Computed: true,
@@ -62,35 +58,33 @@ func resourceVPCPortSecGroupAssociateV2() *schema.Resource {
 }
 
 func resourceVPCPortSecGroupAssociateV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	portID := d.Get("port_id").(string)
-	desired := expandToStringSlice(d.Get("security_group_ids").(*schema.Set).List())
+	desired := d.Get("security_group_ids").(*schema.Set)
 
-	// Reading and writing the port's whole list is a read-modify-write, so
-	// concurrent associations on the same port must not interleave.
+	// VPC API replaces the whole list, so serialize updates per port.
 	selMutexKV.Lock(portID)
 	defer selMutexKV.Unlock(portID)
 
-	groups := desired
+	groups := expandToStringSlice(desired.List())
 	if !d.Get("enforce").(bool) {
-		// Additive: keep every group the port already carries.
 		found, err := port.Get(ctx, client, portID)
 		if err != nil {
-			return diag.FromErr(errGettingObject(networkingPortV2Object, portID, err))
+			return diag.FromErr(errGettingObject(vpcPortV2Object, portID, err))
 		}
 
-		groups = unionNetworkingSecGroupIDs(found.SecurityGroups, desired)
+		groups = addVPCSecGroupIDs(found.SecurityGroups, desired)
 	}
 
-	log.Printf("[DEBUG] setting %d security group(s) on networking port %s", len(groups), portID)
+	log.Printf("[DEBUG] setting %d security group(s) on VPC port %s", len(groups), portID)
 	if _, err := port.Update(ctx, client, portID, port.UpdateRequest{
 		SecurityGroups: &groups,
 	}); err != nil {
-		return diag.FromErr(errCreatingObject(networkingPortSecGroupAssociateV2Object, err))
+		return diag.FromErr(errCreatingObject(vpcPortSecGroupAssociateV2Object, err))
 	}
 
 	d.SetId(portID)
@@ -99,16 +93,15 @@ func resourceVPCPortSecGroupAssociateV2Create(ctx context.Context, d *schema.Res
 }
 
 func resourceVPCPortSecGroupAssociateV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	log.Printf("[DEBUG] getting security groups of networking port %s", d.Id())
+	log.Printf("[DEBUG] getting security groups of VPC port %s", d.Id())
 	found, err := port.Get(ctx, client, d.Id())
 	if err != nil {
-		// The association cannot outlive the port it addresses.
-		return networkingCheckDeleted(d, err, networkingPortV2Object)
+		return vpcCheckDeleted(d, err, vpcPortV2Object)
 	}
 
 	d.Set("port_id", found.ID)
@@ -116,15 +109,12 @@ func resourceVPCPortSecGroupAssociateV2Read(ctx context.Context, d *schema.Resou
 		log.Print(errSettingComplexAttr("all_security_group_ids", err))
 	}
 
-	// In enforce mode the resource owns the whole list, so it reports the whole
-	// list. In additive mode it owns only its own subset: an externally removed
-	// group disappears from security_group_ids, while a group added by someone
-	// else never shows up there.
 	managed := found.SecurityGroups
 	if !d.Get("enforce").(bool) {
-		managed = intersectNetworkingSecGroupIDs(
-			expandToStringSlice(d.Get("security_group_ids").(*schema.Set).List()),
-			found.SecurityGroups)
+		desired := d.Get("security_group_ids").(*schema.Set)
+		managed = slices.DeleteFunc(slices.Clone(found.SecurityGroups), func(id string) bool {
+			return !desired.Contains(id)
+		})
 	}
 
 	if err := d.Set("security_group_ids", managed); err != nil {
@@ -135,7 +125,7 @@ func resourceVPCPortSecGroupAssociateV2Read(ctx context.Context, d *schema.Resou
 }
 
 func resourceVPCPortSecGroupAssociateV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -145,44 +135,36 @@ func resourceVPCPortSecGroupAssociateV2Update(ctx context.Context, d *schema.Res
 	}
 
 	portID := d.Get("port_id").(string)
-	desired := expandToStringSlice(d.Get("security_group_ids").(*schema.Set).List())
+	desired := d.Get("security_group_ids").(*schema.Set)
 
 	selMutexKV.Lock(portID)
 	defer selMutexKV.Unlock(portID)
 
-	groups := desired
-	// Switching enforce on, like staying in enforce mode, makes the configured
-	// set the port's whole list. Only a resource that stays additive keeps the
-	// groups it does not own.
-	stayingAdditive := !d.Get("enforce").(bool)
-	if stayingAdditive {
+	groups := expandToStringSlice(desired.List())
+	if !d.Get("enforce").(bool) {
 		found, err := port.Get(ctx, client, portID)
 		if err != nil {
-			return diag.FromErr(errGettingObject(networkingPortV2Object, portID, err))
+			return diag.FromErr(errGettingObject(vpcPortV2Object, portID, err))
 		}
 
-		// Only the subset this resource had claimed is replaced; anything else on
-		// the port survives, including groups that appeared externally.
 		previous, _ := d.GetChange("security_group_ids")
-		kept := subtractNetworkingSecGroupIDs(
-			found.SecurityGroups,
-			expandToStringSlice(previous.(*schema.Set).List()))
-
-		groups = unionNetworkingSecGroupIDs(kept, desired)
+		groups = addVPCSecGroupIDs(
+			removeVPCSecGroupIDs(found.SecurityGroups, previous.(*schema.Set)),
+			desired)
 	}
 
-	log.Printf("[DEBUG] updating security groups of networking port %s to %d entrie(s)", portID, len(groups))
+	log.Printf("[DEBUG] updating security groups of VPC port %s to %d entries", portID, len(groups))
 	if _, err := port.Update(ctx, client, portID, port.UpdateRequest{
 		SecurityGroups: &groups,
 	}); err != nil {
-		return diag.FromErr(errUpdatingObject(networkingPortSecGroupAssociateV2Object, portID, err))
+		return diag.FromErr(errUpdatingObject(vpcPortSecGroupAssociateV2Object, portID, err))
 	}
 
 	return resourceVPCPortSecGroupAssociateV2Read(ctx, d, meta)
 }
 
 func resourceVPCPortSecGroupAssociateV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -194,48 +176,43 @@ func resourceVPCPortSecGroupAssociateV2Delete(ctx context.Context, d *schema.Res
 
 	found, err := port.Get(ctx, client, portID)
 	if err != nil {
-		if networkingIsNotFound(err) {
-			// The port is gone, so its security groups went with it.
+		if vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
 			return nil
 		}
 
-		return diag.FromErr(errGettingObject(networkingPortV2Object, portID, err))
+		return diag.FromErr(errGettingObject(vpcPortV2Object, portID, err))
 	}
 
-	// Additive mode releases only what it claimed. Enforce mode owned the whole
-	// list, so it clears the whole list.
 	groups := []string{}
 	if !d.Get("enforce").(bool) {
-		groups = subtractNetworkingSecGroupIDs(
+		groups = removeVPCSecGroupIDs(
 			found.SecurityGroups,
-			expandToStringSlice(d.Get("security_group_ids").(*schema.Set).List()))
+			d.Get("security_group_ids").(*schema.Set))
 	}
 
-	log.Printf("[DEBUG] releasing security groups of networking port %s", portID)
+	log.Printf("[DEBUG] releasing security groups of VPC port %s", portID)
 	if _, err := port.Update(ctx, client, portID, port.UpdateRequest{
 		SecurityGroups: &groups,
 	}); err != nil {
-		return diag.FromErr(errDeletingObject(networkingPortSecGroupAssociateV2Object, portID, err))
+		return diag.FromErr(errDeletingObject(vpcPortSecGroupAssociateV2Object, portID, err))
 	}
 
 	return nil
 }
 
 func resourceVPCPortSecGroupAssociateV2ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	if err := resourceNetworkingImportProjectRegion(d, meta); err != nil {
+	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return nil, err
 	}
 
-	// A port_id that matches nothing must fail the import rather than produce an
-	// empty resource in the state.
 	found, err := port.Get(ctx, client, d.Id())
 	if err != nil {
-		return nil, errGettingObject(networkingPortV2Object, d.Id(), err)
+		return nil, errGettingObject(vpcPortV2Object, d.Id(), err)
 	}
 
 	d.Set("port_id", found.ID)
@@ -243,62 +220,19 @@ func resourceVPCPortSecGroupAssociateV2ImportState(ctx context.Context, d *schem
 	return []*schema.ResourceData{d}, nil
 }
 
-// unionNetworkingSecGroupIDs returns the identifiers of both sets, without
-// duplicates and in a stable order.
-func unionNetworkingSecGroupIDs(left, right []string) []string {
-	seen := make(map[string]struct{}, len(left)+len(right))
-	result := make([]string, 0, len(left)+len(right))
-	for _, group := range append(append([]string{}, left...), right...) {
-		if _, exists := seen[group]; exists {
-			continue
+func addVPCSecGroupIDs(current []string, added *schema.Set) []string {
+	result := slices.Clone(current)
+	for _, id := range expandToStringSlice(added.List()) {
+		if !slices.Contains(result, id) {
+			result = append(result, id)
 		}
-
-		seen[group] = struct{}{}
-		result = append(result, group)
 	}
-
-	sort.Strings(result)
 
 	return result
 }
 
-// intersectNetworkingSecGroupIDs returns the identifiers present in both sets.
-func intersectNetworkingSecGroupIDs(left, right []string) []string {
-	present := make(map[string]struct{}, len(right))
-	for _, group := range right {
-		present[group] = struct{}{}
-	}
-
-	result := make([]string, 0, len(left))
-	for _, group := range left {
-		if _, exists := present[group]; exists {
-			result = append(result, group)
-		}
-	}
-
-	sort.Strings(result)
-
-	return result
-}
-
-// subtractNetworkingSecGroupIDs returns the identifiers of left that are absent
-// from right.
-func subtractNetworkingSecGroupIDs(left, right []string) []string {
-	removed := make(map[string]struct{}, len(right))
-	for _, group := range right {
-		removed[group] = struct{}{}
-	}
-
-	result := make([]string, 0, len(left))
-	for _, group := range left {
-		if _, exists := removed[group]; exists {
-			continue
-		}
-
-		result = append(result, group)
-	}
-
-	sort.Strings(result)
-
-	return result
+func removeVPCSecGroupIDs(current []string, removed *schema.Set) []string {
+	return slices.DeleteFunc(slices.Clone(current), func(id string) bool {
+		return removed.Contains(id)
+	})
 }

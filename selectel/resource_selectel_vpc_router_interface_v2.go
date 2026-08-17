@@ -2,14 +2,11 @@ package selectel
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/port"
@@ -17,19 +14,16 @@ import (
 	"github.com/selectel/vpc-go/pkg/v2/subnet"
 )
 
-const networkingRouterInterfaceV2Object = "networking router interface"
+const vpcRouterInterfaceV2Object = "VPC router interface"
 
 func resourceVPCRouterInterfaceV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVPCRouterInterfaceV2Create,
 		ReadContext:   resourceVPCRouterInterfaceV2Read,
-		UpdateContext: resourceVPCRouterInterfaceV2Update,
+		UpdateContext: schema.NoopContext,
 		DeleteContext: resourceVPCRouterInterfaceV2Delete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCRouterInterfaceV2ImportState,
-		},
-		Timeouts: &schema.ResourceTimeout{
-			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
 			"project_id": {
@@ -47,21 +41,23 @@ func resourceVPCRouterInterfaceV2() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-			// Exactly one of the two addresses the interface. The one left out
-			// of the configuration is computed from the attached port.
+			"network_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"subnet_id": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Computed:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"port_id"},
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				ExactlyOneOf: []string{"subnet_id", "port_id"},
 			},
 			"port_id": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Computed:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"subnet_id"},
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				ExactlyOneOf: []string{"subnet_id", "port_id"},
 			},
 			"force_destroy": {
 				Type:     schema.TypeBool,
@@ -73,7 +69,7 @@ func resourceVPCRouterInterfaceV2() *schema.Resource {
 }
 
 func resourceVPCRouterInterfaceV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -81,26 +77,13 @@ func resourceVPCRouterInterfaceV2Create(ctx context.Context, d *schema.ResourceD
 	subnetID := d.Get("subnet_id").(string)
 	portID := d.Get("port_id").(string)
 
-	// ConflictsWith rejects the pair at plan time; the empty case has no schema
-	// equivalent, so both are checked here before the router is touched.
-	switch {
-	case subnetID == "" && portID == "":
-		return diag.FromErr(errors.New(
-			"exactly one of subnet_id or port_id must be set to attach the router to a network"))
-	case subnetID != "" && portID != "":
-		return diag.FromErr(errors.New(
-			"subnet_id and port_id are mutually exclusive, please set exactly one of them"))
-	}
-
 	routerID := d.Get("router_id").(string)
 
-	selector := router.BySubnet(subnetID)
+	request := router.InterfaceRequest{SubnetID: subnetID}
 	if portID != "" {
-		// Neutron requires the port to carry exactly one fixed IP; checking it
-		// here keeps a rejected attach from leaving a half-created resource.
 		found, err := port.Get(ctx, client, portID)
 		if err != nil {
-			return diag.FromErr(errGettingObject(networkingPortV2Object, portID, err))
+			return diag.FromErr(errGettingObject(vpcPortV2Object, portID, err))
 		}
 		if len(found.FixedIPs) != 1 {
 			return diag.FromErr(fmt.Errorf(
@@ -108,19 +91,18 @@ func resourceVPCRouterInterfaceV2Create(ctx context.Context, d *schema.ResourceD
 				portID, len(found.FixedIPs)))
 		}
 
-		selector = router.ByPort(portID)
+		request = router.InterfaceRequest{PortID: portID}
 	}
 
-	log.Printf("[DEBUG] attaching networking router %s interface", routerID)
-	attached, err := router.AddInterface(ctx, client, routerID, selector)
+	log.Printf("[DEBUG] attaching VPC router %s interface", routerID)
+	attached, err := router.AddInterface(ctx, client, routerID, request)
 	if err != nil {
-		return diag.FromErr(errCreatingObject(networkingRouterInterfaceV2Object, err))
+		return diag.FromErr(errCreatingObject(vpcRouterInterfaceV2Object, err))
 	}
 
-	// The identity is the port the router is attached through, whether the
-	// caller supplied it or the API created it for the subnet.
 	d.SetId(attached.PortID)
 	d.Set("port_id", attached.PortID)
+	d.Set("network_id", attached.NetworkID)
 	if attached.SubnetID != "" {
 		d.Set("subnet_id", attached.SubnetID)
 	}
@@ -129,40 +111,33 @@ func resourceVPCRouterInterfaceV2Create(ctx context.Context, d *schema.ResourceD
 }
 
 func resourceVPCRouterInterfaceV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	log.Printf("[DEBUG] getting networking router interface port %s", d.Id())
+	log.Printf("[DEBUG] getting VPC router interface port %s", d.Id())
 	found, err := port.Get(ctx, client, d.Id())
 	if err != nil {
-		// A detached interface deletes its port, so a missing port is the
-		// ordinary external-deletion case.
-		return networkingCheckDeleted(d, err, networkingRouterInterfaceV2Object)
+
+		return vpcCheckDeleted(d, err, vpcRouterInterfaceV2Object)
 	}
 
 	d.Set("port_id", found.ID)
+	d.Set("network_id", found.NetworkID)
 	if found.DeviceID != "" {
 		d.Set("router_id", found.DeviceID)
 	}
 
-	if subnetID := networkingRouterInterfaceV2SubnetFromPort(found.FixedIPs); subnetID != "" {
+	if subnetID := vpcRouterInterfaceV2SubnetFromPort(found.FixedIPs); subnetID != "" {
 		d.Set("subnet_id", subnetID)
 	}
 
 	return nil
 }
 
-// resourceVPCRouterInterfaceV2Update exists only so force_destroy can
-// change without replacing the interface: the attribute steers this resource's
-// own Delete behaviour and has no remote counterpart to update.
-func resourceVPCRouterInterfaceV2Update(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	return nil
-}
-
 func resourceVPCRouterInterfaceV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -171,55 +146,39 @@ func resourceVPCRouterInterfaceV2Delete(ctx context.Context, d *schema.ResourceD
 	subnetID := d.Get("subnet_id").(string)
 
 	if d.Get("force_destroy").(bool) && subnetID != "" {
-		// Clear only the routes that point into the subnet being detached: the
-		// conflict they cause is the one this resource is allowed to resolve.
-		if err := clearNetworkingRouterInterfaceV2Routes(ctx, client, routerID, subnetID); err != nil {
+
+		if err := clearVPCRouterInterfaceV2Routes(ctx, client, routerID, subnetID); err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
-	log.Printf("[DEBUG] detaching networking router %s interface %s", routerID, d.Id())
-	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutDelete), func() *resource.RetryError {
-		_, detachErr := router.RemoveInterface(ctx, client, routerID, router.ByPort(d.Id()))
-		if detachErr == nil {
-			return nil
-		}
-
-		// The interface may still be in use by something this resource does not
-		// own, so a conflict is retried until the timeout rather than forced.
-		if networkingIsConflict(detachErr) {
-			return resource.RetryableError(detachErr)
-		}
-
-		return resource.NonRetryableError(detachErr)
-	})
+	log.Printf("[DEBUG] detaching VPC router %s interface %s", routerID, d.Id())
+	_, err = router.RemoveInterface(ctx, client, routerID, router.InterfaceRequest{PortID: d.Id()})
 	if err != nil {
-		if networkingIsNotFound(err) {
-			// Already detached or the port is gone: nothing left to do.
+		if vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
+
 			return nil
 		}
 
-		return diag.FromErr(errDeletingObject(networkingRouterInterfaceV2Object, d.Id(), err))
+		return diag.FromErr(errDeletingObject(vpcRouterInterfaceV2Object, d.Id(), err))
 	}
 
 	return nil
 }
 
 func resourceVPCRouterInterfaceV2ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	if err := resourceNetworkingImportProjectRegion(d, meta); err != nil {
+	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return nil, err
 	}
 
-	// router_id is Required, so import has to resolve it from the port before
-	// the resource can be read.
 	found, err := port.Get(ctx, client, d.Id())
 	if err != nil {
-		return nil, errGettingObject(networkingRouterInterfaceV2Object, d.Id(), err)
+		return nil, errGettingObject(vpcRouterInterfaceV2Object, d.Id(), err)
 	}
 
 	if found.DeviceID == "" {
@@ -229,17 +188,15 @@ func resourceVPCRouterInterfaceV2ImportState(ctx context.Context, d *schema.Reso
 
 	d.Set("router_id", found.DeviceID)
 	d.Set("port_id", found.ID)
-	if subnetID := networkingRouterInterfaceV2SubnetFromPort(found.FixedIPs); subnetID != "" {
+	d.Set("network_id", found.NetworkID)
+	if subnetID := vpcRouterInterfaceV2SubnetFromPort(found.FixedIPs); subnetID != "" {
 		d.Set("subnet_id", subnetID)
 	}
 
 	return []*schema.ResourceData{d}, nil
 }
 
-// networkingRouterInterfaceV2SubnetFromPort resolves the interface subnet from the
-// port's fixed IPs. It reports an empty string unless there is exactly one: a
-// dual-stack port belongs to two subnets and neither one is the answer.
-func networkingRouterInterfaceV2SubnetFromPort(fixedIPs []port.FixedIP) string {
+func vpcRouterInterfaceV2SubnetFromPort(fixedIPs []port.FixedIP) string {
 	if len(fixedIPs) != 1 {
 		return ""
 	}
@@ -247,15 +204,12 @@ func networkingRouterInterfaceV2SubnetFromPort(fixedIPs []port.FixedIP) string {
 	return fixedIPs[0].SubnetID
 }
 
-// clearNetworkingRouterInterfaceV2Routes removes the router's static routes whose
-// next hop lies inside the subnet being detached. Every other route is kept:
-// force_destroy resolves the conflict caused by this interface, not any other.
-func clearNetworkingRouterInterfaceV2Routes(
+func clearVPCRouterInterfaceV2Routes(
 	ctx context.Context, client *vpc.Client, routerID, subnetID string,
 ) error {
 	attachedSubnet, err := subnet.Get(ctx, client, subnetID)
 	if err != nil {
-		return errGettingObject(networkingSubnetV2Object, subnetID, err)
+		return errGettingObject(vpcNetworkSubnetV2Object, subnetID, err)
 	}
 
 	_, cidr, err := net.ParseCIDR(attachedSubnet.CIDR)
@@ -265,7 +219,7 @@ func clearNetworkingRouterInterfaceV2Routes(
 
 	found, err := router.Get(ctx, client, routerID)
 	if err != nil {
-		return errGettingObject(networkingRouterV2Object, routerID, err)
+		return errGettingObject(vpcRouterV2Object, routerID, err)
 	}
 
 	kept := make([]router.Route, 0, len(found.Routes))
@@ -286,7 +240,7 @@ func clearNetworkingRouterInterfaceV2Routes(
 	}
 
 	if _, err := router.Update(ctx, client, routerID, router.UpdateRequest{Routes: &kept}); err != nil {
-		return errUpdatingObject(networkingRouterV2Object, routerID, err)
+		return errUpdatingObject(vpcRouterV2Object, routerID, err)
 	}
 
 	return nil

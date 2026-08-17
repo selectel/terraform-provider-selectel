@@ -2,22 +2,17 @@ package selectel
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/port"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/pointer"
 )
 
-const networkingPortV2Object = "networking port"
-
-// networkingPortV2VNICTypes are the vnic types Neutron accepts.
-var networkingPortV2VNICTypes = []string{
-	"normal", "direct", "direct-physical", "macvtap",
-	"baremetal", "virtio-forwarder", "remote-managed",
-}
+const vpcPortV2Object = "VPC port"
 
 func resourceVPCPortV2() *schema.Resource {
 	return &schema.Resource{
@@ -56,10 +51,8 @@ func resourceVPCPortV2() *schema.Resource {
 			"admin_state_up": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Computed: true,
+				Default:  true,
 			},
-			// The owner may set mac_address at create, but only admin may
-			// change it afterwards, so a change replaces the port.
 			"mac_address": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -102,22 +95,7 @@ func resourceVPCPortV2() *schema.Resource {
 				Default:       false,
 				ConflictsWith: []string{"fixed_ip"},
 			},
-			"all_fixed_ips": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"subnet_id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"ip_address": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
-			},
+			"all_fixed_ips": vpcComputedFixedIPsSchema(),
 			"security_group_ids": {
 				Type:          schema.TypeSet,
 				Optional:      true,
@@ -168,29 +146,11 @@ func resourceVPCPortV2() *schema.Resource {
 						"ip_version": {
 							Type:     schema.TypeInt,
 							Optional: true,
-							Default:  networkingSubnetV2IPVersion4,
+							Default:  vpcNetworkSubnetV2IPVersion4,
 							ValidateFunc: validation.IntInSlice([]int{
-								networkingSubnetV2IPVersion4,
-								networkingSubnetV2IPVersion6,
+								vpcNetworkSubnetV2IPVersion4,
+								vpcNetworkSubnetV2IPVersion6,
 							}),
-						},
-					},
-				},
-			},
-			// Only vnic_type is a configuration argument: host_id and profile
-			// are reserved for admin and are not returned by the SDK either.
-			"binding": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Computed: true,
-				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"vnic_type": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.StringInSlice(networkingPortV2VNICTypes, false),
 						},
 					},
 				},
@@ -214,34 +174,8 @@ func resourceVPCPortV2() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"dns_assignment": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"ip_address": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"hostname": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"fqdn": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
-			},
-			// Read-only: the cloud's policy grants none of the granular VPC
-			// roles permission to change these.
 			"port_security_enabled": {
 				Type:     schema.TypeBool,
-				Computed: true,
-			},
-			"qos_policy_id": {
-				Type:     schema.TypeString,
 				Computed: true,
 			},
 			"dhcp_blocked": {
@@ -257,44 +191,38 @@ func resourceVPCPortV2() *schema.Resource {
 }
 
 func resourceVPCPortV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if err := validateNetworkingPortV2Config(d); err != nil {
-		return diag.FromErr(err)
-	}
-
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	request := port.CreateRequest{NetworkID: d.Get("network_id").(string)}
+	request := port.CreateRequest{
+		NetworkID:    d.Get("network_id").(string),
+		AdminStateUp: pointer.To(d.Get("admin_state_up").(bool)),
+	}
 	if v, ok := d.GetOk("name"); ok {
-		request.Name = vpcString(v.(string))
+		request.Name = pointer.To(v.(string))
 	}
 	if v, ok := d.GetOk("description"); ok {
-		request.Description = vpcString(v.(string))
-	}
-	if v, ok := d.GetOkExists("admin_state_up"); ok {
-		request.AdminStateUp = vpcBool(v.(bool))
+		request.Description = pointer.To(v.(string))
 	}
 	if v, ok := d.GetOk("mac_address"); ok {
-		request.MACAddress = vpcString(v.(string))
+		request.MACAddress = pointer.To(v.(string))
 	}
 	if v, ok := d.GetOk("device_id"); ok {
-		request.DeviceID = vpcString(v.(string))
+		request.DeviceID = pointer.To(v.(string))
 	}
 	if v, ok := d.GetOk("device_owner"); ok {
-		request.DeviceOwner = vpcString(v.(string))
+		request.DeviceOwner = pointer.To(v.(string))
 	}
 	if v, ok := d.GetOk("dns_name"); ok {
-		request.DNSName = vpcString(v.(string))
+		request.DNSName = pointer.To(v.(string))
 	}
 
-	// An empty list is how "no fixed IP at all" is expressed, as opposed to
-	// omitting the field, which lets the API allocate one.
 	if d.Get("no_fixed_ip").(bool) {
 		request.FixedIPs = &[]port.FixedIP{}
 	} else if v, ok := d.GetOk("fixed_ip"); ok {
-		fixedIPs := expandNetworkingPortV2FixedIPs(v.([]interface{}))
+		fixedIPs := expandVPCPortV2FixedIPs(v.([]interface{}))
 		request.FixedIPs = &fixedIPs
 	}
 
@@ -306,21 +234,17 @@ func resourceVPCPortV2Create(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	if v, ok := d.GetOk("allowed_address_pairs"); ok {
-		pairs := expandNetworkingPortV2AllowedAddressPairs(v.(*schema.Set).List())
+		pairs := expandVPCPortV2AllowedAddressPairs(v.(*schema.Set).List())
 		request.AllowedAddressPairs = &pairs
 	}
 	if v, ok := d.GetOk("extra_dhcp_option"); ok {
-		options := expandNetworkingPortV2ExtraDHCPOptions(v.(*schema.Set).List())
+		options := expandVPCPortV2ExtraDHCPOptions(v.(*schema.Set).List())
 		request.ExtraDHCPOptions = &options
 	}
-	if vnicType := networkingPortV2VNICType(d); vnicType != "" {
-		request.BindingVNICType = vpcString(vnicType)
-	}
-
-	log.Print("[DEBUG] creating networking port")
+	log.Print("[DEBUG] creating VPC port")
 	created, err := port.Create(ctx, client, request)
 	if err != nil {
-		return diag.FromErr(errCreatingObject(networkingPortV2Object, err))
+		return diag.FromErr(errCreatingObject(vpcPortV2Object, err))
 	}
 
 	d.SetId(created.ID)
@@ -328,7 +252,7 @@ func resourceVPCPortV2Create(ctx context.Context, d *schema.ResourceData, meta i
 	if tags, ok := d.GetOk("tags"); ok {
 		values := expandToStringSlice(tags.(*schema.Set).List())
 		if _, err := port.TagOperations(client, created.ID).Replace(ctx, values); err != nil {
-			return diag.FromErr(errUpdatingObject(networkingPortV2Object, created.ID, err))
+			return diag.FromErr(errUpdatingObject(vpcPortV2Object, created.ID, err))
 		}
 	}
 
@@ -336,28 +260,24 @@ func resourceVPCPortV2Create(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func resourceVPCPortV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	log.Printf("[DEBUG] getting networking port %s", d.Id())
+	log.Printf("[DEBUG] getting VPC port %s", d.Id())
 	found, err := port.Get(ctx, client, d.Id())
 	if err != nil {
-		return networkingCheckDeleted(d, err, networkingPortV2Object)
+		return vpcCheckDeleted(d, err, vpcPortV2Object)
 	}
 
-	flattenNetworkingPortV2(d, found)
+	flattenVPCPortV2(d, found)
 
 	return nil
 }
 
 func resourceVPCPortV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if err := validateNetworkingPortV2Config(d); err != nil {
-		return diag.FromErr(err)
-	}
-
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -368,26 +288,26 @@ func resourceVPCPortV2Update(ctx context.Context, d *schema.ResourceData, meta i
 	)
 
 	if d.HasChange("name") {
-		request.Name = vpcString(d.Get("name").(string))
+		request.Name = pointer.To(d.Get("name").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("description") {
-		request.Description = vpcString(d.Get("description").(string))
+		request.Description = pointer.To(d.Get("description").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("admin_state_up") {
-		request.AdminStateUp = vpcBool(d.Get("admin_state_up").(bool))
+		request.AdminStateUp = pointer.To(d.Get("admin_state_up").(bool))
 		needsUpdate = true
 	}
 	if d.HasChange("dns_name") {
-		request.DNSName = vpcString(d.Get("dns_name").(string))
+		request.DNSName = pointer.To(d.Get("dns_name").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("fixed_ip") || d.HasChange("no_fixed_ip") {
 		if d.Get("no_fixed_ip").(bool) {
 			request.FixedIPs = &[]port.FixedIP{}
 		} else {
-			fixedIPs := expandNetworkingPortV2FixedIPs(d.Get("fixed_ip").([]interface{}))
+			fixedIPs := expandVPCPortV2FixedIPs(d.Get("fixed_ip").([]interface{}))
 			request.FixedIPs = &fixedIPs
 		}
 		needsUpdate = true
@@ -402,35 +322,28 @@ func resourceVPCPortV2Update(ctx context.Context, d *schema.ResourceData, meta i
 		needsUpdate = true
 	}
 	if d.HasChange("allowed_address_pairs") {
-		pairs := expandNetworkingPortV2AllowedAddressPairs(d.Get("allowed_address_pairs").(*schema.Set).List())
+		pairs := expandVPCPortV2AllowedAddressPairs(d.Get("allowed_address_pairs").(*schema.Set).List())
 		request.AllowedAddressPairs = &pairs
 		needsUpdate = true
 	}
 	if d.HasChange("extra_dhcp_option") {
 		before, after := d.GetChange("extra_dhcp_option")
-		options := expandNetworkingPortV2ExtraDHCPOptionsUpdate(
+		options := expandVPCPortV2ExtraDHCPOptionsUpdate(
 			before.(*schema.Set), after.(*schema.Set))
 		request.ExtraDHCPOptions = &options
 		needsUpdate = true
 	}
-	if d.HasChange("binding") {
-		if vnicType := networkingPortV2VNICType(d); vnicType != "" {
-			request.BindingVNICType = vpcString(vnicType)
-			needsUpdate = true
-		}
-	}
-
 	if needsUpdate {
-		log.Printf("[DEBUG] updating networking port %s", d.Id())
+		log.Printf("[DEBUG] updating VPC port %s", d.Id())
 		if _, err := port.Update(ctx, client, d.Id(), request); err != nil {
-			return diag.FromErr(errUpdatingObject(networkingPortV2Object, d.Id(), err))
+			return diag.FromErr(errUpdatingObject(vpcPortV2Object, d.Id(), err))
 		}
 	}
 
 	if d.HasChange("tags") {
 		values := expandToStringSlice(d.Get("tags").(*schema.Set).List())
 		if _, err := port.TagOperations(client, d.Id()).Replace(ctx, values); err != nil {
-			return diag.FromErr(errUpdatingObject(networkingPortV2Object, d.Id(), err))
+			return diag.FromErr(errUpdatingObject(vpcPortV2Object, d.Id(), err))
 		}
 	}
 
@@ -438,73 +351,29 @@ func resourceVPCPortV2Update(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func resourceVPCPortV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	log.Printf("[DEBUG] deleting networking port %s", d.Id())
-	if err := port.Delete(ctx, client, d.Id()); err != nil {
-		return networkingCheckDeletedOnDelete(d, err, networkingPortV2Object, func() error {
-			_, confirmErr := port.Get(ctx, client, d.Id())
-
-			return confirmErr
-		})
+	log.Printf("[DEBUG] deleting VPC port %s", d.Id())
+	if err := port.Delete(ctx, client, d.Id()); err != nil &&
+		!vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
+		return diag.FromErr(errDeletingObject(vpcPortV2Object, d.Id(), err))
 	}
 
 	return nil
 }
 
 func resourceVPCPortV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	if err := resourceNetworkingImportProjectRegion(d, meta); err != nil {
+	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 
 	return []*schema.ResourceData{d}, nil
 }
 
-// validateNetworkingPortV2Config rejects what the schema cannot express, before
-// any API call happens.
-func validateNetworkingPortV2Config(d *schema.ResourceData) error {
-	if d.Get("no_security_groups").(bool) {
-		if groups, ok := d.GetOk("security_group_ids"); ok && groups.(*schema.Set).Len() > 0 {
-			return fmt.Errorf("no_security_groups conflicts with a non-empty security_group_ids")
-		}
-	}
-
-	if d.Get("no_fixed_ip").(bool) {
-		if fixedIPs, ok := d.GetOk("fixed_ip"); ok && len(fixedIPs.([]interface{})) > 0 {
-			return fmt.Errorf("no_fixed_ip conflicts with a non-empty fixed_ip")
-		}
-	}
-
-	return nil
-}
-
-// networkingPortV2VNICType reads the single vnic_type out of the binding block.
-func networkingPortV2VNICType(d *schema.ResourceData) string {
-	raw, ok := d.GetOk("binding")
-	if !ok {
-		return ""
-	}
-
-	blocks, ok := raw.([]interface{})
-	if !ok || len(blocks) == 0 {
-		return ""
-	}
-
-	block, ok := blocks[0].(map[string]interface{})
-	if !ok {
-		return ""
-	}
-
-	vnicType, _ := block["vnic_type"].(string)
-
-	return vnicType
-}
-
-// flattenNetworkingPortV2 writes an API port into the state.
-func flattenNetworkingPortV2(d *schema.ResourceData, found *port.Port) {
+func flattenVPCPortV2(d *schema.ResourceData, found *port.Port) {
 	d.Set("network_id", found.NetworkID)
 	d.Set("name", found.Name)
 	d.Set("description", found.Description)
@@ -515,39 +384,29 @@ func flattenNetworkingPortV2(d *schema.ResourceData, found *port.Port) {
 	d.Set("dns_name", found.DNSName)
 	d.Set("status", found.Status)
 	d.Set("port_security_enabled", found.PortSecurityEnabled)
-	d.Set("qos_policy_id", derefString(found.QoSPolicyID))
 	d.Set("dhcp_blocked", found.DHCPBlocked)
 	d.Set("blocked", found.Blocked)
 
-	if err := d.Set("all_fixed_ips", flattenNetworkingPortV2FixedIPs(found.FixedIPs)); err != nil {
+	if err := d.Set("all_fixed_ips", flattenVPCPortV2FixedIPs(found.FixedIPs)); err != nil {
 		log.Print(errSettingComplexAttr("all_fixed_ips", err))
 	}
 	if err := d.Set("all_security_group_ids", found.SecurityGroups); err != nil {
 		log.Print(errSettingComplexAttr("all_security_group_ids", err))
 	}
 	if err := d.Set("allowed_address_pairs",
-		flattenNetworkingPortV2AllowedAddressPairs(found.AllowedAddressPairs)); err != nil {
+		flattenVPCPortV2AllowedAddressPairs(found.AllowedAddressPairs)); err != nil {
 		log.Print(errSettingComplexAttr("allowed_address_pairs", err))
 	}
 	if err := d.Set("extra_dhcp_option",
-		flattenNetworkingPortV2ExtraDHCPOptions(found.ExtraDHCPOptions)); err != nil {
+		flattenVPCPortV2ExtraDHCPOptions(found.ExtraDHCPOptions)); err != nil {
 		log.Print(errSettingComplexAttr("extra_dhcp_option", err))
-	}
-	if err := d.Set("binding", []interface{}{
-		map[string]interface{}{"vnic_type": found.BindingVNICType},
-	}); err != nil {
-		log.Print(errSettingComplexAttr("binding", err))
-	}
-	if err := d.Set("dns_assignment",
-		flattenNetworkingPortV2DNSAssignment(found.DNSAssignment)); err != nil {
-		log.Print(errSettingComplexAttr("dns_assignment", err))
 	}
 	if err := d.Set("all_tags", found.Tags); err != nil {
 		log.Print(errSettingComplexAttr("all_tags", err))
 	}
 }
 
-func expandNetworkingPortV2FixedIPs(raw []interface{}) []port.FixedIP {
+func expandVPCPortV2FixedIPs(raw []interface{}) []port.FixedIP {
 	fixedIPs := make([]port.FixedIP, 0, len(raw))
 
 	for _, item := range raw {
@@ -565,7 +424,7 @@ func expandNetworkingPortV2FixedIPs(raw []interface{}) []port.FixedIP {
 	return fixedIPs
 }
 
-func flattenNetworkingPortV2FixedIPs(fixedIPs []port.FixedIP) []interface{} {
+func flattenVPCPortV2FixedIPs(fixedIPs []port.FixedIP) []interface{} {
 	result := make([]interface{}, 0, len(fixedIPs))
 
 	for _, fixedIP := range fixedIPs {
@@ -578,7 +437,7 @@ func flattenNetworkingPortV2FixedIPs(fixedIPs []port.FixedIP) []interface{} {
 	return result
 }
 
-func expandNetworkingPortV2AllowedAddressPairs(raw []interface{}) []port.AllowedAddressPair {
+func expandVPCPortV2AllowedAddressPairs(raw []interface{}) []port.AllowedAddressPair {
 	pairs := make([]port.AllowedAddressPair, 0, len(raw))
 
 	for _, item := range raw {
@@ -596,7 +455,7 @@ func expandNetworkingPortV2AllowedAddressPairs(raw []interface{}) []port.Allowed
 	return pairs
 }
 
-func flattenNetworkingPortV2AllowedAddressPairs(pairs []port.AllowedAddressPair) []interface{} {
+func flattenVPCPortV2AllowedAddressPairs(pairs []port.AllowedAddressPair) []interface{} {
 	result := make([]interface{}, 0, len(pairs))
 
 	for _, pair := range pairs {
@@ -609,7 +468,7 @@ func flattenNetworkingPortV2AllowedAddressPairs(pairs []port.AllowedAddressPair)
 	return result
 }
 
-func expandNetworkingPortV2ExtraDHCPOptions(raw []interface{}) []port.ExtraDHCPOption {
+func expandVPCPortV2ExtraDHCPOptions(raw []interface{}) []port.ExtraDHCPOption {
 	options := make([]port.ExtraDHCPOption, 0, len(raw))
 
 	for _, item := range raw {
@@ -619,11 +478,9 @@ func expandNetworkingPortV2ExtraDHCPOptions(raw []interface{}) []port.ExtraDHCPO
 		}
 
 		option := port.ExtraDHCPOption{
-			Name:  entry["name"].(string),
-			Value: entry["value"].(string),
-		}
-		if ipVersion, ok := entry["ip_version"].(int); ok && ipVersion != 0 {
-			option.IPVersion = vpcInt(ipVersion)
+			Name:      entry["name"].(string),
+			Value:     entry["value"].(string),
+			IPVersion: entry["ip_version"].(int),
 		}
 
 		options = append(options, option)
@@ -632,15 +489,9 @@ func expandNetworkingPortV2ExtraDHCPOptions(raw []interface{}) []port.ExtraDHCPO
 	return options
 }
 
-// expandNetworkingPortV2ExtraDHCPOptionsUpdate builds the option list of an update
-// request out of the configured set and the one it replaces.
-//
-// An update does not replace the whole set: an option the request leaves out keeps
-// the value it has, so dropping one from the configuration only takes effect when
-// its name is sent with an explicit null value. Without that, removing an option
-// would leave it on the port and every following plan would ask to remove it again.
-func expandNetworkingPortV2ExtraDHCPOptionsUpdate(before, after *schema.Set) []port.UpdateExtraDHCPOption {
-	configured := expandNetworkingPortV2ExtraDHCPOptions(after.List())
+// VPC API removes DHCP options only when they are sent with a null value.
+func expandVPCPortV2ExtraDHCPOptionsUpdate(before, after *schema.Set) []port.UpdateExtraDHCPOption {
+	configured := expandVPCPortV2ExtraDHCPOptions(after.List())
 
 	options := make([]port.UpdateExtraDHCPOption, 0, len(configured))
 	kept := make(map[string]struct{}, len(configured))
@@ -649,14 +500,12 @@ func expandNetworkingPortV2ExtraDHCPOptionsUpdate(before, after *schema.Set) []p
 		options = append(options, port.UpdateExtraDHCPOption{
 			Name:      option.Name,
 			Value:     &value,
-			IPVersion: option.IPVersion,
+			IPVersion: pointer.To(option.IPVersion),
 		})
 		kept[option.Name] = struct{}{}
 	}
 
-	// The name is the key of an option, so a name that is still configured is an
-	// update of that option rather than a removal.
-	for _, option := range expandNetworkingPortV2ExtraDHCPOptions(before.List()) {
+	for _, option := range expandVPCPortV2ExtraDHCPOptions(before.List()) {
 		if _, ok := kept[option.Name]; ok {
 			continue
 		}
@@ -667,28 +516,14 @@ func expandNetworkingPortV2ExtraDHCPOptionsUpdate(before, after *schema.Set) []p
 	return options
 }
 
-func flattenNetworkingPortV2ExtraDHCPOptions(options []port.ExtraDHCPOption) []interface{} {
+func flattenVPCPortV2ExtraDHCPOptions(options []port.ExtraDHCPOption) []interface{} {
 	result := make([]interface{}, 0, len(options))
 
 	for _, option := range options {
 		result = append(result, map[string]interface{}{
 			"name":       option.Name,
 			"value":      option.Value,
-			"ip_version": derefInt(option.IPVersion),
-		})
-	}
-
-	return result
-}
-
-func flattenNetworkingPortV2DNSAssignment(assignments []port.DNSAssignment) []interface{} {
-	result := make([]interface{}, 0, len(assignments))
-
-	for _, assignment := range assignments {
-		result = append(result, map[string]interface{}{
-			"ip_address": assignment.IPAddress,
-			"hostname":   assignment.Hostname,
-			"fqdn":       assignment.FQDN,
+			"ip_version": option.IPVersion,
 		})
 	}
 

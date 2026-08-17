@@ -11,16 +11,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/subnet"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/pointer"
 )
 
 const (
-	networkingSubnetV2IPVersion4 = 4
-	networkingSubnetV2IPVersion6 = 6
+	vpcNetworkSubnetV2Object = "VPC network subnet"
+
+	vpcNetworkSubnetV2IPVersion4 = 4
+	vpcNetworkSubnetV2IPVersion6 = 6
 )
 
-// networkingSubnetV2IPv6Modes are the IPv6 address and router advertisement
-// modes Neutron accepts.
-var networkingSubnetV2IPv6Modes = []string{"slaac", "dhcpv6-stateful", "dhcpv6-stateless"}
+var vpcNetworkSubnetV2IPv6Modes = []string{"slaac", "dhcpv6-stateful", "dhcpv6-stateless"}
 
 func resourceVPCNetworkSubnetV2() *schema.Resource {
 	return &schema.Resource{
@@ -47,14 +48,11 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-			// The subnet always carries its own CIDR: subnet pools are not part of
-			// this provider, so there is no other source for one.
 			"cidr": {
 				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
+				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validateNetworkingSubnetV2CIDR,
+				ValidateFunc: validateVPCNetworkSubnetV2CIDR,
 			},
 			"name": {
 				Type:     schema.TypeString,
@@ -98,10 +96,10 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 				ForceNew: true,
-				Default:  networkingSubnetV2IPVersion4,
+				Default:  vpcNetworkSubnetV2IPVersion4,
 				ValidateFunc: validation.IntInSlice([]int{
-					networkingSubnetV2IPVersion4,
-					networkingSubnetV2IPVersion6,
+					vpcNetworkSubnetV2IPVersion4,
+					vpcNetworkSubnetV2IPVersion6,
 				}),
 			},
 			"enable_dhcp": {
@@ -119,14 +117,14 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice(networkingSubnetV2IPv6Modes, false),
+				ValidateFunc: validation.StringInSlice(vpcNetworkSubnetV2IPv6Modes, false),
 			},
 			"ipv6_ra_mode": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice(networkingSubnetV2IPv6Modes, false),
+				ValidateFunc: validation.StringInSlice(vpcNetworkSubnetV2IPv6Modes, false),
 			},
 			"tags": {
 				Type:     schema.TypeSet,
@@ -138,10 +136,8 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			// service_types and blocked are writable only with admin
-			// privileges, so they are read-only here.
 			"service_types": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
@@ -149,18 +145,13 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
+			"host_routes": vpcComputedRoutesSchema(),
 		},
 	}
 }
 
 func resourceVPCNetworkSubnetV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// Everything that can be rejected without talking to the API is rejected
-	// first, so a bad configuration never changes the remote state.
-	if err := validateNetworkingSubnetV2Config(d); err != nil {
-		return diag.FromErr(err)
-	}
-
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -173,16 +164,16 @@ func resourceVPCNetworkSubnetV2Create(ctx context.Context, d *schema.ResourceDat
 		EnableDHCP: &enableDHCP,
 	}
 	if v, ok := d.GetOk("cidr"); ok {
-		request.CIDR = vpcString(v.(string))
+		request.CIDR = pointer.To(v.(string))
 	}
 	if v, ok := d.GetOk("name"); ok {
-		request.Name = vpcString(v.(string))
+		request.Name = pointer.To(v.(string))
 	}
 	if v, ok := d.GetOk("description"); ok {
-		request.Description = vpcString(v.(string))
+		request.Description = pointer.To(v.(string))
 	}
 	if v, ok := d.GetOk("allocation_pool"); ok {
-		pools := expandNetworkingSubnetV2AllocationPools(v.(*schema.Set).List())
+		pools := expandVPCNetworkSubnetV2AllocationPools(v.(*schema.Set).List())
 		request.AllocationPools = &pools
 	}
 	if v, ok := d.GetOk("dns_nameservers"); ok {
@@ -190,24 +181,22 @@ func resourceVPCNetworkSubnetV2Create(ctx context.Context, d *schema.ResourceDat
 		request.DNSNameservers = &nameservers
 	}
 	if v, ok := d.GetOk("ipv6_address_mode"); ok {
-		request.IPv6AddressMode = vpcString(v.(string))
+		request.IPv6AddressMode = pointer.To(v.(string))
 	}
 	if v, ok := d.GetOk("ipv6_ra_mode"); ok {
-		request.IPv6RAMode = vpcString(v.(string))
+		request.IPv6RAMode = pointer.To(v.(string))
 	}
 
-	// A nil gateway lets the API pick one, an explicit JSON null means the
-	// subnet is created without a gateway.
 	if d.Get("no_gateway").(bool) {
 		request.GatewayIP = vpc.Null[string]()
 	} else if v, ok := d.GetOk("gateway_ip"); ok {
 		request.GatewayIP = vpc.Value(v.(string))
 	}
 
-	log.Print("[DEBUG] creating networking subnet")
+	log.Print("[DEBUG] creating VPC network subnet")
 	created, err := subnet.Create(ctx, client, request)
 	if err != nil {
-		return diag.FromErr(errCreatingObject(networkingSubnetV2Object, err))
+		return diag.FromErr(errCreatingObject(vpcNetworkSubnetV2Object, err))
 	}
 
 	d.SetId(created.ID)
@@ -215,7 +204,7 @@ func resourceVPCNetworkSubnetV2Create(ctx context.Context, d *schema.ResourceDat
 	if tags, ok := d.GetOk("tags"); ok {
 		values := expandToStringSlice(tags.(*schema.Set).List())
 		if _, err := subnet.TagOperations(client, created.ID).Replace(ctx, values); err != nil {
-			return diag.FromErr(errUpdatingObject(networkingSubnetV2Object, created.ID, err))
+			return diag.FromErr(errUpdatingObject(vpcNetworkSubnetV2Object, created.ID, err))
 		}
 	}
 
@@ -223,28 +212,24 @@ func resourceVPCNetworkSubnetV2Create(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceVPCNetworkSubnetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	log.Printf("[DEBUG] getting networking subnet %s", d.Id())
+	log.Printf("[DEBUG] getting VPC network subnet %s", d.Id())
 	found, err := subnet.Get(ctx, client, d.Id())
 	if err != nil {
-		return networkingCheckDeleted(d, err, networkingSubnetV2Object)
+		return vpcCheckDeleted(d, err, vpcNetworkSubnetV2Object)
 	}
 
-	flattenNetworkingSubnetV2(d, found)
+	flattenVPCNetworkSubnetV2(d, found)
 
 	return nil
 }
 
 func resourceVPCNetworkSubnetV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if err := validateNetworkingSubnetV2Config(d); err != nil {
-		return diag.FromErr(err)
-	}
-
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -255,11 +240,11 @@ func resourceVPCNetworkSubnetV2Update(ctx context.Context, d *schema.ResourceDat
 	)
 
 	if d.HasChange("name") {
-		request.Name = vpcString(d.Get("name").(string))
+		request.Name = pointer.To(d.Get("name").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("description") {
-		request.Description = vpcString(d.Get("description").(string))
+		request.Description = pointer.To(d.Get("description").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("enable_dhcp") {
@@ -268,7 +253,7 @@ func resourceVPCNetworkSubnetV2Update(ctx context.Context, d *schema.ResourceDat
 		needsUpdate = true
 	}
 	if d.HasChange("allocation_pool") {
-		pools := expandNetworkingSubnetV2AllocationPools(d.Get("allocation_pool").(*schema.Set).List())
+		pools := expandVPCNetworkSubnetV2AllocationPools(d.Get("allocation_pool").(*schema.Set).List())
 		request.AllocationPools = &pools
 		needsUpdate = true
 	}
@@ -287,16 +272,16 @@ func resourceVPCNetworkSubnetV2Update(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if needsUpdate {
-		log.Printf("[DEBUG] updating networking subnet %s", d.Id())
+		log.Printf("[DEBUG] updating VPC network subnet %s", d.Id())
 		if _, err := subnet.Update(ctx, client, d.Id(), request); err != nil {
-			return diag.FromErr(errUpdatingObject(networkingSubnetV2Object, d.Id(), err))
+			return diag.FromErr(errUpdatingObject(vpcNetworkSubnetV2Object, d.Id(), err))
 		}
 	}
 
 	if d.HasChange("tags") {
 		values := expandToStringSlice(d.Get("tags").(*schema.Set).List())
 		if _, err := subnet.TagOperations(client, d.Id()).Replace(ctx, values); err != nil {
-			return diag.FromErr(errUpdatingObject(networkingSubnetV2Object, d.Id(), err))
+			return diag.FromErr(errUpdatingObject(vpcNetworkSubnetV2Object, d.Id(), err))
 		}
 	}
 
@@ -304,46 +289,46 @@ func resourceVPCNetworkSubnetV2Update(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceVPCNetworkSubnetV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	log.Printf("[DEBUG] deleting networking subnet %s", d.Id())
-	if err := subnet.Delete(ctx, client, d.Id()); err != nil {
-		return networkingCheckDeletedOnDelete(d, err, networkingSubnetV2Object, func() error {
-			_, confirmErr := subnet.Get(ctx, client, d.Id())
-
-			return confirmErr
-		})
+	log.Printf("[DEBUG] deleting VPC network subnet %s", d.Id())
+	if err := subnet.Delete(ctx, client, d.Id()); err != nil &&
+		!vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
+		return diag.FromErr(errDeletingObject(vpcNetworkSubnetV2Object, d.Id(), err))
 	}
 
 	return nil
 }
 
 func resourceVPCNetworkSubnetV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	if err := resourceNetworkingImportProjectRegion(d, meta); err != nil {
+	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 
 	return []*schema.ResourceData{d}, nil
 }
 
-// flattenNetworkingSubnetV2 writes an API subnet into the resource state.
-func flattenNetworkingSubnetV2(d *schema.ResourceData, found *subnet.Subnet) {
+func flattenVPCNetworkSubnetV2(d *schema.ResourceData, found *subnet.Subnet) {
+	flattenVPCNetworkSubnetV2Common(d, found)
+	d.Set("no_gateway", found.GatewayIP == nil)
+}
+
+func flattenVPCNetworkSubnetV2Common(d *schema.ResourceData, found *subnet.Subnet) {
 	d.Set("network_id", found.NetworkID)
 	d.Set("cidr", found.CIDR)
 	d.Set("name", found.Name)
 	d.Set("description", found.Description)
 	d.Set("ip_version", found.IPVersion)
-	d.Set("gateway_ip", derefString(found.GatewayIP))
-	d.Set("no_gateway", derefString(found.GatewayIP) == "")
+	d.Set("gateway_ip", found.GatewayIP)
 	d.Set("enable_dhcp", found.EnableDHCP)
-	d.Set("ipv6_address_mode", derefString(found.IPv6AddressMode))
-	d.Set("ipv6_ra_mode", derefString(found.IPv6RAMode))
+	d.Set("ipv6_address_mode", found.IPv6AddressMode)
+	d.Set("ipv6_ra_mode", found.IPv6RAMode)
 	d.Set("blocked", found.Blocked)
 
-	if err := d.Set("allocation_pool", flattenNetworkingSubnetV2AllocationPools(found.AllocationPools)); err != nil {
+	if err := d.Set("allocation_pool", flattenVPCNetworkSubnetV2AllocationPools(found.AllocationPools)); err != nil {
 		log.Print(errSettingComplexAttr("allocation_pool", err))
 	}
 	if err := d.Set("dns_nameservers", found.DNSNameservers); err != nil {
@@ -352,14 +337,15 @@ func flattenNetworkingSubnetV2(d *schema.ResourceData, found *subnet.Subnet) {
 	if err := d.Set("service_types", found.ServiceTypes); err != nil {
 		log.Print(errSettingComplexAttr("service_types", err))
 	}
+	if err := d.Set("host_routes", flattenVPCNetworkSubnetV2HostRoutes(found.HostRoutes)); err != nil {
+		log.Print(errSettingComplexAttr("host_routes", err))
+	}
 	if err := d.Set("all_tags", found.Tags); err != nil {
 		log.Print(errSettingComplexAttr("all_tags", err))
 	}
 }
 
-// validateNetworkingSubnetV2CIDR rejects a value that is not a CIDR or that is
-// not the network address of its own prefix.
-func validateNetworkingSubnetV2CIDR(v interface{}, k string) ([]string, []error) {
+func validateVPCNetworkSubnetV2CIDR(v interface{}, k string) ([]string, []error) {
 	value, ok := v.(string)
 	if !ok || value == "" {
 		return nil, nil
@@ -378,29 +364,7 @@ func validateNetworkingSubnetV2CIDR(v interface{}, k string) ([]string, []error)
 	return nil, nil
 }
 
-// validateNetworkingSubnetV2Config rejects the configuration errors that the
-// schema itself cannot express, before any API call happens.
-func validateNetworkingSubnetV2Config(d *schema.ResourceData) error {
-	nameservers := expandToStringSlice(d.Get("dns_nameservers").([]interface{}))
-	seen := make(map[string]struct{}, len(nameservers))
-	for _, nameserver := range nameservers {
-		if _, duplicate := seen[nameserver]; duplicate {
-			return fmt.Errorf("dns_nameservers must not contain duplicate entries: %s", nameserver)
-		}
-		seen[nameserver] = struct{}{}
-	}
-
-	if d.Get("ip_version").(int) == networkingSubnetV2IPVersion4 {
-		if d.Get("ipv6_address_mode").(string) != "" || d.Get("ipv6_ra_mode").(string) != "" {
-			return fmt.Errorf("ipv6_address_mode and ipv6_ra_mode require ip_version to be %d",
-				networkingSubnetV2IPVersion6)
-		}
-	}
-
-	return nil
-}
-
-func expandNetworkingSubnetV2AllocationPools(rawPools []interface{}) []subnet.AllocationPool {
+func expandVPCNetworkSubnetV2AllocationPools(rawPools []interface{}) []subnet.AllocationPool {
 	pools := make([]subnet.AllocationPool, 0, len(rawPools))
 
 	for _, rawPool := range rawPools {
@@ -418,7 +382,7 @@ func expandNetworkingSubnetV2AllocationPools(rawPools []interface{}) []subnet.Al
 	return pools
 }
 
-func flattenNetworkingSubnetV2AllocationPools(pools []subnet.AllocationPool) []interface{} {
+func flattenVPCNetworkSubnetV2AllocationPools(pools []subnet.AllocationPool) []interface{} {
 	result := make([]interface{}, 0, len(pools))
 
 	for _, pool := range pools {
@@ -431,7 +395,7 @@ func flattenNetworkingSubnetV2AllocationPools(pools []subnet.AllocationPool) []i
 	return result
 }
 
-func flattenNetworkingSubnetV2HostRoutes(routes []subnet.HostRoute) []interface{} {
+func flattenVPCNetworkSubnetV2HostRoutes(routes []subnet.HostRoute) []interface{} {
 	result := make([]interface{}, 0, len(routes))
 
 	for _, route := range routes {

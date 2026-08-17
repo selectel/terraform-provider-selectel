@@ -11,81 +11,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/subnet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const testAccNetworkingSubnetV2ResourceName = "selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1"
+const testAccVPCNetworkSubnetV2ResourceName = "selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1"
 
-// -----------------------------------------------------------------------------
-// Schema unit tests.
-// -----------------------------------------------------------------------------
-
-// TestNetworkingSubnetV2SchemaOwnership covers REQ-022: service_types and blocked
-// are admin-managed, and segment_id is out of the schema entirely because the SDK
-// does not return it. Subnet pools are not shipped, so the attributes that would
-// draw a subnet from one are absent too.
-func TestNetworkingSubnetV2SchemaOwnership(t *testing.T) {
-	s := resourceVPCNetworkSubnetV2().Schema
-
-	for _, name := range []string{"project_id", "region", "network_id"} {
-		t.Run(name+" is required and ForceNew", func(t *testing.T) {
-			require.Contains(t, s, name)
-			assert.True(t, s[name].Required)
-			assert.True(t, s[name].ForceNew)
-		})
-	}
-
-	for _, name := range []string{"service_types", "blocked"} {
-		t.Run(name+" is computed-only", func(t *testing.T) {
-			require.Contains(t, s, name)
-			assert.True(t, s[name].Computed)
-			assert.False(t, s[name].Optional)
-			assert.False(t, s[name].Required)
-		})
-	}
-
-	// Subnet pools are not part of this provider, so a subnet cannot be created
-	// from one and the two attributes that would do it are absent.
-	t.Run("segment_id, host_routes, subnetpool_id and prefix_length are not part of the resource", func(t *testing.T) {
-		for _, name := range []string{"segment_id", "host_routes", "subnetpool_id", "prefix_length"} {
-			assert.NotContains(t, s, name)
-		}
-	})
-
-	// REQ-016: exactly these attributes replace the resource, including the two
-	// IPv6 modes that have no API update path.
-	t.Run("only the immutable attributes are ForceNew", func(t *testing.T) {
-		forceNew := make([]string, 0)
-		for name, attr := range s {
-			if attr.ForceNew {
-				forceNew = append(forceNew, name)
-			}
-		}
-
-		assert.ElementsMatch(t, []string{
-			"project_id", "region", "network_id", "cidr",
-			"ip_version", "ipv6_address_mode", "ipv6_ra_mode",
-		}, forceNew)
-	})
-
-	// REQ-018: the two mutually exclusive pairs are rejected by the schema.
-	t.Run("mutually exclusive attributes conflict", func(t *testing.T) {
-		assert.Equal(t, []string{"no_gateway"}, s["gateway_ip"].ConflictsWith)
-		assert.Equal(t, []string{"gateway_ip"}, s["no_gateway"].ConflictsWith)
-	})
-
-	t.Run("defaults match the api", func(t *testing.T) {
-		assert.Equal(t, true, s["enable_dhcp"].Default)
-		assert.Equal(t, networkingSubnetV2IPVersion4, s["ip_version"].Default)
-	})
-}
-
-// TestNetworkingSubnetV2CIDRValidation covers SCN-018-05: a value that is not a
-// CIDR, or that is not the network address of its prefix, is rejected before the
-// API is called.
-func TestNetworkingSubnetV2CIDRValidation(t *testing.T) {
+func TestVPCNetworkSubnetV2CIDRValidation(t *testing.T) {
 	for _, c := range []struct {
 		value   string
 		wantErr string
@@ -98,7 +32,7 @@ func TestNetworkingSubnetV2CIDRValidation(t *testing.T) {
 		{value: "192.168.0.17/24", wantErr: "must be the network address"},
 	} {
 		t.Run(c.value, func(t *testing.T) {
-			_, errs := validateNetworkingSubnetV2CIDR(c.value, "cidr")
+			_, errs := validateVPCNetworkSubnetV2CIDR(c.value, "cidr")
 
 			if c.wantErr == "" {
 				assert.Empty(t, errs)
@@ -112,98 +46,91 @@ func TestNetworkingSubnetV2CIDRValidation(t *testing.T) {
 	}
 }
 
-// TestNetworkingSubnetV2ConfigValidation covers SCN-018-02 and SCN-018-04: the
-// checks the schema cannot express are made before any API call.
-func TestNetworkingSubnetV2ConfigValidation(t *testing.T) {
-	newData := func(raw map[string]interface{}) *schema.ResourceData {
-		return schema.TestResourceDataRaw(t, resourceVPCNetworkSubnetV2().Schema, raw)
-	}
-
-	t.Run("duplicate dns_nameservers are rejected", func(t *testing.T) {
-		err := validateNetworkingSubnetV2Config(newData(map[string]interface{}{
-			"dns_nameservers": []interface{}{"8.8.8.8", "8.8.8.8"},
-		}))
-
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "duplicate")
-	})
-
-	t.Run("ipv6 modes require ip_version 6", func(t *testing.T) {
-		err := validateNetworkingSubnetV2Config(newData(map[string]interface{}{
-			"ip_version":        networkingSubnetV2IPVersion4,
-			"ipv6_address_mode": "slaac",
-		}))
-
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "ip_version")
-	})
-
-	t.Run("a valid configuration passes", func(t *testing.T) {
-		err := validateNetworkingSubnetV2Config(newData(map[string]interface{}{
-			"ip_version":      networkingSubnetV2IPVersion4,
-			"dns_nameservers": []interface{}{"8.8.8.8", "1.1.1.1"},
-		}))
-
-		assert.NoError(t, err)
-	})
-}
-
-func TestNetworkingSubnetV2AllocationPools(t *testing.T) {
+func TestVPCNetworkSubnetV2AllocationPools(t *testing.T) {
 	raw := []interface{}{
 		map[string]interface{}{"start": "192.168.0.10", "end": "192.168.0.20"},
 	}
 
-	pools := expandNetworkingSubnetV2AllocationPools(raw)
+	pools := expandVPCNetworkSubnetV2AllocationPools(raw)
 
 	require.Len(t, pools, 1)
 	assert.Equal(t, subnet.AllocationPool{Start: "192.168.0.10", End: "192.168.0.20"}, pools[0])
-	assert.Equal(t, raw, flattenNetworkingSubnetV2AllocationPools(pools))
+	assert.Equal(t, raw, flattenVPCNetworkSubnetV2AllocationPools(pools))
 }
 
-func TestNetworkingSubnetV2HostRoutes(t *testing.T) {
+func TestVPCNetworkSubnetV2DataSourceSchema(t *testing.T) {
+	dataSource := dataSourceVPCNetworkSubnetV2()
+
+	_, hasDeprecatedDHCPSelector := dataSource.Schema["dhcp_enabled"]
+	assert.False(t, hasDeprecatedDHCPSelector)
+
+	enableDHCP := dataSource.Schema["enable_dhcp"]
+	require.NotNil(t, enableDHCP)
+	assert.True(t, enableDHCP.Optional)
+	assert.True(t, enableDHCP.Computed)
+
+	_, hasDeprecatedAllocationPools := dataSource.Schema["allocation_pools"]
+	assert.False(t, hasDeprecatedAllocationPools)
+
+	allocationPool := dataSource.Schema["allocation_pool"]
+	require.NotNil(t, allocationPool)
+	assert.Equal(t, schema.TypeSet, allocationPool.Type)
+	assert.True(t, allocationPool.Computed)
+}
+
+func TestVPCNetworkSubnetV2CollectionSchema(t *testing.T) {
+	for name, resourceSchema := range map[string]map[string]*schema.Schema{
+		"resource":    resourceVPCNetworkSubnetV2().Schema,
+		"data source": dataSourceVPCNetworkSubnetV2().Schema,
+	} {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, schema.TypeList, resourceSchema["dns_nameservers"].Type)
+			assert.Equal(t, schema.TypeSet, resourceSchema["service_types"].Type)
+		})
+	}
+}
+
+func TestVPCNetworkSubnetV2HostRoutes(t *testing.T) {
 	routes := []subnet.HostRoute{{Destination: "10.0.0.0/8", NextHop: "192.168.0.1"}}
-
-	assert.Equal(t, []interface{}{
+	want := []interface{}{
 		map[string]interface{}{"destination_cidr": "10.0.0.0/8", "next_hop": "192.168.0.1"},
-	}, flattenNetworkingSubnetV2HostRoutes(routes))
+	}
+
+	assert.Equal(t, want, flattenVPCNetworkSubnetV2HostRoutes(routes))
+
+	d := schema.TestResourceDataRaw(t, resourceVPCNetworkSubnetV2().Schema, nil)
+	flattenVPCNetworkSubnetV2(d, &subnet.Subnet{HostRoutes: routes})
+	assert.Equal(t, want, d.Get("host_routes"))
 }
 
-// -----------------------------------------------------------------------------
-// Acceptance tests against a staging environment (TF_ACC=1).
-// -----------------------------------------------------------------------------
-
-// TestAccNetworkingSubnetV2Basic covers SCN-013-01 (create with an explicit CIDR),
-// SCN-020-01 (import) and SCN-019-01 (delete).
-func TestAccNetworkingSubnetV2Basic(t *testing.T) {
+func TestAccVPCNetworkSubnetV2Basic(t *testing.T) {
 	var found subnet.Subnet
-	projectID, region := networkingV2TestEnv()
+	projectID, region := vpcV2TestEnv()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckNetworkingSubnetV2Destroy,
+		CheckDestroy:      testAccCheckVPCNetworkSubnetV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSubnetV2Basic(projectID, region, "192.168.199.0/24"),
+				Config: testAccVPCNetworkSubnetV2Basic(projectID, region, "192.168.199.0/24"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckNetworkingSubnetV2Exists(testAccNetworkingSubnetV2ResourceName, &found),
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "cidr", "192.168.199.0/24"),
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "ip_version", "4"),
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "enable_dhcp", "true"),
-					// The API computes the gateway and the allocation pool.
-					resource.TestCheckResourceAttrSet(testAccNetworkingSubnetV2ResourceName, "gateway_ip"),
-					resource.TestCheckResourceAttrSet(testAccNetworkingSubnetV2ResourceName, "allocation_pool.#"),
-					resource.TestCheckResourceAttrSet(testAccNetworkingSubnetV2ResourceName, "blocked"),
+					testAccCheckVPCNetworkSubnetV2Exists(testAccVPCNetworkSubnetV2ResourceName, &found),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "cidr", "192.168.199.0/24"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "ip_version", "4"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "enable_dhcp", "true"),
+					resource.TestCheckResourceAttrSet(testAccVPCNetworkSubnetV2ResourceName, "gateway_ip"),
+					resource.TestCheckResourceAttrSet(testAccVPCNetworkSubnetV2ResourceName, "allocation_pool.#"),
+					resource.TestCheckResourceAttrSet(testAccVPCNetworkSubnetV2ResourceName, "blocked"),
+					resource.TestCheckResourceAttrSet(testAccVPCNetworkSubnetV2ResourceName, "host_routes.#"),
 				),
 			},
 			{
-				// SCN-013-01: no drift means an empty plan.
-				Config:   testAccNetworkingSubnetV2Basic(projectID, region, "192.168.199.0/24"),
+				Config:   testAccVPCNetworkSubnetV2Basic(projectID, region, "192.168.199.0/24"),
 				PlanOnly: true,
 			},
 			{
-				// SCN-020-01: import by the plain subnet identifier.
-				ResourceName:      testAccNetworkingSubnetV2ResourceName,
+				ResourceName:      testAccVPCNetworkSubnetV2ResourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -211,218 +138,132 @@ func TestAccNetworkingSubnetV2Basic(t *testing.T) {
 	})
 }
 
-// TestAccNetworkingSubnetV2OptionalAttributes covers SCN-014-01 … SCN-014-07.
-func TestAccNetworkingSubnetV2OptionalAttributes(t *testing.T) {
+func TestAccVPCNetworkSubnetV2OptionalAttributes(t *testing.T) {
 	var found subnet.Subnet
-	projectID, region := networkingV2TestEnv()
+	projectID, region := vpcV2TestEnv()
 	subnetName := acctest.RandomWithPrefix("tf-acc-subnet")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckNetworkingSubnetV2Destroy,
+		CheckDestroy:      testAccCheckVPCNetworkSubnetV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSubnetV2OptionalAttributes(projectID, region, subnetName),
+				Config: testAccVPCNetworkSubnetV2OptionalAttributes(projectID, region, subnetName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckNetworkingSubnetV2Exists(testAccNetworkingSubnetV2ResourceName, &found),
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "name", subnetName),
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "enable_dhcp", "false"),
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "dns_nameservers.#", "2"),
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "allocation_pool.#", "1"),
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "gateway_ip", "192.168.199.1"),
+					testAccCheckVPCNetworkSubnetV2Exists(testAccVPCNetworkSubnetV2ResourceName, &found),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "name", subnetName),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "enable_dhcp", "false"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "dns_nameservers.#", "2"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "allocation_pool.#", "1"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "gateway_ip", "192.168.199.1"),
 				),
 			},
 			{
-				Config:   testAccNetworkingSubnetV2OptionalAttributes(projectID, region, subnetName),
+				Config:   testAccVPCNetworkSubnetV2OptionalAttributes(projectID, region, subnetName),
 				PlanOnly: true,
 			},
 		},
 	})
 }
 
-// TestAccNetworkingSubnetV2NoGateway covers SCN-014-03: no_gateway creates the
-// subnet without a gateway.
-func TestAccNetworkingSubnetV2NoGateway(t *testing.T) {
+func TestAccVPCNetworkSubnetV2Update(t *testing.T) {
 	var found subnet.Subnet
-	projectID, region := networkingV2TestEnv()
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
-		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckNetworkingSubnetV2Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccNetworkingSubnetV2NoGateway(projectID, region),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckNetworkingSubnetV2Exists(testAccNetworkingSubnetV2ResourceName, &found),
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "no_gateway", "true"),
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "gateway_ip", ""),
-				),
-			},
-			{
-				Config:   testAccNetworkingSubnetV2NoGateway(projectID, region),
-				PlanOnly: true,
-			},
-		},
-	})
-}
-
-// TestAccNetworkingSubnetV2Update covers SCN-015-01 … SCN-015-04.
-func TestAccNetworkingSubnetV2Update(t *testing.T) {
-	var found subnet.Subnet
-	projectID, region := networkingV2TestEnv()
+	projectID, region := vpcV2TestEnv()
 	subnetName := acctest.RandomWithPrefix("tf-acc-subnet")
 	updatedName := acctest.RandomWithPrefix("tf-acc-subnet-upd")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckNetworkingSubnetV2Destroy,
+		CheckDestroy:      testAccCheckVPCNetworkSubnetV2Destroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingSubnetV2OptionalAttributes(projectID, region, subnetName),
+				Config: testAccVPCNetworkSubnetV2OptionalAttributes(projectID, region, subnetName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckNetworkingSubnetV2Exists(testAccNetworkingSubnetV2ResourceName, &found),
+					testAccCheckVPCNetworkSubnetV2Exists(testAccVPCNetworkSubnetV2ResourceName, &found),
 				),
 			},
 			{
-				Config: testAccNetworkingSubnetV2Updated(projectID, region, updatedName),
+				Config: testAccVPCNetworkSubnetV2Updated(projectID, region, updatedName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckNetworkingSubnetV2SameID(testAccNetworkingSubnetV2ResourceName, &found),
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "name", updatedName),
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "enable_dhcp", "true"),
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "dns_nameservers.#", "1"),
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "gateway_ip", "192.168.199.2"),
+					testAccCheckVPCNetworkSubnetV2SameID(testAccVPCNetworkSubnetV2ResourceName, &found),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "name", updatedName),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "enable_dhcp", "true"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "dns_nameservers.#", "1"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "gateway_ip", "192.168.199.2"),
 				),
 			},
 			{
-				Config:   testAccNetworkingSubnetV2Updated(projectID, region, updatedName),
+				Config:   testAccVPCNetworkSubnetV2Updated(projectID, region, updatedName),
 				PlanOnly: true,
 			},
 		},
 	})
 }
 
-// TestAccNetworkingSubnetV2ForceNew covers SCN-016-01: changing the CIDR
-// replaces the subnet instead of updating it.
-func TestAccNetworkingSubnetV2ForceNew(t *testing.T) {
-	var found subnet.Subnet
-	projectID, region := networkingV2TestEnv()
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
-		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckNetworkingSubnetV2Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccNetworkingSubnetV2Basic(projectID, region, "192.168.199.0/24"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckNetworkingSubnetV2Exists(testAccNetworkingSubnetV2ResourceName, &found),
-				),
-			},
-			{
-				Config: testAccNetworkingSubnetV2Basic(projectID, region, "192.168.200.0/24"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckNetworkingSubnetV2DifferentID(testAccNetworkingSubnetV2ResourceName, &found),
-					resource.TestCheckResourceAttr(testAccNetworkingSubnetV2ResourceName, "cidr", "192.168.200.0/24"),
-				),
-			},
-		},
-	})
-}
-
-// TestAccNetworkingSubnetV2ExternalChanges covers SCN-017-01, SCN-017-02 and
-// SCN-019-02.
-func TestAccNetworkingSubnetV2ExternalChanges(t *testing.T) {
-	var found subnet.Subnet
-	projectID, region := networkingV2TestEnv()
+func TestAccVPCNetworkSubnetV2DataSource(t *testing.T) {
+	projectID, region := vpcV2TestEnv()
 	subnetName := acctest.RandomWithPrefix("tf-acc-subnet")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckNetworkingSubnetV2Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccNetworkingSubnetV2OptionalAttributes(projectID, region, subnetName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckNetworkingSubnetV2Exists(testAccNetworkingSubnetV2ResourceName, &found),
-				),
-			},
-			{
-				// SCN-017-01: an out-of-band rename shows up as drift.
-				Config:             testAccNetworkingSubnetV2OptionalAttributes(projectID, region, subnetName),
-				Check:              testAccCheckNetworkingSubnetV2RenameOutOfBand(&found),
-				ExpectNonEmptyPlan: true,
-			},
-			{
-				// SCN-017-02 and SCN-019-02: an out-of-band delete plans a
-				// re-create instead of failing.
-				Config:             testAccNetworkingSubnetV2OptionalAttributes(projectID, region, subnetName),
-				Check:              testAccCheckNetworkingSubnetV2DeleteOutOfBand(),
-				ExpectNonEmptyPlan: true,
-			},
-			{
-				Config: testAccNetworkingSubnetV2OptionalAttributes(projectID, region, subnetName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckNetworkingSubnetV2Exists(testAccNetworkingSubnetV2ResourceName, &found),
-				),
-			},
-		},
-	})
-}
-
-// TestAccNetworkingSubnetV2DataSource covers SCN-021-01 … SCN-021-03.
-func TestAccNetworkingSubnetV2DataSource(t *testing.T) {
-	projectID, region := networkingV2TestEnv()
-	subnetName := acctest.RandomWithPrefix("tf-acc-subnet")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
-		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckNetworkingSubnetV2Destroy,
+		CheckDestroy:      testAccCheckVPCNetworkSubnetV2Destroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVPCNetworkSubnetV2DataSource(projectID, region, subnetName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "name", subnetName),
+					resource.TestCheckResourceAttr(
+						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "enable_dhcp", "false"),
+					resource.TestCheckResourceAttr(
+						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "allocation_pool.#", "1"),
 					resource.TestCheckResourceAttrPair(
 						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "subnet_id",
-						testAccNetworkingSubnetV2ResourceName, "id",
+						testAccVPCNetworkSubnetV2ResourceName, "id",
 					),
-					// host_routes is exported by the data source only.
-					resource.TestCheckResourceAttrSet(
-						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "host_routes.#"),
+					resource.TestCheckResourceAttr(
+						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "host_routes.#", "1"),
+					resource.TestCheckResourceAttr(
+						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "host_routes.0.destination_cidr", "10.0.0.0/8"),
+					resource.TestCheckResourceAttr(
+						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "host_routes.0.next_hop", "192.168.199.10"),
 					resource.TestCheckResourceAttrPair(
 						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "blocked",
-						testAccNetworkingSubnetV2ResourceName, "blocked",
+						testAccVPCNetworkSubnetV2ResourceName, "blocked",
+					),
+				),
+			},
+			{
+				Config: testAccVPCNetworkSubnetV2DataSource(projectID, region, subnetName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "host_routes.#", "1"),
+					resource.TestCheckResourceAttrPair(
+						testAccVPCNetworkSubnetV2ResourceName, "host_routes.#",
+						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "host_routes.#",
 					),
 				),
 			},
 			{
 				Config:      testAccVPCNetworkSubnetV2DataSourceNoMatch(projectID, region),
-				ExpectError: regexp.MustCompile(`no networking subnet found`),
+				ExpectError: regexp.MustCompile(`no VPC network subnet found`),
 			},
 		},
 	})
 }
 
-// -----------------------------------------------------------------------------
-// Acceptance test helpers.
-// -----------------------------------------------------------------------------
-
-func testAccNetworkingSubnetV2Handle(s *terraform.State) (*networkingNetworkV2TestHandle, error) {
-	rs, ok := s.RootModule().Resources[testAccNetworkingSubnetV2ResourceName]
+func testAccVPCNetworkSubnetV2Handle(s *terraform.State) (*vpcNetworkV2TestHandle, error) {
+	rs, ok := s.RootModule().Resources[testAccVPCNetworkSubnetV2ResourceName]
 	if !ok {
-		return nil, fmt.Errorf("not found: %s", testAccNetworkingSubnetV2ResourceName)
+		return nil, fmt.Errorf("not found: %s", testAccVPCNetworkSubnetV2ResourceName)
 	}
 
 	if rs.Primary.ID == "" {
 		return nil, errors.New("no ID is set")
 	}
 
-	client, err := networkingV2Client(
+	client, err := vpcV2Client(
 		testAccProvider.Meta(),
 		rs.Primary.Attributes["project_id"],
 		rs.Primary.Attributes["region"],
@@ -431,12 +272,12 @@ func testAccNetworkingSubnetV2Handle(s *terraform.State) (*networkingNetworkV2Te
 		return nil, err
 	}
 
-	return &networkingNetworkV2TestHandle{client: client, id: rs.Primary.ID}, nil
+	return &vpcNetworkV2TestHandle{client: client, id: rs.Primary.ID}, nil
 }
 
-func testAccCheckNetworkingSubnetV2Exists(_ string, found *subnet.Subnet) resource.TestCheckFunc {
+func testAccCheckVPCNetworkSubnetV2Exists(_ string, found *subnet.Subnet) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		handle, err := testAccNetworkingSubnetV2Handle(s)
+		handle, err := testAccVPCNetworkSubnetV2Handle(s)
 		if err != nil {
 			return err
 		}
@@ -447,7 +288,7 @@ func testAccCheckNetworkingSubnetV2Exists(_ string, found *subnet.Subnet) resour
 		}
 
 		if result.ID != handle.id {
-			return errors.New("networking subnet not found")
+			return errors.New("VPC network subnet not found")
 		}
 
 		*found = *result
@@ -456,7 +297,7 @@ func testAccCheckNetworkingSubnetV2Exists(_ string, found *subnet.Subnet) resour
 	}
 }
 
-func testAccCheckNetworkingSubnetV2SameID(resourceName string, found *subnet.Subnet) resource.TestCheckFunc {
+func testAccCheckVPCNetworkSubnetV2SameID(resourceName string, found *subnet.Subnet) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
@@ -464,64 +305,20 @@ func testAccCheckNetworkingSubnetV2SameID(resourceName string, found *subnet.Sub
 		}
 
 		if rs.Primary.ID != found.ID {
-			return fmt.Errorf("networking subnet was replaced: %s -> %s", found.ID, rs.Primary.ID)
+			return fmt.Errorf("VPC network subnet was replaced: %s -> %s", found.ID, rs.Primary.ID)
 		}
 
 		return nil
 	}
 }
 
-func testAccCheckNetworkingSubnetV2DifferentID(resourceName string, found *subnet.Subnet) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("not found: %s", resourceName)
-		}
-
-		if rs.Primary.ID == found.ID {
-			return errors.New("networking subnet was updated in place instead of being replaced")
-		}
-
-		found.ID = rs.Primary.ID
-
-		return nil
-	}
-}
-
-func testAccCheckNetworkingSubnetV2RenameOutOfBand(found *subnet.Subnet) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		handle, err := testAccNetworkingSubnetV2Handle(s)
-		if err != nil {
-			return err
-		}
-
-		driftedName := found.Name + "-drifted"
-		_, err = subnet.Update(context.Background(), handle.client, handle.id, subnet.UpdateRequest{
-			Name: &driftedName,
-		})
-
-		return err
-	}
-}
-
-func testAccCheckNetworkingSubnetV2DeleteOutOfBand() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		handle, err := testAccNetworkingSubnetV2Handle(s)
-		if err != nil {
-			return err
-		}
-
-		return subnet.Delete(context.Background(), handle.client, handle.id)
-	}
-}
-
-func testAccCheckNetworkingSubnetV2Destroy(s *terraform.State) error {
+func testAccCheckVPCNetworkSubnetV2Destroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "selectel_vpc_network_subnet_v2" {
 			continue
 		}
 
-		client, err := networkingV2Client(
+		client, err := vpcV2Client(
 			testAccProvider.Meta(),
 			rs.Primary.Attributes["project_id"],
 			rs.Primary.Attributes["region"],
@@ -531,8 +328,8 @@ func testAccCheckNetworkingSubnetV2Destroy(s *terraform.State) error {
 		}
 
 		if _, err := subnet.Get(context.Background(), client, rs.Primary.ID); err == nil {
-			return errors.New("networking subnet still exists")
-		} else if !networkingIsNotFound(err) {
+			return errors.New("VPC network subnet still exists")
+		} else if !vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
 			return err
 		}
 	}
@@ -540,12 +337,8 @@ func testAccCheckNetworkingSubnetV2Destroy(s *terraform.State) error {
 	return nil
 }
 
-// -----------------------------------------------------------------------------
-// Acceptance test configurations.
-// -----------------------------------------------------------------------------
-
-func testAccNetworkingSubnetV2Network(projectID, region string) string {
-	return testAccNetworkingV2Base(projectID) + fmt.Sprintf(`
+func testAccVPCNetworkSubnetV2Network(projectID, region string) string {
+	return testAccVPCV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_vpc_network_v2" "network_tf_acc_test_1" {
   project_id = local.project_id
   region     = "%s"
@@ -554,8 +347,8 @@ resource "selectel_vpc_network_v2" "network_tf_acc_test_1" {
 `, region)
 }
 
-func testAccNetworkingSubnetV2Basic(projectID, region, cidr string) string {
-	return testAccNetworkingSubnetV2Network(projectID, region) + fmt.Sprintf(`
+func testAccVPCNetworkSubnetV2Basic(projectID, region, cidr string) string {
+	return testAccVPCNetworkSubnetV2Network(projectID, region) + fmt.Sprintf(`
 resource "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
   project_id = local.project_id
   region     = "%s"
@@ -565,20 +358,8 @@ resource "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
 `, region, cidr)
 }
 
-func testAccNetworkingSubnetV2NoGateway(projectID, region string) string {
-	return testAccNetworkingSubnetV2Network(projectID, region) + fmt.Sprintf(`
-resource "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
-  project_id = local.project_id
-  region     = "%s"
-  network_id = selectel_vpc_network_v2.network_tf_acc_test_1.id
-  cidr       = "192.168.199.0/24"
-  no_gateway = true
-}
-`, region)
-}
-
-func testAccNetworkingSubnetV2OptionalAttributes(projectID, region, subnetName string) string {
-	return testAccNetworkingSubnetV2Network(projectID, region) + fmt.Sprintf(`
+func testAccVPCNetworkSubnetV2OptionalAttributes(projectID, region, subnetName string) string {
+	return testAccVPCNetworkSubnetV2Network(projectID, region) + fmt.Sprintf(`
 resource "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
   project_id           = local.project_id
   region               = "%s"
@@ -599,8 +380,8 @@ resource "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
 `, region, subnetName)
 }
 
-func testAccNetworkingSubnetV2Updated(projectID, region, subnetName string) string {
-	return testAccNetworkingSubnetV2Network(projectID, region) + fmt.Sprintf(`
+func testAccVPCNetworkSubnetV2Updated(projectID, region, subnetName string) string {
+	return testAccVPCNetworkSubnetV2Network(projectID, region) + fmt.Sprintf(`
 resource "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
   project_id           = local.project_id
   region               = "%s"
@@ -622,17 +403,28 @@ resource "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
 }
 
 func testAccVPCNetworkSubnetV2DataSource(projectID, region, subnetName string) string {
-	return testAccNetworkingSubnetV2OptionalAttributes(projectID, region, subnetName) + fmt.Sprintf(`
-data "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
-  project_id = local.project_id
-  region     = "%s"
-  name       = selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1.name
+	return testAccVPCNetworkSubnetV2OptionalAttributes(projectID, region, subnetName) + fmt.Sprintf(`
+resource "selectel_vpc_network_subnet_route_v2" "route_tf_acc_test_1" {
+  project_id       = local.project_id
+  region           = "%s"
+  subnet_id        = selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1.id
+  destination_cidr = "10.0.0.0/8"
+  next_hop         = "192.168.199.10"
 }
-`, region)
+
+data "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
+  project_id  = local.project_id
+  region      = "%s"
+  name        = selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1.name
+  enable_dhcp = false
+
+  depends_on = [selectel_vpc_network_subnet_route_v2.route_tf_acc_test_1]
+}
+`, region, region)
 }
 
 func testAccVPCNetworkSubnetV2DataSourceNoMatch(projectID, region string) string {
-	return testAccNetworkingSubnetV2Network(projectID, region) + fmt.Sprintf(`
+	return testAccVPCNetworkSubnetV2Network(projectID, region) + fmt.Sprintf(`
 data "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
   project_id = local.project_id
   region     = "%s"

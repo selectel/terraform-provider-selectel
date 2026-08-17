@@ -6,11 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// resourceNetworkingImportProjectRegion fills project_id and region from the
-// provider-level configuration during import. Neutron import IDs carry only the
-// remote identifier, following the pattern already established by the other
-// resources of this provider (see resourceMKSClusterV1ImportState).
-func resourceNetworkingImportProjectRegion(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCImportProjectRegion(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
 	if config.ProjectID == "" {

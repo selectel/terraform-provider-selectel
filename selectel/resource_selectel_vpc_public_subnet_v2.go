@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 
@@ -150,14 +151,18 @@ func resourceVPCSubnetV2Read(_ context.Context, d *schema.ResourceData, meta int
 	d.Set("region", subnet.Region)
 	d.Set("status", subnet.Status)
 
-	prefixLength, err := getPrefixLengthFromCIDR(subnet.CIDR)
+	ip, network, err := net.ParseCIDR(subnet.CIDR)
 	if err != nil {
 		log.Print(errParsingPrefixLength(objectSubnet, d.Id(), err))
 	} else {
+		prefixLength, _ := network.Mask.Size()
 		d.Set("prefix_length", prefixLength)
+		if ip.To4() == nil {
+			d.Set("ip_version", string(selvpcclient.IPv6))
+		} else {
+			d.Set("ip_version", string(selvpcclient.IPv4))
+		}
 	}
-
-	d.Set("ip_version", getIPVersionFromPrefixLength(prefixLength))
 
 	associatedServers := serversMapsFromStructs(subnet.Servers)
 	if err := d.Set("servers", associatedServers); err != nil {

@@ -11,7 +11,7 @@ import (
 	"github.com/selectel/vpc-go/pkg/v2/floatingip"
 )
 
-const networkingFloatingIPAssociateV2Object = "networking floating ip association"
+const vpcFloatingIPAssociateV2Object = "VPC floating ip association"
 
 func resourceVPCFloatingIPAssociateV2() *schema.Resource {
 	return &schema.Resource{
@@ -54,7 +54,7 @@ func resourceVPCFloatingIPAssociateV2() *schema.Resource {
 func resourceVPCFloatingIPAssociateV2Create(
 	ctx context.Context, d *schema.ResourceData, meta interface{},
 ) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -69,7 +69,7 @@ func resourceVPCFloatingIPAssociateV2Create(
 		return diag.FromErr(fmt.Errorf("error finding floating ip %q: %w", address, err))
 	}
 
-	floatingIPID, err := networkingFloatingIPAssociateV2Result(found, address)
+	floatingIPID, err := vpcFloatingIPAssociateV2Result(found, address)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -81,9 +81,9 @@ func resourceVPCFloatingIPAssociateV2Create(
 		request.FixedIPAddress = vpc.Value(fixedIP.(string))
 	}
 
-	log.Printf("[DEBUG] associating networking floating ip %s", floatingIPID)
+	log.Printf("[DEBUG] associating VPC floating ip %s", floatingIPID)
 	if _, err := floatingip.Update(ctx, client, floatingIPID, request); err != nil {
-		return diag.FromErr(errUpdatingObject(networkingFloatingIPAssociateV2Object, floatingIPID, err))
+		return diag.FromErr(errUpdatingObject(vpcFloatingIPAssociateV2Object, floatingIPID, err))
 	}
 
 	d.SetId(floatingIPID)
@@ -94,18 +94,18 @@ func resourceVPCFloatingIPAssociateV2Create(
 func resourceVPCFloatingIPAssociateV2Read(
 	ctx context.Context, d *schema.ResourceData, meta interface{},
 ) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	log.Printf("[DEBUG] getting networking floating ip association %s", d.Id())
+	log.Printf("[DEBUG] getting VPC floating ip association %s", d.Id())
 	found, err := floatingip.Get(ctx, client, d.Id())
 	if err != nil {
-		return networkingCheckDeleted(d, err, networkingFloatingIPAssociateV2Object)
+		return vpcCheckDeleted(d, err, vpcFloatingIPAssociateV2Object)
 	}
 
-	flattenNetworkingFloatingIPAssociateV2(d, found)
+	flattenVPCFloatingIPAssociateV2(d, found)
 
 	return nil
 }
@@ -113,7 +113,7 @@ func resourceVPCFloatingIPAssociateV2Read(
 func resourceVPCFloatingIPAssociateV2Update(
 	ctx context.Context, d *schema.ResourceData, meta interface{},
 ) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -129,9 +129,9 @@ func resourceVPCFloatingIPAssociateV2Update(
 		}
 	}
 
-	log.Printf("[DEBUG] updating networking floating ip association %s", d.Id())
+	log.Printf("[DEBUG] updating VPC floating ip association %s", d.Id())
 	if _, err := floatingip.Update(ctx, client, d.Id(), request); err != nil {
-		return diag.FromErr(errUpdatingObject(networkingFloatingIPAssociateV2Object, d.Id(), err))
+		return diag.FromErr(errUpdatingObject(vpcFloatingIPAssociateV2Object, d.Id(), err))
 	}
 
 	return resourceVPCFloatingIPAssociateV2Read(ctx, d, meta)
@@ -140,19 +140,20 @@ func resourceVPCFloatingIPAssociateV2Update(
 func resourceVPCFloatingIPAssociateV2Delete(
 	ctx context.Context, d *schema.ResourceData, meta interface{},
 ) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	log.Printf("[DEBUG] disassociating networking floating ip %s", d.Id())
+	log.Printf("[DEBUG] disassociating VPC floating ip %s", d.Id())
 	if _, err := floatingip.Update(ctx, client, d.Id(), floatingip.UpdateRequest{
 		PortID: vpc.Null[string](),
 	}); err != nil {
-		// Unlike deletion of a managed object, absence of the floating IP is
-		// an error here: this resource owns only the association and must not
-		// claim that it detached an object that no longer exists.
-		return diag.FromErr(errUpdatingObject(networkingFloatingIPAssociateV2Object, d.Id(), err))
+		if vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
+			return nil
+		}
+
+		return diag.FromErr(errUpdatingObject(vpcFloatingIPAssociateV2Object, d.Id(), err))
 	}
 
 	return nil
@@ -161,14 +162,14 @@ func resourceVPCFloatingIPAssociateV2Delete(
 func resourceVPCFloatingIPAssociateV2ImportState(
 	_ context.Context, d *schema.ResourceData, meta interface{},
 ) ([]*schema.ResourceData, error) {
-	if err := resourceNetworkingImportProjectRegion(d, meta); err != nil {
+	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 
 	return []*schema.ResourceData{d}, nil
 }
 
-func networkingFloatingIPAssociateV2Result(
+func vpcFloatingIPAssociateV2Result(
 	found []floatingip.FloatingIP, address string,
 ) (string, error) {
 	switch len(found) {
@@ -181,10 +182,10 @@ func networkingFloatingIPAssociateV2Result(
 	}
 }
 
-func flattenNetworkingFloatingIPAssociateV2(
+func flattenVPCFloatingIPAssociateV2(
 	d *schema.ResourceData, found *floatingip.FloatingIP,
 ) {
 	d.Set("floating_ip", found.FloatingIPAddress)
-	d.Set("port_id", derefString(found.PortID))
-	d.Set("fixed_ip", derefString(found.FixedIPAddress))
+	d.Set("port_id", found.PortID)
+	d.Set("fixed_ip", found.FixedIPAddress)
 }

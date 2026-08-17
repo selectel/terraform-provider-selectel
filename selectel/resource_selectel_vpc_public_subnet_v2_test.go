@@ -3,6 +3,7 @@ package selectel
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"testing"
 
@@ -19,6 +20,8 @@ func TestAccVPCV2SubnetBasic(t *testing.T) {
 		project projects.Project
 	)
 	projectName := acctest.RandomWithPrefix("tf-acc")
+	_, region := vpcV2TestEnv()
+	prefixLength := testAccVPCPublicSubnetPrefixLength(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -26,11 +29,11 @@ func TestAccVPCV2SubnetBasic(t *testing.T) {
 		CheckDestroy:      testAccCheckVPCV2SubnetDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccVPCV2SubnetBasic(projectName),
+				Config: testAccVPCV2SubnetBasic(projectName, region, prefixLength),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccCheckVPCV2SubnetExists("selectel_vpc_public_subnet_v2.subnet_tf_acc_test_1", &subnet),
-					resource.TestCheckResourceAttr("selectel_vpc_public_subnet_v2.subnet_tf_acc_test_1", "region", "ru-3"),
+					resource.TestCheckResourceAttr("selectel_vpc_public_subnet_v2.subnet_tf_acc_test_1", "region", region),
 					resource.TestCheckResourceAttr("selectel_vpc_public_subnet_v2.subnet_tf_acc_test_1", "status", "DOWN"),
 				),
 			},
@@ -91,7 +94,23 @@ func testAccCheckVPCV2SubnetExists(n string, subnet *subnets.Subnet) resource.Te
 	}
 }
 
-func testAccVPCV2SubnetBasic(projectName string) string {
+func testAccVPCPublicSubnetPrefixLength(t *testing.T) int {
+	t.Helper()
+
+	raw := os.Getenv("INFRA_PUBLIC_SUBNET_PREFIX_LENGTH")
+	if raw == "" {
+		return 29
+	}
+
+	prefixLength, err := strconv.Atoi(raw)
+	if err != nil || prefixLength < 24 || prefixLength > 29 {
+		t.Fatalf("INFRA_PUBLIC_SUBNET_PREFIX_LENGTH must be an integer from 24 to 29, got %q", raw)
+	}
+
+	return prefixLength
+}
+
+func testAccVPCV2SubnetBasic(projectName, region string, prefixLength int) string {
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
@@ -99,6 +118,16 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
 
 resource "selectel_vpc_public_subnet_v2" "subnet_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
-  region     = "ru-3"
-}`, projectName)
+  region     = "%s"
+  prefix_length = %d
+}`, projectName, region, prefixLength)
+}
+
+func testAccVPCV2SubnetExistingProject(projectID, region string, prefixLength int) string {
+	return fmt.Sprintf(`
+resource "selectel_vpc_public_subnet_v2" "subnet_tf_acc_test_1" {
+  project_id    = %q
+  region        = %q
+  prefix_length = %d
+}`, projectID, region, prefixLength)
 }

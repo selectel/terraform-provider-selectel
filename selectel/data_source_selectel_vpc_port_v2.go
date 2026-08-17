@@ -75,14 +75,10 @@ func dataSourceVPCPortV2() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
-			// fixed_ip matches a port that has this address among its fixed IPs,
-			// not one whose whole set equals it.
 			"fixed_ip": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			// security_group_ids matches a port that has at least one of the
-			// given groups assigned.
 			"security_group_ids": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -93,22 +89,7 @@ func dataSourceVPCPortV2() *schema.Resource {
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"all_fixed_ips": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"subnet_id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"ip_address": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
-			},
+			"all_fixed_ips": vpcComputedFixedIPsSchema(),
 			"all_security_group_ids": {
 				Type:     schema.TypeSet,
 				Computed: true,
@@ -150,38 +131,6 @@ func dataSourceVPCPortV2() *schema.Resource {
 					},
 				},
 			},
-			"binding": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"vnic_type": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
-			},
-			"dns_assignment": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"ip_address": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"hostname": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"fqdn": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
-			},
 			"all_tags": {
 				Type:     schema.TypeSet,
 				Computed: true,
@@ -189,10 +138,6 @@ func dataSourceVPCPortV2() *schema.Resource {
 			},
 			"port_security_enabled": {
 				Type:     schema.TypeBool,
-				Computed: true,
-			},
-			"qos_policy_id": {
-				Type:     schema.TypeString,
 				Computed: true,
 			},
 			"dhcp_blocked": {
@@ -208,11 +153,46 @@ func dataSourceVPCPortV2() *schema.Resource {
 }
 
 func dataSourceVPCPortV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	filters := vpcPortV2ListFilters(d)
+
+	found, err := port.List(ctx, client, vpc.ListOptions{
+		SelectionOptions: vpc.SelectionOptions{Filters: filters},
+	})
+	if err != nil {
+		return diag.FromErr(errGettingObjects(vpcPortV2Object, err))
+	}
+
+	matched := filterVPCPortV2BySecurityGroups(d, found)
+
+	switch len(matched) {
+	case 0:
+		return diag.FromErr(fmt.Errorf(
+			"no %s found for the given search criteria, please adjust them and try again",
+			vpcPortV2Object))
+	case 1:
+	default:
+		return diag.FromErr(fmt.Errorf(
+			"%d %ss found for the given search criteria, please specify a more precise search",
+			len(matched), vpcPortV2Object))
+	}
+
+	result := matched[0]
+
+	d.SetId(result.ID)
+	d.Set("port_id", result.ID)
+	flattenVPCPortV2(d, &result)
+
+	log.Printf("[DEBUG] found VPC port %s", result.ID)
+
+	return nil
+}
+
+func vpcPortV2ListFilters(d *schema.ResourceData) map[string][]string {
 	filters := make(map[string][]string)
 	for schemaKey, queryKey := range map[string]string{
 		"port_id":      "id",
@@ -232,48 +212,17 @@ func dataSourceVPCPortV2Read(ctx context.Context, d *schema.ResourceData, meta i
 	if v, ok := d.GetOkExists("admin_state_up"); ok {
 		filters["admin_state_up"] = []string{strconv.FormatBool(v.(bool))}
 	}
+	if v, ok := d.GetOk("fixed_ip"); ok {
+		filters["fixed_ips"] = []string{"ip_address=" + v.(string)}
+	}
 	if v, ok := d.GetOk("tags"); ok {
 		filters["tags"] = []string{strings.Join(expandToStringSlice(v.(*schema.Set).List()), ",")}
 	}
 
-	found, err := port.List(ctx, client, vpc.ListOptions{
-		SelectionOptions: vpc.SelectionOptions{Filters: filters},
-	})
-	if err != nil {
-		return diag.FromErr(errGettingObjects(networkingPortV2Object, err))
-	}
-
-	matched := filterNetworkingPortV2(d, found)
-
-	switch len(matched) {
-	case 0:
-		return diag.FromErr(fmt.Errorf(
-			"no %s found for the given search criteria, please adjust them and try again",
-			networkingPortV2Object))
-	case 1:
-	default:
-		return diag.FromErr(fmt.Errorf(
-			"%d %ss found for the given search criteria, please specify a more precise search",
-			len(matched), networkingPortV2Object))
-	}
-
-	result := matched[0]
-
-	d.SetId(result.ID)
-	d.Set("port_id", result.ID)
-	flattenNetworkingPortV2(d, &result)
-
-	log.Printf("[DEBUG] found networking port %s", result.ID)
-
-	return nil
+	return filters
 }
 
-// filterNetworkingPortV2 applies the two selectors the list API cannot express:
-// a single fixed IP that must be among the port's addresses, and a set of
-// security groups of which the port must have at least one.
-func filterNetworkingPortV2(d *schema.ResourceData, candidates []port.Port) []port.Port {
-	wantFixedIP, hasFixedIP := d.GetOk("fixed_ip")
-
+func filterVPCPortV2BySecurityGroups(d *schema.ResourceData, candidates []port.Port) []port.Port {
 	var wantGroups []string
 	if v, ok := d.GetOk("security_group_ids"); ok {
 		wantGroups = expandToStringSlice(v.(*schema.Set).List())
@@ -282,10 +231,7 @@ func filterNetworkingPortV2(d *schema.ResourceData, candidates []port.Port) []po
 	matched := make([]port.Port, 0, len(candidates))
 
 	for _, candidate := range candidates {
-		if hasFixedIP && !networkingPortV2HasFixedIP(candidate, wantFixedIP.(string)) {
-			continue
-		}
-		if len(wantGroups) > 0 && !networkingPortV2HasAnyGroup(candidate, wantGroups) {
+		if len(wantGroups) > 0 && !vpcPortV2HasAnyGroup(candidate, wantGroups) {
 			continue
 		}
 
@@ -295,17 +241,7 @@ func filterNetworkingPortV2(d *schema.ResourceData, candidates []port.Port) []po
 	return matched
 }
 
-func networkingPortV2HasFixedIP(candidate port.Port, address string) bool {
-	for _, fixedIP := range candidate.FixedIPs {
-		if fixedIP.IPAddress == address {
-			return true
-		}
-	}
-
-	return false
-}
-
-func networkingPortV2HasAnyGroup(candidate port.Port, groups []string) bool {
+func vpcPortV2HasAnyGroup(candidate port.Port, groups []string) bool {
 	assigned := make(map[string]struct{}, len(candidate.SecurityGroups))
 	for _, group := range candidate.SecurityGroups {
 		assigned[group] = struct{}{}

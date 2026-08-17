@@ -8,9 +8,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/router"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/pointer"
 )
 
-const networkingRouterV2Object = "networking router"
+const vpcRouterV2Object = "VPC router"
 
 func resourceVPCRouterV2() *schema.Resource {
 	return &schema.Resource{
@@ -44,11 +45,8 @@ func resourceVPCRouterV2() *schema.Resource {
 			"admin_state_up": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Computed: true,
+				Default:  true,
 			},
-			// The external gateway is limited to the two sub-attributes the
-			// cloud's policy grants to a project owner. The addresses of the
-			// gateway are assigned by the API and reported in external_fixed_ip.
 			"external_network_id": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -58,12 +56,6 @@ func resourceVPCRouterV2() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				RequiredWith: []string{"external_network_id"},
-			},
-			"flavor_id": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
 			},
 			"availability_zone_hints": {
 				Type:     schema.TypeList,
@@ -91,24 +83,7 @@ func resourceVPCRouterV2() *schema.Resource {
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			// Read-only: the policy reserves writing external_fixed_ips for the
-			// Keystone admin role.
-			"external_fixed_ip": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"subnet_id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"ip_address": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
-			},
+			"external_fixed_ip": vpcComputedFixedIPsSchema(),
 			"blocked": {
 				Type:     schema.TypeBool,
 				Computed: true,
@@ -118,36 +93,32 @@ func resourceVPCRouterV2() *schema.Resource {
 }
 
 func resourceVPCRouterV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	request := router.CreateRequest{}
+	request := router.CreateRequest{
+		AdminStateUp: pointer.To(d.Get("admin_state_up").(bool)),
+	}
 	if v, ok := d.GetOk("name"); ok {
-		request.Name = vpcString(v.(string))
+		request.Name = pointer.To(v.(string))
 	}
 	if v, ok := d.GetOk("description"); ok {
-		request.Description = vpcString(v.(string))
-	}
-	if v, ok := d.GetOkExists("admin_state_up"); ok { //nolint:staticcheck // GetOkExists distinguishes an explicit false from an unset bool
-		request.AdminStateUp = vpcBool(v.(bool))
-	}
-	if v, ok := d.GetOk("flavor_id"); ok {
-		request.FlavorID = vpcString(v.(string))
+		request.Description = pointer.To(v.(string))
 	}
 	if v, ok := d.GetOk("availability_zone_hints"); ok {
 		hints := expandToStringSlice(v.([]interface{}))
 		request.AvailabilityZoneHints = &hints
 	}
-	if gateway, ok := expandNetworkingRouterV2Gateway(d); ok {
+	if gateway, ok := expandVPCRouterV2Gateway(d); ok {
 		request.ExternalGateway = vpc.Value(gateway)
 	}
 
-	log.Print("[DEBUG] creating networking router")
+	log.Print("[DEBUG] creating VPC router")
 	created, err := router.Create(ctx, client, request)
 	if err != nil {
-		return diag.FromErr(errCreatingObject(networkingRouterV2Object, err))
+		return diag.FromErr(errCreatingObject(vpcRouterV2Object, err))
 	}
 
 	d.SetId(created.ID)
@@ -155,7 +126,7 @@ func resourceVPCRouterV2Create(ctx context.Context, d *schema.ResourceData, meta
 	if tags, ok := d.GetOk("tags"); ok {
 		values := expandToStringSlice(tags.(*schema.Set).List())
 		if _, err := router.TagOperations(client, created.ID).Replace(ctx, values); err != nil {
-			return diag.FromErr(errUpdatingObject(networkingRouterV2Object, created.ID, err))
+			return diag.FromErr(errUpdatingObject(vpcRouterV2Object, created.ID, err))
 		}
 	}
 
@@ -163,24 +134,24 @@ func resourceVPCRouterV2Create(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceVPCRouterV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	log.Printf("[DEBUG] getting networking router %s", d.Id())
+	log.Printf("[DEBUG] getting VPC router %s", d.Id())
 	found, err := router.Get(ctx, client, d.Id())
 	if err != nil {
-		return networkingCheckDeleted(d, err, networkingRouterV2Object)
+		return vpcCheckDeleted(d, err, vpcRouterV2Object)
 	}
 
-	flattenNetworkingRouterV2(d, found)
+	flattenVPCRouterV2(d, found)
 
 	return nil
 }
 
 func resourceVPCRouterV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -191,21 +162,19 @@ func resourceVPCRouterV2Update(ctx context.Context, d *schema.ResourceData, meta
 	)
 
 	if d.HasChange("name") {
-		request.Name = vpcString(d.Get("name").(string))
+		request.Name = pointer.To(d.Get("name").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("description") {
-		request.Description = vpcString(d.Get("description").(string))
+		request.Description = pointer.To(d.Get("description").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("admin_state_up") {
-		request.AdminStateUp = vpcBool(d.Get("admin_state_up").(bool))
+		request.AdminStateUp = pointer.To(d.Get("admin_state_up").(bool))
 		needsUpdate = true
 	}
 	if d.HasChange("external_network_id") || d.HasChange("enable_snat") {
-		// Detaching the gateway is an explicit JSON null; attaching or changing
-		// it sends the whole gateway object, which is how Neutron models it.
-		if gateway, ok := expandNetworkingRouterV2Gateway(d); ok {
+		if gateway, ok := expandVPCRouterV2Gateway(d); ok {
 			request.ExternalGateway = vpc.Value(gateway)
 		} else {
 			request.ExternalGateway = vpc.Null[router.ExternalGatewayRequest]()
@@ -214,16 +183,16 @@ func resourceVPCRouterV2Update(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	if needsUpdate {
-		log.Printf("[DEBUG] updating networking router %s", d.Id())
+		log.Printf("[DEBUG] updating VPC router %s", d.Id())
 		if _, err := router.Update(ctx, client, d.Id(), request); err != nil {
-			return diag.FromErr(errUpdatingObject(networkingRouterV2Object, d.Id(), err))
+			return diag.FromErr(errUpdatingObject(vpcRouterV2Object, d.Id(), err))
 		}
 	}
 
 	if d.HasChange("tags") {
 		values := expandToStringSlice(d.Get("tags").(*schema.Set).List())
 		if _, err := router.TagOperations(client, d.Id()).Replace(ctx, values); err != nil {
-			return diag.FromErr(errUpdatingObject(networkingRouterV2Object, d.Id(), err))
+			return diag.FromErr(errUpdatingObject(vpcRouterV2Object, d.Id(), err))
 		}
 	}
 
@@ -231,64 +200,53 @@ func resourceVPCRouterV2Update(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceVPCRouterV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := networkingV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	log.Printf("[DEBUG] deleting networking router %s", d.Id())
-	if err := router.Delete(ctx, client, d.Id()); err != nil {
-		// A router with attached interfaces is refused with a conflict, which
-		// stays a diagnostic error: detaching them silently is not this
-		// resource's business.
-		return networkingCheckDeletedOnDelete(d, err, networkingRouterV2Object, func() error {
-			_, confirmErr := router.Get(ctx, client, d.Id())
-
-			return confirmErr
-		})
+	log.Printf("[DEBUG] deleting VPC router %s", d.Id())
+	if err := router.Delete(ctx, client, d.Id()); err != nil &&
+		!vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
+		return diag.FromErr(errDeletingObject(vpcRouterV2Object, d.Id(), err))
 	}
 
 	return nil
 }
 
 func resourceVPCRouterV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	if err := resourceNetworkingImportProjectRegion(d, meta); err != nil {
+	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 
 	return []*schema.ResourceData{d}, nil
 }
 
-// expandNetworkingRouterV2Gateway builds the external gateway from the
-// configuration. It reports false when no gateway is configured, which on
-// update means the gateway is being detached.
-func expandNetworkingRouterV2Gateway(d *schema.ResourceData) (router.ExternalGatewayRequest, bool) {
+func expandVPCRouterV2Gateway(d *schema.ResourceData) (router.ExternalGatewayRequest, bool) {
 	networkID, ok := d.GetOk("external_network_id")
 	if !ok {
 		return router.ExternalGatewayRequest{}, false
 	}
 
 	gateway := router.ExternalGatewayRequest{NetworkID: networkID.(string)}
-	if v, ok := d.GetOkExists("enable_snat"); ok { //nolint:staticcheck // GetOkExists distinguishes an explicit false from an unset bool
-		gateway.EnableSNAT = vpcBool(v.(bool))
+	if v, ok := d.GetOkExists("enable_snat"); ok { //nolint:staticcheck
+		gateway.EnableSNAT = pointer.To(v.(bool))
 	}
 
 	return gateway, true
 }
 
-// flattenNetworkingRouterV2 writes an API router into the state.
-func flattenNetworkingRouterV2(d *schema.ResourceData, found *router.Router) {
+func flattenVPCRouterV2(d *schema.ResourceData, found *router.Router) {
 	d.Set("name", found.Name)
 	d.Set("description", found.Description)
 	d.Set("admin_state_up", found.AdminStateUp)
 	d.Set("status", found.Status)
-	d.Set("flavor_id", derefString(found.FlavorID))
 	d.Set("blocked", found.Blocked)
 
 	if found.ExternalGateway != nil {
 		d.Set("external_network_id", found.ExternalGateway.NetworkID)
 		d.Set("enable_snat", found.ExternalGateway.EnableSNAT)
-		if err := d.Set("external_fixed_ip", flattenNetworkingRouterV2FixedIPs(found.ExternalGateway.ExternalFixedIPs)); err != nil {
+		if err := d.Set("external_fixed_ip", flattenVPCRouterV2FixedIPs(found.ExternalGateway.ExternalFixedIPs)); err != nil {
 			log.Print(errSettingComplexAttr("external_fixed_ip", err))
 		}
 	} else {
@@ -307,7 +265,7 @@ func flattenNetworkingRouterV2(d *schema.ResourceData, found *router.Router) {
 	}
 }
 
-func flattenNetworkingRouterV2FixedIPs(fixedIPs []router.ExternalFixedIP) []interface{} {
+func flattenVPCRouterV2FixedIPs(fixedIPs []router.ExternalFixedIP) []interface{} {
 	result := make([]interface{}, 0, len(fixedIPs))
 	for _, fixedIP := range fixedIPs {
 		result = append(result, map[string]interface{}{
