@@ -79,6 +79,10 @@ func resourceVPCRouterInterfaceV2Create(ctx context.Context, d *schema.ResourceD
 
 	routerID := d.Get("router_id").(string)
 
+	// Attaching mutates the router, so serialize updates per router.
+	selMutexKV.Lock(routerID)
+	defer selMutexKV.Unlock(routerID)
+
 	request := router.InterfaceRequest{SubnetID: subnetID}
 	if portID != "" {
 		found, err := port.Get(ctx, client, portID)
@@ -145,6 +149,11 @@ func resourceVPCRouterInterfaceV2Delete(ctx context.Context, d *schema.ResourceD
 	routerID := d.Get("router_id").(string)
 	subnetID := d.Get("subnet_id").(string)
 
+	// Clearing routes rewrites the whole list and detaching mutates the router,
+	// so serialize updates per router.
+	selMutexKV.Lock(routerID)
+	defer selMutexKV.Unlock(routerID)
+
 	if d.Get("force_destroy").(bool) && subnetID != "" {
 
 		if err := clearVPCRouterInterfaceV2Routes(ctx, client, routerID, subnetID); err != nil {
@@ -186,12 +195,16 @@ func resourceVPCRouterInterfaceV2ImportState(ctx context.Context, d *schema.Reso
 			"port %s is not attached to a router, so it is not a router interface", d.Id())
 	}
 
+	if len(found.FixedIPs) != 1 {
+		return nil, fmt.Errorf(
+			"port %s has %d fixed ips, so it carries more than one router interface "+
+				"and cannot be imported as a single resource", d.Id(), len(found.FixedIPs))
+	}
+
 	d.Set("router_id", found.DeviceID)
 	d.Set("port_id", found.ID)
 	d.Set("network_id", found.NetworkID)
-	if subnetID := vpcRouterInterfaceV2SubnetFromPort(found.FixedIPs); subnetID != "" {
-		d.Set("subnet_id", subnetID)
-	}
+	d.Set("subnet_id", vpcRouterInterfaceV2SubnetFromPort(found.FixedIPs))
 
 	return []*schema.ResourceData{d}, nil
 }
