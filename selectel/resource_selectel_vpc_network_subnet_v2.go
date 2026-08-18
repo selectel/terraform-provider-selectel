@@ -261,12 +261,15 @@ func resourceVPCNetworkSubnetV2Update(ctx context.Context, d *schema.ResourceDat
 		request.DNSNameservers = &nameservers
 		needsUpdate = true
 	}
-	if d.HasChange("gateway_ip") || d.HasChange("no_gateway") {
-		if d.Get("no_gateway").(bool) {
-			request.GatewayIP = vpc.Null[string]()
-		} else {
-			request.GatewayIP = vpc.Value(d.Get("gateway_ip").(string))
+	if d.HasChange("gateway_ip") {
+		request.GatewayIP = nil
+		if v, ok := d.GetOk("gateway_ip"); ok {
+			request.GatewayIP = vpc.Value(v.(string))
 		}
+		needsUpdate = true
+	}
+	if d.HasChange("no_gateway") && d.Get("no_gateway").(bool) {
+		request.GatewayIP = vpc.Null[string]()
 		needsUpdate = true
 	}
 
