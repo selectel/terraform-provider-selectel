@@ -57,7 +57,7 @@ func resourceVPCNetworkSubnetRouteV2() *schema.Resource {
 	}
 }
 
-func resourceVPCNetworkSubnetRouteV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCNetworkSubnetRouteV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -98,7 +98,7 @@ func resourceVPCNetworkSubnetRouteV2Create(ctx context.Context, d *schema.Resour
 	return resourceVPCNetworkSubnetRouteV2Read(ctx, d, meta)
 }
 
-func resourceVPCNetworkSubnetRouteV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCNetworkSubnetRouteV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -128,7 +128,7 @@ func resourceVPCNetworkSubnetRouteV2Read(ctx context.Context, d *schema.Resource
 	return nil
 }
 
-func resourceVPCNetworkSubnetRouteV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCNetworkSubnetRouteV2Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -172,7 +172,7 @@ func resourceVPCNetworkSubnetRouteV2Delete(ctx context.Context, d *schema.Resour
 	return nil
 }
 
-func resourceVPCNetworkSubnetRouteV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVPCNetworkSubnetRouteV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err
 	}

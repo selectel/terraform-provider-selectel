@@ -68,7 +68,7 @@ func resourceVPCRouterInterfaceV2() *schema.Resource {
 	}
 }
 
-func resourceVPCRouterInterfaceV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCRouterInterfaceV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -110,7 +110,7 @@ func resourceVPCRouterInterfaceV2Create(ctx context.Context, d *schema.ResourceD
 	return resourceVPCRouterInterfaceV2Read(ctx, d, meta)
 }
 
-func resourceVPCRouterInterfaceV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCRouterInterfaceV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -136,7 +136,7 @@ func resourceVPCRouterInterfaceV2Read(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func resourceVPCRouterInterfaceV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCRouterInterfaceV2Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -166,7 +166,7 @@ func resourceVPCRouterInterfaceV2Delete(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
-func resourceVPCRouterInterfaceV2ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVPCRouterInterfaceV2ImportState(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err
 	}

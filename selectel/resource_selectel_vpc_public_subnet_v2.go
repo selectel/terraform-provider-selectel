@@ -93,7 +93,7 @@ func resourceVPCPublicSubnetV2() *schema.Resource {
 	}
 }
 
-func resourceVPCSubnetV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCSubnetV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*Config)
 	projectID := d.Get("project_id").(string)
 	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
@@ -123,7 +123,7 @@ func resourceVPCSubnetV2Create(ctx context.Context, d *schema.ResourceData, meta
 	return resourceVPCSubnetV2Read(ctx, d, meta)
 }
 
-func resourceVPCSubnetV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCSubnetV2Read(_ context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*Config)
 	projectID := d.Get("project_id").(string)
 	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
@@ -172,7 +172,7 @@ func resourceVPCSubnetV2Read(_ context.Context, d *schema.ResourceData, meta int
 	return nil
 }
 
-func resourceVPCSubnetV2Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCSubnetV2Delete(_ context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*Config)
 	projectID := d.Get("project_id").(string)
 	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
@@ -196,7 +196,7 @@ func resourceVPCSubnetV2Delete(_ context.Context, d *schema.ResourceData, meta i
 	return nil
 }
 
-func resourceVPCSubnetV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVPCSubnetV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if config.ProjectID == "" {
 		return nil, fmt.Errorf("INFRA_PROJECT_ID must be set for the resource import")

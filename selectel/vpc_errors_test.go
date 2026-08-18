@@ -29,7 +29,7 @@ func newTestTransportError() error {
 func newVPCTestData(t *testing.T) *schema.ResourceData {
 	t.Helper()
 
-	d := schema.TestResourceDataRaw(t, vpcImportTestSchema(), map[string]interface{}{})
+	d := schema.TestResourceDataRaw(t, vpcImportTestSchema(), map[string]any{})
 	d.SetId("2a1b3c4d-5e6f-7081-92a3-b4c5d6e7f809")
 
 	return d

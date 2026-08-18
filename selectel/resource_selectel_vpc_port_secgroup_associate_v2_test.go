@@ -3,6 +3,7 @@ package selectel
 import (
 	"context"
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -155,11 +156,9 @@ func testAccCheckVPCPortSecGroupAssociateV2Destroy(s *terraform.State) error {
 		if managed == "" {
 			continue
 		}
-		for _, group := range found.SecurityGroups {
-			if group == managed {
-				return fmt.Errorf("security group %s is still associated with port %s",
-					managed, rs.Primary.ID)
-			}
+		if slices.Contains(found.SecurityGroups, managed) {
+			return fmt.Errorf("security group %s is still associated with port %s",
+				managed, rs.Primary.ID)
 		}
 	}
 

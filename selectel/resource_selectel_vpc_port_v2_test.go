@@ -369,8 +369,8 @@ data "selectel_vpc_port_v2" "port_tf_acc_test_1" {
 
 func TestVPCPortV2Expanders(t *testing.T) {
 	t.Run("fixed ips round trip", func(t *testing.T) {
-		raw := []interface{}{
-			map[string]interface{}{"subnet_id": "s-1", "ip_address": "192.168.199.10"},
+		raw := []any{
+			map[string]any{"subnet_id": "s-1", "ip_address": "192.168.199.10"},
 		}
 
 		fixedIPs := expandVPCPortV2FixedIPs(raw)
@@ -381,8 +381,8 @@ func TestVPCPortV2Expanders(t *testing.T) {
 	})
 
 	t.Run("allowed address pairs round trip", func(t *testing.T) {
-		raw := []interface{}{
-			map[string]interface{}{"ip_address": "192.168.199.20", "mac_address": "fa:16:3e:00:00:01"},
+		raw := []any{
+			map[string]any{"ip_address": "192.168.199.20", "mac_address": "fa:16:3e:00:00:01"},
 		}
 
 		pairs := expandVPCPortV2AllowedAddressPairs(raw)
@@ -393,8 +393,8 @@ func TestVPCPortV2Expanders(t *testing.T) {
 	})
 
 	t.Run("extra dhcp options round trip with the ip version", func(t *testing.T) {
-		raw := []interface{}{
-			map[string]interface{}{"name": "tftp-server", "value": "10.0.0.1", "ip_version": 4},
+		raw := []any{
+			map[string]any{"name": "tftp-server", "value": "10.0.0.1", "ip_version": 4},
 		}
 
 		options := expandVPCPortV2ExtraDHCPOptions(raw)
@@ -406,10 +406,10 @@ func TestVPCPortV2Expanders(t *testing.T) {
 	})
 
 	t.Run("extra dhcp options dropped from the configuration are sent as removals", func(t *testing.T) {
-		option := func(name, value string) interface{} {
-			return map[string]interface{}{"name": name, "value": value, "ip_version": 4}
+		option := func(name, value string) any {
+			return map[string]any{"name": name, "value": value, "ip_version": 4}
 		}
-		set := func(items ...interface{}) *schema.Set {
+		set := func(items ...any) *schema.Set {
 			nested, ok := resourceVPCPortV2().Schema["extra_dhcp_option"].Elem.(*schema.Resource)
 			require.True(t, ok)
 
@@ -439,7 +439,7 @@ func TestVPCPortV2Expanders(t *testing.T) {
 }
 
 func TestVPCPortV2ListFilters(t *testing.T) {
-	d := schema.TestResourceDataRaw(t, dataSourceVPCPortV2().Schema, map[string]interface{}{
+	d := schema.TestResourceDataRaw(t, dataSourceVPCPortV2().Schema, map[string]any{
 		"fixed_ip": "192.168.199.11",
 	})
 
@@ -464,13 +464,13 @@ func TestVPCPortV2SecurityGroupFilter(t *testing.T) {
 		},
 	}
 
-	newData := func(raw map[string]interface{}) *schema.ResourceData {
+	newData := func(raw map[string]any) *schema.ResourceData {
 		return schema.TestResourceDataRaw(t, dataSourceVPCPortV2().Schema, raw)
 	}
 
 	t.Run("security_group_ids matches an intersection, not an exact set", func(t *testing.T) {
-		matched := filterVPCPortV2BySecurityGroups(newData(map[string]interface{}{
-			"security_group_ids": []interface{}{"sg-2", "sg-9"},
+		matched := filterVPCPortV2BySecurityGroups(newData(map[string]any{
+			"security_group_ids": []any{"sg-2", "sg-9"},
 		}), candidates)
 
 		require.Len(t, matched, 1)
@@ -478,7 +478,7 @@ func TestVPCPortV2SecurityGroupFilter(t *testing.T) {
 	})
 
 	t.Run("without a security group selector everything passes through", func(t *testing.T) {
-		matched := filterVPCPortV2BySecurityGroups(newData(map[string]interface{}{}), candidates)
+		matched := filterVPCPortV2BySecurityGroups(newData(map[string]any{}), candidates)
 
 		assert.Len(t, matched, 2)
 	})

@@ -69,7 +69,7 @@ func resourceVPCRBACPolicyV2() *schema.Resource {
 	}
 }
 
-func resourceVPCRBACPolicyV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCRBACPolicyV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -91,7 +91,7 @@ func resourceVPCRBACPolicyV2Create(ctx context.Context, d *schema.ResourceData, 
 	return resourceVPCRBACPolicyV2Read(ctx, d, meta)
 }
 
-func resourceVPCRBACPolicyV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCRBACPolicyV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -112,7 +112,7 @@ func resourceVPCRBACPolicyV2Read(ctx context.Context, d *schema.ResourceData, me
 	return nil
 }
 
-func resourceVPCRBACPolicyV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCRBACPolicyV2Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -130,7 +130,7 @@ func resourceVPCRBACPolicyV2Update(ctx context.Context, d *schema.ResourceData, 
 	return resourceVPCRBACPolicyV2Read(ctx, d, meta)
 }
 
-func resourceVPCRBACPolicyV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCRBACPolicyV2Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -145,7 +145,7 @@ func resourceVPCRBACPolicyV2Delete(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceVPCRBACPolicyV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVPCRBACPolicyV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err
 	}

@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/subnet"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/pointer"
 )
 
 const (
@@ -150,7 +149,7 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 	}
 }
 
-func resourceVPCNetworkSubnetV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCNetworkSubnetV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -164,27 +163,27 @@ func resourceVPCNetworkSubnetV2Create(ctx context.Context, d *schema.ResourceDat
 		EnableDHCP: &enableDHCP,
 	}
 	if v, ok := d.GetOk("cidr"); ok {
-		request.CIDR = pointer.To(v.(string))
+		request.CIDR = new(v.(string))
 	}
 	if v, ok := d.GetOk("name"); ok {
-		request.Name = pointer.To(v.(string))
+		request.Name = new(v.(string))
 	}
 	if v, ok := d.GetOk("description"); ok {
-		request.Description = pointer.To(v.(string))
+		request.Description = new(v.(string))
 	}
 	if v, ok := d.GetOk("allocation_pool"); ok {
 		pools := expandVPCNetworkSubnetV2AllocationPools(v.(*schema.Set).List())
 		request.AllocationPools = &pools
 	}
 	if v, ok := d.GetOk("dns_nameservers"); ok {
-		nameservers := expandToStringSlice(v.([]interface{}))
+		nameservers := expandToStringSlice(v.([]any))
 		request.DNSNameservers = &nameservers
 	}
 	if v, ok := d.GetOk("ipv6_address_mode"); ok {
-		request.IPv6AddressMode = pointer.To(v.(string))
+		request.IPv6AddressMode = new(v.(string))
 	}
 	if v, ok := d.GetOk("ipv6_ra_mode"); ok {
-		request.IPv6RAMode = pointer.To(v.(string))
+		request.IPv6RAMode = new(v.(string))
 	}
 
 	if d.Get("no_gateway").(bool) {
@@ -211,7 +210,7 @@ func resourceVPCNetworkSubnetV2Create(ctx context.Context, d *schema.ResourceDat
 	return resourceVPCNetworkSubnetV2Read(ctx, d, meta)
 }
 
-func resourceVPCNetworkSubnetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCNetworkSubnetV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -228,7 +227,7 @@ func resourceVPCNetworkSubnetV2Read(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceVPCNetworkSubnetV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCNetworkSubnetV2Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -240,11 +239,11 @@ func resourceVPCNetworkSubnetV2Update(ctx context.Context, d *schema.ResourceDat
 	)
 
 	if d.HasChange("name") {
-		request.Name = pointer.To(d.Get("name").(string))
+		request.Name = new(d.Get("name").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("description") {
-		request.Description = pointer.To(d.Get("description").(string))
+		request.Description = new(d.Get("description").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("enable_dhcp") {
@@ -258,7 +257,7 @@ func resourceVPCNetworkSubnetV2Update(ctx context.Context, d *schema.ResourceDat
 		needsUpdate = true
 	}
 	if d.HasChange("dns_nameservers") {
-		nameservers := expandToStringSlice(d.Get("dns_nameservers").([]interface{}))
+		nameservers := expandToStringSlice(d.Get("dns_nameservers").([]any))
 		request.DNSNameservers = &nameservers
 		needsUpdate = true
 	}
@@ -288,7 +287,7 @@ func resourceVPCNetworkSubnetV2Update(ctx context.Context, d *schema.ResourceDat
 	return resourceVPCNetworkSubnetV2Read(ctx, d, meta)
 }
 
-func resourceVPCNetworkSubnetV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCNetworkSubnetV2Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -303,7 +302,7 @@ func resourceVPCNetworkSubnetV2Delete(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func resourceVPCNetworkSubnetV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVPCNetworkSubnetV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
@@ -345,7 +344,7 @@ func flattenVPCNetworkSubnetV2Common(d *schema.ResourceData, found *subnet.Subne
 	}
 }
 
-func validateVPCNetworkSubnetV2CIDR(v interface{}, k string) ([]string, []error) {
+func validateVPCNetworkSubnetV2CIDR(v any, k string) ([]string, []error) {
 	value, ok := v.(string)
 	if !ok || value == "" {
 		return nil, nil
@@ -364,11 +363,11 @@ func validateVPCNetworkSubnetV2CIDR(v interface{}, k string) ([]string, []error)
 	return nil, nil
 }
 
-func expandVPCNetworkSubnetV2AllocationPools(rawPools []interface{}) []subnet.AllocationPool {
+func expandVPCNetworkSubnetV2AllocationPools(rawPools []any) []subnet.AllocationPool {
 	pools := make([]subnet.AllocationPool, 0, len(rawPools))
 
 	for _, rawPool := range rawPools {
-		poolMap, ok := rawPool.(map[string]interface{})
+		poolMap, ok := rawPool.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -382,11 +381,11 @@ func expandVPCNetworkSubnetV2AllocationPools(rawPools []interface{}) []subnet.Al
 	return pools
 }
 
-func flattenVPCNetworkSubnetV2AllocationPools(pools []subnet.AllocationPool) []interface{} {
-	result := make([]interface{}, 0, len(pools))
+func flattenVPCNetworkSubnetV2AllocationPools(pools []subnet.AllocationPool) []any {
+	result := make([]any, 0, len(pools))
 
 	for _, pool := range pools {
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"start": pool.Start,
 			"end":   pool.End,
 		})
@@ -395,11 +394,11 @@ func flattenVPCNetworkSubnetV2AllocationPools(pools []subnet.AllocationPool) []i
 	return result
 }
 
-func flattenVPCNetworkSubnetV2HostRoutes(routes []subnet.HostRoute) []interface{} {
-	result := make([]interface{}, 0, len(routes))
+func flattenVPCNetworkSubnetV2HostRoutes(routes []subnet.HostRoute) []any {
+	result := make([]any, 0, len(routes))
 
 	for _, route := range routes {
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"destination_cidr": route.Destination,
 			"next_hop":         route.NextHop,
 		})

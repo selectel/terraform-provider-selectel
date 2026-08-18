@@ -47,8 +47,8 @@ func TestVPCNetworkSubnetV2CIDRValidation(t *testing.T) {
 }
 
 func TestVPCNetworkSubnetV2AllocationPools(t *testing.T) {
-	raw := []interface{}{
-		map[string]interface{}{"start": "192.168.0.10", "end": "192.168.0.20"},
+	raw := []any{
+		map[string]any{"start": "192.168.0.10", "end": "192.168.0.20"},
 	}
 
 	pools := expandVPCNetworkSubnetV2AllocationPools(raw)
@@ -92,8 +92,8 @@ func TestVPCNetworkSubnetV2CollectionSchema(t *testing.T) {
 
 func TestVPCNetworkSubnetV2HostRoutes(t *testing.T) {
 	routes := []subnet.HostRoute{{Destination: "10.0.0.0/8", NextHop: "192.168.0.1"}}
-	want := []interface{}{
-		map[string]interface{}{"destination_cidr": "10.0.0.0/8", "next_hop": "192.168.0.1"},
+	want := []any{
+		map[string]any{"destination_cidr": "10.0.0.0/8", "next_hop": "192.168.0.1"},
 	}
 
 	assert.Equal(t, want, flattenVPCNetworkSubnetV2HostRoutes(routes))

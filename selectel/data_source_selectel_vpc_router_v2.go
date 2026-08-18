@@ -88,7 +88,7 @@ func dataSourceVPCRouterV2() *schema.Resource {
 	}
 }
 
-func dataSourceVPCRouterV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceVPCRouterV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -146,10 +146,10 @@ func dataSourceVPCRouterV2Read(ctx context.Context, d *schema.ResourceData, meta
 	return nil
 }
 
-func flattenVPCRouterV2Routes(routes []router.Route) []interface{} {
-	result := make([]interface{}, 0, len(routes))
+func flattenVPCRouterV2Routes(routes []router.Route) []any {
+	result := make([]any, 0, len(routes))
 	for _, route := range routes {
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"destination_cidr": route.Destination,
 			"next_hop":         route.NextHop,
 		})

@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/network"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/pointer"
 )
 
 const (
@@ -125,26 +124,26 @@ func resourceVPCNetworkV2() *schema.Resource {
 	}
 }
 
-func resourceVPCNetworkV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCNetworkV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	request := network.CreateRequest{
-		AdminStateUp: pointer.To(d.Get("admin_state_up").(bool)),
+		AdminStateUp: new(d.Get("admin_state_up").(bool)),
 	}
 	if v, ok := d.GetOk("name"); ok {
-		request.Name = pointer.To(v.(string))
+		request.Name = new(v.(string))
 	}
 	if v, ok := d.GetOk("description"); ok {
-		request.Description = pointer.To(v.(string))
+		request.Description = new(v.(string))
 	}
 	if v, ok := d.GetOk("dns_domain"); ok {
-		request.DNSDomain = pointer.To(v.(string))
+		request.DNSDomain = new(v.(string))
 	}
 	if v, ok := d.GetOk("availability_zone_hints"); ok {
-		hints := expandToStringSlice(v.([]interface{}))
+		hints := expandToStringSlice(v.([]any))
 		request.AvailabilityZoneHints = &hints
 	}
 
@@ -166,7 +165,7 @@ func resourceVPCNetworkV2Create(ctx context.Context, d *schema.ResourceData, met
 	return resourceVPCNetworkV2Read(ctx, d, meta)
 }
 
-func resourceVPCNetworkV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCNetworkV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -184,7 +183,7 @@ func resourceVPCNetworkV2Read(ctx context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
-func resourceVPCNetworkV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCNetworkV2Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -196,19 +195,19 @@ func resourceVPCNetworkV2Update(ctx context.Context, d *schema.ResourceData, met
 	)
 
 	if d.HasChange("name") {
-		request.Name = pointer.To(d.Get("name").(string))
+		request.Name = new(d.Get("name").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("description") {
-		request.Description = pointer.To(d.Get("description").(string))
+		request.Description = new(d.Get("description").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("admin_state_up") {
-		request.AdminStateUp = pointer.To(d.Get("admin_state_up").(bool))
+		request.AdminStateUp = new(d.Get("admin_state_up").(bool))
 		needsUpdate = true
 	}
 	if d.HasChange("dns_domain") {
-		request.DNSDomain = pointer.To(d.Get("dns_domain").(string))
+		request.DNSDomain = new(d.Get("dns_domain").(string))
 		needsUpdate = true
 	}
 
@@ -229,7 +228,7 @@ func resourceVPCNetworkV2Update(ctx context.Context, d *schema.ResourceData, met
 	return resourceVPCNetworkV2Read(ctx, d, meta)
 }
 
-func resourceVPCNetworkV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCNetworkV2Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -244,7 +243,7 @@ func resourceVPCNetworkV2Delete(ctx context.Context, d *schema.ResourceData, met
 	return nil
 }
 
-func resourceVPCNetworkV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVPCNetworkV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err
 	}

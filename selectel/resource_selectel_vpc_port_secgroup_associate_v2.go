@@ -57,7 +57,7 @@ func resourceVPCPortSecGroupAssociateV2() *schema.Resource {
 	}
 }
 
-func resourceVPCPortSecGroupAssociateV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCPortSecGroupAssociateV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -92,7 +92,7 @@ func resourceVPCPortSecGroupAssociateV2Create(ctx context.Context, d *schema.Res
 	return resourceVPCPortSecGroupAssociateV2Read(ctx, d, meta)
 }
 
-func resourceVPCPortSecGroupAssociateV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCPortSecGroupAssociateV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -124,7 +124,7 @@ func resourceVPCPortSecGroupAssociateV2Read(ctx context.Context, d *schema.Resou
 	return nil
 }
 
-func resourceVPCPortSecGroupAssociateV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCPortSecGroupAssociateV2Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -163,7 +163,7 @@ func resourceVPCPortSecGroupAssociateV2Update(ctx context.Context, d *schema.Res
 	return resourceVPCPortSecGroupAssociateV2Read(ctx, d, meta)
 }
 
-func resourceVPCPortSecGroupAssociateV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCPortSecGroupAssociateV2Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -200,7 +200,7 @@ func resourceVPCPortSecGroupAssociateV2Delete(ctx context.Context, d *schema.Res
 	return nil
 }
 
-func resourceVPCPortSecGroupAssociateV2ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVPCPortSecGroupAssociateV2ImportState(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err
 	}

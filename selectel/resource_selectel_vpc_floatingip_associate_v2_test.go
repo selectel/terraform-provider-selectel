@@ -45,7 +45,7 @@ func TestVPCFloatingIPAssociateV2Flatten(t *testing.T) {
 	resourceData := schema.TestResourceDataRaw(
 		t,
 		resourceVPCFloatingIPAssociateV2().Schema,
-		map[string]interface{}{
+		map[string]any{
 			"project_id":  "project-id",
 			"region":      "ru-3",
 			"floating_ip": "203.0.113.1",

@@ -1,5 +1,6 @@
 package pointer
 
+//go:fix inline
 func To[T any](value T) *T {
-	return &value
+	return new(value)
 }

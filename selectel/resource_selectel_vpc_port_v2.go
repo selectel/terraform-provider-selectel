@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/port"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/pointer"
 )
 
 const vpcPortV2Object = "VPC port"
@@ -190,7 +189,7 @@ func resourceVPCPortV2() *schema.Resource {
 	}
 }
 
-func resourceVPCPortV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCPortV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -198,31 +197,31 @@ func resourceVPCPortV2Create(ctx context.Context, d *schema.ResourceData, meta i
 
 	request := port.CreateRequest{
 		NetworkID:    d.Get("network_id").(string),
-		AdminStateUp: pointer.To(d.Get("admin_state_up").(bool)),
+		AdminStateUp: new(d.Get("admin_state_up").(bool)),
 	}
 	if v, ok := d.GetOk("name"); ok {
-		request.Name = pointer.To(v.(string))
+		request.Name = new(v.(string))
 	}
 	if v, ok := d.GetOk("description"); ok {
-		request.Description = pointer.To(v.(string))
+		request.Description = new(v.(string))
 	}
 	if v, ok := d.GetOk("mac_address"); ok {
-		request.MACAddress = pointer.To(v.(string))
+		request.MACAddress = new(v.(string))
 	}
 	if v, ok := d.GetOk("device_id"); ok {
-		request.DeviceID = pointer.To(v.(string))
+		request.DeviceID = new(v.(string))
 	}
 	if v, ok := d.GetOk("device_owner"); ok {
-		request.DeviceOwner = pointer.To(v.(string))
+		request.DeviceOwner = new(v.(string))
 	}
 	if v, ok := d.GetOk("dns_name"); ok {
-		request.DNSName = pointer.To(v.(string))
+		request.DNSName = new(v.(string))
 	}
 
 	if d.Get("no_fixed_ip").(bool) {
 		request.FixedIPs = &[]port.FixedIP{}
 	} else if v, ok := d.GetOk("fixed_ip"); ok {
-		fixedIPs := expandVPCPortV2FixedIPs(v.([]interface{}))
+		fixedIPs := expandVPCPortV2FixedIPs(v.([]any))
 		request.FixedIPs = &fixedIPs
 	}
 
@@ -259,7 +258,7 @@ func resourceVPCPortV2Create(ctx context.Context, d *schema.ResourceData, meta i
 	return resourceVPCPortV2Read(ctx, d, meta)
 }
 
-func resourceVPCPortV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCPortV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -276,7 +275,7 @@ func resourceVPCPortV2Read(ctx context.Context, d *schema.ResourceData, meta int
 	return nil
 }
 
-func resourceVPCPortV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCPortV2Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -288,26 +287,26 @@ func resourceVPCPortV2Update(ctx context.Context, d *schema.ResourceData, meta i
 	)
 
 	if d.HasChange("name") {
-		request.Name = pointer.To(d.Get("name").(string))
+		request.Name = new(d.Get("name").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("description") {
-		request.Description = pointer.To(d.Get("description").(string))
+		request.Description = new(d.Get("description").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("admin_state_up") {
-		request.AdminStateUp = pointer.To(d.Get("admin_state_up").(bool))
+		request.AdminStateUp = new(d.Get("admin_state_up").(bool))
 		needsUpdate = true
 	}
 	if d.HasChange("dns_name") {
-		request.DNSName = pointer.To(d.Get("dns_name").(string))
+		request.DNSName = new(d.Get("dns_name").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("fixed_ip") || d.HasChange("no_fixed_ip") {
 		if d.Get("no_fixed_ip").(bool) {
 			request.FixedIPs = &[]port.FixedIP{}
 		} else {
-			fixedIPs := expandVPCPortV2FixedIPs(d.Get("fixed_ip").([]interface{}))
+			fixedIPs := expandVPCPortV2FixedIPs(d.Get("fixed_ip").([]any))
 			request.FixedIPs = &fixedIPs
 		}
 		needsUpdate = true
@@ -350,7 +349,7 @@ func resourceVPCPortV2Update(ctx context.Context, d *schema.ResourceData, meta i
 	return resourceVPCPortV2Read(ctx, d, meta)
 }
 
-func resourceVPCPortV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCPortV2Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -365,7 +364,7 @@ func resourceVPCPortV2Delete(ctx context.Context, d *schema.ResourceData, meta i
 	return nil
 }
 
-func resourceVPCPortV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVPCPortV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
@@ -406,11 +405,11 @@ func flattenVPCPortV2(d *schema.ResourceData, found *port.Port) {
 	}
 }
 
-func expandVPCPortV2FixedIPs(raw []interface{}) []port.FixedIP {
+func expandVPCPortV2FixedIPs(raw []any) []port.FixedIP {
 	fixedIPs := make([]port.FixedIP, 0, len(raw))
 
 	for _, item := range raw {
-		entry, ok := item.(map[string]interface{})
+		entry, ok := item.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -424,11 +423,11 @@ func expandVPCPortV2FixedIPs(raw []interface{}) []port.FixedIP {
 	return fixedIPs
 }
 
-func flattenVPCPortV2FixedIPs(fixedIPs []port.FixedIP) []interface{} {
-	result := make([]interface{}, 0, len(fixedIPs))
+func flattenVPCPortV2FixedIPs(fixedIPs []port.FixedIP) []any {
+	result := make([]any, 0, len(fixedIPs))
 
 	for _, fixedIP := range fixedIPs {
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"subnet_id":  fixedIP.SubnetID,
 			"ip_address": fixedIP.IPAddress,
 		})
@@ -437,11 +436,11 @@ func flattenVPCPortV2FixedIPs(fixedIPs []port.FixedIP) []interface{} {
 	return result
 }
 
-func expandVPCPortV2AllowedAddressPairs(raw []interface{}) []port.AllowedAddressPair {
+func expandVPCPortV2AllowedAddressPairs(raw []any) []port.AllowedAddressPair {
 	pairs := make([]port.AllowedAddressPair, 0, len(raw))
 
 	for _, item := range raw {
-		entry, ok := item.(map[string]interface{})
+		entry, ok := item.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -455,11 +454,11 @@ func expandVPCPortV2AllowedAddressPairs(raw []interface{}) []port.AllowedAddress
 	return pairs
 }
 
-func flattenVPCPortV2AllowedAddressPairs(pairs []port.AllowedAddressPair) []interface{} {
-	result := make([]interface{}, 0, len(pairs))
+func flattenVPCPortV2AllowedAddressPairs(pairs []port.AllowedAddressPair) []any {
+	result := make([]any, 0, len(pairs))
 
 	for _, pair := range pairs {
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"ip_address":  pair.IPAddress,
 			"mac_address": pair.MACAddress,
 		})
@@ -468,11 +467,11 @@ func flattenVPCPortV2AllowedAddressPairs(pairs []port.AllowedAddressPair) []inte
 	return result
 }
 
-func expandVPCPortV2ExtraDHCPOptions(raw []interface{}) []port.ExtraDHCPOption {
+func expandVPCPortV2ExtraDHCPOptions(raw []any) []port.ExtraDHCPOption {
 	options := make([]port.ExtraDHCPOption, 0, len(raw))
 
 	for _, item := range raw {
-		entry, ok := item.(map[string]interface{})
+		entry, ok := item.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -500,7 +499,7 @@ func expandVPCPortV2ExtraDHCPOptionsUpdate(before, after *schema.Set) []port.Upd
 		options = append(options, port.UpdateExtraDHCPOption{
 			Name:      option.Name,
 			Value:     &value,
-			IPVersion: pointer.To(option.IPVersion),
+			IPVersion: new(option.IPVersion),
 		})
 		kept[option.Name] = struct{}{}
 	}
@@ -516,11 +515,11 @@ func expandVPCPortV2ExtraDHCPOptionsUpdate(before, after *schema.Set) []port.Upd
 	return options
 }
 
-func flattenVPCPortV2ExtraDHCPOptions(options []port.ExtraDHCPOption) []interface{} {
-	result := make([]interface{}, 0, len(options))
+func flattenVPCPortV2ExtraDHCPOptions(options []port.ExtraDHCPOption) []any {
+	result := make([]any, 0, len(options))
 
 	for _, option := range options {
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"name":       option.Name,
 			"value":      option.Value,
 			"ip_version": option.IPVersion,

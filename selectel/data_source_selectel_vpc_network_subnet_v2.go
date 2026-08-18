@@ -126,7 +126,7 @@ func dataSourceVPCNetworkSubnetV2() *schema.Resource {
 	}
 }
 
-func dataSourceVPCNetworkSubnetV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceVPCNetworkSubnetV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)

@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceVPCImportProjectRegion(d *schema.ResourceData, meta interface{}) error {
+func resourceVPCImportProjectRegion(d *schema.ResourceData, meta any) error {
 	config := meta.(*Config)
 
 	if config.ProjectID == "" {

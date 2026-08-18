@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/router"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/pointer"
 )
 
 const vpcRouterV2Object = "VPC router"
@@ -92,23 +91,23 @@ func resourceVPCRouterV2() *schema.Resource {
 	}
 }
 
-func resourceVPCRouterV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCRouterV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	request := router.CreateRequest{
-		AdminStateUp: pointer.To(d.Get("admin_state_up").(bool)),
+		AdminStateUp: new(d.Get("admin_state_up").(bool)),
 	}
 	if v, ok := d.GetOk("name"); ok {
-		request.Name = pointer.To(v.(string))
+		request.Name = new(v.(string))
 	}
 	if v, ok := d.GetOk("description"); ok {
-		request.Description = pointer.To(v.(string))
+		request.Description = new(v.(string))
 	}
 	if v, ok := d.GetOk("availability_zone_hints"); ok {
-		hints := expandToStringSlice(v.([]interface{}))
+		hints := expandToStringSlice(v.([]any))
 		request.AvailabilityZoneHints = &hints
 	}
 	if gateway, ok := expandVPCRouterV2Gateway(d); ok {
@@ -133,7 +132,7 @@ func resourceVPCRouterV2Create(ctx context.Context, d *schema.ResourceData, meta
 	return resourceVPCRouterV2Read(ctx, d, meta)
 }
 
-func resourceVPCRouterV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCRouterV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -150,7 +149,7 @@ func resourceVPCRouterV2Read(ctx context.Context, d *schema.ResourceData, meta i
 	return nil
 }
 
-func resourceVPCRouterV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCRouterV2Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -162,15 +161,15 @@ func resourceVPCRouterV2Update(ctx context.Context, d *schema.ResourceData, meta
 	)
 
 	if d.HasChange("name") {
-		request.Name = pointer.To(d.Get("name").(string))
+		request.Name = new(d.Get("name").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("description") {
-		request.Description = pointer.To(d.Get("description").(string))
+		request.Description = new(d.Get("description").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("admin_state_up") {
-		request.AdminStateUp = pointer.To(d.Get("admin_state_up").(bool))
+		request.AdminStateUp = new(d.Get("admin_state_up").(bool))
 		needsUpdate = true
 	}
 	if d.HasChange("external_network_id") || d.HasChange("enable_snat") {
@@ -199,7 +198,7 @@ func resourceVPCRouterV2Update(ctx context.Context, d *schema.ResourceData, meta
 	return resourceVPCRouterV2Read(ctx, d, meta)
 }
 
-func resourceVPCRouterV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCRouterV2Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -214,7 +213,7 @@ func resourceVPCRouterV2Delete(ctx context.Context, d *schema.ResourceData, meta
 	return nil
 }
 
-func resourceVPCRouterV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVPCRouterV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
@@ -230,7 +229,7 @@ func expandVPCRouterV2Gateway(d *schema.ResourceData) (router.ExternalGatewayReq
 
 	gateway := router.ExternalGatewayRequest{NetworkID: networkID.(string)}
 	if v, ok := d.GetOkExists("enable_snat"); ok { //nolint:staticcheck
-		gateway.EnableSNAT = pointer.To(v.(bool))
+		gateway.EnableSNAT = new(v.(bool))
 	}
 
 	return gateway, true
@@ -265,10 +264,10 @@ func flattenVPCRouterV2(d *schema.ResourceData, found *router.Router) {
 	}
 }
 
-func flattenVPCRouterV2FixedIPs(fixedIPs []router.ExternalFixedIP) []interface{} {
-	result := make([]interface{}, 0, len(fixedIPs))
+func flattenVPCRouterV2FixedIPs(fixedIPs []router.ExternalFixedIP) []any {
+	result := make([]any, 0, len(fixedIPs))
 	for _, fixedIP := range fixedIPs {
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"subnet_id":  fixedIP.SubnetID,
 			"ip_address": fixedIP.IPAddress,
 		})

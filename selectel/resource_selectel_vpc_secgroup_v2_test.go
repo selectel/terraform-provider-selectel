@@ -23,7 +23,7 @@ const (
 )
 
 func TestVPCSecGroupV2Flatten(t *testing.T) {
-	d := schema.TestResourceDataRaw(t, resourceVPCSecGroupV2().Schema, map[string]interface{}{})
+	d := schema.TestResourceDataRaw(t, resourceVPCSecGroupV2().Schema, map[string]any{})
 
 	flattenVPCSecGroupV2(d, &securitygroup.SecurityGroup{
 		ID:          "sg-id",
@@ -43,7 +43,7 @@ func TestVPCSecGroupV2Flatten(t *testing.T) {
 	assert.Equal(t, "web traffic", d.Get("description"))
 	assert.Equal(t, false, d.Get("stateful"))
 	assert.Equal(t, true, d.Get("shared"))
-	assert.Equal(t, []interface{}{"rule-egress-v4", "rule-egress-v6", "rule-allpass-v4"},
+	assert.Equal(t, []any{"rule-egress-v4", "rule-egress-v6", "rule-allpass-v4"},
 		d.Get("security_group_rules"))
 }
 

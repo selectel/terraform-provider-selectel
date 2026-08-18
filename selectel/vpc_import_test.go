@@ -30,7 +30,7 @@ func vpcImportTestSchema() map[string]*schema.Schema {
 
 func TestResourceVPCImportProjectRegion(t *testing.T) {
 	t.Run("sets both fields from the provider configuration", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, vpcImportTestSchema(), map[string]interface{}{})
+		d := schema.TestResourceDataRaw(t, vpcImportTestSchema(), map[string]any{})
 		config := &Config{
 			ProjectID: testVPCImportProjectID,
 			Region:    testVPCImportRegion,
@@ -44,7 +44,7 @@ func TestResourceVPCImportProjectRegion(t *testing.T) {
 	})
 
 	t.Run("fails when the provider has no project_id", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, vpcImportTestSchema(), map[string]interface{}{})
+		d := schema.TestResourceDataRaw(t, vpcImportTestSchema(), map[string]any{})
 		config := &Config{Region: testVPCImportRegion}
 
 		err := resourceVPCImportProjectRegion(d, config)
@@ -55,7 +55,7 @@ func TestResourceVPCImportProjectRegion(t *testing.T) {
 	})
 
 	t.Run("fails when the provider has no region", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, vpcImportTestSchema(), map[string]interface{}{})
+		d := schema.TestResourceDataRaw(t, vpcImportTestSchema(), map[string]any{})
 		config := &Config{ProjectID: testVPCImportProjectID}
 
 		err := resourceVPCImportProjectRegion(d, config)

@@ -52,7 +52,7 @@ func resourceVPCFloatingIPAssociateV2() *schema.Resource {
 }
 
 func resourceVPCFloatingIPAssociateV2Create(
-	ctx context.Context, d *schema.ResourceData, meta interface{},
+	ctx context.Context, d *schema.ResourceData, meta any,
 ) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
@@ -92,7 +92,7 @@ func resourceVPCFloatingIPAssociateV2Create(
 }
 
 func resourceVPCFloatingIPAssociateV2Read(
-	ctx context.Context, d *schema.ResourceData, meta interface{},
+	ctx context.Context, d *schema.ResourceData, meta any,
 ) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
@@ -111,7 +111,7 @@ func resourceVPCFloatingIPAssociateV2Read(
 }
 
 func resourceVPCFloatingIPAssociateV2Update(
-	ctx context.Context, d *schema.ResourceData, meta interface{},
+	ctx context.Context, d *schema.ResourceData, meta any,
 ) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
@@ -138,7 +138,7 @@ func resourceVPCFloatingIPAssociateV2Update(
 }
 
 func resourceVPCFloatingIPAssociateV2Delete(
-	ctx context.Context, d *schema.ResourceData, meta interface{},
+	ctx context.Context, d *schema.ResourceData, meta any,
 ) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
@@ -160,7 +160,7 @@ func resourceVPCFloatingIPAssociateV2Delete(
 }
 
 func resourceVPCFloatingIPAssociateV2ImportState(
-	_ context.Context, d *schema.ResourceData, meta interface{},
+	_ context.Context, d *schema.ResourceData, meta any,
 ) ([]*schema.ResourceData, error) {
 	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err

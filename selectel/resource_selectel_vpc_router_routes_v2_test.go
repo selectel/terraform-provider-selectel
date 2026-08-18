@@ -21,16 +21,16 @@ func TestVPCRouterRoutesV2Expand(t *testing.T) {
 	s := resourceVPCRouterRoutesV2().Schema
 
 	t.Run("an unset routes attribute expands to an empty list", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, s, map[string]interface{}{})
+		d := schema.TestResourceDataRaw(t, s, map[string]any{})
 
 		assert.Empty(t, expandVPCRouterRoutesV2(d.Get("routes")))
 	})
 
 	t.Run("a declared set expands to the same pairs", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, s, map[string]interface{}{
-			"routes": []interface{}{
-				map[string]interface{}{"destination_cidr": "10.0.0.0/8", "next_hop": "192.168.199.10"},
-				map[string]interface{}{"destination_cidr": "172.16.0.0/12", "next_hop": "192.168.199.11"},
+		d := schema.TestResourceDataRaw(t, s, map[string]any{
+			"routes": []any{
+				map[string]any{"destination_cidr": "10.0.0.0/8", "next_hop": "192.168.199.10"},
+				map[string]any{"destination_cidr": "172.16.0.0/12", "next_hop": "192.168.199.11"},
 			},
 		})
 
@@ -51,7 +51,7 @@ func TestVPCRouterRoutesV2Flatten(t *testing.T) {
 		{Destination: "10.0.0.0/8", NextHop: "192.168.199.11"},
 	}
 
-	d := schema.TestResourceDataRaw(t, resourceVPCRouterRoutesV2().Schema, map[string]interface{}{})
+	d := schema.TestResourceDataRaw(t, resourceVPCRouterRoutesV2().Schema, map[string]any{})
 	require.NoError(t, d.Set("routes", flattenVPCRouterRoutesV2(routes)))
 
 	assert.ElementsMatch(t, routes, expandVPCRouterRoutesV2(d.Get("routes")))

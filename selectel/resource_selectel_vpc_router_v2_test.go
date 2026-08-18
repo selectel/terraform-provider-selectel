@@ -25,14 +25,14 @@ const (
 
 func TestVPCRouterV2ExpandGateway(t *testing.T) {
 	t.Run("no gateway configured", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, resourceVPCRouterV2().Schema, map[string]interface{}{})
+		d := schema.TestResourceDataRaw(t, resourceVPCRouterV2().Schema, map[string]any{})
 
 		_, ok := expandVPCRouterV2Gateway(d)
 		assert.False(t, ok, "an unset external_network_id must report no gateway, which update turns into a detach")
 	})
 
 	t.Run("network without an explicit snat setting", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, resourceVPCRouterV2().Schema, map[string]interface{}{
+		d := schema.TestResourceDataRaw(t, resourceVPCRouterV2().Schema, map[string]any{
 			"external_network_id": "network-id",
 		})
 
@@ -44,7 +44,7 @@ func TestVPCRouterV2ExpandGateway(t *testing.T) {
 	})
 
 	t.Run("network with snat disabled", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, resourceVPCRouterV2().Schema, map[string]interface{}{
+		d := schema.TestResourceDataRaw(t, resourceVPCRouterV2().Schema, map[string]any{
 			"external_network_id": "network-id",
 			"enable_snat":         false,
 		})
@@ -59,7 +59,7 @@ func TestVPCRouterV2ExpandGateway(t *testing.T) {
 
 func TestVPCRouterV2FlattenGateway(t *testing.T) {
 	t.Run("gateway present", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, resourceVPCRouterV2().Schema, map[string]interface{}{})
+		d := schema.TestResourceDataRaw(t, resourceVPCRouterV2().Schema, map[string]any{})
 
 		flattenVPCRouterV2(d, &router.Router{
 			ID: "router-id",
@@ -77,7 +77,7 @@ func TestVPCRouterV2FlattenGateway(t *testing.T) {
 	})
 
 	t.Run("gateway absent", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, resourceVPCRouterV2().Schema, map[string]interface{}{
+		d := schema.TestResourceDataRaw(t, resourceVPCRouterV2().Schema, map[string]any{
 			"external_network_id": "network-id",
 		})
 

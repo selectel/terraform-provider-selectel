@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/floatingip"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/pointer"
 )
 
 const (
@@ -71,7 +70,7 @@ func resourceVPCPortForwardingV2() *schema.Resource {
 	}
 }
 
-func resourceVPCPortForwardingV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCPortForwardingV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -80,14 +79,14 @@ func resourceVPCPortForwardingV2Create(ctx context.Context, d *schema.ResourceDa
 	floatingIPID := d.Get("floatingip_id").(string)
 
 	request := floatingip.PortForwardingCreateRequest{
-		Protocol:          pointer.To(d.Get("protocol").(string)),
-		InternalPortID:    pointer.To(d.Get("internal_port_id").(string)),
-		InternalIPAddress: pointer.To(d.Get("internal_ip_address").(string)),
-		InternalPort:      pointer.To(d.Get("internal_port").(int)),
-		ExternalPort:      pointer.To(d.Get("external_port").(int)),
+		Protocol:          new(d.Get("protocol").(string)),
+		InternalPortID:    new(d.Get("internal_port_id").(string)),
+		InternalIPAddress: new(d.Get("internal_ip_address").(string)),
+		InternalPort:      new(d.Get("internal_port").(int)),
+		ExternalPort:      new(d.Get("external_port").(int)),
 	}
 	if v, ok := d.GetOk("description"); ok {
-		request.Description = pointer.To(v.(string))
+		request.Description = new(v.(string))
 	}
 
 	log.Printf("[DEBUG] creating port forwarding on floating ip %s", floatingIPID)
@@ -101,7 +100,7 @@ func resourceVPCPortForwardingV2Create(ctx context.Context, d *schema.ResourceDa
 	return resourceVPCPortForwardingV2Read(ctx, d, meta)
 }
 
-func resourceVPCPortForwardingV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCPortForwardingV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -127,7 +126,7 @@ func resourceVPCPortForwardingV2Read(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func resourceVPCPortForwardingV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCPortForwardingV2Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -139,27 +138,27 @@ func resourceVPCPortForwardingV2Update(ctx context.Context, d *schema.ResourceDa
 	)
 
 	if d.HasChange("protocol") {
-		request.Protocol = pointer.To(d.Get("protocol").(string))
+		request.Protocol = new(d.Get("protocol").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("internal_port_id") {
-		request.InternalPortID = pointer.To(d.Get("internal_port_id").(string))
+		request.InternalPortID = new(d.Get("internal_port_id").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("internal_ip_address") {
-		request.InternalIPAddress = pointer.To(d.Get("internal_ip_address").(string))
+		request.InternalIPAddress = new(d.Get("internal_ip_address").(string))
 		needsUpdate = true
 	}
 	if d.HasChange("internal_port") {
-		request.InternalPort = pointer.To(d.Get("internal_port").(int))
+		request.InternalPort = new(d.Get("internal_port").(int))
 		needsUpdate = true
 	}
 	if d.HasChange("external_port") {
-		request.ExternalPort = pointer.To(d.Get("external_port").(int))
+		request.ExternalPort = new(d.Get("external_port").(int))
 		needsUpdate = true
 	}
 	if d.HasChange("description") {
-		request.Description = pointer.To(d.Get("description").(string))
+		request.Description = new(d.Get("description").(string))
 		needsUpdate = true
 	}
 
@@ -175,7 +174,7 @@ func resourceVPCPortForwardingV2Update(ctx context.Context, d *schema.ResourceDa
 	return resourceVPCPortForwardingV2Read(ctx, d, meta)
 }
 
-func resourceVPCPortForwardingV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCPortForwardingV2Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -192,7 +191,7 @@ func resourceVPCPortForwardingV2Delete(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func resourceVPCPortForwardingV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVPCPortForwardingV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err
 	}

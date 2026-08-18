@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/securitygrouprule"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/pointer"
 )
 
 const vpcSecGroupRuleV2Object = "VPC security group rule"
@@ -93,7 +92,7 @@ func resourceVPCSecGroupRuleV2() *schema.Resource {
 	}
 }
 
-func resourceVPCSecGroupRuleV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCSecGroupRuleV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -110,7 +109,7 @@ func resourceVPCSecGroupRuleV2Create(ctx context.Context, d *schema.ResourceData
 	return resourceVPCSecGroupRuleV2Read(ctx, d, meta)
 }
 
-func resourceVPCSecGroupRuleV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCSecGroupRuleV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -136,7 +135,7 @@ func resourceVPCSecGroupRuleV2Read(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceVPCSecGroupRuleV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVPCSecGroupRuleV2Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -155,7 +154,7 @@ func resourceVPCSecGroupRuleV2Delete(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func resourceVPCSecGroupRuleV2ImportState(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVPCSecGroupRuleV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
@@ -167,27 +166,27 @@ func expandVPCSecGroupRuleV2Request(d *schema.ResourceData) securitygrouprule.Cr
 	request := securitygrouprule.CreateRequest{
 		SecurityGroupID: d.Get("security_group_id").(string),
 		Direction:       d.Get("direction").(string),
-		EtherType:       pointer.To(d.Get("ethertype").(string)),
+		EtherType:       new(d.Get("ethertype").(string)),
 	}
 
 	if v, ok := d.GetOk("description"); ok {
-		request.Description = pointer.To(v.(string))
+		request.Description = new(v.(string))
 	}
 	if v, ok := d.GetOk("protocol"); ok {
-		request.Protocol = pointer.To(v.(string))
+		request.Protocol = new(v.(string))
 	}
 	if v, ok := d.GetOkExists("port_range_min"); ok { //nolint:staticcheck // zero is a valid ICMP type
-		request.PortRangeMin = pointer.To(v.(int))
+		request.PortRangeMin = new(v.(int))
 	}
 	if v, ok := d.GetOkExists("port_range_max"); ok { //nolint:staticcheck // zero is a valid ICMP code
-		request.PortRangeMax = pointer.To(v.(int))
+		request.PortRangeMax = new(v.(int))
 	}
 
 	switch {
 	case d.Get("remote_group_id").(string) != "":
-		request.RemoteGroupID = pointer.To(d.Get("remote_group_id").(string))
+		request.RemoteGroupID = new(d.Get("remote_group_id").(string))
 	case d.Get("remote_ip_prefix").(string) != "":
-		request.RemoteIPPrefix = pointer.To(d.Get("remote_ip_prefix").(string))
+		request.RemoteIPPrefix = new(d.Get("remote_ip_prefix").(string))
 	}
 
 	return request

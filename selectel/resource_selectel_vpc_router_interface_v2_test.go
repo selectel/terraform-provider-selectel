@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -239,10 +240,8 @@ func testAccCheckVPCRouterInterfaceV2RouteStillPresent() resource.TestCheckFunc 
 			return err
 		}
 
-		for _, route := range found.Routes {
-			if route == testAccVPCRouterInterfaceV2BlockingRoute {
-				return nil
-			}
+		if slices.Contains(found.Routes, testAccVPCRouterInterfaceV2BlockingRoute) {
+			return nil
 		}
 
 		return fmt.Errorf("route %s via %s is gone before destroy ran",

@@ -56,8 +56,8 @@ func TestFlattenVPCNetworkV2Topology(t *testing.T) {
 
 	flattenVPCNetworkV2(d, found)
 
-	assert.Equal(t, []interface{}{"subnet-1", "subnet-2"}, d.Get("subnets"))
-	assert.Equal(t, []interface{}{"ru-3a", "ru-3b"}, d.Get("availability_zones"))
+	assert.Equal(t, []any{"subnet-1", "subnet-2"}, d.Get("subnets"))
+	assert.Equal(t, []any{"ru-3a", "ru-3b"}, d.Get("availability_zones"))
 }
 
 func TestAccVPCNetworkV2Basic(t *testing.T) {

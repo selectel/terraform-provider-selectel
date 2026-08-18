@@ -8,7 +8,7 @@ import (
 
 const vpcV2ServiceType = "network"
 
-func vpcV2Client(meta interface{}, projectID, region string) (*vpc.Client, error) {
+func vpcV2Client(meta any, projectID, region string) (*vpc.Client, error) {
 	config := meta.(*Config)
 
 	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)

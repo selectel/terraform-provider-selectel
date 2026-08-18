@@ -81,7 +81,7 @@ func TestVPCSecGroupRuleV2ExpandPortRange(t *testing.T) {
 	schemaMap := resourceVPCSecGroupRuleV2().Schema
 
 	t.Run("an icmp type and code of zero reach the request", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, schemaMap, map[string]interface{}{
+		d := schema.TestResourceDataRaw(t, schemaMap, map[string]any{
 			"security_group_id": "sg-id",
 			"direction":         "ingress",
 			"ethertype":         "IPv4",
@@ -99,7 +99,7 @@ func TestVPCSecGroupRuleV2ExpandPortRange(t *testing.T) {
 	})
 
 	t.Run("a lone icmp type without a code reaches the request", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, schemaMap, map[string]interface{}{
+		d := schema.TestResourceDataRaw(t, schemaMap, map[string]any{
 			"security_group_id": "sg-id",
 			"direction":         "ingress",
 			"ethertype":         "IPv4",
@@ -115,7 +115,7 @@ func TestVPCSecGroupRuleV2ExpandPortRange(t *testing.T) {
 	})
 
 	t.Run("a tcp port range is carried through", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, schemaMap, map[string]interface{}{
+		d := schema.TestResourceDataRaw(t, schemaMap, map[string]any{
 			"security_group_id": "sg-id",
 			"direction":         "ingress",
 			"ethertype":         "IPv4",
@@ -132,13 +132,13 @@ func TestVPCSecGroupRuleV2ExpandPortRange(t *testing.T) {
 	})
 
 	t.Run("the remote selectors are mutually exclusive in the request", func(t *testing.T) {
-		prefix := schema.TestResourceDataRaw(t, schemaMap, map[string]interface{}{
+		prefix := schema.TestResourceDataRaw(t, schemaMap, map[string]any{
 			"security_group_id": "sg-id",
 			"direction":         "ingress",
 			"ethertype":         "IPv4",
 			"remote_ip_prefix":  "192.168.199.0/24",
 		})
-		group := schema.TestResourceDataRaw(t, schemaMap, map[string]interface{}{
+		group := schema.TestResourceDataRaw(t, schemaMap, map[string]any{
 			"security_group_id": "sg-id",
 			"direction":         "ingress",
 			"ethertype":         "IPv4",
@@ -153,7 +153,7 @@ func TestVPCSecGroupRuleV2ExpandPortRange(t *testing.T) {
 		assert.NotNil(t, groupRequest.RemoteGroupID)
 		assert.Nil(t, groupRequest.RemoteIPPrefix)
 
-		empty := schema.TestResourceDataRaw(t, schemaMap, map[string]interface{}{
+		empty := schema.TestResourceDataRaw(t, schemaMap, map[string]any{
 			"security_group_id": "sg-id",
 			"direction":         "egress",
 			"ethertype":         "IPv4",
