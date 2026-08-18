@@ -3,14 +3,14 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_port_v2"
 sidebar_current: "docs-selectel-datasource-vpc-port-v2"
 description: |-
-  Provides information about a port in the Selectel cloud using VPC API v2.0.
+  Provides information about a port in Selectel products.
 ---
 
 # selectel\_vpc\_port\_v2
 
-Provides information about a port.
+Provides information about a port. For more information about ports, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/ports/).
 
-The data source returns exactly one port. If no port matches the selectors, or if more than one does, the read fails with a diagnostic error instead of picking one arbitrarily.
+The data source returns exactly one port. You can combine any of the optional selectors below, and the port must match all of them at the same time. If no port matches the selectors, or if more than one does, the read fails with a diagnostic error instead of picking one arbitrarily.
 
 ~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html#migrating-data-sources) to replace the corresponding OpenStack data source with the Selectel provider data source.
 
@@ -26,11 +26,9 @@ data "selectel_vpc_port_v2" "port_1" {
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated project.
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
-* `region` - (Required) Pool where the port is located, for example, `ru-3`.
-
-You can combine any of the following selectors. The port must match all of them at the same time:
+* `region` - (Required) Pool where the port is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
 
 * `port_id` - (Optional) Unique identifier of the port.
 
@@ -50,7 +48,7 @@ You can combine any of the following selectors. The port must match all of them 
 
 * `status` - (Optional) Status of the port.
 
-* `dns_name` - (Optional) DNS name of the port. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/).
+* `dns_name` - (Optional) Host name of the port. Private DNS combines it with `dns_domain` of the port's network and creates generated A and AAAA records for the port fixed IPs. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/).
 
 * `fixed_ip` - (Optional) Single address that must be among the port's fixed IPs. The port matches when any of its addresses equals this value, not only when it is the port's sole address.
 
@@ -82,23 +80,9 @@ You can combine any of the following selectors. The port must match all of them 
 
   * `ip_version` - Internet protocol version of the option.
 
-* `binding` - Binding parameters of the port:
-
-  * `vnic_type` - Virtual NIC type of the port.
-
-* `dns_assignment` - DNS records assigned to the port:
-
-  * `ip_address` - Address the record points to.
-
-  * `hostname` - Host name of the record.
-
-  * `fqdn` - Fully-qualified domain name of the record.
-
 * `all_tags` - All tags of the port.
 
 * `port_security_enabled` - Specifies whether port security is enabled.
-
-* `qos_policy_id` - Unique identifier of the QoS policy associated with the port.
 
 * `dhcp_blocked` - Specifies whether DHCP is administratively blocked on the port.
 

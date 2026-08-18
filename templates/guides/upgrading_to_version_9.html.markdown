@@ -3,18 +3,18 @@ layout: "selectel"
 page_title: "Upgrading to version 9.0.0"
 sidebar_current: "docs-selectel-guide-upgrade-guide-v9"
 description: |-
-  How to upgrade Selectel Terraform Provider to version 9.0.0, migrate the deprecated public subnet resource, and move existing networking resources from terraform-provider-openstack.
+  How to upgrade Selectel Terraform Provider to version 9.0.0, migrate the removed public subnet resource, and move existing networking resources from terraform-provider-openstack.
 ---
 
 # Upgrading to version 9.0.0
 
-Version 9.0.0 of the Selectel provider introduces `selectel_vpc_public_subnet_v2` as a replacement for the deprecated `selectel_vpc_subnet_v2` resource and manages networking resources natively in its `vpc` (Virtual Private Cloud) domain. This guide explains how to migrate both kinds of resources without recreating them.
+Version 9.0.0 of the Selectel provider replaces `selectel_vpc_subnet_v2` with `selectel_vpc_public_subnet_v2` and manages networking resources natively in its `vpc` (Virtual Private Cloud) domain. This guide explains how to migrate both kinds of resources without recreating them.
 
 The VPC API behavior can differ from the OpenStack API. The differences relevant to migration are listed under [Schema differences](#schema-differences).
 
-## Migrating the deprecated public subnet resource
+## Migrating the removed public subnet resource
 
-The `selectel_vpc_subnet_v2` resource is deprecated. Replace it with `selectel_vpc_public_subnet_v2`. Both resource types manage the same kind of public subnet and use the same arguments and attributes.
+The `selectel_vpc_subnet_v2` resource was removed. Replace it with `selectel_vpc_public_subnet_v2`; both resource types manage the same kind of public subnet and use the same arguments and attributes.
 
 Terraform cannot use [`terraform state mv`](https://developer.hashicorp.com/terraform/cli/commands/state/mv) when the source and destination have different resource types. Migrate the state with `terraform state rm` and `terraform import` instead. These commands change only Terraform state and do not recreate the public subnet.
 
@@ -72,14 +72,13 @@ Each row maps one source resource type to the resource that replaces it. Every s
 | `openstack_networking_router_interface_v2` | `selectel_vpc_router_interface_v2` | none |
 | `openstack_networking_router_route_v2` | `selectel_vpc_router_route_v2` | none |
 | `openstack_networking_router_routes_v2` | `selectel_vpc_router_routes_v2` | none |
-| `openstack_networking_floatingip_v2` | `selectel_vpc_floatingip_v2` | `selectel_vpc_floatingip_v2` |
 | `openstack_networking_floatingip_associate_v2` | `selectel_vpc_floatingip_associate_v2` | none |
 | `openstack_networking_secgroup_v2` | `selectel_vpc_secgroup_v2` | `selectel_vpc_secgroup_v2` |
 | `openstack_networking_secgroup_rule_v2` | `selectel_vpc_secgroup_rule_v2` | none |
 | `openstack_networking_port_secgroup_associate_v2` | `selectel_vpc_port_secgroup_associate_v2` | none |
 | `openstack_networking_rbac_policy_v2` | `selectel_vpc_rbac_policy_v2` | none |
 
-Six of the fifteen entities get a data source, listed in the third column. The others are primarily link resources — a route entry, an interface, an association, or a policy — with no independent object to search for.
+Five of the fourteen entities get a data source, listed in the third column. The others either represent links without an independent object to search for or, in the case of floating IPs, keep allocation and deletion in the existing resource.
 
 Networking resources that are not listed in the [Resource mapping](#resource-mapping) are not supported in the Selectel VPC.
 
@@ -87,13 +86,25 @@ Networking resources that are not listed in the [Resource mapping](#resource-map
 
 Data sources do not manage the lifecycle of remote objects, so they do not need `terraform state rm` or `terraform import`. Replace the OpenStack data source type with the corresponding Selectel data source from the mapping table, add the required `project_id` and `region` selectors, and update references to its attributes.
 
+When migrating `openstack_networking_subnet_v2`, make these schema changes:
+
+| OpenStack data source | Selectel data source | Migration action |
+| --------------------- | -------------------- | ---------------- |
+| `dhcp_enabled` selector | `enable_dhcp` selector | Rename the argument. `enable_dhcp` is also the computed result. |
+| `allocation_pools` attribute | `allocation_pool` attribute | Rename every reference. The Selectel attribute is an unordered set rather than a list. |
+| `dns_nameservers` attribute | `dns_nameservers` attribute | The name is unchanged, but the Selectel attribute is an ordered list rather than a set. |
+
+Because `allocation_pool` is a set, do not access it with an index such as `allocation_pools[0]`. Use a `for` expression when processing every pool, or `one(...)` when exactly one pool is expected.
+
 For example:
 
 ```hcl
-data "selectel_vpc_network_v2" "example" {
-  project_id = selectel_vpc_project_v2.project_1.id
-  region     = "ru-3"
-  name       = "example"
+data "selectel_vpc_network_subnet_v2" "subnet_1" {
+  project_id  = selectel_vpc_project_v2.project_1.id
+  region      = "ru-3"
+  network_id  = selectel_vpc_network_v2.network_1.id
+  cidr        = "192.168.199.0/24"
+  enable_dhcp = true
 }
 ```
 
@@ -199,27 +210,39 @@ The Selectel VPC carries attributes the upstream schema has no place for. They r
 
 | Entity | New read-only attributes |
 | ------ | ------------------------ |
-| network | `blocked`, `is_public`, `is_dns_enabled` |
-| subnet | `blocked` |
-| port | `blocked`, `dhcp_blocked` |
-| router | `blocked` |
+| network | `status`, `subnets`, `availability_zones`, `blocked`, `is_public`, `is_dns_enabled` |
+| subnet | `host_routes`, `blocked` |
+| port | `status`, `blocked`, `dhcp_blocked` |
+| router | `status`, `availability_zones`, `blocked` |
+| security group | `shared`, `security_group_rules` |
 
-A security group has no `blocked` attribute. It does gain a read-only `shared`, which reports whether an RBAC policy grants another project access to the group; you manage that with `selectel_vpc_rbac_policy_v2`, not on the group itself.
+A security group has no `blocked` attribute. Its `shared` attribute reports whether an RBAC policy grants another project access to the group; manage that access with `selectel_vpc_rbac_policy_v2`, not on the group itself. `security_group_rules` contains the identifiers of the rules that belong to the group.
 
-After a migration these appear in your state with the values the platform reports. A change made to one of them outside Terraform — an administrator blocking a network, say — is recorded on the next refresh and does not produce a permanent diff.
+#### Attributes that become read-only or are not exposed
 
-#### Attributes the upstream provider lets you set, and these do not
-
-~> **Warning:** Remove these lines from your configuration as you migrate. Left in place, `terraform plan` fails with an unsupported-argument error, because the attribute is not a configuration argument of the new resource. The actual values stay under the platform's control.
+~> **Warning:** If your OpenStack resource configuration sets any attributes listed below, remove them when changing the resource type. The Selectel resource does not accept them as configuration arguments, so Terraform reports an unsupported-argument error before building a plan. Read-only attributes remain available for references; attributes listed as not exposed must also be removed from references.
 
 | Entity | Read-only in the native resource | Not exposed at all |
 | ------ | -------------------------------- | ------------------ |
-| network | `shared`, `external`, `mtu`, `port_security_enabled`, `qos_policy_id`, `provider:network_type`, `provider:physical_network`, `provider:segmentation_id` | `segments` (replaced by the three read-only `provider_*` attributes) |
-| subnet | — | `service_types`, `segment_id` |
-| port | `port_security_enabled`, `qos_policy_id` | `binding.host_id`, `binding.profile` |
-| router | `external_fixed_ip`, gateway `qos_policy_id` | `distributed`, `ha`, `external_subnet_ids` |
-| subnet pool | `shared`, `is_default` | — |
-| address scope | `shared` | — |
+| network | `shared`, `external`, `mtu`, `port_security_enabled` | `tenant_id`, `segments`, `transparent_vlan`, `value_specs`, `qos_policy_id` |
+| subnet | `service_types` | `tenant_id`, `prefix_length`, `dns_publish_fixed_ip`, `segment_id`, `subnetpool_id`, `value_specs` |
+| port | `port_security_enabled` | `tenant_id`, `value_specs`, `binding`, `dns_assignment`, `qos_policy_id` |
+| router | `external_fixed_ip` | `tenant_id`, `external_qos_policy_id`, `distributed`, `external_subnet_ids`, `flavor_id`, `value_specs`, `vendor_options` |
+| security group | — | `tenant_id` |
+
+The native resources use the required `project_id` argument instead of `tenant_id`. Remove `tenant_id` rather than copying it alongside `project_id`.
+
+#### Other schema changes
+
+* Network `availability_zone_hints` changes from an unordered `Set` to an ordered `List`.
+* Subnet `service_types` changes from a configurable `List` to a read-only `Set`. Remove it from the managed subnet configuration, and do not use numeric indexes when referencing it.
+* Subnet `prefix_length` and subnet-pool allocation are not supported. The OpenStack resource uses `prefix_length` with `subnetpool_id` to allocate a CIDR automatically; the native resource requires an explicit `cidr`. Before migration, copy the allocated CIDR from the existing resource state into the new configuration.
+* Port `all_fixed_ips` changes from a list of IP address strings to a list of objects with `subnet_id` and `ip_address`. For example, replace `all_fixed_ips[0]` with `all_fixed_ips[0].ip_address`.
+* Security group `description` is no longer computed when omitted. Copy a non-empty existing description into the configuration if it must be preserved.
+
+#### Changed defaults
+
+`admin_state_up` defaults to `true` for managed networks, ports, and routers. To preserve an imported object that is administratively down, set `admin_state_up = false` explicitly; otherwise Terraform plans to enable it.
 
 ### No automated tooling
 

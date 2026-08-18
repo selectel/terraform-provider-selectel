@@ -3,14 +3,14 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_network_v2"
 sidebar_current: "docs-selectel-datasource-vpc-network-v2"
 description: |-
-  Provides information about a private network in the Selectel cloud using VPC API v2.0.
+  Provides information about a private network in Selectel products.
 ---
 
 # selectel\_vpc\_network\_v2
 
-Provides information about a private network. For more information about networks, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/servers/networks/about-networks/).
+Provides information about a private network. For more information about private networks, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/).
 
-The data source returns exactly one network. If no network matches the selectors, or if more than one does, the read fails with a diagnostic error instead of picking one arbitrarily.
+The data source returns exactly one network. You can combine any of the optional selectors below, and the network must match all of them at the same time. If no network matches the selectors, or if more than one does, the read fails with a diagnostic error instead of picking one arbitrarily.
 
 ~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html#migrating-data-sources) to replace the corresponding OpenStack data source with the Selectel provider data source.
 
@@ -29,8 +29,6 @@ data "selectel_vpc_network_v2" "network_1" {
 * `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
 * `region` - (Required) Pool where the network is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
-
-You can combine any of the following selectors. The network must match all of them at the same time:
 
 * `network_id` - (Optional) Unique identifier of the network.
 
@@ -54,7 +52,9 @@ You can combine any of the following selectors. The network must match all of th
 
 * `dns_domain` - DNS domain of the network. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/).
 
-* `availability_zone_hints` - Availability zones that host the network services.
+* `availability_zone_hints` - Pool segments requested for hosting the network services.
+
+* `availability_zones` - Pool segments where the network services are actually hosted.
 
 * `subnets` - Unique identifiers of the subnets attached to the network.
 
@@ -63,14 +63,6 @@ You can combine any of the following selectors. The network must match all of th
 * `shared` - Specifies whether the network can be accessed by any project.
 
 * `port_security_enabled` - Specifies whether port security is enabled by default for the ports of the network.
-
-* `qos_policy_id` - Unique identifier of the QoS policy associated with the network.
-
-* `provider_network_type` - Type of the physical network the network is implemented on.
-
-* `provider_physical_network` - Physical network the network is implemented on.
-
-* `provider_segmentation_id` - Identifier of the isolated segment on the physical network.
 
 * `blocked` - Specifies whether the network is administratively blocked.
 

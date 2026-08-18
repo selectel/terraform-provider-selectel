@@ -3,14 +3,14 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_secgroup_v2"
 sidebar_current: "docs-selectel-datasource-vpc-secgroup-v2"
 description: |-
-  Provides information about a security group in the Selectel cloud using VPC API v2.0.
+  Provides information about a security group in Selectel products.
 ---
 
 # selectel\_vpc\_secgroup\_v2
 
-Provides information about a security group.
+Provides information about a security group. For more information about security groups, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/security-groups/).
 
-The data source returns exactly one security group. If no security group matches the selectors, or if more than one does, the read fails with a diagnostic error instead of picking one arbitrarily.
+The data source returns exactly one security group. You can combine any of the optional selectors below, and the security group must match all of them at the same time. If no security group matches the selectors, or if more than one does, the read fails with a diagnostic error instead of picking one arbitrarily.
 
 ~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html#migrating-data-sources) to replace the corresponding OpenStack data source with the Selectel provider data source.
 
@@ -36,19 +36,17 @@ data "selectel_vpc_secgroup_v2" "default" {
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated project.
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
-* `region` - (Required) Selectel region where the security group is located, for example, `ru-3`.
+* `region` - (Required) Pool where the security group is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
 
-You can combine any of the following selectors. The security group must match all of them at the same time:
+* `secgroup_id` - (Optional) Unique identifier of the security group.
 
-* `secgroup_id` - (Optional, Computed) Unique identifier of the security group.
+* `name` - (Optional) Name of the security group.
 
-* `name` - (Optional, Computed) Name of the security group.
+* `description` - (Optional) Description of the security group.
 
-* `description` - (Optional, Computed) Description of the security group.
-
-* `stateful` - (Optional, Computed) Specifies whether the group tracks connection state.
+* `stateful` - (Optional) Specifies whether the group tracks connection state.
 
 * `tags` - (Optional) Tags that the security group must have.
 

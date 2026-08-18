@@ -3,14 +3,14 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_network_subnet_v2"
 sidebar_current: "docs-selectel-datasource-vpc-network-subnet-v2"
 description: |-
-  Provides information about a subnet in the Selectel cloud using VPC API v2.0.
+  Provides information about a subnet of a private network in Selectel products.
 ---
 
 # selectel\_vpc\_network\_subnet\_v2
 
-Provides information about a subnet. For more information about networks and subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/servers/networks/about-networks/).
+Provides information about a subnet of a private network. For more information about private networks and subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/).
 
-The data source returns exactly one subnet. If no subnet matches the selectors, or if more than one does, the read fails with a diagnostic error instead of picking one arbitrarily.
+The data source returns exactly one subnet. You can combine any of the optional selectors below, and the subnet must match all of them at the same time. If no subnet matches the selectors, or if more than one does, the read fails with a diagnostic error instead of picking one arbitrarily.
 
 ~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html#migrating-data-sources) to replace the corresponding OpenStack data source with the Selectel provider data source.
 
@@ -26,11 +26,9 @@ data "selectel_vpc_network_subnet_v2" "subnet_1" {
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated project.
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
-* `region` - (Required) Pool where the subnet is located, for example, `ru-3`.
-
-You can combine any of the following selectors. The subnet must match all of them at the same time:
+* `region` - (Required) Pool where the subnet is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
 
 * `subnet_id` - (Optional) Unique identifier of the subnet.
 
@@ -46,7 +44,7 @@ You can combine any of the following selectors. The subnet must match all of the
 
 * `ip_version` - (Optional) Internet protocol version: `4` or `6`.
 
-* `dhcp_enabled` - (Optional) Specifies whether DHCP is enabled for the subnet.
+* `enable_dhcp` - (Optional) Specifies whether DHCP is enabled for the subnet.
 
 * `ipv6_address_mode` - (Optional) IPv6 address assignment mode: `slaac`, `dhcpv6-stateful`, or `dhcpv6-stateless`.
 
@@ -56,11 +54,9 @@ You can combine any of the following selectors. The subnet must match all of the
 
 ## Attributes Reference
 
-* `enable_dhcp` - Specifies whether DHCP is enabled for the subnet.
+* `dns_nameservers` - Ordered list of DNS name servers passed to instances through DHCP. This setting does not create Private DNS records.
 
-* `dns_nameservers` - DNS name servers of the subnet.
-
-* `allocation_pools` - Address ranges available for allocation:
+* `allocation_pool` - Unordered set of address ranges available for allocation:
 
   * `start` - First address of the pool.
 
@@ -72,7 +68,7 @@ You can combine any of the following selectors. The subnet must match all of the
 
   * `next_hop` - Next hop of the route.
 
-* `service_types` - Service types associated with the subnet.
+* `service_types` - Unordered set of service types associated with the subnet.
 
 * `all_tags` - All tags of the subnet.
 

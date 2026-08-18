@@ -3,16 +3,16 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_public_subnet_v2"
 sidebar_current: "docs-selectel-resource-vpc-public-subnet-v2"
 description: |-
-  Creates and manages a public subnet for Selectel products using VPC API v2.
+  Creates and manages a public subnet for Selectel products using public API v2.
 ---
 
 # selectel\_vpc\_public\_subnet\_v2
 
-~> **Note:** To migrate from the deprecated `selectel_vpc_subnet_v2` resource, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html#migrating-the-deprecated-public-subnet-resource). Do not declare both resource types for the same public subnet.
+~> **Note:** To migrate from the removed `selectel_vpc_subnet_v2` resource, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html#migrating-the-removed-public-subnet-resource).
 
-Creates and manages a public subnet using VPC API v2. For more information about public subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/servers/networks/about-networks/).
+Creates and manages a public subnet using public API v2. For more information about public subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/public-subnets/).
 
-For project networks and their subnets, use [selectel\_vpc\_network\_v2](vpc_network_v2.html) and [selectel\_vpc\_network\_subnet\_v2](vpc_network_subnet_v2.html).
+For project networks and their subnets, use [selectel\_vpc\_network\_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_v2) and [selectel\_vpc\_network\_subnet\_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2).
 
 Creates a public subnet in a service network. You cannot select a network during subnet creation or modify service network settings.
 
@@ -33,7 +33,7 @@ resource "selectel_vpc_public_subnet_v2" "subnet_1" {
 
 * `region` - (Required) Pool where the public subnet is located, for example, `ru-3`. Changing this creates a new public subnet. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
 
-* `ip_version` - (Optional) Internet protocol version supported in the public subnet. The only available value is `ipv4`.
+* `ip_version` - (Optional) Internet protocol version supported in the public subnet. Changing this creates a new public subnet. The only available value is `ipv4`, which is also the default value.
 
 * `prefix_length` - (Optional) Prefix length of the public subnet. The default value is `29`. Changing this creates a new public subnet.
 

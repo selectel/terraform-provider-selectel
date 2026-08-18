@@ -3,12 +3,12 @@ layout: "selectel"
 page_title: "Selectel: selectel_vpc_network_subnet_v2"
 sidebar_current: "docs-selectel-resource-vpc-network-subnet-v2"
 description: |-
-  Creates and manages a subnet in the Selectel cloud using VPC API v2.0.
+  Creates and manages a subnet of a private network for Selectel products using public API v2.
 ---
 
 # selectel\_vpc\_network\_subnet\_v2
 
-Creates and manages a subnet using VPC API v2.0. For more information about networks and subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/servers/networks/about-networks/).
+Creates and manages a subnet of a private network using public API v2. For more information about private networks and subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/).
 
 ~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
@@ -16,12 +16,11 @@ Creates and manages a subnet using VPC API v2.0. For more information about netw
 
 ```hcl
 resource "selectel_vpc_network_subnet_v2" "subnet_1" {
-  project_id = selectel_vpc_project_v2.project_1.id
-  region     = "ru-3"
-  network_id = selectel_vpc_network_v2.network_1.id
-  cidr       = "192.168.199.0/24"
-  name       = "subnet-1"
-
+  project_id      = selectel_vpc_project_v2.project_1.id
+  region          = "ru-3"
+  network_id      = selectel_vpc_network_v2.network_1.id
+  cidr            = "192.168.199.0/24"
+  name            = "subnet-1"
   dns_nameservers = ["8.8.8.8", "1.1.1.1"]
 
   allocation_pool {
@@ -35,11 +34,11 @@ resource "selectel_vpc_network_subnet_v2" "subnet_1" {
 
 * `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new subnet. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource.
 
-* `region` - (Required) Pool where the subnet is located, for example, `ru-3`. Changing this creates a new subnet.
+* `region` - (Required) Pool where the subnet is located, for example, `ru-3`. Changing this creates a new subnet. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
 
 * `network_id` - (Required) Unique identifier of the parent network. Changing this creates a new subnet.
 
-* `cidr` - (Optional) CIDR of the subnet. Must be the network address of its own prefix, for example, `192.168.199.0/24` and not `192.168.199.5/24`; any other value is rejected before the API is called. Changing this creates a new subnet.
+* `cidr` - (Required) CIDR of the subnet. Must be the network address of its own prefix, for example, `192.168.199.0/24` and not `192.168.199.5/24`; any other value is rejected before the API is called. Changing this creates a new subnet.
 
 * `name` - (Optional) Name of the subnet. If you do not specify a name, the API assigns one.
 
@@ -53,7 +52,7 @@ resource "selectel_vpc_network_subnet_v2" "subnet_1" {
 
 * `enable_dhcp` - (Optional) Specifies whether DHCP is enabled for the subnet. The default value is `true`.
 
-* `dns_nameservers` - (Optional) DNS name servers of the subnet, in order. Duplicate entries are rejected before the API is called.
+* `dns_nameservers` - (Optional) DNS name servers passed to instances through DHCP, in order. This setting does not create Private DNS records. Duplicate entries are rejected before the API is called.
 
 * `allocation_pool` - (Optional) Address ranges available for allocation. You can specify several pools:
 
@@ -71,11 +70,15 @@ resource "selectel_vpc_network_subnet_v2" "subnet_1" {
 
 * `all_tags` - All tags of the subnet, including the ones added outside Terraform.
 
-* `service_types` - Service types associated with the subnet.
+* `service_types` - Unordered set of service types associated with the subnet.
 
 * `blocked` - Specifies whether the subnet is administratively blocked.
 
-~> **Note:** To read the full list of routes of a subnet, including routes added by other resources, use the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/vpc_network_subnet_v2) data source, which exports `host_routes`.
+* `host_routes` - All routes of the subnet, including the ones added by the [selectel_vpc_network_subnet_route_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_route_v2) resource. The subnet resource reports this list but does not manage it:
+
+  * `destination_cidr` - Destination CIDR of the route.
+
+  * `next_hop` - Next hop of the route.
 
 ## Import
 
@@ -92,14 +95,14 @@ terraform import selectel_vpc_network_subnet_v2.subnet_1 <subnet_id>
 
 where:
 
-* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/).
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
 
-* `<username>` — Name of the service user.
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
 
 * `<password>` — Password of the service user.
 
-* `<project_id>` — Unique identifier of the associated project. Taken from `INFRA_PROJECT_ID`, and the import fails if the variable is not set.
+* `<project_id>` — Unique identifier of the associated project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/). The import ID does not contain the project, so `INFRA_PROJECT_ID` must be set.
 
-* `<pool>` — Pool where the subnet is located, for example, `ru-3`. Taken from `INFRA_REGION`, and the import fails if the variable is not set.
+* `<pool>` — Pool where the subnet is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/). The import ID does not contain the pool, so `INFRA_REGION` must be set.
 
-* `<subnet_id>` — Unique identifier of the subnet, for example, `8f6c1e9b-2a3d-4f50-9b8a-1c2d3e4f5a6b`.
+* `<subnet_id>` — Unique identifier of the subnet, for example, `8f6c1e9b-2a3d-4f50-9b8a-1c2d3e4f5a6b`. To get the subnet ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ the network page ⟶ the **Subnets** tab ⟶ copy the ID of the required subnet. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud/servers/tools/openstack/) command `openstack subnet list` and copy the `ID` field.
