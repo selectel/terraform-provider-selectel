@@ -1,3 +1,11 @@
+## 8.4.0 (August 19, 2026)
+
+FEATURES:
+
+* Add `selectel_compute_volume_v3` resource.
+* Add `selectel_compute_volume_v3` and `selectel_compute_volume_type_v3` data sources.
+* Add Selectel Block Storage API SDK integration. ([#421](https://github.com/selectel/terraform-provider-selectel/pull/421))
+
 ## 8.3.1 (August 10, 2026)
 
 BUG FIXES:
