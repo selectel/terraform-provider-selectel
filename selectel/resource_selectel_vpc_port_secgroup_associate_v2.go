@@ -3,13 +3,13 @@ package selectel
 import (
 	"context"
 	"log"
-	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/port"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/sliceutil"
 )
 
 const vpcPortSecGroupAssociateV2Object = "VPC port security group association"
@@ -78,7 +78,7 @@ func resourceVPCPortSecGroupAssociateV2Create(ctx context.Context, d *schema.Res
 			return diag.FromErr(errGettingObject(vpcPortV2Object, portID, err))
 		}
 
-		groups = addVPCSecGroupIDs(found.SecurityGroups, desired)
+		groups = sliceutil.Union(found.SecurityGroups, groups)
 	}
 
 	log.Printf("[DEBUG] setting %d security group(s) on VPC port %s", len(groups), portID)
@@ -113,9 +113,7 @@ func resourceVPCPortSecGroupAssociateV2Read(ctx context.Context, d *schema.Resou
 	managed := found.SecurityGroups
 	if !d.Get("enforce").(bool) {
 		desired := d.Get("security_group_ids").(*schema.Set)
-		managed = slices.DeleteFunc(slices.Clone(found.SecurityGroups), func(id string) bool {
-			return !desired.Contains(id)
-		})
+		managed = sliceutil.Intersect(found.SecurityGroups, convert.ToStringSlice(desired.List()))
 	}
 
 	if err := d.Set("security_group_ids", managed); err != nil {
@@ -149,9 +147,10 @@ func resourceVPCPortSecGroupAssociateV2Update(ctx context.Context, d *schema.Res
 		}
 
 		previous, _ := d.GetChange("security_group_ids")
-		groups = addVPCSecGroupIDs(
-			removeVPCSecGroupIDs(found.SecurityGroups, previous.(*schema.Set)),
-			desired)
+		unmanaged := sliceutil.Subtract(
+			found.SecurityGroups,
+			convert.ToStringSlice(previous.(*schema.Set).List()))
+		groups = sliceutil.Union(unmanaged, groups)
 	}
 
 	log.Printf("[DEBUG] updating security groups of VPC port %s to %d entries", portID, len(groups))
@@ -186,9 +185,9 @@ func resourceVPCPortSecGroupAssociateV2Delete(ctx context.Context, d *schema.Res
 
 	groups := []string{}
 	if !d.Get("enforce").(bool) {
-		groups = removeVPCSecGroupIDs(
+		groups = sliceutil.Subtract(
 			found.SecurityGroups,
-			d.Get("security_group_ids").(*schema.Set))
+			convert.ToStringSlice(d.Get("security_group_ids").(*schema.Set).List()))
 	}
 
 	log.Printf("[DEBUG] releasing security groups of VPC port %s", portID)
@@ -219,21 +218,4 @@ func resourceVPCPortSecGroupAssociateV2ImportState(ctx context.Context, d *schem
 	d.Set("port_id", found.ID)
 
 	return []*schema.ResourceData{d}, nil
-}
-
-func addVPCSecGroupIDs(current []string, added *schema.Set) []string {
-	result := slices.Clone(current)
-	for _, id := range convert.ToStringSlice(added.List()) {
-		if !slices.Contains(result, id) {
-			result = append(result, id)
-		}
-	}
-
-	return result
-}
-
-func removeVPCSecGroupIDs(current []string, removed *schema.Set) []string {
-	return slices.DeleteFunc(slices.Clone(current), func(id string) bool {
-		return removed.Contains(id)
-	})
 }

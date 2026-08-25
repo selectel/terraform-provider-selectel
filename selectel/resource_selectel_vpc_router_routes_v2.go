@@ -3,12 +3,12 @@ package selectel
 import (
 	"context"
 	"log"
-	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/router"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/sliceutil"
 )
 
 const vpcRouterRoutesV2Object = "VPC router routes"
@@ -77,12 +77,7 @@ func resourceVPCRouterRoutesV2Create(ctx context.Context, d *schema.ResourceData
 	}
 
 	// Avoid deleting pre-existing routes during initial creation.
-	routes := append([]router.Route{}, found.Routes...)
-	for _, route := range desired {
-		if !slices.Contains(routes, route) {
-			routes = append(routes, route)
-		}
-	}
+	routes := sliceutil.Union(found.Routes, desired)
 
 	if len(routes) != len(found.Routes) {
 		log.Printf("[DEBUG] adding %d route(s) to VPC router %s", len(routes)-len(found.Routes), routerID)
@@ -169,12 +164,7 @@ func resourceVPCRouterRoutesV2Delete(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(errGettingObject(vpcRouterV2Object, routerID, err))
 	}
 
-	kept := make([]router.Route, 0, len(found.Routes))
-	for _, route := range found.Routes {
-		if !slices.Contains(managed, route) {
-			kept = append(kept, route)
-		}
-	}
+	kept := sliceutil.Subtract(found.Routes, managed)
 
 	if len(kept) == len(found.Routes) {
 		return nil
