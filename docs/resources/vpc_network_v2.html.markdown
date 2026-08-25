@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages a private network using public API v2. For more information about private networks, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/).
 
-~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -30,13 +30,13 @@ resource "selectel_vpc_network_v2" "network_1" {
 
 * `region` - (Required) Pool where the network is located, for example, `ru-3`. Changing this creates a new network. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
 
-* `name` - (Optional) Name of the network. If you do not specify a name, the API assigns one.
+* `name` - (Optional) Name of the network.
 
 * `description` - (Optional) Description of the network.
 
 * `admin_state_up` - (Optional) Administrative state of the network. If `false`, the network does not forward packets. The default value is `true`.
 
-* `dns_domain` - (Optional) DNS domain of the network. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/).
+* `dns_domain` - (Optional) DNS domain of the network. Must be a fully qualified domain name with a dot at the end, for example, `example.com.`. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/).
 
 * `availability_zone_hints` - (Optional) Pool segments requested for hosting the network services. Changing this creates a new network.
 

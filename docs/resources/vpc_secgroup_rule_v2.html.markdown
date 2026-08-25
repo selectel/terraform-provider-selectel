@@ -12,11 +12,11 @@ Creates and manages a rule of a security group using public API v2. For more inf
 
 The resource manages exactly one rule of an existing security group and leaves every other rule of that group alone. The group itself is managed with the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource.
 
-~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
-Allowing inbound SSH from one subnet:
+### Allowing inbound SSH from one subnet
 
 ```hcl
 resource "selectel_vpc_secgroup_rule_v2" "rule_1" {
@@ -32,7 +32,7 @@ resource "selectel_vpc_secgroup_rule_v2" "rule_1" {
 }
 ```
 
-Allowing outbound traffic to the members of another group:
+### Allowing outbound traffic to the members of another group:
 
 ```hcl
 resource "selectel_vpc_secgroup_rule_v2" "rule_2" {

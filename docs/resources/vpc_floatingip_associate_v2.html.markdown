@@ -12,7 +12,7 @@ Creates and manages the association between an existing public floating IP addre
 
 The resource manages only the association and never creates or deletes the public floating IP address or the port. The address is managed with the [selectel_vpc_floatingip_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_floatingip_v2) resource, and the port with the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.
 
-~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -78,4 +78,4 @@ The import fills `floating_ip`, `port_id`, and `fixed_ip` from the remote public
 
 Changes made outside Terraform are reflected during refresh. If the association is detached or moved, the next plan restores the configured port and fixed IP. If the public floating IP address itself is deleted, the association leaves state.
 
-Deleting this resource detaches the public floating IP address without deleting either the address or the port. Detaching an already detached address is idempotent. If the address itself no longer exists when the resource is deleted, the provider reports an error instead of claiming that it detached the association.
+Deleting this resource detaches the public floating IP address without deleting either the address or the port. Detaching an already detached address is idempotent. If the address itself no longer exists when the resource is deleted, the delete succeeds without an error — there is nothing left to detach.

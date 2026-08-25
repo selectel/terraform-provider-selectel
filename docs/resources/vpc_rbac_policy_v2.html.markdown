@@ -12,7 +12,7 @@ Creates and manages an RBAC policy that grants another project access to a netwo
 
 For example, share a network with another project so that project can create ports on it.
 
-~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -33,9 +33,9 @@ resource "selectel_vpc_rbac_policy_v2" "rbac_1" {
 
 * `region` - (Required) Pool where the object is located, for example, `ru-3`. Changing this creates a new policy. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
 
-* `action` - (Required) Access granted by the policy. One of `access_as_shared` or `access_as_external`. Changing this creates a new policy.
+* `action` - (Required) Access granted by the policy. Available values are `access_as_shared` and `access_as_external`. `access_as_external` is applicable only when `object_type` is `network`. Changing this creates a new policy.
 
-* `object_type` - (Required) Type of the object being shared. One of `network`, `qos_policy`, `security_group`, `address_scope`, `address_group`, or `bgpvpn`. Changing this creates a new policy.
+* `object_type` - (Required) Type of the object to share. Available values are `network` and `security_group`. Changing this creates a new policy.
 
 * `object_id` - (Required) Unique identifier of the object being shared. Changing this creates a new policy.
 

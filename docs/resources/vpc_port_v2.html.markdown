@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages a port using public API v2. For more information about ports, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/ports/).
 
-~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -41,7 +41,7 @@ resource "selectel_vpc_port_v2" "port_1" {
 
 * `network_id` - (Required) Unique identifier of the network the port belongs to. Changing this creates a new port.
 
-* `name` - (Optional) Name of the port. If you do not specify a name, the API assigns one.
+* `name` - (Optional) Name of the port.
 
 * `description` - (Optional) Description of the port.
 
@@ -53,13 +53,13 @@ resource "selectel_vpc_port_v2" "port_1" {
 
 * `device_owner` - (Optional) Owner of the device the port is attached to. Changing this creates a new port.
 
-* `fixed_ip` - (Optional) Fixed IPs of the port. Conflicts with `no_fixed_ip`. If you specify neither, the API allocates an address from a DHCP subnet of the network. You can specify several blocks:
+* `fixed_ip` - (Optional) Fixed IPs of the port. Conflicts with `no_fixed_ip`. If you specify neither, the API allocates an address from one of the subnets of the network. You can specify several blocks:
 
-  * `subnet_id` - (Required) Unique identifier of the subnet the address is allocated from.
+  * `subnet_id` - (Optional) Unique identifier of the subnet the address is allocated from. If you do not specify it, the API selects a suitable subnet of the network.
 
   * `ip_address` - (Optional) Specific address to assign. If you do not specify it, the API allocates one from the subnet.
 
-* `no_fixed_ip` - (Optional) Creates the port without any fixed IP, even when the network has a DHCP subnet. The default value is `false`. Conflicts with `fixed_ip`.
+* `no_fixed_ip` - (Optional) Creates the port without any fixed IP, even when the network has subnets. The default value is `false`. Conflicts with `fixed_ip`.
 
 * `security_group_ids` - (Optional) Security groups assigned to the port. Conflicts with `no_security_groups`. If you specify neither, the port gets the project's default security group.
 

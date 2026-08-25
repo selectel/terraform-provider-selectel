@@ -12,7 +12,7 @@ Creates and manages a port-forwarding rule of a public floating IP address using
 
 Traffic that arrives at an external port of the public floating IP address is forwarded to an internal address and port. The public floating IP address is managed with the [selectel_vpc_floatingip_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_floatingip_v2) resource.
 
-~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -44,11 +44,11 @@ resource "selectel_vpc_port_forwarding_v2" "port_forwarding_1" {
 
 * `internal_ip_address` - (Required) Address traffic is forwarded to, which must be one of the fixed IPs of `internal_port_id`. Can be changed without replacement.
 
-* `internal_port` - (Required) Port traffic is forwarded to. Can be changed without replacement.
+* `internal_port` - (Required) Port traffic is forwarded to. Can be changed without replacement. The available range is from 1 to 65535.
 
-* `external_port` - (Required) Port of the public floating IP address that traffic arrives at. Can be changed without replacement.
+* `external_port` - (Required) Port of the public floating IP address that traffic arrives at. Can be changed without replacement. The available range is from 1 to 65535.
 
-* `protocol` - (Required) Protocol of the forwarded traffic, for example, `tcp` or `udp`. Can be changed without replacement.
+* `protocol` - (Required) Protocol of the forwarded traffic. Available values are `tcp`, `udp`, `icmp`, `ipv6-icmp`, `sctp`, and `dccp`.
 
 * `description` - (Optional) Description of the rule.
 

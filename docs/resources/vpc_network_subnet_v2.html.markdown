@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages a subnet of a private network using public API v2. For more information about private networks and subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/).
 
-~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -40,7 +40,7 @@ resource "selectel_vpc_network_subnet_v2" "subnet_1" {
 
 * `cidr` - (Required) CIDR of the subnet. Must be the network address of its own prefix, for example, `192.168.199.0/24` and not `192.168.199.5/24`; any other value is rejected before the API is called. Changing this creates a new subnet.
 
-* `name` - (Optional) Name of the subnet. If you do not specify a name, the API assigns one.
+* `name` - (Optional) Name of the subnet.
 
 * `description` - (Optional) Description of the subnet.
 
@@ -52,7 +52,7 @@ resource "selectel_vpc_network_subnet_v2" "subnet_1" {
 
 * `enable_dhcp` - (Optional) Specifies whether DHCP is enabled for the subnet. The default value is `true`.
 
-* `dns_nameservers` - (Optional) DNS name servers passed to instances through DHCP, in order. This setting does not create Private DNS records. Duplicate entries are rejected before the API is called.
+* `dns_nameservers` - (Optional) DNS name servers passed to instances through DHCP, in order. This setting does not create Private DNS records. The API rejects duplicate entries.
 
 * `allocation_pool` - (Optional) Address ranges available for allocation. You can specify several pools:
 

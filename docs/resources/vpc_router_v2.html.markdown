@@ -12,7 +12,7 @@ Creates and manages a cloud router using public API v2. For more information abo
 
 The router routes traffic between the subnets attached to it and, when an external gateway is set, to and from an external network. Subnets and ports are attached with [selectel_vpc_router_interface_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_interface_v2), and static routes are managed with [selectel_vpc_router_route_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_route_v2) — this resource does not carry them.
 
-~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -40,7 +40,7 @@ resource "selectel_vpc_router_v2" "router_1" {
 
 * `admin_state_up` - (Optional) Administrative state of the router. The default value is `true`.
 
-* `external_network_id` - (Optional) Unique identifier of the external network the gateway is attached to. Can be changed without replacement, which moves the gateway; removing it detaches the gateway.
+* `external_network_id` - (Optional) Unique identifier of the external network the gateway is attached to. Can be changed without replacement, which moves the gateway; removing it detaches the gateway. You can retrieve it with the [selectel_vpc_network_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/vpc_network_v2) data source using the `external = true` filter.
 
 * `enable_snat` - (Optional) Specifies whether source NAT is enabled on the gateway. Requires `external_network_id` in the same configuration — a value without it is rejected at plan. Can be changed without replacement.
 

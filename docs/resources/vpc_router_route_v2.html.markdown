@@ -12,7 +12,7 @@ Creates and manages a single static route of a cloud router using public API v2.
 
 The resource manages one pair of `destination_cidr` and `next_hop` and leaves every other route of the router alone. Use [selectel_vpc_router_routes_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_routes_v2) instead when you want Terraform to own the router's complete route list.
 
-~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 

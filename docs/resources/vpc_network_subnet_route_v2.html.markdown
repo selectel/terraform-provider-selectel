@@ -14,7 +14,7 @@ The resource manages a single entry of the subnet's `host_routes` list and leave
 
 ~> **Note:** Adding an entry rewrites the whole `host_routes` list of the subnet, so the provider serializes concurrent routes of the same subnet. Do not manage the same subnet's routes both with this resource and by another means at the same time.
 
-~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 

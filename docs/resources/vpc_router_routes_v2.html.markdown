@@ -12,7 +12,7 @@ Creates and manages the complete set of static routes of a cloud router using pu
 
 Terraform owns the router's route list: a route added by anything else is reported as drift and removed by the next apply. Use [selectel_vpc_router_route_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_route_v2) instead when you want to manage individual routes and leave the rest of the list alone. Do not manage the same router with both resources — they will fight over the list.
 
-~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -45,7 +45,7 @@ resource "selectel_vpc_router_routes_v2" "routes_1" {
 
 * `router_id` - (Required) Unique identifier of the router whose routes are managed. Changing this creates a new resource.
 
-* `routes` - (Optional) The complete set of static routes of the router. Omit it, or declare it empty, to state that the router should carry no routes. Each block takes:
+* `routes` - (Optional) The complete set of static routes of the router. Declare it empty (`routes = []`) to state that the router should carry no routes. If you omit `routes`, the resource adopts the router's current route list on every refresh and reports no drift — omitting it does not clear the routes, and a later destroy removes all adopted routes. Each block takes:
 
   * `destination_cidr` - (Required) Destination of the route, for example, `10.0.0.0/8`.
 

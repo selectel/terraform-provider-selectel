@@ -12,11 +12,11 @@ Creates and manages the association between security groups and an existing port
 
 The resource addresses the port by identifier, never creates or deletes it, and does not manage any of its other attributes. Use the resource when the port itself is managed elsewhere, or not by Terraform at all.
 
-~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
-Adding a group to whatever the port already has:
+### Adding a group to whatever the port already has
 
 ```hcl
 resource "selectel_vpc_port_secgroup_associate_v2" "associate_1" {
@@ -27,7 +27,7 @@ resource "selectel_vpc_port_secgroup_associate_v2" "associate_1" {
 }
 ```
 
-Making Terraform the sole authority over the port's groups:
+### Making Terraform the sole authority over the port's groups
 
 ```hcl
 resource "selectel_vpc_port_secgroup_associate_v2" "associate_2" {

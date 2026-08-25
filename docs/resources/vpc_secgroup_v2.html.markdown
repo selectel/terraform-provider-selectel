@@ -12,7 +12,7 @@ Creates and manages a security group using public API v2. For more information a
 
 A security group is a named set of rules that is attached to ports to filter their traffic. Individual rules are managed with [selectel_vpc_secgroup_rule_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_rule_v2), and groups are attached to a port with [selectel_vpc_port_secgroup_associate_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_secgroup_associate_v2).
 
-~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
 
@@ -26,7 +26,7 @@ resource "selectel_vpc_secgroup_v2" "secgroup_1" {
 }
 ```
 
-Starting from an empty group, without the egress rules the API adds:
+### Starting from an empty group, without the egress rules the API adds
 
 ```hcl
 resource "selectel_vpc_secgroup_v2" "secgroup_2" {
@@ -47,7 +47,7 @@ resource "selectel_vpc_secgroup_v2" "secgroup_2" {
 
 * `description` - (Optional) Description of the security group. Removing it from the configuration clears it.
 
-* `stateful` - (Optional) Specifies whether the group tracks connection state. Boolean flag. If you do not specify a value, the API assigns one, and the default value it assigns is `true`. Can be changed without replacement.
+* `stateful` - (Optional) Specifies whether the group tracks connection state. Boolean flag. If you do not specify a value, the API assigns one, and the default value it assigns is `true`. Can be changed without replacement. The value can only be changed while the group is not attached to any port; detach it from every port first.
 
 * `delete_default_rules` - (Optional) Specifies whether the egress rules that the API adds to a new group are deleted right after the group is created. Boolean flag, the default value is `false`. Changing this creates a new security group, because the flag only takes effect at create time.
 

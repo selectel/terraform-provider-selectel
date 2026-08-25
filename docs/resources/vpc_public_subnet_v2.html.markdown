@@ -35,7 +35,7 @@ resource "selectel_vpc_public_subnet_v2" "subnet_1" {
 
 * `ip_version` - (Optional) Internet protocol version supported in the public subnet. Changing this creates a new public subnet. The only available value is `ipv4`, which is also the default value.
 
-* `prefix_length` - (Optional) Prefix length of the public subnet. The default value is `29`. Changing this creates a new public subnet.
+* `prefix_length` - (Optional) Prefix length of the public subnet. Available values are from `24` to `29`. The default value is `29`. Changing this creates a new public subnet.
 
 ## Attributes Reference
 
@@ -63,6 +63,7 @@ You can import a public subnet:
 export OS_DOMAIN_NAME=<account_id>
 export OS_USERNAME=<username>
 export OS_PASSWORD=<password>
+export INFRA_PROJECT_ID=<project_id>
 terraform import selectel_vpc_public_subnet_v2.subnet_1 <public_subnet_id>
 ```
 
@@ -73,5 +74,7 @@ where:
 * `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
 
 * `<password>` — Password of the service user.
+
+* `<project_id>` — Unique identifier of the associated project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/). The import ID does not contain the project, so `INFRA_PROJECT_ID` must be set.
 
 * `<public_subnet_id>` — Unique identifier of the public subnet. To get public subnet ID, use the [Get list of subnets](https://docs.selectel.ru/en/api/cloud-projects-and-resources/#tag/Subnets/operation/listSubnets) method in [Cloud Platform Projects and Resources API](https://docs.selectel.ru/en/api/cloud-projects-and-resources/).
