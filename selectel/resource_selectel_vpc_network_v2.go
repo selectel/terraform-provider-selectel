@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/network"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
 )
 
 const (
@@ -143,7 +144,7 @@ func resourceVPCNetworkV2Create(ctx context.Context, d *schema.ResourceData, met
 		request.DNSDomain = new(v.(string))
 	}
 	if v, ok := d.GetOk("availability_zone_hints"); ok {
-		hints := expandToStringSlice(v.([]any))
+		hints := convert.ToStringSlice(v.([]any))
 		request.AvailabilityZoneHints = &hints
 	}
 
@@ -156,7 +157,7 @@ func resourceVPCNetworkV2Create(ctx context.Context, d *schema.ResourceData, met
 	d.SetId(created.ID)
 
 	if tags, ok := d.GetOk("tags"); ok {
-		values := expandToStringSlice(tags.(*schema.Set).List())
+		values := convert.ToStringSlice(tags.(*schema.Set).List())
 		if _, err := network.TagOperations(client, created.ID).Replace(ctx, values); err != nil {
 			return diag.FromErr(errUpdatingObject(vpcNetworkV2Object, created.ID, err))
 		}
@@ -219,7 +220,7 @@ func resourceVPCNetworkV2Update(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	if d.HasChange("tags") {
-		values := expandToStringSlice(d.Get("tags").(*schema.Set).List())
+		values := expandVPCUpdateTagsV2(d)
 		if _, err := network.TagOperations(client, d.Id()).Replace(ctx, values); err != nil {
 			return diag.FromErr(errUpdatingObject(vpcNetworkV2Object, d.Id(), err))
 		}
@@ -274,7 +275,5 @@ func flattenVPCNetworkV2(d *schema.ResourceData, found *network.Network) {
 	if err := d.Set("subnets", found.Subnets); err != nil {
 		log.Print(errSettingComplexAttr("subnets", err))
 	}
-	if err := d.Set("all_tags", found.Tags); err != nil {
-		log.Print(errSettingComplexAttr("all_tags", err))
-	}
+	flattenVPCTagsV2(d, found.Tags)
 }

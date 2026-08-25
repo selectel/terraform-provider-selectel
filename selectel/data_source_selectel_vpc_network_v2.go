@@ -11,6 +11,7 @@ import (
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/network"
 	"github.com/selectel/vpc-go/pkg/v2/subnet"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
 )
 
 func dataSourceVPCNetworkV2() *schema.Resource {
@@ -134,7 +135,7 @@ func dataSourceVPCNetworkV2Read(ctx context.Context, d *schema.ResourceData, met
 		}
 	}
 	if v, ok := d.GetOk("tags"); ok {
-		filters["tags"] = []string{strings.Join(expandToStringSlice(v.(*schema.Set).List()), ",")}
+		filters["tags"] = []string{strings.Join(convert.ToStringSlice(v.(*schema.Set).List()), ",")}
 	}
 	if v, ok := d.GetOkExists("external"); ok {
 		filters["router:external"] = []string{strconv.FormatBool(v.(bool))}

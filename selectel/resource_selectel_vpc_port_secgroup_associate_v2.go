@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/port"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
 )
 
 const vpcPortSecGroupAssociateV2Object = "VPC port security group association"
@@ -70,7 +71,7 @@ func resourceVPCPortSecGroupAssociateV2Create(ctx context.Context, d *schema.Res
 	selMutexKV.Lock(portID)
 	defer selMutexKV.Unlock(portID)
 
-	groups := expandToStringSlice(desired.List())
+	groups := convert.ToStringSlice(desired.List())
 	if !d.Get("enforce").(bool) {
 		found, err := port.Get(ctx, client, portID)
 		if err != nil {
@@ -140,7 +141,7 @@ func resourceVPCPortSecGroupAssociateV2Update(ctx context.Context, d *schema.Res
 	selMutexKV.Lock(portID)
 	defer selMutexKV.Unlock(portID)
 
-	groups := expandToStringSlice(desired.List())
+	groups := convert.ToStringSlice(desired.List())
 	if !d.Get("enforce").(bool) {
 		found, err := port.Get(ctx, client, portID)
 		if err != nil {
@@ -222,7 +223,7 @@ func resourceVPCPortSecGroupAssociateV2ImportState(ctx context.Context, d *schem
 
 func addVPCSecGroupIDs(current []string, added *schema.Set) []string {
 	result := slices.Clone(current)
-	for _, id := range expandToStringSlice(added.List()) {
+	for _, id := range convert.ToStringSlice(added.List()) {
 		if !slices.Contains(result, id) {
 			result = append(result, id)
 		}

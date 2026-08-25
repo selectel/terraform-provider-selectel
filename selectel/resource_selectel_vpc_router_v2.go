@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/router"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
 )
 
 const vpcRouterV2Object = "VPC router"
@@ -107,7 +108,7 @@ func resourceVPCRouterV2Create(ctx context.Context, d *schema.ResourceData, meta
 		request.Description = new(v.(string))
 	}
 	if v, ok := d.GetOk("availability_zone_hints"); ok {
-		hints := expandToStringSlice(v.([]any))
+		hints := convert.ToStringSlice(v.([]any))
 		request.AvailabilityZoneHints = &hints
 	}
 	if gateway, ok := expandVPCRouterV2Gateway(d); ok {
@@ -123,7 +124,7 @@ func resourceVPCRouterV2Create(ctx context.Context, d *schema.ResourceData, meta
 	d.SetId(created.ID)
 
 	if tags, ok := d.GetOk("tags"); ok {
-		values := expandToStringSlice(tags.(*schema.Set).List())
+		values := convert.ToStringSlice(tags.(*schema.Set).List())
 		if _, err := router.TagOperations(client, created.ID).Replace(ctx, values); err != nil {
 			return diag.FromErr(errUpdatingObject(vpcRouterV2Object, created.ID, err))
 		}
@@ -189,7 +190,7 @@ func resourceVPCRouterV2Update(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	if d.HasChange("tags") {
-		values := expandToStringSlice(d.Get("tags").(*schema.Set).List())
+		values := expandVPCUpdateTagsV2(d)
 		if _, err := router.TagOperations(client, d.Id()).Replace(ctx, values); err != nil {
 			return diag.FromErr(errUpdatingObject(vpcRouterV2Object, d.Id(), err))
 		}
@@ -259,9 +260,7 @@ func flattenVPCRouterV2(d *schema.ResourceData, found *router.Router) {
 	if err := d.Set("availability_zones", found.AvailabilityZones); err != nil {
 		log.Print(errSettingComplexAttr("availability_zones", err))
 	}
-	if err := d.Set("all_tags", found.Tags); err != nil {
-		log.Print(errSettingComplexAttr("all_tags", err))
-	}
+	flattenVPCTagsV2(d, found.Tags)
 }
 
 func flattenVPCRouterV2FixedIPs(fixedIPs []router.ExternalFixedIP) []any {

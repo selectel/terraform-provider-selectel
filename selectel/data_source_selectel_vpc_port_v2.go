@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/port"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
 )
 
 func dataSourceVPCPortV2() *schema.Resource {
@@ -216,7 +217,7 @@ func vpcPortV2ListFilters(d *schema.ResourceData) map[string][]string {
 		filters["fixed_ips"] = []string{"ip_address=" + v.(string)}
 	}
 	if v, ok := d.GetOk("tags"); ok {
-		filters["tags"] = []string{strings.Join(expandToStringSlice(v.(*schema.Set).List()), ",")}
+		filters["tags"] = []string{strings.Join(convert.ToStringSlice(v.(*schema.Set).List()), ",")}
 	}
 
 	return filters
@@ -225,7 +226,7 @@ func vpcPortV2ListFilters(d *schema.ResourceData) map[string][]string {
 func filterVPCPortV2BySecurityGroups(d *schema.ResourceData, candidates []port.Port) []port.Port {
 	var wantGroups []string
 	if v, ok := d.GetOk("security_group_ids"); ok {
-		wantGroups = expandToStringSlice(v.(*schema.Set).List())
+		wantGroups = convert.ToStringSlice(v.(*schema.Set).List())
 	}
 
 	matched := make([]port.Port, 0, len(candidates))

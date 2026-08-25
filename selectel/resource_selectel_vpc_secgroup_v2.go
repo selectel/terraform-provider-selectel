@@ -9,6 +9,7 @@ import (
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/securitygroup"
 	"github.com/selectel/vpc-go/pkg/v2/securitygrouprule"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
 )
 
 const vpcSecGroupV2Object = "VPC security group"
@@ -104,7 +105,7 @@ func resourceVPCSecGroupV2Create(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	if tags, ok := d.GetOk("tags"); ok {
-		values := expandToStringSlice(tags.(*schema.Set).List())
+		values := convert.ToStringSlice(tags.(*schema.Set).List())
 		if _, err := securitygroup.TagOperations(client, created.ID).Replace(ctx, values); err != nil {
 			return diag.FromErr(errUpdatingObject(vpcSecGroupV2Object, created.ID, err))
 		}
@@ -162,7 +163,7 @@ func resourceVPCSecGroupV2Update(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	if d.HasChange("tags") {
-		values := expandToStringSlice(d.Get("tags").(*schema.Set).List())
+		values := expandVPCUpdateTagsV2(d)
 		if _, err := securitygroup.TagOperations(client, d.Id()).Replace(ctx, values); err != nil {
 			return diag.FromErr(errUpdatingObject(vpcSecGroupV2Object, d.Id(), err))
 		}
@@ -217,9 +218,8 @@ func flattenVPCSecGroupV2(d *schema.ResourceData, found *securitygroup.SecurityG
 	d.Set("stateful", found.Stateful)
 	d.Set("shared", found.Shared)
 
-	if err := d.Set("all_tags", found.Tags); err != nil {
-		log.Print(errSettingComplexAttr("all_tags", err))
-	}
+	flattenVPCTagsV2(d, found.Tags)
+
 	if err := d.Set("security_group_rules", flattenVPCSecGroupV2RuleIDs(found.SecurityGroupRules)); err != nil {
 		log.Print(errSettingComplexAttr("security_group_rules", err))
 	}

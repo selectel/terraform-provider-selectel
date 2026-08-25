@@ -162,6 +162,40 @@ func TestAccVPCRouterV2Update(t *testing.T) {
 	})
 }
 
+func TestAccVPCRouterV2TagsOutOfBand(t *testing.T) {
+	var found router.Router
+	projectID, region := vpcV2TestEnv()
+	routerName := acctest.RandomWithPrefix("tf-acc-router")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCRouterV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVPCRouterV2Named(projectID, region, routerName, true),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCRouterV2Exists(&found),
+					testAccCheckVPCTagsV2AddOutOfBand(testAccVPCRouterV2TagOperations, "foreign"),
+				),
+			},
+			{
+				Config: testAccVPCRouterV2TagsUpdated(projectID, region, routerName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCRouterV2SameID(&found),
+					resource.TestCheckResourceAttr(testAccVPCRouterV2ResourceName, "tags.#", "1"),
+					resource.TestCheckTypeSetElemAttr(testAccVPCRouterV2ResourceName, "all_tags.*", "foreign"),
+					testAccCheckVPCTagsV2Match(testAccVPCRouterV2TagOperations, []string{"tf-acc", "foreign"}),
+				),
+			},
+			{
+				Config:   testAccVPCRouterV2TagsUpdated(projectID, region, routerName),
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func TestAccVPCRouterV2Gateway(t *testing.T) {
 	var found router.Router
 	projectID, region := vpcV2TestEnv()
@@ -239,6 +273,15 @@ func TestAccVPCRouterV2DataSource(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccVPCRouterV2TagOperations(s *terraform.State) (vpcTagsV2AccOperations, error) {
+	handle, err := testAccVPCNetworkV2Handle(s, testAccVPCRouterV2ResourceName)
+	if err != nil {
+		return nil, err
+	}
+
+	return router.TagOperations(handle.client, handle.id), nil
 }
 
 func testAccCheckVPCRouterV2Exists(found *router.Router) resource.TestCheckFunc {
@@ -335,6 +378,19 @@ resource "selectel_vpc_router_v2" "router_tf_acc_test_1" {
   tags           = ["tf-acc", "VPC"]
 }
 `, region, name, adminStateUp)
+}
+
+func testAccVPCRouterV2TagsUpdated(projectID, region, name string) string {
+	return testAccVPCV2Base(projectID) + fmt.Sprintf(`
+resource "selectel_vpc_router_v2" "router_tf_acc_test_1" {
+  project_id     = local.project_id
+  region         = "%s"
+  name           = "%s"
+  description    = "Managed by the acceptance test"
+  admin_state_up = true
+  tags           = ["tf-acc"]
+}
+`, region, name)
 }
 
 func testAccVPCRouterV2GatewaySupport(projectID, region string) string {

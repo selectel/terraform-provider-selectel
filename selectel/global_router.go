@@ -147,17 +147,6 @@ func getZoneGroupByParams(ctx context.Context, client *globalrouter.ServiceClien
 	return &(*zoneGroups)[0], nil
 }
 
-func expandToStringSlice(v []any) []string {
-	var s []string
-	for _, val := range v {
-		if strVal, ok := val.(string); ok {
-			s = append(s, strVal)
-		}
-	}
-
-	return s
-}
-
 func flattenZoneGroupsV1(zoneGroups []globalrouter.ZoneGroup) []map[string]any {
 	zgs := make([]map[string]any, len(zoneGroups))
 

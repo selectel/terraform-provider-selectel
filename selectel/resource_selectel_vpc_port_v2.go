@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/port"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
 )
 
 const vpcPortV2Object = "VPC port"
@@ -228,7 +229,7 @@ func resourceVPCPortV2Create(ctx context.Context, d *schema.ResourceData, meta a
 	if d.Get("no_security_groups").(bool) {
 		request.SecurityGroups = &[]string{}
 	} else if v, ok := d.GetOk("security_group_ids"); ok {
-		groups := expandToStringSlice(v.(*schema.Set).List())
+		groups := convert.ToStringSlice(v.(*schema.Set).List())
 		request.SecurityGroups = &groups
 	}
 
@@ -249,7 +250,7 @@ func resourceVPCPortV2Create(ctx context.Context, d *schema.ResourceData, meta a
 	d.SetId(created.ID)
 
 	if tags, ok := d.GetOk("tags"); ok {
-		values := expandToStringSlice(tags.(*schema.Set).List())
+		values := convert.ToStringSlice(tags.(*schema.Set).List())
 		if _, err := port.TagOperations(client, created.ID).Replace(ctx, values); err != nil {
 			return diag.FromErr(errUpdatingObject(vpcPortV2Object, created.ID, err))
 		}
@@ -315,7 +316,7 @@ func resourceVPCPortV2Update(ctx context.Context, d *schema.ResourceData, meta a
 		if d.Get("no_security_groups").(bool) {
 			request.SecurityGroups = &[]string{}
 		} else {
-			groups := expandToStringSlice(d.Get("security_group_ids").(*schema.Set).List())
+			groups := convert.ToStringSlice(d.Get("security_group_ids").(*schema.Set).List())
 			request.SecurityGroups = &groups
 		}
 		needsUpdate = true
@@ -340,7 +341,7 @@ func resourceVPCPortV2Update(ctx context.Context, d *schema.ResourceData, meta a
 	}
 
 	if d.HasChange("tags") {
-		values := expandToStringSlice(d.Get("tags").(*schema.Set).List())
+		values := expandVPCUpdateTagsV2(d)
 		if _, err := port.TagOperations(client, d.Id()).Replace(ctx, values); err != nil {
 			return diag.FromErr(errUpdatingObject(vpcPortV2Object, d.Id(), err))
 		}
@@ -400,9 +401,7 @@ func flattenVPCPortV2(d *schema.ResourceData, found *port.Port) {
 		flattenVPCPortV2ExtraDHCPOptions(found.ExtraDHCPOptions)); err != nil {
 		log.Print(errSettingComplexAttr("extra_dhcp_option", err))
 	}
-	if err := d.Set("all_tags", found.Tags); err != nil {
-		log.Print(errSettingComplexAttr("all_tags", err))
-	}
+	flattenVPCTagsV2(d, found.Tags)
 }
 
 func expandVPCPortV2FixedIPs(raw []any) []port.FixedIP {

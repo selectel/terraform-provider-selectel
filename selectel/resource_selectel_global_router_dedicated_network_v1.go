@@ -8,6 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	globalrouter "github.com/selectel/globalrouter-go/pkg/v1"
+
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
 	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/globalrouter"
 )
 
@@ -121,7 +123,7 @@ func resourceGlobalRouterDedicatedNetworkV1Create(ctx context.Context, d *schema
 
 	if v, ok := d.GetOk("tags"); ok {
 		tags := v.(*schema.Set).List()
-		createOpts.Tags = expandToStringSlice(tags)
+		createOpts.Tags = convert.ToStringSlice(tags)
 	}
 
 	createdRouter, _, err := client.DedicatedNetworkCreate(ctx, &createOpts)
@@ -191,7 +193,7 @@ func resourceGlobalRouterDedicatedNetworkV1Update(ctx context.Context, d *schema
 		hasChange = true
 		if v, ok := d.GetOk("tags"); ok {
 			tags := v.(*schema.Set).List()
-			tagsToUpdate := expandToStringSlice(tags)
+			tagsToUpdate := convert.ToStringSlice(tags)
 			updateOpts.Tags = &tagsToUpdate
 		} else {
 			updateOpts.Tags = &[]string{}

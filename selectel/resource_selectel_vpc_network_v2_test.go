@@ -131,6 +131,40 @@ func TestAccVPCNetworkV2Update(t *testing.T) {
 	})
 }
 
+func TestAccVPCNetworkV2TagsOutOfBand(t *testing.T) {
+	var found network.Network
+	projectID, region := vpcV2TestEnv()
+	networkName := acctest.RandomWithPrefix("tf-acc-net")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCNetworkV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVPCNetworkV2OptionalAttributes(projectID, region, networkName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCNetworkV2Exists(testAccVPCNetworkV2ResourceName, &found),
+					testAccCheckVPCTagsV2AddOutOfBand(testAccVPCNetworkV2TagOperations, "foreign"),
+				),
+			},
+			{
+				Config: testAccVPCNetworkV2Updated(projectID, region, networkName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCNetworkV2SameID(testAccVPCNetworkV2ResourceName, &found),
+					resource.TestCheckResourceAttr(testAccVPCNetworkV2ResourceName, "tags.#", "1"),
+					resource.TestCheckTypeSetElemAttr(testAccVPCNetworkV2ResourceName, "all_tags.*", "foreign"),
+					testAccCheckVPCTagsV2Match(testAccVPCNetworkV2TagOperations, []string{"tf-acc", "foreign"}),
+				),
+			},
+			{
+				Config:   testAccVPCNetworkV2Updated(projectID, region, networkName),
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func TestAccVPCNetworkV2DataSource(t *testing.T) {
 	projectID, region := vpcV2TestEnv()
 	networkName := acctest.RandomWithPrefix("tf-acc-net")
@@ -223,6 +257,15 @@ func testAccCheckVPCNetworkV2Exists(resourceName string, found *network.Network)
 
 		return nil
 	}
+}
+
+func testAccVPCNetworkV2TagOperations(s *terraform.State) (vpcTagsV2AccOperations, error) {
+	handle, err := testAccVPCNetworkV2Handle(s, testAccVPCNetworkV2ResourceName)
+	if err != nil {
+		return nil, err
+	}
+
+	return network.TagOperations(handle.client, handle.id), nil
 }
 
 func testAccCheckVPCNetworkV2SameID(resourceName string, found *network.Network) resource.TestCheckFunc {

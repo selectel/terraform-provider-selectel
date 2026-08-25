@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/subnet"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
 )
 
 const (
@@ -176,7 +177,7 @@ func resourceVPCNetworkSubnetV2Create(ctx context.Context, d *schema.ResourceDat
 		request.AllocationPools = &pools
 	}
 	if v, ok := d.GetOk("dns_nameservers"); ok {
-		nameservers := expandToStringSlice(v.([]any))
+		nameservers := convert.ToStringSlice(v.([]any))
 		request.DNSNameservers = &nameservers
 	}
 	if v, ok := d.GetOk("ipv6_address_mode"); ok {
@@ -201,7 +202,7 @@ func resourceVPCNetworkSubnetV2Create(ctx context.Context, d *schema.ResourceDat
 	d.SetId(created.ID)
 
 	if tags, ok := d.GetOk("tags"); ok {
-		values := expandToStringSlice(tags.(*schema.Set).List())
+		values := convert.ToStringSlice(tags.(*schema.Set).List())
 		if _, err := subnet.TagOperations(client, created.ID).Replace(ctx, values); err != nil {
 			return diag.FromErr(errUpdatingObject(vpcNetworkSubnetV2Object, created.ID, err))
 		}
@@ -257,7 +258,7 @@ func resourceVPCNetworkSubnetV2Update(ctx context.Context, d *schema.ResourceDat
 		needsUpdate = true
 	}
 	if d.HasChange("dns_nameservers") {
-		nameservers := expandToStringSlice(d.Get("dns_nameservers").([]any))
+		nameservers := convert.ToStringSlice(d.Get("dns_nameservers").([]any))
 		request.DNSNameservers = &nameservers
 		needsUpdate = true
 	}
@@ -281,7 +282,7 @@ func resourceVPCNetworkSubnetV2Update(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if d.HasChange("tags") {
-		values := expandToStringSlice(d.Get("tags").(*schema.Set).List())
+		values := expandVPCUpdateTagsV2(d)
 		if _, err := subnet.TagOperations(client, d.Id()).Replace(ctx, values); err != nil {
 			return diag.FromErr(errUpdatingObject(vpcNetworkSubnetV2Object, d.Id(), err))
 		}
@@ -342,9 +343,7 @@ func flattenVPCNetworkSubnetV2Common(d *schema.ResourceData, found *subnet.Subne
 	if err := d.Set("host_routes", flattenVPCNetworkSubnetV2HostRoutes(found.HostRoutes)); err != nil {
 		log.Print(errSettingComplexAttr("host_routes", err))
 	}
-	if err := d.Set("all_tags", found.Tags); err != nil {
-		log.Print(errSettingComplexAttr("all_tags", err))
-	}
+	flattenVPCTagsV2(d, found.Tags)
 }
 
 func validateVPCNetworkSubnetV2CIDR(v any, k string) ([]string, []error) {

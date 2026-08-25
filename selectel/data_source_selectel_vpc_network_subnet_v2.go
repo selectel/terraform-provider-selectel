@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/subnet"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
 )
 
 func dataSourceVPCNetworkSubnetV2() *schema.Resource {
@@ -154,7 +155,7 @@ func dataSourceVPCNetworkSubnetV2Read(ctx context.Context, d *schema.ResourceDat
 		filters["enable_dhcp"] = []string{strconv.FormatBool(v.(bool))}
 	}
 	if v, ok := d.GetOk("tags"); ok {
-		filters["tags"] = []string{strings.Join(expandToStringSlice(v.(*schema.Set).List()), ",")}
+		filters["tags"] = []string{strings.Join(convert.ToStringSlice(v.(*schema.Set).List()), ",")}
 	}
 
 	found, err := subnet.List(ctx, client, vpc.ListOptions{

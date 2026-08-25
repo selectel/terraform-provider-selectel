@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/securitygroup"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
 )
 
 func dataSourceVPCSecGroupV2() *schema.Resource {
@@ -88,7 +89,7 @@ func dataSourceVPCSecGroupV2Read(ctx context.Context, d *schema.ResourceData, me
 		filters["stateful"] = []string{strconv.FormatBool(v.(bool))}
 	}
 	if v, ok := d.GetOk("tags"); ok {
-		filters["tags"] = []string{strings.Join(expandToStringSlice(v.(*schema.Set).List()), ",")}
+		filters["tags"] = []string{strings.Join(convert.ToStringSlice(v.(*schema.Set).List()), ",")}
 	}
 
 	found, err := securitygroup.List(ctx, client, vpc.ListOptions{

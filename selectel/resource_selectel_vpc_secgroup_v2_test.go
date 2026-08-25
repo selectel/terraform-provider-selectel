@@ -138,6 +138,40 @@ func TestAccVPCSecGroupV2Update(t *testing.T) {
 	})
 }
 
+func TestAccVPCSecGroupV2TagsOutOfBand(t *testing.T) {
+	var found securitygroup.SecurityGroup
+	projectID, region := vpcV2TestEnv()
+	secGroupName := acctest.RandomWithPrefix("tf-acc-secgroup")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCSecGroupV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVPCSecGroupV2Described(projectID, region, secGroupName, "web traffic", true),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCSecGroupV2Exists(&found),
+					testAccCheckVPCTagsV2AddOutOfBand(testAccVPCSecGroupV2TagOperations, "foreign"),
+				),
+			},
+			{
+				Config: testAccVPCSecGroupV2TagsUpdated(projectID, region, secGroupName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCSecGroupV2SameID(&found),
+					resource.TestCheckResourceAttr(testAccVPCSecGroupV2ResourceName, "tags.#", "1"),
+					resource.TestCheckTypeSetElemAttr(testAccVPCSecGroupV2ResourceName, "all_tags.*", "foreign"),
+					testAccCheckVPCTagsV2Match(testAccVPCSecGroupV2TagOperations, []string{"tf-acc", "foreign"}),
+				),
+			},
+			{
+				Config:   testAccVPCSecGroupV2TagsUpdated(projectID, region, secGroupName),
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func TestAccVPCSecGroupV2DataSource(t *testing.T) {
 	projectID, region := vpcV2TestEnv()
 	secGroupName := acctest.RandomWithPrefix("tf-acc-secgroup")
@@ -170,6 +204,15 @@ func TestAccVPCSecGroupV2DataSource(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccVPCSecGroupV2TagOperations(s *terraform.State) (vpcTagsV2AccOperations, error) {
+	handle, err := testAccVPCNetworkV2Handle(s, testAccVPCSecGroupV2ResourceName)
+	if err != nil {
+		return nil, err
+	}
+
+	return securitygroup.TagOperations(handle.client, handle.id), nil
 }
 
 func testAccCheckVPCSecGroupV2Exists(found *securitygroup.SecurityGroup) resource.TestCheckFunc {
@@ -310,6 +353,19 @@ resource "selectel_vpc_secgroup_v2" "secgroup_tf_acc_test_1" {
   tags        = ["tf-acc", "VPC"]
 }
 `, region, name, description, stateful)
+}
+
+func testAccVPCSecGroupV2TagsUpdated(projectID, region, name string) string {
+	return testAccVPCV2Base(projectID) + fmt.Sprintf(`
+resource "selectel_vpc_secgroup_v2" "secgroup_tf_acc_test_1" {
+  project_id  = local.project_id
+  region      = "%s"
+  name        = "%s"
+  description = "web traffic"
+  stateful    = true
+  tags        = ["tf-acc"]
+}
+`, region, name)
 }
 
 func testAccVPCSecGroupV2DeleteDefaultRules(projectID, region string) string {

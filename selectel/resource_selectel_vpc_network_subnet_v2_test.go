@@ -202,6 +202,40 @@ func TestAccVPCNetworkSubnetV2Update(t *testing.T) {
 	})
 }
 
+func TestAccVPCNetworkSubnetV2TagsOutOfBand(t *testing.T) {
+	var found subnet.Subnet
+	projectID, region := vpcV2TestEnv()
+	subnetName := acctest.RandomWithPrefix("tf-acc-subnet")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCNetworkSubnetV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVPCNetworkSubnetV2OptionalAttributes(projectID, region, subnetName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCNetworkSubnetV2Exists(testAccVPCNetworkSubnetV2ResourceName, &found),
+					testAccCheckVPCTagsV2AddOutOfBand(testAccVPCNetworkSubnetV2TagOperations, "foreign"),
+				),
+			},
+			{
+				Config: testAccVPCNetworkSubnetV2Updated(projectID, region, subnetName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCNetworkSubnetV2SameID(testAccVPCNetworkSubnetV2ResourceName, &found),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "tags.#", "2"),
+					resource.TestCheckTypeSetElemAttr(testAccVPCNetworkSubnetV2ResourceName, "all_tags.*", "foreign"),
+					testAccCheckVPCTagsV2Match(testAccVPCNetworkSubnetV2TagOperations, []string{"tf-acc", "updated", "foreign"}),
+				),
+			},
+			{
+				Config:   testAccVPCNetworkSubnetV2Updated(projectID, region, subnetName),
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func TestAccVPCNetworkSubnetV2DataSource(t *testing.T) {
 	projectID, region := vpcV2TestEnv()
 	subnetName := acctest.RandomWithPrefix("tf-acc-subnet")
@@ -273,6 +307,15 @@ func testAccVPCNetworkSubnetV2Handle(s *terraform.State) (*vpcNetworkV2TestHandl
 	}
 
 	return &vpcNetworkV2TestHandle{client: client, id: rs.Primary.ID}, nil
+}
+
+func testAccVPCNetworkSubnetV2TagOperations(s *terraform.State) (vpcTagsV2AccOperations, error) {
+	handle, err := testAccVPCNetworkSubnetV2Handle(s)
+	if err != nil {
+		return nil, err
+	}
+
+	return subnet.TagOperations(handle.client, handle.id), nil
 }
 
 func testAccCheckVPCNetworkSubnetV2Exists(_ string, found *subnet.Subnet) resource.TestCheckFunc {

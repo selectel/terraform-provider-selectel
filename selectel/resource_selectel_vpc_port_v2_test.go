@@ -126,6 +126,40 @@ func TestAccVPCPortV2Update(t *testing.T) {
 	})
 }
 
+func TestAccVPCPortV2TagsOutOfBand(t *testing.T) {
+	var found port.Port
+	projectID, region := vpcV2TestEnv()
+	portName := acctest.RandomWithPrefix("tf-acc-port")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCPortV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVPCPortV2Extended(projectID, region, portName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCPortV2Exists(&found),
+					testAccCheckVPCTagsV2AddOutOfBand(testAccVPCPortV2TagOperations, "foreign"),
+				),
+			},
+			{
+				Config: testAccVPCPortV2ExtendedUpdated(projectID, region, portName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCPortV2SameID(&found),
+					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "tags.#", "1"),
+					resource.TestCheckTypeSetElemAttr(testAccVPCPortV2ResourceName, "all_tags.*", "foreign"),
+					testAccCheckVPCTagsV2Match(testAccVPCPortV2TagOperations, []string{"tf-acc", "foreign"}),
+				),
+			},
+			{
+				Config:   testAccVPCPortV2ExtendedUpdated(projectID, region, portName),
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func TestAccVPCPortV2DataSource(t *testing.T) {
 	projectID, region := vpcV2TestEnv()
 	portName := acctest.RandomWithPrefix("tf-acc-port")
@@ -177,6 +211,15 @@ func testAccVPCPortV2Handle(s *terraform.State) (*vpcNetworkV2TestHandle, error)
 	}
 
 	return &vpcNetworkV2TestHandle{client: client, id: rs.Primary.ID}, nil
+}
+
+func testAccVPCPortV2TagOperations(s *terraform.State) (vpcTagsV2AccOperations, error) {
+	handle, err := testAccVPCPortV2Handle(s)
+	if err != nil {
+		return nil, err
+	}
+
+	return port.TagOperations(handle.client, handle.id), nil
 }
 
 func testAccCheckVPCPortV2Exists(found *port.Port) resource.TestCheckFunc {
