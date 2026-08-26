@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages a cloud router using public API v2. For more information about cloud routers, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/cloud-routers/).
 
-The router routes traffic between the subnets attached to it and, when an external gateway is set, to and from an external network. Subnets and ports are attached with [selectel_vpc_router_interface_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_interface_v2), and static routes are managed with [selectel_vpc_router_route_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_route_v2) — this resource does not carry them.
+The router routes traffic between the subnets attached to it and, when an external gateway is set, to and from an external network. Subnets and ports are attached with [selectel_vpc_router_interface_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_interface_v2), and static routes are managed with [selectel_vpc_router_route_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_route_v2) — this resource does not carry them. A router with attached interfaces cannot be deleted: the API refuses the deletion with a conflict, and this resource never detaches interfaces on your behalf — remove the `selectel_vpc_router_interface_v2` resources first.
 
 ~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
@@ -85,9 +85,3 @@ where:
 * `<pool>` — Pool where the router is located, for example, `ru-6`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/).
 
 * `<router_id>` — Unique identifier of the router, for example, `1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809`. To get the router ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Cloud routers** tab ⟶ copy the ID of the required router. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack router list` and copy the `ID` field.
-
-## Behavior notes
-
-A router with attached interfaces is not deleted: the API refuses it with a conflict, and the resource stays in the state — this resource never detaches interfaces on your behalf. Remove the `selectel_vpc_router_interface_v2` resources first.
-
-A router deleted outside Terraform leaves the state on the next refresh without an error, and the next plan re-creates it. A denied access or a transport failure keeps the resource in the state and reports a diagnostic error instead.

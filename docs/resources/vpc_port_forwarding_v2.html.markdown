@@ -52,10 +52,6 @@ resource "selectel_vpc_port_forwarding_v2" "port_forwarding_1" {
 
 * `description` - (Optional) Description of the rule.
 
-## Attributes Reference
-
-No attributes are exported beyond the arguments. The identifier of the resource is the identifier the API assigns to the rule.
-
 ## Import
 
 You can import a rule by the identifier of its public floating IP address and the identifier of the rule:
@@ -84,7 +80,3 @@ where:
 * `<floatingip_id>` — Unique identifier of the public floating IP address, for example, `1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809`. To get the public floating IP address ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Public Floating IP addresses** tab ⟶ copy the ID of the required address. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack floating ip list` and copy the `ID` field.
 
 * `<id>` — Unique identifier of the rule, for example, `9f8e7d6c-5b4a-3928-1706-f5e4d3c2b1a0`. To get the rule ID, use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack floating ip port forwarding list <floatingip_id>` and copy the `ID` field. The Control panel does not show the rule ID.
-
-## Behavior notes
-
-A rule removed outside Terraform, or one whose public floating IP address was deleted, leaves the state on the next refresh without an error, and the next plan re-creates it — the rule cannot exist without its public floating IP address. A denied access or a transport failure keeps the resource in the state and reports a diagnostic error instead.

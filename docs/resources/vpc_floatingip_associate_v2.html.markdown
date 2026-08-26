@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages the association between an existing public floating IP address and an existing port using public API v2. For more information about public floating IP addresses, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/public-floating-ip-addresses/).
 
-The resource manages only the association and never creates or deletes the public floating IP address or the port. The address is managed with the [selectel_vpc_floatingip_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_floatingip_v2) resource, and the port with the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.
+The resource manages only the association and never creates or deletes the public floating IP address or the port: destroying it only detaches the address from the port, and both stay. The address is managed with the [selectel_vpc_floatingip_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_floatingip_v2) resource, and the port with the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.
 
 ~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
@@ -41,10 +41,6 @@ resource "selectel_vpc_floatingip_associate_v2" "association_1" {
 
 * `fixed_ip` - (Optional) Fixed IP address of port_id to associate. Must be set if the port has multiple fixed IP addresses. If the port has a single fixed IP address, can be omitted — the provider stores the address selected by the API in state. Changing it updates the association in place.
 
-## Attributes Reference
-
-No attributes are exported beyond the arguments. The resource identifier is the remote identifier of the public floating IP address, not the address itself.
-
 ## Import
 
 You can import an association by the remote identifier of its public floating IP address:
@@ -73,9 +69,3 @@ where:
 * `<floatingip_id>` — Unique identifier of the public floating IP address, for example, `1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809`. To get the public floating IP address ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Public Floating IP addresses** tab ⟶ copy the ID of the required address. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack floating ip list` and copy the `ID` field.
 
 The import fills `floating_ip`, `port_id`, and `fixed_ip` from the remote public floating IP address.
-
-## Behavior notes
-
-Changes made outside Terraform are reflected during refresh. If the association is detached or moved, the next plan restores the configured port and fixed IP. If the public floating IP address itself is deleted, the association leaves state.
-
-Deleting this resource detaches the public floating IP address without deleting either the address or the port. Detaching an already detached address is idempotent. If the address itself no longer exists when the resource is deleted, the delete succeeds without an error — there is nothing left to detach.

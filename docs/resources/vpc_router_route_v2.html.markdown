@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages a single static route of a cloud router using public API v2. For more information about static routes, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/static-routes/).
 
-The resource manages one pair of `destination_cidr` and `next_hop` and leaves every other route of the router alone. Use [selectel_vpc_router_routes_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_routes_v2) instead when you want Terraform to own the router's complete route list.
+The resource manages one pair of `destination_cidr` and `next_hop` and leaves every other route of the router alone. One destination can be served by several routes with different next hops, so only the pair identifies one route — creating a pair that already exists on the router fails; import the existing route if Terraform should manage it. Use [selectel_vpc_router_routes_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_routes_v2) instead when you want Terraform to own the router's complete route list.
 
 Do not manage the same router with both resources: selectel_vpc_router_routes_v2 owns the router's complete route list and removes routes added by this resource on its next apply.
 
@@ -41,11 +41,7 @@ resource "selectel_vpc_router_route_v2" "route_1" {
 
 * `destination_cidr` - (Required) Destination of the route, for example, `10.0.0.0/8`. Changing this creates a new route.
 
-* `next_hop` - (Required) Address traffic for `destination_cidr` is forwarded to. Changing this creates a new route.
-
-## Attributes Reference
-
-No attributes are exported beyond the arguments. The identifier of the resource is `<router_id>-route-<destination_cidr>-<next_hop>`: one destination can be served by several routes with different next hops, so only the pair identifies one entry.
+* `next_hop` - (Required) Address traffic for `destination_cidr` is forwarded to. Changing this creates a new route. Must be an address in a subnet connected to one of the router's internal interfaces — you cannot use an address from the router's external gateway subnet.
 
 ## Import
 
@@ -79,13 +75,3 @@ where:
 * `<next_hop>` — Next hop of the route, for example, `192.168.199.10`.
 
 An identifier without the `-route-` separator, or whose remainder does not split into exactly two dash-separated parts, is rejected locally without calling the API.
-
-## Behavior notes
-
-`next_hop` must be an address in a subnet connected to one of the router's internal interfaces. You cannot use an address from the router's external gateway subnet.
-
-Creating a route whose `destination_cidr` and `next_hop` pair already exists fails. Import the existing route if Terraform should manage it.
-
-If the route is removed from the router outside Terraform, or the router itself is deleted, the resource leaves the state on the next refresh without an error and the next plan re-creates it. A denied access or a transport failure keeps the resource in the state and reports a diagnostic error instead.
-
-Destroying the resource removes only its own entry. If the entry is already gone, or the router no longer exists, the destroy succeeds without rewriting the route list.

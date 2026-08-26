@@ -71,13 +71,9 @@ resource "selectel_vpc_secgroup_rule_v2" "rule_2" {
 
 ~> **Note:** `remote_group_id` and `remote_ip_prefix` are mutually exclusive — set at most one. Setting neither means the rule is not restricted by remote address — the source for ingress rules, the destination for egress rules.
 
-## Attributes Reference
-
-No attributes are exported beyond the arguments. The identifier of the resource is the identifier the API assigns to the rule, independent of the identifier of its security group and of any other rule on it.
-
 ## Import
 
-You can import a rule by its own identifier:
+You can import a rule by its own identifier — it is assigned by the API and is independent of the identifier of the security group the rule belongs to:
 
 ```shell
 export OS_DOMAIN_NAME=<account_id>
@@ -101,7 +97,3 @@ where:
 * `<pool>` — Pool where the security group is located, for example, `ru-6`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/).
 
 * `<secgroup_rule_id>` — Unique identifier of the rule, for example, `1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809`. To get the rule ID, use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack security group rule list` and copy the `ID` field. The Control panel does not show the rule ID.
-
-## Behavior notes
-
-If the rule is removed outside Terraform, or its whole security group is deleted, the resource leaves the state on the next refresh without an error and the next plan re-creates it. A denied access or a transport failure keeps the resource in the state and reports a diagnostic error instead. Destroying a rule that is already gone succeeds without an error.

@@ -47,17 +47,21 @@ resource "selectel_vpc_port_secgroup_associate_v2" "associate_2" {
 
 * `port_id` - (Required) Unique identifier of the port. Changing this creates a new resource. Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.
 
-* `security_group_ids` - (Required) Identifiers of the security groups this resource manages on the port. Can be changed without replacement. Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource.
+* `security_group_ids` - (Required) Identifiers of the security groups this resource manages on the port. Can be changed without replacement. Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource. In the state, the argument reports what the resource manages: with `enforce = true` — the port's whole list; with `enforce = false` — the intersection of the configured set with what the port actually carries, so a group removed externally disappears from it, while a group added externally never appears there.
 
 * `enforce` - (Optional) Specifies whether `security_group_ids` replaces the port's list of security groups or is appended to it. Boolean flag, the default value is `false`:
 
-  * `false` — the resource owns only the groups listed in `security_group_ids` and leaves the other groups of the port alone.
+  * `false` (default) — additive: the resource owns only the groups listed in `security_group_ids`. Creating it adds them to whatever the port already carries; groups put there by anything else are left alone. An update replaces only the subset the resource previously claimed, and destroying it releases only that subset.
 
-  * `true` — the resource owns the whole list, so the port keeps only the groups listed in `security_group_ids`.
+  * `true` — authoritative: the resource owns the port's entire list. Creating it makes the port's groups exactly `security_group_ids`, removing anything else that was there, however it got there. An update replaces the whole list, and destroying it leaves the port with no security groups at all.
+
+  Can be changed without replacement. Switching `enforce` from `false` to `true` takes effect on the next apply: the port's groups become exactly the configured set, and anything else is removed even though this resource never added it.
+
+~> **Warning:** Do not manage the same port with both this resource and the `security_group_ids` argument of `selectel_vpc_port_v2`. Both write the port's list, and they will fight over it on every apply. Pick one.
 
 ## Attributes Reference
 
-* `all_security_group_ids` - The port's complete actual list of security groups, whatever the mode.
+* `all_security_group_ids` - The port's complete actual list of security groups, whatever the mode — including groups attached outside Terraform.
 
 ## Import
 
@@ -87,19 +91,3 @@ where:
 * `<port_id>` — Unique identifier of the port, for example, `1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809`. To get the port ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ the network page ⟶ the **Ports** tab ⟶ copy the ID of the required port. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack port list` and copy the `ID` field.
 
 ~> **Note:** The import fills `all_security_group_ids` with the port's full list, but `security_group_ids` comes out empty and `enforce` takes its default of `false` — there is no configuration yet for the import to reconcile against. Write the configuration you want and check `terraform plan` before applying, especially with `enforce = true`, which would otherwise remove everything you did not list.
-
-## Enforce modes
-
-**`enforce = false`, the default — additive.** The resource owns only the groups named in `security_group_ids`. Creating it adds them to whatever the port already carries; groups put there by anything else are left alone. An update replaces only the subset the resource previously claimed. Destroying it releases only that subset.
-
-**`enforce = true` — authoritative.** The resource owns the port's entire list. Creating it makes the port's groups exactly `security_group_ids`, removing anything else that was there, however it got there. An update replaces the whole list, and destroying it leaves the port with no security groups at all.
-
-Switching `enforce` from `false` to `true` takes effect on the next apply: the port's groups become exactly the configured set, and anything else is removed even though this resource never added it.
-
-~> **Warning:** Do not manage the same port with both this resource and the `security_group_ids` argument of `selectel_vpc_port_v2`. Both write the port's list, and they will fight over it on every apply. Pick one.
-
-## Behavior notes
-
-`all_security_group_ids` always reports the port's real list, so you can see what else is attached. `security_group_ids` reports what this resource manages: in enforce mode that is the whole list, and in additive mode it is the intersection of what you configured with what the port actually carries — so a group removed externally disappears from it, while a group added externally never appears there.
-
-If the port is deleted outside Terraform, the resource leaves the state on the next refresh without an error, and destroying an association whose port is already gone succeeds without touching anything.

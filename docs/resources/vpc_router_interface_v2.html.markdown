@@ -12,6 +12,8 @@ Creates and manages an interface that attaches a cloud router to a network using
 
 The interface attaches the router either through a subnet or through an existing port. The router routes traffic for every subnet attached to it. The router itself is managed with the [selectel_vpc_router_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_v2) resource.
 
+~> **Note:** Detaching an interface deletes its port — both a port the API created for `subnet_id` and a port you passed as `port_id`.
+
 ~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
 ## Example Usage
@@ -48,19 +50,21 @@ resource "selectel_vpc_router_interface_v2" "interface_2" {
 
 * `subnet_id` - (Optional) Unique identifier of the subnet to attach. You must specify either `subnet_id` or `port_id`, but not both. When you attach through `subnet_id` API creates the port for the interface. Changing this creates a new interface. Retrieved from the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource.
 
-* `port_id` - (Optional) Unique identifier of the port to attach. You must specify either `subnet_id` or `port_id`, but not both. A port passed as `port_id` must have exactly one fixed IP. Changing this creates a new interface. Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.
+* `port_id` - (Optional) Unique identifier of the port to attach. You must specify either `subnet_id` or `port_id`, but not both. A port passed as `port_id` must have exactly one fixed IP. Changing this creates a new interface. Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource. Do not manage a port attached as a router interface with a separate `selectel_vpc_port_v2` resource: destroying the interface deletes that port as well.
 
-* `force_destroy` - (Optional) Specifies whether the interface may be detached by first removing the router's static routes that point into the attached subnet. The default value is `false`. Can be changed without replacement — it only steers this resource's destroy.
+* `force_destroy` - (Optional) Specifies whether the interface may be detached by first removing the router's static routes that point into the attached subnet. Boolean flag, the default value is `false`. Can be changed without replacement — it only steers this resource's destroy. The API refuses to detach an interface whose subnet is still in use — for example, when the router has static routes whose `next_hop` is an address inside that subnet:
+
+  * `false` (default) — the destroy fails with the API error. Remove the routes first or set `force_destroy` to `true`.
+
+  * `true` — the routes whose `next_hop` belongs to the subnet are removed first, and then the interface is detached.
 
 ## Attributes Reference
 
 * `network_id` - Unique identifier of the network containing the interface port. It is computed from the actual port after create, read, or import.
 
-The identifier of the resource is the identifier of the port the router is attached through — whether you supplied that port or the API created it for the subnet.
-
 ## Import
 
-You can import an interface by the identifier of its port:
+You can import an interface by the identifier of its port — whether you supplied that port as `port_id` or the API created it for `subnet_id`:
 
 ```shell
 export OS_DOMAIN_NAME=<account_id>
@@ -86,11 +90,3 @@ where:
 * `<port_id>` — Unique identifier of the port the router is attached through, for example, `1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809`. To get the port ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ the network page ⟶ the **Ports** tab ⟶ copy the ID of the required port. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack port list` and copy the `ID` field.
 
 ~> **Note:** A port with more than one fixed IP carries more than one router interface and cannot be imported as a single resource — the import is rejected. A port that is not attached to a router is also rejected as not being a router interface.
-
-## Behavior notes
-
-Detaching an interface deletes its port — both a port the API created for `subnet_id` and a port you passed as `port_id`. Do not manage a port attached as a router interface with a separate `selectel_vpc_port_v2` resource: destroying the interface deletes that port as well.
-
-If the interface is detached outside Terraform, or its port is deleted, the resource leaves the state on the next refresh without an error and the next plan re-creates it.
-
-The API refuses to detach an interface whose subnet is still in use — for example, when the router has static routes whose `next_hop` is an address inside that subnet. With `force_destroy = false`, the destroy fails with the API error — remove the routes first or set `force_destroy = true`. With `force_destroy = true`, the routes whose `next_hop` belongs to the subnet are removed first, and then the interface is detached.

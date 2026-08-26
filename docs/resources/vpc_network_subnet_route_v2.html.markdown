@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages a single route of a subnet using public API v2. For more information about static routes, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/static-routes/).
 
-The resource manages a single entry of the subnet's `host_routes` list and leaves the other entries alone. Use it when different routes of one subnet are owned by different configurations or modules. The subnet itself is managed with the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource.
+The resource manages a single entry of the subnet's `host_routes` list and leaves the other entries alone. Use it when different routes of one subnet are owned by different configurations or modules. A route whose `destination_cidr` and `next_hop` pair already exists on the subnet cannot be created — the same `destination_cidr` with a different `next_hop` is a separate route. The subnet itself is managed with the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource, and its full route list is available through the `host_routes` attribute.
 
 ~> **Note:** Adding an entry rewrites the whole `host_routes` list of the subnet, so the provider serializes concurrent routes of the same subnet. Do not manage the same subnet's routes both with this resource and by another means at the same time.
 
@@ -39,10 +39,6 @@ resource "selectel_vpc_network_subnet_route_v2" "route_1" {
 * `destination_cidr` - (Required) Destination CIDR of the route. Changing this creates a new route. The format is validated by the API rather than by the provider.
 
 * `next_hop` - (Required) Next hop of the route, which must be an address reachable through the subnet. Changing this creates a new route. The format is validated by the API rather than by the provider.
-
-## Attributes Reference
-
-No attributes are exported beyond the arguments. The parent [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource and the corresponding data source expose the full list through `host_routes`.
 
 ## Import
 
@@ -82,11 +78,3 @@ terraform import selectel_vpc_network_subnet_route_v2.route_1 8f6c1e9b-2a3d-4f50
 ```
 
 An identifier without the `-route-` separator, or whose remainder does not split into exactly two dash-separated parts, is rejected locally without calling the API.
-
-## Behavior notes
-
-* A route whose `destination_cidr` and `next_hop` pair already exists on the subnet is refused with a diagnostic error. The same `destination_cidr` with a different `next_hop` is a separate route and is not a conflict.
-
-* If the parent subnet is absent when the route is created, creation fails. If the subnet is absent when the route is deleted, deletion succeeds because the route is already gone.
-
-* If the route disappears from `host_routes` outside Terraform, the next refresh removes it from state. Destroying an already absent route succeeds.

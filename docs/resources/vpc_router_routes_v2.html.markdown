@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages the complete set of static routes of a cloud router using public API v2. For more information about static routes, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/static-routes/).
 
-Terraform owns the router's route list: a route added by anything else is reported as drift and removed by the next apply. Use [selectel_vpc_router_route_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_route_v2) instead when you want to manage individual routes and leave the rest of the list alone. Do not manage the same router with both resources — they will fight over the list.
+Terraform owns the router's route list: a route added by anything else — a `selectel_vpc_router_route_v2` resource, a direct API call, the Control panel — is reported as drift and removed by the next apply. Destroying the resource removes only the routes recorded in its state; anything else on the router stays. Use [selectel_vpc_router_route_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_route_v2) instead when you want to manage individual routes and leave the rest of the list alone. Do not manage the same router with both resources — they will fight over the list.
 
 ~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
@@ -45,15 +45,13 @@ resource "selectel_vpc_router_routes_v2" "routes_1" {
 
 * `router_id` - (Required) Unique identifier of the router whose routes are managed. Changing this creates a new resource. Retrieved from the [selectel_vpc_router_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_v2) resource.
 
-* `routes` - (Optional) The complete set of static routes of the router. Declare it empty (`routes = []`) to state that the router should carry no routes. If you omit `routes`, the resource adopts the router's current route list on every refresh and reports no drift — omitting it does not clear the routes, and a later destroy removes all adopted routes. Each block takes:
+* `routes` - (Optional) The complete set of static routes of the router. Declare it empty (`routes = []`) to state that the router should carry no routes. If you omit `routes`, the resource adopts the router's current route list on every refresh and reports no drift — omitting it does not clear the routes, and a later destroy removes all adopted routes. The first apply is additive: it only ensures the declared routes are present, so an existing route is adopted rather than deleted; from the next apply on, the declared list is applied as the router's whole list. The API validates the submitted list as a whole, so one invalid next hop rejects every route in that apply. Each block takes:
 
   * `destination_cidr` - (Required) Destination of the route, for example, `10.0.0.0/8`.
 
-  * `next_hop` - (Required) Address traffic for `destination_cidr` is forwarded to.
+  * `next_hop` - (Required) Address traffic for `destination_cidr` is forwarded to. Must be an address in a subnet connected to one of the router's internal interfaces — you cannot use an address from the router's external gateway subnet.
 
-## Attributes Reference
-
-No attributes are exported beyond the arguments. The identifier of the resource is the identifier of the router.
+~> **Note:** If an apply was rejected by the API, run a plan or an apply before destroying. The rejected list stays in state until a refresh replaces it with the router's actual one, so a destroy in between removes only the rejected entries and leaves the routes the router really has — and those routes keep the router's interfaces from being deleted until they are removed.
 
 ## Import
 
@@ -83,15 +81,3 @@ where:
 * `<router_id>` — Unique identifier of the router, for example, `1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809`. To get the router ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Cloud routers** tab ⟶ copy the ID of the required router. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack router list` and copy the `ID` field.
 
 The import fills `routes` with the router's full current list. A `router_id` that matches no router fails with a diagnostic error instead of adding an empty resource to the state.
-
-## Behavior notes
-
-`routes` is authoritative. Because a refresh fills it with the router's actual list, a route added by another mechanism — a `selectel_vpc_router_route_v2` resource, a direct API call, the control panel — shows up in the plan as a route to be removed, and the next apply removes it. This is the deliberate difference from the single-route resource, which never touches routes it did not add.
-
-The first apply is additive: it only ensures the declared routes are present, so an existing route is adopted rather than deleted. From the next apply on, the declared list is applied as the router's whole list.
-
-Every `next_hop` must be an address in a subnet connected to one of the router's internal interfaces. You cannot use an address from the router's external gateway subnet. The API validates the submitted list as a whole, so one invalid next hop rejects every route in that apply.
-
-Destroying the resource removes only the routes recorded in its state; anything else on the router stays. If the state holds no routes, the destroy makes no API call. If the router is already gone, or the managed routes are already absent, the destroy succeeds without an error.
-
-Run a plan or an apply before destroying if the previous apply was rejected by the API. The rejected list stays in state until a refresh replaces it with the router's actual one, so a destroy in between removes only the rejected entries and leaves the routes the router really has — and those routes keep the router's interfaces from being deleted until they are removed.

@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages a security group using public API v2. For more information about security groups, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/security-groups/).
 
-A security group is a named set of rules that is attached to ports to filter their traffic. Individual rules are managed with [selectel_vpc_secgroup_rule_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_rule_v2), and groups are attached to a port with [selectel_vpc_port_secgroup_associate_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_secgroup_associate_v2).
+A security group is a named set of rules that is attached to ports to filter their traffic. Individual rules are managed with [selectel_vpc_secgroup_rule_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_rule_v2), and groups are attached to a port with [selectel_vpc_port_secgroup_associate_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_secgroup_associate_v2). A group still attached to a port cannot be deleted — detach it from every port first.
 
 ~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
@@ -55,6 +55,8 @@ resource "selectel_vpc_secgroup_v2" "secgroup_2" {
 
 * `tags` - (Optional) Tags of the security group that are managed by Terraform.
 
+~> **Note:** If the group is created but a follow-up step of the same apply fails — removing the default rules, or applying tags — the apply reports the error, and the identifier of the group is already in the state. The group is therefore never left untracked, and the next apply finishes the work instead of creating a second group.
+
 ## Attributes Reference
 
 * `shared` - Specifies whether another project has been granted access to this group.
@@ -95,11 +97,3 @@ where:
 * `<secgroup_id>` — Unique identifier of the security group, for example, `1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809`. To get the security group ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Security Groups** tab ⟶ copy the ID of the required security group. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack security group list` and copy the `ID` field.
 
 ~> **Note:** `delete_default_rules` describes an action taken at create time and has no counterpart on the API, so it is not filled in by the import. Set it in the configuration to match how you intend the group to be re-created; a different value plans a replacement.
-
-## Behavior notes
-
-If the group is created but a follow-up step fails — removing the default rules, or applying tags — the apply reports the error, and the identifier of the group is already in the state. The group is therefore never left untracked, and the next apply finishes the work instead of creating a second group.
-
-A group deleted outside Terraform leaves the state on the next refresh without an error, and the next plan re-creates it. A denied access or a transport failure keeps the resource in the state and reports a diagnostic error instead.
-
-A group still attached to a port is not deleted. Detach it from every port first.
