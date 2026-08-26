@@ -39,7 +39,7 @@ resource "selectel_vpc_floatingip_associate_v2" "association_1" {
 
 * `port_id` - (Required) Unique identifier of the existing port. Changing this updates the association in place. Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.
 
-* `fixed_ip` - (Optional) Fixed IP address of `port_id` to associate. If omitted, the remote API selects an address and the provider stores it in state. Changing it updates the association in place.
+* `fixed_ip` - (Optional) Fixed IP address of port_id to associate. Must be set if the port has multiple fixed IP addresses. If the port has a single fixed IP address, can be omitted — the provider stores the address selected by the API in state. Changing it updates the association in place.
 
 ## Attributes Reference
 

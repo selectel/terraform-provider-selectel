@@ -35,7 +35,7 @@ resource "selectel_vpc_network_v2" "network_1" {
 
 * `dns_domain` - (Optional) DNS domain of the network. Must be a fully qualified domain name with a dot at the end, for example, `example.com.`. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/).
 
-* `availability_zone_hints` - (Optional) Pool segments requested for hosting the network services. Changing this creates a new network. Learn more about available zones in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/).
+* `availability_zone_hints` - (Optional) Pool segments requested for hosting the network services. Changing this creates a new network. Learn more about available pool segments in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/).
 
 * `tags` - (Optional) Tags of the network that Terraform manages. Tags added outside Terraform are reported in `all_tags` and are not removed by this resource.
 

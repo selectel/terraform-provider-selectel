@@ -18,13 +18,8 @@ The router routes traffic between the subnets attached to it and, when an extern
 
 ```hcl
 resource "selectel_vpc_router_v2" "router_1" {
-  project_id          = selectel_vpc_project_v2.project_1.id
-  region              = "ru-6"
-  name                = "router-1"
-  description         = "Managed by Terraform"
-  tags                = ["production", "networking"]
-  external_network_id = data.selectel_vpc_network_v2.external.id
-  enable_snat         = true
+  project_id = selectel_vpc_project_v2.project_1.id
+  region     = "ru-6"
 }
 ```
 
@@ -44,7 +39,7 @@ resource "selectel_vpc_router_v2" "router_1" {
 
 * `enable_snat` - (Optional) Specifies whether source NAT is enabled on the gateway. Requires `external_network_id` in the same configuration — a value without it is rejected at plan. Can be changed without replacement.
 
-* `availability_zone_hints` - (Optional) Pool segments the router is requested in. Changing this creates a new router. Learn more about available zones in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/).
+* `availability_zone_hints` - (Optional) Pool segments the router is requested in. Changing this creates a new router. Learn more about available pool segments in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/).
 
 * `tags` - (Optional) Tags of the router that are managed by Terraform.
 

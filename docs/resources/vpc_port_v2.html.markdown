@@ -19,17 +19,6 @@ resource "selectel_vpc_port_v2" "port_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-6"
   network_id = selectel_vpc_network_v2.network_1.id
-  name       = "port-1"
-
-  fixed_ip {
-    subnet_id  = selectel_vpc_network_subnet_v2.subnet_1.id
-    ip_address = "192.168.199.50"
-  }
-
-  allowed_address_pairs {
-    ip_address = "192.168.199.100"
-  }
-
 }
 ```
 

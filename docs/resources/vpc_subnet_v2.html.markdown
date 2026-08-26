@@ -20,8 +20,8 @@ Creates a public subnet in a service network. You cannot select a network during
 
 ```hcl
 resource "selectel_vpc_subnet_v2" "subnet_1" {
-  project_id    = selectel_vpc_project_v2.project_1.id
-  region        = "ru-6"
+  project_id = selectel_vpc_project_v2.project_1.id
+  region     = "ru-6"
 }
 ```
 
