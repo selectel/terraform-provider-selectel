@@ -88,11 +88,17 @@ func TestProviderVPCRegistration(t *testing.T) {
 		"selectel_vpc_rbac_policy_v2",
 		"selectel_vpc_secgroup_v2",
 		"selectel_vpc_secgroup_rule_v2",
+		"selectel_vpc_subnet_v2",
 		"selectel_vpc_public_subnet_v2",
 	} {
 		if _, ok := provider.ResourcesMap[name]; !ok {
 			t.Errorf("expected managed resource %s to be registered", name)
 		}
+	}
+
+	deprecatedSubnet := provider.ResourcesMap["selectel_vpc_subnet_v2"]
+	if deprecatedSubnet.DeprecationMessage == "" {
+		t.Error("expected selectel_vpc_subnet_v2 to be marked as deprecated")
 	}
 
 	for _, name := range []string{

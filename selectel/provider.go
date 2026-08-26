@@ -172,6 +172,7 @@ func Provider(providerVersion string) *schema.Provider {
 			"selectel_dedicated_ssh_keys_v1":                        resourceDedicatedSSHKeysV1(),
 			"selectel_vpc_license_v2":                               resourceVPCLicenseV2(),
 			"selectel_vpc_project_v2":                               resourceVPCProjectV2(),
+			"selectel_vpc_subnet_v2":                                resourceDeprecatedVPCSubnetV2(),
 			"selectel_vpc_public_subnet_v2":                         resourceVPCPublicSubnetV2(),
 			"selectel_iam_serviceuser_v1":                           resourceIAMServiceUserV1(),
 			"selectel_iam_user_v1":                                  resourceIAMUserV1(),

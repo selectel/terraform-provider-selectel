@@ -3,18 +3,18 @@ layout: "selectel"
 page_title: "Upgrading to version 9.0.0"
 sidebar_current: "docs-selectel-guide-upgrade-guide-v9"
 description: |-
-  How to upgrade Selectel Terraform Provider to version 9.0.0, migrate the removed public subnet resource, and move existing networking resources from terraform-provider-openstack.
+  How to upgrade Selectel Terraform Provider to version 9.0.0, migrate the deprecated public subnet resource, and move existing networking resources from terraform-provider-openstack.
 ---
 
 # Upgrading to version 9.0.0
 
-Version 9.0.0 of the Selectel provider replaces `selectel_vpc_subnet_v2` with `selectel_vpc_public_subnet_v2` and manages networking resources natively in its `vpc` (Virtual Private Cloud) domain. This guide explains how to migrate both kinds of resources without recreating them.
+Version 9.0.0 of the Selectel provider introduces `selectel_vpc_public_subnet_v2` as a replacement for the deprecated `selectel_vpc_subnet_v2` resource and manages networking resources natively in its `vpc` (Virtual Private Cloud) domain. This guide explains how to migrate both kinds of resources without recreating them.
 
 The VPC API behavior can differ from the OpenStack API. The differences relevant to migration are listed under [Schema differences](#schema-differences).
 
-## Migrating the removed public subnet resource
+## Migrating the deprecated public subnet resource
 
-The `selectel_vpc_subnet_v2` resource was removed. Replace it with `selectel_vpc_public_subnet_v2`; both resource types manage the same kind of public subnet and use the same arguments and attributes.
+The `selectel_vpc_subnet_v2` resource is deprecated. Existing configurations continue to work, but use `selectel_vpc_public_subnet_v2` for new configurations. Both resource types manage the same kind of public subnet and use the same arguments and attributes.
 
 Terraform cannot use [`terraform state mv`](https://developer.hashicorp.com/terraform/cli/commands/state/mv) when the source and destination have different resource types. Migrate the state with `terraform state rm` and `terraform import` instead. These commands change only Terraform state and do not recreate the public subnet.
 
