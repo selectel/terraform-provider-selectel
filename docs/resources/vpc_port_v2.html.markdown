@@ -17,7 +17,7 @@ Creates and manages a port using public API v2. For more information about ports
 ```hcl
 resource "selectel_vpc_port_v2" "port_1" {
   project_id = selectel_vpc_project_v2.project_1.id
-  region     = "ru-3"
+  region     = "ru-6"
   network_id = selectel_vpc_network_v2.network_1.id
   name       = "port-1"
 
@@ -35,11 +35,11 @@ resource "selectel_vpc_port_v2" "port_1" {
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new port. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new port. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
 
-* `region` - (Required) Pool where the port is located, for example, `ru-3`. Changing this creates a new port. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
+* `region` - (Required) Pool where the port is located, for example, `ru-3`. Changing this creates a new port. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/).
 
-* `network_id` - (Required) Unique identifier of the network the port belongs to. Changing this creates a new port.
+* `network_id` - (Required) Unique identifier of the network the port belongs to. Changing this creates a new port. Retrieved from the [selectel_vpc_network_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_v2) resource.
 
 * `name` - (Optional) Name of the port.
 
@@ -55,13 +55,13 @@ resource "selectel_vpc_port_v2" "port_1" {
 
 * `fixed_ip` - (Optional) Fixed IPs of the port. Conflicts with `no_fixed_ip`. If you specify neither, the API allocates an address from one of the subnets of the network. You can specify several blocks:
 
-  * `subnet_id` - (Optional) Unique identifier of the subnet the address is allocated from. If you do not specify it, the API selects a suitable subnet of the network.
+  * `subnet_id` - (Optional) Unique identifier of the subnet the address is allocated from. If you do not specify it, the API selects a suitable subnet of the network. Retrieved from the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource.
 
   * `ip_address` - (Optional) Specific address to assign. If you do not specify it, the API allocates one from the subnet.
 
 * `no_fixed_ip` - (Optional) Creates the port without any fixed IP, even when the network has subnets. The default value is `false`. Conflicts with `fixed_ip`.
 
-* `security_group_ids` - (Optional) Security groups assigned to the port. Conflicts with `no_security_groups`. If you specify neither, the port gets the project's default security group.
+* `security_group_ids` - (Optional) Security groups assigned to the port. Conflicts with `no_security_groups`. If you specify neither, the port gets the project's default security group. Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource.
 
 * `no_security_groups` - (Optional) Creates the port without any security group. The default value is `false`. Conflicts with `security_group_ids`.
 
@@ -118,14 +118,14 @@ terraform import selectel_vpc_port_v2.port_1 <port_id>
 
 where:
 
-* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/account/registration/).
 
-* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/access-control/user-types).
 
 * `<password>` — Password of the service user.
 
-* `<project_id>` — Unique identifier of the associated project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/). The import ID does not contain the project, so `INFRA_PROJECT_ID` must be set.
+* `<project_id>` — Unique identifier of the associated project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
 
-* `<pool>` — Pool where the port is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/). The import ID does not contain the pool, so `INFRA_REGION` must be set.
+* `<pool>` — Pool where the port is located, for example, `ru-6`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/).
 
-* `<port_id>` — Unique identifier of the port, for example, `9d1e2f3a-4b5c-6d70-8e9f-0a1b2c3d4e5f`. To get the port ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ the network page ⟶ the **Ports** tab ⟶ copy the ID of the required port. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud/servers/tools/openstack/) command `openstack port list` and copy the `ID` field.
+* `<port_id>` — Unique identifier of the port, for example, `9d1e2f3a-4b5c-6d70-8e9f-0a1b2c3d4e5f`. To get the port ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ the network page ⟶ the **Ports** tab ⟶ copy the ID of the required port. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack port list` and copy the `ID` field.

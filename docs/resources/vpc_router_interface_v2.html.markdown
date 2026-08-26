@@ -21,7 +21,7 @@ The interface attaches the router either through a subnet or through an existing
 ```hcl
 resource "selectel_vpc_router_interface_v2" "interface_1" {
   project_id = selectel_vpc_project_v2.project_1.id
-  region     = "ru-3"
+  region     = "ru-6"
   router_id  = selectel_vpc_router_v2.router_1.id
   subnet_id  = selectel_vpc_network_subnet_v2.subnet_1.id
 }
@@ -32,7 +32,7 @@ resource "selectel_vpc_router_interface_v2" "interface_1" {
 ```hcl
 resource "selectel_vpc_router_interface_v2" "interface_2" {
   project_id = selectel_vpc_project_v2.project_1.id
-  region     = "ru-3"
+  region     = "ru-6"
   router_id  = selectel_vpc_router_v2.router_1.id
   port_id    = selectel_vpc_port_v2.port_1.id
 }
@@ -40,15 +40,15 @@ resource "selectel_vpc_router_interface_v2" "interface_2" {
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new interface. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new interface. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
 
-* `region` - (Required) Pool where the router is located, for example, `ru-3`. Changing this creates a new interface. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
+* `region` - (Required) Pool where the router is located, for example, `ru-3`. Changing this creates a new interface. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/).
 
-* `router_id` - (Required) Unique identifier of the router the network is attached to. Changing this creates a new interface.
+* `router_id` - (Required) Unique identifier of the router the network is attached to. Changing this creates a new interface. Retrieved from the [selectel_vpc_router_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_v2) resource.
 
-* `subnet_id` - (Optional) Unique identifier of the subnet to attach. Conflicts with `port_id`. When you attach through `port_id` instead, this is computed from the port. Changing this creates a new interface. You must specify either `subnet_id` or `port_id`, but not both.
+* `subnet_id` - (Optional) Unique identifier of the subnet to attach. You must specify either `subnet_id` or `port_id`, but not both. When you attach through `subnet_id` API creates the port for the interface. Changing this creates a new interface. Retrieved from the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource.
 
-* `port_id` - (Optional) Unique identifier of the port to attach. Conflicts with `subnet_id`. When you attach through `subnet_id` instead, this is the port the API created for the interface. A port passed as `port_id` must have exactly one fixed IP. Changing this creates a new interface. You must specify either `subnet_id` or `port_id`, but not both.
+* `port_id` - (Optional) Unique identifier of the port to attach. You must specify either `subnet_id` or `port_id`, but not both. A port passed as `port_id` must have exactly one fixed IP. Changing this creates a new interface. Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.
 
 * `force_destroy` - (Optional) Specifies whether the interface may be detached by first removing the router's static routes that point into the attached subnet. The default value is `false`. Can be changed without replacement — it only steers this resource's destroy.
 
@@ -73,17 +73,17 @@ terraform import selectel_vpc_router_interface_v2.interface_1 <port_id>
 
 where:
 
-* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/account/registration/).
 
-* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/access-control/user-types).
 
 * `<password>` — Password of the service user.
 
-* `<project_id>` — Unique identifier of the associated project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/). The import ID does not contain the project, so `INFRA_PROJECT_ID` must be set.
+* `<project_id>` — Unique identifier of the associated project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/). The import ID does not contain the project, so `INFRA_PROJECT_ID` must be set.
 
-* `<pool>` — Pool where the router is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/). The import ID does not contain the pool, so `INFRA_REGION` must be set.
+* `<pool>` — Pool where the router is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/). The import ID does not contain the pool, so `INFRA_REGION` must be set.
 
-* `<port_id>` — Unique identifier of the port the router is attached through, for example, `1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809`. No composite format and no `router_id` are needed: `router_id`, `network_id`, and `subnet_id` are read from the port. To get the port ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ the network page ⟶ the **Ports** tab ⟶ copy the ID of the required port. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud/servers/tools/openstack/) command `openstack port list` and copy the `ID` field.
+* `<port_id>` — Unique identifier of the port the router is attached through, for example, `1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809`. To get the port ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ the network page ⟶ the **Ports** tab ⟶ copy the ID of the required port. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack port list` and copy the `ID` field.
 
 ~> **Note:** A port with more than one fixed IP carries more than one router interface and cannot be imported as a single resource — the import is rejected. A port that is not attached to a router is also rejected as not being a router interface.
 
@@ -93,4 +93,4 @@ Detaching an interface deletes its port — both a port the API created for `sub
 
 If the interface is detached outside Terraform, or its port is deleted, the resource leaves the state on the next refresh without an error and the next plan re-creates it.
 
-The API refuses to detach an interface whose subnet is still in use — for example, when the router has static routes whose `next_hop` is an address inside that subnet. WWith `force_destroy = false`, the destroy fails with the API error — remove the routes first or set `force_destroy = true`. With `force_destroy = true`, the routes whose `next_hop` belongs to the subnet are removed first, and then the interface is detached.
+The API refuses to detach an interface whose subnet is still in use — for example, when the router has static routes whose `next_hop` is an address inside that subnet. With `force_destroy = false`, the destroy fails with the API error — remove the routes first or set `force_destroy = true`. With `force_destroy = true`, the routes whose `next_hop` belongs to the subnet are removed first, and then the interface is detached.

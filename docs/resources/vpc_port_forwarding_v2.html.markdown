@@ -19,7 +19,7 @@ Traffic that arrives at an external port of the public floating IP address is fo
 ```hcl
 resource "selectel_vpc_port_forwarding_v2" "port_forwarding_1" {
   project_id          = selectel_vpc_project_v2.project_1.id
-  region              = "ru-3"
+  region              = "ru-6"
   floatingip_id       = selectel_vpc_floatingip_v2.floatingip_1.id
   internal_port_id    = selectel_vpc_port_v2.port_1.id
   internal_ip_address = "192.168.199.50"
@@ -34,13 +34,13 @@ resource "selectel_vpc_port_forwarding_v2" "port_forwarding_1" {
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new rule. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new rule. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
 
-* `region` - (Required) Pool where the public floating IP address is located, for example, `ru-3`. Changing this creates a new rule. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
+* `region` - (Required) Pool where the public floating IP address is located, for example, `ru-6`. Changing this creates a new rule. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/).
 
-* `floatingip_id` - (Required) Unique identifier of the public floating IP address the rule belongs to. Changing this creates a new rule, because the rule exists under one public floating IP address.
+* `floatingip_id` - (Required) Unique identifier of the public floating IP address the rule belongs to. Changing this creates a new rule, because the rule exists under one public floating IP address. Retrieved from the [selectel_vpc_floatingip_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_floatingip_v2) resource.
 
-* `internal_port_id` - (Required) Unique identifier of the port traffic is forwarded to. Can be changed without replacement.
+* `internal_port_id` - (Required) Unique identifier of the port traffic is forwarded to. Can be changed without replacement. Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.
 
 * `internal_ip_address` - (Required) Address traffic is forwarded to, which must be one of the fixed IPs of `internal_port_id`. Can be changed without replacement.
 
@@ -71,19 +71,19 @@ terraform import selectel_vpc_port_forwarding_v2.pf_1 <floatingip_id>/<id>
 
 where:
 
-* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/account/registration/).
 
-* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/access-control/user-types).
 
 * `<password>` — Password of the service user.
 
-* `<project_id>` — Unique identifier of the associated project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/). The import ID does not contain the project, so `INFRA_PROJECT_ID` must be set.
+* `<project_id>` — Unique identifier of the associated project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
 
-* `<pool>` — Pool where the public floating IP address is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/). The import ID does not contain the pool, so `INFRA_REGION` must be set.
+* `<pool>` — Pool where the public floating IP address is located, for example, `ru-6`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/).
 
-* `<floatingip_id>` — Unique identifier of the public floating IP address, for example, `1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809`. To get the public floating IP address ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Public Floating IP addresses** tab ⟶ copy the ID of the required address. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud/servers/tools/openstack/) command `openstack floating ip list` and copy the `ID` field.
+* `<floatingip_id>` — Unique identifier of the public floating IP address, for example, `1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809`. To get the public floating IP address ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Public Floating IP addresses** tab ⟶ copy the ID of the required address. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack floating ip list` and copy the `ID` field.
 
-* `<id>` — Unique identifier of the rule, for example, `9f8e7d6c-5b4a-3928-1706-f5e4d3c2b1a0`. To get the rule ID, use [OpenStack CLI](https://docs.selectel.ru/en/cloud/servers/tools/openstack/) command `openstack floating ip port forwarding list <floatingip_id>` and copy the `ID` field. The Control panel does not show the rule ID.
+* `<id>` — Unique identifier of the rule, for example, `9f8e7d6c-5b4a-3928-1706-f5e4d3c2b1a0`. To get the rule ID, use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack floating ip port forwarding list <floatingip_id>` and copy the `ID` field. The Control panel does not show the rule ID.
 
 ## Behavior notes
 

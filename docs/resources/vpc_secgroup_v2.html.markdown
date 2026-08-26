@@ -16,10 +16,12 @@ A security group is a named set of rules that is attached to ports to filter the
 
 ## Example Usage
 
+### Creating a security group
+
 ```hcl
 resource "selectel_vpc_secgroup_v2" "secgroup_1" {
   project_id  = selectel_vpc_project_v2.project_1.id
-  region      = "ru-3"
+  region      = "ru-6"
   name        = "secgroup-1"
   description = "Managed by Terraform"
   tags        = ["production", "web"]
@@ -31,7 +33,7 @@ resource "selectel_vpc_secgroup_v2" "secgroup_1" {
 ```hcl
 resource "selectel_vpc_secgroup_v2" "secgroup_2" {
   project_id           = selectel_vpc_project_v2.project_1.id
-  region               = "ru-3"
+  region               = "ru-6"
   name                 = "secgroup-2"
   delete_default_rules = true
 }
@@ -39,9 +41,9 @@ resource "selectel_vpc_secgroup_v2" "secgroup_2" {
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new security group. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new security group. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
 
-* `region` - (Required) Pool where the security group is created, for example, `ru-3`. Changing this creates a new security group. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
+* `region` - (Required) Pool where the security group is created, for example, `ru-6`. Changing this creates a new security group. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/).
 
 * `name` - (Required) Name of the security group. Can be changed without replacement.
 
@@ -80,17 +82,17 @@ terraform import selectel_vpc_secgroup_v2.secgroup_1 <secgroup_id>
 
 where:
 
-* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/account/registration/).
 
-* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/access-control/user-types).
 
 * `<password>` — Password of the service user.
 
-* `<project_id>` — Unique identifier of the associated project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/). The import ID does not contain the project, so `INFRA_PROJECT_ID` must be set.
+* `<project_id>` — Unique identifier of the associated project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
 
-* `<pool>` — Pool where the security group is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/). The import ID does not contain the pool, so `INFRA_REGION` must be set.
+* `<pool>` — Pool where the security group is located, for example, `ru-6`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/).
 
-* `<secgroup_id>` — Unique identifier of the security group, for example, `1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809`. To get the security group ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Security Groups** tab ⟶ copy the ID of the required security group. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud/servers/tools/openstack/) command `openstack security group list` and copy the `ID` field.
+* `<secgroup_id>` — Unique identifier of the security group, for example, `1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809`. To get the security group ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Security Groups** tab ⟶ copy the ID of the required security group. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack security group list` and copy the `ID` field.
 
 ~> **Note:** `delete_default_rules` describes an action taken at create time and has no counterpart on the API, so it is not filled in by the import. Set it in the configuration to match how you intend the group to be re-created; a different value plans a replacement.
 

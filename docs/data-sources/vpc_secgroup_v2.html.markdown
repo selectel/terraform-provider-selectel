@@ -12,33 +12,35 @@ Provides information about a security group. For more information about security
 
 The data source returns exactly one security group. You can combine any of the optional selectors below, and the security group must match all of them at the same time. If no security group matches the selectors, or if more than one does, the read fails with a diagnostic error instead of picking one arbitrarily.
 
-~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](/docs/providers/selectel/guides/upgrading_to_version_9.html#migrating-data-sources) to replace the corresponding OpenStack data source with the Selectel provider data source.
+~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to replace the corresponding OpenStack data source with the Selectel provider data source.
 
 ## Example Usage
+
+### Find the group by name
 
 ```hcl
 data "selectel_vpc_secgroup_v2" "secgroup_1" {
   project_id = selectel_vpc_project_v2.project_1.id
-  region     = "ru-3"
+  region     = "ru-6"
   name       = "secgroup-1"
 }
 ```
 
-Reading the project's `default` group, to see the rules the platform put in it:
+### Find the default group of the project
 
 ```hcl
 data "selectel_vpc_secgroup_v2" "default" {
   project_id = selectel_vpc_project_v2.project_1.id
-  region     = "ru-3"
+  region     = "ru-6"
   name       = "default"
 }
 ```
 
 ## Argument Reference
 
-* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
 
-* `region` - (Required) Pool where the security group is located, for example, `ru-3`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
+* `region` - (Required) Pool where the security group is located, for example, `ru-6`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/).
 
 * `secgroup_id` - (Optional) Unique identifier of the security group.
 
