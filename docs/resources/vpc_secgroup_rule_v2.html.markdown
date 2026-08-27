@@ -59,7 +59,7 @@ resource "selectel_vpc_secgroup_rule_v2" "rule_2" {
 
 * `description` - (Optional) Description of the rule. Changing this creates a new rule.
 
-* `protocol` - (Optional) Protocol the rule matches. Takes a protocol name or an IP protocol number from `0` to `255` as a string. Required when a port range is set. Changing this creates a new rule.
+* `protocol` - (Optional) Protocol the rule matches. Available protocol names are `ah`, `dccp`, `egp`, `esp`, `gre`, `icmp`, `igmp`, `ipip`, `ipv6-encap`, `ipv6-frag`, `ipv6-icmp`, `ipv6-nonxt`, `ipv6-opts`, `ipv6-route`, `ospf`, `pgm`, `rsvp`, `sctp`, `tcp`, `udp`, `udplite`, and `vrrp`. As an alternative, you can specify an IP protocol number from `0` to `255` as a string. If omitted, the rule matches any protocol. Required when a port range is set. Changing this creates a new rule.
 
 * `port_range_min` - (Optional) Lower bound of the port range from `0` to `65535`. Requires `protocol`. With `protocol = "icmp"`, specifies the ICMP **type** from `0` to `255` and can be set without `port_range_max`. Changing this creates a new rule.
 

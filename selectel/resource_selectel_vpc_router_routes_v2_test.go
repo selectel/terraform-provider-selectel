@@ -150,6 +150,26 @@ func TestAccVPCRouterRoutesV2Authoritative(t *testing.T) {
 	})
 }
 
+func TestAccVPCRouterRoutesV2DestroyRemovesOutOfBand(t *testing.T) {
+	projectID, region := vpcV2TestEnv()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCRouterRoutesV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVPCRouterRoutesV2Pair(projectID, region),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCRouterRoutesV2AddOutOfBand("192.0.2.0/24", "192.168.199.10"),
+					testAccCheckVPCRouterRoutesV2Count(3),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func testAccCheckVPCRouterRoutesV2IDIsRouter() resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[testAccVPCRouterRoutesV2ResourceName]
