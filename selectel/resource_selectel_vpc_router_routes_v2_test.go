@@ -111,6 +111,13 @@ func TestAccVPCRouterRoutesV2Update(t *testing.T) {
 					testAccCheckVPCRouterRoutesV2Count(2),
 				),
 			},
+			{
+				Config: testAccVPCRouterRoutesV2Empty(projectID, region),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCRouterRoutesV2IDIsRouter(),
+					testAccCheckVPCRouterRoutesV2Count(0),
+				),
+			},
 		},
 	})
 }
@@ -310,6 +317,18 @@ resource "selectel_vpc_router_routes_v2" "routes_tf_acc_test_1" {
     destination_cidr = "192.0.2.0/24"
     next_hop         = "192.168.199.10"
   }
+
+  depends_on = [selectel_vpc_router_interface_v2.interface_tf_acc_test_1]
+}
+	`, region)
+}
+
+func testAccVPCRouterRoutesV2Empty(projectID, region string) string {
+	return testAccVPCRouterRouteV2Prerequisites(projectID, region) + fmt.Sprintf(`
+resource "selectel_vpc_router_routes_v2" "routes_tf_acc_test_1" {
+  project_id = local.project_id
+  region     = "%s"
+  router_id  = selectel_vpc_router_v2.router_tf_acc_test_1.id
 
   depends_on = [selectel_vpc_router_interface_v2.interface_tf_acc_test_1]
 }

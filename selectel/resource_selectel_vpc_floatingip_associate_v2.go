@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/floatingip"
 )
@@ -34,18 +35,20 @@ func resourceVPCFloatingIPAssociateV2() *schema.Resource {
 				ForceNew: true,
 			},
 			"floating_ip": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsIPAddress,
 			},
 			"port_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
 			"fixed_ip": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IsIPAddress,
 			},
 		},
 	}

@@ -36,9 +36,9 @@ resource "selectel_vpc_network_subnet_route_v2" "route_1" {
 
 * `subnet_id` - (Required) Unique identifier of the subnet the route belongs to. Changing this creates a new route. Retrieved from the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource.
 
-* `destination_cidr` - (Required) Destination CIDR of the route. Changing this creates a new route. The format is validated by the API rather than by the provider.
+* `destination_cidr` - (Required) Destination CIDR of the route. Changing this creates a new route.
 
-* `next_hop` - (Required) Next hop of the route, which must be an address reachable through the subnet. Changing this creates a new route. The format is validated by the API rather than by the provider.
+* `next_hop` - (Required) Next hop of the route, which must be an address reachable through the subnet. Changing this creates a new route.
 
 ## Import
 

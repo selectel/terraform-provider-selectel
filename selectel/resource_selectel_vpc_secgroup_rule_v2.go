@@ -2,12 +2,15 @@ package selectel
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/securitygrouprule"
 )
@@ -39,14 +42,16 @@ func resourceVPCSecGroupRuleV2() *schema.Resource {
 				ForceNew: true,
 			},
 			"direction": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice([]string{"ingress", "egress"}, false),
 			},
 			"ethertype": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice([]string{"IPv4", "IPv6"}, false),
 			},
 			"description": {
 				Type:     schema.TypeString,
@@ -54,10 +59,11 @@ func resourceVPCSecGroupRuleV2() *schema.Resource {
 				ForceNew: true,
 			},
 			"protocol": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				ValidateFunc: validateVPCSecGroupRuleV2Protocol,
 			},
 			"port_range_min": {
 				Type:         schema.TypeInt,
@@ -65,6 +71,7 @@ func resourceVPCSecGroupRuleV2() *schema.Resource {
 				Computed:     true,
 				ForceNew:     true,
 				RequiredWith: []string{"protocol"},
+				ValidateFunc: validation.IntBetween(0, 65535),
 			},
 			"port_range_max": {
 				Type:         schema.TypeInt,
@@ -72,6 +79,7 @@ func resourceVPCSecGroupRuleV2() *schema.Resource {
 				Computed:     true,
 				ForceNew:     true,
 				RequiredWith: []string{"protocol", "port_range_min"},
+				ValidateFunc: validation.IntBetween(0, 65535),
 			},
 			"remote_group_id": {
 				Type:          schema.TypeString,
@@ -87,6 +95,7 @@ func resourceVPCSecGroupRuleV2() *schema.Resource {
 				ForceNew:         true,
 				ConflictsWith:    []string{"remote_group_id"},
 				DiffSuppressFunc: suppressVPCSecGroupRuleV2PrefixDiff,
+				ValidateFunc:     validation.IsCIDR,
 			},
 		},
 	}
@@ -214,4 +223,24 @@ func suppressVPCSecGroupRuleV2PrefixDiff(_, stored, configured string, _ *schema
 	}
 
 	return storedNet.String() == configuredNet.String()
+}
+
+func validateVPCSecGroupRuleV2Protocol(value any, key string) ([]string, []error) {
+	protocol := value.(string)
+	switch protocol {
+	case "", "ah", "dccp", "egp", "esp", "gre", "icmp", "igmp", "ipip",
+		"ipv6-encap", "ipv6-frag", "ipv6-icmp", "ipv6-nonxt", "ipv6-opts",
+		"ipv6-route", "ospf", "pgm", "rsvp", "sctp", "tcp", "udp", "udplite", "vrrp":
+		return nil, nil
+	}
+
+	protocolNumber, err := strconv.Atoi(protocol)
+	if err != nil {
+		return nil, []error{fmt.Errorf("unknown %q %s for selectel_vpc_secgroup_rule_v2: %w", value, key, err)}
+	}
+	if protocolNumber < 0 || protocolNumber > 255 {
+		return nil, []error{fmt.Errorf("unknown %q %s for selectel_vpc_secgroup_rule_v2", value, key)}
+	}
+
+	return nil, nil
 }

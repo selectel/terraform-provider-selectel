@@ -59,11 +59,11 @@ resource "selectel_vpc_secgroup_rule_v2" "rule_2" {
 
 * `description` - (Optional) Description of the rule. Changing this creates a new rule.
 
-* `protocol` - (Optional) Protocol the rule matches. Changing this creates a new rule. Takes either a known name, such as `tcp`, `udp`, `icmp`, `esp` or `ipv6-icmp`, or an IP protocol number as a string. Required when a port range is set.
+* `protocol` - (Optional) Protocol the rule matches. Takes a protocol name or an IP protocol number from `0` to `255` as a string. Required when a port range is set. Changing this creates a new rule.
 
-* `port_range_min` - (Optional) Lower bound of the port range. Changing this creates a new rule. Requires `protocol`. With `protocol = "icmp"` this is the ICMP **type**, and it may be set on its own to match one type with any code.
+* `port_range_min` - (Optional) Lower bound of the port range from `0` to `65535`. Requires `protocol`. With `protocol = "icmp"`, specifies the ICMP **type** from `0` to `255` and can be set without `port_range_max`. Changing this creates a new rule.
 
-* `port_range_max` - (Optional) Upper bound of the port range. Changing this creates a new rule. Requires `protocol` and `port_range_min`. With `protocol = "icmp"` this is the ICMP **code**, which cannot be set without a type.
+* `port_range_max` - (Optional) Upper bound of the port range from `0` to `65535`. Requires `protocol` and `port_range_min`. With `protocol = "icmp"`, specifies the ICMP **code** from `0` to `255`. Changing this creates a new rule.
 
 * `remote_group_id` - (Optional) Unique identifier of the security group whose members the rule matches. Changing this creates a new rule. Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/vpc_secgroup_v2) data source.
 

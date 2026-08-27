@@ -45,7 +45,7 @@ resource "selectel_vpc_router_routes_v2" "routes_1" {
 
 * `router_id` - (Required) Unique identifier of the router whose routes are managed. Changing this creates a new resource. Retrieved from the [selectel_vpc_router_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_v2) resource.
 
-* `routes` - (Optional) The complete set of static routes of the router. Declare it empty (`routes = []`) to state that the router should carry no routes. If you omit `routes`, the resource adopts the router's current route list on every refresh and reports no drift — omitting it does not clear the routes, and a later destroy removes all adopted routes. The first apply is additive: it only ensures the declared routes are present, so an existing route is adopted rather than deleted; from the next apply on, the declared list is applied as the router's whole list. The API validates the submitted list as a whole, so one invalid next hop rejects every route in that apply. Each block takes:
+* `routes` - (Optional) The complete set of static routes of the router. Omit all `routes` blocks to declare an empty set. The first apply is additive: it only ensures the declared routes are present, so an existing route is adopted rather than deleted; from the next apply on, the declared set is applied as the router's whole route list. The API validates the submitted list as a whole, so one invalid next hop rejects every route in that apply. Each block takes:
 
   * `destination_cidr` - (Required) Destination of the route, for example, `10.0.0.0/8`.
 

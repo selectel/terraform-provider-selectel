@@ -54,10 +54,11 @@ func resourceVPCPortV2() *schema.Resource {
 				Default:  true,
 			},
 			"mac_address": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsMACAddress,
 			},
 			"device_id": {
 				Type:     schema.TypeString,
@@ -82,9 +83,10 @@ func resourceVPCPortV2() *schema.Resource {
 							Optional: true,
 						},
 						"ip_address": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.IsIPAddress,
 						},
 					},
 				},
@@ -119,13 +121,15 @@ func resourceVPCPortV2() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"ip_address": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.Any(validation.IsIPAddress, validation.IsCIDR),
 						},
 						"mac_address": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.IsMACAddress,
 						},
 					},
 				},

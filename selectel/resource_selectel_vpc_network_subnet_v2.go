@@ -70,12 +70,14 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"start": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.IsIPAddress,
 						},
 						"end": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.IsIPAddress,
 						},
 					},
 				},
@@ -85,6 +87,7 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 				Optional:      true,
 				Computed:      true,
 				ConflictsWith: []string{"no_gateway"},
+				ValidateFunc:  validation.IsIPAddress,
 			},
 			"no_gateway": {
 				Type:          schema.TypeBool,
@@ -110,7 +113,10 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 			"dns_nameservers": {
 				Type:     schema.TypeList,
 				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validation.IsIPAddress,
+				},
 			},
 			"ipv6_address_mode": {
 				Type:         schema.TypeString,

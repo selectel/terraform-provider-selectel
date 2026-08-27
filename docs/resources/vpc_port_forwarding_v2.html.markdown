@@ -42,7 +42,7 @@ resource "selectel_vpc_port_forwarding_v2" "port_forwarding_1" {
 
 * `internal_port_id` - (Required) Unique identifier of the port traffic is forwarded to. Can be changed without replacement. Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.
 
-* `internal_ip_address` - (Required) Address traffic is forwarded to, which must be one of the fixed IPs of `internal_port_id`. Can be changed without replacement.
+* `internal_ip_address` - (Required) IPv4 address to which traffic is forwarded. Must be one of the fixed IPs of `internal_port_id`. Can be changed without replacement.
 
 * `internal_port` - (Required) Port traffic is forwarded to. Can be changed without replacement. The available range is from 1 to 65535.
 

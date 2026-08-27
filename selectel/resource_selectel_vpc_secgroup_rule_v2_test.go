@@ -75,10 +75,23 @@ func TestVPCSecGroupRuleV2PrefixDiffSuppression(t *testing.T) {
 					"remote_ip_prefix", testCase.stored, testCase.configured, nil))
 		})
 	}
+
 }
 
 func TestVPCSecGroupRuleV2ExpandPortRange(t *testing.T) {
 	schemaMap := resourceVPCSecGroupRuleV2().Schema
+
+	t.Run("protocol validation matches OpenStack", func(t *testing.T) {
+		for _, protocol := range []string{"", "tcp", "ipv6-icmp", "udplite", "0", "255"} {
+			_, errs := validateVPCSecGroupRuleV2Protocol(protocol, "protocol")
+			assert.Empty(t, errs, protocol)
+		}
+
+		for _, protocol := range []string{"any", "TCP", "not-a-protocol", "-1", "256"} {
+			_, errs := validateVPCSecGroupRuleV2Protocol(protocol, "protocol")
+			assert.NotEmpty(t, errs, protocol)
+		}
+	})
 
 	t.Run("an icmp type and code of zero reach the request", func(t *testing.T) {
 		d := schema.TestResourceDataRaw(t, schemaMap, map[string]any{
