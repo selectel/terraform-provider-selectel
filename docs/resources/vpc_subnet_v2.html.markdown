@@ -39,9 +39,9 @@ resource "selectel_vpc_subnet_v2" "subnet_1" {
 
 * `cidr` - CIDR of the public subnet.
 
-* `network_id` - Unique identifier of the parent service network.
+* `network_id` - Unique identifier of the parent service network — an identifier of the same type as in the [selectel_vpc_network_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_v2) resource.
 
-* `subnet_id` - Unique identifier of the public subnet.
+* `subnet_id` - Unique identifier of the associated subnet in the parent service network — an identifier of the same type as in the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource. Do not use it to import the public subnet — the import uses a different identifier, see [Import](#import).
 
 * `status` - Status of the public subnet.
 
@@ -75,4 +75,4 @@ where:
 
 * `<project_id>` — Unique identifier of the associated project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
 
-* `<public_subnet_id>` — Unique identifier of the public subnet. To get public subnet ID, use the [Get list of subnets](https://docs.selectel.ru/en/api/cloud-projects-and-resources/#tag/Subnets/operation/listSubnets) method in [Cloud Platform Projects and Resources API](https://docs.selectel.ru/en/api/cloud-projects-and-resources/).
+* `<public_subnet_id>` — Unique identifier of the public subnet — the `id` field in the response of the [Get list of subnets](https://docs.selectel.ru/en/api/cloud-projects-and-resources/#tag/Subnets/operation/listSubnets) method in [Cloud Platform Projects and Resources API](https://docs.selectel.ru/en/api/cloud-projects-and-resources/). Do not use the value of the `subnet_id` attribute — it identifies the associated subnet in the parent service network, not the public subnet.

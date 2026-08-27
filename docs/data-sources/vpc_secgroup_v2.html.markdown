@@ -42,7 +42,7 @@ data "selectel_vpc_secgroup_v2" "default" {
 
 * `region` - (Required) Pool where the security group is located, for example, `ru-6`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/).
 
-* `secgroup_id` - (Optional) Unique identifier of the security group.
+* `secgroup_id` - (Optional) Unique identifier of the security group. To get the security group ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Security Groups** tab ⟶ copy the ID of the required security group. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack security group list` and copy the `ID` field.
 
 * `name` - (Optional) Name of the security group.
 

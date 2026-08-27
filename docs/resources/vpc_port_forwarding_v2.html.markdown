@@ -62,7 +62,7 @@ export OS_USERNAME=<username>
 export OS_PASSWORD=<password>
 export INFRA_PROJECT_ID=<project_id>
 export INFRA_REGION=<pool>
-terraform import selectel_vpc_port_forwarding_v2.pf_1 <floatingip_id>/<id>
+terraform import selectel_vpc_port_forwarding_v2.port_forwarding_1 <floatingip_id>/<id>
 ```
 
 where:

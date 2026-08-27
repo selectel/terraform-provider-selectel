@@ -20,11 +20,9 @@ A security group is a named set of rules that is attached to ports to filter the
 
 ```hcl
 resource "selectel_vpc_secgroup_v2" "secgroup_1" {
-  project_id  = selectel_vpc_project_v2.project_1.id
-  region      = "ru-6"
-  name        = "secgroup-1"
-  description = "Managed by Terraform"
-  tags        = ["production", "web"]
+  project_id = selectel_vpc_project_v2.project_1.id
+  region     = "ru-6"
+  name       = "secgroup-1"
 }
 ```
 
@@ -34,7 +32,6 @@ resource "selectel_vpc_secgroup_v2" "secgroup_1" {
 resource "selectel_vpc_secgroup_v2" "secgroup_2" {
   project_id           = selectel_vpc_project_v2.project_1.id
   region               = "ru-6"
-  name                 = "secgroup-2"
   delete_default_rules = true
 }
 ```
@@ -51,7 +48,7 @@ resource "selectel_vpc_secgroup_v2" "secgroup_2" {
 
 * `stateful` - (Optional) Specifies whether the group tracks connection state. Boolean flag. If you do not specify a value, the API assigns one, and the default value it assigns is `true`. Can be changed without replacement. The value can only be changed while the group is not attached to any port; detach it from every port first.
 
-* `delete_default_rules` - (Optional) Specifies whether the egress rules that the API adds to a new group are deleted right after the group is created. Boolean flag, the default value is `false`. Changing this creates a new security group, because the flag only takes effect at create time.
+* `delete_default_rules` - (Optional) Specifies whether all rules that the API automatically adds to a new group are deleted right after the group is created. Default value is `false`. Changing this creates a new security group, because the flag only takes effect at create time.
 
 * `tags` - (Optional) Tags of the security group that are managed by Terraform.
 
