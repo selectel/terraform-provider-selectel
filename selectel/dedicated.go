@@ -783,7 +783,7 @@ func resourceDedicatedServerV1GetFreePublicIPs(
 		return subnet.NetworkUUID == n.UUID
 	})
 
-	if !netsContainSubnet || subnet.Free == 0 {
+	if !netsContainSubnet || subnet.Free == "0" {
 		return nil, fmt.Errorf(
 			"subnet %s is not suitable for allocating ip", subnetID,
 		)
