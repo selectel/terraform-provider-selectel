@@ -44,6 +44,7 @@ func resourceDBaaSUserV1Create(ctx context.Context, d *schema.ResourceData, meta
 		DatastoreID: d.Get("datastore_id").(string),
 		Name:        d.Get("name").(string),
 		Password:    d.Get("password").(string),
+		Settings:    expandDBaaSUserV1Settings(d),
 	}
 
 	log.Print(msgCreate(objectUser, userCreateOpts))
@@ -78,6 +79,9 @@ func resourceDBaaSUserV1Read(ctx context.Context, d *schema.ResourceData, meta a
 	d.Set("datastore_id", user.DatastoreID)
 	d.Set("name", user.Name)
 	d.Set("status", user.Status)
+	if err := d.Set("settings", flattenDBaaSUserV1Settings(user.Settings)); err != nil {
+		log.Print(errSettingComplexAttr("settings", err))
+	}
 
 	return nil
 }
@@ -100,10 +104,16 @@ func resourceDBaaSUserV1Update(ctx context.Context, d *schema.ResourceData, meta
 		}
 
 		log.Printf("[DEBUG] waiting for user %s to become 'ACTIVE'", d.Id())
-		timeout := d.Timeout(schema.TimeoutCreate)
+		timeout := d.Timeout(schema.TimeoutUpdate)
 		err = waiters.WaitForDBaaSUserV1ActiveState(ctx, dbaasClient, d.Id(), timeout)
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
+		}
+	}
+
+	if d.HasChange("settings") {
+		if err := updateDBaaSUserV1Settings(ctx, d, dbaasClient); err != nil {
+			return diag.FromErr(err)
 		}
 	}
 

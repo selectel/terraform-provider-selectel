@@ -47,6 +47,7 @@ const (
 	objectFlavors                      = "flavors"
 	objectConfigurationParameters      = "configuration-parameters"
 	objectShardGroup                   = "shard-group"
+	objectUserSettingParameters        = "user-setting-parameters"
 	objectPrometheusMetricToken        = "prometheus-metric-token"
 	objectFeatureGates                 = "feature-gates"
 	objectAdmissionControllers         = "admission-controllers"
@@ -143,6 +144,7 @@ func Provider(providerVersion string) *schema.Provider {
 			"selectel_dbaas_flavor_v1":                             dataSourceDBaaSFlavorV1(),
 			"selectel_dbaas_flavor_v2":                             dataSourceDBaaSV2Flavor(),
 			"selectel_dbaas_configuration_parameter_v1":            dataSourceDBaaSConfigurationParameterV1(),
+			"selectel_dbaas_user_setting_parameter_v1":             dataSourceDBaaSUserSettingParameterV1(),
 			"selectel_dbaas_clickhouse_configuration_parameter_v2": dataSourceDBaaSV2ClickhouseConfigurationParameter(),
 			"selectel_dbaas_prometheus_metric_token_v1":            dataSourceDBaaSPrometheusMetricTokenV1(),
 			"selectel_mks_kubeconfig_v1":                           dataSourceMKSKubeconfigV1(),

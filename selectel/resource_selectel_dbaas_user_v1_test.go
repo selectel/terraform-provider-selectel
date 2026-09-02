@@ -44,6 +44,46 @@ func TestAccDBaaSUserV1Basic(t *testing.T) {
 	})
 }
 
+func TestAccDBaaSUserV1Settings(t *testing.T) {
+	var (
+		dbaasUser dbaas.User
+		project   projects.Project
+	)
+
+	projectName := acctest.RandomWithPrefix("tf-acc")
+	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
+	userName := RandomWithPrefix("tf_acc_user")
+	userPassword := acctest.RandomWithPrefix("tf-acc-pass")
+	nodeCount := 1
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDBaaSUserV1WithSettings(projectName, datastoreName, userName, userPassword, nodeCount, 20, 5000),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccCheckDBaaSUserV1Exists("selectel_dbaas_user_v1.user_tf_acc_test_1", &dbaasUser),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.0.conn_limit", "20"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.0.statement_timeout", "5000"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.0.login", "true"),
+				),
+			},
+			{
+				Config: testAccDBaaSUserV1WithSettings(projectName, datastoreName, userName, userPassword, nodeCount, 20, 1000),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDBaaSUserV1Exists("selectel_dbaas_user_v1.user_tf_acc_test_1", &dbaasUser),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.0.conn_limit", "20"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.0.statement_timeout", "1000"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.0.login", "true"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckDBaaSUserV1Exists(n string, dbaasUser *dbaas.User) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -114,4 +154,53 @@ resource "selectel_dbaas_user_v1" "user_tf_acc_test_1" {
   name = "%s"
   password = "%s"
 }`, projectName, datastoreName, nodeCount, userName, userPassword)
+}
+
+func testAccDBaaSUserV1WithSettings(projectName, datastoreName, userName, userPassword string, nodeCount, connLimit, statementTimeout int) string {
+	return fmt.Sprintf(`
+resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
+  name        = "%s"
+}
+
+resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region     = "ru-3"
+}
+
+data "selectel_dbaas_datastore_type_v1" "dt" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region = "ru-3"
+  filter {
+    engine = "postgresql"
+    version = "12"
+  }
+}
+
+resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
+  name = "%s"
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region = "ru-3"
+  type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
+  subnet_id = "${selectel_vpc_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
+  node_count = "%d"
+  flavor {
+    vcpus = 2
+    ram = 4096
+    disk = 32
+  }
+}
+
+resource "selectel_dbaas_user_v1" "user_tf_acc_test_1" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region = "ru-3"
+  datastore_id = "${selectel_dbaas_datastore_v1.datastore_tf_acc_test_1.id}"
+  name = "%s"
+  password = "%s"
+
+  settings {
+    conn_limit        = %d
+    statement_timeout = %d
+    login             = true
+  }
+}`, projectName, datastoreName, nodeCount, userName, userPassword, connLimit, statementTimeout)
 }

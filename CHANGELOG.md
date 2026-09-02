@@ -1,3 +1,10 @@
+## Unreleased
+
+IMPROVEMENTS:
+
+* `selectel_dbaas_user_v1`: add PostgreSQL `settings` block for role attributes and GUCs. Settings are applied on create and updated via a dedicated API endpoint. Removing a key from the block unsets it.
+* __New Data Source:__ `selectel_dbaas_user_setting_parameter_v1` — catalog of per-user PostgreSQL settings.
+
 ## 9.2.0 (October 14, 2026)
 
 FEATURES:

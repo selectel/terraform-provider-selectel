@@ -19,6 +19,12 @@ resource "selectel_dbaas_user_v1" "user_1" {
   datastore_id = selectel_dbaas_postgresql_datastore_v1.cluster_1.id
   name         = "user"
   password     = "secret"
+
+  settings {
+    conn_limit        = 20
+    statement_timeout = 5000
+    login             = true
+  }
 }
 ```
 
@@ -57,6 +63,36 @@ resource "selectel_dbaas_user_v1" "user_1" {
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new user. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-databases).
 
 * `datastore_id` - (Required) Unique identifier of the associated cluster. Changing this creates a new user. Retrieved from the [selectel_dbaas_postgresql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_datastore_v1) or [selectel_dbaas_mysql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_mysql_datastore_v1) resource depending on the cluster type you use.
+
+* `settings` - (Optional) PostgreSQL role settings. Supported only for PostgreSQL, PostgreSQL for 1C, and PostgreSQL TimescaleDB. You can set settings on create. Changing settings updates only this block (password is updated separately). Omitted keys are kept; remove a key from the block to unset it. You can retrieve available parameters with the [selectel_dbaas_user_setting_parameter_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_user_setting_parameter_v1) data source.
+
+  * `conn_limit` - (Optional) Maximum number of concurrent connections. Use `-1` for unlimited.
+
+  * `login` - (Optional) Whether the user is allowed to log in.
+
+  * `statement_timeout` - (Optional) Abort statements running longer than this value, in milliseconds. `0` disables the timeout.
+
+  * `lock_timeout` - (Optional) Abort statements waiting for a lock longer than this value, in milliseconds. `0` disables the timeout.
+
+  * `idle_in_transaction_session_timeout` - (Optional) Terminate sessions idle in a transaction longer than this value, in milliseconds. `0` disables the timeout.
+
+  * `idle_session_timeout` - (Optional) Terminate idle sessions outside a transaction after this timeout, in milliseconds. Requires PostgreSQL 14+. `0` disables.
+
+  * `temp_file_limit` - (Optional) Maximum disk space for temporary files, in kB. Use `-1` for unlimited.
+
+  * `work_mem` - (Optional) Memory for sort/hash operations, in kB.
+
+  * `log_min_duration_statement` - (Optional) Log statements running at least this long, in milliseconds. Use `-1` to disable.
+
+  * `search_path` - (Optional) Schema search path.
+
+  * `default_transaction_isolation` - (Optional) Default transaction isolation level. Available values are `serializable`, `repeatable read`, `read committed`, `read uncommitted`.
+
+  * `log_statement` - (Optional) Which SQL statements are logged. Available values are `none`, `ddl`, `mod`, `all`.
+
+  * `synchronous_commit` - (Optional) Synchronous commit mode. Available values are `on`, `off`, `local`, `remote_write`, `remote_apply`.
+
+  * `default_transaction_read_only` - (Optional) Whether transactions are read-only by default.
 
 ## Attributes Reference
 
