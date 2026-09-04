@@ -42,6 +42,37 @@ func TestVPCPortForwardingV2ID(t *testing.T) {
 	}
 }
 
+func TestVPCPortForwardingV2PortRangeValidation(t *testing.T) {
+	for _, c := range []struct {
+		value   string
+		wantErr string
+	}{
+		{value: "80:90"},
+		{value: "80:80"},
+		{value: "1:65535"},
+		{value: ""},
+		{value: "80", wantErr: "expected <first>:<last>"},
+		{value: "80:90:100", wantErr: "expected <first>:<last>"},
+		{value: "abc:90", wantErr: "between 1 and 65535"},
+		{value: "0:10", wantErr: "between 1 and 65535"},
+		{value: "10:70000", wantErr: "between 1 and 65535"},
+		{value: "90:80", wantErr: "must not exceed"},
+	} {
+		t.Run(c.value, func(t *testing.T) {
+			_, errs := validateVPCPortForwardingV2PortRange(c.value, "internal_port_range")
+
+			if c.wantErr == "" {
+				assert.Empty(t, errs)
+
+				return
+			}
+
+			require.NotEmpty(t, errs)
+			assert.Contains(t, errs[0].Error(), c.wantErr)
+		})
+	}
+}
+
 func TestAccVPCPortForwardingV2Basic(t *testing.T) {
 	var found floatingip.PortForwarding
 	projectID, region := vpcV2TestEnv()
@@ -56,6 +87,8 @@ func TestAccVPCPortForwardingV2Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCPortForwardingV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "external_port", "8080"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "external_port_range", "8080:8080"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "internal_port_range", "80:80"),
 					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "protocol", "tcp"),
 					resource.TestCheckResourceAttrSet(testAccVPCPortForwardingV2ResourceName, "internal_ip_address"),
 				),
@@ -88,16 +121,19 @@ func TestAccVPCPortForwardingV2Update(t *testing.T) {
 				Check:  testAccCheckVPCPortForwardingV2Exists(&found),
 			},
 			{
-				Config: testAccVPCPortForwardingV2Described(projectID, region, 9090, "udp"),
+				Config: testAccVPCPortForwardingV2Ranges(projectID, region, "9090:9092", "udp"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCPortForwardingV2SameID(&found),
-					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "external_port", "9090"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "external_port_range", "9090:9092"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "internal_port_range", "80:82"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "external_port", "0"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "internal_port", "0"),
 					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "protocol", "udp"),
 					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "description", "updated by the acceptance test"),
 				),
 			},
 			{
-				Config:   testAccVPCPortForwardingV2Described(projectID, region, 9090, "udp"),
+				Config:   testAccVPCPortForwardingV2Ranges(projectID, region, "9090:9092", "udp"),
 				PlanOnly: true,
 			},
 		},
@@ -243,7 +279,7 @@ resource "selectel_vpc_port_forwarding_v2" "pf_tf_acc_test_1" {
 `, region, externalPort, protocol)
 }
 
-func testAccVPCPortForwardingV2Described(projectID, region string, externalPort int, protocol string) string {
+func testAccVPCPortForwardingV2Ranges(projectID, region, externalPortRange, protocol string) string {
 	return testAccVPCPortForwardingV2Base(projectID, region) + fmt.Sprintf(`
 resource "selectel_vpc_port_forwarding_v2" "pf_tf_acc_test_1" {
   project_id          = local.project_id
@@ -251,8 +287,8 @@ resource "selectel_vpc_port_forwarding_v2" "pf_tf_acc_test_1" {
   floatingip_id       = selectel_vpc_floatingip_v2.floatingip_tf_acc_test_1.id
   internal_port_id    = selectel_vpc_port_v2.port_tf_acc_test_1.id
   internal_ip_address = "192.168.199.60"
-  internal_port       = 80
-  external_port       = %d
+  internal_port_range = "80:82"
+  external_port_range = "%s"
   protocol            = "%s"
   description         = "updated by the acceptance test"
 
@@ -260,5 +296,5 @@ resource "selectel_vpc_port_forwarding_v2" "pf_tf_acc_test_1" {
   # nothing else in this resource refers to it.
   depends_on = [selectel_vpc_router_interface_v2.interface_tf_acc_test_1]
 }
-`, region, externalPort, protocol)
+`, region, externalPortRange, protocol)
 }

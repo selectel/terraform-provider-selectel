@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages a port-forwarding rule of a public floating IP address using public API v2. For more information about public floating IP addresses, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/public-floating-ip-addresses/).
 
-Traffic that arrives at an external port of the public floating IP address is forwarded to an internal address and port. The public floating IP address is managed with the [selectel_vpc_floatingip_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_floatingip_v2) resource.
+Traffic that arrives at an external port of the public floating IP address is forwarded to an internal address and port. A rule forwards either a single port or a range of ports. The public floating IP address is managed with the [selectel_vpc_floatingip_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_floatingip_v2) resource.
 
 ~> **Note:** If you are upgrading to version 9.0.0 or later, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack Terraform provider to the Selectel provider.
 
@@ -23,10 +23,7 @@ resource "selectel_vpc_port_forwarding_v2" "port_forwarding_1" {
   floatingip_id       = selectel_vpc_floatingip_v2.floatingip_1.id
   internal_port_id    = selectel_vpc_port_v2.port_1.id
   internal_ip_address = "192.168.199.50"
-  internal_port       = 80
-  external_port       = 8080
   protocol            = "tcp"
-  depends_on          = [selectel_vpc_router_interface_v2.interface_1]
 }
 ```
 
@@ -40,13 +37,17 @@ resource "selectel_vpc_port_forwarding_v2" "port_forwarding_1" {
 
 * `floatingip_id` - (Required) Unique identifier of the public floating IP address the rule belongs to. Changing this creates a new rule, because the rule exists under one public floating IP address. Retrieved from the [selectel_vpc_floatingip_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_floatingip_v2) resource.
 
-* `internal_port_id` - (Required) Unique identifier of the port traffic is forwarded to. Can be changed without replacement. Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.
+* `internal_port_id` - (Required) Unique identifier of the port traffic is forwarded to. Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.
 
-* `internal_ip_address` - (Required) IPv4 address to which traffic is forwarded. Must be one of the fixed IPs of `internal_port_id`. Can be changed without replacement.
+* `internal_ip_address` - (Required) IPv4 address to which traffic is forwarded. Must be one of the fixed IPs of `internal_port_id`.
 
-* `internal_port` - (Required) Port traffic is forwarded to. Can be changed without replacement. The available range is from 1 to 65535.
+* `internal_port` - (Optional) Port traffic is forwarded to. You must specify either `internal_port` or `internal_port_range`, but not both. The available range is from 1 to 65535. If you specify `internal_port_range`, `internal_port` is `0` in the state.
 
-* `external_port` - (Required) Port of the public floating IP address that traffic arrives at. Can be changed without replacement. The available range is from 1 to 65535.
+* `internal_port_range` - (Optional) Range of ports traffic is forwarded to. The format is `<first>:<last>`, for example, `8000:8002`. You must specify either `internal_port` or `internal_port_range`, but not both. Must have the same size as `external_port_range`. To forward every port of `external_port_range` to one internal port, specify `internal_port` instead. The available range is from 1 to 65535. If you specify `internal_port`, `internal_port_range` is computed as `<port>:<port>` and is available in the state.
+
+* `external_port` - (Optional) Port of the public floating IP address that traffic arrives at. You must specify either `external_port` or `external_port_range`, but not both. The available range is from 1 to 65535. If you specify `external_port_range`, `external_port` is `0` in the state.
+
+* `external_port_range` - (Optional) Range of ports of the public floating IP address that traffic arrives at. The format is `<first>:<last>`, for example, `9000:9002`. You must specify either `external_port` or `external_port_range`, but not both. Must have the same size as `internal_port_range`, or `internal_port` must be specified to forward every port of the range to one internal port. The available range is from 1 to 65535. If you specify `external_port`, `external_port_range` is computed as `<port>:<port>` and is available in the state.
 
 * `protocol` - (Required) Protocol of the forwarded traffic. Available values are `tcp`, `udp`, `icmp`, `ipv6-icmp`, `sctp`, and `dccp`.
 
