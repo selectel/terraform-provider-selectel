@@ -41,7 +41,7 @@ resource "selectel_vpc_rbac_policy_v2" "rbac_1" {
 
 * `object_id` - (Required) Unique identifier of the object being shared. Changing this creates a new policy. Retrieved from the [selectel_vpc_network_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_v2) or [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource.
 
-* `target_tenant` - (Required) Unique identifier of the project the access is granted to. Can be changed without replacement, which moves the grant from one project to another. To get the ID of an existing project, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project.
+* `target_tenant` - (Required) Unique identifier of the project the access is granted to. Changing this moves the grant from one project to another. To get the ID of an existing project, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project.
 
 ## Import
 

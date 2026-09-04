@@ -43,11 +43,11 @@ resource "selectel_vpc_secgroup_v2" "secgroup_2" {
 
 * `region` - (Required) Pool where the security group is created, for example, `ru-6`. Changing this creates a new security group. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/infrastructure/availability-matrix/).
 
-* `name` - (Required) Name of the security group. Can be changed without replacement.
+* `name` - (Required) Name of the security group.
 
 * `description` - (Optional) Description of the security group. Removing it from the configuration clears it.
 
-* `stateful` - (Optional) Specifies whether the group tracks connection state. Boolean flag. If you do not specify a value, the API assigns one, and the default value it assigns is `true`. Can be changed without replacement. The value can only be changed while the group is not attached to any port; detach it from every port first.
+* `stateful` - (Optional) Specifies whether the group tracks connection state. Boolean flag. If you do not specify a value, the API assigns one, and the default value it assigns is `true`. The value can only be changed while the group is not attached to any port; detach it from every port first.
 
 * `delete_default_rules` - (Optional) Specifies whether all rules that the API automatically adds to a new group are deleted right after the group is created. Default value is `false`. Changing this creates a new security group, because the flag only takes effect at create time.
 

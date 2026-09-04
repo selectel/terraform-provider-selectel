@@ -47,7 +47,7 @@ resource "selectel_vpc_port_secgroup_associate_v2" "associate_2" {
 
 * `port_id` - (Required) Unique identifier of the port. Changing this creates a new resource. Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.
 
-* `security_group_ids` - (Required) Identifiers of the security groups this resource manages on the port. Can be changed without replacement. Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource. In the state, the argument reports what the resource manages: with `enforce = true` — the port's whole list; with `enforce = false` — the intersection of the configured set with what the port actually carries, so a group removed externally disappears from it, while a group added externally never appears there.
+* `security_group_ids` - (Required) Identifiers of the security groups this resource manages on the port. Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource. In the state, the argument reports what the resource manages: with `enforce = true` — the port's whole list; with `enforce = false` — the intersection of the configured set with what the port actually carries, so a group removed externally disappears from it, while a group added externally never appears there.
 
 * `enforce` - (Optional) Specifies whether `security_group_ids` replaces the port's list of security groups or is appended to it. Boolean flag, the default value is `false`:
 
@@ -55,7 +55,7 @@ resource "selectel_vpc_port_secgroup_associate_v2" "associate_2" {
 
   * `true` — authoritative: the resource owns the port's entire list. Creating it makes the port's groups exactly `security_group_ids`, removing anything else that was there, however it got there. An update replaces the whole list, and destroying it leaves the port with no security groups at all.
 
-  Can be changed without replacement. Switching `enforce` from `false` to `true` takes effect on the next apply: the port's groups become exactly the configured set, and anything else is removed even though this resource never added it.
+  Switching `enforce` from `false` to `true` takes effect on the next apply: the port's groups become exactly the configured set, and anything else is removed even though this resource never added it.
 
 ~> **Warning:** Do not manage the same port with both this resource and the `security_group_ids` argument of `selectel_vpc_port_v2`. Both write the port's list, and they will fight over it on every apply. Pick one.
 
