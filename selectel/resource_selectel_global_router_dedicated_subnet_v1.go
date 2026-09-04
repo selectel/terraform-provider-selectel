@@ -8,8 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	globalrouter "github.com/selectel/globalrouter-go/pkg/v1"
-
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
 	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/globalrouter"
 )
 
@@ -127,12 +125,12 @@ func resourceGlobalRouterDedicatedSubnetV1Create(ctx context.Context, d *schema.
 
 	if v, ok := d.GetOk("service_addresses"); ok {
 		serviceAddresses := v.(*schema.Set).List()
-		createOpts.ServiceAddresses = convert.ToStringSlice(serviceAddresses)
+		createOpts.ServiceAddresses = expandToStringSlice(serviceAddresses)
 	}
 
 	if v, ok := d.GetOk("tags"); ok {
 		tags := v.(*schema.Set).List()
-		createOpts.Tags = convert.ToStringSlice(tags)
+		createOpts.Tags = expandToStringSlice(tags)
 	}
 
 	createdRouter, _, err := client.DedicatedSubnetCreate(ctx, &createOpts)
@@ -202,7 +200,7 @@ func resourceGlobalRouterDedicatedSubnetV1Update(ctx context.Context, d *schema.
 		hasChange = true
 		if v, ok := d.GetOk("tags"); ok {
 			tags := v.(*schema.Set).List()
-			tagsToUpdate := convert.ToStringSlice(tags)
+			tagsToUpdate := expandToStringSlice(tags)
 			updateOpts.Tags = &tagsToUpdate
 		} else {
 			updateOpts.Tags = &[]string{}
