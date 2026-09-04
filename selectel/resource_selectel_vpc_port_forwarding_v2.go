@@ -208,10 +208,10 @@ func resourceVPCPortForwardingV2Update(ctx context.Context, d *schema.ResourceDa
 	}
 
 	if needsUpdate {
-		log.Printf("[DEBUG] updating port forwarding %s", d.Id())
-		if _, err := floatingip.UpdatePortForwarding(
-			ctx, client, d.Get("floatingip_id").(string), d.Id(), request,
-		); err != nil {
+		floatingIPID := d.Get("floatingip_id").(string)
+
+		log.Printf("[DEBUG] updating port forwarding %s on floating ip %s", d.Id(), floatingIPID)
+		if _, err := floatingip.UpdatePortForwarding(ctx, client, floatingIPID, d.Id(), request); err != nil {
 			return diag.FromErr(errUpdatingObject(vpcPortForwardingV2Object, d.Id(), err))
 		}
 	}
