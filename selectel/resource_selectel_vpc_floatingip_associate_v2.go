@@ -91,7 +91,12 @@ func resourceVPCFloatingIPAssociateV2Create(
 
 	d.SetId(floatingIPID)
 
-	return resourceVPCFloatingIPAssociateV2Read(ctx, d, meta)
+	diags := waitForVPCFloatingIPV2Active(ctx, client, floatingIPID)
+	if diags.HasError() {
+		return diags
+	}
+
+	return append(diags, resourceVPCFloatingIPAssociateV2Read(ctx, d, meta)...)
 }
 
 func resourceVPCFloatingIPAssociateV2Read(
@@ -137,7 +142,12 @@ func resourceVPCFloatingIPAssociateV2Update(
 		return diag.FromErr(errUpdatingObject(vpcFloatingIPAssociateV2Object, d.Id(), err))
 	}
 
-	return resourceVPCFloatingIPAssociateV2Read(ctx, d, meta)
+	diags := waitForVPCFloatingIPV2Active(ctx, client, d.Id())
+	if diags.HasError() {
+		return diags
+	}
+
+	return append(diags, resourceVPCFloatingIPAssociateV2Read(ctx, d, meta)...)
 }
 
 func resourceVPCFloatingIPAssociateV2Delete(

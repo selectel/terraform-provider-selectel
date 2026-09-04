@@ -123,6 +123,10 @@ func resourceVPCRouterV2Create(ctx context.Context, d *schema.ResourceData, meta
 
 	d.SetId(created.ID)
 
+	if err := waitForVPCRouterV2Ready(ctx, client, created.ID); err != nil {
+		return diag.FromErr(err)
+	}
+
 	if tags, ok := d.GetOk("tags"); ok {
 		values := convert.ToStringSlice(tags.(*schema.Set).List())
 		if _, err := router.TagOperations(client, created.ID).Replace(ctx, values); err != nil {
@@ -273,4 +277,22 @@ func flattenVPCRouterV2FixedIPs(fixedIPs []router.ExternalFixedIP) []any {
 	}
 
 	return result
+}
+
+func waitForVPCRouterV2Ready(ctx context.Context, client *vpc.Client, id string) error {
+	_, err := waitForVPCV2Status(
+		ctx, vpcRouterV2Object, id,
+		[]string{vpcV2StatusBuild, vpcV2StatusAllocating, vpcV2StatusPendingCreate, vpcV2StatusPendingUpdate},
+		vpcV2StatusPollInterval, vpcV2StatusTimeout,
+		func(ctx context.Context) (string, error) {
+			found, err := router.Get(ctx, client, id)
+			if err != nil {
+				return "", err
+			}
+
+			return found.Status, nil
+		},
+	)
+
+	return err
 }

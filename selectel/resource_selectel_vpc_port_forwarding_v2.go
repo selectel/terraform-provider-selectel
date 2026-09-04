@@ -133,7 +133,12 @@ func resourceVPCPortForwardingV2Create(ctx context.Context, d *schema.ResourceDa
 
 	d.SetId(created.ID)
 
-	return resourceVPCPortForwardingV2Read(ctx, d, meta)
+	diags := waitForVPCFloatingIPV2Active(ctx, client, floatingIPID)
+	if diags.HasError() {
+		return diags
+	}
+
+	return append(diags, resourceVPCPortForwardingV2Read(ctx, d, meta)...)
 }
 
 func resourceVPCPortForwardingV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
