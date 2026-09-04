@@ -47,14 +47,16 @@ func dataSourceVPCNetworkSubnetV2() *schema.Resource {
 				Computed: true,
 			},
 			"cidr": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IsCIDR,
 			},
 			"gateway_ip": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IsIPAddress,
 			},
 			"ip_version": {
 				Type:     schema.TypeInt,

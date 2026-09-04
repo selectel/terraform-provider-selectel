@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/port"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
@@ -62,9 +63,10 @@ func dataSourceVPCPortV2() *schema.Resource {
 				Computed: true,
 			},
 			"mac_address": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IsMACAddress,
 			},
 			"status": {
 				Type:     schema.TypeString,
@@ -77,8 +79,9 @@ func dataSourceVPCPortV2() *schema.Resource {
 				Computed: true,
 			},
 			"fixed_ip": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.IsIPAddress,
 			},
 			"security_group_ids": {
 				Type:     schema.TypeSet,

@@ -19,6 +19,8 @@ const (
 	vpcPortForwardingV2IDSeparator = "/"
 )
 
+var vpcPortForwardingV2Protocols = []string{"tcp", "udp", "icmp", "ipv6-icmp", "sctp", "dccp"}
+
 func resourceVPCPortForwardingV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVPCPortForwardingV2Create,
@@ -82,8 +84,9 @@ func resourceVPCPortForwardingV2() *schema.Resource {
 				ExactlyOneOf: []string{"external_port", "external_port_range"},
 			},
 			"protocol": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringInSlice(vpcPortForwardingV2Protocols, false),
 			},
 			"description": {
 				Type:     schema.TypeString,

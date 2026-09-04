@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/network"
 	"github.com/selectel/vpc-go/pkg/v2/subnet"
@@ -62,8 +63,9 @@ func dataSourceVPCNetworkV2() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"matching_subnet_cidr": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.IsCIDR,
 			},
 			"admin_state_up": {
 				Type:     schema.TypeBool,
