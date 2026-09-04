@@ -1,0 +1,5 @@
+stages:
+  - test
+
+include:
+  - component: $CI_SERVER_FQDN/ai/ci/tf-acceptance-gate@master

@@ -28,7 +28,7 @@ func validateRegion(selvpcClient *selvpcclient.Client, serviceType string, regio
 	endpointRegions := make([]string, 0)
 
 	for _, endpoint := range endpoints {
-		if endpoint.Region == region {
+		if endpoint.RegionID == region {
 			return nil
 		}
 		endpointRegions = append(endpointRegions, endpoint.RegionID)
