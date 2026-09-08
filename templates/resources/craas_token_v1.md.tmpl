@@ -1,0 +1,42 @@
+---
+page_title: "Selectel: selectel_craas_token_v1"
+sidebar_current: "docs-selectel-resource-craas-token-v1"
+description: |-
+  Creates and manages tokens in Selectel Container Registry using public API v1.
+---
+
+{{/* This template serves as a starting point for documentation generation, and can be customized with hardcoded values and/or doc gen templates.
+
+For example, the {{ .SchemaMarkdown }} template can be used to replace manual schema documentation if descriptions of schema attributes are added in the provider source code. */ -}}
+
+# selectel\_craas\_token\_v1
+
+**WARNING**: This resource is deprecated and is going to be removed soon. You should use the [selectel_craas_token_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/craas_token_v2) resource
+
+Creates and manages tokens in Container Registry using public API v1. For more information about Container Registry, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/craas/).
+
+## Basic usage example
+
+{{tffile "examples/resources/craas_token_v1/example_1.tf"}}
+
+## Docker CLI login example
+
+{{tffile "examples/resources/craas_token_v1/example_2.tf"}}
+
+```shell
+REGISTRY_USERNAME=$(terraform output -raw registry_username)
+REGISTRY_TOKEN=$(terraform output -raw registry_token)
+echo $REGISTRY_TOKEN | docker login cr.selcloud.ru --username $REGISTRY_USERNAME --password-stdin
+```
+
+## Argument Reference
+
+* `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new token. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
+
+* `token_ttl` - (Optional) Token lifetime. Changing this creates a new token. Available values are `1y` for a year and `12h` for 12 hours. The default value is `1y`.
+
+## Attributes Reference
+
+* `username` - (Sensitive) Username to access Container Registry.
+
+* `token` - (Sensitive) Token to access Container Registry.

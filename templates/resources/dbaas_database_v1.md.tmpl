@@ -1,0 +1,57 @@
+---
+page_title: "Selectel: selectel_dbaas_database_v1"
+sidebar_current: "docs-selectel-resource-dbaas-database-v1"
+description: |-
+  Manages a V1 database resource within Selectel Managed Databases Service.
+---
+
+{{/* This template serves as a starting point for documentation generation, and can be customized with hardcoded values and/or doc gen templates.
+
+For example, the {{ .SchemaMarkdown }} template can be used to replace manual schema documentation if descriptions of schema attributes are added in the provider source code. */ -}}
+
+# selectel\_dbaas\_database\_v1
+
+**WARNING**: This resource is deprecated and is going to be removed soon. You should use database resource for specific datastore type.
+
+Manages a V1 database resource within Selectel Managed Databases Service.
+
+## Example usage
+
+{{tffile "examples/resources/dbaas_database_v1/example_1.tf"}}
+
+## Argument Reference
+
+The following arguments are supported:
+
+* `name` - (Required) A name of the database. Changing this creates a new database.
+
+* `project_id` - (Required) An associated Selectel VPC project. Changing this creates a new database.
+
+* `region` - (Required) A Selectel VPC region of where the database is located. Changing this creates a new database.
+
+* `datastore_id` - (Required) An associated datastore. Changing this creates a new database.
+
+* `owner_id` - (Optional) Owner of the database. Required only for the PostgreSQL datastore. Can be omitted for the MySQL datastore.
+
+* `lc_collate` - (Optional) A lc_collate option for the PostreSQL datastore.
+
+* `lc_ctype` - (Optional) A lc_ctype option for the PostreSQL datastore.
+
+## Attributes Reference
+
+The following attributes are exported:
+
+* `status` - Shows the current status of the database.
+
+## Import
+
+Database can be imported using the `id`, e.g.
+
+```shell
+export OS_DOMAIN_NAME=999999
+export OS_USERNAME=example_user
+export OS_PASSWORD=example_password
+export INFRA_PROJECT_ID=SELECTEL_VPC_PROJECT_ID
+export INFRA_REGION=SELECTEL_VPC_REGION
+terraform import selectel_dbaas_database_v1.database_1 b311ce58-2658-46b5-b733-7a0f418703f2
+```
