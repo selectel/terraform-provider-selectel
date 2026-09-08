@@ -1,9 +1,11 @@
-## 8.3.1 (August 7, 2026)
+## 8.3.2 (September 9, 2026)
 
 BUG FIXES:
 
 * `selectel_dedicated_server_v1`: fix `user_data` permanent drift caused by HTML entity encoding in API responses. The provider now decodes HTML entities on read so the state always contains the human-readable form.
 * `selectel_dedicated_server_v1`: fix `disk_name` not persisted to state for non-RAID partition configs. When the API response lacks intermediate partition items, the provider now falls back to preserving `disk_name` from the existing Terraform state.
+([#419](https://github.com/selectel/terraform-provider-selectel/pull/419))
+
 ## 8.3.1 (August 10, 2026)
 
 BUG FIXES:

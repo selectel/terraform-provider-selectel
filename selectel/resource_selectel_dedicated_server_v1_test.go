@@ -941,3 +941,38 @@ func TestUserDataHTMLEntityDecoding(t *testing.T) {
 		})
 	}
 }
+
+func TestResourceDedicatedServerV1UserDataDiffSuppress(t *testing.T) {
+	resource := resourceDedicatedServerV1()
+	userDataSchema := resource.Schema[dedicatedServerSchemaKeyOSUserData]
+
+	// The API strips trailing newlines from cloud_init_user_data, so the state
+	// holds the value without "\n" while the config sourced via file() keeps it.
+	apiValue := "#!/bin/bash\n\necho 'Hello world' > /root/my-text-file"
+	configValue := "#!/bin/bash\n\necho 'Hello world' > /root/my-text-file\n"
+
+	suppressed := userDataSchema.DiffSuppressFunc(dedicatedServerSchemaKeyOSUserData, apiValue, configValue, nil)
+	assert.True(t, suppressed, "diff should be suppressed for trailing newline difference")
+
+	// Multiple trailing newlines are also stripped by the API.
+	configMultipleNewlines := "#!/bin/bash\n\necho 'Hello world' > /root/my-text-file\n\n\n"
+	suppressedMultiple := userDataSchema.DiffSuppressFunc(dedicatedServerSchemaKeyOSUserData, apiValue, configMultipleNewlines, nil)
+	assert.True(t, suppressedMultiple, "diff should be suppressed for multiple trailing newlines")
+
+	// Identical values must suppress.
+	suppressedIdentical := userDataSchema.DiffSuppressFunc(dedicatedServerSchemaKeyOSUserData, apiValue, apiValue, nil)
+	assert.True(t, suppressedIdentical, "diff should be suppressed for identical values")
+
+	// Different content must not suppress.
+	changedValue := "#!/bin/bash\n\necho 'Changed' > /root/my-text-file\n"
+	notSuppressed := userDataSchema.DiffSuppressFunc(dedicatedServerSchemaKeyOSUserData, apiValue, changedValue, nil)
+	assert.False(t, notSuppressed, "diff should not be suppressed for different content")
+
+	// Empty vs newline-only values.
+	suppressedEmpty := userDataSchema.DiffSuppressFunc(dedicatedServerSchemaKeyOSUserData, "", "\n", nil)
+	assert.True(t, suppressedEmpty, "diff should be suppressed for empty vs newline-only")
+
+	// Empty vs non-empty content must not suppress.
+	notSuppressedEmpty := userDataSchema.DiffSuppressFunc(dedicatedServerSchemaKeyOSUserData, "", changedValue, nil)
+	assert.False(t, notSuppressedEmpty, "diff should not be suppressed for empty vs non-empty content")
+}
