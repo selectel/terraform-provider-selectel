@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_global_router_static_route_v1"
-sidebar_current: "docs-selectel-resource-global-router-static-route-v1"
 description: |-
   Creates and manages a static route in the Global Router service using public API v1.
 ---

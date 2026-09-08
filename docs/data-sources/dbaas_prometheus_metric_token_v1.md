@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_prometheus_metric_token_v1"
-sidebar_current: "docs-selectel-datasource-dbaas-prometheus-metric-token-v1"
 description: |-
   Provides a list of tokens for Prometheus available in Selectel Managed Databases.
 ---

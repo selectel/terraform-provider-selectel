@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_database_v1"
-sidebar_current: "docs-selectel-resource-dbaas-database-v1"
 description: |-
   Manages a V1 database resource within Selectel Managed Databases Service.
 ---

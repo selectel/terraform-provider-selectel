@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_global_router_router_v1"
-sidebar_current: "docs-selectel-resource-global-router-router-v1"
 description: |-
   Creates and manages a global router in the Global Router service using public API v1.
 ---

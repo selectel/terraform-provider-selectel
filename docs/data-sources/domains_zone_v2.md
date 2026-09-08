@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_domains_zone_v2"
-sidebar_current: "docs-selectel-datasource-domains-zone-v2"
 description: |-
   Provides information about a zone in Selectel DNS Hosting (actual).
 ---

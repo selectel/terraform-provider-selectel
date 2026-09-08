@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_mks_admission_controllers_v1"
-sidebar_current: "docs-selectel-datasource-mks-admission-controllers-v1"
 description: |-
   Provides a list of admission controllers available in Selectel Managed Kubernetes.
 ---

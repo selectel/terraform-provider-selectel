@@ -1,7 +1,5 @@
 ---
-layout: "selectel"
 page_title: "Upgrading Terraform Selectel Provider to version 6.0.0"
-sidebar_current: "docs-selectel-guide-upgrade-guide-v6"
 description: |-
   How to upgrade Terraform Selectel Provider to version 6.0.0.
 ---

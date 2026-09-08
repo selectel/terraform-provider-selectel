@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_vpc_project_v2"
-sidebar_current: "docs-selectel-resource-vpc-project-v2"
 description: |-
   Creates and manages a Selectel project using public API v2.
 ---

@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_postgresql_database_v1"
-sidebar_current: "docs-selectel-resource-dbaas-postgresql-database-v1"
 description: |-
   Creates and manages a PostgreSQL database in Selectel Managed Databases using public API v1.
 ---

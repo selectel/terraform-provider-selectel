@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_domains_rrset_v2"
-sidebar_current: "docs-selectel-datasource-domains-rrset-v2"
 description: |-
   Provides information about an RRSet in Selectel DNS Hosting (actual).
 ---

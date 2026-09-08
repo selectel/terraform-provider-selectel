@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_vpc_floatingip_v2"
-sidebar_current: "docs-selectel-resource-vpc-floatingip-v2"
 description: |-
   Creates and manages a public IP address for Selectel products using public API v2.
 ---

@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_available_extension_v1"
-sidebar_current: "docs-selectel-datasource-dbaas-available-extension-v1"
 description: |-
   Provides a list of extensions available for Selectel Managed Databases.
 ---

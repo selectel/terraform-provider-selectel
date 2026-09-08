@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_configuration_parameter_v1"
-sidebar_current: "docs-selectel-datasource-dbaas-configuration-parameter-v1"
 description: |-
   Provides a list of configuration parameters available for Selectel Managed Databases.
 ---

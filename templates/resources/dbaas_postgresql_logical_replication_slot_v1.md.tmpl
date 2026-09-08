@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_postgresql_logical_replication_slot_v1"
-sidebar_current: "docs-selectel-resource-dbaas-postgresql-logical-replication-slot-v1"
 description: |-
   Creates and manages a logical replication slot in Selectel Managed Databases using public API v1.
 ---

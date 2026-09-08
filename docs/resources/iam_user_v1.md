@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_iam_user_v1"
-sidebar_current: "docs-selectel-resource-iam-user-v1"
 description: |-
   Creates and manages a control panel user or a federated user for Selectel products using public API v1.
 ---

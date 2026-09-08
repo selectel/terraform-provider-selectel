@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_datastore_type_v1"
-sidebar_current: "docs-selectel-datasource-dbaas-datastore-type-v1"
 description: |-
   Provides a list of available cluster types in Selectel Managed Databases.
 ---

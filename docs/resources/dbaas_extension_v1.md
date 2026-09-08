@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_extension_v1"
-sidebar_current: "docs-selectel-resource-dbaas-extension-v1"
 description: |-
   Manages a V1 extension resource within Selectel Managed Databases Service.
 ---

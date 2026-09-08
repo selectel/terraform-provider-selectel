@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_global_router_service_v1"
-sidebar_current: "docs-selectel-datasource-global-router-service-v1"
 description: |-
   Provides a list of services in the Global Router service using public API v1.
 ---

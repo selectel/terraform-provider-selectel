@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_domains_zone_v2"
-sidebar_current: "docs-selectel-resource-domains-zone-v2"
 description: |-
   Creates and manages a zone in Selectel DNS Hosting (actual) using public API v2.
 ---

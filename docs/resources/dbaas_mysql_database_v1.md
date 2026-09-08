@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_mysql_database_v1"
-sidebar_current: "docs-selectel-resource-dbaas-mysql-database-v1"
 description: |-
   Creates and manages a MySQL database in Selectel Managed Databases using public API v1.
 ---

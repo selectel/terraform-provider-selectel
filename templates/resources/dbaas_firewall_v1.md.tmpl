@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_firewall_v1"
-sidebar_current: "docs-selectel-resource-dbaas-firewall-v1"
 description: |-
   Creates and manages a list of IP-addresses with access to the cluster in Selectel Managed Databases using public API v1.
 ---

@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_iam_saml_federation_certificate_v1"
-sidebar_current: "docs-selectel-resource-iam-saml-federation-certificate-v1"
 description: |-
   Creates and manages SAML Federation Certificates for Selectel products using public API v1.
 ---

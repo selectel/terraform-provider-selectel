@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_kafka_topic_v1"
-sidebar_current: "docs-selectel-resource-dbaas-kafka-topic-v1"
 description: |-
   Creates and manages a topic in Selectel Managed Databases using public API v1.
 ---

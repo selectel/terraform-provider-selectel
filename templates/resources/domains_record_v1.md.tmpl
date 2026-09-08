@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_domains_record_v1"
-sidebar_current: "docs-selectel-resource-domains-record-v1"
 description: |-
   Creates and manages a record in Selectel DNS Hosting using public API v1.
 ---

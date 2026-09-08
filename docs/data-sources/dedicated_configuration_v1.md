@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dedicated_configuration_v1"
-sidebar_current: "docs-selectel-datasource-dedicated-configuration-v1"
 description: |-
   Provides a list of server configurations available in Selectel.
 ---

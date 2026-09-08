@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dedicated_servers_v1"
-sidebar_current: "docs-selectel-datasource-dedicated-servers-v1"
 description: |-
   Provides a list of dedicated servers in the project.
 ---

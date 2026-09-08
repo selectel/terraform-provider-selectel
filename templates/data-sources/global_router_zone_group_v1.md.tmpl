@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_global_router_zone_group_v1"
-sidebar_current: "docs-selectel-datasource-global-router-zone-group-v1"
 description: |-
   Provides a list of zone groups in the Global Router service using public API v1.
 ---

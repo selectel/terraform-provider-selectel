@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_mks_kube_versions_v1"
-sidebar_current: "docs-selectel-datasource-mks-kube-versions-v1"
 description: |-
   Provides a list of Kubernetes versions supported in a Selectel Managed Kubernetes cluster.
 ---

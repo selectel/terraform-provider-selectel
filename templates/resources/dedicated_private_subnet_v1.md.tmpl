@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dedicated_private_subnet_v1"
-sidebar_current: "docs-selectel-resource-dedicated-private-subnet-v1"
 description: |-
   Creates and manages a private subnet for dedicated servers using public API v1.  
 ---

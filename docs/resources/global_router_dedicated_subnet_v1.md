@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_global_router_dedicated_subnet_v1"
-sidebar_current: "docs-selectel-resource-global-router-dedicated-subnet-v1"
 description: |-
   Creates and manages a global router subnet that connects a dedicated server private subnet to a global router in the Global Router service using public API v1.
 ---

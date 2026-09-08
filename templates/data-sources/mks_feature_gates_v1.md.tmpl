@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_mks_feature_gates_v1"
-sidebar_current: "docs-selectel-datasource-mks-feature-gates-v1"
 description: |-
   Provides a list of feature gates available in Selectel Managed Kubernetes.
 ---

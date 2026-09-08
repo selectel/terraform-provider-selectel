@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_vpc_subnet_v2"
-sidebar_current: "docs-selectel-resource-vpc-subnet-v2"
 description: |-
   Creates and manages a public subnet for Selectel products using public API v2.
 ---

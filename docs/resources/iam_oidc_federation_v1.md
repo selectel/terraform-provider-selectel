@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_iam_oidc_federation_v1"
-sidebar_current: "docs-selectel-resource-iam-oidc-federation-v1"
 description: |-
   Creates and manages OIDC Federation for Selectel products using public API v1.
 ---

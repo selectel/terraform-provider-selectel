@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_global_router_vpc_network_v1"
-sidebar_current: "docs-selectel-resource-global-router-vpc-network-v1"
 description: |-
   Creates and manages a global router network that connects a cloud platform private network to a global router in the Global Router service using public API v1.
 ---

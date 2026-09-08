@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dedicated_os_v1"
-sidebar_current: "docs-selectel-datasource-dedicated-os-v1"
 description: |-
   Provides a list of available operating systems.
 ---

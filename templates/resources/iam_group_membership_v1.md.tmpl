@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_iam_group_membership_v1"
-sidebar_current: "docs-selectel-resource-iam-group_membership-v1"
 description: |-
   Creates and manages group membership for Selectel products using public API v1.
 ---

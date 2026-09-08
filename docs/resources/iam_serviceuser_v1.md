@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_iam_serviceuser_v1"
-sidebar_current: "docs-selectel-resource-iam-serviceuser-v1"
 description: |-
   Creates and manages a service user for Selectel products using public API v1.
 ---

@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_domains_domain_v1"
-sidebar_current: "docs-selectel-datasource-domains-domain-v1"
 description: |-
   Provides an ID of a domain in Selectel DNS Hosting (legacy).
 ---

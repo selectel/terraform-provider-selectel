@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_global_router_vpc_subnet_v1"
-sidebar_current: "docs-selectel-resource-global-router-vpc-subnet-v1"
 description: |-
   Creates and manages a global router subnet that connects a cloud platform private subnet to a global router in the Global Router service using public API v1.
 ---

@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_datastore_v1"
-sidebar_current: "docs-selectel-resource-dbaas-datastore-v1"
 description: |-
   Manages a V1 datastore resource within Selectel Managed Databases Service.
 ---

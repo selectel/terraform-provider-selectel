@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_flavor_v1"
-sidebar_current: "docs-selectel-datasource-dbaas-flavor-v1"
 description: |-
   Provides a list of flavors available in Selectel Managed Databases.
 ---

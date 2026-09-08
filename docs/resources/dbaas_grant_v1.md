@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_grant_v1"
-sidebar_current: "docs-selectel-resource-dbaas-grant-v1"
 description: |-
   Grants privileges to the users in Selectel Managed Databases using public API v1.
 ---

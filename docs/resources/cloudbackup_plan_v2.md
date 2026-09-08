@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_cloudbackup_plan_v2"
-sidebar_current: "docs-selectel-resource-cloudbackup-plan-v2"
 description: |-
   Creates and manages backup plans for Selectel Backups in the Cloud.
 ---

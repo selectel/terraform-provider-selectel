@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_user_v1"
-sidebar_current: "docs-selectel-resource-dbaas-user-v1"
 description: |-
   Creates and manages a user in Selectel Managed Databases using public API v1.
 ---

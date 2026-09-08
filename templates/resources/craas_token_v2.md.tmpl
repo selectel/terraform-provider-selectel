@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_craas_token_v2"
-sidebar_current: "docs-selectel-resource-craas-token-v2"
 description: |-
   Creates and manages tokens in Selectel Container Registry using public API v2.
 ---

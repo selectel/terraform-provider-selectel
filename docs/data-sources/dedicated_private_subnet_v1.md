@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dedicated_private_subnet_v1"
-sidebar_current: "docs-selectel-data-source-dedicated-private-subnet-v1"
 description: |-
   Provides a list of existing private subnets in a project. 
 ---

@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_mks_nodegroup_v1"
-sidebar_current: "docs-selectel-resource-mks-nodegroup-v1"
 description: |-
   Creates and manages a node group in Selectel Managed Kubernetes using public API v1.
 ---

@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_private_dns_service_v1"
-sidebar_current: "docs-selectel-private-dns-service-v1"
 description: |-
   Creates and manages a DNS service in Selectel Private DNS using public API v1
 ---

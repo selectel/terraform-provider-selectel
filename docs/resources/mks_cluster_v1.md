@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_mks_cluster_v1"
-sidebar_current: "docs-selectel-resource-mks-cluster-v1"
 description: |-
   Creates and manages a cluster in Selectel Managed Kubernetes using public API v1.
 ---

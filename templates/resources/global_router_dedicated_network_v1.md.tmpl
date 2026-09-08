@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_global_router_dedicated_network_v1"
-sidebar_current: "docs-selectel-resource-global-router-dedicated-network-v1"
 description: |-
   Creates and manages a global router network that connects a dedicated server private network to a global router in the Global Router service using public API v1.
 ---

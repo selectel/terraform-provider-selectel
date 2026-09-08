@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_iam_group_v1"
-sidebar_current: "docs-selectel-resource-iam-group-v1"
 description: |-
   Creates and manages a user group for Selectel products using public API v1.
 ---

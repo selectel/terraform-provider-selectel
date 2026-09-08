@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_kafka_ccl_v1"
-sidebar_current: "docs-selectel-resource-dbaas-kafka-acl-v1"
 description: |-
   Creates and manages an ACL in Selectel Managed Databases using public API v1.
 ---

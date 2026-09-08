@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_vpc_license_v2"
-sidebar_current: "docs-selectel-resource-vpc-license-v2"
 description: |-
   Manages a license for Selectel cloud servers using public API v2.
 ---

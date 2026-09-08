@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_craas_registry_v1"
-sidebar_current: "docs-selectel-resource-craas-registry-v1"
 description: |-
   Creates and manages a registry in Selectel Container Registry using public API v1.
 ---

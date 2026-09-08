@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_domains_rrset_v2"
-sidebar_current: "docs-selectel-resource-domains-rrset-v2"
 description: |-
   Creates and manages an RRSet in Selectel DNS Hosting (actual) using public API v2.
 ---

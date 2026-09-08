@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dedicated_public_subnet_v1"
-sidebar_current: "docs-selectel-datasource-dedicated-public-subnet-v1"
 description: |-
   Provides a list of available public subnets.
 ---

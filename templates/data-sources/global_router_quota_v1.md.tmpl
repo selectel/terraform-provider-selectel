@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_global_router_quota_v1"
-sidebar_current: "docs-selectel-datasource-global-router-quota-v1"
 description: |-
   Provides a list of quotas in the Global Router service using public API v1.
 ---

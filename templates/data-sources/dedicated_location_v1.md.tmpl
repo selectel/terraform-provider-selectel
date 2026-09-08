@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dedicated_location_v1"
-sidebar_current: "docs-selectel-datasource-dedicated-location-v1"
 description: |-
   Provides a list of available locations.
 ---

@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_vpc_public_port_v1"
-sidebar_current: "docs-selectel-resource-vpc-public-port-v1"
 description: |-
   Creates and manages a direct public IP address (public port) for Selectel products using public API v1
 ---

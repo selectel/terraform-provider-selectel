@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_prometheus_metric_token_v1"
-sidebar_current: "docs-selectel-resource-dbaas-prometheus-metric-token-v1"
 description: |-
   Creates and manages tokens in Selectel Managed Databases required to get access to the metrics in the Prometheus format using public API v1.
 ---

@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_iam_s3_credentials_v1"
-sidebar_current: "docs-selectel-resource-iam-s3-credentials-v1"
 description: |-
   Creates and manages S3 credentials for a service user using public API v1.
 ---

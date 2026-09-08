@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_secretsmanager_secret_v1"
-sidebar_current: "docs-selectel-resource-secretsmanager-secret-v1"
 description: |-
     Creates and manages a secret in Selectel Secrets Manager using public API v1.
 ---

@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dedicated_ssh_keys_v1"
-sidebar_current: "docs-selectel-resource-dedicated-ssh-keys-v1"
 description: |-
   Adds and manages a public SSH key for dedicated servers using public API v1.
 ---

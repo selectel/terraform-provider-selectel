@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_iam_oidc_federation_group_mappings_v1"
-sidebar_current: "docs-selectel-resource-iam-oidc-federation-group-mappings-v1"
 description: |-
   Manages OIDC Federation group mappings for Selectel products using public API v1.
 ---

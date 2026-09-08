@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_dbaas_redis_datastore_v1"
-sidebar_current: "docs-selectel-resource-dbaas-redis-datastore-v1"
 description: |-
   Creates and manages a Redis cluster in Selectel Managed Databases using public API v1.
 ---

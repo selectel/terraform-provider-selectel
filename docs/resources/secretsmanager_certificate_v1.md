@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_secretsmanager_certificate_v1"
-sidebar_current: "docs-selectel-resource-secretsmanager-certificate-v1"
 description: |-
     Creates and manages a certificate in Selectel Secrets Manager using public API v1.
 ---

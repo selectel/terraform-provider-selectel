@@ -1,6 +1,5 @@
 ---
 page_title: "Selectel: selectel_private_dns_zone_v1"
-sidebar_current: "docs-selectel-private-dns-zone-v1"
 description: |-
   Creates and manages a DNS zone and record sets in Selectel Private DNS using public API v1
 ---

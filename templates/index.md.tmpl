@@ -1,6 +1,5 @@
 ---
 page_title: "Provider: Selectel"
-sidebar_current: "docs-selectel-index"
 description: |-
   Use the Selectel provider to manage Selectel products.
 ---
