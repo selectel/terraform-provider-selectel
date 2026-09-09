@@ -18,20 +18,30 @@ description: |-
 {{- end }}
 
 {{ .SchemaMarkdown | trimspace }}
-{{- if .HasImport }}
+{{- if or .HasImport .HasImportIDConfig .HasImportIdentityConfig }}
 
 ## Import
+{{- end }}
+{{- if .HasImportIdentityConfig }}
 
-You can import a public port:
+In Terraform 1.12.0 and later, use the [`import` block](https://developer.hashicorp.com/terraform/language/import) with the `identity` attribute:
+
+{{ tffile .ImportIdentityConfigFile }}
+
+{{ .IdentitySchemaMarkdown | trimspace }}
+{{- end }}
+{{- if .HasImportIDConfig }}
+
+In Terraform 1.5.0 and later, use the [`import` block](https://developer.hashicorp.com/terraform/language/import) with the `id` attribute. The project and the pool are taken from the [provider configuration](https://registry.terraform.io/providers/selectel/selectel/latest/docs):
+
+{{ tffile .ImportIDConfigFile }}
+{{- end }}
+{{- if .HasImport }}
+
+You can also use the [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import):
 
 {{ codefile "shell" .ImportFile }}
 
-where:
-
-* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/control-panel-actions/account/registration/).
-* `<username>` — Name of the service user. To get the name, in the top right corner of the [Control panel](https://my.selectel.ru/profile/users_management/users?type=service), go to the account menu ⟶ **Profile and Settings** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/control-panel-actions/users-and-roles/user-types-and-roles/).
-* `<password>` — Password of the service user.
-* `<selectel_project_id>` — Unique identifier of the associated project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
-* `<selectel_pool>` — Pool where the public port is located, for example, `ru-6`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Cloud Platform** ⟶ **Network** ⟶ the **Direct public IP addresses** tab. The pool is under the IP address.
-* `<public_port_id>` — Unique identifier of the public port, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the public port ID, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Cloud Platform** ⟶ **Network** ⟶ the **Direct public IP addresses** tab ⟶ copy the ID of the public port on the right side of the public port card.
+`<domain_name>`, `<username>` and `<password>` are the arguments of the [provider configuration](https://registry.terraform.io/providers/selectel/selectel/latest/docs).
+Other identity attributes are described above in the import or resource sections.
 {{- end }}

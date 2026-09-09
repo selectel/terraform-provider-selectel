@@ -8,7 +8,7 @@ import (
 )
 
 func TestWithDocsHints(t *testing.T) {
-	s := withDocsHints("public port", map[string]*schema.Schema{
+	s := resourceDocs{Name: "public port"}.withDocsHints(map[string]*schema.Schema{
 		"force_new": {
 			Type:        schema.TypeString,
 			Required:    true,
@@ -54,4 +54,18 @@ func TestWithDocsHints(t *testing.T) {
 	assert.Equal(t, "Computed field.", s["plain"].Description)
 	assert.Equal(t, "Inner field. Changing this creates a new public port.",
 		s["nested"].Elem.(*schema.Resource).Schema["inner"].Description)
+}
+
+func TestResourceDocsIDSchemas(t *testing.T) {
+	docs := resourceDocs{Name: "public port", ExampleID: "b311ce58-2658-46b5-b733-7a0f418703f2"}
+
+	res := docs.idResourceSchema()
+	assert.True(t, res.Computed)
+	assert.Equal(t, "Unique identifier of the public port.", res.Description)
+
+	identity := docs.idIdentitySchema("Copy it from the card.")
+	assert.True(t, identity.RequiredForImport)
+	assert.Equal(t,
+		"Unique identifier of the public port, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. Copy it from the card.",
+		identity.Description)
 }
