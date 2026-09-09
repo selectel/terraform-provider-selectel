@@ -21,41 +21,43 @@ func resourceVPCPublicPortV1() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCPublicPortV1ImportState,
 		},
-		Schema: map[string]*schema.Schema{
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
+		Description: "Creates and manages a direct public IP address (public port) in VPC using public API v1. " +
+			"For more information about direct public IP address, see the " +
+			"[official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses).",
+		Schema: withDocsHints("public port", map[string]*schema.Schema{
+			"region":     regionSchema("public port", "ru-6"),
+			"project_id": projectIDSchema(),
 			"network_id": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Identifier of the service network to which the public port is attached.",
 			},
 			"ip_address": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Direct public IP address assigned to the public port.",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "",
+				Description: "Public port description.",
 			},
 			"subnet": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "CIDR of the subnet in which the public port IP address is allocated.",
 			},
 			"gateway": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "IP address of the subnet gateway.",
 			},
 			"admin_state_up": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Enables (`true`) or disables (`false`) the public port administratively.",
 			},
 			"security_group_ids": {
 				Type:     schema.TypeList,
@@ -65,8 +67,11 @@ func resourceVPCPublicPortV1() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				MaxItems: 20,
+				Description: "List of OpenStack security group identifiers to associate with the public port. " +
+					"Learn more about the [openstack_networking_secgroup_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_secgroup_v2) resource in the official OpenStack documentation. " +
+					"The default value is the identifier of the default security group in the project.",
 			},
-		},
+		}),
 	}
 }
 
