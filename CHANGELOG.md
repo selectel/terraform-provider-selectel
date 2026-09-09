@@ -1,3 +1,11 @@
+## 8.3.2 (September 9, 2026)
+
+BUG FIXES:
+
+* `selectel_dedicated_public_subnet_v1`: fix IPv6 subnets causing `json: cannot unmarshal number into Go struct field Subnet.result.free of type int` by updating `dedicated-go` to v2.1.3.
+* `selectel_dedicated_public_subnet_v1`: fix `broadcast` and `gateway` attributes being set to the literal `<nil>` string for subnets without a broadcast or gateway address (e.g. IPv6).
+([#423] (https://github.com/selectel/terraform-provider-selectel/pull/423))
+
 ## 8.3.1 (August 10, 2026)
 
 BUG FIXES:
