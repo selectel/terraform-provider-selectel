@@ -30,6 +30,7 @@ const (
 	replicaRole              = "REPLICA"
 )
 
+// getDBaaSClient is dbaas v1 client.
 func getDBaaSClient(d *schema.ResourceData, meta any) (*dbaas.API, diag.Diagnostics) {
 	config := meta.(*Config)
 	projectID := d.Get("project_id").(string)
