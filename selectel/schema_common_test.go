@@ -57,7 +57,7 @@ func TestWithDocsHints(t *testing.T) {
 }
 
 func TestResourceDocsIDSchemas(t *testing.T) {
-	docs := resourceDocs{Name: "public port", ExampleID: "b311ce58-2658-46b5-b733-7a0f418703f2"}
+	docs := resourceDocs{Name: "public port"}
 
 	res := docs.idResourceSchema()
 	assert.True(t, res.Computed)

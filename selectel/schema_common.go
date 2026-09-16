@@ -7,18 +7,19 @@ import (
 )
 
 const (
-	projectIDDescription      = "Unique identifier of the associated project."
+	projectIDDescription      = "Unique identifier of the associated project, for example `a07abc12310546f1b9291ab3013a7d75`."
 	projectIDFromResource     = "Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource."
-	projectIDFromControlPanel = "To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project."
+	projectIDFromControlPanel = "To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ project name ⟶ copy the ID of the required project."
 	projectIDLearnMore        = "Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/)."
 
-	regionLearnMore = "Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/)."
+	regionLearnMore = "Learn more about available pools in [Product availability by location](/infrastructure/product-availability-by-location/)."
+
+	exampleRegion     = "ru-6"
+	exampleResourceID = "b311ce58-2658-46b5-b733-7a0f418703f2"
 )
 
 type resourceDocs struct {
-	Name          string
-	ExampleRegion string
-	ExampleID     string
+	Name string
 }
 
 func (r resourceDocs) idDescription() string {
@@ -37,12 +38,12 @@ func (r resourceDocs) idIdentitySchema(controlPanelHint string) *schema.Schema {
 	return &schema.Schema{
 		Type:              schema.TypeString,
 		RequiredForImport: true,
-		Description:       fmt.Sprintf("%s, for example, `%s`. %s", r.idDescription(), r.ExampleID, controlPanelHint),
+		Description:       fmt.Sprintf("%s, for example, `%s`. %s", r.idDescription(), exampleResourceID, controlPanelHint),
 	}
 }
 
 func (r resourceDocs) regionDescription() string {
-	return fmt.Sprintf("Pool where the %s is located, for example, `%s`.", r.Name, r.ExampleRegion)
+	return fmt.Sprintf("Pool where the %s is located, for example, `%s`.", r.Name, exampleRegion)
 }
 
 func (r resourceDocs) regionResourceSchema() *schema.Schema {

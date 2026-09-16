@@ -4,7 +4,7 @@ description: |-
   Creates and manages a direct public IP address (public port) in VPC using public API v1. For more information about direct public IP address, see the official Selectel documentation https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses.
 ---
 
-# selectel_vpc_public_port_v1 (Resource)
+# selectel_vpc_public_port_v1
 
 Creates and manages a direct public IP address (public port) in VPC using public API v1. For more information about direct public IP address, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses).
 
@@ -12,8 +12,8 @@ Creates and manages a direct public IP address (public port) in VPC using public
 
 ```terraform
 resource "selectel_vpc_public_port_v1" "port_1" {
-  project_id         = selectel_vpc_project_v2.project_1.id
-  region             = "ru-6"
+  project_id = selectel_vpc_project_v2.project_1.id
+  region     = "ru-6"
 }
 ```
 
@@ -22,8 +22,8 @@ resource "selectel_vpc_public_port_v1" "port_1" {
 
 ### Required
 
-- `project_id` (String) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/). Changing this creates a new public port.
-- `region` (String) Pool where the public port is located, for example, `ru-6`. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/). Changing this creates a new public port.
+- `project_id` (String) Unique identifier of the associated project, for example `a07abc12310546f1b9291ab3013a7d75`. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/). Changing this creates a new public port.
+- `region` (String) Pool where the public port is located, for example, `ru-6`. Learn more about available pools in [Product availability by location](/infrastructure/product-availability-by-location/). Changing this creates a new public port.
 
 ### Optional
 
@@ -41,7 +41,9 @@ resource "selectel_vpc_public_port_v1" "port_1" {
 
 ## Import
 
-In Terraform 1.12.0 and later, use the [`import` block](https://developer.hashicorp.com/terraform/language/import) with the `identity` attribute:
+### In Terraform 1.12.0 and later
+
+Use the [`import` block](https://developer.hashicorp.com/terraform/language/import) with the `identity` attribute:
 
 ```terraform
 import {
@@ -60,10 +62,12 @@ import {
 #### Required
 
 - `id` (String) Unique identifier of the public port, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the public port ID, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Cloud Platform** ⟶ **Network** ⟶ the **Direct public IP addresses** tab ⟶ copy the ID of the public port on the right side of the public port card.
-- `project_id` (String) Unique identifier of the associated project. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
-- `region` (String) Pool where the public port is located, for example, `ru-6`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Cloud Platform** ⟶ **Network** ⟶ the **Direct public IP addresses** tab. The pool is under the IP address. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/).
+- `project_id` (String) Unique identifier of the associated project, for example `a07abc12310546f1b9291ab3013a7d75`. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
+- `region` (String) Pool where the public port is located, for example, `ru-6`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Direct public IP addresses** tab. The pool is under the IP address. Learn more about available pools in [Product availability by location](/infrastructure/product-availability-by-location/).
 
-In Terraform 1.5.0 and later, use the [`import` block](https://developer.hashicorp.com/terraform/language/import) with the `id` attribute. The project and the pool are taken from the [provider configuration](https://registry.terraform.io/providers/selectel/selectel/latest/docs):
+### In Terraform 1.5.0 and later
+
+Use the [`import` block](https://developer.hashicorp.com/terraform/language/import) with the `id` attribute:
 
 ```terraform
 import {
@@ -72,7 +76,9 @@ import {
 }
 ```
 
-You can also use the [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import):
+### All versions
+
+Use the [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import):
 
 ```shell
 export OS_DOMAIN_NAME=<domain_name>

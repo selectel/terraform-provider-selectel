@@ -4,7 +4,7 @@ description: |-
 {{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
 ---
 
-# {{.Name}} ({{.Type}})
+# {{.Name}}
 
 {{ .Description | trimspace }}
 
@@ -24,7 +24,9 @@ description: |-
 {{- end }}
 {{- if .HasImportIdentityConfig }}
 
-In Terraform 1.12.0 and later, use the [`import` block](https://developer.hashicorp.com/terraform/language/import) with the `identity` attribute:
+### In Terraform 1.12.0 and later
+
+Use the [`import` block](https://developer.hashicorp.com/terraform/language/import) with the `identity` attribute:
 
 {{ tffile .ImportIdentityConfigFile }}
 
@@ -32,13 +34,17 @@ In Terraform 1.12.0 and later, use the [`import` block](https://developer.hashic
 {{- end }}
 {{- if .HasImportIDConfig }}
 
-In Terraform 1.5.0 and later, use the [`import` block](https://developer.hashicorp.com/terraform/language/import) with the `id` attribute. The project and the pool are taken from the [provider configuration](https://registry.terraform.io/providers/selectel/selectel/latest/docs):
+### In Terraform 1.5.0 and later
+
+Use the [`import` block](https://developer.hashicorp.com/terraform/language/import) with the `id` attribute:
 
 {{ tffile .ImportIDConfigFile }}
 {{- end }}
 {{- if .HasImport }}
 
-You can also use the [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import):
+### All versions
+
+Use the [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import):
 
 {{ codefile "shell" .ImportFile }}
 

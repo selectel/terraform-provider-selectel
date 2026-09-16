@@ -12,11 +12,7 @@ import (
 	publicnetapi "github.com/selectel/public-net-api-go/pkg/v1"
 )
 
-var publicPortDocs = resourceDocs{
-	Name:          "public port",
-	ExampleRegion: "ru-6",
-	ExampleID:     "b311ce58-2658-46b5-b733-7a0f418703f2",
-}
+var publicPortDocs = resourceDocs{Name: "public port"}
 
 func resourceVPCPublicPortV1() *schema.Resource {
 	return &schema.Resource{
@@ -91,7 +87,7 @@ func resourceVPCPublicPortV1IdentitySchema() map[string]*schema.Schema {
 			"To get the public port ID, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Cloud Platform** ⟶ **Network** ⟶ the **Direct public IP addresses** tab ⟶ copy the ID of the public port on the right side of the public port card."),
 		"project_id": projectIDIdentitySchema(),
 		"region": publicPortDocs.regionIdentitySchema(
-			"To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Cloud Platform** ⟶ **Network** ⟶ the **Direct public IP addresses** tab. The pool is under the IP address."),
+			"To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Direct public IP addresses** tab. The pool is under the IP address."),
 	}
 }
 
