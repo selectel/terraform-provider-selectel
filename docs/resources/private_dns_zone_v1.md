@@ -40,7 +40,7 @@ resource "selectel_private_dns_zone_v1" "zone_1" {
 * `records` - (Optional) List of the zone record sets:
   * `domain` - (Required) Domain of the record set, must be an FQDN.
   * `type` - (Required) Record set type. Available types are `A`, `AAAA`, `MX`, `TXT`, `CNAME`.
-  * `ttl` - (Optional) Time to live (TTL) in seconds for the record. If not specifed, zone TTL is used for the record.
+  * `ttl` - (Optional) Time to live (TTL) in seconds for the record. If not specified, zone TTL is used for the record.
   * `values` - (Required) List of record set values.
 
 ## Attributes Reference
