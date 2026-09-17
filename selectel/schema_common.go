@@ -7,12 +7,12 @@ import (
 )
 
 const (
-	projectIDDescription      = "Unique identifier of the associated project, for example `a07abc12310546f1b9291ab3013a7d75`."
+	projectIDDescription      = "Unique identifier of the associated project, for example, `a07abc12310546f1b9291ab3013a7d75`."
 	projectIDFromResource     = "Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource."
 	projectIDFromControlPanel = "To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ project name ⟶ copy the ID of the required project."
 	projectIDLearnMore        = "Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/)."
 
-	regionLearnMore = "Learn more about available pools in [Product availability by location](/infrastructure/product-availability-by-location/)."
+	regionLearnMore = "Learn more about available pools in [Product availability by location](https://docs.selectel.ru/en/infrastructure/product-availability-by-location/)."
 
 	exampleRegion     = "ru-6"
 	exampleResourceID = "b311ce58-2658-46b5-b733-7a0f418703f2"
