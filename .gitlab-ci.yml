@@ -1,0 +1,68 @@
+variables:
+  GO_VERSION: "1.26"
+  # NOTE: If you update the version, don't forget to update GNUmakefile and .github/workflows/verify.yml.
+  GOLANGCI_VERSION: "v2.12.2"
+  # Must exist in https://mirror.selectel.ru/3rd-party/hashicorp/pool/<arch>/main/
+  TERRAFORM_VERSION: "1.16.2"
+  # Let go.mod win over the image when it asks for a newer toolchain.
+  GOTOOLCHAIN: auto
+
+stages:
+  - test
+
+.test:
+  stage: test
+  image: docker-registry.selectel.ru/library/golang:$GO_VERSION
+  tags:
+    - kube-dev
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+tests:
+  extends: .test
+  script:
+    - make test
+
+golangci-lint:
+  extends: .test
+  image: docker-registry.selectel.ru/golangci/golangci-lint:$GOLANGCI_VERSION
+  script:
+    - golangci-lint run
+
+tidy:
+  extends: .test
+  script:
+    - go mod tidy -v
+    - git diff --exit-code
+
+go-fix:
+  extends: .test
+  script:
+    - go fix ./...
+    - git diff --exit-code
+
+docs:
+  extends: .test
+  variables:
+    # Don't let terraform call checkpoint.hashicorp.com for update checks.
+    CHECKPOINT_DISABLE: "1"
+  before_script:
+    # releases.hashicorp.com is not reachable from the runners; the Selectel mirror
+    # of the HashiCorp apt repository serves the same terraform packages.
+    - arch=$(dpkg --print-architecture)
+    - curl -fsSL -o /tmp/terraform.deb "https://mirror.selectel.ru/3rd-party/hashicorp/pool/$arch/main/terraform_${TERRAFORM_VERSION}-1_$arch.deb"
+    - dpkg -i /tmp/terraform.deb
+    - terraform version
+  script:
+    - make examples-check
+    - make docs-check
+
+doc-misspell:
+  extends: .test
+  allow_failure: true
+  script:
+    - make docs-misspell
