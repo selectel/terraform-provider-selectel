@@ -181,8 +181,8 @@ func resourceMKSClusterV1() *schema.Resource {
 					string(cluster.CNITypeCilium),
 				}, true),
 				Default: cluster.CNITypeCalico,
-				DiffSuppressFunc: func(_, old, new string, _ *schema.ResourceData) bool {
-					return old == "" && new == string(cluster.CNITypeCalico)
+				DiffSuppressFunc: func(_, oldValue, newValue string, _ *schema.ResourceData) bool {
+					return oldValue == "" && newValue == string(cluster.CNITypeCalico)
 				},
 			},
 			"cni_cilium_settings": {
