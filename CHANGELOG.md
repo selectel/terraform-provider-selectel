@@ -1,3 +1,9 @@
+## 8.4.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* `selectel_domains_domain_v1`, `selectel_domains_record_v1`: deprecate legacy Domains v1 entities in favor of `selectel_domains_zone_v2` and `selectel_domains_rrset_v2`.
+
 ## 8.3.1 (August 10, 2026)
 
 BUG FIXES:

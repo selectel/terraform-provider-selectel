@@ -13,9 +13,10 @@ import (
 
 func resourceDomainsDomainV1() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceDomainsDomainV1Create,
-		ReadContext:   resourceDomainsDomainV1Read,
-		DeleteContext: resourceDomainsDomainV1Delete,
+		DeprecationMessage: "use selectel_domains_zone_v2 instead",
+		CreateContext:      resourceDomainsDomainV1Create,
+		ReadContext:        resourceDomainsDomainV1Read,
+		DeleteContext:      resourceDomainsDomainV1Delete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},

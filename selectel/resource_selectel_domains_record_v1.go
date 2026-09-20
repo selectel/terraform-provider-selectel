@@ -17,10 +17,11 @@ import (
 func resourceDomainsRecordV1() *schema.Resource {
 	hexRegexp := regexp.MustCompile(`^[a-fA-F0-9]+$`)
 	return &schema.Resource{
-		CreateContext: resourceDomainsRecordV1Create,
-		ReadContext:   resourceDomainsRecordV1Read,
-		UpdateContext: resourceDomainsRecordV1Update,
-		DeleteContext: resourceDomainsRecordV1Delete,
+		DeprecationMessage: "use selectel_domains_rrset_v2 instead",
+		CreateContext:      resourceDomainsRecordV1Create,
+		ReadContext:        resourceDomainsRecordV1Read,
+		UpdateContext:      resourceDomainsRecordV1Update,
+		DeleteContext:      resourceDomainsRecordV1Delete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},

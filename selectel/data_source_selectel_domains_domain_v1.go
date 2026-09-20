@@ -12,7 +12,8 @@ import (
 
 func dataSourceDomainsDomainV1() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceDomainsDomainV1Read,
+		DeprecationMessage: "use selectel_domains_zone_v2 instead",
+		ReadContext:        dataSourceDomainsDomainV1Read,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
