@@ -13,10 +13,12 @@ import (
 	dbaas_v2 "github.com/selectel/dbaas-go/v2"
 	dbaas_v2_ch "github.com/selectel/dbaas-go/v2/clickhouse"
 	dbaas_v2_common "github.com/selectel/dbaas-go/v2/common"
+	dbaas_v2_os "github.com/selectel/dbaas-go/v2/opensearch"
 	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dbaas"
 )
 
 const clickhouseDatastoreType = "clickhouse"
+const opensearchDatastoreType = "opensearch"
 
 func getDBaaSV2Client(d *schema.ResourceData, meta any) (*dbaas_v2.API, diag.Diagnostics) {
 	config := meta.(*Config)
@@ -406,4 +408,342 @@ func expandDBaaSV2ConfigurationParameterSearchFilter(filterSet *schema.Set) dbaa
 	}
 
 	return filter
+}
+
+// Opensearch
+func flattenDBaaSV2DatastoreOpensearchNodeGroups(nodeGroups []dbaas_v2_os.NodeGroupResponse) []any {
+
+	flattenedNodeGroups := make([]any, len(nodeGroups))
+	for i, ng := range nodeGroups {
+
+		flattenedInstances := make([]any, len(ng.Instances))
+		for j, instance := range ng.Instances {
+			flattenedInstance := map[string]any{
+				"id":                instance.ID,
+				"ip":                instance.IP,
+				"floating_ip":       instance.FloatingIP,
+				"availability_zone": instance.AvailabilityZone,
+				"hostname":          instance.Hostname,
+			}
+			flattenedInstances[j] = flattenedInstance
+		}
+
+		flattenedNG := map[string]any{
+			"id":             ng.ID,
+			"name":           ng.Name,
+			"role":           ng.Role,
+			"node_count":     ng.NodeCount,
+			"has_public_ips": ng.HasPublicIPs,
+			"status":         ng.Status,
+			"flavor":         flattenDBaaSV2OpensearchNodeGroupFlavor(ng.Flavor),
+			"instances":      flattenedInstances,
+		}
+
+		flattenedNodeGroups[i] = flattenedNG
+	}
+
+	return flattenedNodeGroups
+}
+
+func flattenDBaaSV2OpensearchNodeGroupFlavor(f dbaas_v2_os.FlavorResponse) []any {
+
+	if f.Type == dbaas_v2_common.FlavorTypeFlexible {
+		return []any{
+			map[string]any{
+				"type":      f.Type,
+				"disk":      f.Disk,
+				"ram":       f.RAM,
+				"vcpus":     f.VCPUs,
+				"disk_type": f.DiskType,
+			},
+		}
+	} else {
+		return []any{
+			map[string]any{
+				"id":   f.ID,
+				"type": f.Type,
+			},
+		}
+	}
+}
+
+func expandDBaasV2OpensearchNodeGroupsCreate(nodeGroups []any) []dbaas_v2_os.NodeGroupCreateRequest {
+	result := make([]dbaas_v2_os.NodeGroupCreateRequest, 0, len(nodeGroups))
+
+	for _, rawGroup := range nodeGroups {
+		result = append(result, expandDBaaSV2OpensearchNodeGroupCreate(rawGroup))
+	}
+
+	return result
+}
+
+func expandDBaaSV2OpensearchNodeGroupCreate(raw any) dbaas_v2_os.NodeGroupCreateRequest {
+	ng := raw.(map[string]any)
+
+	req := dbaas_v2_os.NodeGroupCreateRequest{
+		Name:      ng["name"].(string),
+		Role:      dbaas_v2_os.NodeGroupRole(ng["role"].(string)),
+		NodeCount: ng["node_count"].(int),
+		Flavor:    expandDBaaSV2OpensearchNodeGroupFlavor(ng["flavor"]),
+	}
+
+	if hasFIP, ok := ng["has_public_ips"]; ok && hasFIP != nil {
+		h := hasFIP.(bool)
+		req.HasPublicIPs = &h
+	}
+	return req
+}
+
+func expandDBaaSV2OpensearchNodeGroupFlavor(raw any) dbaas_v2_os.FlavorForNodeGroupRequest {
+	flavors := raw.([]any)
+	if len(flavors) == 0 {
+		return dbaas_v2_os.FlavorForNodeGroupRequest{}
+	}
+
+	data := flavors[0].(map[string]any)
+	diskType := data["disk_type"].(string)
+	flavorType := data["type"].(string)
+
+	if flavorType == string(dbaas_v2_common.FlavorTypeFIXED) && diskType == "" {
+		diskType = string(dbaas_v2_common.FlavorDiskLocal)
+	}
+
+	return dbaas_v2_os.FlavorForNodeGroupRequest{
+		ID:       data["id"].(string),
+		Type:     dbaas_v2_common.FlavorType(flavorType),
+		Disk:     data["disk"].(int),
+		DiskType: dbaas_v2_common.FlavorDiskType(diskType),
+		RAM:      data["ram"].(int),
+		VCPUs:    data["vcpus"].(int),
+	}
+}
+
+func expandDBaaSV2OpensearchDatastoreLogPlatform(raw any) (dbaas_v2_os.DatastoreLogGroup, error) {
+	var res dbaas_v2_os.DatastoreLogGroup
+
+	logPlatform := raw.([]any)
+	if len(logPlatform) == 0 {
+		return res, errors.New("log_group is not set")
+	}
+
+	logGroup := logPlatform[0].(map[string]any)
+	res.LogGroup = logGroup["log_group"].(string)
+	return res, nil
+}
+
+func expandDBaaSV2OpensearchShardNameFromSet(shardNamesSet *schema.Set) []string {
+	if shardNamesSet == nil {
+		return nil
+	}
+
+	result := make([]string, 0, shardNamesSet.Len())
+	for _, value := range shardNamesSet.List() {
+		result = append(result, value.(string))
+	}
+
+	return result
+}
+
+func updateDBaaSV2OpensearchDatastoreName(ctx context.Context, d *schema.ResourceData, client *dbaas_v2.API) error {
+	var updateOpts dbaas_v2_os.DatastoreUpdateRequest
+	updateOpts.Name = d.Get("name").(string)
+
+	log.Print(msgUpdate(objectDatastore, d.Id(), updateOpts))
+	_, err := client.Opensearch.UpdateDatastore(ctx, d.Id(), updateOpts)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, client.Opensearch, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func updateDBaaSV2OpensearchDatastorePassword(ctx context.Context, d *schema.ResourceData, client *dbaas_v2.API) error {
+	var updateOpts dbaas_v2_os.DatastoreUpdatePasswordRequest
+	log.Print(msgUpdate(objectDatastore, d.Id(), updateOpts))
+	// do after log to avoid exposing the password
+	updateOpts.NewPassword = d.Get("password").(string)
+	_, err := client.Opensearch.UpdateDatastorePassword(ctx, d.Id(), updateOpts)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, client.Opensearch, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func updateDBaaSV2OpensearchDatastoreLogPlatform(ctx context.Context, d *schema.ResourceData, client *dbaas_v2.API) error {
+	var updateOpts dbaas_v2_os.DatastoreLogPlatformRequest
+	var err error
+
+	log.Print(msgUpdate(objectDatastore, d.Id(), updateOpts))
+	rawLogPlatform, ok := d.GetOk("log_platform")
+	if ok {
+		logGroup, expandErr := expandDBaaSV2OpensearchDatastoreLogPlatform(rawLogPlatform)
+		if expandErr != nil {
+			return errUpdatingObject(objectDatastore, d.Id(), expandErr)
+		}
+		updateOpts.LogPlatform = logGroup
+		_, err = client.Opensearch.EnableLogPlatform(ctx, d.Id(), updateOpts)
+	} else {
+		err = client.Opensearch.DisableLogPlatform(ctx, d.Id())
+	}
+
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, client.Opensearch, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func updateDBaaSV2OpensearchDatastoreSecurityGroups(ctx context.Context, d *schema.ResourceData, client *dbaas_v2.API) error {
+	rawSG := d.Get("security_groups")
+
+	securityGroupsSet := rawSG.(*schema.Set)
+	// may be use v2 expand
+	securityGroups, err := resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet)
+	if err != nil {
+		return errParseDatastoreV1SecurityGroups(err)
+	}
+
+	updateOpts := dbaas_v2_os.DatastoreSecurityGroupsRequest{
+		SecurityGroups: securityGroups,
+	}
+
+	log.Print(msgUpdate(objectDatastore, d.Id(), updateOpts))
+
+	if _, err := client.Opensearch.UpdateDatastoreSecurityGroups(ctx, d.Id(), updateOpts); err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, client.Opensearch, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func createDBaaSV2OpensearchNodeGroup(
+	ctx context.Context,
+	client *dbaas_v2.API,
+	datastoreID string,
+	nodeGroupData any,
+	timeout time.Duration,
+) error {
+	createOpts := expandDBaaSV2OpensearchNodeGroupCreate(nodeGroupData)
+	extraMsg := fmt.Sprintf("create node group %+v", createOpts)
+
+	log.Print(msgUpdate(objectDatastore, datastoreID, extraMsg))
+	_, err := client.Opensearch.CreateNodeGroup(ctx, datastoreID, createOpts)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, datastoreID, err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", datastoreID)
+	err = waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, client.Opensearch, datastoreID, timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, datastoreID, err)
+	}
+
+	return nil
+}
+
+func deleteDBaaSV2OpensearchNodeGroup(
+	ctx context.Context,
+	client *dbaas_v2.API,
+	datastoreID string,
+	nodeGroupID string,
+	timeout time.Duration,
+) error {
+	extraMsg := fmt.Sprintf("delete node group %s", nodeGroupID)
+	log.Print(msgUpdate(objectDatastore, datastoreID, extraMsg))
+	err := client.Opensearch.DeleteNodeGroup(ctx, datastoreID, nodeGroupID)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, datastoreID, err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", datastoreID)
+	err = waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, client.Opensearch, datastoreID, timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, datastoreID, err)
+	}
+
+	return nil
+}
+
+func resizeDBaaSV2OpensearchNodeGroup(
+	ctx context.Context,
+	client *dbaas_v2.API,
+	datastoreID string,
+	nodeGroupID string,
+	resizeData dbaas_v2_os.NodeGroupResizeRequest,
+	timeout time.Duration,
+) error {
+	extraMsg := fmt.Sprintf("resize node group %s: %+v", nodeGroupID, resizeData)
+
+	log.Print(msgUpdate(objectDatastore, datastoreID, extraMsg))
+
+	_, err := client.Opensearch.ResizeNodeGroup(ctx, datastoreID, nodeGroupID, resizeData)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, datastoreID, err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", datastoreID)
+	err = waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, client.Opensearch, datastoreID, timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, datastoreID, err)
+	}
+
+	return nil
+}
+
+func updateDBaaSV2OpensearchNodeGroupPublicIPs(
+	ctx context.Context,
+	client *dbaas_v2.API,
+	datastoreID string,
+	nodeGroupID string,
+	hasPublicIPs bool,
+	timeout time.Duration,
+) error {
+	updateOpts := dbaas_v2_os.NodeGroupUpdateFloatingIPsRequest{
+		HasPublicIPs: hasPublicIPs,
+	}
+	extraMsg := fmt.Sprintf("update public IPs for node group %s: %+v", nodeGroupID, updateOpts)
+
+	log.Print(msgUpdate(objectDatastore, datastoreID, extraMsg))
+
+	_, err := client.Opensearch.UpdateNodeGroupFloatingIPs(ctx, datastoreID, nodeGroupID, updateOpts)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, datastoreID, err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", datastoreID)
+	err = waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, client.Opensearch, datastoreID, timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, datastoreID, err)
+	}
+
+	return nil
 }
