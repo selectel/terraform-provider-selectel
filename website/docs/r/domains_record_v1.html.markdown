@@ -10,7 +10,7 @@ description: |-
 
 !> **WARNING:** This resource is deprecated and will be removed in a future major version. Use selectel_domains_rrset_v2 instead.
 
-DNS Hosting (legacy) is not supported or developed anymore, but domains and records created in DNS Hosting (legacy) continue to work until further notice. For more information about DNS Hosting (actual), see the [official Selectel documentation](https://docs.selectel.ru/en/networks-services/dns/about-dns/).
+DNS Hosting (legacy) is not supported or developed anymore. For more information about DNS Hosting (actual), see the [official Selectel documentation](https://docs.selectel.ru/en/networks-services/dns/about-dns/).
 
 To create records in DNS Hosting (actual) use the [selectel_domains_rrset_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/selectel_domains_rrset_v2) resource.
 
