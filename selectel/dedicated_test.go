@@ -1837,3 +1837,138 @@ func TestResourceDedicatedServerV1ReadExistingRaidConfigOrder(t *testing.T) {
 		_ = resourceDedicatedServerV1ReadExistingRaidConfigOrder
 	})
 }
+
+func TestFindMountsForDrive_DirectFilesystemReference(t *testing.T) {
+	// Non-RAID config where filesystem.Device points directly to local_drive
+	// (no intermediate partition items).
+	apiCfg := dedicated.PartitionsConfig{
+		"drive-1": {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 480, Type: "SSD NVMe"}},
+		"drive-2": {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 2000, Type: "HDD SATA"}},
+		"fs-root": {Type: "filesystem", Device: "drive-1", FSType: "ext4", Mount: "/"},
+		"fs-data": {Type: "filesystem", Device: "drive-2", FSType: "ext4", Mount: "/data"},
+	}
+
+	mounts := findMountsForDrive(apiCfg, "drive-1")
+	assert.Contains(t, mounts, "/")
+	assert.Len(t, mounts, 1)
+
+	mounts = findMountsForDrive(apiCfg, "drive-2")
+	assert.Contains(t, mounts, "/data")
+	assert.Len(t, mounts, 1)
+
+	// Non-existent drive
+	mounts = findMountsForDrive(apiCfg, "drive-99")
+	assert.Empty(t, mounts)
+}
+
+func TestFindMountsForDrive_WithPartitionChain(t *testing.T) {
+	// Standard chain: local_drive → partition → filesystem
+	// Should use the existing path, not the fallback.
+	apiCfg := dedicated.PartitionsConfig{
+		"disk1":   {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 480, Type: "SSD SATA"}},
+		"part1":   {Type: "partition", Device: "disk1", Size: -1.0, Priority: new(int)},
+		"fs-root": {Type: "filesystem", Device: "part1", FSType: "ext4", Mount: "/"},
+	}
+
+	mounts := findMountsForDrive(apiCfg, "disk1")
+	assert.Contains(t, mounts, "/")
+	assert.Len(t, mounts, 1)
+}
+
+func TestBuildDiskPartitions_ExistingDiskNameByMountFallback(t *testing.T) {
+	// Non-RAID config where filesystem.Device points directly to local_drive.
+	// Without intermediate partition items, applyDeviceConfig can't resolve disk_name,
+	// so the existingDiskNameByMount fallback should be used.
+	apiCfg := dedicated.PartitionsConfig{
+		"drive-1": {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 480, Type: "SSD NVMe"}},
+		"drive-2": {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 2000, Type: "HDD SATA"}},
+		"fs-root": {Type: "filesystem", Device: "drive-1", FSType: "ext4", Mount: "/"},
+		"fs-data": {Type: "filesystem", Device: "drive-2", FSType: "ext4", Mount: "/data"},
+	}
+
+	raidNamesByID := map[string]string{}
+	diskNamesByID := map[string]string{} // empty — not resolved because no partition chain
+	existingMounts := []string{"/", "/data"}
+	existingDiskNameByMount := map[string]string{
+		"/":     "system",
+		"/data": "data",
+	}
+
+	partitions := buildDiskPartitions(apiCfg, raidNamesByID, diskNamesByID, existingMounts, existingDiskNameByMount)
+
+	require.Len(t, partitions, 2)
+
+	// Find partitions by mount
+	var rootPart, dataPart map[string]any
+	for _, p := range partitions {
+		switch p[dedicatedServerSchemaKeyMount] {
+		case "/":
+			rootPart = p
+		case "/data":
+			dataPart = p
+		}
+	}
+	require.NotNil(t, rootPart, "root partition not found")
+	require.NotNil(t, dataPart, "data partition not found")
+
+	// disk_name should be populated from existingDiskNameByMount fallback
+	assert.Equal(t, "system", rootPart[dedicatedServerSchemaKeyDiskName])
+	assert.Equal(t, "data", dataPart[dedicatedServerSchemaKeyDiskName])
+}
+
+func TestBuildDiskPartitions_PrefersDiskNamesByID(t *testing.T) {
+	// When both diskNamesByID and existingDiskNameByMount are available,
+	// diskNamesByID (from applyDeviceConfig) should take precedence.
+	apiCfg := dedicated.PartitionsConfig{
+		"disk1":   {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 480, Type: "SSD SATA"}},
+		"part1":   {Type: "partition", Device: "disk1", Size: -1.0, Priority: new(int)},
+		"fs-root": {Type: "filesystem", Device: "part1", FSType: "ext4", Mount: "/"},
+	}
+
+	raidNamesByID := map[string]string{}
+	diskNamesByID := map[string]string{"disk1": "from-api"}
+	existingMounts := []string{"/"}
+	existingDiskNameByMount := map[string]string{"/": "from-fallback"}
+
+	partitions := buildDiskPartitions(apiCfg, raidNamesByID, diskNamesByID, existingMounts, existingDiskNameByMount)
+
+	require.Len(t, partitions, 1)
+	// diskNamesByID (via applyDeviceConfig) should win over fallback
+	assert.Equal(t, "from-api", partitions[0][dedicatedServerSchemaKeyDiskName])
+}
+
+func TestApiPartitionsConfigToSchema_NonRAIDDirectReference(t *testing.T) {
+	// Full end-to-end test: API returns non-RAID config without intermediate
+	// partition items. existingDiskNameByMount should preserve disk names.
+	apiCfg := dedicated.PartitionsConfig{
+		"drive-1": {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 480, Type: "SSD NVMe"}},
+		"drive-2": {Type: "local_drive", Match: &dedicated.PartitionConfigItemMatch{Size: 2000, Type: "HDD SATA"}},
+		"fs-root": {Type: "filesystem", Device: "drive-1", FSType: "ext4", Mount: "/"},
+		"fs-data": {Type: "filesystem", Device: "drive-2", FSType: "ext4", Mount: "/data"},
+	}
+
+	existingMounts := []string{"/", "/data"}
+	existingDiskNameByMount := map[string]string{
+		"/":     "system",
+		"/data": "data",
+	}
+
+	result, err := apiPartitionsConfigToSchema(apiCfg, nil, existingMounts, existingDiskNameByMount, nil, nil, nil)
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+
+	diskPartitions := result[0][dedicatedServerSchemaKeyDiskPartitions].([]map[string]any)
+	require.Len(t, diskPartitions, 2)
+
+	// Both partitions should have disk_name from fallback
+	for _, dp := range diskPartitions {
+		mount := dp[dedicatedServerSchemaKeyMount].(string)
+		diskName := dp[dedicatedServerSchemaKeyDiskName].(string)
+		switch mount {
+		case "/":
+			assert.Equal(t, "system", diskName)
+		case "/data":
+			assert.Equal(t, "data", diskName)
+		}
+	}
+}
