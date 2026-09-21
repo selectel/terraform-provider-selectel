@@ -1,3 +1,19 @@
+## 8.4.0 (September 21, 2026)
+
+BUG FIXES:
+
+* `selectel_mks_cluster_v1`: do not force cluster replacement when `cni_type` is missing from the state after a provider upgrade. ([#424](https://github.com/selectel/terraform-provider-selectel/pull/424))
+* `selectel_dedicated_server_v1`: fix `user_data` permanent drift caused by HTML entity encoding in API responses. The provider now decodes HTML entities on read so the state always contains the human-readable form. ([#419](https://github.com/selectel/terraform-provider-selectel/pull/419))
+* `selectel_dedicated_server_v1`: fix `disk_name` not persisted to state for non-RAID partition configs. When the API response lacks intermediate partition items, the provider now falls back to preserving `disk_name` from the existing Terraform state. ([#419](https://github.com/selectel/terraform-provider-selectel/pull/419))
+* `selectel_dedicated_public_subnet_v1`: fix IPv6 subnets causing `json: cannot unmarshal number into Go struct field Subnet.result.free of type int` by updating `dedicated-go` to v2.1.3. ([#423](https://github.com/selectel/terraform-provider-selectel/pull/423))
+* `selectel_dedicated_public_subnet_v1`: fix `broadcast` and `gateway` attributes being set to the literal `<nil>` string for subnets without a `broadcast` or `gateway` address (e.g. IPv6). ([#423](https://github.com/selectel/terraform-provider-selectel/pull/423))
+
+DEPRECATIONS:
+
+* `selectel_domains_domain_v1` (data source): deprecated and will be removed in a future version. Use `selectel_domains_zone_v2` instead. ([#425](https://github.com/selectel/terraform-provider-selectel/pull/425))
+* `selectel_domains_domain_v1` (resource): deprecated and will be removed in a future version. Use `selectel_domains_zone_v2` instead. ([#425](https://github.com/selectel/terraform-provider-selectel/pull/425))
+* `selectel_domains_record_v1` (resource): deprecated and will be removed in a future version. Use `selectel_domains_rrset_v2` instead. ([#425](https://github.com/selectel/terraform-provider-selectel/pull/425))
+
 ## 8.3.1 (August 10, 2026)
 
 BUG FIXES:
