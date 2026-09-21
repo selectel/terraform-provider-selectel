@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"fmt"
+	"net"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -163,4 +164,80 @@ func Test_filterDedicatedPublicSubnets(t *testing.T) {
 			assert.Equalf(t, tt.want, got, "filterDedicatedPublicSubnets(%v, %v)", tt.args.subnets, tt.args.filter)
 		})
 	}
+}
+
+func Test_filterDedicatedPublicSubnets_IPv6(t *testing.T) {
+	unfilteredList := dedicated.Subnets{
+		{
+			UUID:   "3",
+			Subnet: "2a00:1f40::/48",
+		},
+		{
+			UUID:   "4",
+			Subnet: "2001:db8::/32",
+		},
+	}
+
+	t.Run("IPv6IncludeSubnet", func(t *testing.T) {
+		filter := dedicatedPublicSubnetsSearchFilter{
+			subnet: "2a00:1f40::/48",
+		}
+		got, err := filterDedicatedPublicSubnets(unfilteredList, filter)
+		assert.NoError(t, err)
+		assert.Equal(t, dedicated.Subnets{unfilteredList[0]}, got)
+	})
+
+	t.Run("IPv6IncludeIP", func(t *testing.T) {
+		filter := dedicatedPublicSubnetsSearchFilter{
+			ip: "2a00:1f40::1",
+		}
+		got, err := filterDedicatedPublicSubnets(unfilteredList, filter)
+		assert.NoError(t, err)
+		assert.Equal(t, dedicated.Subnets{unfilteredList[0]}, got)
+	})
+
+	t.Run("IPv6NoMatches", func(t *testing.T) {
+		filter := dedicatedPublicSubnetsSearchFilter{
+			ip:     "2001:db8::1",
+			subnet: "2a00:1f40::/48",
+		}
+		got, err := filterDedicatedPublicSubnets(unfilteredList, filter)
+		assert.NoError(t, err)
+		assert.Nil(t, got)
+	})
+}
+
+func Test_flattenDedicatedPublicSubnets_NilBroadcastGateway(t *testing.T) {
+	subnets := dedicated.Subnets{
+		{
+			UUID:        "1",
+			NetworkUUID: "net-1",
+			Subnet:      "2a00:1f40::/48",
+			// IPv6: Broadcast and Gateway can be nil
+			Broadcast: nil,
+			Gateway:   nil,
+		},
+		{
+			UUID:        "2",
+			NetworkUUID: "net-2",
+			Subnet:      "192.168.1.0/24",
+			Broadcast:   net.ParseIP("192.168.1.255"),
+			Gateway:     net.ParseIP("192.168.1.1"),
+		},
+	}
+
+	filter := dedicatedPublicSubnetsSearchFilter{}
+	result := flattenDedicatedPublicSubnets(subnets, filter)
+
+	assert.Len(t, result, 2)
+
+	// IPv6 subnet: broadcast and gateway should be empty strings, not "<nil>"
+	ipv6Map := result[0].(map[string]any)
+	assert.Equal(t, "", ipv6Map["broadcast"])
+	assert.Equal(t, "", ipv6Map["gateway"])
+
+	// IPv4 subnet: broadcast and gateway should have values
+	ipv4Map := result[1].(map[string]any)
+	assert.Equal(t, "192.168.1.255", ipv4Map["broadcast"])
+	assert.Equal(t, "192.168.1.1", ipv4Map["gateway"])
 }
