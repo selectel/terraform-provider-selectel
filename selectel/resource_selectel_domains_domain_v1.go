@@ -13,7 +13,7 @@ import (
 
 func resourceDomainsDomainV1() *schema.Resource {
 	return &schema.Resource{
-		DeprecationMessage: "use selectel_domains_zone_v2 instead",
+		DeprecationMessage: "The `selectel_domains_domain_v1` resource is deprecated and will be removed in a future version. Use `selectel_domains_zone_v2` instead.",
 		CreateContext:      resourceDomainsDomainV1Create,
 		ReadContext:        resourceDomainsDomainV1Read,
 		DeleteContext:      resourceDomainsDomainV1Delete,
