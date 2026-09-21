@@ -1,3 +1,9 @@
+## 8.3.2
+
+BUG FIXES:
+
+* `selectel_mks_cluster_v1`: do not force cluster replacement when `cni_type` is missing from the state after a provider upgrade. ([#424](https://github.com/selectel/terraform-provider-selectel/pull/424))
+
 ## 8.3.1 (August 10, 2026)
 
 BUG FIXES:
