@@ -8,7 +8,10 @@ description: |-
 
 # selectel\_domains\_record\_v1
 
-**WARNING**: This resource is applicable to DNS Hosting (legacy). We do not support and develop DNS Hosting (legacy), but domains and records created in DNS Hosting (legacy) continue to work until further notice. We recommend to transfer your data to DNS Hosting (actual). For more infomation about DNS Hosting (actual), see the [official Selectel documentation](https://docs.selectel.ru/en/networks-services/dns/about-dns/).
+!> **WARNING:** This resource is deprecated and will be removed in a future major version. Use selectel_domains_rrset_v2 instead.
+
+DNS Hosting (legacy) is not supported or developed anymore. For more information about DNS Hosting (actual), see the [official Selectel documentation](https://docs.selectel.ru/en/networks-services/dns/about-dns/).
+
 To create records in DNS Hosting (actual) use the [selectel_domains_rrset_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/selectel_domains_rrset_v2) resource.
 
 Creates and manages a record in DNS Hosting (legacy) using public API v1. For more information about records, see the [official Selectel documentation](https://docs.selectel.ru/en/networks-services/dns/records/).
