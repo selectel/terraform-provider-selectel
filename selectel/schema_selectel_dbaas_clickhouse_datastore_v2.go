@@ -20,6 +20,7 @@ func resourceDBaaSV2ClickhouseDatastoreSchema() map[string]*schema.Schema {
 	datastoreSchema["node_groups"] = &schema.Schema{
 		Type:     schema.TypeList,
 		Required: true,
+		MinItems: 1,
 
 		Elem: &schema.Resource{
 			Schema: dbaasV2ClickhouseNodeGroupSchema(),
@@ -39,10 +40,12 @@ func resourceDBaaSV2ClickhouseDatastoreSchema() map[string]*schema.Schema {
 	datastoreSchema["security_groups"] = &schema.Schema{
 		Type:     schema.TypeSet,
 		Optional: true,
+		Computed: true, // When creating a cluster without groups, the API itself sets the default group..
 		Elem: &schema.Schema{
 			Type:         schema.TypeString,
 			ValidateFunc: validation.IsUUID,
 		},
+		MinItems: 1,
 	}
 
 	datastoreSchema["log_platform"] = &schema.Schema{
@@ -58,6 +61,13 @@ func resourceDBaaSV2ClickhouseDatastoreSchema() map[string]*schema.Schema {
 				},
 			},
 		},
+	}
+
+	datastoreSchema["allow_reduce_nodes"] = &schema.Schema{
+		Type:        schema.TypeBool,
+		Optional:    true,
+		Default:     false,
+		Description: "Allows forced reduction of node count.",
 	}
 
 	return datastoreSchema

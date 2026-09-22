@@ -152,7 +152,7 @@ func dbaasV2DatastoreDeleteStateRefreshFunc[D DBaaSV2DatastoreResponse](ctx cont
 		d, err := client.GetDatastore(ctx, datastoreID)
 		if err != nil {
 			var dbaasError *dbaas_v2.DBaaSAPIError
-			if errors.As(err, &dbaasError) {
+			if errors.As(err, &dbaasError) && dbaasError.StatusCode() == http.StatusNotFound {
 				return d, strconv.Itoa(dbaasError.StatusCode()), nil
 			}
 
