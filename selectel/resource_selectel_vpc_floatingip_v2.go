@@ -8,8 +8,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v4/selvpcclient/clients"
-	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/floatingips"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient/clients"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/floatingips"
 )
 
 func resourceVPCFloatingIPV2() *schema.Resource {
@@ -87,24 +87,16 @@ func resourceVPCFloatingIPV2Create(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	opts := floatingips.FloatingIPOpts{
-		FloatingIPs: []floatingips.FloatingIPOpt{
-			{
-				Region:   region,
-				Quantity: 1,
-			},
-		},
+		Region: region,
 	}
 
 	log.Print(msgCreate(objectFloatingIP, opts))
-	floatingIPs, _, err := floatingips.Create(selvpcClient, projectID, opts)
+	floatingIP, _, err := floatingips.Create(selvpcClient, projectID, opts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectFloatingIP, err))
 	}
-	if len(floatingIPs) != 1 {
-		return diag.FromErr(errReadFromResponse(objectFloatingIP))
-	}
 
-	d.SetId(floatingIPs[0].ID)
+	d.SetId(floatingIP.ID)
 
 	return resourceVPCFloatingIPV2Read(ctx, d, meta)
 }

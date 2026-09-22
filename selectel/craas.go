@@ -13,7 +13,7 @@ import (
 	clientv1 "github.com/selectel/craas-go/pkg/v1/client"
 	"github.com/selectel/craas-go/pkg/v1/registry"
 	clientv2 "github.com/selectel/craas-go/pkg/v2/client"
-	"github.com/selectel/go-selvpcclient/v4/selvpcclient"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient"
 )
 
 const (

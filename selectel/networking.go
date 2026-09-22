@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/selectel/go-selvpcclient/v4/selvpcclient"
-	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/subnets"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/subnets"
 )
 
 func getPrefixLengthFromCIDR(cidr string) (int, error) {
