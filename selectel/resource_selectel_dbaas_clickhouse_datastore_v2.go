@@ -50,7 +50,7 @@ func resourceDBaaSV2ClickhouseDatastoreCreate(ctx context.Context, d *schema.Res
 		return diagErr
 	}
 
-	nodeGroups := expandDBaasV2ClickhouseNodeGroupsCreate(d.Get("node_groups").([]any))
+	nodeGroups := expandDBaasV2ClickhouseNodeGroupsCreate(d.Get("node_group").([]any))
 
 	datastoreCreateOpts := dbaas_v2_ch.DatastoreCreateRequest{
 		Name:       d.Get("name").(string),
@@ -113,6 +113,7 @@ func resourceDBaaSV2ClickhouseDatastoreRead(ctx context.Context, d *schema.Resou
 			d.SetId("")
 			return nil
 		}
+
 		return diag.FromErr(errGettingObject(objectDatastore, d.Id(), err))
 	}
 
@@ -135,7 +136,7 @@ func resourceDBaaSV2ClickhouseDatastoreRead(ctx context.Context, d *schema.Resou
 	// sort node goups from api as in config
 	apiNodeGroups := flattenDBaaSV2DatastoreClickhouseNodeGroups(datastore.NodeGroups)
 	apiNodeGroupsMap := clickhouseNodeGroupsByName(apiNodeGroups)
-	configNodeGroups := d.Get("node_groups").([]any)
+	configNodeGroups := d.Get("node_group").([]any)
 	sortedNodeGroups := make([]any, 0, len(apiNodeGroups))
 
 	for _, ng := range configNodeGroups {
@@ -147,18 +148,16 @@ func resourceDBaaSV2ClickhouseDatastoreRead(ctx context.Context, d *schema.Resou
 			// delete ng which was handeled
 			delete(apiNodeGroupsMap, name)
 		}
-
 	}
 	// add an api node group that is not in the HCL (not created using Terraform)
 	for _, apiGroup := range apiNodeGroupsMap {
 		sortedNodeGroups = append(sortedNodeGroups, apiGroup)
 	}
 
-	if err := d.Set("node_groups", sortedNodeGroups); err != nil {
-		log.Print(errSettingComplexAttr("node_groups", err))
+	if err := d.Set("node_group", sortedNodeGroups); err != nil {
+		log.Print(errSettingComplexAttr("node_group", err))
 	}
 
-	// TODO: convert by getting params and use its type
 	configMap := make(map[string]string)
 	for key, value := range datastore.Config {
 		configMap[key] = convertFieldToStringByType(value)
@@ -192,8 +191,8 @@ func resourceDBaaSV2ClickhouseDatastoreUpdate(ctx context.Context, d *schema.Res
 	allowReduceNodes := d.Get("allow_reduce_nodes")
 	d.Set("allow_reduce_nodes", allowReduceNodes)
 
-	if d.HasChange("node_groups") {
-		oldRaw, newRaw := d.GetChange("node_groups")
+	if d.HasChange("node_group") {
+		oldRaw, newRaw := d.GetChange("node_group")
 
 		oldGroups := oldRaw.([]any)
 		newGroups := newRaw.([]any)
@@ -209,10 +208,12 @@ func resourceDBaaSV2ClickhouseDatastoreUpdate(ctx context.Context, d *schema.Res
 		); err != nil {
 			return diag.FromErr(err)
 		}
-
 	}
 	if d.HasChange("config") {
-		// Update config
+		err := updateDBaaSv2ClickhouseDatastoreConfig(ctx, d, dbaasClient)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	if d.HasChange("security_groups") {
@@ -237,9 +238,8 @@ func reconcileDBaaSV2ClickhouseNodeGroups(
 	oldGroups []any,
 	newGroups []any,
 	timeout time.Duration,
-	allow_reduce_nodes bool,
+	allowReduceNodes bool,
 ) error {
-
 	oldByName := clickhouseNodeGroupsByName(oldGroups)
 	newByName := clickhouseNodeGroupsByName(newGroups)
 
@@ -253,20 +253,20 @@ func reconcileDBaaSV2ClickhouseNodeGroups(
 			); err != nil {
 				return fmt.Errorf("creating node group error: %w", err)
 			}
+
 			continue
 		}
 
 		oldID := oldGroup["id"].(string)
 
 		if err := reconcileDBaaSV2ClickhouseNodeGroup(
-			ctx, client, datastoreID, oldID, oldGroup, newGroup, timeout, allow_reduce_nodes); err != nil {
+			ctx, client, datastoreID, oldID, oldGroup, newGroup, timeout, allowReduceNodes); err != nil {
 			return fmt.Errorf("reconciliation node group error: %w", err)
 		}
 	}
 
 	// Delete.
 	for name, oldGroup := range oldByName {
-
 		if _, exists := newByName[name]; exists {
 			continue
 		}
@@ -404,9 +404,10 @@ func getInstanceIDsToReduceClickhouseNodeGroupCount(oldInstances []any, oldNodeC
 			return nil, errors.New("can't parse instance from state to reduce node count")
 		}
 	}
-	return targetIDs, nil
 
+	return targetIDs, nil
 }
+
 func resourceDBaaSV2ClickhouseDatastoreDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	dbaasClient, diagErr := getDBaaSV2Client(d, meta)
 	if diagErr != nil {
@@ -425,6 +426,7 @@ func resourceDBaaSV2ClickhouseDatastoreDelete(ctx context.Context, d *schema.Res
 	if err != nil {
 		return diag.FromErr(errDeletingObject(objectDatastore, d.Id(), err))
 	}
+
 	return nil
 }
 
@@ -444,11 +446,11 @@ func resourceDBaaSV2ClickhouseDatastoreImportState(_ context.Context, d *schema.
 }
 
 func validateDBaaSV2ClickhouseDatastoreDiff(
-	ctx context.Context,
+	_ context.Context,
 	diff *schema.ResourceDiff,
-	meta any,
+	_ any,
 ) error {
-	rawNewGroups, ok := diff.Get("node_groups").([]any)
+	rawNewGroups, ok := diff.Get("node_group").([]any)
 	if !ok {
 		return nil
 	}
@@ -464,7 +466,7 @@ func validateDBaaSV2ClickhouseDatastoreDiff(
 		name, _ := newGroup["name"].(string)
 
 		if _, dup := seen[name]; dup {
-			return fmt.Errorf("node_groups: duplicate group name %q", name)
+			return fmt.Errorf("node_group: duplicate group name %q", name)
 		}
 		seen[name] = newGroup
 	}
@@ -472,6 +474,7 @@ func validateDBaaSV2ClickhouseDatastoreDiff(
 	if err := validateDBaaSV2ClickhouseNodeGroupsDiff(diff); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -483,7 +486,7 @@ func validateDBaaSV2ClickHouseNodeGroup(group map[string]any) error {
 	nodeCount := group["node_count"].(int)
 
 	if name == "" {
-		return errors.New("node group with empty name.")
+		return errors.New("node group with empty name")
 	}
 
 	if nodeCount < 1 {
@@ -526,7 +529,7 @@ func clickhouseNodeGroupsByName(groups []any) map[string]map[string]any {
 }
 
 func validateDBaaSV2ClickhouseNodeGroupsDiff(diff *schema.ResourceDiff) error {
-	rawOld, rawNew := diff.GetChange("node_groups")
+	rawOld, rawNew := diff.GetChange("node_group")
 
 	oldGroups, ok := rawOld.([]any)
 	if !ok {
@@ -553,7 +556,7 @@ func validateDBaaSV2ClickhouseNodeGroupsDiff(diff *schema.ResourceDiff) error {
 
 		if oldRole != newRole {
 			return fmt.Errorf(
-				"node_groups: changing role of node group %q is not allowed",
+				"node_group: changing role of node group %q is not allowed",
 				name,
 			)
 		}
@@ -563,7 +566,7 @@ func validateDBaaSV2ClickhouseNodeGroupsDiff(diff *schema.ResourceDiff) error {
 		for name := range oldByName {
 			if _, exists := newByName[name]; !exists {
 				return fmt.Errorf(
-					"node_groups: changing name of node group %q is not allowed",
+					"node_group: changing name of node group %q is not allowed",
 					name,
 				)
 			}
@@ -648,4 +651,37 @@ func equalDBaaSV2ClickhouseFlavor(a, b dbaas_v2_ch.FlavorForNodeGroupRequest) bo
 	default:
 		return false
 	}
+}
+
+func updateDBaaSv2ClickhouseDatastoreConfig(ctx context.Context, d *schema.ResourceData, client *dbaas_v2.API) error {
+	var configOpts dbaas_v2_ch.DatastoreConfigRequest
+	datastore, err := client.ClickHouse.GetDatastore(ctx, d.Id())
+	if err != nil {
+		return err
+	}
+	config := d.Get("config").(map[string]any)
+
+	for param := range datastore.Config {
+		// if a param was deleted from config by client we will set nil to reset it to default on api side.
+		if _, ok := config[param]; !ok {
+			config[param] = nil
+		}
+	}
+
+	configOpts.Config = config
+
+	log.Print(msgUpdate(objectDatastore, d.Id(), configOpts))
+	_, err = client.ClickHouse.UpdateDatastoreConfig(ctx, d.Id(), configOpts)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, client.ClickHouse, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
 }

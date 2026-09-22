@@ -23,7 +23,6 @@ var (
 )
 
 func testAccCheckDBaaSV2ClickhouseDatastoreDestroy(s *terraform.State) error {
-
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "selectel_dbaas_clickhouse_datastore_v2" {
 			continue
@@ -41,7 +40,6 @@ func testAccCheckDBaaSV2ClickhouseDatastoreDestroy(s *terraform.State) error {
 				rs.Primary.ID,
 			)
 		}
-
 	}
 
 	return nil
@@ -84,7 +82,7 @@ func TestAccDBaaSClickhouseDatastoreV2Basic(t *testing.T) {
 	var dbaasDatastore dbaas_v2_ch.DatastoreResponse
 
 	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
-	datastorePassword := "Iu2YgYlk!ORz"
+	datastorePassword := "Iu2YgYlk!ORz" // nolint:gosec
 	datastoreSG := ""
 	shardOneWeight := 50
 	shardOneNodeCount := 1
@@ -100,7 +98,7 @@ func TestAccDBaaSClickhouseDatastoreV2Basic(t *testing.T) {
 	allowReduceNodes := false
 
 	updatedDatastoreName := acctest.RandomWithPrefix("tf-acc-ds-updated")
-	updatedDatastorePassword := "Iu2YgYlk!ORzUpd"
+	updatedDatastorePassword := "Iu2YgYlk!ORzUpd" // nolint:gosec
 	updatedShardOneWeight := 70
 	updatedshardOneNodeCountTwo := 2
 	updatedshardOneNodeCountOne := 1
@@ -114,7 +112,7 @@ func TestAccDBaaSClickhouseDatastoreV2Basic(t *testing.T) {
 	updatedDatastoreSG := "${openstack_networking_secgroup_v2.ds_sg.id}"
 	updatedShardOneHasPublicIps := true
 	updatedKeepersBlock := `
-	node_groups {
+	node_group {
 	  name       = "keepers"
 	  role       = "KEEPER"
 	  node_count = 3
@@ -146,17 +144,17 @@ func TestAccDBaaSClickhouseDatastoreV2Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "status", string(dbaas_v2_common.DatastoreStatusActive)),
 					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "state", string(dbaas_v2_common.DatastoreStateRunning)),
 
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.#", "1"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.name", "shard1"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.node_count", strconv.Itoa(shardOneNodeCount)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.role", "DATA"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.weight", strconv.Itoa(shardOneWeight)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.#", "1"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.name", "shard1"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.node_count", strconv.Itoa(shardOneNodeCount)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.role", "DATA"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.weight", strconv.Itoa(shardOneWeight)),
 
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.flavor.0.type", string(shardOneFlavor.Type)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.flavor.0.vcpus", strconv.Itoa(shardOneFlavor.VCPUs)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.flavor.0.ram", strconv.Itoa(shardOneFlavor.RAM)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.flavor.0.disk", strconv.Itoa(shardOneFlavor.Disk)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.flavor.0.disk_type", string(shardOneFlavor.DiskType)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.flavor.0.type", string(shardOneFlavor.Type)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.flavor.0.vcpus", strconv.Itoa(shardOneFlavor.VCPUs)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.flavor.0.ram", strconv.Itoa(shardOneFlavor.RAM)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.flavor.0.disk", strconv.Itoa(shardOneFlavor.Disk)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.flavor.0.disk_type", string(shardOneFlavor.DiskType)),
 
 					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "security_groups.#", "1"),
 					resource.TestCheckResourceAttrSet(resourceDBaaSClickhouseDatastoreV2Name, "security_groups.0"), // first item is not empty string
@@ -192,8 +190,8 @@ func TestAccDBaaSClickhouseDatastoreV2Basic(t *testing.T) {
 				Config: testAccDBaaSClickhouseDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, updatedDatastoreSG, keepersBlock, updatedShardOneWeight, shardOneNodeCount, shardOneFlavor, shardOneHasPublicIps, allowReduceNodes),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "name", updatedDatastoreName),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.weight", strconv.Itoa(updatedShardOneWeight)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.has_public_ips", "false"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.weight", strconv.Itoa(updatedShardOneWeight)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.has_public_ips", "false"),
 				),
 			},
 			// Update shard1 add public ips
@@ -201,8 +199,8 @@ func TestAccDBaaSClickhouseDatastoreV2Basic(t *testing.T) {
 				Config: testAccDBaaSClickhouseDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, updatedDatastoreSG, keepersBlock, updatedShardOneWeight, shardOneNodeCount, shardOneFlavor, updatedShardOneHasPublicIps, allowReduceNodes),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "name", updatedDatastoreName),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.weight", strconv.Itoa(updatedShardOneWeight)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.has_public_ips", "true"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.weight", strconv.Itoa(updatedShardOneWeight)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.has_public_ips", "true"),
 				),
 			},
 			// Resize shard1 by flavor
@@ -210,14 +208,14 @@ func TestAccDBaaSClickhouseDatastoreV2Basic(t *testing.T) {
 				Config: testAccDBaaSClickhouseDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, updatedDatastoreSG, keepersBlock, updatedShardOneWeight, shardOneNodeCount, updatedShardOneFlavor, updatedShardOneHasPublicIps, allowReduceNodes),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "name", updatedDatastoreName),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.weight", strconv.Itoa(updatedShardOneWeight)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.node_count", strconv.Itoa(shardOneNodeCount)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.has_public_ips", "true"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.flavor.0.type", string(updatedShardOneFlavor.Type)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.flavor.0.vcpus", strconv.Itoa(updatedShardOneFlavor.VCPUs)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.flavor.0.ram", strconv.Itoa(updatedShardOneFlavor.RAM)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.flavor.0.disk", strconv.Itoa(updatedShardOneFlavor.Disk)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.flavor.0.disk_type", string(updatedShardOneFlavor.DiskType)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.weight", strconv.Itoa(updatedShardOneWeight)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.node_count", strconv.Itoa(shardOneNodeCount)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.has_public_ips", "true"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.flavor.0.type", string(updatedShardOneFlavor.Type)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.flavor.0.vcpus", strconv.Itoa(updatedShardOneFlavor.VCPUs)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.flavor.0.ram", strconv.Itoa(updatedShardOneFlavor.RAM)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.flavor.0.disk", strconv.Itoa(updatedShardOneFlavor.Disk)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.flavor.0.disk_type", string(updatedShardOneFlavor.DiskType)),
 				),
 			},
 			// Add keepers node group
@@ -226,17 +224,17 @@ func TestAccDBaaSClickhouseDatastoreV2Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "name", updatedDatastoreName),
 
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.#", "2"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.name", "keepers"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.node_count", "3"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.role", "KEEPER"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.flavor.0.type", "FIXED"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.#", "2"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.name", "keepers"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.node_count", "3"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.role", "KEEPER"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.flavor.0.type", "FIXED"),
 
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.name", "shard1"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.node_count", strconv.Itoa(shardOneNodeCount)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.role", "DATA"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.weight", strconv.Itoa(updatedShardOneWeight)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.flavor.0.type", string(updatedShardOneFlavor.Type)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.name", "shard1"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.node_count", strconv.Itoa(shardOneNodeCount)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.role", "DATA"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.weight", strconv.Itoa(updatedShardOneWeight)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.flavor.0.type", string(updatedShardOneFlavor.Type)),
 				),
 			},
 			// Update node count for shard1 (add node)
@@ -245,18 +243,18 @@ func TestAccDBaaSClickhouseDatastoreV2Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "name", updatedDatastoreName),
 
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.#", "2"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.name", "keepers"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.node_count", "3"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.role", "KEEPER"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.flavor.0.type", "FIXED"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.#", "2"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.name", "keepers"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.node_count", "3"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.role", "KEEPER"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.flavor.0.type", "FIXED"),
 
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.name", "shard1"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.node_count", strconv.Itoa(updatedshardOneNodeCountTwo)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.role", "DATA"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.weight", strconv.Itoa(updatedShardOneWeight)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.has_public_ips", "true"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.flavor.0.type", string(updatedShardOneFlavor.Type)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.name", "shard1"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.node_count", strconv.Itoa(updatedshardOneNodeCountTwo)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.role", "DATA"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.weight", strconv.Itoa(updatedShardOneWeight)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.has_public_ips", "true"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.flavor.0.type", string(updatedShardOneFlavor.Type)),
 				),
 			},
 			// Update node count for shard1 (delete)
@@ -265,18 +263,18 @@ func TestAccDBaaSClickhouseDatastoreV2Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "name", updatedDatastoreName),
 
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.#", "2"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.name", "keepers"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.node_count", "3"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.role", "KEEPER"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.flavor.0.type", "FIXED"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.#", "2"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.name", "keepers"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.node_count", "3"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.role", "KEEPER"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.flavor.0.type", "FIXED"),
 
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.name", "shard1"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.node_count", strconv.Itoa(updatedshardOneNodeCountOne)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.role", "DATA"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.weight", strconv.Itoa(updatedShardOneWeight)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.has_public_ips", "true"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.flavor.0.type", string(updatedShardOneFlavor.Type)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.name", "shard1"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.node_count", strconv.Itoa(updatedshardOneNodeCountOne)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.role", "DATA"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.weight", strconv.Itoa(updatedShardOneWeight)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.has_public_ips", "true"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.flavor.0.type", string(updatedShardOneFlavor.Type)),
 
 					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "allow_reduce_nodes", strconv.FormatBool(updAllowReduceNodes)),
 				),
@@ -296,6 +294,7 @@ func testAccDBaaSClickhouseDatastoreV2Basic(datastoreName, datastorePassword, da
 	if shardOneHasPublicIps {
 		HasPublickIPsBlock = "has_public_ips = true"
 	}
+
 	return fmt.Sprintf(`
 locals {
   project_id = "%s"
@@ -372,7 +371,7 @@ resource "selectel_dbaas_clickhouse_datastore_v2" "datastore_tf_acc_test_1" {
   // keepers
   %s
 
-  node_groups {
+  node_group {
     name       = "shard1" 
     role       = "DATA"
     node_count = "%d"
@@ -388,4 +387,123 @@ resource "selectel_dbaas_clickhouse_datastore_v2" "datastore_tf_acc_test_1" {
     }
   }
 }`, dbaasProjectID, dbaasRegion, datastoreName, datastorePassword, securityGroupsBlock, strconv.FormatBool(allowReduceNodes), keepersBlock, shardOneNodeCount, shardOneWeight, HasPublickIPsBlock, shardOneFlavor.Type, shardOneFlavor.VCPUs, shardOneFlavor.RAM, shardOneFlavor.Disk, shardOneFlavor.DiskType)
+}
+
+func TestAccDBaaSClickhouseDatastoreV2Config(t *testing.T) {
+	var dbaasDatastore dbaas_v2_ch.DatastoreResponse
+
+	configBlock := ""
+	updatedConfigBlock := `
+	config = {
+		"server_settings.async_insert_threads" = 10
+		(data.selectel_dbaas_clickhouse_configuration_parameter_v2.cp_mt.configuration_parameters[0].name) = "rebuild"
+	}
+	`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccDBaaSV2PreCheck(t) },
+		ProviderFactories: testAccProvidersWithOpenStack,
+		CheckDestroy:      testAccCheckDBaaSV2ClickhouseDatastoreDestroy,
+		Steps: []resource.TestStep{
+			// with empty config
+			{
+				Config: testAccDBaaSClickhouseDatastoreV2Config(configBlock),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDBaaSV2ClickhouseDatastoreExists(resourceDBaaSClickhouseDatastoreV2Name, &dbaasDatastore),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "name", "TestDS"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "region", dbaasRegion),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "status", string(dbaas_v2_common.DatastoreStatusActive)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "state", string(dbaas_v2_common.DatastoreStateRunning)),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.#", "1"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.name", "shard1"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.node_count", "1"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.role", "DATA"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.weight", "100"),
+
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "config.%", "0"),
+				),
+			},
+			// Update datastore config
+			{
+				Config: testAccDBaaSClickhouseDatastoreV2Config(updatedConfigBlock),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "config.%", "2"),
+
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "config.server_settings.async_insert_threads", "10"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "config.merge_tree_settings.deduplicate_merge_projection_mode", "rebuild"),
+				),
+			},
+		},
+	})
+}
+
+// testAccDBaaSClickhouseDatastoreV2Config is a simple cluster for update config.
+func testAccDBaaSClickhouseDatastoreV2Config(configBlock string) string {
+	return fmt.Sprintf(`
+locals {
+  project_id  = "%s"
+  region_name = "%s"
+}
+
+provider openstack {
+  tenant_id = local.project_id
+}
+
+resource "openstack_networking_network_v2" "ds_net" {
+  region = local.region_name
+  name   = "network_test"
+}
+
+resource "openstack_networking_subnet_v2" "ds_subnet" {
+  network_id  = openstack_networking_network_v2.ds_net.id
+  cidr        = "192.168.1.0/24"
+  ip_version  = 4
+  enable_dhcp = false
+  name        = "subnet_test"
+}
+
+data "selectel_dbaas_datastore_type_v2" "dt" {
+  project_id = local.project_id
+  region     = local.region_name
+  filter {
+    engine  = "clickhouse"
+    version = "26.3.12.3"
+
+  }
+}
+
+data "selectel_dbaas_clickhouse_configuration_parameter_v2" "cp_mt" {
+  project_id = local.project_id
+  region     = local.region_name
+  filter {
+    datastore_type_id = "${data.selectel_dbaas_datastore_type_v2.dt.datastore_types[0].id}"
+    name = "merge_tree_settings.deduplicate_merge_projection_mode"
+  }
+}
+
+resource "selectel_dbaas_clickhouse_datastore_v2" "datastore_tf_acc_test_1" {
+  name       = "TestDS"
+  project_id = local.project_id
+  region     = local.region_name
+  type_id    = "${data.selectel_dbaas_datastore_type_v2.dt.datastore_types[0].id}"
+  subnet_id  = "${openstack_networking_subnet_v2.ds_subnet.id}"
+  password   = "Iu2YgYlk!ORz"
+  // config
+  %s
+
+  node_group {
+    name       = "shard1" 
+    role       = "DATA"
+    node_count = "1"
+	weight     = "100"
+
+    flavor {
+      type      = "FLEXIBLE"
+      vcpus     = "2"
+      ram       = "4096"
+      disk      = "32"
+      disk_type = "NETWORK_ULTRA"
+    }
+  }
+}`, dbaasProjectID, dbaasRegion, configBlock)
 }

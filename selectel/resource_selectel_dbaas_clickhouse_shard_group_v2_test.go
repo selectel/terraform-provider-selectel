@@ -40,10 +40,10 @@ func TestAccDBaaSClickhouseShardGroupV2Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "region", dbaasRegion),
 					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "status", string(dbaas_v2_common.DatastoreStatusActive)),
 					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "state", string(dbaas_v2_common.DatastoreStateRunning)),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.#", "3"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.0.name", "keepers"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.1.name", "shard1"),
-					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_groups.2.name", "shard2"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.#", "3"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.0.name", "keepers"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.1.name", "shard1"),
+					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "node_group.2.name", "shard2"),
 
 					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "log_platform.0.log_group", logGroup),
 					resource.TestCheckResourceAttr(resourceDBaaSClickhouseDatastoreV2Name, "security_groups.#", "1"),
@@ -140,7 +140,7 @@ resource "selectel_dbaas_clickhouse_datastore_v2" "datastore_tf_acc_test_1" {
      log_group = "s/dbaas/%s" 
   }
 
-  node_groups {
+  node_group {
 	name       = "keepers" 
 	role       = "KEEPER"
 	node_count = 3
@@ -150,7 +150,7 @@ resource "selectel_dbaas_clickhouse_datastore_v2" "datastore_tf_acc_test_1" {
 	}
   }
 
-  node_groups {
+  node_group {
     name       = "shard1" 
     role       = "DATA"
     node_count = 1
@@ -163,7 +163,7 @@ resource "selectel_dbaas_clickhouse_datastore_v2" "datastore_tf_acc_test_1" {
       disk_type = "LOCAL"
     }
   }
-  node_groups {
+  node_group {
     name       = "shard2" 
     role       = "DATA"
     node_count = 1
