@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -84,6 +85,14 @@ func resourceDedicatedServerV1Schema() map[string]*schema.Schema {
 		dedicatedServerSchemaKeyOSUserData: {
 			Type:     schema.TypeString,
 			Optional: true,
+			DiffSuppressFunc: func(_, oldVal, newVal string, _ *schema.ResourceData) bool {
+				// The dedicated servers API strips trailing newlines from
+				// cloud_init_user_data when storing and returning it. Suppress
+				// the diff when values differ only by trailing newlines to
+				// avoid a permanent one-byte drift for configs sourced via
+				// file() (files conventionally end with a newline).
+				return strings.TrimRight(oldVal, "\n") == strings.TrimRight(newVal, "\n")
+			},
 		},
 		dedicatedServerSchemaKeyOSSSHKey: {
 			Type:     schema.TypeString,
