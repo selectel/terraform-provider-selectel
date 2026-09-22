@@ -140,7 +140,7 @@ func resourceDBaaSV2ClickhouseDatastoreRead(ctx context.Context, d *schema.Resou
 	sortedNodeGroups := make([]any, 0, len(apiNodeGroups))
 
 	for _, ng := range configNodeGroups {
-		ngMap := ng.(map[string]interface{})
+		ngMap := ng.(map[string]any)
 		name := ngMap["name"].(string)
 
 		if apiNG, found := apiNodeGroupsMap[name]; found {
