@@ -46,6 +46,7 @@ const (
 	objectAvailableExtensions          = "available-extensions"
 	objectFlavors                      = "flavors"
 	objectConfigurationParameters      = "configuration-parameters"
+	objectShardGroup                   = "shard-group"
 	objectPrometheusMetricToken        = "prometheus-metric-token"
 	objectFeatureGates                 = "feature-gates"
 	objectAdmissionControllers         = "admission-controllers"
@@ -200,6 +201,7 @@ func Provider(providerVersion string) *schema.Provider {
 			"selectel_dbaas_kafka_topic_v1":                         resourceDBaaSKafkaTopicV1(),
 			"selectel_dbaas_firewall_v1":                            resourceDBaaSFirewallV1(),
 			"selectel_dbaas_clickhouse_datastore_v2":                resourceDBaaSV2ClickhouseDatastore(),
+			"selectel_dbaas_clickhouse_shard_group_v2":              resourceDBaaSV2ClickhouseShardGroup(),
 			"selectel_craas_registry_v1":                            resourceCRaaSRegistryV1(),
 			"selectel_craas_token_v1":                               resourceCRaaSTokenV1(),
 			"selectel_craas_token_v2":                               resourceCRaaSTokenV2(),
