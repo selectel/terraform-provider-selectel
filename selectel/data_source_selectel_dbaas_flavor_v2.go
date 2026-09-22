@@ -121,7 +121,6 @@ func dataSourceDBaaSV2FlavorRead(ctx context.Context, d *schema.ResourceData, me
 
 	if response.Errors != "" {
 		log.Printf("[WARN] flavors got with error: %s", response.Errors)
-
 	}
 
 	flavors := response.Flavors

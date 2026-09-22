@@ -128,7 +128,6 @@ func dbaasV2DatastoreStateRefreshFunc[D DBaaSV2DatastoreResponse](ctx context.Co
 func WaitForDBaaSV2DatastoreDeleted[D DBaaSV2DatastoreResponse](
 	ctx context.Context, client DBaaSV2DatastoreGetter[D], datastoreID string, timeout time.Duration,
 ) error {
-
 	stateConf := &retry.StateChangeConf{
 		Pending:    []string{strconv.Itoa(http.StatusOK)},
 		Target:     []string{strconv.Itoa(http.StatusNotFound)},
@@ -147,6 +146,7 @@ func WaitForDBaaSV2DatastoreDeleted[D DBaaSV2DatastoreResponse](
 
 	return nil
 }
+
 func dbaasV2DatastoreDeleteStateRefreshFunc[D DBaaSV2DatastoreResponse](ctx context.Context, client DBaaSV2DatastoreGetter[D], datastoreID string) retry.StateRefreshFunc {
 	return func() (any, string, error) {
 		d, err := client.GetDatastore(ctx, datastoreID)

@@ -79,7 +79,6 @@ func dataSourceDBaaSV2DatastoreTypeRead(ctx context.Context, d *schema.ResourceD
 
 	if response.Errors != "" {
 		log.Printf("[WARN] datastore types got with error: %s", response.Errors)
-
 	}
 
 	datastoreTypes := response.DatastoreTypes

@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.1
 	github.com/selectel/cloudbackup-go v1.0.1-0.20251028081814-eed36cddb45b
 	github.com/selectel/craas-go v0.4.2
-	github.com/selectel/dbaas-go v0.18.0
+	github.com/selectel/dbaas-go v0.20.0
 	github.com/selectel/dedicated-go/v2 v2.1.2
 	github.com/selectel/domains-go v1.0.2
 	github.com/selectel/globalrouter-go v1.2.1

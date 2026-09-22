@@ -47,7 +47,6 @@ func getDBaaSV2Client(d *schema.ResourceData, meta any) (*dbaas_v2.API, diag.Dia
 }
 
 func validateDBaaSV2DatastoreType(ctx context.Context, expectedDatastoreTypeEngines []string, typeID string, client *dbaas_v2.API) diag.Diagnostics {
-
 	// no endpoint to get a datastore type in v2
 
 	response, err := client.DatastoreType.GetDatastoreTypeList(ctx)
@@ -57,7 +56,6 @@ func validateDBaaSV2DatastoreType(ctx context.Context, expectedDatastoreTypeEngi
 
 	if response.Errors != "" {
 		log.Printf("[WARN] datastore types got with error: %s", response.Errors)
-
 	}
 
 	var datastoreType *dbaas_v2_common.DatastoreTypeResponse
@@ -80,10 +78,8 @@ func validateDBaaSV2DatastoreType(ctx context.Context, expectedDatastoreTypeEngi
 }
 
 func flattenDBaaSV2DatastoreClickhouseNodeGroups(nodeGroups []dbaas_v2_ch.NodeGroupResponse) []any {
-
 	flattenedNodeGroups := make([]any, len(nodeGroups))
 	for i, ng := range nodeGroups {
-
 		flattenedInstances := make([]any, len(ng.Instances))
 		for j, instance := range ng.Instances {
 			flattenedInstance := map[string]any{
@@ -115,7 +111,6 @@ func flattenDBaaSV2DatastoreClickhouseNodeGroups(nodeGroups []dbaas_v2_ch.NodeGr
 }
 
 func flattenDBaaSV2ClickhouseNodeGroupFlavor(f dbaas_v2_ch.FlavorResponse) []any {
-
 	if f.Type == dbaas_v2_common.FlavorTypeFlexible {
 		return []any{
 			map[string]any{
@@ -126,13 +121,13 @@ func flattenDBaaSV2ClickhouseNodeGroupFlavor(f dbaas_v2_ch.FlavorResponse) []any
 				"disk_type": f.DiskType,
 			},
 		}
-	} else {
-		return []any{
-			map[string]any{
-				"id":   f.ID,
-				"type": f.Type,
-			},
-		}
+	}
+	// for FIXED
+	return []any{
+		map[string]any{
+			"id":   f.ID,
+			"type": f.Type,
+		},
 	}
 }
 
@@ -165,6 +160,7 @@ func expandDBaaSV2ClickhouseNodeGroupCreate(raw any) dbaas_v2_ch.NodeGroupCreate
 		h := hasFIP.(bool)
 		req.HasPublicIPs = &h
 	}
+
 	return req
 }
 
@@ -202,6 +198,7 @@ func expandDBaaSV2ClickhouseDatastoreLogPlatform(raw any) (dbaas_v2_ch.Datastore
 
 	logGroup := logPlatform[0].(map[string]any)
 	res.LogGroup = logGroup["log_group"].(string)
+
 	return res, nil
 }
 
@@ -484,4 +481,30 @@ func updateDBaaSV2ClickhouseNodeGroupWeight(
 	}
 
 	return nil
+}
+
+type dbaasV2ConfigurationParameterSearchFilter struct {
+	datastoreTypeID string
+	name            string
+}
+
+func expandDBaaSV2ConfigurationParameterSearchFilter(filterSet *schema.Set) dbaasV2ConfigurationParameterSearchFilter {
+	filter := dbaasV2ConfigurationParameterSearchFilter{}
+	if filterSet.Len() == 0 {
+		return filter
+	}
+
+	resourceFilterMap := filterSet.List()[0].(map[string]any)
+
+	datastoreTypeID, ok := resourceFilterMap["datastore_type_id"]
+	if ok {
+		filter.datastoreTypeID = datastoreTypeID.(string)
+	}
+
+	name, ok := resourceFilterMap["name"]
+	if ok {
+		filter.name = name.(string)
+	}
+
+	return filter
 }

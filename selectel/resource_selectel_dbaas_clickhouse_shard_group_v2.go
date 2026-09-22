@@ -148,7 +148,6 @@ func resourceDBaaSV2ClickhouseShardGroupUpdate(ctx context.Context, d *schema.Re
 			return diag.FromErr(err)
 		}
 		shardGroupUpdateOpts.ShardIDs = &shardIDs
-
 	}
 
 	log.Print(msgUpdate(objectShardGroup, shardGroupID, shardGroupUpdateOpts))
@@ -188,6 +187,7 @@ func resourceDBaaSV2ClickhouseShardGroupDelete(ctx context.Context, d *schema.Re
 	if err != nil {
 		return diag.FromErr(errDeletingObject(objectShardGroup, shardGroupID, err))
 	}
+
 	return nil
 }
 
@@ -205,14 +205,12 @@ func resolveDBaaSv2ClickhouseShardIDs(
 	}
 
 	for _, shardName := range shardNames {
-
 		shardID, exists := shardIDByName[shardName]
 		if !exists {
 			return nil, fmt.Errorf("shard %s not found in datastore %s", shardName, datastore.ID)
 		}
 
 		shardIDs = append(shardIDs, shardID)
-
 	}
 
 	return shardIDs, nil
@@ -232,15 +230,14 @@ func resolveDBaaSv2ClickhouseShardNames(
 	}
 
 	for _, shardID := range shardIDs {
-
 		shardName, exists := shardNameByID[shardID]
 		if !exists {
 			return nil, fmt.Errorf("shard %s not found in datastore %s", shardID, datastore.ID)
 		}
 
 		shardNames = append(shardNames, shardName)
-
 	}
+
 	return shardNames, nil
 }
 
@@ -250,7 +247,6 @@ func getDBaaSV2ClickhouseShardGroup(
 	datastoreID string,
 	shardGroupID string,
 ) (*dbaas_v2_ch.ShardGroupResponse, error) {
-
 	// no endpoint to get by id
 	shardGroups, err := client.ClickHouse.GetShardGroups(ctx, datastoreID)
 	if err != nil {

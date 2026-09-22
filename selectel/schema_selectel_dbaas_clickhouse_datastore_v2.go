@@ -17,7 +17,7 @@ func resourceDBaaSV2ClickhouseDatastoreSchema() map[string]*schema.Schema {
 		Description: "Datastore password",
 	}
 
-	datastoreSchema["node_groups"] = &schema.Schema{
+	datastoreSchema["node_group"] = &schema.Schema{
 		Type:     schema.TypeList,
 		Required: true,
 		MinItems: 1,
@@ -158,7 +158,6 @@ func dbaasV2ClickhouseNodeGroupSchema() map[string]*schema.Schema {
 
 func dbaasV2ClickhouseFlavorSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
-
 		"id": {
 			Type:     schema.TypeString,
 			Optional: true,
