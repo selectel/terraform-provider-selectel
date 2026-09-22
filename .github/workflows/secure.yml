@@ -21,7 +21,7 @@ jobs:
       security-events: write
     steps:
       # NOTE: to update the version, use `make pin-sha-tags`.
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: semgrep scan --sarif --output=semgrep.sarif --error --severity=WARNING --severity=ERROR
         env:
           SEMGREP_RULES: >-
@@ -42,7 +42,7 @@ jobs:
             p/sql-injection
             p/xss
       # NOTE: to update the version, use `make pin-sha-tags`.
-      - uses: github/codeql-action/upload-sarif@c4dd10e44af883a891fe31ced449bcb4a6728b9b # v3
+      - uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         with:
           sarif_file: semgrep.sarif
         if: always()
@@ -59,7 +59,7 @@ jobs:
       security-events: write
     steps:
       # NOTE: to update the version, use `make pin-sha-tags`.
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: trivy fs .
         env:
           TRIVY_FORMAT: sarif
@@ -69,7 +69,7 @@ jobs:
           TRIVY_IGNOREFILE: .trivyignore.yml
           TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
       # NOTE: to update the version, use `make pin-sha-tags`.
-      - uses: github/codeql-action/upload-sarif@c4dd10e44af883a891fe31ced449bcb4a6728b9b # v3
+      - uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         with:
           sarif_file: trivy.sarif
         if: always()
@@ -80,6 +80,6 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       # NOTE: to update the version, use `make pin-sha-tags`.
-      - uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f # v1
+      - uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f # v1.1.0
         with:
           go-version-input: "1.26"
