@@ -179,3 +179,10 @@ func testAccGlobalRouterStaticRoutePreCheck(t *testing.T) {
 		t.Skip("GLOBAL_ROUTER_STATIC_ROUTE_NEXT_HOP must be set for acceptance tests of Global Router static router in VPC subnet")
 	}
 }
+
+func testAccDBaaSV2PreCheck(t *testing.T) {
+	testAccSelectelPreCheckWithProjectID(t)
+	if v := os.Getenv("INFRA_REGION"); v == "" {
+		t.Fatal("INFRA_REGION must be set for acceptance tests")
+	}
+}

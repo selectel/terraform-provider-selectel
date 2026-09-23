@@ -1,3 +1,14 @@
+## 8.5.0 (September 23, 2026)
+
+FEATURES:
+
+* Add support for DBaaS public API v2 client (`dbaas-go/v2`).
+* **New Resource:** `selectel_dbaas_clickhouse_datastore_v2` — Creates and manages a ClickHouse cluster using public API v2.
+* **New Resource:** `selectel_dbaas_clickhouse_shard_group_v2` — Creates and manages a ClickHouse shard group.
+* **New Data Source:** `selectel_dbaas_clickhouse_configuration_parameter_v2` — Provides a list of configuration parameters available for Managed ClickHouse clusters.
+* **New Data Source:** `selectel_dbaas_datastore_type_v2` — Provides a list of available cluster types using public API v2.
+* **New Data Source:** `selectel_dbaas_flavor_v2` — Provides a list of available flavors using public API v2. Supports filtering by `allowed_role` (e.g. `KEEPER`, `DATA`).
+
 ## 8.4.0 (September 21, 2026)
 
 BUG FIXES:
