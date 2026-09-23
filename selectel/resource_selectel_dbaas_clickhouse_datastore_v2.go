@@ -248,6 +248,8 @@ func reconcileDBaaSV2ClickhouseNodeGroups(
 		oldGroup, exists := oldByName[name]
 
 		if !exists {
+			log.Printf("[DEBUG] creating node group %s for datastore %s", name, datastoreID)
+
 			if err := createDBaaSV2ClickhouseNodeGroup(
 				ctx, client, datastoreID, newGroup, timeout,
 			); err != nil {
@@ -272,6 +274,8 @@ func reconcileDBaaSV2ClickhouseNodeGroups(
 		}
 
 		oldID := oldGroup["id"].(string)
+
+		log.Printf("[DEBUG] deleting node group %s (id=%s) for datastore %s", name, oldID, datastoreID)
 
 		if err := deleteDBaaSV2ClickhouseNodeGroup(
 			ctx, client, datastoreID, oldID, timeout,
@@ -304,12 +308,16 @@ func reconcileDBaaSV2ClickhouseNodeGroup(
 
 	if newNodeCount < oldNodeCount {
 		if allowReduceNodes {
+			log.Printf("[DEBUG] reducing node group %s (id=%s): %d → %d nodes", groupName, nodeGroupID, oldNodeCount, newNodeCount)
+
 			targetIDs, err := getInstanceIDsToReduceClickhouseNodeGroupCount(
 				oldGroup["instances"].([]any), oldNodeCount, newNodeCount,
 			)
 			if err != nil {
 				return fmt.Errorf("node group %s: %w", groupName, err)
 			}
+
+			log.Printf("[DEBUG] node group %s: deleting instances: %v", groupName, targetIDs)
 
 			if err := resizeDBaaSV2ClickhouseNodeGroupDeleteInstances(
 				ctx,
@@ -331,6 +339,8 @@ func reconcileDBaaSV2ClickhouseNodeGroup(
 	}
 
 	if newNodeCount > oldNodeCount || !equalDBaaSV2ClickhouseFlavor(oldFlavor, newFlavor) {
+		log.Printf("[DEBUG] resizing node group %s (id=%s): nodes=%d, flavor=%+v", groupName, nodeGroupID, newNodeCount, newFlavor)
+
 		req := dbaas_v2_ch.NodeGroupResizeRequest{
 			NodeCount: newNodeCount,
 			Flavor:    newFlavor,
@@ -351,6 +361,8 @@ func reconcileDBaaSV2ClickhouseNodeGroup(
 	oldHasPublicIPs := oldGroup["has_public_ips"].(bool)
 	newHasPublicIPs := newGroup["has_public_ips"].(bool)
 	if oldHasPublicIPs != newHasPublicIPs {
+		log.Printf("[DEBUG] updating public IPs for node group %s (id=%s): %v → %v", groupName, nodeGroupID, oldHasPublicIPs, newHasPublicIPs)
+
 		if err := updateDBaaSV2ClickhouseNodeGroupPublicIPs(
 			ctx,
 			client,
@@ -367,6 +379,8 @@ func reconcileDBaaSV2ClickhouseNodeGroup(
 	oldWeight := oldGroup["weight"].(int)
 	newWeight := newGroup["weight"].(int)
 	if oldWeight != newWeight {
+		log.Printf("[DEBUG] updating weight for node group %s (id=%s): %d → %d", groupName, nodeGroupID, oldWeight, newWeight)
+
 		if err := updateDBaaSV2ClickhouseNodeGroupWeight(
 			ctx,
 			client,
