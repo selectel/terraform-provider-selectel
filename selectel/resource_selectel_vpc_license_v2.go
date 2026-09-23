@@ -9,8 +9,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v4/selvpcclient/clients"
-	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/licenses"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient/clients"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/licenses"
 )
 
 func resourceVPCLicenseV2() *schema.Resource {
@@ -94,26 +94,17 @@ func resourceVPCLicenseV2Create(ctx context.Context, d *schema.ResourceData, met
 
 	licenseType := d.Get("type").(string)
 	opts := licenses.LicenseOpts{
-		Licenses: []licenses.LicenseOpt{
-			{
-				Region:   region,
-				Type:     licenseType,
-				Quantity: 1,
-			},
-		},
+		Region: region,
+		Type:   licenseType,
 	}
 
 	log.Print(msgCreate(objectLicense, opts))
-	newLicenses, _, err := licenses.Create(selvpcClient, projectID, opts)
+	newLicense, _, err := licenses.Create(selvpcClient, projectID, opts)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectLicense, err))
 	}
 
-	if len(newLicenses) != 1 {
-		return diag.FromErr(errReadFromResponse(objectLicense))
-	}
-
-	d.SetId(strconv.Itoa(newLicenses[0].ID))
+	d.SetId(strconv.Itoa(newLicense.ID))
 
 	return resourceVPCLicenseV2Read(ctx, d, meta)
 }

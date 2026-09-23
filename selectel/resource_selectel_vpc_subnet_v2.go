@@ -10,9 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/selectel/go-selvpcclient/v4/selvpcclient"
-	"github.com/selectel/go-selvpcclient/v4/selvpcclient/clients"
-	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/subnets"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient/clients"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/subnets"
 )
 
 func resourceVPCSubnetV2() *schema.Resource {
@@ -107,14 +107,9 @@ func resourceVPCSubnetV2Create(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	opts := subnets.SubnetOpts{
-		Subnets: []subnets.SubnetOpt{
-			{
-				Region:       region,
-				Quantity:     1,
-				Type:         selvpcclient.IPVersion(d.Get("ip_version").(string)),
-				PrefixLength: d.Get("prefix_length").(int),
-			},
-		},
+		Region:       region,
+		Type:         selvpcclient.IPVersion(d.Get("ip_version").(string)),
+		PrefixLength: d.Get("prefix_length").(int),
 	}
 
 	log.Print(msgCreate(objectSubnet, opts))
@@ -122,11 +117,8 @@ func resourceVPCSubnetV2Create(ctx context.Context, d *schema.ResourceData, meta
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectSubnet, err))
 	}
-	if len(subnetsResponse) != 1 {
-		return diag.FromErr(errReadFromResponse(objectSubnet))
-	}
 
-	d.SetId(strconv.Itoa(subnetsResponse[0].ID))
+	d.SetId(strconv.Itoa(subnetsResponse.ID))
 
 	return resourceVPCSubnetV2Read(ctx, d, meta)
 }

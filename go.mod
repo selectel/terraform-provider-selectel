@@ -12,7 +12,7 @@ require (
 	github.com/selectel/dedicated-go/v2 v2.1.3
 	github.com/selectel/domains-go v1.0.2
 	github.com/selectel/globalrouter-go v1.2.1
-	github.com/selectel/go-selvpcclient/v4 v4.2.0
+	github.com/selectel/go-selvpcclient/v5 v5.0.0
 	github.com/selectel/iam-go v0.9.0
 	github.com/selectel/mks-go v1.1.0
 	github.com/selectel/private-dns-go v1.1.0
@@ -31,9 +31,9 @@ require (
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gophercloud/gophercloud v1.10.0 // indirect
+	github.com/gophercloud/gophercloud v1.14.1 // indirect
 	github.com/gophercloud/utils v0.0.0-20230324070755-05e9e7f5ea4d // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-checkpoint v0.5.0 // indirect

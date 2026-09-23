@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v4/selvpcclient/quotamanager/quotas"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient/quotamanager/quotas"
 	v1 "github.com/selectel/mks-go/pkg/v1"
 	"github.com/selectel/mks-go/pkg/v1/cluster"
 	"github.com/selectel/mks-go/pkg/v1/kubeoptions"

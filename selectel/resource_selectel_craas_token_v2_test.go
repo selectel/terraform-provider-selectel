@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/craas-go/pkg/svc"
 	tokenv2 "github.com/selectel/craas-go/pkg/v2/token"
-	"github.com/selectel/go-selvpcclient/v4/selvpcclient/resell/v2/projects"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
 	"github.com/stretchr/testify/assert"
 )
 

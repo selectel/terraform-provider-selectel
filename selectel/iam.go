@@ -9,7 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/selectel/go-selvpcclient/v4/selvpcclient"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient"
 	"github.com/selectel/iam-go"
 	"github.com/selectel/iam-go/service/roles"
 	"github.com/selectel/iam-go/service/users"
