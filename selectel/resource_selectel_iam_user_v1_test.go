@@ -27,6 +27,7 @@ func TestAccIAMV1UserBasic(t *testing.T) {
 					testAccCheckIAMV1UserExists("selectel_iam_user_v1.user_tf_acc_test_1", &user),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "id"),
 					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "email", userEmail),
+					resource.TestCheckResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "enabled", "true"),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.role_name"),
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope"),
 				),
@@ -76,6 +77,37 @@ func TestAccIAMV1UserUpdateRoles(t *testing.T) {
 					resource.TestCheckResourceAttrSet("selectel_iam_user_v1.user_tf_acc_test_1", "role.0.scope"),
 					resource.TestCheckNoResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.1.role_name"),
 					resource.TestCheckNoResourceAttr("selectel_iam_user_v1.user_tf_acc_test_1", "role.1.scope"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccIAMV1UserEnabled(t *testing.T) {
+	userEmail := acctest.RandomWithPrefix("tf-acc") + "@example.com"
+	resourceName := "selectel_iam_user_v1.user_tf_acc_test_1"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckIAMV1UserDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccIAMV1UserEnabled(userEmail, false, false),
+				Check:  resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
+			},
+			{
+				Config: testAccIAMV1UserEnabled(userEmail, true, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "role.#", "2"),
+				),
+			},
+			{
+				Config: testAccIAMV1UserEnabled(userEmail, false, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceName, "role.#", "1"),
 				),
 			},
 		},
@@ -153,4 +185,24 @@ func testAccIAMV1UserAssignRole(userEmail string) string {
 			scope = "account"
 		}
 	}`, userEmail)
+}
+
+func testAccIAMV1UserEnabled(userEmail string, enabled, extraRole bool) string {
+	roles := ""
+	if extraRole {
+		roles = `role {
+    role_name = "billing"
+    scope     = "account"
+  }`
+	}
+	return fmt.Sprintf(`
+resource "selectel_iam_user_v1" "user_tf_acc_test_1" {
+  email   = %q
+  enabled = %t
+  role {
+    role_name = "reader"
+    scope     = "account"
+  }
+  %s
+}`, userEmail, enabled, roles)
 }

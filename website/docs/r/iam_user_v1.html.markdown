@@ -26,6 +26,8 @@ resource "selectel_iam_user_v1" "user_1" {
 
 * `email` - (Required) Email address of the user. Changing this creates a new user. We will send authentication instructions to this email.
 
+* `enabled` - (Optional) Whether the user is enabled. Defaults to `true`. Set to `false` to disable the user.
+
 * `auth_type` - (Optional) Authentication type of the user. Changing this creates a new user. Available types are `local` (for control panel users, to store the credentials locally in Selectel) and `federated` (for federated users, to store the credentials in the corporate Identity Provider). The default value is `local`. If `auth_type` is `federated`, the `federation` argument is required.
 
 * `federation` - (Optional) Information about the federation. `auth_type` must be set to `federated`.
