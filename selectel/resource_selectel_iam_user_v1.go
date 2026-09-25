@@ -25,6 +25,12 @@ func resourceIAMUserV1() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
+			"enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Indicates whether the User is enabled. True by default.",
+			},
 			"email": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -117,6 +123,13 @@ func resourceIAMUserV1Create(ctx context.Context, d *schema.ResourceData, meta a
 		return diag.FromErr(errCreatingObject(objectUser, err))
 	}
 	d.SetId(user.ID)
+	if !d.Get("enabled").(bool) {
+		enabled := false
+		log.Print(msgUpdate(objectUser, d.Id(), "Enabled: false"))
+		if _, err := iamClient.Users.Update(ctx, d.Id(), users.UpdateRequest{Enabled: &enabled}); err != nil {
+			return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
+		}
+	}
 
 	readDiags := resourceIAMUserV1Read(ctx, d, meta)
 
@@ -138,6 +151,7 @@ func resourceIAMUserV1Read(ctx context.Context, d *schema.ResourceData, meta any
 	}
 
 	d.Set("keystone_id", user.KeystoneID)
+	d.Set("enabled", user.Enabled)
 	if _, ok := d.GetOk("email"); !ok {
 		d.Set("email", importIAMUndefined)
 	}
@@ -155,6 +169,14 @@ func resourceIAMUserV1Update(ctx context.Context, d *schema.ResourceData, meta a
 	iamClient, diagErr := getIAMClient(meta)
 	if diagErr != nil {
 		return diagErr
+	}
+
+	if d.HasChange("enabled") {
+		enabled := d.Get("enabled").(bool)
+		log.Print(msgUpdate(objectUser, d.Id(), fmt.Sprintf("Enabled: %v", enabled)))
+		if _, err := iamClient.Users.Update(ctx, d.Id(), users.UpdateRequest{Enabled: &enabled}); err != nil {
+			return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
+		}
 	}
 
 	if d.HasChange("role") {
@@ -177,8 +199,6 @@ func resourceIAMUserV1Update(ctx context.Context, d *schema.ResourceData, meta a
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
 		}
-
-		return diags
 	}
 
 	readDiags := resourceIAMUserV1Read(ctx, d, meta)
