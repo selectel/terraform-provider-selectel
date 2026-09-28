@@ -75,7 +75,6 @@ func TestVPCSecGroupRuleV2PrefixDiffSuppression(t *testing.T) {
 					"remote_ip_prefix", testCase.stored, testCase.configured, nil))
 		})
 	}
-
 }
 
 func TestVPCSecGroupRuleV2ExpandPortRange(t *testing.T) {
@@ -191,8 +190,13 @@ func TestAccVPCSecGroupRuleV2Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCSecGroupRuleV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccVPCSecGroupRuleV2ResourceName, "direction", "ingress"),
+					resource.TestCheckResourceAttr(testAccVPCSecGroupRuleV2ResourceName, "ethertype", "IPv4"),
 					resource.TestCheckResourceAttr(testAccVPCSecGroupRuleV2ResourceName, "protocol", "tcp"),
 					resource.TestCheckResourceAttr(testAccVPCSecGroupRuleV2ResourceName, "port_range_min", "22"),
+					resource.TestCheckResourceAttr(testAccVPCSecGroupRuleV2ResourceName, "port_range_max", "22"),
+					resource.TestCheckResourceAttr(testAccVPCSecGroupRuleV2ResourceName, "remote_ip_prefix", "192.168.199.0/24"),
+					resource.TestCheckResourceAttr(testAccVPCSecGroupRuleV2ResourceName, "description", "ssh from the office"),
+					resource.TestCheckResourceAttr(testAccVPCSecGroupRuleV2ResourceName, "remote_group_id", ""),
 					resource.TestCheckResourceAttrPair(
 						testAccVPCSecGroupRuleV2ResourceName, "security_group_id",
 						testAccVPCSecGroupV2ResourceName, "id",
@@ -207,6 +211,11 @@ func TestAccVPCSecGroupRuleV2Basic(t *testing.T) {
 				ResourceName:      testAccVPCSecGroupRuleV2ResourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				Config:             testAccVPCSecGroupRuleV2IngressPrefix(projectID, region, "192.168.199.0/24"),
+				Check:              testAccCheckVPCV2DeleteOutOfBand(testAccVPCSecGroupRuleV2ResourceName, securitygrouprule.Delete),
+				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -296,6 +305,7 @@ resource "selectel_vpc_secgroup_rule_v2" "rule_tf_acc_test_1" {
   port_range_min    = 22
   port_range_max    = 22
   remote_ip_prefix  = "%s"
+  description       = "ssh from the office"
 }
 `, region, prefix)
 }

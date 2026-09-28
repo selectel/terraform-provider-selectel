@@ -51,6 +51,8 @@ func TestAccVPCRBACPolicyV2Basic(t *testing.T) {
 				Config: testAccVPCRBACPolicyV2Basic(projectID, region, targets.prefix, targets.first),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCRBACPolicyV2Exists(&found),
+					resource.TestCheckResourceAttr(testAccVPCRBACPolicyV2ResourceName, "project_id", projectID),
+					resource.TestCheckResourceAttr(testAccVPCRBACPolicyV2ResourceName, "region", region),
 					resource.TestCheckResourceAttr(testAccVPCRBACPolicyV2ResourceName, "action", "access_as_shared"),
 					resource.TestCheckResourceAttr(testAccVPCRBACPolicyV2ResourceName, "object_type", "network"),
 					targets.check(targets.first),
@@ -68,6 +70,11 @@ func TestAccVPCRBACPolicyV2Basic(t *testing.T) {
 				ResourceName:      testAccVPCRBACPolicyV2ResourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				Config:             testAccVPCRBACPolicyV2Basic(projectID, region, targets.prefix, targets.first),
+				Check:              testAccCheckVPCV2DeleteOutOfBand(testAccVPCRBACPolicyV2ResourceName, rbacpolicy.Delete),
+				ExpectNonEmptyPlan: true,
 			},
 		},
 	})

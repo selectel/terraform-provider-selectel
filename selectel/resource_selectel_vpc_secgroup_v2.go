@@ -10,6 +10,7 @@ import (
 	"github.com/selectel/vpc-go/pkg/v2/securitygroup"
 	"github.com/selectel/vpc-go/pkg/v2/securitygrouprule"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadiff"
 )
 
 const vpcSecGroupV2Object = "VPC security group"
@@ -20,6 +21,7 @@ func resourceVPCSecGroupV2() *schema.Resource {
 		ReadContext:   resourceVPCSecGroupV2Read,
 		UpdateContext: resourceVPCSecGroupV2Update,
 		DeleteContext: resourceVPCSecGroupV2Delete,
+		CustomizeDiff: schemadiff.RecomputeOnChange("all_tags", "tags"),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCSecGroupV2ImportState,
 		},
@@ -188,7 +190,7 @@ func resourceVPCSecGroupV2Delete(ctx context.Context, d *schema.ResourceData, me
 }
 
 func resourceVPCSecGroupV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
-	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
+	if err := importProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 

@@ -103,6 +103,11 @@ func TestAccVPCPortForwardingV2Basic(t *testing.T) {
 				ImportStateVerify: true,
 				ImportStateIdFunc: testAccVPCPortForwardingV2ImportID,
 			},
+			{
+				Config:             testAccVPCPortForwardingV2Basic(projectID, region, 8080, "tcp"),
+				Check:              testAccCheckVPCPortForwardingV2DeleteOutOfBand(),
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -117,8 +122,32 @@ func TestAccVPCPortForwardingV2Update(t *testing.T) {
 		CheckDestroy:      testAccCheckVPCPortForwardingV2Destroy,
 		Steps: []resource.TestStep{
 			{
+				Config: testAccVPCPortForwardingV2Ranges(projectID, region, "9090:9092", "tcp"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCPortForwardingV2Exists(&found),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "internal_port_range", "80:82"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "external_port_range", "9090:9092"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "internal_port", "0"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "external_port", "0"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "description", "updated by the acceptance test"),
+					resource.TestCheckResourceAttrPair(
+						testAccVPCPortForwardingV2ResourceName, "floatingip_id",
+						"selectel_vpc_floatingip_v2.floatingip_tf_acc_test_1", "id",
+					),
+					resource.TestCheckResourceAttrPair(
+						testAccVPCPortForwardingV2ResourceName, "internal_port_id",
+						testAccVPCPortV2ResourceName, "id",
+					),
+				),
+			},
+			{
 				Config: testAccVPCPortForwardingV2Basic(projectID, region, 8080, "tcp"),
-				Check:  testAccCheckVPCPortForwardingV2Exists(&found),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCPortForwardingV2SameID(&found),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "internal_port", "80"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "external_port", "8080"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "description", ""),
+				),
 			},
 			{
 				Config: testAccVPCPortForwardingV2Ranges(projectID, region, "9090:9092", "udp"),
@@ -130,6 +159,34 @@ func TestAccVPCPortForwardingV2Update(t *testing.T) {
 					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "internal_port", "0"),
 					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "protocol", "udp"),
 					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "description", "updated by the acceptance test"),
+				),
+			},
+			{
+				Config: testAccVPCPortForwardingV2Moved(projectID, region, 81, 8081),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCPortForwardingV2SameID(&found),
+					resource.TestCheckResourceAttrPair(
+						testAccVPCPortForwardingV2ResourceName, "internal_port_id",
+						"selectel_vpc_port_v2.port_tf_acc_test_2", "id",
+					),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "internal_ip_address", "192.168.199.61"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "internal_port", "81"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "external_port", "8081"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "protocol", "tcp"),
+				),
+			},
+			{
+				Config: testAccVPCPortForwardingV2Ranges(projectID, region, "9090:9092", "udp"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCPortForwardingV2SameID(&found),
+					resource.TestCheckResourceAttrPair(
+						testAccVPCPortForwardingV2ResourceName, "internal_port_id",
+						testAccVPCPortV2ResourceName, "id",
+					),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "internal_ip_address", "192.168.199.60"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "internal_port_range", "80:82"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "external_port_range", "9090:9092"),
+					resource.TestCheckResourceAttr(testAccVPCPortForwardingV2ResourceName, "protocol", "udp"),
 				),
 			},
 			{
@@ -187,6 +244,17 @@ func testAccCheckVPCPortForwardingV2Exists(found *floatingip.PortForwarding) res
 		*found = *result
 
 		return nil
+	}
+}
+
+func testAccCheckVPCPortForwardingV2DeleteOutOfBand() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		handle, floatingIPID, err := testAccVPCPortForwardingV2Handle(s)
+		if err != nil {
+			return err
+		}
+
+		return floatingip.DeletePortForwarding(context.Background(), handle.client, floatingIPID, handle.id)
 	}
 }
 
@@ -257,7 +325,35 @@ resource "selectel_vpc_router_interface_v2" "interface_tf_acc_test_1" {
   router_id  = selectel_vpc_router_v2.router_tf_acc_test_1.id
   subnet_id  = selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1.id
 }
+
+resource "selectel_vpc_port_v2" "port_tf_acc_test_2" {
+  project_id = local.project_id
+  region     = "%[1]s"
+  network_id = selectel_vpc_network_v2.network_tf_acc_test_1.id
+
+  fixed_ip {
+    subnet_id  = selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1.id
+    ip_address = "192.168.199.61"
+  }
+}
 `, region)
+}
+
+func testAccVPCPortForwardingV2Moved(projectID, region string, internalPort, externalPort int) string {
+	return testAccVPCPortForwardingV2Base(projectID, region) + fmt.Sprintf(`
+resource "selectel_vpc_port_forwarding_v2" "pf_tf_acc_test_1" {
+  project_id          = local.project_id
+  region              = "%s"
+  floatingip_id       = selectel_vpc_floatingip_v2.floatingip_tf_acc_test_1.id
+  internal_port_id    = selectel_vpc_port_v2.port_tf_acc_test_2.id
+  internal_ip_address = "192.168.199.61"
+  internal_port       = %d
+  external_port       = %d
+  protocol            = "tcp"
+
+  depends_on = [selectel_vpc_router_interface_v2.interface_tf_acc_test_1]
+}
+`, region, internalPort, externalPort)
 }
 
 func testAccVPCPortForwardingV2Basic(projectID, region string, externalPort int, protocol string) string {

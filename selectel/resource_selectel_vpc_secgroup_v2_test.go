@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -17,10 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const (
-	testAccVPCSecGroupV2ResourceName   = "selectel_vpc_secgroup_v2.secgroup_tf_acc_test_1"
-	testAccVPCSecGroupV2DataSourceName = "data.selectel_vpc_secgroup_v2.secgroup_tf_acc_test_1"
-)
+const testAccVPCSecGroupV2ResourceName = "selectel_vpc_secgroup_v2.secgroup_tf_acc_test_1"
 
 func TestVPCSecGroupV2Flatten(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, resourceVPCSecGroupV2().Schema, map[string]any{})
@@ -74,6 +70,11 @@ func TestAccVPCSecGroupV2Basic(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"delete_default_rules"},
+			},
+			{
+				Config:             testAccVPCSecGroupV2Basic(projectID, region, "secgroup-1"),
+				Check:              testAccCheckVPCV2DeleteOutOfBand(testAccVPCSecGroupV2ResourceName, securitygroup.Delete),
+				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -167,40 +168,6 @@ func TestAccVPCSecGroupV2TagsOutOfBand(t *testing.T) {
 			{
 				Config:   testAccVPCSecGroupV2TagsUpdated(projectID, region, secGroupName),
 				PlanOnly: true,
-			},
-		},
-	})
-}
-
-func TestAccVPCSecGroupV2DataSource(t *testing.T) {
-	projectID, region := vpcV2TestEnv()
-	secGroupName := acctest.RandomWithPrefix("tf-acc-secgroup")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
-		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCSecGroupV2Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccVPCSecGroupV2DataSource(projectID, region, secGroupName),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrPair(
-						testAccVPCSecGroupV2DataSourceName, "secgroup_id",
-						testAccVPCSecGroupV2ResourceName, "id",
-					),
-					resource.TestCheckResourceAttrPair(
-						testAccVPCSecGroupV2DataSourceName, "shared",
-						testAccVPCSecGroupV2ResourceName, "shared",
-					),
-					resource.TestCheckResourceAttrPair(
-						testAccVPCSecGroupV2DataSourceName, "security_group_rules.#",
-						testAccVPCSecGroupV2ResourceName, "security_group_rules.#",
-					),
-				),
-			},
-			{
-				Config:      testAccVPCSecGroupV2DataSourceNoMatch(projectID, region),
-				ExpectError: regexp.MustCompile(`no VPC security group found`),
 			},
 		},
 	})
@@ -375,26 +342,6 @@ resource "selectel_vpc_secgroup_v2" "secgroup_tf_acc_test_1" {
   region               = "%s"
   name                 = "secgroup-tf-acc-test-1"
   delete_default_rules = true
-}
-`, region)
-}
-
-func testAccVPCSecGroupV2DataSource(projectID, region, name string) string {
-	return testAccVPCSecGroupV2Basic(projectID, region, name) + fmt.Sprintf(`
-data "selectel_vpc_secgroup_v2" "secgroup_tf_acc_test_1" {
-  project_id = local.project_id
-  region     = "%s"
-  name       = selectel_vpc_secgroup_v2.secgroup_tf_acc_test_1.name
-}
-`, region)
-}
-
-func testAccVPCSecGroupV2DataSourceNoMatch(projectID, region string) string {
-	return testAccVPCV2Base(projectID) + fmt.Sprintf(`
-data "selectel_vpc_secgroup_v2" "secgroup_tf_acc_test_1" {
-  project_id = local.project_id
-  region     = "%s"
-  name       = "tf-acc-no-such-secgroup"
 }
 `, region)
 }

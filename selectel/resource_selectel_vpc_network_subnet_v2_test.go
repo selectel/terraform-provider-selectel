@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -58,26 +57,6 @@ func TestVPCNetworkSubnetV2AllocationPools(t *testing.T) {
 	assert.Equal(t, raw, flattenVPCNetworkSubnetV2AllocationPools(pools))
 }
 
-func TestVPCNetworkSubnetV2DataSourceSchema(t *testing.T) {
-	dataSource := dataSourceVPCNetworkSubnetV2()
-
-	_, hasDeprecatedDHCPSelector := dataSource.Schema["dhcp_enabled"]
-	assert.False(t, hasDeprecatedDHCPSelector)
-
-	enableDHCP := dataSource.Schema["enable_dhcp"]
-	require.NotNil(t, enableDHCP)
-	assert.True(t, enableDHCP.Optional)
-	assert.True(t, enableDHCP.Computed)
-
-	_, hasDeprecatedAllocationPools := dataSource.Schema["allocation_pools"]
-	assert.False(t, hasDeprecatedAllocationPools)
-
-	allocationPool := dataSource.Schema["allocation_pool"]
-	require.NotNil(t, allocationPool)
-	assert.Equal(t, schema.TypeSet, allocationPool.Type)
-	assert.True(t, allocationPool.Computed)
-}
-
 func TestVPCNetworkSubnetV2CollectionSchema(t *testing.T) {
 	for name, resourceSchema := range map[string]map[string]*schema.Schema{
 		"resource":    resourceVPCNetworkSubnetV2().Schema,
@@ -127,6 +106,45 @@ func TestAccVPCNetworkSubnetV2Basic(t *testing.T) {
 			},
 			{
 				Config:   testAccVPCNetworkSubnetV2Basic(projectID, region, "192.168.199.0/24"),
+				PlanOnly: true,
+			},
+			{
+				ResourceName:      testAccVPCNetworkSubnetV2ResourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config:             testAccVPCNetworkSubnetV2Basic(projectID, region, "192.168.199.0/24"),
+				Check:              testAccCheckVPCV2DeleteOutOfBand(testAccVPCNetworkSubnetV2ResourceName, subnet.Delete),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func TestAccVPCNetworkSubnetV2IPv6(t *testing.T) {
+	var found subnet.Subnet
+	projectID, region := vpcV2TestEnv()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCNetworkSubnetV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVPCNetworkSubnetV2IPv6(projectID, region),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCNetworkSubnetV2Exists(testAccVPCNetworkSubnetV2ResourceName, &found),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "ip_version", "6"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "cidr", "fd00:c0de:199::/64"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "ipv6_address_mode", "dhcpv6-stateful"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "ipv6_ra_mode", "dhcpv6-stateful"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "no_gateway", "true"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "gateway_ip", ""),
+				),
+			},
+			{
+				Config:   testAccVPCNetworkSubnetV2IPv6(projectID, region),
 				PlanOnly: true,
 			},
 			{
@@ -192,10 +210,19 @@ func TestAccVPCNetworkSubnetV2Update(t *testing.T) {
 					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "enable_dhcp", "true"),
 					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "dns_nameservers.#", "1"),
 					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "gateway_ip", "192.168.199.2"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "all_tags.#", "2"),
 				),
 			},
 			{
-				Config:   testAccVPCNetworkSubnetV2Updated(projectID, region, updatedName),
+				Config: testAccVPCNetworkSubnetV2NoGateway(projectID, region, updatedName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCNetworkSubnetV2SameID(testAccVPCNetworkSubnetV2ResourceName, &found),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "no_gateway", "true"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "gateway_ip", ""),
+				),
+			},
+			{
+				Config:   testAccVPCNetworkSubnetV2NoGateway(projectID, region, updatedName),
 				PlanOnly: true,
 			},
 		},
@@ -231,57 +258,6 @@ func TestAccVPCNetworkSubnetV2TagsOutOfBand(t *testing.T) {
 			{
 				Config:   testAccVPCNetworkSubnetV2Updated(projectID, region, subnetName),
 				PlanOnly: true,
-			},
-		},
-	})
-}
-
-func TestAccVPCNetworkSubnetV2DataSource(t *testing.T) {
-	projectID, region := vpcV2TestEnv()
-	subnetName := acctest.RandomWithPrefix("tf-acc-subnet")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
-		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCNetworkSubnetV2Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccVPCNetworkSubnetV2DataSource(projectID, region, subnetName),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "name", subnetName),
-					resource.TestCheckResourceAttr(
-						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "enable_dhcp", "false"),
-					resource.TestCheckResourceAttr(
-						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "allocation_pool.#", "1"),
-					resource.TestCheckResourceAttrPair(
-						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "subnet_id",
-						testAccVPCNetworkSubnetV2ResourceName, "id",
-					),
-					resource.TestCheckResourceAttr(
-						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "host_routes.#", "1"),
-					resource.TestCheckResourceAttr(
-						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "host_routes.0.destination_cidr", "10.0.0.0/8"),
-					resource.TestCheckResourceAttr(
-						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "host_routes.0.next_hop", "192.168.199.10"),
-					resource.TestCheckResourceAttrPair(
-						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "blocked",
-						testAccVPCNetworkSubnetV2ResourceName, "blocked",
-					),
-				),
-			},
-			{
-				Config: testAccVPCNetworkSubnetV2DataSource(projectID, region, subnetName),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "host_routes.#", "1"),
-					resource.TestCheckResourceAttrPair(
-						testAccVPCNetworkSubnetV2ResourceName, "host_routes.#",
-						"data.selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1", "host_routes.#",
-					),
-				),
-			},
-			{
-				Config:      testAccVPCNetworkSubnetV2DataSourceNoMatch(projectID, region),
-				ExpectError: regexp.MustCompile(`no VPC network subnet found`),
 			},
 		},
 	})
@@ -445,33 +421,39 @@ resource "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
 `, region, subnetName)
 }
 
-func testAccVPCNetworkSubnetV2DataSource(projectID, region, subnetName string) string {
-	return testAccVPCNetworkSubnetV2OptionalAttributes(projectID, region, subnetName) + fmt.Sprintf(`
-resource "selectel_vpc_network_subnet_route_v2" "route_tf_acc_test_1" {
-  project_id       = local.project_id
-  region           = "%s"
-  subnet_id        = selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1.id
-  destination_cidr = "10.0.0.0/8"
-  next_hop         = "192.168.199.10"
-}
-
-data "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
-  project_id  = local.project_id
-  region      = "%s"
-  name        = selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1.name
-  enable_dhcp = false
-
-  depends_on = [selectel_vpc_network_subnet_route_v2.route_tf_acc_test_1]
-}
-`, region, region)
-}
-
-func testAccVPCNetworkSubnetV2DataSourceNoMatch(projectID, region string) string {
+func testAccVPCNetworkSubnetV2NoGateway(projectID, region, subnetName string) string {
 	return testAccVPCNetworkSubnetV2Network(projectID, region) + fmt.Sprintf(`
-data "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
-  project_id = local.project_id
-  region     = "%s"
-  name       = "tf-acc-no-such-subnet"
+resource "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
+  project_id      = local.project_id
+  region          = "%s"
+  network_id      = selectel_vpc_network_v2.network_tf_acc_test_1.id
+  cidr            = "192.168.199.0/24"
+  name            = "%s"
+  description     = "updated by the acceptance test"
+  no_gateway      = true
+  enable_dhcp     = true
+  dns_nameservers = ["8.8.8.8"]
+  tags            = ["tf-acc", "updated"]
+
+  allocation_pool {
+    start = "192.168.199.30"
+    end   = "192.168.199.40"
+  }
+}
+`, region, subnetName)
+}
+
+func testAccVPCNetworkSubnetV2IPv6(projectID, region string) string {
+	return testAccVPCNetworkSubnetV2Network(projectID, region) + fmt.Sprintf(`
+resource "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
+  project_id        = local.project_id
+  region            = "%s"
+  network_id        = selectel_vpc_network_v2.network_tf_acc_test_1.id
+  cidr              = "fd00:c0de:199::/64"
+  ip_version        = 6
+  ipv6_address_mode = "dhcpv6-stateful"
+  ipv6_ra_mode      = "dhcpv6-stateful"
+  no_gateway        = true
 }
 `, region)
 }

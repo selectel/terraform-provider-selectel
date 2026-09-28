@@ -12,6 +12,7 @@ import (
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/subnet"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadiff"
 )
 
 const (
@@ -29,6 +30,7 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 		ReadContext:   resourceVPCNetworkSubnetV2Read,
 		UpdateContext: resourceVPCNetworkSubnetV2Update,
 		DeleteContext: resourceVPCNetworkSubnetV2Delete,
+		CustomizeDiff: schemadiff.RecomputeOnChange("all_tags", "tags"),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCNetworkSubnetV2ImportState,
 		},
@@ -313,7 +315,7 @@ func resourceVPCNetworkSubnetV2Delete(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceVPCNetworkSubnetV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
-	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
+	if err := importProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 

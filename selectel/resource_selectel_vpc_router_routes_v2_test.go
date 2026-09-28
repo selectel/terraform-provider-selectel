@@ -69,7 +69,21 @@ func TestAccVPCRouterRoutesV2Basic(t *testing.T) {
 				Config: testAccVPCRouterRoutesV2Pair(projectID, region),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCRouterRoutesV2IDIsRouter(),
+					resource.TestCheckResourceAttr(testAccVPCRouterRoutesV2ResourceName, "project_id", projectID),
+					resource.TestCheckResourceAttr(testAccVPCRouterRoutesV2ResourceName, "region", region),
+					resource.TestCheckResourceAttrPair(
+						testAccVPCRouterRoutesV2ResourceName, "router_id",
+						"selectel_vpc_router_v2.router_tf_acc_test_1", "id",
+					),
 					resource.TestCheckResourceAttr(testAccVPCRouterRoutesV2ResourceName, "routes.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs(testAccVPCRouterRoutesV2ResourceName, "routes.*", map[string]string{
+						"destination_cidr": "10.0.0.0/8",
+						"next_hop":         "192.168.199.10",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(testAccVPCRouterRoutesV2ResourceName, "routes.*", map[string]string{
+						"destination_cidr": "172.16.0.0/12",
+						"next_hop":         "192.168.199.10",
+					}),
 					testAccCheckVPCRouterRoutesV2Count(2),
 				),
 			},

@@ -48,7 +48,6 @@ func dataSourceVPCRouterV2() *schema.Resource {
 			},
 			"status": {
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"tags": {
@@ -100,7 +99,6 @@ func dataSourceVPCRouterV2Read(ctx context.Context, d *schema.ResourceData, meta
 		"router_id":   "id",
 		"name":        "name",
 		"description": "description",
-		"status":      "status",
 	} {
 		if v, ok := d.GetOk(schemaKey); ok {
 			filters[queryKey] = []string{v.(string)}

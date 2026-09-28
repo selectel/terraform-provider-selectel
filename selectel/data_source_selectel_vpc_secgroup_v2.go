@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -43,7 +42,6 @@ func dataSourceVPCSecGroupV2() *schema.Resource {
 			},
 			"stateful": {
 				Type:     schema.TypeBool,
-				Optional: true,
 				Computed: true,
 			},
 			"tags": {
@@ -84,9 +82,6 @@ func dataSourceVPCSecGroupV2Read(ctx context.Context, d *schema.ResourceData, me
 		if v, ok := d.GetOk(schemaKey); ok {
 			filters[queryKey] = []string{v.(string)}
 		}
-	}
-	if v, ok := d.GetOkExists("stateful"); ok { //nolint:staticcheck // GetOkExists distinguishes an explicit false from an unset bool
-		filters["stateful"] = []string{strconv.FormatBool(v.(bool))}
 	}
 	if v, ok := d.GetOk("tags"); ok {
 		filters["tags"] = []string{strings.Join(convert.ToStringSlice(v.(*schema.Set).List()), ",")}

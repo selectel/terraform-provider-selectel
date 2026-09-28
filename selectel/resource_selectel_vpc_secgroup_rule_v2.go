@@ -127,7 +127,6 @@ func resourceVPCSecGroupRuleV2Read(ctx context.Context, d *schema.ResourceData, 
 	log.Printf("[DEBUG] getting VPC security group rule %s", d.Id())
 	found, err := securitygrouprule.Get(ctx, client, d.Id())
 	if err != nil {
-
 		return vpcCheckDeleted(d, err, vpcSecGroupRuleV2Object)
 	}
 
@@ -153,7 +152,6 @@ func resourceVPCSecGroupRuleV2Delete(ctx context.Context, d *schema.ResourceData
 	log.Printf("[DEBUG] deleting VPC security group rule %s", d.Id())
 	if err := securitygrouprule.Delete(ctx, client, d.Id()); err != nil {
 		if vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
-
 			return nil
 		}
 
@@ -164,7 +162,7 @@ func resourceVPCSecGroupRuleV2Delete(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceVPCSecGroupRuleV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
-	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
+	if err := importProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 
@@ -213,7 +211,6 @@ func suppressVPCSecGroupRuleV2PrefixDiff(_, stored, configured string, _ *schema
 
 	_, storedNet, err := net.ParseCIDR(stored)
 	if err != nil {
-
 		return strings.EqualFold(stored, configured)
 	}
 

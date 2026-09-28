@@ -64,6 +64,12 @@ func TestAccVPCNetworkSubnetRouteV2Basic(t *testing.T) {
 				Config: testAccVPCNetworkSubnetRouteV2Basic(projectID, region, "10.0.0.0/8", "192.168.199.10"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCNetworkSubnetRouteV2Exists("10.0.0.0/8", "192.168.199.10"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetRouteV2ResourceName, "project_id", projectID),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetRouteV2ResourceName, "region", region),
+					resource.TestCheckResourceAttrPair(
+						testAccVPCNetworkSubnetRouteV2ResourceName, "subnet_id",
+						testAccVPCNetworkSubnetV2ResourceName, "id",
+					),
 					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetRouteV2ResourceName, "destination_cidr", "10.0.0.0/8"),
 					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetRouteV2ResourceName, "next_hop", "192.168.199.10"),
 				),
@@ -76,6 +82,11 @@ func TestAccVPCNetworkSubnetRouteV2Basic(t *testing.T) {
 				ResourceName:      testAccVPCNetworkSubnetRouteV2ResourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				Config:             testAccVPCNetworkSubnetRouteV2Basic(projectID, region, "10.0.0.0/8", "192.168.199.10"),
+				Check:              testAccCheckVPCNetworkSubnetRouteV2RemoveOutOfBand("10.0.0.0/8", "192.168.199.10"),
+				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -136,6 +147,29 @@ func testAccCheckVPCNetworkSubnetRouteV2Exists(destination, nextHop string) reso
 		}
 
 		return nil
+	}
+}
+
+func testAccCheckVPCNetworkSubnetRouteV2RemoveOutOfBand(destination, nextHop string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		handle, err := testAccVPCNetworkV2Handle(s, testAccVPCNetworkSubnetV2ResourceName)
+		if err != nil {
+			return err
+		}
+
+		found, err := subnet.Get(context.Background(), handle.client, handle.id)
+		if err != nil {
+			return err
+		}
+
+		target := subnet.HostRoute{Destination: destination, NextHop: nextHop}
+		kept := slices.DeleteFunc(slices.Clone(found.HostRoutes), func(route subnet.HostRoute) bool {
+			return route == target
+		})
+		_, err = subnet.Update(context.Background(), handle.client, handle.id,
+			subnet.UpdateRequest{HostRoutes: &kept})
+
+		return err
 	}
 }
 

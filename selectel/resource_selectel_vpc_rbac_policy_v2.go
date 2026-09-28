@@ -100,7 +100,6 @@ func resourceVPCRBACPolicyV2Read(ctx context.Context, d *schema.ResourceData, me
 	log.Printf("[DEBUG] getting VPC rbac policy %s", d.Id())
 	found, err := rbacpolicy.Get(ctx, client, d.Id())
 	if err != nil {
-
 		return vpcCheckDeleted(d, err, vpcRBACPolicyV2Object)
 	}
 
@@ -146,7 +145,7 @@ func resourceVPCRBACPolicyV2Delete(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceVPCRBACPolicyV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
-	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
+	if err := importProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 

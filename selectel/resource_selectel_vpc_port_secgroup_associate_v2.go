@@ -9,6 +9,7 @@ import (
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/port"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadiff"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/sliceutil"
 )
 
@@ -20,6 +21,7 @@ func resourceVPCPortSecGroupAssociateV2() *schema.Resource {
 		ReadContext:   resourceVPCPortSecGroupAssociateV2Read,
 		UpdateContext: resourceVPCPortSecGroupAssociateV2Update,
 		DeleteContext: resourceVPCPortSecGroupAssociateV2Delete,
+		CustomizeDiff: schemadiff.RecomputeOnChange("all_security_group_ids", "security_group_ids", "enforce"),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCPortSecGroupAssociateV2ImportState,
 		},
@@ -201,7 +203,7 @@ func resourceVPCPortSecGroupAssociateV2Delete(ctx context.Context, d *schema.Res
 }
 
 func resourceVPCPortSecGroupAssociateV2ImportState(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
-	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
+	if err := importProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 

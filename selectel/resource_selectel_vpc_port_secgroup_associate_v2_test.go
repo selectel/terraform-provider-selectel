@@ -25,7 +25,19 @@ func TestAccVPCPortSecGroupAssociateV2Additive(t *testing.T) {
 			{
 				Config: testAccVPCPortSecGroupAssociateV2Additive(projectID, region),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(testAccVPCPortSecGroupAssociateV2ResourceName, "project_id", projectID),
+					resource.TestCheckResourceAttr(testAccVPCPortSecGroupAssociateV2ResourceName, "region", region),
+					resource.TestCheckResourceAttr(testAccVPCPortSecGroupAssociateV2ResourceName, "enforce", "false"),
 					resource.TestCheckResourceAttr(testAccVPCPortSecGroupAssociateV2ResourceName, "security_group_ids.#", "1"),
+					resource.TestCheckTypeSetElemAttrPair(
+						testAccVPCPortSecGroupAssociateV2ResourceName, "security_group_ids.*",
+						"selectel_vpc_secgroup_v2.secgroup_tf_acc_test_2", "id",
+					),
+					resource.TestCheckResourceAttr(testAccVPCPortSecGroupAssociateV2ResourceName, "all_security_group_ids.#", "2"),
+					resource.TestCheckResourceAttrPair(
+						testAccVPCPortSecGroupAssociateV2ResourceName, "port_id",
+						testAccVPCPortV2ResourceName, "id",
+					),
 					testAccCheckVPCPortSecGroupAssociateV2PortHasAtLeast(2),
 					testAccCheckVPCPortSecGroupAssociateV2IDIsPort(),
 				),
@@ -39,6 +51,46 @@ func TestAccVPCPortSecGroupAssociateV2Additive(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"security_group_ids", "enforce"},
+			},
+			{
+				Config: testAccVPCPortSecGroupAssociateV2Managed(projectID, region,
+					testAccVPCPortSecGroupAssociateV2SecondGroup+", "+testAccVPCPortSecGroupAssociateV2ThirdGroup, false),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCPortSecGroupAssociateV2IDIsPort(),
+					resource.TestCheckResourceAttr(testAccVPCPortSecGroupAssociateV2ResourceName, "security_group_ids.#", "2"),
+					resource.TestCheckResourceAttr(testAccVPCPortSecGroupAssociateV2ResourceName, "all_security_group_ids.#", "3"),
+					testAccCheckVPCPortSecGroupAssociateV2PortHas(3),
+				),
+			},
+			{
+				Config: testAccVPCPortSecGroupAssociateV2Managed(projectID, region, testAccVPCPortSecGroupAssociateV2ThirdGroup, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(testAccVPCPortSecGroupAssociateV2ResourceName, "security_group_ids.#", "1"),
+					resource.TestCheckResourceAttr(testAccVPCPortSecGroupAssociateV2ResourceName, "all_security_group_ids.#", "2"),
+					testAccCheckVPCPortSecGroupAssociateV2PortHas(2),
+				),
+			},
+			{
+				Config: testAccVPCPortSecGroupAssociateV2Managed(projectID, region, testAccVPCPortSecGroupAssociateV2ThirdGroup, true),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCPortSecGroupAssociateV2IDIsPort(),
+					resource.TestCheckResourceAttr(testAccVPCPortSecGroupAssociateV2ResourceName, "enforce", "true"),
+					resource.TestCheckResourceAttr(testAccVPCPortSecGroupAssociateV2ResourceName, "security_group_ids.#", "1"),
+					resource.TestCheckResourceAttr(testAccVPCPortSecGroupAssociateV2ResourceName, "all_security_group_ids.#", "1"),
+					testAccCheckVPCPortSecGroupAssociateV2PortHas(1),
+				),
+			},
+			{
+				Config: testAccVPCPortSecGroupAssociateV2Managed(projectID, region, testAccVPCPortSecGroupAssociateV2ThirdGroup, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(testAccVPCPortSecGroupAssociateV2ResourceName, "enforce", "false"),
+					resource.TestCheckResourceAttr(testAccVPCPortSecGroupAssociateV2ResourceName, "security_group_ids.#", "1"),
+					testAccCheckVPCPortSecGroupAssociateV2PortHas(1),
+				),
+			},
+			{
+				Config:   testAccVPCPortSecGroupAssociateV2Managed(projectID, region, testAccVPCPortSecGroupAssociateV2ThirdGroup, false),
+				PlanOnly: true,
 			},
 		},
 	})
@@ -62,6 +114,11 @@ func TestAccVPCPortSecGroupAssociateV2Enforce(t *testing.T) {
 			{
 				Config:   testAccVPCPortSecGroupAssociateV2Enforce(projectID, region),
 				PlanOnly: true,
+			},
+			{
+				Config:             testAccVPCPortSecGroupAssociateV2Enforce(projectID, region),
+				Check:              testAccCheckVPCV2DeleteOutOfBand(testAccVPCPortSecGroupAssociateV2ResourceName, port.Delete),
+				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -180,23 +237,18 @@ resource "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
   cidr       = "192.168.199.0/24"
 }
 
-resource "selectel_vpc_secgroup_v2" "secgroup_tf_acc_test_1" {
-  project_id = local.project_id
-  region     = "%[1]s"
-  name       = "secgroup-existing"
-}
-
 resource "selectel_vpc_secgroup_v2" "secgroup_tf_acc_test_2" {
   project_id = local.project_id
   region     = "%[1]s"
   name       = "secgroup-associated"
 }
 
+# The port does not manage its groups: the API puts the project's default group
+# on it, which plays the part of a group that came from outside terraform.
 resource "selectel_vpc_port_v2" "port_tf_acc_test_1" {
-  project_id         = local.project_id
-  region             = "%[1]s"
-  network_id         = selectel_vpc_network_v2.network_tf_acc_test_1.id
-  security_group_ids = [selectel_vpc_secgroup_v2.secgroup_tf_acc_test_1.id]
+  project_id = local.project_id
+  region     = "%[1]s"
+  network_id = selectel_vpc_network_v2.network_tf_acc_test_1.id
 
   fixed_ip {
     subnet_id = selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1.id
@@ -226,4 +278,27 @@ resource "selectel_vpc_port_secgroup_associate_v2" "associate_tf_acc_test_1" {
   enforce            = true
 }
 `, region)
+}
+
+const (
+	testAccVPCPortSecGroupAssociateV2SecondGroup = "selectel_vpc_secgroup_v2.secgroup_tf_acc_test_2.id"
+	testAccVPCPortSecGroupAssociateV2ThirdGroup  = "selectel_vpc_secgroup_v2.secgroup_tf_acc_test_3.id"
+)
+
+func testAccVPCPortSecGroupAssociateV2Managed(projectID, region, groups string, enforce bool) string {
+	return testAccVPCPortSecGroupAssociateV2Base(projectID, region) + fmt.Sprintf(`
+resource "selectel_vpc_secgroup_v2" "secgroup_tf_acc_test_3" {
+  project_id = local.project_id
+  region     = "%[1]s"
+  name       = "secgroup-associated-2"
+}
+
+resource "selectel_vpc_port_secgroup_associate_v2" "associate_tf_acc_test_1" {
+  project_id         = local.project_id
+  region             = "%[1]s"
+  port_id            = selectel_vpc_port_v2.port_tf_acc_test_1.id
+  security_group_ids = [%[2]s]
+  enforce            = %[3]t
+}
+`, region, groups, enforce)
 }

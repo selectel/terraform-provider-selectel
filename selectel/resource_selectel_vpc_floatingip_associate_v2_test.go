@@ -101,6 +101,11 @@ func TestAccVPCFloatingIPAssociateV2Basic(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
+			{
+				Config:             testAccVPCFloatingIPAssociateV2(projectID, region, "port_a", ""),
+				Check:              testAccCheckVPCFloatingIPAssociateV2DisassociateOutOfBand(),
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -136,6 +141,21 @@ func TestAccVPCFloatingIPAssociateV2Update(t *testing.T) {
 	})
 }
 
+func testAccCheckVPCFloatingIPAssociateV2DisassociateOutOfBand() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		handle, err := testAccVPCNetworkV2Handle(s, testAccVPCFloatingIPAssociateV2ResourceName)
+		if err != nil {
+			return err
+		}
+
+		_, err = floatingip.Update(context.Background(), handle.client, handle.id, floatingip.UpdateRequest{
+			PortID: vpc.Null[string](),
+		})
+
+		return err
+	}
+}
+
 func testAccCheckVPCFloatingIPAssociateV2CaptureID(target *string) resource.TestCheckFunc {
 	return func(state *terraform.State) error {
 		instance, ok := state.RootModule().Resources[testAccVPCFloatingIPAssociateV2ResourceName]
@@ -148,7 +168,6 @@ func testAccCheckVPCFloatingIPAssociateV2CaptureID(target *string) resource.Test
 	}
 }
 
-// Dereference at check time because an earlier step populates the ID.
 func testAccCheckVPCFloatingIPAssociateV2ID(expected *string) resource.TestCheckFunc {
 	return func(state *terraform.State) error {
 		instance, ok := state.RootModule().Resources[testAccVPCFloatingIPAssociateV2ResourceName]

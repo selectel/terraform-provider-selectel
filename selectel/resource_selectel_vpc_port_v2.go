@@ -5,11 +5,13 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/port"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadiff"
 )
 
 const vpcPortV2Object = "VPC port"
@@ -20,6 +22,10 @@ func resourceVPCPortV2() *schema.Resource {
 		ReadContext:   resourceVPCPortV2Read,
 		UpdateContext: resourceVPCPortV2Update,
 		DeleteContext: resourceVPCPortV2Delete,
+		CustomizeDiff: customdiff.All(
+			schemadiff.RecomputeOnChange("all_tags", "tags"),
+			schemadiff.RecomputeOnChange("all_security_group_ids", "security_group_ids", "no_security_groups"),
+		),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCPortV2ImportState,
 		},
@@ -370,7 +376,7 @@ func resourceVPCPortV2Delete(ctx context.Context, d *schema.ResourceData, meta a
 }
 
 func resourceVPCPortV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
-	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
+	if err := importProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 

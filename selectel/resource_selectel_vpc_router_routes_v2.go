@@ -183,7 +183,7 @@ func resourceVPCRouterRoutesV2Delete(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceVPCRouterRoutesV2ImportState(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
-	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
+	if err := importProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 

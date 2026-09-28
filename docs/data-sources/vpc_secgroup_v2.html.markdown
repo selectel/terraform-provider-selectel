@@ -48,11 +48,11 @@ data "selectel_vpc_secgroup_v2" "default" {
 
 * `description` - (Optional) Description of the security group.
 
-* `stateful` - (Optional) Specifies whether the group tracks connection state.
-
 * `tags` - (Optional) Tags that the security group must have.
 
 ## Attributes Reference
+
+* `stateful` - Specifies whether the group tracks connection state.
 
 * `shared` - Specifies whether another project has been granted access to this group.
 

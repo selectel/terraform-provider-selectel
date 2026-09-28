@@ -108,7 +108,6 @@ func resourceVPCRouterRouteV2Read(ctx context.Context, d *schema.ResourceData, m
 
 	found, err := router.Get(ctx, client, routerID)
 	if err != nil {
-
 		return vpcCheckDeleted(d, err, vpcRouterV2Object)
 	}
 
@@ -142,7 +141,6 @@ func resourceVPCRouterRouteV2Delete(ctx context.Context, d *schema.ResourceData,
 	found, err := router.Get(ctx, client, routerID)
 	if err != nil {
 		if vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
-
 			return nil
 		}
 
@@ -151,7 +149,6 @@ func resourceVPCRouterRouteV2Delete(ctx context.Context, d *schema.ResourceData,
 
 	index := slices.Index(found.Routes, route)
 	if index < 0 {
-
 		return nil
 	}
 
@@ -170,7 +167,7 @@ func resourceVPCRouterRouteV2Delete(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceVPCRouterRouteV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
-	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
+	if err := importProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 

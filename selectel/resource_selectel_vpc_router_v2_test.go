@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -19,7 +18,6 @@ import (
 
 const (
 	testAccVPCRouterV2ResourceName                  = "selectel_vpc_router_v2.router_tf_acc_test_1"
-	testAccVPCRouterV2DataSourceName                = "data.selectel_vpc_router_v2.router_tf_acc_test_1"
 	testAccVPCRouterV2ExternalNetworkDataSourceName = "data.selectel_vpc_network_v2.external"
 )
 
@@ -117,6 +115,11 @@ func TestAccVPCRouterV2Basic(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
+			{
+				Config:             testAccVPCRouterV2Basic(projectID, region),
+				Check:              testAccCheckVPCV2DeleteOutOfBand(testAccVPCRouterV2ResourceName, router.Delete),
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -139,10 +142,11 @@ func TestAccVPCRouterV2Update(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccVPCRouterV2Named(projectID, region, "router-1-renamed", true),
+				Config: testAccVPCRouterV2Described(projectID, region, "router-1-renamed", "updated by the acceptance test", true),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCRouterV2SameID(&found),
 					resource.TestCheckResourceAttr(testAccVPCRouterV2ResourceName, "name", "router-1-renamed"),
+					resource.TestCheckResourceAttr(testAccVPCRouterV2ResourceName, "description", "updated by the acceptance test"),
 					resource.TestCheckResourceAttr(testAccVPCRouterV2ResourceName, "admin_state_up", "true"),
 				),
 			},
@@ -244,37 +248,6 @@ func TestAccVPCRouterV2Gateway(t *testing.T) {
 	})
 }
 
-func TestAccVPCRouterV2DataSource(t *testing.T) {
-	projectID, region := vpcV2TestEnv()
-	routerName := acctest.RandomWithPrefix("tf-acc-router")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
-		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCRouterV2Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccVPCRouterV2DataSource(projectID, region, routerName),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrPair(
-						testAccVPCRouterV2DataSourceName, "router_id",
-						testAccVPCRouterV2ResourceName, "id",
-					),
-					resource.TestCheckResourceAttrPair(
-						testAccVPCRouterV2DataSourceName, "blocked",
-						testAccVPCRouterV2ResourceName, "blocked",
-					),
-					resource.TestCheckResourceAttrSet(testAccVPCRouterV2DataSourceName, "routes.#"),
-				),
-			},
-			{
-				Config:      testAccVPCRouterV2DataSourceNoMatch(projectID, region),
-				ExpectError: regexp.MustCompile(`no VPC router found`),
-			},
-		},
-	})
-}
-
 func testAccVPCRouterV2TagOperations(s *terraform.State) (vpcTagsV2AccOperations, error) {
 	handle, err := testAccVPCNetworkV2Handle(s, testAccVPCRouterV2ResourceName)
 	if err != nil {
@@ -368,16 +341,20 @@ resource "selectel_vpc_router_v2" "router_tf_acc_test_1" {
 }
 
 func testAccVPCRouterV2Named(projectID, region, name string, adminStateUp bool) string {
+	return testAccVPCRouterV2Described(projectID, region, name, "Managed by the acceptance test", adminStateUp)
+}
+
+func testAccVPCRouterV2Described(projectID, region, name, description string, adminStateUp bool) string {
 	return testAccVPCV2Base(projectID) + fmt.Sprintf(`
 resource "selectel_vpc_router_v2" "router_tf_acc_test_1" {
   project_id     = local.project_id
   region         = "%s"
   name           = "%s"
-  description    = "Managed by the acceptance test"
+  description    = "%s"
   admin_state_up = %t
   tags           = ["tf-acc", "VPC"]
 }
-`, region, name, adminStateUp)
+`, region, name, description, adminStateUp)
 }
 
 func testAccVPCRouterV2TagsUpdated(projectID, region, name string) string {
@@ -419,26 +396,6 @@ func testAccVPCRouterV2GatewayDetached(projectID, region string) string {
 resource "selectel_vpc_router_v2" "router_tf_acc_test_1" {
   project_id = local.project_id
   region     = "%s"
-}
-`, region)
-}
-
-func testAccVPCRouterV2DataSource(projectID, region, name string) string {
-	return testAccVPCRouterV2Named(projectID, region, name, true) + fmt.Sprintf(`
-data "selectel_vpc_router_v2" "router_tf_acc_test_1" {
-  project_id = local.project_id
-  region     = "%s"
-  name       = selectel_vpc_router_v2.router_tf_acc_test_1.name
-}
-`, region)
-}
-
-func testAccVPCRouterV2DataSourceNoMatch(projectID, region string) string {
-	return testAccVPCV2Base(projectID) + fmt.Sprintf(`
-data "selectel_vpc_router_v2" "router_tf_acc_test_1" {
-  project_id = local.project_id
-  region     = "%s"
-  name       = "tf-acc-no-such-router"
 }
 `, region)
 }

@@ -123,7 +123,6 @@ func resourceVPCRouterInterfaceV2Read(ctx context.Context, d *schema.ResourceDat
 	log.Printf("[DEBUG] getting VPC router interface port %s", d.Id())
 	found, err := port.Get(ctx, client, d.Id())
 	if err != nil {
-
 		return vpcCheckDeleted(d, err, vpcRouterInterfaceV2Object)
 	}
 
@@ -155,7 +154,6 @@ func resourceVPCRouterInterfaceV2Delete(ctx context.Context, d *schema.ResourceD
 	defer selMutexKV.Unlock(routerID)
 
 	if d.Get("force_destroy").(bool) && subnetID != "" {
-
 		if err := clearVPCRouterInterfaceV2Routes(ctx, client, routerID, subnetID); err != nil {
 			return diag.FromErr(err)
 		}
@@ -165,7 +163,6 @@ func resourceVPCRouterInterfaceV2Delete(ctx context.Context, d *schema.ResourceD
 	_, err = router.RemoveInterface(ctx, client, routerID, router.InterfaceRequest{PortID: d.Id()})
 	if err != nil {
 		if vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
-
 			return nil
 		}
 
@@ -176,7 +173,7 @@ func resourceVPCRouterInterfaceV2Delete(ctx context.Context, d *schema.ResourceD
 }
 
 func resourceVPCRouterInterfaceV2ImportState(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
-	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
+	if err := importProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 

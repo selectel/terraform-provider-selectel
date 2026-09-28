@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -18,10 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	testAccVPCNetworkV2ResourceName   = "selectel_vpc_network_v2.network_tf_acc_test_1"
-	testAccVPCNetworkV2DataSourceName = "data.selectel_vpc_network_v2.network_tf_acc_test_1"
-)
+const testAccVPCNetworkV2ResourceName = "selectel_vpc_network_v2.network_tf_acc_test_1"
 
 func vpcV2TestEnv() (projectID, region string) {
 	return os.Getenv("INFRA_PROJECT_ID"), os.Getenv("INFRA_REGION")
@@ -92,6 +88,11 @@ func TestAccVPCNetworkV2Basic(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
+			{
+				Config:             testAccVPCNetworkV2Basic(projectID, region),
+				Check:              testAccCheckVPCV2DeleteOutOfBand(testAccVPCNetworkV2ResourceName, network.Delete),
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -121,6 +122,7 @@ func TestAccVPCNetworkV2Update(t *testing.T) {
 					resource.TestCheckResourceAttr(testAccVPCNetworkV2ResourceName, "description", "updated by the acceptance test"),
 					resource.TestCheckResourceAttr(testAccVPCNetworkV2ResourceName, "admin_state_up", "false"),
 					resource.TestCheckResourceAttr(testAccVPCNetworkV2ResourceName, "tags.#", "1"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkV2ResourceName, "all_tags.#", "1"),
 				),
 			},
 			{
@@ -165,49 +167,6 @@ func TestAccVPCNetworkV2TagsOutOfBand(t *testing.T) {
 	})
 }
 
-func TestAccVPCNetworkV2DataSource(t *testing.T) {
-	projectID, region := vpcV2TestEnv()
-	networkName := acctest.RandomWithPrefix("tf-acc-net")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
-		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCNetworkV2Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccVPCNetworkV2DataSource(projectID, region, networkName),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(testAccVPCNetworkV2DataSourceName, "name", networkName),
-					resource.TestCheckResourceAttrPair(
-						testAccVPCNetworkV2DataSourceName, "network_id",
-						testAccVPCNetworkV2ResourceName, "id",
-					),
-					resource.TestCheckResourceAttrPair(
-						testAccVPCNetworkV2DataSourceName, "blocked",
-						testAccVPCNetworkV2ResourceName, "blocked",
-					),
-					resource.TestCheckResourceAttrPair(
-						testAccVPCNetworkV2DataSourceName, "shared",
-						testAccVPCNetworkV2ResourceName, "shared",
-					),
-					resource.TestCheckResourceAttrPair(
-						testAccVPCNetworkV2DataSourceName, "subnets.#",
-						testAccVPCNetworkV2ResourceName, "subnets.#",
-					),
-					resource.TestCheckResourceAttrPair(
-						testAccVPCNetworkV2DataSourceName, "availability_zones.#",
-						testAccVPCNetworkV2ResourceName, "availability_zones.#",
-					),
-				),
-			},
-			{
-				Config:      testAccVPCNetworkV2DataSourceNoMatch(projectID, region),
-				ExpectError: regexp.MustCompile(`no VPC network found`),
-			},
-		},
-	})
-}
-
 const testAccVPCV2DriftedName = "renamed outside terraform"
 
 type vpcNetworkV2TestHandle struct {
@@ -235,6 +194,19 @@ func testAccVPCNetworkV2Handle(s *terraform.State, resourceName string) (*vpcNet
 	}
 
 	return &vpcNetworkV2TestHandle{client: client, id: rs.Primary.ID}, nil
+}
+
+func testAccCheckVPCV2DeleteOutOfBand(
+	resourceName string, remove func(context.Context, *vpc.Client, string) error,
+) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		handle, err := testAccVPCNetworkV2Handle(s, resourceName)
+		if err != nil {
+			return err
+		}
+
+		return remove(context.Background(), handle.client, handle.id)
+	}
 }
 
 func testAccCheckVPCNetworkV2Exists(resourceName string, found *network.Network) resource.TestCheckFunc {
@@ -349,24 +321,4 @@ resource "selectel_vpc_network_v2" "network_tf_acc_test_1" {
   tags           = ["tf-acc"]
 }
 `, region, networkName)
-}
-
-func testAccVPCNetworkV2DataSource(projectID, region, networkName string) string {
-	return testAccVPCNetworkV2OptionalAttributes(projectID, region, networkName) + fmt.Sprintf(`
-data "selectel_vpc_network_v2" "network_tf_acc_test_1" {
-  project_id = local.project_id
-  region     = "%s"
-  name       = selectel_vpc_network_v2.network_tf_acc_test_1.name
-}
-`, region)
-}
-
-func testAccVPCNetworkV2DataSourceNoMatch(projectID, region string) string {
-	return testAccVPCV2Base(projectID) + fmt.Sprintf(`
-data "selectel_vpc_network_v2" "network_tf_acc_test_1" {
-  project_id = local.project_id
-  region     = "%s"
-  name       = "tf-acc-no-such-network"
-}
-`, region)
 }

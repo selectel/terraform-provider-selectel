@@ -149,7 +149,6 @@ func resourceVPCNetworkSubnetRouteV2Delete(ctx context.Context, d *schema.Resour
 	found, err := subnet.Get(ctx, client, subnetID)
 	if err != nil {
 		if vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
-
 			return nil
 		}
 
@@ -176,7 +175,7 @@ func resourceVPCNetworkSubnetRouteV2Delete(ctx context.Context, d *schema.Resour
 }
 
 func resourceVPCNetworkSubnetRouteV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
-	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
+	if err := importProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 

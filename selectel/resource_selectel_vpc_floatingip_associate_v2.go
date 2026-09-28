@@ -129,12 +129,9 @@ func resourceVPCFloatingIPAssociateV2Update(
 	request := floatingip.UpdateRequest{
 		PortID: vpc.Value(d.Get("port_id").(string)),
 	}
+
 	if d.HasChange("fixed_ip") {
-		if fixedIP := d.Get("fixed_ip").(string); fixedIP == "" {
-			request.FixedIPAddress = vpc.Null[string]()
-		} else {
-			request.FixedIPAddress = vpc.Value(fixedIP)
-		}
+		request.FixedIPAddress = vpc.Value(d.Get("fixed_ip").(string))
 	}
 
 	log.Printf("[DEBUG] updating VPC floating ip association %s", d.Id())
@@ -175,7 +172,7 @@ func resourceVPCFloatingIPAssociateV2Delete(
 func resourceVPCFloatingIPAssociateV2ImportState(
 	_ context.Context, d *schema.ResourceData, meta any,
 ) ([]*schema.ResourceData, error) {
-	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
+	if err := importProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 

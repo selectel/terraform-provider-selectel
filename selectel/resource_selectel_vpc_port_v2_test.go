@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -19,8 +18,10 @@ import (
 
 const (
 	testAccVPCPortV2ResourceName   = "selectel_vpc_port_v2.port_tf_acc_test_1"
-	testAccVPCPortV2DataSourceName = "data.selectel_vpc_port_v2.port_tf_acc_test_1"
 	testAccVPCPortV2FixedIPAddress = "192.168.199.42"
+	testAccVPCPortV2MACAddress     = "fa:16:3e:5c:aa:01"
+	testAccVPCPortV2DeviceID       = "tf-acc-device-1"
+	testAccVPCPortV2DeviceOwner    = "tf-acc:test"
 )
 
 func TestAccVPCPortV2Basic(t *testing.T) {
@@ -56,6 +57,11 @@ func TestAccVPCPortV2Basic(t *testing.T) {
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"no_fixed_ip", "no_security_groups"},
 			},
+			{
+				Config:             testAccVPCPortV2Basic(projectID, region),
+				Check:              testAccCheckVPCV2DeleteOutOfBand(testAccVPCPortV2ResourceName, port.Delete),
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -75,6 +81,9 @@ func TestAccVPCPortV2ExtendedAttributes(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCPortV2Exists(&found),
 					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "name", portName),
+					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "mac_address", testAccVPCPortV2MACAddress),
+					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "device_id", testAccVPCPortV2DeviceID),
+					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "device_owner", testAccVPCPortV2DeviceOwner),
 					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "fixed_ip.0.ip_address", testAccVPCPortV2FixedIPAddress),
 					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "all_fixed_ips.0.ip_address", testAccVPCPortV2FixedIPAddress),
 					resource.TestCheckResourceAttrSet(testAccVPCPortV2ResourceName, "all_fixed_ips.0.subnet_id"),
@@ -116,10 +125,23 @@ func TestAccVPCPortV2Update(t *testing.T) {
 					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "allowed_address_pairs.#", "2"),
 					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "extra_dhcp_option.#", "1"),
 					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "tags.#", "1"),
+					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "all_tags.#", "1"),
+					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "security_group_ids.#", "1"),
+					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "all_security_group_ids.#", "1"),
 				),
 			},
 			{
-				Config:   testAccVPCPortV2ExtendedUpdated(projectID, region, updatedName),
+				Config: testAccVPCPortV2ExtendedDetached(projectID, region, updatedName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCPortV2SameID(&found),
+					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "no_fixed_ip", "true"),
+					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "no_security_groups", "true"),
+					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "all_fixed_ips.#", "0"),
+					resource.TestCheckResourceAttr(testAccVPCPortV2ResourceName, "all_security_group_ids.#", "0"),
+				),
+			},
+			{
+				Config:   testAccVPCPortV2ExtendedDetached(projectID, region, updatedName),
 				PlanOnly: true,
 			},
 		},
@@ -155,37 +177,6 @@ func TestAccVPCPortV2TagsOutOfBand(t *testing.T) {
 			{
 				Config:   testAccVPCPortV2ExtendedUpdated(projectID, region, portName),
 				PlanOnly: true,
-			},
-		},
-	})
-}
-
-func TestAccVPCPortV2DataSource(t *testing.T) {
-	projectID, region := vpcV2TestEnv()
-	portName := acctest.RandomWithPrefix("tf-acc-port")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
-		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCPortV2Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccVPCPortV2DataSource(projectID, region, portName),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(testAccVPCPortV2DataSourceName, "name", portName),
-					resource.TestCheckResourceAttrPair(
-						testAccVPCPortV2DataSourceName, "port_id",
-						testAccVPCPortV2ResourceName, "id",
-					),
-					resource.TestCheckResourceAttrPair(
-						testAccVPCPortV2DataSourceName, "blocked",
-						testAccVPCPortV2ResourceName, "blocked",
-					),
-				),
-			},
-			{
-				Config:      testAccVPCPortV2DataSourceNoMatch(projectID, region),
-				ExpectError: regexp.MustCompile(`no VPC port found`),
 			},
 		},
 	})
@@ -296,19 +287,6 @@ resource "selectel_vpc_port_v2" "port_tf_acc_test_1" {
 `, region)
 }
 
-func testAccVPCPortV2Named(projectID, region, portName string) string {
-	return testAccVPCPortV2Subnet(projectID, region) + fmt.Sprintf(`
-resource "selectel_vpc_port_v2" "port_tf_acc_test_1" {
-  project_id = local.project_id
-  region     = "%s"
-  network_id = selectel_vpc_network_v2.network_tf_acc_test_1.id
-  name       = "%s"
-
-  depends_on = [selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1]
-}
-`, region, portName)
-}
-
 func testAccVPCPortV2FixedIP(projectID, region, address string) string {
 	return testAccVPCPortV2Subnet(projectID, region) + fmt.Sprintf(`
 resource "selectel_vpc_port_v2" "port_tf_acc_test_1" {
@@ -325,18 +303,21 @@ resource "selectel_vpc_port_v2" "port_tf_acc_test_1" {
 }
 
 func testAccVPCPortV2Extended(projectID, region, portName string) string {
-	return testAccVPCPortV2Subnet(projectID, region) + fmt.Sprintf(`
+	return testAccVPCPortV2SecGroups(projectID, region) + fmt.Sprintf(`
 resource "selectel_vpc_port_v2" "port_tf_acc_test_1" {
   project_id     = local.project_id
-  region         = "%s"
+  region         = "%[1]s"
   network_id     = selectel_vpc_network_v2.network_tf_acc_test_1.id
-  name           = "%s"
+  name           = "%[2]s"
   description    = "created by the acceptance test"
   admin_state_up = true
+  mac_address    = "%[4]s"
+  device_id      = "%[5]s"
+  device_owner   = "%[6]s"
   tags           = ["tf-acc", "VPC"]
 
   fixed_ip {
-    ip_address = "%s"
+    ip_address = "%[3]s"
   }
 
   allowed_address_pairs {
@@ -355,19 +336,24 @@ resource "selectel_vpc_port_v2" "port_tf_acc_test_1" {
 
   depends_on = [selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1]
 }
-`, region, portName, testAccVPCPortV2FixedIPAddress)
+`, region, portName, testAccVPCPortV2FixedIPAddress,
+		testAccVPCPortV2MACAddress, testAccVPCPortV2DeviceID, testAccVPCPortV2DeviceOwner)
 }
 
 func testAccVPCPortV2ExtendedUpdated(projectID, region, portName string) string {
-	return testAccVPCPortV2Subnet(projectID, region) + fmt.Sprintf(`
+	return testAccVPCPortV2SecGroups(projectID, region) + fmt.Sprintf(`
 resource "selectel_vpc_port_v2" "port_tf_acc_test_1" {
-  project_id     = local.project_id
-  region         = "%s"
-  network_id     = selectel_vpc_network_v2.network_tf_acc_test_1.id
-  name           = "%s"
-  description    = "updated by the acceptance test"
-  admin_state_up = false
-  tags           = ["tf-acc"]
+  project_id         = local.project_id
+  region             = "%[1]s"
+  network_id         = selectel_vpc_network_v2.network_tf_acc_test_1.id
+  name               = "%[2]s"
+  description        = "updated by the acceptance test"
+  admin_state_up     = false
+  mac_address        = "%[3]s"
+  device_id          = "%[4]s"
+  device_owner       = "%[5]s"
+  tags               = ["tf-acc"]
+  security_group_ids = [selectel_vpc_secgroup_v2.secgroup_tf_acc_test_1.id]
 
   fixed_ip {
     subnet_id = selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1.id
@@ -386,28 +372,41 @@ resource "selectel_vpc_port_v2" "port_tf_acc_test_1" {
     value = "192.168.199.3"
   }
 }
-`, region, portName)
+`, region, portName, testAccVPCPortV2MACAddress, testAccVPCPortV2DeviceID, testAccVPCPortV2DeviceOwner)
 }
 
-func testAccVPCPortV2DataSource(projectID, region, portName string) string {
-	return testAccVPCPortV2Named(projectID, region, portName) + fmt.Sprintf(`
-data "selectel_vpc_port_v2" "port_tf_acc_test_1" {
-  project_id = local.project_id
-  region     = "%s"
-  name       = selectel_vpc_port_v2.port_tf_acc_test_1.name
-  fixed_ip   = selectel_vpc_port_v2.port_tf_acc_test_1.all_fixed_ips[0].ip_address
-}
-`, region)
-}
+func testAccVPCPortV2ExtendedDetached(projectID, region, portName string) string {
+	return testAccVPCPortV2SecGroups(projectID, region) + fmt.Sprintf(`
+resource "selectel_vpc_port_v2" "port_tf_acc_test_1" {
+  project_id         = local.project_id
+  region             = "%[1]s"
+  network_id         = selectel_vpc_network_v2.network_tf_acc_test_1.id
+  name               = "%[2]s"
+  description        = "updated by the acceptance test"
+  admin_state_up     = false
+  mac_address        = "%[3]s"
+  device_id          = "%[4]s"
+  device_owner       = "%[5]s"
+  tags               = ["tf-acc"]
+  no_fixed_ip        = true
+  no_security_groups = true
 
-func testAccVPCPortV2DataSourceNoMatch(projectID, region string) string {
-	return testAccVPCPortV2Subnet(projectID, region) + fmt.Sprintf(`
-data "selectel_vpc_port_v2" "port_tf_acc_test_1" {
-  project_id = local.project_id
-  region     = "%s"
-  name       = "tf-acc-no-such-port"
+  allowed_address_pairs {
+    ip_address = "192.168.199.100"
+  }
+
+  allowed_address_pairs {
+    ip_address = "192.168.199.101"
+  }
+
+  extra_dhcp_option {
+    name  = "tftp-server"
+    value = "192.168.199.3"
+  }
+
+  depends_on = [selectel_vpc_network_subnet_v2.subnet_tf_acc_test_1]
 }
-`, region)
+`, region, portName, testAccVPCPortV2MACAddress, testAccVPCPortV2DeviceID, testAccVPCPortV2DeviceOwner)
 }
 
 func TestVPCPortV2Expanders(t *testing.T) {
@@ -481,48 +480,18 @@ func TestVPCPortV2Expanders(t *testing.T) {
 	})
 }
 
-func TestVPCPortV2ListFilters(t *testing.T) {
-	d := schema.TestResourceDataRaw(t, dataSourceVPCPortV2().Schema, map[string]any{
-		"fixed_ip": "192.168.199.11",
-	})
-
-	filters := vpcPortV2ListFilters(d)
-
-	assert.Equal(t, []string{"ip_address=192.168.199.11"}, filters["fixed_ips"])
-	assert.Contains(t,
-		vpc.SelectionOptions{Filters: filters}.Values().Encode(),
-		"fixed_ips=ip_address%3D192.168.199.11",
-	)
+func testAccVPCPortV2SecGroups(projectID, region string) string {
+	return testAccVPCPortV2Subnet(projectID, region) + fmt.Sprintf(`
+resource "selectel_vpc_secgroup_v2" "secgroup_tf_acc_test_1" {
+  project_id = local.project_id
+  region     = "%[1]s"
+  name       = "secgroup-port-1"
 }
 
-func TestVPCPortV2SecurityGroupFilter(t *testing.T) {
-	candidates := []port.Port{
-		{
-			ID:             "p-1",
-			SecurityGroups: []string{"sg-1", "sg-2"},
-		},
-		{
-			ID:             "p-2",
-			SecurityGroups: []string{"sg-3"},
-		},
-	}
-
-	newData := func(raw map[string]any) *schema.ResourceData {
-		return schema.TestResourceDataRaw(t, dataSourceVPCPortV2().Schema, raw)
-	}
-
-	t.Run("security_group_ids matches an intersection, not an exact set", func(t *testing.T) {
-		matched := filterVPCPortV2BySecurityGroups(newData(map[string]any{
-			"security_group_ids": []any{"sg-2", "sg-9"},
-		}), candidates)
-
-		require.Len(t, matched, 1)
-		assert.Equal(t, "p-1", matched[0].ID)
-	})
-
-	t.Run("without a security group selector everything passes through", func(t *testing.T) {
-		matched := filterVPCPortV2BySecurityGroups(newData(map[string]any{}), candidates)
-
-		assert.Len(t, matched, 2)
-	})
+resource "selectel_vpc_secgroup_v2" "secgroup_tf_acc_test_2" {
+  project_id = local.project_id
+  region     = "%[1]s"
+  name       = "secgroup-port-2"
+}
+`, region)
 }

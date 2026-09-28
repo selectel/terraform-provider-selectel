@@ -36,7 +36,7 @@ func TestResourceVPCImportProjectRegion(t *testing.T) {
 			Region:    testVPCImportRegion,
 		}
 
-		err := resourceVPCImportProjectRegion(d, config)
+		err := importProjectRegion(d, config)
 
 		require.NoError(t, err)
 		assert.Equal(t, testVPCImportProjectID, d.Get("project_id").(string))
@@ -47,7 +47,7 @@ func TestResourceVPCImportProjectRegion(t *testing.T) {
 		d := schema.TestResourceDataRaw(t, vpcImportTestSchema(), map[string]any{})
 		config := &Config{Region: testVPCImportRegion}
 
-		err := resourceVPCImportProjectRegion(d, config)
+		err := importProjectRegion(d, config)
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "INFRA_PROJECT_ID")
@@ -58,7 +58,7 @@ func TestResourceVPCImportProjectRegion(t *testing.T) {
 		d := schema.TestResourceDataRaw(t, vpcImportTestSchema(), map[string]any{})
 		config := &Config{ProjectID: testVPCImportProjectID}
 
-		err := resourceVPCImportProjectRegion(d, config)
+		err := importProjectRegion(d, config)
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "INFRA_REGION")

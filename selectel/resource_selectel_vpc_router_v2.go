@@ -9,6 +9,7 @@ import (
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/router"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadiff"
 )
 
 const vpcRouterV2Object = "VPC router"
@@ -19,6 +20,7 @@ func resourceVPCRouterV2() *schema.Resource {
 		ReadContext:   resourceVPCRouterV2Read,
 		UpdateContext: resourceVPCRouterV2Update,
 		DeleteContext: resourceVPCRouterV2Delete,
+		CustomizeDiff: schemadiff.RecomputeOnChange("all_tags", "tags"),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCRouterV2ImportState,
 		},
@@ -219,7 +221,7 @@ func resourceVPCRouterV2Delete(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceVPCRouterV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
-	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
+	if err := importProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 

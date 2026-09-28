@@ -66,6 +66,12 @@ func TestAccVPCRouterRouteV2Basic(t *testing.T) {
 				Config: testAccVPCRouterRouteV2Basic(projectID, region, "10.0.0.0/8"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCRouterRouteV2Exists("10.0.0.0/8", "192.168.199.10"),
+					resource.TestCheckResourceAttr(testAccVPCRouterRouteV2ResourceName, "project_id", projectID),
+					resource.TestCheckResourceAttr(testAccVPCRouterRouteV2ResourceName, "region", region),
+					resource.TestCheckResourceAttrPair(
+						testAccVPCRouterRouteV2ResourceName, "router_id",
+						"selectel_vpc_router_v2.router_tf_acc_test_1", "id",
+					),
 					resource.TestCheckResourceAttr(testAccVPCRouterRouteV2ResourceName, "destination_cidr", "10.0.0.0/8"),
 					resource.TestCheckResourceAttr(testAccVPCRouterRouteV2ResourceName, "next_hop", "192.168.199.10"),
 				),
@@ -85,6 +91,11 @@ func TestAccVPCRouterRouteV2Basic(t *testing.T) {
 					testAccCheckVPCRouterRouteV2Exists("172.16.0.0/12", "192.168.199.10"),
 					testAccCheckVPCRouterRouteV2Absent("10.0.0.0/8", "192.168.199.10"),
 				),
+			},
+			{
+				Config:             testAccVPCRouterRouteV2Basic(projectID, region, "172.16.0.0/12"),
+				Check:              testAccCheckVPCRouterRouteV2RemoveOutOfBand("172.16.0.0/12", "192.168.199.10"),
+				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -123,6 +134,29 @@ func testAccCheckVPCRouterRouteV2Absent(destination, nextHop string) resource.Te
 		}
 
 		return nil
+	}
+}
+
+func testAccCheckVPCRouterRouteV2RemoveOutOfBand(destination, nextHop string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		handle, err := testAccVPCRouterRouteV2Router(s)
+		if err != nil {
+			return err
+		}
+
+		found, err := router.Get(context.Background(), handle.client, handle.id)
+		if err != nil {
+			return err
+		}
+
+		target := router.Route{Destination: destination, NextHop: nextHop}
+		kept := slices.DeleteFunc(slices.Clone(found.Routes), func(route router.Route) bool {
+			return route == target
+		})
+		_, err = router.Update(context.Background(), handle.client, handle.id,
+			router.UpdateRequest{Routes: &kept})
+
+		return err
 	}
 }
 

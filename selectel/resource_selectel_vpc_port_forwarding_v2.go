@@ -212,11 +212,37 @@ func resourceVPCPortForwardingV2Update(ctx context.Context, d *schema.ResourceDa
 		needsUpdate = true
 	}
 
-	if needsUpdate {
-		floatingIPID := d.Get("floatingip_id").(string)
+	if !needsUpdate {
+		return resourceVPCPortForwardingV2Read(ctx, d, meta)
+	}
 
-		log.Printf("[DEBUG] updating port forwarding %s on floating ip %s", d.Id(), floatingIPID)
-		if _, err := floatingip.UpdatePortForwarding(ctx, client, floatingIPID, d.Id(), request); err != nil {
+	floatingIPID := d.Get("floatingip_id").(string)
+
+	// The API ignores a new internal port range when the internal target moves in
+	// the same request, so the target moves first and the ports follow in a second
+	// request. Internal and external ports travel together: the API validates their
+	// relation within one request.
+	var trailing *floatingip.PortForwardingUpdateRequest
+	if request.InternalPortRange != nil &&
+		(d.HasChange("internal_port_id") || d.HasChange("internal_ip_address")) {
+		trailing = &floatingip.PortForwardingUpdateRequest{
+			InternalPort:      request.InternalPort,
+			InternalPortRange: request.InternalPortRange,
+			ExternalPort:      request.ExternalPort,
+			ExternalPortRange: request.ExternalPortRange,
+		}
+		request.InternalPort, request.InternalPortRange = nil, nil
+		request.ExternalPort, request.ExternalPortRange = nil, nil
+	}
+
+	log.Printf("[DEBUG] updating port forwarding %s on floating ip %s", d.Id(), floatingIPID)
+	if _, err := floatingip.UpdatePortForwarding(ctx, client, floatingIPID, d.Id(), request); err != nil {
+		return diag.FromErr(errUpdatingObject(vpcPortForwardingV2Object, d.Id(), err))
+	}
+
+	if trailing != nil {
+		log.Printf("[DEBUG] updating the ports of port forwarding %s on floating ip %s", d.Id(), floatingIPID)
+		if _, err := floatingip.UpdatePortForwarding(ctx, client, floatingIPID, d.Id(), *trailing); err != nil {
 			return diag.FromErr(errUpdatingObject(vpcPortForwardingV2Object, d.Id(), err))
 		}
 	}
@@ -242,7 +268,7 @@ func resourceVPCPortForwardingV2Delete(ctx context.Context, d *schema.ResourceDa
 }
 
 func resourceVPCPortForwardingV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
-	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
+	if err := importProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 

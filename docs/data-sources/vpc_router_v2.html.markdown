@@ -38,11 +38,11 @@ data "selectel_vpc_router_v2" "router_1" {
 
 * `admin_state_up` - (Optional) Administrative state of the router.
 
-* `status` - (Optional) Status of the router, for example, `ACTIVE` or `DOWN`.
-
 * `tags` - (Optional) Tags that the router must have.
 
 ## Attributes Reference
+
+* `status` - Status of the router, for example, `ACTIVE` or `DOWN`.
 
 * `external_network_id` - Unique identifier of the external network the gateway is attached to, empty when the router has no gateway.
 

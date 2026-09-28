@@ -11,6 +11,7 @@ import (
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/network"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadiff"
 )
 
 const (
@@ -25,6 +26,7 @@ func resourceVPCNetworkV2() *schema.Resource {
 		ReadContext:   resourceVPCNetworkV2Read,
 		UpdateContext: resourceVPCNetworkV2Update,
 		DeleteContext: resourceVPCNetworkV2Delete,
+		CustomizeDiff: schemadiff.RecomputeOnChange("all_tags", "tags"),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCNetworkV2ImportState,
 		},
@@ -175,7 +177,6 @@ func resourceVPCNetworkV2Read(ctx context.Context, d *schema.ResourceData, meta 
 	log.Printf("[DEBUG] getting VPC network %s", d.Id())
 	found, err := network.Get(ctx, client, d.Id())
 	if err != nil {
-
 		return vpcCheckDeleted(d, err, vpcNetworkV2Object)
 	}
 
@@ -245,7 +246,7 @@ func resourceVPCNetworkV2Delete(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceVPCNetworkV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
-	if err := resourceVPCImportProjectRegion(d, meta); err != nil {
+	if err := importProjectRegion(d, meta); err != nil {
 		return nil, err
 	}
 
