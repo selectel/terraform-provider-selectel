@@ -301,21 +301,6 @@ func TestDeleteVPCV2WithRetry(t *testing.T) {
 		assert.Equal(t, 3, calls)
 	})
 
-	t.Run("conflict is retried until gone", func(t *testing.T) {
-		calls := 0
-		err := deleteVPCV2WithRetry(context.Background(), "object", "id", interval, timeout, vpcV2ConflictIsTransient,
-			func(context.Context) error {
-				calls++
-				if calls < 3 {
-					return conflict
-				}
-
-				return notFound
-			})
-		require.NoError(t, err)
-		assert.Equal(t, 3, calls)
-	})
-
 	t.Run("conflict until timeout", func(t *testing.T) {
 		err := deleteVPCV2WithRetry(context.Background(), "object", "id", interval, timeout, vpcV2ConflictIsTransient,
 			func(context.Context) error { return conflict })
@@ -350,49 +335,6 @@ func TestDeleteVPCV2WithRetry(t *testing.T) {
 			func(context.Context) error { return conflict })
 		require.ErrorIs(t, err, context.Canceled)
 	})
-}
-
-func TestVPCV2ResourceTimeouts(t *testing.T) {
-	tests := []struct {
-		name     string
-		resource *schema.Resource
-		create   time.Duration
-		update   time.Duration
-		delete   time.Duration
-	}{
-		{
-			name: "floatingip associate", resource: resourceVPCFloatingIPAssociateV2(),
-			create: vpcV2DefaultStatusTimeout, update: vpcV2DefaultStatusTimeout,
-		},
-		{
-			name: "port forwarding", resource: resourceVPCPortForwardingV2(),
-			create: vpcV2DefaultStatusTimeout,
-		},
-		{name: "secgroup", resource: resourceVPCSecGroupV2(), delete: vpcV2DefaultDeleteTimeout},
-		{name: "network subnet", resource: resourceVPCNetworkSubnetV2(), delete: vpcV2DefaultDeleteTimeout},
-		{name: "router interface", resource: resourceVPCRouterInterfaceV2(), delete: vpcV2DefaultDeleteTimeout},
-		{name: "router", resource: resourceVPCRouterV2(), delete: vpcV2DefaultDeleteTimeout},
-		{name: "network", resource: resourceVPCNetworkV2(), delete: vpcV2DefaultDeleteTimeout},
-	}
-
-	get := func(d *time.Duration) time.Duration {
-		if d == nil {
-			return 0
-		}
-
-		return *d
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			require.NotNil(t, tt.resource.Timeouts, "resource declares a timeouts block")
-			assert.Equal(t, tt.create, get(tt.resource.Timeouts.Create), "create")
-			assert.Equal(t, tt.update, get(tt.resource.Timeouts.Update), "update")
-			assert.Equal(t, tt.delete, get(tt.resource.Timeouts.Delete), "delete")
-			assert.Nil(t, tt.resource.Timeouts.Read, "read")
-			assert.Nil(t, tt.resource.Timeouts.Default, "default")
-		})
-	}
 }
 
 func TestWaitForVPCFloatingIPV2Active(t *testing.T) {

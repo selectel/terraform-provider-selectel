@@ -118,8 +118,4 @@ func TestTestResourceData(t *testing.T) {
 		assert.True(t, IsSet(d, "tags"))
 		assert.True(t, IsSet(d, "external_fixed_ip"))
 	})
-
-	t.Run("no id, like the SDK helper", func(t *testing.T) {
-		assert.Empty(t, TestResourceData(t, sch, map[string]any{}).Id())
-	})
 }

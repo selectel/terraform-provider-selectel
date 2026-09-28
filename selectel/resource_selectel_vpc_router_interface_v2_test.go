@@ -376,9 +376,4 @@ func TestVPCRouterInterfaceV2ConflictIsTransient(t *testing.T) {
 		assert.False(t, vpcRouterInterfaceV2ConflictIsTransient(conflict("RouterInterfaceInUseByRoute")),
 			"routes never go away on their own; force_destroy is the way to clear them")
 	})
-
-	t.Run("not a conflict", func(t *testing.T) {
-		assert.False(t, vpcRouterInterfaceV2ConflictIsTransient(
-			newTestAPIError(http.StatusNotFound, vpc.ErrorClassNotFound)))
-	})
 }

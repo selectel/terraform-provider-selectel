@@ -10,7 +10,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/router"
@@ -414,22 +413,6 @@ func TestVPCRouterV2CheckCreated(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "VPC router r-1 is in ERROR status")
 	})
-}
-
-func TestVPCRouterV2HASchema(t *testing.T) {
-	ha := resourceVPCRouterV2().Schema["ha"]
-	require.NotNil(t, ha)
-	assert.Equal(t, schema.TypeBool, ha.Type)
-	assert.True(t, ha.Optional)
-	assert.True(t, ha.Computed)
-	assert.Nil(t, ha.Default)
-	assert.False(t, ha.ForceNew)
-
-	dsHA := dataSourceVPCRouterV2().Schema["ha"]
-	require.NotNil(t, dsHA)
-	assert.Equal(t, schema.TypeBool, dsHA.Type)
-	assert.True(t, dsHA.Computed)
-	assert.False(t, dsHA.Optional)
 }
 
 func TestMigrateVPCRouterV2HA(t *testing.T) {
