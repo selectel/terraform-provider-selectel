@@ -92,8 +92,6 @@ func resourceDBaaSV2OpensearchDatastoreCreate(ctx context.Context, d *schema.Res
 
 	d.SetId(datastore.ID)
 
-	d.Set("allow_reduce_nodes", d.Get("allow_reduce_nodes"))
-
 	return resourceDBaaSV2OpensearchDatastoreRead(ctx, d, meta)
 }
 
@@ -179,9 +177,6 @@ func resourceDBaaSV2OpensearchDatastoreUpdate(ctx context.Context, d *schema.Res
 		}
 	}
 
-	allowReduceNodes := d.Get("allow_reduce_nodes")
-	d.Set("allow_reduce_nodes", allowReduceNodes)
-
 	if d.HasChange("node_groups") {
 		oldRaw, newRaw := d.GetChange("node_groups")
 
@@ -195,7 +190,6 @@ func resourceDBaaSV2OpensearchDatastoreUpdate(ctx context.Context, d *schema.Res
 			oldGroups,
 			newGroups,
 			timeout,
-			allowReduceNodes.(bool),
 		); err != nil {
 			return diag.FromErr(err)
 		}
@@ -224,7 +218,6 @@ func reconcileDBaaSV2OpensearchNodeGroups(
 	oldGroups []any,
 	newGroups []any,
 	timeout time.Duration,
-	allow_reduce_nodes bool,
 ) error {
 
 	oldByName := opensearchNodeGroupsByName(oldGroups)
@@ -246,7 +239,7 @@ func reconcileDBaaSV2OpensearchNodeGroups(
 		oldID := oldGroup["id"].(string)
 
 		if err := reconcileDBaaSV2OpensearchNodeGroup(
-			ctx, client, datastoreID, oldID, oldGroup, newGroup, timeout, allow_reduce_nodes); err != nil {
+			ctx, client, datastoreID, oldID, oldGroup, newGroup, timeout); err != nil {
 			return fmt.Errorf("reconciliation node group error: %w", err)
 		}
 	}
@@ -278,7 +271,6 @@ func reconcileDBaaSV2OpensearchNodeGroup(
 	oldGroup map[string]any,
 	newGroup map[string]any,
 	timeout time.Duration,
-	allowReduceNodes bool,
 ) error {
 	groupName := newGroup["name"].(string)
 
