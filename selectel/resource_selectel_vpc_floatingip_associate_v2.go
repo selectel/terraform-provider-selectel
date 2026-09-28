@@ -20,6 +20,10 @@ func resourceVPCFloatingIPAssociateV2() *schema.Resource {
 		ReadContext:   resourceVPCFloatingIPAssociateV2Read,
 		UpdateContext: resourceVPCFloatingIPAssociateV2Update,
 		DeleteContext: resourceVPCFloatingIPAssociateV2Delete,
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(vpcV2DefaultStatusTimeout),
+			Update: schema.DefaultTimeout(vpcV2DefaultStatusTimeout),
+		},
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCFloatingIPAssociateV2ImportState,
 		},
@@ -91,7 +95,8 @@ func resourceVPCFloatingIPAssociateV2Create(
 
 	d.SetId(floatingIPID)
 
-	diags := waitForVPCFloatingIPV2Active(ctx, client, floatingIPID)
+	diags := waitForVPCFloatingIPV2Active(ctx, client, floatingIPID,
+		vpcV2StatusPollInterval, d.Timeout(schema.TimeoutCreate))
 	if diags.HasError() {
 		return diags
 	}
@@ -139,7 +144,8 @@ func resourceVPCFloatingIPAssociateV2Update(
 		return diag.FromErr(errUpdatingObject(vpcFloatingIPAssociateV2Object, d.Id(), err))
 	}
 
-	diags := waitForVPCFloatingIPV2Active(ctx, client, d.Id())
+	diags := waitForVPCFloatingIPV2Active(ctx, client, d.Id(),
+		vpcV2StatusPollInterval, d.Timeout(schema.TimeoutUpdate))
 	if diags.HasError() {
 		return diags
 	}

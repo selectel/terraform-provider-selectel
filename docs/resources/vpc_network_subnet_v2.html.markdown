@@ -59,6 +59,10 @@ resource "selectel_vpc_network_subnet_v2" "subnet_1" {
 
 * `tags` - (Optional) Tags of the subnet that Terraform manages. Tags added outside Terraform are reported in `all_tags` and are not removed by this resource.
 
+* `timeouts` — (Optional) Timeout values. If the subnet is still in use when it is destroyed, for example by a port that another service has not released yet, the provider keeps retrying the delete until the timeout expires.
+The default values are the following:
+  * delete = "10m".
+
 ## Attributes Reference
 
 * `all_tags` - All tags of the subnet, including the ones added outside Terraform.

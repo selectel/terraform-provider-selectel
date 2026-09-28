@@ -22,6 +22,9 @@ func resourceVPCSecGroupV2() *schema.Resource {
 		UpdateContext: resourceVPCSecGroupV2Update,
 		DeleteContext: resourceVPCSecGroupV2Delete,
 		CustomizeDiff: schemadiff.RecomputeOnChange("all_tags", "tags"),
+		Timeouts: &schema.ResourceTimeout{
+			Delete: schema.DefaultTimeout(vpcV2DefaultDeleteTimeout),
+		},
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCSecGroupV2ImportState,
 		},
@@ -181,8 +184,10 @@ func resourceVPCSecGroupV2Delete(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	log.Printf("[DEBUG] deleting VPC security group %s", d.Id())
-	if err := securitygroup.Delete(ctx, client, d.Id()); err != nil &&
-		!vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
+	err = deleteVPCV2WithRetry(ctx, vpcSecGroupV2Object, d.Id(),
+		vpcV2StatusPollInterval, d.Timeout(schema.TimeoutDelete), vpcV2ConflictIsTransient,
+		func(ctx context.Context) error { return securitygroup.Delete(ctx, client, d.Id()) })
+	if err != nil {
 		return diag.FromErr(errDeletingObject(vpcSecGroupV2Object, d.Id(), err))
 	}
 

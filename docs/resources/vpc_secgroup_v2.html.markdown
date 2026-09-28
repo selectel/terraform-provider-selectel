@@ -55,6 +55,10 @@ resource "selectel_vpc_secgroup_v2" "secgroup_2" {
 
 ~> **Note:** If the group is created but a follow-up step of the same apply fails — removing the default rules, or applying tags — the apply reports the error, and the identifier of the group is already in the state. The group is therefore never left untracked, and the next apply finishes the work instead of creating a second group.
 
+* `timeouts` — (Optional) Timeout values. If the group is still in use when it is destroyed, for example by a port that another service has not released yet, the provider keeps retrying the delete until the timeout expires.
+The default values are the following:
+  * delete = "10m".
+
 ## Attributes Reference
 
 * `shared` - Specifies whether another project has been granted access to this group.

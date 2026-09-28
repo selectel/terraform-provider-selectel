@@ -9,12 +9,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/httptest"
 )
 
 const testVPCObject = "network"
@@ -260,4 +262,186 @@ func TestMergeVPCTagsV2(t *testing.T) {
 
 		assert.ElementsMatch(t, []string{"foreign"}, merged)
 	})
+}
+
+func TestDeleteVPCV2WithRetry(t *testing.T) {
+	const (
+		interval = time.Millisecond
+		timeout  = 50 * time.Millisecond
+	)
+	conflict := newTestAPIError(http.StatusConflict, vpc.ErrorClassConflict)
+	notFound := newTestAPIError(http.StatusNotFound, vpc.ErrorClassNotFound)
+
+	t.Run("deleted at once", func(t *testing.T) {
+		calls := 0
+		err := deleteVPCV2WithRetry(context.Background(), "object", "id", interval, timeout, vpcV2ConflictIsTransient,
+			func(context.Context) error { calls++; return nil })
+		require.NoError(t, err)
+		assert.Equal(t, 1, calls)
+	})
+
+	t.Run("already gone counts as deleted", func(t *testing.T) {
+		err := deleteVPCV2WithRetry(context.Background(), "object", "id", interval, timeout, vpcV2ConflictIsTransient,
+			func(context.Context) error { return notFound })
+		require.NoError(t, err)
+	})
+
+	t.Run("conflict is retried until deleted", func(t *testing.T) {
+		calls := 0
+		err := deleteVPCV2WithRetry(context.Background(), "object", "id", interval, timeout, vpcV2ConflictIsTransient,
+			func(context.Context) error {
+				calls++
+				if calls < 3 {
+					return conflict
+				}
+
+				return nil
+			})
+		require.NoError(t, err)
+		assert.Equal(t, 3, calls)
+	})
+
+	t.Run("conflict is retried until gone", func(t *testing.T) {
+		calls := 0
+		err := deleteVPCV2WithRetry(context.Background(), "object", "id", interval, timeout, vpcV2ConflictIsTransient,
+			func(context.Context) error {
+				calls++
+				if calls < 3 {
+					return conflict
+				}
+
+				return notFound
+			})
+		require.NoError(t, err)
+		assert.Equal(t, 3, calls)
+	})
+
+	t.Run("conflict until timeout", func(t *testing.T) {
+		err := deleteVPCV2WithRetry(context.Background(), "object", "id", interval, timeout, vpcV2ConflictIsTransient,
+			func(context.Context) error { return conflict })
+		require.ErrorIs(t, err, errVPCV2DeleteTimeout)
+		require.ErrorIs(t, err, conflict)
+		assert.Contains(t, err.Error(), "object id is still in use after 50ms")
+	})
+
+	t.Run("other error is returned at once", func(t *testing.T) {
+		calls := 0
+		forbidden := newTestAPIError(http.StatusForbidden, vpc.ErrorClassForbidden)
+		err := deleteVPCV2WithRetry(context.Background(), "object", "id", interval, timeout, vpcV2ConflictIsTransient,
+			func(context.Context) error { calls++; return forbidden })
+		require.ErrorIs(t, err, forbidden)
+		assert.Equal(t, 1, calls)
+	})
+
+	t.Run("conflict the predicate calls permanent is returned at once", func(t *testing.T) {
+		calls := 0
+		never := func(error) bool { return false }
+		err := deleteVPCV2WithRetry(context.Background(), "object", "id", interval, timeout, never,
+			func(context.Context) error { calls++; return conflict })
+		require.ErrorIs(t, err, conflict)
+		require.NotErrorIs(t, err, errVPCV2DeleteTimeout)
+		assert.Equal(t, 1, calls)
+	})
+
+	t.Run("cancelled context", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		err := deleteVPCV2WithRetry(ctx, "object", "id", time.Hour, time.Hour, vpcV2ConflictIsTransient,
+			func(context.Context) error { return conflict })
+		require.ErrorIs(t, err, context.Canceled)
+	})
+}
+
+func TestVPCV2ResourceTimeouts(t *testing.T) {
+	tests := []struct {
+		name     string
+		resource *schema.Resource
+		create   time.Duration
+		update   time.Duration
+		delete   time.Duration
+	}{
+		{
+			name: "floatingip associate", resource: resourceVPCFloatingIPAssociateV2(),
+			create: vpcV2DefaultStatusTimeout, update: vpcV2DefaultStatusTimeout,
+		},
+		{
+			name: "port forwarding", resource: resourceVPCPortForwardingV2(),
+			create: vpcV2DefaultStatusTimeout,
+		},
+		{name: "secgroup", resource: resourceVPCSecGroupV2(), delete: vpcV2DefaultDeleteTimeout},
+		{name: "network subnet", resource: resourceVPCNetworkSubnetV2(), delete: vpcV2DefaultDeleteTimeout},
+		{name: "router interface", resource: resourceVPCRouterInterfaceV2(), delete: vpcV2DefaultDeleteTimeout},
+		{name: "router", resource: resourceVPCRouterV2(), delete: vpcV2DefaultDeleteTimeout},
+		{name: "network", resource: resourceVPCNetworkV2(), delete: vpcV2DefaultDeleteTimeout},
+	}
+
+	get := func(d *time.Duration) time.Duration {
+		if d == nil {
+			return 0
+		}
+
+		return *d
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.NotNil(t, tt.resource.Timeouts, "resource declares a timeouts block")
+			assert.Equal(t, tt.create, get(tt.resource.Timeouts.Create), "create")
+			assert.Equal(t, tt.update, get(tt.resource.Timeouts.Update), "update")
+			assert.Equal(t, tt.delete, get(tt.resource.Timeouts.Delete), "delete")
+			assert.Nil(t, tt.resource.Timeouts.Read, "read")
+			assert.Nil(t, tt.resource.Timeouts.Default, "default")
+		})
+	}
+}
+
+func TestWaitForVPCFloatingIPV2Active(t *testing.T) {
+	newClient := func(t *testing.T, statuses ...string) *vpc.Client {
+		t.Helper()
+		i := 0
+		client, err := vpc.NewClient(vpc.Config{
+			Endpoint: "https://vpc.example.test",
+			Token:    "token",
+			HTTPClient: &http.Client{
+				Transport: httptest.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
+					assert.Equal(t, "/v2.0/floatingips/fip-1", req.URL.Path)
+					status := statuses[min(i, len(statuses)-1)]
+					i++
+
+					return httptest.NewFakeResponse(http.StatusOK,
+						fmt.Sprintf(`{"floatingip": {"id": "fip-1", "status": %q}}`, status)), nil
+				}),
+			},
+		})
+		require.NoError(t, err)
+
+		return client
+	}
+
+	t.Run("active", func(t *testing.T) {
+		diags := waitForVPCFloatingIPV2Active(context.Background(), newClient(t, vpcV2StatusDown, vpcV2StatusActive),
+			"fip-1", time.Millisecond, 50*time.Millisecond)
+		assert.Empty(t, diags)
+	})
+
+	t.Run("still down after timeout is a warning", func(t *testing.T) {
+		diags := waitForVPCFloatingIPV2Active(context.Background(), newClient(t, vpcV2StatusDown),
+			"fip-1", time.Millisecond, 20*time.Millisecond)
+		require.Len(t, diags, 1)
+		assert.Equal(t, diag.Warning, diags[0].Severity)
+		assert.Contains(t, diags[0].Summary, "fip-1 is still DOWN")
+	})
+
+	t.Run("error status", func(t *testing.T) {
+		diags := waitForVPCFloatingIPV2Active(context.Background(), newClient(t, vpcV2StatusError),
+			"fip-1", time.Millisecond, 20*time.Millisecond)
+		require.True(t, diags.HasError())
+		assert.Contains(t, diags[0].Summary, "fip-1 is in ERROR status")
+	})
+}
+
+func TestVPCV2ConflictIsTransient(t *testing.T) {
+	assert.True(t, vpcV2ConflictIsTransient(newTestAPIError(http.StatusConflict, vpc.ErrorClassConflict)))
+	assert.False(t, vpcV2ConflictIsTransient(newTestAPIError(http.StatusNotFound, vpc.ErrorClassNotFound)))
+	assert.False(t, vpcV2ConflictIsTransient(newTestTransportError()))
 }

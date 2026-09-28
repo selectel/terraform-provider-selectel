@@ -39,6 +39,10 @@ resource "selectel_vpc_network_v2" "network_1" {
 
 * `tags` - (Optional) Tags of the network that Terraform manages. Tags added outside Terraform are reported in `all_tags` and are not removed by this resource.
 
+* `timeouts` — (Optional) Timeout values. If the network is still in use when it is destroyed, for example by a port that another service has not released yet, the provider keeps retrying the delete until the timeout expires.
+The default values are the following:
+  * delete = "10m".
+
 ## Attributes Reference
 
 * `status` - Status of the network: `ACTIVE`, `DOWN`, `BUILD`, or `ERROR`.

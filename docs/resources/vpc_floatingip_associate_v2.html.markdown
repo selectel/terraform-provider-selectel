@@ -40,6 +40,11 @@ resource "selectel_vpc_floatingip_associate_v2" "association_1" {
 
 * `fixed_ip` - (Optional) Fixed IP address of port_id to associate. Must be set if the port has multiple fixed IP addresses. If the port has a single fixed IP address, can be omitted — the provider stores the address selected by the API in state. Changing it updates the association in place.
 
+* `timeouts` — (Optional) Timeout values. After the association is created or updated, the provider waits for the public floating IP address to become `ACTIVE`. If the address is still `DOWN` when the timeout expires, the apply finishes with a warning.
+The default values are the following:
+  * create = "5m",
+  * update = "5m".
+
 ## Import
 
 You can import an association by the remote identifier of its public floating IP address:

@@ -43,6 +43,10 @@ resource "selectel_vpc_router_v2" "router_1" {
 
 * `tags` - (Optional) Tags of the router that are managed by Terraform.
 
+* `timeouts` — (Optional) Timeout values. If a public floating IP address is still bound through the router when it is destroyed, for example because the association is being destroyed in the same run, the provider keeps retrying the delete until the timeout expires.
+The default values are the following:
+  * delete = "10m".
+
 ## Attributes Reference
 
 * `status` - Status of the router, for example, `ACTIVE` or `DOWN`.

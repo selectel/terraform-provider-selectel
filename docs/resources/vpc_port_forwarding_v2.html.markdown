@@ -53,6 +53,10 @@ resource "selectel_vpc_port_forwarding_v2" "port_forwarding_1" {
 
 * `description` - (Optional) Description of the rule.
 
+* `timeouts` — (Optional) Timeout values. After the rule is created, the provider waits for the public floating IP address to become `ACTIVE`. If the address is still `DOWN` when the timeout expires, the apply finishes with a warning.
+The default values are the following:
+  * create = "5m".
+
 ## Import
 
 You can import a rule by the identifier of its public floating IP address and the identifier of the rule:

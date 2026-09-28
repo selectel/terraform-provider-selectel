@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/network"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadiff"
@@ -27,6 +26,9 @@ func resourceVPCNetworkV2() *schema.Resource {
 		UpdateContext: resourceVPCNetworkV2Update,
 		DeleteContext: resourceVPCNetworkV2Delete,
 		CustomizeDiff: schemadiff.RecomputeOnChange("all_tags", "tags"),
+		Timeouts: &schema.ResourceTimeout{
+			Delete: schema.DefaultTimeout(vpcV2DefaultDeleteTimeout),
+		},
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCNetworkV2ImportState,
 		},
@@ -237,8 +239,10 @@ func resourceVPCNetworkV2Delete(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	log.Printf("[DEBUG] deleting VPC network %s", d.Id())
-	if err := network.Delete(ctx, client, d.Id()); err != nil &&
-		!vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
+	err = deleteVPCV2WithRetry(ctx, vpcNetworkV2Object, d.Id(),
+		vpcV2StatusPollInterval, d.Timeout(schema.TimeoutDelete), vpcV2ConflictIsTransient,
+		func(ctx context.Context) error { return network.Delete(ctx, client, d.Id()) })
+	if err != nil {
 		return diag.FromErr(errDeletingObject(vpcNetworkV2Object, d.Id(), err))
 	}
 

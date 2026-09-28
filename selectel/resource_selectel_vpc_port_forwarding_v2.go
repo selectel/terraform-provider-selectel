@@ -27,6 +27,9 @@ func resourceVPCPortForwardingV2() *schema.Resource {
 		ReadContext:   resourceVPCPortForwardingV2Read,
 		UpdateContext: resourceVPCPortForwardingV2Update,
 		DeleteContext: resourceVPCPortForwardingV2Delete,
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(vpcV2DefaultStatusTimeout),
+		},
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCPortForwardingV2ImportState,
 		},
@@ -133,7 +136,8 @@ func resourceVPCPortForwardingV2Create(ctx context.Context, d *schema.ResourceDa
 
 	d.SetId(created.ID)
 
-	diags := waitForVPCFloatingIPV2Active(ctx, client, floatingIPID)
+	diags := waitForVPCFloatingIPV2Active(ctx, client, floatingIPID,
+		vpcV2StatusPollInterval, d.Timeout(schema.TimeoutCreate))
 	if diags.HasError() {
 		return diags
 	}

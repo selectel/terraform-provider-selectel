@@ -22,21 +22,21 @@ const (
 )
 
 const (
-	vpcV2StatusActive        = "ACTIVE"
-	vpcV2StatusDown          = "DOWN"
-	vpcV2StatusError         = "ERROR"
-	vpcV2StatusBuild         = "BUILD"
-	vpcV2StatusAllocating    = "ALLOCATING"
-	vpcV2StatusPendingCreate = "PENDING_CREATE"
-	vpcV2StatusPendingUpdate = "PENDING_UPDATE"
+	vpcV2StatusActive = "ACTIVE"
+	vpcV2StatusDown   = "DOWN"
+	vpcV2StatusError  = "ERROR"
 )
 
 const (
-	vpcV2StatusPollInterval = 2 * time.Second
-	vpcV2StatusTimeout      = time.Minute
+	vpcV2StatusPollInterval   = 3 * time.Second
+	vpcV2DefaultStatusTimeout = 5 * time.Minute
+	vpcV2DefaultDeleteTimeout = 10 * time.Minute
 )
 
-var errVPCV2StatusTimeout = errors.New("timeout waiting for status")
+var (
+	errVPCV2StatusTimeout = errors.New("timeout waiting for status")
+	errVPCV2DeleteTimeout = errors.New("timeout waiting for delete")
+)
 
 type vpcV2StatusRefreshFunc func(ctx context.Context) (string, error)
 
@@ -114,10 +114,47 @@ func waitForVPCV2Status(
 	}
 }
 
-func waitForVPCFloatingIPV2Active(ctx context.Context, client *vpc.Client, id string) diag.Diagnostics {
+func vpcV2ConflictIsTransient(err error) bool {
+	return vpc.IsErrorClass(err, vpc.ErrorClassConflict)
+}
+
+func deleteVPCV2WithRetry(
+	ctx context.Context, object, id string,
+	interval, timeout time.Duration, transient func(error) bool, del func(ctx context.Context) error,
+) error {
+	deadline := time.Now().Add(timeout)
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		err := del(ctx)
+		if err == nil || vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
+			return nil
+		}
+		if !transient(err) {
+			return err
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("%w: %s %s is still in use after %s: %w",
+				errVPCV2DeleteTimeout, object, id, timeout, err)
+		}
+
+		log.Printf("[DEBUG] %s %s is still in use, retrying delete", object, id)
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+		}
+	}
+}
+
+func waitForVPCFloatingIPV2Active(
+	ctx context.Context, client *vpc.Client, id string, interval, timeout time.Duration,
+) diag.Diagnostics {
 	status, err := waitForVPCV2Status(
 		ctx, vpcFloatingIPV2Object, id, []string{vpcV2StatusDown},
-		vpcV2StatusPollInterval, vpcV2StatusTimeout,
+		interval, timeout,
 		func(ctx context.Context) (string, error) {
 			found, err := floatingip.Get(ctx, client, id)
 			if err != nil {

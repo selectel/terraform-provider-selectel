@@ -31,6 +31,9 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 		UpdateContext: resourceVPCNetworkSubnetV2Update,
 		DeleteContext: resourceVPCNetworkSubnetV2Delete,
 		CustomizeDiff: schemadiff.RecomputeOnChange("all_tags", "tags"),
+		Timeouts: &schema.ResourceTimeout{
+			Delete: schema.DefaultTimeout(vpcV2DefaultDeleteTimeout),
+		},
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCNetworkSubnetV2ImportState,
 		},
@@ -306,8 +309,10 @@ func resourceVPCNetworkSubnetV2Delete(ctx context.Context, d *schema.ResourceDat
 	}
 
 	log.Printf("[DEBUG] deleting VPC network subnet %s", d.Id())
-	if err := subnet.Delete(ctx, client, d.Id()); err != nil &&
-		!vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
+	err = deleteVPCV2WithRetry(ctx, vpcNetworkSubnetV2Object, d.Id(),
+		vpcV2StatusPollInterval, d.Timeout(schema.TimeoutDelete), vpcV2ConflictIsTransient,
+		func(ctx context.Context) error { return subnet.Delete(ctx, client, d.Id()) })
+	if err != nil {
 		return diag.FromErr(errDeletingObject(vpcNetworkSubnetV2Object, d.Id(), err))
 	}
 

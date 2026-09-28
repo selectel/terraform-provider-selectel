@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -21,6 +22,9 @@ func resourceVPCRouterV2() *schema.Resource {
 		UpdateContext: resourceVPCRouterV2Update,
 		DeleteContext: resourceVPCRouterV2Delete,
 		CustomizeDiff: schemadiff.RecomputeOnChange("all_tags", "tags"),
+		Timeouts: &schema.ResourceTimeout{
+			Delete: schema.DefaultTimeout(vpcV2DefaultDeleteTimeout),
+		},
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCRouterV2ImportState,
 		},
@@ -125,7 +129,7 @@ func resourceVPCRouterV2Create(ctx context.Context, d *schema.ResourceData, meta
 
 	d.SetId(created.ID)
 
-	if err := waitForVPCRouterV2Ready(ctx, client, created.ID); err != nil {
+	if err := checkVPCRouterV2Created(created); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -212,8 +216,10 @@ func resourceVPCRouterV2Delete(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	log.Printf("[DEBUG] deleting VPC router %s", d.Id())
-	if err := router.Delete(ctx, client, d.Id()); err != nil &&
-		!vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
+	err = deleteVPCV2WithRetry(ctx, vpcRouterV2Object, d.Id(),
+		vpcV2StatusPollInterval, d.Timeout(schema.TimeoutDelete), vpcV2ConflictIsTransient,
+		func(ctx context.Context) error { return router.Delete(ctx, client, d.Id()) })
+	if err != nil {
 		return diag.FromErr(errDeletingObject(vpcRouterV2Object, d.Id(), err))
 	}
 
@@ -281,20 +287,10 @@ func flattenVPCRouterV2FixedIPs(fixedIPs []router.ExternalFixedIP) []any {
 	return result
 }
 
-func waitForVPCRouterV2Ready(ctx context.Context, client *vpc.Client, id string) error {
-	_, err := waitForVPCV2Status(
-		ctx, vpcRouterV2Object, id,
-		[]string{vpcV2StatusBuild, vpcV2StatusAllocating, vpcV2StatusPendingCreate, vpcV2StatusPendingUpdate},
-		vpcV2StatusPollInterval, vpcV2StatusTimeout,
-		func(ctx context.Context) (string, error) {
-			found, err := router.Get(ctx, client, id)
-			if err != nil {
-				return "", err
-			}
+func checkVPCRouterV2Created(created *router.Router) error {
+	if created.Status == vpcV2StatusError {
+		return fmt.Errorf("%s %s is in %s status", vpcRouterV2Object, created.ID, created.Status)
+	}
 
-			return found.Status, nil
-		},
-	)
-
-	return err
+	return nil
 }

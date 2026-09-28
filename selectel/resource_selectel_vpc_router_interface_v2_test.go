@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"slices"
 	"testing"
@@ -355,4 +356,29 @@ resource "selectel_vpc_router_interface_v2" "interface_tf_acc_test_1" {
   force_destroy = %[2]t
 }
 `, region, forceDestroy)
+}
+
+func TestVPCRouterInterfaceV2ConflictIsTransient(t *testing.T) {
+	conflict := func(neutronType string) error {
+		return &vpc.APIError{
+			StatusCode: http.StatusConflict,
+			Type:       neutronType,
+			Message:    "test",
+			Class:      vpc.ErrorClassConflict,
+		}
+	}
+
+	t.Run("floating ip still bound through the interface", func(t *testing.T) {
+		assert.True(t, vpcRouterInterfaceV2ConflictIsTransient(conflict("RouterInterfaceInUseByFloatingIP")))
+	})
+
+	t.Run("routes require the interface", func(t *testing.T) {
+		assert.False(t, vpcRouterInterfaceV2ConflictIsTransient(conflict("RouterInterfaceInUseByRoute")),
+			"routes never go away on their own; force_destroy is the way to clear them")
+	})
+
+	t.Run("not a conflict", func(t *testing.T) {
+		assert.False(t, vpcRouterInterfaceV2ConflictIsTransient(
+			newTestAPIError(http.StatusNotFound, vpc.ErrorClassNotFound)))
+	})
 }

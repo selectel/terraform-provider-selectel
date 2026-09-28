@@ -58,6 +58,10 @@ resource "selectel_vpc_router_interface_v2" "interface_2" {
 
   * `true` — the routes whose `next_hop` belongs to the subnet are removed first, and then the interface is detached.
 
+* `timeouts` — (Optional) Timeout values. If a public floating IP address is still bound to a port in the subnet through this router when the interface is detached, for example because the association is being destroyed in the same run, the provider keeps retrying the detach until the timeout expires. A detach blocked by routes is not retried, see `force_destroy`.
+The default values are the following:
+  * delete = "10m".
+
 ## Attributes Reference
 
 * `network_id` - Unique identifier of the network containing the interface port. It is computed from the actual port after create, read, or import.

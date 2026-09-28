@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -14,7 +15,11 @@ import (
 	"github.com/selectel/vpc-go/pkg/v2/subnet"
 )
 
-const vpcRouterInterfaceV2Object = "VPC router interface"
+const (
+	vpcRouterInterfaceV2Object = "VPC router interface"
+
+	vpcRouterInterfaceV2InUseByFloatingIP = "RouterInterfaceInUseByFloatingIP"
+)
 
 func resourceVPCRouterInterfaceV2() *schema.Resource {
 	return &schema.Resource{
@@ -22,6 +27,9 @@ func resourceVPCRouterInterfaceV2() *schema.Resource {
 		ReadContext:   resourceVPCRouterInterfaceV2Read,
 		UpdateContext: schema.NoopContext,
 		DeleteContext: resourceVPCRouterInterfaceV2Delete,
+		Timeouts: &schema.ResourceTimeout{
+			Delete: schema.DefaultTimeout(vpcV2DefaultDeleteTimeout),
+		},
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCRouterInterfaceV2ImportState,
 		},
@@ -160,16 +168,28 @@ func resourceVPCRouterInterfaceV2Delete(ctx context.Context, d *schema.ResourceD
 	}
 
 	log.Printf("[DEBUG] detaching VPC router %s interface %s", routerID, d.Id())
-	_, err = router.RemoveInterface(ctx, client, routerID, router.InterfaceRequest{PortID: d.Id()})
-	if err != nil {
-		if vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
-			return nil
-		}
+	err = deleteVPCV2WithRetry(ctx, vpcRouterInterfaceV2Object, d.Id(),
+		vpcV2StatusPollInterval, d.Timeout(schema.TimeoutDelete), vpcRouterInterfaceV2ConflictIsTransient,
+		func(ctx context.Context) error {
+			_, err := router.RemoveInterface(ctx, client, routerID, router.InterfaceRequest{PortID: d.Id()})
 
+			return err
+		})
+	if err != nil {
 		return diag.FromErr(errDeletingObject(vpcRouterInterfaceV2Object, d.Id(), err))
 	}
 
 	return nil
+}
+
+func vpcRouterInterfaceV2ConflictIsTransient(err error) bool {
+	if !vpc.IsErrorClass(err, vpc.ErrorClassConflict) {
+		return false
+	}
+
+	apiErr, ok := errors.AsType[*vpc.APIError](err)
+
+	return ok && apiErr.Type == vpcRouterInterfaceV2InUseByFloatingIP
 }
 
 func resourceVPCRouterInterfaceV2ImportState(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {

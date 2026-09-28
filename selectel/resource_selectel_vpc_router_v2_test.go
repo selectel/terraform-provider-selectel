@@ -399,3 +399,15 @@ resource "selectel_vpc_router_v2" "router_tf_acc_test_1" {
 }
 `, region)
 }
+
+func TestVPCRouterV2CheckCreated(t *testing.T) {
+	t.Run("active", func(t *testing.T) {
+		require.NoError(t, checkVPCRouterV2Created(&router.Router{ID: "r-1", Status: vpcV2StatusActive}))
+	})
+
+	t.Run("error", func(t *testing.T) {
+		err := checkVPCRouterV2Created(&router.Router{ID: "r-1", Status: vpcV2StatusError})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "VPC router r-1 is in ERROR status")
+	})
+}
