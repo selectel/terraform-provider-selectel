@@ -10,6 +10,7 @@ import (
 	"github.com/selectel/vpc-go/pkg/v2/securitygroup"
 	"github.com/selectel/vpc-go/pkg/v2/securitygrouprule"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemaconfig"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadiff"
 )
 
@@ -91,8 +92,8 @@ func resourceVPCSecGroupV2Create(ctx context.Context, d *schema.ResourceData, me
 	if v, ok := d.GetOk("description"); ok {
 		request.Description = new(v.(string))
 	}
-	if v, ok := d.GetOkExists("stateful"); ok { //nolint:staticcheck
-		request.Stateful = new(v.(bool))
+	if schemaconfig.IsSet(d, "stateful") {
+		request.Stateful = new(d.Get("stateful").(bool))
 	}
 
 	log.Print("[DEBUG] creating VPC security group")

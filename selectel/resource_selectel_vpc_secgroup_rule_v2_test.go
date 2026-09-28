@@ -7,12 +7,12 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/securitygrouprule"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemaconfig"
 )
 
 const testAccVPCSecGroupRuleV2ResourceName = "selectel_vpc_secgroup_rule_v2.rule_tf_acc_test_1"
@@ -93,7 +93,7 @@ func TestVPCSecGroupRuleV2ExpandPortRange(t *testing.T) {
 	})
 
 	t.Run("an icmp type and code of zero reach the request", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, schemaMap, map[string]any{
+		d := schemaconfig.TestResourceData(t, schemaMap, map[string]any{
 			"security_group_id": "sg-id",
 			"direction":         "ingress",
 			"ethertype":         "IPv4",
@@ -111,7 +111,7 @@ func TestVPCSecGroupRuleV2ExpandPortRange(t *testing.T) {
 	})
 
 	t.Run("a lone icmp type without a code reaches the request", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, schemaMap, map[string]any{
+		d := schemaconfig.TestResourceData(t, schemaMap, map[string]any{
 			"security_group_id": "sg-id",
 			"direction":         "ingress",
 			"ethertype":         "IPv4",
@@ -127,7 +127,7 @@ func TestVPCSecGroupRuleV2ExpandPortRange(t *testing.T) {
 	})
 
 	t.Run("a tcp port range is carried through", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, schemaMap, map[string]any{
+		d := schemaconfig.TestResourceData(t, schemaMap, map[string]any{
 			"security_group_id": "sg-id",
 			"direction":         "ingress",
 			"ethertype":         "IPv4",
@@ -144,13 +144,13 @@ func TestVPCSecGroupRuleV2ExpandPortRange(t *testing.T) {
 	})
 
 	t.Run("the remote selectors are mutually exclusive in the request", func(t *testing.T) {
-		prefix := schema.TestResourceDataRaw(t, schemaMap, map[string]any{
+		prefix := schemaconfig.TestResourceData(t, schemaMap, map[string]any{
 			"security_group_id": "sg-id",
 			"direction":         "ingress",
 			"ethertype":         "IPv4",
 			"remote_ip_prefix":  "192.168.199.0/24",
 		})
-		group := schema.TestResourceDataRaw(t, schemaMap, map[string]any{
+		group := schemaconfig.TestResourceData(t, schemaMap, map[string]any{
 			"security_group_id": "sg-id",
 			"direction":         "ingress",
 			"ethertype":         "IPv4",
@@ -165,7 +165,7 @@ func TestVPCSecGroupRuleV2ExpandPortRange(t *testing.T) {
 		assert.NotNil(t, groupRequest.RemoteGroupID)
 		assert.Nil(t, groupRequest.RemoteIPPrefix)
 
-		empty := schema.TestResourceDataRaw(t, schemaMap, map[string]any{
+		empty := schemaconfig.TestResourceData(t, schemaMap, map[string]any{
 			"security_group_id": "sg-id",
 			"direction":         "egress",
 			"ethertype":         "IPv4",

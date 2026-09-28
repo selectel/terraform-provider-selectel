@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/securitygrouprule"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemaconfig"
 )
 
 const vpcSecGroupRuleV2Object = "VPC security group rule"
@@ -182,11 +183,12 @@ func expandVPCSecGroupRuleV2Request(d *schema.ResourceData) securitygrouprule.Cr
 	if v, ok := d.GetOk("protocol"); ok {
 		request.Protocol = new(v.(string))
 	}
-	if v, ok := d.GetOkExists("port_range_min"); ok { //nolint:staticcheck // zero is a valid ICMP type
-		request.PortRangeMin = new(v.(int))
+	// Zero is a valid ICMP type and code, so an explicit 0 must reach the API.
+	if schemaconfig.IsSet(d, "port_range_min") {
+		request.PortRangeMin = new(d.Get("port_range_min").(int))
 	}
-	if v, ok := d.GetOkExists("port_range_max"); ok { //nolint:staticcheck // zero is a valid ICMP code
-		request.PortRangeMax = new(v.(int))
+	if schemaconfig.IsSet(d, "port_range_max") {
+		request.PortRangeMax = new(d.Get("port_range_max").(int))
 	}
 
 	switch {

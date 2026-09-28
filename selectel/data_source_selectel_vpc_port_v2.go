@@ -13,6 +13,7 @@ import (
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/port"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemaconfig"
 )
 
 func dataSourceVPCPortV2() *schema.Resource {
@@ -213,8 +214,8 @@ func vpcPortV2ListFilters(d *schema.ResourceData) map[string][]string {
 			filters[queryKey] = []string{v.(string)}
 		}
 	}
-	if v, ok := d.GetOkExists("admin_state_up"); ok {
-		filters["admin_state_up"] = []string{strconv.FormatBool(v.(bool))}
+	if schemaconfig.IsSet(d, "admin_state_up") {
+		filters["admin_state_up"] = []string{strconv.FormatBool(d.Get("admin_state_up").(bool))}
 	}
 	if v, ok := d.GetOk("fixed_ip"); ok {
 		filters["fixed_ips"] = []string{"ip_address=" + v.(string)}

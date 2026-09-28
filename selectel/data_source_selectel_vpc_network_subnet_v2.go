@@ -12,6 +12,7 @@ import (
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/subnet"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemaconfig"
 )
 
 func dataSourceVPCNetworkSubnetV2() *schema.Resource {
@@ -153,8 +154,8 @@ func dataSourceVPCNetworkSubnetV2Read(ctx context.Context, d *schema.ResourceDat
 	if v, ok := d.GetOk("ip_version"); ok {
 		filters["ip_version"] = []string{strconv.Itoa(v.(int))}
 	}
-	if v, ok := d.GetOkExists("enable_dhcp"); ok {
-		filters["enable_dhcp"] = []string{strconv.FormatBool(v.(bool))}
+	if schemaconfig.IsSet(d, "enable_dhcp") {
+		filters["enable_dhcp"] = []string{strconv.FormatBool(d.Get("enable_dhcp").(bool))}
 	}
 	if v, ok := d.GetOk("tags"); ok {
 		filters["tags"] = []string{strings.Join(convert.ToStringSlice(v.(*schema.Set).List()), ",")}

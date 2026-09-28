@@ -8,12 +8,12 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/router"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemaconfig"
 )
 
 const (
@@ -23,14 +23,14 @@ const (
 
 func TestVPCRouterV2ExpandGateway(t *testing.T) {
 	t.Run("no gateway configured", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, resourceVPCRouterV2().Schema, map[string]any{})
+		d := schemaconfig.TestResourceData(t, resourceVPCRouterV2().Schema, map[string]any{})
 
 		_, ok := expandVPCRouterV2Gateway(d)
 		assert.False(t, ok, "an unset external_network_id must report no gateway, which update turns into a detach")
 	})
 
 	t.Run("network without an explicit snat setting", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, resourceVPCRouterV2().Schema, map[string]any{
+		d := schemaconfig.TestResourceData(t, resourceVPCRouterV2().Schema, map[string]any{
 			"external_network_id": "network-id",
 		})
 
@@ -42,7 +42,7 @@ func TestVPCRouterV2ExpandGateway(t *testing.T) {
 	})
 
 	t.Run("network with snat disabled", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, resourceVPCRouterV2().Schema, map[string]any{
+		d := schemaconfig.TestResourceData(t, resourceVPCRouterV2().Schema, map[string]any{
 			"external_network_id": "network-id",
 			"enable_snat":         false,
 		})
@@ -57,7 +57,7 @@ func TestVPCRouterV2ExpandGateway(t *testing.T) {
 
 func TestVPCRouterV2FlattenGateway(t *testing.T) {
 	t.Run("gateway present", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, resourceVPCRouterV2().Schema, map[string]any{})
+		d := schemaconfig.TestResourceData(t, resourceVPCRouterV2().Schema, map[string]any{})
 
 		flattenVPCRouterV2(d, &router.Router{
 			ID: "router-id",
@@ -75,7 +75,7 @@ func TestVPCRouterV2FlattenGateway(t *testing.T) {
 	})
 
 	t.Run("gateway absent", func(t *testing.T) {
-		d := schema.TestResourceDataRaw(t, resourceVPCRouterV2().Schema, map[string]any{
+		d := schemaconfig.TestResourceData(t, resourceVPCRouterV2().Schema, map[string]any{
 			"external_network_id": "network-id",
 		})
 

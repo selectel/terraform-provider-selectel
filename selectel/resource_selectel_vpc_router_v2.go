@@ -10,6 +10,7 @@ import (
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/router"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemaconfig"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadiff"
 )
 
@@ -241,8 +242,8 @@ func expandVPCRouterV2Gateway(d *schema.ResourceData) (router.ExternalGatewayReq
 	}
 
 	gateway := router.ExternalGatewayRequest{NetworkID: networkID.(string)}
-	if v, ok := d.GetOkExists("enable_snat"); ok { //nolint:staticcheck
-		gateway.EnableSNAT = new(v.(bool))
+	if schemaconfig.IsSet(d, "enable_snat") {
+		gateway.EnableSNAT = new(d.Get("enable_snat").(bool))
 	}
 
 	return gateway, true

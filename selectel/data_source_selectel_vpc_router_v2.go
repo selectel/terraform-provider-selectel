@@ -12,6 +12,7 @@ import (
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/router"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemaconfig"
 )
 
 func dataSourceVPCRouterV2() *schema.Resource {
@@ -104,8 +105,8 @@ func dataSourceVPCRouterV2Read(ctx context.Context, d *schema.ResourceData, meta
 			filters[queryKey] = []string{v.(string)}
 		}
 	}
-	if v, ok := d.GetOkExists("admin_state_up"); ok { //nolint:staticcheck
-		filters["admin_state_up"] = []string{strconv.FormatBool(v.(bool))}
+	if schemaconfig.IsSet(d, "admin_state_up") {
+		filters["admin_state_up"] = []string{strconv.FormatBool(d.Get("admin_state_up").(bool))}
 	}
 	if v, ok := d.GetOk("tags"); ok {
 		filters["tags"] = []string{strings.Join(convert.ToStringSlice(v.(*schema.Set).List()), ",")}
