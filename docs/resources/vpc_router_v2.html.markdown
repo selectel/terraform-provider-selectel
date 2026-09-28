@@ -35,6 +35,8 @@ resource "selectel_vpc_router_v2" "router_1" {
 
 * `admin_state_up` - (Optional) Administrative state of the router. The default value is `true`.
 
+* `ha` - (Optional) Specifies whether the router runs in high availability mode. If omitted, the API default applies. Changing it on an existing router requires the router to be administratively down: the provider disables the router, changes the mode, and enables it again, so traffic through the router is interrupted while the change is applied. If `admin_state_up` is `false` in the configuration, the router stays disabled.
+
 * `external_network_id` - (Optional) Unique identifier of the external network the gateway is attached to. Changing this moves the gateway; removing it detaches the gateway. You can retrieve it with the [selectel_vpc_network_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/vpc_network_v2) data source using the `external = true` filter.
 
 * `enable_snat` - (Optional) Specifies whether source NAT is enabled on the gateway. If omitted, the value is assigned by the API and appears in the state after the router is created. Requires `external_network_id` in the same configuration — a value without it is rejected at plan.

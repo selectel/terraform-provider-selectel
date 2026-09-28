@@ -44,6 +44,8 @@ data "selectel_vpc_router_v2" "router_1" {
 
 * `status` - Status of the router, for example, `ACTIVE` or `DOWN`.
 
+* `ha` - Specifies whether the router runs in high availability mode.
+
 * `external_network_id` - Unique identifier of the external network the gateway is attached to, empty when the router has no gateway.
 
 * `enable_snat` - Specifies whether source NAT is enabled on the gateway.

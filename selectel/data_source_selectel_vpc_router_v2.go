@@ -47,6 +47,10 @@ func dataSourceVPCRouterV2() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"ha": {
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
 			"status": {
 				Type:     schema.TypeString,
 				Computed: true,

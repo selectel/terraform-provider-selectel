@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -53,6 +54,11 @@ func resourceVPCRouterV2() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
+			},
+			"ha": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
 			},
 			"external_network_id": {
 				Type:     schema.TypeString,
@@ -113,6 +119,9 @@ func resourceVPCRouterV2Create(ctx context.Context, d *schema.ResourceData, meta
 	}
 	if v, ok := d.GetOk("description"); ok {
 		request.Description = new(v.(string))
+	}
+	if schemaconfig.IsSet(d, "ha") {
+		request.HA = new(d.Get("ha").(bool))
 	}
 	if v, ok := d.GetOk("availability_zone_hints"); ok {
 		hints := convert.ToStringSlice(v.([]any))
@@ -207,7 +216,41 @@ func resourceVPCRouterV2Update(ctx context.Context, d *schema.ResourceData, meta
 		}
 	}
 
+	if d.HasChange("ha") {
+		selMutexKV.Lock(d.Id())
+		defer selMutexKV.Unlock(d.Id())
+
+		err := migrateVPCRouterV2HA(ctx, client, d.Id(), d.Get("ha").(bool), d.Get("admin_state_up").(bool))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	return resourceVPCRouterV2Read(ctx, d, meta)
+}
+
+func migrateVPCRouterV2HA(ctx context.Context, client *vpc.Client, id string, ha, adminStateUp bool) error {
+	if adminStateUp {
+		log.Printf("[DEBUG] disabling VPC router %s before changing ha", id)
+		if _, err := router.Update(ctx, client, id, router.UpdateRequest{AdminStateUp: new(false)}); err != nil {
+			return fmt.Errorf("error disabling VPC router %s before changing ha: %w", id, err)
+		}
+	}
+
+	log.Printf("[DEBUG] setting ha=%t on VPC router %s", ha, id)
+	_, migrateErr := router.Update(ctx, client, id, router.UpdateRequest{HA: new(ha)})
+	if migrateErr != nil {
+		migrateErr = fmt.Errorf("error migrating VPC router %s to ha=%t: %w", id, ha, migrateErr)
+	}
+
+	if adminStateUp {
+		log.Printf("[DEBUG] re-enabling VPC router %s after changing ha", id)
+		if _, err := router.Update(ctx, client, id, router.UpdateRequest{AdminStateUp: new(true)}); err != nil {
+			return errors.Join(migrateErr, fmt.Errorf("error re-enabling VPC router %s after changing ha: %w", id, err))
+		}
+	}
+
+	return migrateErr
 }
 
 func resourceVPCRouterV2Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -253,6 +296,7 @@ func flattenVPCRouterV2(d *schema.ResourceData, found *router.Router) {
 	d.Set("name", found.Name)
 	d.Set("description", found.Description)
 	d.Set("admin_state_up", found.AdminStateUp)
+	d.Set("ha", found.HA)
 	d.Set("status", found.Status)
 	d.Set("blocked", found.Blocked)
 

@@ -4,15 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/router"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/httptest"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemaconfig"
 )
 
@@ -410,4 +414,145 @@ func TestVPCRouterV2CheckCreated(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "VPC router r-1 is in ERROR status")
 	})
+}
+
+func TestVPCRouterV2HASchema(t *testing.T) {
+	ha := resourceVPCRouterV2().Schema["ha"]
+	require.NotNil(t, ha)
+	assert.Equal(t, schema.TypeBool, ha.Type)
+	assert.True(t, ha.Optional)
+	assert.True(t, ha.Computed)
+	assert.Nil(t, ha.Default)
+	assert.False(t, ha.ForceNew)
+
+	dsHA := dataSourceVPCRouterV2().Schema["ha"]
+	require.NotNil(t, dsHA)
+	assert.Equal(t, schema.TypeBool, dsHA.Type)
+	assert.True(t, dsHA.Computed)
+	assert.False(t, dsHA.Optional)
+}
+
+func TestMigrateVPCRouterV2HA(t *testing.T) {
+	newClient := func(t *testing.T, statuses ...int) (*vpc.Client, *[]string) {
+		t.Helper()
+		bodies := &[]string{}
+		client, err := vpc.NewClient(vpc.Config{
+			Endpoint: "https://vpc.example.test",
+			Token:    "token",
+			HTTPClient: &http.Client{
+				Transport: httptest.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
+					assert.Equal(t, http.MethodPut, req.Method)
+					assert.Equal(t, "/v2.0/routers/r-1", req.URL.Path)
+					raw, _ := io.ReadAll(req.Body)
+					*bodies = append(*bodies, string(raw))
+					status := http.StatusOK
+					if len(*bodies) <= len(statuses) {
+						status = statuses[len(*bodies)-1]
+					}
+					if status != http.StatusOK {
+						return httptest.NewFakeResponse(status,
+							`{"NeutronError": {"type": "BadRequest", "message": "boom"}}`), nil
+					}
+
+					return httptest.NewFakeResponse(http.StatusOK, `{"router": {"id": "r-1"}}`), nil
+				}),
+			},
+		})
+		require.NoError(t, err)
+
+		return client, bodies
+	}
+
+	t.Run("an enabled router is disabled around the change", func(t *testing.T) {
+		client, bodies := newClient(t)
+		require.NoError(t, migrateVPCRouterV2HA(context.Background(), client, "r-1", true, true))
+		require.Len(t, *bodies, 3)
+		assert.JSONEq(t, `{"router": {"admin_state_up": false}}`, (*bodies)[0])
+		assert.JSONEq(t, `{"router": {"ha": true}}`, (*bodies)[1])
+		assert.JSONEq(t, `{"router": {"admin_state_up": true}}`, (*bodies)[2])
+	})
+
+	t.Run("a disabled router changes in one call", func(t *testing.T) {
+		client, bodies := newClient(t)
+		require.NoError(t, migrateVPCRouterV2HA(context.Background(), client, "r-1", false, false))
+		require.Len(t, *bodies, 1)
+		assert.JSONEq(t, `{"router": {"ha": false}}`, (*bodies)[0])
+	})
+
+	t.Run("a failed change still re-enables the router", func(t *testing.T) {
+		client, bodies := newClient(t, http.StatusOK, http.StatusBadRequest, http.StatusOK)
+		err := migrateVPCRouterV2HA(context.Background(), client, "r-1", true, true)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "error migrating VPC router r-1 to ha=true")
+		assert.NotContains(t, err.Error(), "re-enabling")
+		require.Len(t, *bodies, 3)
+		assert.JSONEq(t, `{"router": {"admin_state_up": true}}`, (*bodies)[2])
+	})
+
+	t.Run("a failed re-enable is reported together with the change", func(t *testing.T) {
+		client, bodies := newClient(t, http.StatusOK, http.StatusBadRequest, http.StatusInternalServerError)
+		err := migrateVPCRouterV2HA(context.Background(), client, "r-1", true, true)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "error migrating VPC router r-1 to ha=true")
+		assert.Contains(t, err.Error(), "error re-enabling VPC router r-1")
+		require.Len(t, *bodies, 3)
+	})
+
+	t.Run("a failed disable stops before the change", func(t *testing.T) {
+		client, bodies := newClient(t, http.StatusInternalServerError)
+		err := migrateVPCRouterV2HA(context.Background(), client, "r-1", true, true)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "error disabling VPC router r-1")
+		require.Len(t, *bodies, 1)
+	})
+}
+
+func TestAccVPCRouterV2HA(t *testing.T) {
+	projectID, region := vpcV2TestEnv()
+
+	var found router.Router
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCRouterV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVPCRouterV2HA(projectID, region, true, true),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCRouterV2Exists(&found),
+					resource.TestCheckResourceAttr(testAccVPCRouterV2ResourceName, "ha", "true"),
+					resource.TestCheckResourceAttr(testAccVPCRouterV2ResourceName, "admin_state_up", "true"),
+				),
+			},
+			{
+				Config: testAccVPCRouterV2HA(projectID, region, false, true),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCRouterV2SameID(&found),
+					resource.TestCheckResourceAttr(testAccVPCRouterV2ResourceName, "ha", "false"),
+					resource.TestCheckResourceAttr(testAccVPCRouterV2ResourceName, "admin_state_up", "true"),
+				),
+			},
+			{
+				Config: testAccVPCRouterV2HA(projectID, region, true, false),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCRouterV2SameID(&found),
+					resource.TestCheckResourceAttr(testAccVPCRouterV2ResourceName, "ha", "true"),
+					resource.TestCheckResourceAttr(testAccVPCRouterV2ResourceName, "admin_state_up", "false"),
+				),
+			},
+		},
+	})
+}
+
+func testAccVPCRouterV2HA(projectID, region string, ha, adminStateUp bool) string {
+	return testAccVPCV2Base(projectID) + fmt.Sprintf(`
+resource "selectel_vpc_router_v2" "router_tf_acc_test_1" {
+  project_id     = local.project_id
+  region         = "%s"
+  name           = "router-ha"
+  ha             = %t
+  admin_state_up = %t
+}
+`, region, ha, adminStateUp)
 }
