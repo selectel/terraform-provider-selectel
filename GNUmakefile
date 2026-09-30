@@ -1,8 +1,12 @@
 TEST?=$$(go list ./...)
 GOFMT_FILES?=$$(find . -name '*.go')
 GOLANGCI_VERSION?=v2.12.2
-WEBSITE_REPO=github.com/hashicorp/terraform-website
 PKG_NAME=selectel
+TFPLUGINDOCS_VERSION?=v0.25.0
+TFPLUGINDOCS=go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@$(TFPLUGINDOCS_VERSION)
+MISSPELL_VERSION?=v0.8.0
+MISSPELL=go run github.com/golangci/misspell/cmd/misspell@$(MISSPELL_VERSION)
+DOCS_EXAMPLES=$(wildcard examples/resources/selectel_* examples/data-sources/selectel_*)
 
 default: build
 
@@ -16,7 +20,6 @@ build:
 	go build
 
 test:
-	go test -i $(TEST) || exit 1
 	echo $(TEST) | \
 		xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
 
@@ -40,20 +43,29 @@ test-compile:
 
 all: fmt import golangci-lint test testacc semgrep pin-sha-tags test-compile
 
-website:
-ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
-	echo "$(WEBSITE_REPO) not found in your GOPATH (necessary for layouts and assets), get-ting..."
-	git clone https://$(WEBSITE_REPO) $(GOPATH)/src/$(WEBSITE_REPO)
-endif
-	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
+docs:
+	$(TFPLUGINDOCS) generate
 
-website-test:
-ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
-	echo "$(WEBSITE_REPO) not found in your GOPATH (necessary for layouts and assets), get-ting..."
-	git clone https://$(WEBSITE_REPO) $(GOPATH)/src/$(WEBSITE_REPO)
-endif
-	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
+docs-check:
+	@snapshot=$$(mktemp -d); trap 'rm -rf "$$snapshot"' EXIT; cp -R docs "$$snapshot/docs" || exit 1; \
+	for cmd in generate validate; do \
+		if ! out=$$($(TFPLUGINDOCS) $$cmd 2>&1); then \
+			err=$$(echo "$$out" | sed -n '/^Error executing command/,$$p'); echo "$${err:-$$out}"; exit 1; \
+		fi; \
+	done; \
+	if ! diff -rq "$$snapshot/docs" docs; then \
+		echo "docs/ was out of date and has been regenerated, review and commit the changes"; \
+		exit 1; \
+	fi
 
+docs-misspell:
+	$(MISSPELL) -error -source text templates/ docs/
+
+examples-fmt:
+	@for dir in $(DOCS_EXAMPLES); do terraform fmt $$dir; done
+
+examples-check:
+	@for dir in $(DOCS_EXAMPLES); do terraform fmt -check -diff $$dir || exit 1; done
 
 # CLI reference:
 # https://github.com/aquasecurity/trivy/blob/main/docs/docs/references/configuration/cli/trivy_filesystem.md
@@ -87,4 +99,4 @@ pin-sha-tags:
 		-v ${PWD}/.github/workflows:/workflows \
 		mheap/pin-github-action@sha256:1a336147444c5be62b5bade8a7b82d971d138aac3c799f9ad72d0598331210aa .
 
-.PHONY: golangci-lint go-fix build test testacc fmt test-compile trivy semgrep pin-sha-tags website website-test
+.PHONY: golangci-lint go-fix build test testacc fmt test-compile docs docs-check examples-fmt examples-check docs-misspell trivy semgrep pin-sha-tags

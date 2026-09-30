@@ -1,4 +1,5 @@
 *.tf
+!examples/**/*.tf
 *.tfstate
 *.tfstate.backup
 *.tfstate.lock.info

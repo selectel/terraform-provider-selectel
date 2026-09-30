@@ -1,0 +1,53 @@
+---
+page_title: "Selectel: {{.Name}}"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}}
+
+{{ .Description | trimspace }}
+
+{{ if .HasExamples -}}
+## Example Usage
+
+{{- range .ExampleFiles }}
+
+{{ tffile . }}
+{{- end }}
+{{- end }}
+
+{{ .SchemaMarkdown | trimspace }}
+{{- if or .HasImport .HasImportIDConfig .HasImportIdentityConfig }}
+
+## Import
+{{- end }}
+{{- if .HasImportIdentityConfig }}
+
+### In Terraform 1.12.0 and later
+
+Use the [`import` block](https://developer.hashicorp.com/terraform/language/import) with the `identity` attribute:
+
+{{ tffile .ImportIdentityConfigFile }}
+
+{{ .IdentitySchemaMarkdown | trimspace }}
+{{- end }}
+{{- if .HasImportIDConfig }}
+
+### In Terraform 1.5.0 and later
+
+Use the [`import` block](https://developer.hashicorp.com/terraform/language/import) with the `id` attribute:
+
+{{ tffile .ImportIDConfigFile }}
+{{- end }}
+{{- if .HasImport }}
+
+### All versions
+
+Use the [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import):
+
+{{ codefile "shell" .ImportFile }}
+
+`<domain_name>`, `<username>`, and `<password>` are the arguments of the [provider configuration](https://registry.terraform.io/providers/selectel/selectel/latest/docs).
+Other identity attributes are described above in the import or resource sections.
+{{- end }}
