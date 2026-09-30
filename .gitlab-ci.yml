@@ -1,4 +1,0 @@
-include:
-  - project: terraform/ci-templates
-    ref: master
-    file: terraform-provider-selectel.yml
