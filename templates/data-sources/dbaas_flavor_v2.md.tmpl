@@ -1,10 +1,10 @@
 ---
-layout: "selectel"
 page_title: "Selectel: selectel_dbaas_flavor_v2"
-sidebar_current: "docs-selectel-datasource-dbaas-flavor-v2"
 description: |-
   Provides a list of flavors available in Selectel Managed Databases using public API v2.
 ---
+
+{{/* This template serves as a starting point for documentation generation */ -}}
 
 # selectel\_dbaas\_flavor\_v2
 
@@ -12,17 +12,7 @@ Provides a list of flavors available in Managed Databases using public API v2. L
 
 ## Example Usage
 
-```hcl
-data "selectel_dbaas_flavor_v2" "flavor" {
-  project_id = selectel_vpc_project_v2.project_1.id
-  region     = "ru-3"
-  filter {
-    datastore_type_id = data.selectel_dbaas_datastore_type_v2.dt.datastore_types[0].id
-    allowed_role      = "KEEPER"
-    fl_size           = "STANDARD"
-  }
-}
-```
+{{tffile "examples/data-sources/dbaas_flavor_v2/example_1.tf"}}
 
 ## Argument Reference
 

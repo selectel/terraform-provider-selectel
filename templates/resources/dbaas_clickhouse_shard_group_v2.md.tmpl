@@ -1,10 +1,10 @@
 ---
-layout: "selectel"
 page_title: "Selectel: selectel_dbaas_clickhouse_shard_group_v2"
-sidebar_current: "docs-selectel-resource-dbaas-clickhouse-shard-group-v2"
 description: |-
   Creates and manages a ClickHouse shard group in Selectel Managed Databases using public API v2.
 ---
+
+{{/* This template serves as a starting point for documentation generation */ -}}
 
 # selectel\_dbaas\_clickhouse\_shard\_group\_v2
 
@@ -12,16 +12,7 @@ Creates and manages a ClickHouse shard group using public API v2. Shard groups a
 
 ## Example usage
 
-```hcl
-resource "selectel_dbaas_clickhouse_shard_group_v2" "shard_group_1" {
-  project_id   = selectel_vpc_project_v2.project_1.id
-  region       = "ru-3"
-  datastore_id = selectel_dbaas_clickhouse_datastore_v2.cluster_1.id
-  name         = "group-1"
-  description  = "First shard group"
-  shard_names  = ["shard1", "shard2"]
-}
-```
+{{tffile "examples/resources/dbaas_clickhouse_shard_group_v2/example_1.tf"}}
 
 ## Argument Reference
 

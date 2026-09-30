@@ -1,10 +1,10 @@
 ---
-layout: "selectel"
 page_title: "Selectel: selectel_dbaas_clickhouse_configuration_parameter_v2"
-sidebar_current: "docs-selectel-datasource-dbaas-clickhouse-configuration-parameter-v2"
 description: |-
   Provides a list of configuration parameters available for Selectel Managed ClickHouse clusters.
 ---
+
+{{/* This template serves as a starting point for documentation generation */ -}}
 
 # selectel\_dbaas\_clickhouse\_configuration\_parameter\_v2
 
@@ -12,12 +12,7 @@ Provides a list of configuration parameters available for Managed ClickHouse clu
 
 ## Example Usage
 
-```hcl
-data "selectel_dbaas_clickhouse_configuration_parameter_v2" "configuration_parameter_1" {
-  project_id = selectel_vpc_project_v2.project_1.id
-  region     = "ru-3"
-}
-```
+{{tffile "examples/data-sources/dbaas_clickhouse_configuration_parameter_v2/example_1.tf"}}
 
 ## Argument Reference
 

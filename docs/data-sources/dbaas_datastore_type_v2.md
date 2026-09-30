@@ -1,7 +1,5 @@
 ---
-layout: "selectel"
 page_title: "Selectel: selectel_dbaas_datastore_type_v2"
-sidebar_current: "docs-selectel-datasource-dbaas-datastore-type-v2"
 description: |-
   Provides a list of available cluster types in Selectel Managed Databases using public API v2.
 ---
@@ -14,7 +12,7 @@ Provides a list of available cluster types in Managed Databases using public API
 
 ### ClickHouse
 
-```hcl
+```terraform
 data "selectel_dbaas_datastore_type_v2" "dt" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-3"

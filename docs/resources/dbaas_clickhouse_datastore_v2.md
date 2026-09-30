@@ -1,7 +1,5 @@
 ---
-layout: "selectel"
 page_title: "Selectel: selectel_dbaas_clickhouse_datastore_v2"
-sidebar_current: "docs-selectel-resource-dbaas-clickhouse-datastore-v2"
 description: |-
   Creates and manages a ClickHouse cluster in Selectel Managed Databases using public API v2.
 ---
@@ -12,7 +10,7 @@ Creates and manages a ClickHouse cluster using public API v2. For more informati
 
 ## Example usage
 
-```hcl
+```terraform
 resource "selectel_dbaas_clickhouse_datastore_v2" "cluster_1" {
   name       = "cluster-1"
   project_id = selectel_vpc_project_v2.project_1.id
@@ -34,7 +32,7 @@ resource "selectel_dbaas_clickhouse_datastore_v2" "cluster_1" {
   node_group {
     name           = "shard1"
     role           = "DATA"
-    node_count     = 2
+    node_count     = 1
     weight         = 100
     has_public_ips = true
     flavor {
@@ -50,7 +48,7 @@ resource "selectel_dbaas_clickhouse_datastore_v2" "cluster_1" {
     name           = "shard2"
     role           = "DATA"
     node_count     = 1
-    weight         = 50
+    weight         = 100
     has_public_ips = true
     flavor {
       vcpus     = 2
@@ -122,8 +120,6 @@ resource "selectel_dbaas_clickhouse_datastore_v2" "cluster_1" {
 * Do not change the `name` of an existing node group. The provider identifies groups by `name`. Keeping the name allows in-place updates (`node_count`, `weight`, `has_public_ips`, `flavor`). Changing a name when the number of groups is unchanged causes a `terraform plan` error. Changing a name while also adding or removing groups is treated as deleting the old group and creating a new one.
 
 * Do not change the `role` of an existing node group. Changing the role is prohibited by the provider and returns an error: `node_group: changing role of node group "<name>" is not allowed`.
-
-* You can freely change `node_count`, `weight`, `has_public_ips`, and `flavor` for existing groups.
 
 * Add new node groups to the end of the list. This minimizes display differences in the Terraform state.
 
