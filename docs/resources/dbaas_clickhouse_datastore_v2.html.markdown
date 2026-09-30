@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_dbaas\_clickhouse\_datastore\_v2
 
-Creates and manages a ClickHouse cluster using public API v2. For more information about Managed Databases, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/managed-databases/clickhouse/).
+Creates and manages a ClickHouse cluster using public API v2. For more information about Managed Databases, see the [official Selectel documentation](https://docs.selectel.ru/en/managed-databases/clickhouse/).
 
 ## Example usage
 
@@ -89,11 +89,11 @@ resource "selectel_dbaas_clickhouse_datastore_v2" "cluster_1" {
 
   * `weight` - (Optional) Weight of the node group. Used for `DATA` role groups to distribute data across shards. Must be greater than `0` for `DATA` role. Not applicable for `KEEPER` role. The default value is `0`.
 
-  * `has_public_ips` - (Optional) Assigns public IP addresses to the nodes in the group. The network configuration must meet the requirements. Not applicable for `KEEPER` role. Learn more about [public IP addresses and the required network configuration](https://docs.selectel.ru/en/cloud/managed-databases/clickhouse/public-ip/).
+  * `has_public_ips` - (Optional) Assigns public IP addresses to the nodes in the group. The network configuration must meet the requirements. Not applicable for `KEEPER` role. Learn more about [public IP addresses and the required network configuration](https://docs.selectel.ru/en/managed-databases/clickhouse/public-ip/).
 
   * `flavor` - (Required) Flavor configuration for the node group.
 
-    * `id` - (Optional) Unique identifier of the predefined flavor. Required for `FIXED` flavor type. Learn more about available flavors for [ClickHouse](https://docs.selectel.ru/en/cloud/managed-databases/clickhouse/configurations/).
+    * `id` - (Optional) Unique identifier of the predefined flavor. Required for `FIXED` flavor type. Learn more about available flavors for [ClickHouse](https://docs.selectel.ru/en/managed-databases/clickhouse/configurations/).
 
     * `type` - (Required) Flavor type. Available values are `FIXED` and `FLEXIBLE`. `FIXED` type uses predefined flavors, `FLEXIBLE` allows you to set custom vCPUs, RAM, and disk.
 
@@ -103,11 +103,11 @@ resource "selectel_dbaas_clickhouse_datastore_v2" "cluster_1" {
 
     * `disk` - (Optional) Volume size in GB. Required for `FLEXIBLE` flavor type.
 
-    * `disk_type` - (Optional) Volume type. Available values are `LOCAL` and `NETWORK_ULTRA`. Required for `FLEXIBLE` flavor type. Learn more about volumes for [ClickHouse](https://docs.selectel.ru/en/cloud/managed-databases/clickhouse/volumes/).
+    * `disk_type` - (Optional) Volume type. Available values are `LOCAL` and `NETWORK_ULTRA`. Required for `FLEXIBLE` flavor type. Learn more about volumes for [ClickHouse](https://docs.selectel.ru/en/managed-databases/clickhouse/volumes/).
 
 * `config` - (Optional) Configuration parameters for the cluster. You can retrieve information about available configuration parameters with the [selectel_dbaas_clickhouse_configuration_parameter_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_clickhouse_configuration_parameter_v2) data source. Setting a parameter to `null` resets it to the default value.
 
-* `security_groups` - (Optional) List of security groups. If no security group UUIDs are specified when creating the cluster, a default security group will be created and its UUID will be assigned automatically. A cluster must have at least one security group. Learn more about security groups for [ClickHouse](https://docs.selectel.ru/en/cloud/managed-databases/clickhouse/network-access-control/#security-groups-in-managed-databases).
+* `security_groups` - (Optional) List of security groups. If no security group UUIDs are specified when creating the cluster, a default security group will be created and its UUID will be assigned automatically. A cluster must have at least one security group. Learn more about security groups for [ClickHouse](https://docs.selectel.ru/en/managed-databases/clickhouse/network-access-control/#security-groups-in-managed-databases).
 
 * `log_platform` - (Optional) Name of an existing or a new log group in the [Logs](https://docs.selectel.ru/en/logs/about-logs/) service. The name must start with the prefix `s/dbaas/`. It can contain uppercase and lowercase letters, digits and symbols (underscore, hyphen, forward slash, period and hash). The name cannot exceed 512 symbols. For example, `s/dbaas/My-first-group`. Learn more about [Logs](https://docs.selectel.ru/en/managed-databases/clickhouse/logs/).
 

@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_dbaas\_clickhouse\_shard\_group\_v2
 
-Creates and manages a ClickHouse shard group using public API v2. Shard groups allow you to combine shards (node groups with `DATA` role) into logical groups for distributed queries. For more information about Managed Databases, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/managed-databases/clickhouse/).
+Creates and manages a ClickHouse shard group using public API v2. Shard groups allow you to combine shards (node groups with `DATA` role) into logical groups for distributed queries. For more information about Managed Databases, see the [official Selectel documentation](https://docs.selectel.ru/en/managed-databases/clickhouse/).
 
 ## Example usage
 

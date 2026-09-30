@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_dbaas\_clickhouse\_configuration\_parameter\_v2
 
-Provides a list of configuration parameters available for Managed ClickHouse clusters. For more information about configuration parameters, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/managed-databases/clickhouse/settings/).
+Provides a list of configuration parameters available for Managed ClickHouse clusters. For more information about configuration parameters, see the [official Selectel documentation](https://docs.selectel.ru/en/managed-databases/clickhouse/settings/).
 
 ## Example Usage
 

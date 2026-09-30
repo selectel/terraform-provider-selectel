@@ -8,7 +8,7 @@ description: |-
 
 # selectel\_dbaas\_flavor\_v2
 
-Provides a list of flavors available in Managed Databases using public API v2. Learn more about available configurations for [ClickHouse](https://docs.selectel.ru/en/cloud/managed-databases/clickhouse/configurations/).
+Provides a list of flavors available in Managed Databases using public API v2. Learn more about available configurations for [ClickHouse](https://docs.selectel.ru/en/managed-databases/clickhouse/configurations/).
 
 ## Example Usage
 
@@ -38,7 +38,7 @@ data "selectel_dbaas_flavor_v2" "flavor" {
 
   * `disk` - (Optional) Volume size in GB.
 
-  * `fl_size` - (Optional) Line of flavors. Available values are `STANDARD` (for the Standard, CPU, and Memory lines) and `HIGH_FREQ` (for the HighFreq line). Learn more about available configurations for [ClickHouse](https://docs.selectel.ru/en/cloud/managed-databases/clickhouse/configurations/).
+  * `fl_size` - (Optional) Line of flavors. Available values are `STANDARD` (for the Standard, CPU, and Memory lines) and `HIGH_FREQ` (for the HighFreq line). Learn more about available configurations for [ClickHouse](https://docs.selectel.ru/en/managed-databases/clickhouse/configurations/).
 
   * `datastore_type_id` - (Optional) Unique identifier of the cluster type. You can retrieve information about available cluster types with the [selectel_dbaas_datastore_type_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_datastore_type_v2) data source.
 
