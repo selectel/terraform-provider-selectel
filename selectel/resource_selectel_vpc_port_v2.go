@@ -16,6 +16,8 @@ import (
 
 const vpcPortV2Object = "VPC port"
 
+var portV2Docs = resourceDocs{Name: "port"}
+
 func resourceVPCPortV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVPCPortV2Create,
@@ -29,35 +31,36 @@ func resourceVPCPortV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCPortV2ImportState,
 		},
-		Schema: map[string]*schema.Schema{
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
+		Description: "Creates and manages a port using public API v2. " +
+			"For more information about ports, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/ports/).\n\n" +
+			upgradeGuideNote,
+		Schema: portV2Docs.withDocsHints(map[string]*schema.Schema{
+			"id":         portV2Docs.idResourceSchema(),
+			"project_id": projectIDResourceSchema(),
+			"region":     portV2Docs.regionResourceSchema(),
 			"network_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+				Description: "Unique identifier of the network the port belongs to. " +
+					"Retrieved from the [selectel_vpc_network_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_v2) resource.",
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Name of the port.",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Description of the port.",
 			},
 			"admin_state_up": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Specifies if the port is administratively up.",
 			},
 			"mac_address": {
 				Type:         schema.TypeString,
@@ -65,34 +68,45 @@ func resourceVPCPortV2() *schema.Resource {
 				Computed:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.IsMACAddress,
+				Description: "MAC address of the port, for example `fa:16:3e:4c:2c:30`. " +
+					"If not specified, it allocates one automatically.",
 			},
 			"device_id": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Description: "Unique identifier of the device the port is attached to.",
 			},
 			"device_owner": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Description: "Owner of the device the port is attached to.",
 			},
 			"fixed_ip": {
 				Type:          schema.TypeList,
 				Optional:      true,
 				ConflictsWith: []string{"no_fixed_ip"},
+				Description: "Fixed IPs of the port. Conflicts with `no_fixed_ip`. " +
+					"If neither is specified, allocates an address from one of the subnets of the network.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"subnet_id": {
 							Type:     schema.TypeString,
 							Optional: true,
+							Description: "Unique identifier of the subnet the address is allocated from. " +
+								"If not specified, selects a suitable subnet of the network. " +
+								"Retrieved from the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource.",
 						},
 						"ip_address": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Computed:     true,
 							ValidateFunc: validation.IsIPAddress,
+							Description: "Specific address to assign, for example `192.168.1.10`. " +
+								"If not specified, it allocates one from the subnet.",
 						},
 					},
 				},
@@ -102,56 +116,71 @@ func resourceVPCPortV2() *schema.Resource {
 				Optional:      true,
 				Default:       false,
 				ConflictsWith: []string{"fixed_ip"},
+				Description:   "Specifies whether to create the port without any fixed IP. Conflicts with `fixed_ip`.",
 			},
-			"all_fixed_ips": vpcComputedFixedIPsSchema(),
+			"all_fixed_ips": vpcComputedFixedIPsSchema("All fixed IPs of the port."),
 			"security_group_ids": {
 				Type:          schema.TypeSet,
 				Optional:      true,
 				ConflictsWith: []string{"no_security_groups"},
 				Elem:          &schema.Schema{Type: schema.TypeString},
+				Description: "Unique identifiers of security groups assigned to the port. " +
+					"Conflicts with `no_security_groups`. " +
+					"If not specified, the port gets the default security group of the project. " +
+					"Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource.",
 			},
 			"no_security_groups": {
 				Type:          schema.TypeBool,
 				Optional:      true,
 				Default:       false,
 				ConflictsWith: []string{"security_group_ids"},
+				Description: "Specifies whether to create the port without any security group. " +
+					"Conflicts with `security_group_ids`.",
 			},
 			"all_security_group_ids": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "All unique identifiers of security groups assigned to the port.",
 			},
 			"allowed_address_pairs": {
-				Type:     schema.TypeSet,
-				Optional: true,
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Additional IP and MAC address pairs allowed on the port.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"ip_address": {
 							Type:         schema.TypeString,
 							Required:     true,
 							ValidateFunc: validation.Any(validation.IsIPAddress, validation.IsCIDR),
+							Description:  "IP address or CIDR of the pair, for example, `192.168.0.10` or `192.168.0.0/24`.",
 						},
 						"mac_address": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Computed:     true,
 							ValidateFunc: validation.IsMACAddress,
+							Description: "MAC address of the pair, for example, `00:11:22:33:44:55`. " +
+								"If not specified, the pair gets own port MAC address.",
 						},
 					},
 				},
 			},
 			"extra_dhcp_option": {
-				Type:     schema.TypeSet,
-				Optional: true,
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Extra DHCP options configured on the port.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Name of the option.",
 						},
 						"value": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Value of the option.",
 						},
 						"ip_version": {
 							Type:     schema.TypeInt,
@@ -161,42 +190,50 @@ func resourceVPCPortV2() *schema.Resource {
 								vpcNetworkSubnetV2IPVersion4,
 								vpcNetworkSubnetV2IPVersion6,
 							}),
+							Description: "Internet protocol version of the option. Available versions are `4` or `6`.",
 						},
 					},
 				},
 			},
 			"dns_name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "DNS name of the port. " + privateDNSLearnMore,
 			},
 			"tags": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Tags of the port.",
 			},
 			"all_tags": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "All tags of the port.",
 			},
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Status of the port.",
 			},
 			"port_security_enabled": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Specifies if port security is enabled.",
 			},
 			"dhcp_blocked": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Specifies if DHCP is administratively blocked on the port.",
 			},
 			"blocked": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Specifies if the port is administratively blocked.",
 			},
-		},
+		}),
 	}
 }
 

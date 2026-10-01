@@ -16,6 +16,8 @@ import (
 	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/subnets"
 )
 
+var vpcPublicSubnetDocs = resourceDocs{Name: "public subnet"}
+
 func resourceVPCPublicSubnetV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVPCSubnetV2Create,
@@ -24,23 +26,20 @@ func resourceVPCPublicSubnetV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCSubnetV2ImportState,
 		},
-		Schema: map[string]*schema.Schema{
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
+		Description: "Creates and manages a public subnet using public API v2. " +
+			"For more information about public subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/public-subnets/).\n\n" +
+			upgradeGuideNote,
+		Schema: vpcPublicSubnetDocs.withDocsHints(map[string]*schema.Schema{
+			"id":         vpcPublicSubnetDocs.idResourceSchema(),
+			"project_id": projectIDResourceSchema(),
+			"region":     vpcPublicSubnetDocs.regionResourceSchema(),
 			"prefix_length": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				ForceNew:     true,
 				Default:      29,
 				ValidateFunc: validation.IntBetween(24, 29),
+				Description:  "Prefix length of the public subnet. Available values are from `24` to `29`.",
 			},
 			"ip_version": {
 				Type:     schema.TypeString,
@@ -51,22 +50,27 @@ func resourceVPCPublicSubnetV2() *schema.Resource {
 					string(selvpcclient.IPv4),
 					string(selvpcclient.IPv6),
 				}, false),
+				Description: "Internet protocol version supported in the public subnet. Available versions are `ipv4` or `ipv6`.",
 			},
 			"cidr": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "CIDR of the public subnet.",
 			},
 			"network_id": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Unique identifier of the parent service network.",
 			},
 			"subnet_id": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Unique identifier of the associated subnet in the parent service network.",
 			},
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Status of the public subnet.",
 			},
 			"servers": {
 				Type:     schema.TypeSet,
@@ -75,21 +79,25 @@ func resourceVPCPublicSubnetV2() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Unique identifier of the cloud server.",
 						},
 						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Name of the cloud server.",
 						},
 						"status": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Status of the cloud server.",
 						},
 					},
 				},
+				Description: "List of cloud servers that are located in the public subnet.",
 			},
-		},
+		}),
 	}
 }
 

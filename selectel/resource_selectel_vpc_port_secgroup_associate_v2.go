@@ -15,6 +15,8 @@ import (
 
 const vpcPortSecGroupAssociateV2Object = "VPC port security group association"
 
+var portSecGroupAssociateV2Docs = resourceDocs{Name: "port security group association"}
+
 func resourceVPCPortSecGroupAssociateV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVPCPortSecGroupAssociateV2Create,
@@ -25,38 +27,46 @@ func resourceVPCPortSecGroupAssociateV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCPortSecGroupAssociateV2ImportState,
 		},
-		Schema: map[string]*schema.Schema{
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+		Description: "Creates and manages the association between security groups and an existing port using public API v2. " +
+			"For more information about security groups, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/security-groups/).\n\n" +
+			"The resource addresses the port by identifier, never creates or deletes it, and does not manage any of its other attributes. " +
+			"Do not manage the same port with both this resource and the `security_group_ids` argument of `selectel_vpc_port_v2`.\n\n" +
+			upgradeGuideNote,
+		Schema: portSecGroupAssociateV2Docs.withDocsHints(map[string]*schema.Schema{
+			"id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Unique identifier of the port, for example, `1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809`.",
 			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
+			"project_id": projectIDResourceSchema(),
+			"region":     portSecGroupAssociateV2Docs.regionResourceSchema(),
 			"port_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+				Description: "Unique identifier of the port. " +
+					"Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.",
 			},
 			"security_group_ids": {
 				Type:     schema.TypeSet,
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
+				Description: "Unique identifiers of the security groups this resource manages on the port. " +
+					"Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource.",
 			},
 			"enforce": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Specifies if `security_group_ids` replaces the port's list of security groups or is appended to it.",
 			},
 			"all_security_group_ids": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "All unique identifiers of security groups of the port.",
 			},
-		},
+		}),
 	}
 }
 

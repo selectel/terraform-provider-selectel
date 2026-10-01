@@ -14,8 +14,12 @@ const (
 
 	regionLearnMore = "Learn more about available pools in [Product availability by location](https://docs.selectel.ru/en/infrastructure/product-availability-by-location/)."
 
+	upgradeGuideNote = "If you are upgrading from a version earlier than 9.0.0, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack provider."
+
 	exampleRegion     = "ru-6"
 	exampleResourceID = "b311ce58-2658-46b5-b733-7a0f418703f2"
+
+	privateDNSLearnMore = "Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/)."
 )
 
 type resourceDocs struct {
@@ -101,5 +105,21 @@ func projectIDIdentitySchema() *schema.Schema {
 		Type:              schema.TypeString,
 		RequiredForImport: true,
 		Description:       projectIDDescription + " " + projectIDFromControlPanel + " " + projectIDLearnMore,
+	}
+}
+
+func projectIDDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeString,
+		Required:    true,
+		Description: projectIDDescription + " " + projectIDFromResource + " " + projectIDLearnMore,
+	}
+}
+
+func regionDataSourceSchema(name string) *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeString,
+		Required:    true,
+		Description: fmt.Sprintf("Pool where the %s is located, for example, `%s`. %s", name, exampleRegion, regionLearnMore),
 	}
 }

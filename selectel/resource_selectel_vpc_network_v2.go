@@ -19,6 +19,8 @@ const (
 
 var vpcNetworkV2DNSDomainRegexp = regexp.MustCompile(`^$|\.$`)
 
+var vpcNetworkDocs = resourceDocs{Name: "network"}
+
 func resourceVPCNetworkV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVPCNetworkV2Create,
@@ -32,30 +34,29 @@ func resourceVPCNetworkV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCNetworkV2ImportState,
 		},
-		Schema: map[string]*schema.Schema{
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
+		Description: "Creates and manages a private network using public API v2. " +
+			"For more information about private networks, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/).\n\n" +
+			upgradeGuideNote,
+		Schema: vpcNetworkDocs.withDocsHints(map[string]*schema.Schema{
+			"id":         vpcNetworkDocs.idResourceSchema(),
+			"project_id": projectIDResourceSchema(),
+			"region":     vpcNetworkDocs.regionResourceSchema(),
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Name of the network.",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Description of the network.",
 			},
 			"admin_state_up": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Specifies if the network is administratively up.",
 			},
 			"dns_domain": {
 				Type:     schema.TypeString,
@@ -65,67 +66,81 @@ func resourceVPCNetworkV2() *schema.Resource {
 					vpcNetworkV2DNSDomainRegexp,
 					"fully-qualified (unambiguous) DNS domain names must have a dot at the end",
 				),
+				Description: "DNS domain of the network. " + privateDNSLearnMore,
 			},
 			"availability_zone_hints": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Pool segments requested for allocating the network. " + regionLearnMore,
 			},
 			"tags": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Tags of the network.",
 			},
 			"all_tags": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "All tags of the network.",
 			},
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Status of the network.",
 			},
 			"subnets": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Unique identifiers of the subnets within the network.",
 			},
 			"availability_zones": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Pool segments where the network is actually allocated.",
 			},
 			"shared": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Specifies if the network can be accessed by any project.",
 			},
 			"external": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Specifies if the network has an external routing facility.",
 			},
 			"mtu": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Maximum transmission unit of the network.",
 			},
 			"port_security_enabled": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Specifies if port security is enabled by default for the ports of the network.",
 			},
 			"blocked": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Specifies if the network is administratively blocked.",
 			},
 			"is_public": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Specifies if the network is public.",
 			},
 			"is_dns_enabled": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Specifies if the private DNS service is enabled for the network.",
 			},
-		},
+		}),
 	}
 }
 

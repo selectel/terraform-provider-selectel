@@ -14,6 +14,8 @@ import (
 
 const vpcFloatingIPAssociateV2Object = "VPC floating ip association"
 
+var floatingIPAssociateV2Docs = resourceDocs{Name: "association"}
+
 func resourceVPCFloatingIPAssociateV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVPCFloatingIPAssociateV2Create,
@@ -27,34 +29,47 @@ func resourceVPCFloatingIPAssociateV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCFloatingIPAssociateV2ImportState,
 		},
-		Schema: map[string]*schema.Schema{
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+		Description: "Creates and manages the association between an existing public floating IP address and an existing port using public API v2. " +
+			"For more information about public floating IP addresses, see the " +
+			"[official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/public-floating-ip-addresses/).\n\n" +
+			"The resource manages only the association and never creates or deletes the public floating IP address or the port.\n\n" +
+			upgradeGuideNote,
+		Schema: floatingIPAssociateV2Docs.withDocsHints(map[string]*schema.Schema{
+			"id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Unique identifier of the public floating IP address.",
 			},
+			"project_id": projectIDResourceSchema(),
 			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Pool where the public floating IP address and port are located, for example, `" + exampleRegion + "`. " + regionLearnMore,
 			},
 			"floating_ip": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.IsIPAddress,
+				Description: "Public floating IP address to associate, for example, `192.168.1.10`. " +
+					"Retrieved from the [selectel_vpc_floatingip_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_floatingip_v2) resource.",
 			},
 			"port_id": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "Unique identifier of the existing port. " +
+					"Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.",
 			},
 			"fixed_ip": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
 				ValidateFunc: validation.IsIPAddress,
+				Description: "Fixed IP address of the port to associate, for example, `192.168.1.10`. " +
+					"Must be set if the port has multiple fixed IP addresses. If the port has a single fixed IP address, can be omitted.",
 			},
-		},
+		}),
 	}
 }
 

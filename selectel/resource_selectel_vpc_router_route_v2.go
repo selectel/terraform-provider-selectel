@@ -19,6 +19,8 @@ const (
 	vpcRouterRouteV2IDSeparator = "-route-"
 )
 
+var routerRouteDocs = resourceDocs{Name: "route"}
+
 func resourceVPCRouterRouteV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVPCRouterRouteV2Create,
@@ -27,35 +29,43 @@ func resourceVPCRouterRouteV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCRouterRouteV2ImportState,
 		},
-		Schema: map[string]*schema.Schema{
-			"project_id": {
+		Description: "Creates and manages a single static route of a cloud router using public API v2. " +
+			"For more information about static routes, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/static-routes/).\n\n" +
+			"Do not manage the same router with both resources: `selectel_vpc_router_route_v2` and `selectel_vpc_router_routes_v2`.\n\n" +
+			upgradeGuideNote,
+		Schema: routerRouteDocs.withDocsHints(map[string]*schema.Schema{
+			"id": {
 				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Computed: true,
+				Description: "Composite identifier of the route in the format `<router_id>-route-<destination_cidr>-<next_hop>`, " +
+					"for example, `" + exampleResourceID + "-route-10.0.0.0/8-192.168.199.10`.",
 			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
+			"project_id": projectIDResourceSchema(),
+			"region":     routerRouteDocs.regionResourceSchema(),
 			"router_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+				Description: "Unique identifier of the router the route belongs to. " +
+					"Retrieved from the [selectel_vpc_router_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_v2) resource.",
 			},
 			"destination_cidr": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.IsCIDR,
+				Description:  "Destination CIDR of the route, for example, `10.0.0.0/8`.",
 			},
 			"next_hop": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.IsIPAddress,
+				Description: "Next hop IP address for the route, for example, `192.168.199.10`. " +
+					"Must be an address in a subnet connected to one of the router's internal interfaces. " +
+					"Can not use an address from the router's external gateway subnet.",
 			},
-		},
+		}),
 	}
 }
 

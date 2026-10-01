@@ -16,6 +16,8 @@ import (
 
 const vpcSecGroupV2Object = "VPC security group"
 
+var secGroupDocs = resourceDocs{Name: "security group"}
+
 func resourceVPCSecGroupV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVPCSecGroupV2Create,
@@ -29,56 +31,60 @@ func resourceVPCSecGroupV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCSecGroupV2ImportState,
 		},
-		Schema: map[string]*schema.Schema{
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
+		Description: "Creates and manages a security group using public API v2. " +
+			"For more information about security groups, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/security-groups/).\n\n" +
+			upgradeGuideNote,
+		Schema: secGroupDocs.withDocsHints(map[string]*schema.Schema{
+			"id":         secGroupDocs.idResourceSchema(),
+			"project_id": projectIDResourceSchema(),
+			"region":     secGroupDocs.regionResourceSchema(),
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of the security group.",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Description of the security group.",
 			},
 			"stateful": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Specifies if the security group is stateful.",
 			},
 			"delete_default_rules": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
-				ForceNew: true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				ForceNew:    true,
+				Description: "Specifies whether to delete the default egress rules. Default value is `false`.",
 			},
 			"tags": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Tags of the security group.",
 			},
 			"all_tags": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "All tags of the security group.",
 			},
 			"shared": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Specifies if another project has been granted access to this group.",
 			},
 			"security_group_rules": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Unique identifiers of rules contained in the security group.",
 			},
-		},
+		}),
 	}
 }
 

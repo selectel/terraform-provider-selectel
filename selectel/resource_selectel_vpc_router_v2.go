@@ -17,6 +17,8 @@ import (
 
 const vpcRouterV2Object = "VPC router"
 
+var routerDocs = resourceDocs{Name: "router"}
+
 func resourceVPCRouterV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVPCRouterV2Create,
@@ -30,78 +32,89 @@ func resourceVPCRouterV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCRouterV2ImportState,
 		},
-		Schema: map[string]*schema.Schema{
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
+		Description: "Creates and manages a cloud router using public API v2. " +
+			"For more information about cloud routers, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/cloud-routers/).\n\n" +
+			upgradeGuideNote,
+		Schema: routerDocs.withDocsHints(map[string]*schema.Schema{
+			"id":         routerDocs.idResourceSchema(),
+			"project_id": projectIDResourceSchema(),
+			"region":     routerDocs.regionResourceSchema(),
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Name of the router.",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Description of the router.",
 			},
 			"admin_state_up": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Specifies if the router is administratively up.",
 			},
 			"ha": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Computed: true,
+				Description: "Specifies if the router runs in high availability mode. " +
+					"Changing it on an existing router disables the router for the time of the change, so traffic through it is interrupted. " +
+					"Default value is `false`.",
 			},
 			"external_network_id": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Description: "Unique identifier of the external network the gateway is attached to. " +
+					"Retrieved from the [selectel_vpc_network_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/vpc_network_v2) data source with `external = true` filter.",
 			},
 			"enable_snat": {
 				Type:         schema.TypeBool,
 				Optional:     true,
 				Computed:     true,
 				RequiredWith: []string{"external_network_id"},
+				Description:  "Specifies if source NAT is enabled on the gateway. Requires `external_network_id`.",
 			},
 			"availability_zone_hints": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Pool segments requested for allocating the router. " + regionLearnMore,
 			},
 			"tags": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Tags of the router.",
 			},
 			"all_tags": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "All tags of the router.",
 			},
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Status of the router.",
 			},
 			"availability_zones": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Pool segments where the router is actually allocated.",
 			},
-			"external_fixed_ip": vpcComputedFixedIPsSchema(),
+			"external_fixed_ip": vpcComputedFixedIPsSchema("Gateway addresses of the router."),
 			"blocked": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Specifies if the router is administratively blocked.",
 			},
-		},
+		}),
 	}
 }
 

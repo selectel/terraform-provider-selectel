@@ -24,6 +24,8 @@ var (
 	}
 )
 
+var rbacPolicyDocs = resourceDocs{Name: "RBAC policy"}
+
 func resourceVPCRBACPolicyV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVPCRBACPolicyV2Create,
@@ -33,39 +35,43 @@ func resourceVPCRBACPolicyV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCRBACPolicyV2ImportState,
 		},
-		Schema: map[string]*schema.Schema{
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
+		Description: "Creates and manages an RBAC policy that grants another project access to a networking object using public API v2. " +
+			"For more information about managing network access, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/manage-access/).\n\n" +
+			upgradeGuideNote,
+		Schema: rbacPolicyDocs.withDocsHints(map[string]*schema.Schema{
+			"id":         rbacPolicyDocs.idResourceSchema(),
+			"project_id": projectIDResourceSchema(),
+			"region":     rbacPolicyDocs.regionResourceSchema(),
 			"action": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice(vpcRBACPolicyV2Actions, false),
+				Description: "Access granted by the policy. Available values are `access_as_shared` and `access_as_external`. " +
+					"`access_as_external` is applicable only when `object_type` is `network`.",
 			},
 			"object_type": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice(vpcRBACPolicyV2ObjectTypes, false),
+				Description:  "Type of the object to share. Available values are `network` and `security_group`.",
 			},
 			"object_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+				Description: "Unique identifier of the object being shared. " +
+					"Retrieved from the [selectel_vpc_network_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_v2) or [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource.",
 			},
 			"target_tenant": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "Unique identifier of the project the access is granted to. " +
+					"Changing this moves the grant from one project to another. " +
+					"To get the ID of an existing project, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project.",
 			},
-		},
+		}),
 	}
 }
 

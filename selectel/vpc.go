@@ -210,38 +210,44 @@ func mergeVPCTagsV2(allTags, oldTags, newTags *schema.Set) []string {
 	return convert.ToStringSlice(allTags.Difference(oldTags).Union(newTags).List())
 }
 
-func vpcComputedFixedIPsSchema() *schema.Schema {
+func vpcComputedFixedIPsSchema(description string) *schema.Schema {
 	return &schema.Schema{
-		Type:     schema.TypeList,
-		Computed: true,
+		Type:        schema.TypeList,
+		Computed:    true,
+		Description: description,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"subnet_id": {
-					Type:     schema.TypeString,
-					Computed: true,
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Unique identifier of the subnet the IP address comes from.",
 				},
 				"ip_address": {
-					Type:     schema.TypeString,
-					Computed: true,
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Assigned IP address.",
 				},
 			},
 		},
 	}
 }
 
-func vpcComputedRoutesSchema() *schema.Schema {
+func vpcComputedRoutesSchema(description string) *schema.Schema {
 	return &schema.Schema{
-		Type:     schema.TypeList,
-		Computed: true,
+		Type:        schema.TypeList,
+		Computed:    true,
+		Description: description,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"destination_cidr": {
-					Type:     schema.TypeString,
-					Computed: true,
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Destination CIDR of the route.",
 				},
 				"next_hop": {
-					Type:     schema.TypeString,
-					Computed: true,
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Next hop of the route.",
 				},
 			},
 		},

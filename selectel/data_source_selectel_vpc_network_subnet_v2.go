@@ -18,46 +18,53 @@ import (
 func dataSourceVPCNetworkSubnetV2() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceVPCNetworkSubnetV2Read,
+		Description: "Provides a subnet of a private network. " +
+			"For more information about private network subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/).\n\n" +
+			upgradeGuideNote,
 		Schema: map[string]*schema.Schema{
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
+			"project_id": projectIDDataSourceSchema(),
+			"region":     regionDataSourceSchema("subnet"),
 			"subnet_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+				Description: "Unique identifier of the subnet. " +
+					"To get the subnet ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ the network page ⟶ the **Subnets** tab ⟶ copy the ID of the required subnet. " +
+					"As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack subnet list` and copy the `ID` field.",
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Name of the subnet.",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Description of the subnet.",
 			},
 			"network_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+				Description: "Unique identifier of the parent network. " +
+					"To get the network ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ copy the ID of the required network. " +
+					"As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack network list` and copy the `ID` field.",
 			},
 			"cidr": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
 				ValidateFunc: validation.IsCIDR,
+				Description:  "CIDR of the subnet, for example `192.168.1.0/24`.",
 			},
 			"gateway_ip": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
 				ValidateFunc: validation.IsIPAddress,
+				Description:  "Gateway of the subnet, for example `192.168.1.1`.",
 			},
 			"ip_version": {
 				Type:     schema.TypeInt,
@@ -67,33 +74,41 @@ func dataSourceVPCNetworkSubnetV2() *schema.Resource {
 					vpcNetworkSubnetV2IPVersion4,
 					vpcNetworkSubnetV2IPVersion6,
 				}),
+				Description: "Internet protocol version. Available versions are `4` or `6`.",
 			},
 			"ipv6_address_mode": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
 				ValidateFunc: validation.StringInSlice(vpcNetworkSubnetV2IPv6Modes, false),
+				Description: "IPv6 address assignment mode. " +
+					"Available modes are `slaac`, `dhcpv6-stateful`, or `dhcpv6-stateless`.",
 			},
 			"ipv6_ra_mode": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
 				ValidateFunc: validation.StringInSlice(vpcNetworkSubnetV2IPv6Modes, false),
+				Description: "IPv6 router advertisement mode. " +
+					"Available modes are `slaac`, `dhcpv6-stateful`, or `dhcpv6-stateless`.",
 			},
 			"tags": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Tags of the subnet.",
 			},
 			"enable_dhcp": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Specifies if DHCP is enabled for the subnet.",
 			},
 			"dns_nameservers": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "DNS nameservers of the subnet.",
 			},
 			"allocation_pool": {
 				Type:     schema.TypeSet,
@@ -101,30 +116,38 @@ func dataSourceVPCNetworkSubnetV2() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"start": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "First address of the pool.",
 						},
 						"end": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Last address of the pool.",
 						},
 					},
 				},
+				Description: "Allocation pools of the subnet.",
 			},
-			"host_routes": vpcComputedRoutesSchema(),
+			"host_routes": vpcComputedRoutesSchema(
+				"Host routes of the subnet.",
+			),
 			"service_types": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Service types of the subnet.",
 			},
 			"all_tags": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "All tags of the subnet.",
 			},
 			"blocked": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Specifies if the subnet is administratively blocked.",
 			},
 		},
 	}

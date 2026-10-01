@@ -14,6 +14,8 @@ import (
 
 const vpcRouterRoutesV2Object = "VPC router routes"
 
+var routerRoutesDocs = resourceDocs{Name: "route set"}
+
 func resourceVPCRouterRoutesV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVPCRouterRoutesV2Create,
@@ -23,41 +25,49 @@ func resourceVPCRouterRoutesV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCRouterRoutesV2ImportState,
 		},
-		Schema: map[string]*schema.Schema{
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+		Description: "Creates and manages the complete set of static routes of a cloud router using public API v2. " +
+			"For more information about static routes, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/static-routes/).\n\n" +
+			"Do not manage the same router with both resources: `selectel_vpc_router_route_v2` and `selectel_vpc_router_routes_v2`.\n\n" +
+			upgradeGuideNote,
+		Schema: routerRoutesDocs.withDocsHints(map[string]*schema.Schema{
+			"id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Unique identifier of the router whose routes are managed, for example, `" + exampleResourceID + "`.",
 			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
+			"project_id": projectIDResourceSchema(),
+			"region":     routerRoutesDocs.regionResourceSchema(),
 			"router_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+				Description: "Unique identifier of the router whose routes are managed. " +
+					"Retrieved from the [selectel_vpc_router_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_v2) resource.",
 			},
 			"routes": {
-				Type:     schema.TypeSet,
-				Optional: true,
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Static routes to add to the router.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"destination_cidr": {
 							Type:         schema.TypeString,
 							Required:     true,
 							ValidateFunc: validation.IsCIDR,
+							Description:  "Destination CIDR of the route, for example, `10.0.0.0/8`.",
 						},
 						"next_hop": {
 							Type:         schema.TypeString,
 							Required:     true,
 							ValidateFunc: validation.IsIPAddress,
+							Description: "IP address of the next hop gateway, for example, `192.168.199.10`. " +
+								"Must be an address in a subnet connected to one of the router's internal interfaces. " +
+								"Can not use an address from the router's external gateway subnet.",
 						},
 					},
 				},
 			},
-		},
+		}),
 	}
 }
 

@@ -21,6 +21,8 @@ const (
 
 var vpcPortForwardingV2Protocols = []string{"tcp", "udp", "icmp", "ipv6-icmp", "sctp", "dccp"}
 
+var portForwardingV2Docs = resourceDocs{Name: "port forwarding rule"}
+
 func resourceVPCPortForwardingV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVPCPortForwardingV2Create,
@@ -33,30 +35,31 @@ func resourceVPCPortForwardingV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCPortForwardingV2ImportState,
 		},
-		Schema: map[string]*schema.Schema{
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
+		Description: "Creates and manages a port-forwarding rule of a public floating IP address using public API v2. " +
+			"For more information about public floating IP addresses, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/public-floating-ip-addresses/).\n\n" +
+			upgradeGuideNote,
+		Schema: portForwardingV2Docs.withDocsHints(map[string]*schema.Schema{
+			"id":         portForwardingV2Docs.idResourceSchema(),
+			"project_id": projectIDResourceSchema(),
+			"region":     portForwardingV2Docs.regionResourceSchema(),
 			"floatingip_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+				Description: "Unique identifier of the public floating IP address the rule belongs to. " +
+					"Retrieved from the [selectel_vpc_floatingip_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_floatingip_v2) resource.",
 			},
 			"internal_port_id": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "Unique identifier of the port traffic is forwarded to. " +
+					"Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.",
 			},
 			"internal_ip_address": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.IsIPv4Address,
+				Description:  "IPv4 address to which traffic is forwarded. Must be one of the fixed IPs of the internal port `internal_port_id`.",
 			},
 			"internal_port": {
 				Type:         schema.TypeInt,
@@ -64,6 +67,7 @@ func resourceVPCPortForwardingV2() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.IntBetween(1, 65535),
 				ExactlyOneOf: []string{"internal_port", "internal_port_range"},
+				Description:  "Port traffic is forwarded to. Specify either `internal_port` or `internal_port_range`. Available port range is from 1 to 65535.",
 			},
 			"internal_port_range": {
 				Type:         schema.TypeString,
@@ -71,6 +75,11 @@ func resourceVPCPortForwardingV2() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validateVPCPortForwardingV2PortRange,
 				ExactlyOneOf: []string{"internal_port", "internal_port_range"},
+				Description: "Range of ports traffic is forwarded to, for example, `8000:8002`. " +
+					"Specify either `internal_port` or `internal_port_range`. " +
+					"Must have the same size as `external_port_range`. " +
+					"To forward every port of `external_port_range` to one internal port, specify `internal_port` instead. " +
+					"The available range is from 1 to 65535.",
 			},
 			"external_port": {
 				Type:         schema.TypeInt,
@@ -78,6 +87,9 @@ func resourceVPCPortForwardingV2() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.IntBetween(1, 65535),
 				ExactlyOneOf: []string{"external_port", "external_port_range"},
+				Description: "Port traffic arrives at. " +
+					"Specify either `external_port` or `external_port_range`. " +
+					"The available range is from 1 to 65535.",
 			},
 			"external_port_range": {
 				Type:         schema.TypeString,
@@ -85,17 +97,24 @@ func resourceVPCPortForwardingV2() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validateVPCPortForwardingV2PortRange,
 				ExactlyOneOf: []string{"external_port", "external_port_range"},
+				Description: "Range of ports traffic arrives at, for example, `9000:9002`. " +
+					"Specify either `external_port` or `external_port_range`. " +
+					"Must have the same size as `internal_port_range`, or `internal_port` must be specified to forward every port of the range to one internal port. " +
+					"The available range is from 1 to 65535.",
 			},
 			"protocol": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice(vpcPortForwardingV2Protocols, false),
+				Description: "Protocol of the forwarded traffic. " +
+					"Available values are `tcp`, `udp`, `icmp`, `ipv6-icmp`, `sctp`, and `dccp`.",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Description of the rule.",
 			},
-		},
+		}),
 	}
 }
 

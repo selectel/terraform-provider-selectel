@@ -24,6 +24,8 @@ const (
 
 var vpcNetworkSubnetV2IPv6Modes = []string{"slaac", "dhcpv6-stateful", "dhcpv6-stateless"}
 
+var vpcNetworkSubnetDocs = resourceDocs{Name: "subnet"}
+
 func resourceVPCNetworkSubnetV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVPCNetworkSubnetV2Create,
@@ -37,52 +39,56 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCNetworkSubnetV2ImportState,
 		},
-		Schema: map[string]*schema.Schema{
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
+		Description: "Creates and manages a subnet of a private network using public API v2. " +
+			"For more information about private networks and subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/).\n\n" +
+			upgradeGuideNote,
+		Schema: vpcNetworkSubnetDocs.withDocsHints(map[string]*schema.Schema{
+			"id":         vpcNetworkSubnetDocs.idResourceSchema(),
+			"project_id": projectIDResourceSchema(),
+			"region":     vpcNetworkSubnetDocs.regionResourceSchema(),
 			"network_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+				Description: "Unique identifier of the parent network. " +
+					"Retrieved from the [selectel_vpc_network_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_v2) resource.",
 			},
 			"cidr": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validateVPCNetworkSubnetV2CIDR,
+				Description:  "CIDR of the subnet, for example `10.0.0.0/8`.",
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Name of the subnet.",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Description of the subnet.",
 			},
 			"allocation_pool": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Description: "Allocation pools of the subnet.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"start": {
 							Type:         schema.TypeString,
 							Required:     true,
 							ValidateFunc: validation.IsIPAddress,
+							Description:  "First address of the pool, for example, `192.168.199.10`.",
 						},
 						"end": {
 							Type:         schema.TypeString,
 							Required:     true,
 							ValidateFunc: validation.IsIPAddress,
+							Description:  "Last address of the pool, for example, `192.168.199.20`.",
 						},
 					},
 				},
@@ -93,12 +99,16 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 				Computed:      true,
 				ConflictsWith: []string{"no_gateway"},
 				ValidateFunc:  validation.IsIPAddress,
+				Description: "Gateway of the subnet, for example, `192.168.199.1`. " +
+					"Conflicts with `no_gateway`. Default value is the first address of the subnet.",
 			},
 			"no_gateway": {
 				Type:          schema.TypeBool,
 				Optional:      true,
 				Default:       false,
 				ConflictsWith: []string{"gateway_ip"},
+				Description: "Specifies whether to create the subnet without a gateway. " +
+					"Conflicts with `gateway_ip`.",
 			},
 			"ip_version": {
 				Type:     schema.TypeInt,
@@ -109,11 +119,13 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 					vpcNetworkSubnetV2IPVersion4,
 					vpcNetworkSubnetV2IPVersion6,
 				}),
+				Description: "Internet protocol version. Available versions are `4` or `6`.",
 			},
 			"enable_dhcp": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Specifies if DHCP is enabled for the subnet.",
 			},
 			"dns_nameservers": {
 				Type:     schema.TypeList,
@@ -122,6 +134,7 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 					Type:         schema.TypeString,
 					ValidateFunc: validation.IsIPAddress,
 				},
+				Description: "DNS nameservers of the subnet, for example, `188.93.16.19`.",
 			},
 			"ipv6_address_mode": {
 				Type:         schema.TypeString,
@@ -129,6 +142,8 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 				Computed:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice(vpcNetworkSubnetV2IPv6Modes, false),
+				Description: "IPv6 address assignment mode. Requires `ip_version` is `6`. " +
+					"Available modes are `slaac`, `dhcpv6-stateful`, or `dhcpv6-stateless`.",
 			},
 			"ipv6_ra_mode": {
 				Type:         schema.TypeString,
@@ -136,28 +151,34 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 				Computed:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice(vpcNetworkSubnetV2IPv6Modes, false),
+				Description: "IPv6 router advertisement mode. Requires `ip_version` to be `6`. " +
+					"Available modes are `slaac`, `dhcpv6-stateful`, or `dhcpv6-stateless`.",
 			},
 			"tags": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Tags of the subnet.",
 			},
 			"all_tags": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "All tags of the subnet.",
 			},
 			"service_types": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Service types of the subnet.",
 			},
 			"blocked": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Specifies if the subnet is administratively blocked.",
 			},
-			"host_routes": vpcComputedRoutesSchema(),
-		},
+			"host_routes": vpcComputedRoutesSchema("Host routes of the subnet."),
+		}),
 	}
 }
 

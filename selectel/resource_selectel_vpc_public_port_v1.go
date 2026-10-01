@@ -26,9 +26,8 @@ func resourceVPCPublicPortV1() *schema.Resource {
 		Identity: &schema.ResourceIdentity{
 			SchemaFunc: resourceVPCPublicPortV1IdentitySchema,
 		},
-		Description: "Creates and manages a direct public IP address (public port) in VPC using the V1 public API. " +
-			"For more information about direct public IP addresses, see the " +
-			"[official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses).",
+		Description: "Creates and manages a direct public IP address (public port) in VPC using public API v1. " +
+			"For more information about direct public IP addresses, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses).",
 		Schema: publicPortDocs.withDocsHints(map[string]*schema.Schema{
 			"id":         publicPortDocs.idResourceSchema(),
 			"region":     publicPortDocs.regionResourceSchema(),
@@ -36,7 +35,7 @@ func resourceVPCPublicPortV1() *schema.Resource {
 			"network_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Identifier of the service network to which the public port is attached.",
+				Description: "Unique identifier of the service network from which the public port is allocated.",
 			},
 			"ip_address": {
 				Type:        schema.TypeString,
@@ -47,12 +46,12 @@ func resourceVPCPublicPortV1() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "",
-				Description: "Public port description.",
+				Description: "Description of the public port.",
 			},
 			"subnet": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "CIDR of the subnet in which the public port IP address is allocated.",
+				Description: "CIDR of the subnet from which the public port IP address is allocated.",
 			},
 			"gateway": {
 				Type:        schema.TypeString,
@@ -63,7 +62,7 @@ func resourceVPCPublicPortV1() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "Enables (`true`) or disables (`false`) the public port administratively.",
+				Description: "Specifies if the port is administratively up.",
 			},
 			"security_group_ids": {
 				Type:     schema.TypeList,
@@ -73,9 +72,9 @@ func resourceVPCPublicPortV1() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				MaxItems: 20,
-				Description: "List of OpenStack security group identifiers to associate with the public port. " +
-					"Learn more about the [openstack_networking_secgroup_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_secgroup_v2) resource in the official OpenStack documentation. " +
-					"The default value is the identifier of the default security group in the project.",
+				Description: "Unique identifiers of security groups associated with the public port. " +
+					"If not specified, the port gets the default security group of the project. " +
+					"Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource.",
 			},
 		}),
 	}
@@ -84,7 +83,7 @@ func resourceVPCPublicPortV1() *schema.Resource {
 func resourceVPCPublicPortV1IdentitySchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"id": publicPortDocs.idIdentitySchema(
-			"To get the public port ID, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Cloud Platform** ⟶ **Network** ⟶ the **Direct public IP addresses** tab ⟶ copy the ID of the public port on the right side of the public port card."),
+			"To get the public port ID, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Direct public IP addresses** tab ⟶ copy the ID of the public port on the right side of the public port card."),
 		"project_id": projectIDIdentitySchema(),
 		"region": publicPortDocs.regionIdentitySchema(
 			"To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Direct public IP addresses** tab. The pool is under the IP address."),

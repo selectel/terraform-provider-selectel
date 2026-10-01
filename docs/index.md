@@ -1,7 +1,7 @@
 ---
-layout: "selectel"
 page_title: "Provider: Selectel"
-sidebar_current: "docs-selectel-index"
+description: |-
+  Use the Selectel provider to manage Selectel products.
 ---
 
 # Selectel provider
@@ -14,7 +14,7 @@ Backward compatibility is not guaranteed. Some Selectel functionality may be una
 
 ## Example Usage
 
-```hcl
+```terraform
 terraform {
   required_providers {
     selectel = {
@@ -32,7 +32,7 @@ resource "selectel_vpc_project_v2" "project_1" {
 
 ## Authentication (6.0.0 and later)
 
-```hcl
+```terraform
 # Configure the Selectel provider
 
 provider "selectel" {
@@ -64,7 +64,7 @@ provider "selectel" {
 
 ## Authentication (4.0.0 up to 5.*)
 
-```hcl
+```terraform
 # Configure the Selectel provider
 
 provider "selectel" {
@@ -94,7 +94,7 @@ provider "selectel" {
 
 ## Authentication (up to 3.11.0)
 
-```hcl
+```terraform
 # Configure the Selectel provider
 
 provider "selectel" {

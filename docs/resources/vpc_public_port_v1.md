@@ -1,12 +1,12 @@
 ---
 page_title: "Selectel: selectel_vpc_public_port_v1"
 description: |-
-  Creates and manages a direct public IP address (public port) in VPC using the V1 public API. For more information about direct public IP addresses, see the official Selectel documentation https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses.
+  Creates and manages a direct public IP address (public port) in VPC using public API v1. For more information about direct public IP addresses, see the official Selectel documentation https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses.
 ---
 
 # selectel_vpc_public_port_v1
 
-Creates and manages a direct public IP address (public port) in VPC using the V1 public API. For more information about direct public IP addresses, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses).
+Creates and manages a direct public IP address (public port) in VPC using public API v1. For more information about direct public IP addresses, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses).
 
 ## Example Usage
 
@@ -27,17 +27,17 @@ resource "selectel_vpc_public_port_v1" "port_1" {
 
 ### Optional
 
-- `admin_state_up` (Boolean) Enables (`true`) or disables (`false`) the public port administratively. The default value is `true`.
-- `description` (String) Public port description. The default value is an empty string.
-- `security_group_ids` (List of String) List of OpenStack security group identifiers to associate with the public port. Learn more about the [openstack_networking_secgroup_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_secgroup_v2) resource in the official OpenStack documentation. The default value is the identifier of the default security group in the project.
+- `admin_state_up` (Boolean) Specifies if the port is administratively up. The default value is `true`.
+- `description` (String) Description of the public port. The default value is an empty string.
+- `security_group_ids` (List of String) Unique identifiers of security groups associated with the public port. If not specified, the port gets the default security group of the project. Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource.
 
 ### Read-Only
 
 - `gateway` (String) IP address of the subnet gateway.
 - `id` (String) Unique identifier of the public port.
 - `ip_address` (String) Direct public IP address assigned to the public port.
-- `network_id` (String) Identifier of the service network to which the public port is attached.
-- `subnet` (String) CIDR of the subnet in which the public port IP address is allocated.
+- `network_id` (String) Unique identifier of the service network from which the public port is allocated.
+- `subnet` (String) CIDR of the subnet from which the public port IP address is allocated.
 
 ## Import
 
