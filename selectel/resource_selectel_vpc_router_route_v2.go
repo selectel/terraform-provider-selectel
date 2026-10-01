@@ -30,7 +30,7 @@ func resourceVPCRouterRouteV2() *schema.Resource {
 			StateContext: resourceVPCRouterRouteV2ImportState,
 		},
 		Description: "Creates and manages a single static route of a cloud router using public API v2. " +
-			"For more information about static routes, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/static-routes/).\n\n" +
+			staticRoutesMoreInfo + "\n\n" +
 			"Do not manage the same router with both resources: `selectel_vpc_router_route_v2` and `selectel_vpc_router_routes_v2`.\n\n" +
 			upgradeGuideNote,
 		Schema: routerRouteDocs.withDocsHints(map[string]*schema.Schema{
@@ -40,14 +40,14 @@ func resourceVPCRouterRouteV2() *schema.Resource {
 				Description: "Composite identifier of the route in the format `<router_id>-route-<destination_cidr>-<next_hop>`, " +
 					"for example, `" + exampleResourceID + "-route-10.0.0.0/8-192.168.199.10`.",
 			},
-			"project_id": projectIDResourceSchema(),
+			"project_id": routerRouteDocs.projectIDResourceSchema(),
 			"region":     routerRouteDocs.regionResourceSchema(),
 			"router_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 				Description: "Unique identifier of the router the route belongs to. " +
-					"Retrieved from the [selectel_vpc_router_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_v2) resource.",
+					routerIDFromResource,
 			},
 			"destination_cidr": {
 				Type:         schema.TypeString,

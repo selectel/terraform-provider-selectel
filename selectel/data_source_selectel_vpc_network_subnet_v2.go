@@ -15,6 +15,8 @@ import (
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemaconfig"
 )
 
+var vpcNetworkSubnetDataSourceDocs = dataSourceDocs{Name: "subnet"}
+
 func dataSourceVPCNetworkSubnetV2() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceVPCNetworkSubnetV2Read,
@@ -22,8 +24,9 @@ func dataSourceVPCNetworkSubnetV2() *schema.Resource {
 			"For more information about private network subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/).\n\n" +
 			upgradeGuideNote,
 		Schema: map[string]*schema.Schema{
-			"project_id": projectIDDataSourceSchema(),
-			"region":     regionDataSourceSchema("subnet"),
+			"id":         vpcNetworkSubnetDataSourceDocs.idSchema(),
+			"project_id": vpcNetworkSubnetDataSourceDocs.projectIDSchema(),
+			"region":     vpcNetworkSubnetDataSourceDocs.regionSchema(),
 			"subnet_id": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -49,8 +52,7 @@ func dataSourceVPCNetworkSubnetV2() *schema.Resource {
 				Optional: true,
 				Computed: true,
 				Description: "Unique identifier of the parent network. " +
-					"To get the network ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ copy the ID of the required network. " +
-					"As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack network list` and copy the `ID` field.",
+					networkIDFromControlPanel,
 			},
 			"cidr": {
 				Type:         schema.TypeString,

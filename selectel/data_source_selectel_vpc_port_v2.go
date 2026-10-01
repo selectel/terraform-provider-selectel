@@ -16,15 +16,18 @@ import (
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemaconfig"
 )
 
+var vpcPortDataSourceDocs = dataSourceDocs{Name: "port"}
+
 func dataSourceVPCPortV2() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceVPCPortV2Read,
 		Description: "Provides a port. " +
-			"For more information about ports, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/ports/).\n\n" +
+			portsMoreInfo + "\n\n" +
 			upgradeGuideNote,
 		Schema: map[string]*schema.Schema{
-			"project_id": projectIDDataSourceSchema(),
-			"region":     regionDataSourceSchema("port"),
+			"id":         vpcPortDataSourceDocs.idSchema(),
+			"project_id": vpcPortDataSourceDocs.projectIDSchema(),
+			"region":     vpcPortDataSourceDocs.regionSchema(),
 			"port_id": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -50,8 +53,7 @@ func dataSourceVPCPortV2() *schema.Resource {
 				Optional: true,
 				Computed: true,
 				Description: "Unique identifier of the network the port belongs to. " +
-					"To get the network ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ copy the ID of the required network. " +
-					"As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack network list` and copy the `ID` field.",
+					networkIDFromControlPanel,
 			},
 			"admin_state_up": {
 				Type:        schema.TypeBool,

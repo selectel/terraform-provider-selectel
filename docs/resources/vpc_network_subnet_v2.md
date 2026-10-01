@@ -38,12 +38,12 @@ resource "selectel_vpc_network_subnet_v2" "subnet_1" {
 - `description` (String) Description of the subnet.
 - `dns_nameservers` (List of String) DNS nameservers of the subnet, for example, `188.93.16.19`.
 - `enable_dhcp` (Boolean) Specifies if DHCP is enabled for the subnet. The default value is `true`.
-- `gateway_ip` (String) Gateway of the subnet, for example, `192.168.199.1`. Conflicts with `no_gateway`. Default value is the fist address of the subnet.
+- `gateway_ip` (String) Gateway of the subnet, for example, `192.168.199.1`. Default value is the first address of the subnet. Conflicts with `no_gateway`.
 - `ip_version` (Number) Internet protocol version. Available versions are `4` or `6`. Changing this creates a new subnet. The default value is `4`.
 - `ipv6_address_mode` (String) IPv6 address assignment mode. Requires `ip_version` is `6`. Available modes are `slaac`, `dhcpv6-stateful`, or `dhcpv6-stateless`. Changing this creates a new subnet.
 - `ipv6_ra_mode` (String) IPv6 router advertisement mode. Requires `ip_version` to be `6`. Available modes are `slaac`, `dhcpv6-stateful`, or `dhcpv6-stateless`. Changing this creates a new subnet.
 - `name` (String) Name of the subnet.
-- `no_gateway` (Boolean) Specifies whether to create the subnet without a gateway. Conflicts with `gateway_ip`. Default value is `false`. The default value is `false`.
+- `no_gateway` (Boolean) Specifies whether to create the subnet without a gateway. Conflicts with `gateway_ip`. The default value is `false`.
 - `tags` (Set of String) Tags of the subnet.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 

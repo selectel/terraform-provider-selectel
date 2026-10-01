@@ -31,7 +31,7 @@ func resourceVPCPublicPortV1() *schema.Resource {
 		Schema: publicPortDocs.withDocsHints(map[string]*schema.Schema{
 			"id":         publicPortDocs.idResourceSchema(),
 			"region":     publicPortDocs.regionResourceSchema(),
-			"project_id": projectIDResourceSchema(),
+			"project_id": publicPortDocs.projectIDResourceSchema(),
 			"network_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -74,7 +74,7 @@ func resourceVPCPublicPortV1() *schema.Resource {
 				MaxItems: 20,
 				Description: "Unique identifiers of security groups associated with the public port. " +
 					"If not specified, the port gets the default security group of the project. " +
-					"Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource.",
+					secGroupIDFromResource,
 			},
 		}),
 	}
@@ -83,8 +83,9 @@ func resourceVPCPublicPortV1() *schema.Resource {
 func resourceVPCPublicPortV1IdentitySchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"id": publicPortDocs.idIdentitySchema(
+			exampleResourceID,
 			"To get the public port ID, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Direct public IP addresses** tab ⟶ copy the ID of the public port on the right side of the public port card."),
-		"project_id": projectIDIdentitySchema(),
+		"project_id": publicPortDocs.projectIDIdentitySchema(),
 		"region": publicPortDocs.regionIdentitySchema(
 			"To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Direct public IP addresses** tab. The pool is under the IP address."),
 	}

@@ -19,7 +19,7 @@ const (
 	vpcNetworkSubnetRouteV2IDSeparator = "-route-"
 )
 
-var vpcNetworkSubnetRouteDocs = resourceDocs{Name: "route"}
+var vpcNetworkSubnetRouteDocs = resourceDocs{Name: "subnet route"}
 
 func resourceVPCNetworkSubnetRouteV2() *schema.Resource {
 	return &schema.Resource{
@@ -30,7 +30,7 @@ func resourceVPCNetworkSubnetRouteV2() *schema.Resource {
 			StateContext: resourceVPCNetworkSubnetRouteV2ImportState,
 		},
 		Description: "Creates and manages a single route of a subnet using public API v2. " +
-			"For more information about static routes, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/static-routes/).\n\n" +
+			staticRoutesMoreInfo + "\n\n" +
 			"The resource manages a single entry of the subnet's `host_routes` list and leaves the other entries alone. " +
 			"Do not manage the same routes both with this resource and the `host_routes` argument of `selectel_vpc_network_subnet_v2`.\n\n" +
 			upgradeGuideNote,
@@ -38,22 +38,17 @@ func resourceVPCNetworkSubnetRouteV2() *schema.Resource {
 			"id": {
 				Type:     schema.TypeString,
 				Computed: true,
-				Description: vpcNetworkSubnetRouteDocs.idDescription() + ". " +
-					"Composite identifier of the subnet route association in format `<subnet_id>-route-<destination_cidr>-<next_hop>`, for example, `8f6c1e9b-2a3d-4f50-9b8a-1c2d3e4f5a6b-route-10.0.0.0/8-192.168.199.10`.",
+				Description: "Composite identifier of the route in the format `<subnet_id>-route-<destination_cidr>-<next_hop>`, " +
+					"for example, `" + exampleResourceID + "-route-10.0.0.0/8-192.168.199.10`.",
 			},
-			"project_id": projectIDResourceSchema(),
-			"region": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Pool where the subnet is located, for example, `" + exampleRegion + "`. " + regionLearnMore,
-			},
+			"project_id": vpcNetworkSubnetRouteDocs.projectIDResourceSchema(),
+			"region":     vpcNetworkSubnetRouteDocs.regionResourceSchema(),
 			"subnet_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 				Description: "Unique identifier of the subnet the route belongs to. " +
-					"Retrieved from the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource.",
+					networkSubnetIDFromResource,
 			},
 			"destination_cidr": {
 				Type:         schema.TypeString,

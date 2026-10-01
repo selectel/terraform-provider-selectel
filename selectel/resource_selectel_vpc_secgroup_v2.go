@@ -32,11 +32,11 @@ func resourceVPCSecGroupV2() *schema.Resource {
 			StateContext: resourceVPCSecGroupV2ImportState,
 		},
 		Description: "Creates and manages a security group using public API v2. " +
-			"For more information about security groups, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/security-groups/).\n\n" +
+			securityGroupsMoreInfo + "\n\n" +
 			upgradeGuideNote,
 		Schema: secGroupDocs.withDocsHints(map[string]*schema.Schema{
 			"id":         secGroupDocs.idResourceSchema(),
-			"project_id": projectIDResourceSchema(),
+			"project_id": secGroupDocs.projectIDResourceSchema(),
 			"region":     secGroupDocs.regionResourceSchema(),
 			"name": {
 				Type:        schema.TypeString,
@@ -59,7 +59,7 @@ func resourceVPCSecGroupV2() *schema.Resource {
 				Optional:    true,
 				Default:     false,
 				ForceNew:    true,
-				Description: "Specifies whether to delete the default egress rules. Default value is `false`.",
+				Description: "Specifies whether to delete the default egress rules.",
 			},
 			"tags": {
 				Type:        schema.TypeSet,

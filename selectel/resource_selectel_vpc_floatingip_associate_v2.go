@@ -12,7 +12,7 @@ import (
 	"github.com/selectel/vpc-go/pkg/v2/floatingip"
 )
 
-const vpcFloatingIPAssociateV2Object = "VPC floating ip association"
+const vpcFloatingIPAssociateV2Object = "VPC floating ip association" //nolint:gosec
 
 var floatingIPAssociateV2Docs = resourceDocs{Name: "association"}
 
@@ -40,7 +40,7 @@ func resourceVPCFloatingIPAssociateV2() *schema.Resource {
 				Computed:    true,
 				Description: "Unique identifier of the public floating IP address.",
 			},
-			"project_id": projectIDResourceSchema(),
+			"project_id": floatingIPAssociateV2Docs.projectIDResourceSchema(),
 			"region": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -53,13 +53,13 @@ func resourceVPCFloatingIPAssociateV2() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.IsIPAddress,
 				Description: "Public floating IP address to associate, for example, `192.168.1.10`. " +
-					"Retrieved from the [selectel_vpc_floatingip_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_floatingip_v2) resource.",
+					floatingIPIDFromResource,
 			},
 			"port_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				Description: "Unique identifier of the existing port. " +
-					"Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.",
+					portIDFromResource,
 			},
 			"fixed_ip": {
 				Type:         schema.TypeString,

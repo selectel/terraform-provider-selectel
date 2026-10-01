@@ -33,11 +33,11 @@ func resourceVPCRouterV2() *schema.Resource {
 			StateContext: resourceVPCRouterV2ImportState,
 		},
 		Description: "Creates and manages a cloud router using public API v2. " +
-			"For more information about cloud routers, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/cloud-routers/).\n\n" +
+			cloudRoutersMoreInfo + "\n\n" +
 			upgradeGuideNote,
 		Schema: routerDocs.withDocsHints(map[string]*schema.Schema{
 			"id":         routerDocs.idResourceSchema(),
-			"project_id": projectIDResourceSchema(),
+			"project_id": routerDocs.projectIDResourceSchema(),
 			"region":     routerDocs.regionResourceSchema(),
 			"name": {
 				Type:        schema.TypeString,
@@ -75,7 +75,7 @@ func resourceVPCRouterV2() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				RequiredWith: []string{"external_network_id"},
-				Description:  "Specifies if source NAT is enabled on the gateway. Requires `external_network_id`.",
+				Description:  "Specifies if source NAT is enabled on the gateway.",
 			},
 			"availability_zone_hints": {
 				Type:        schema.TypeList,

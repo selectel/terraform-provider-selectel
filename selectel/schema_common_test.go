@@ -56,6 +56,51 @@ func TestWithDocsHints(t *testing.T) {
 		s["nested"].Elem.(*schema.Resource).Schema["inner"].Description)
 }
 
+func TestWithDocsHintsDependencies(t *testing.T) {
+	s := resourceDocs{Name: "port"}.withDocsHints(map[string]*schema.Schema{
+		"conflicts": {
+			Type:          schema.TypeString,
+			Optional:      true,
+			ForceNew:      true,
+			ConflictsWith: []string{"a", "b", "c"},
+			Description:   "Conflicting field.",
+		},
+		"pair": {
+			Type:         schema.TypeString,
+			Optional:     true,
+			ExactlyOneOf: []string{"pair", "other"},
+			Description:  "Pair field.",
+		},
+		"triple": {
+			Type:         schema.TypeString,
+			Optional:     true,
+			ExactlyOneOf: []string{"triple", "x", "y"},
+			Description:  "Triple field.",
+		},
+		"least": {
+			Type:         schema.TypeString,
+			Optional:     true,
+			AtLeastOneOf: []string{"least", "x"},
+			Description:  "Least field.",
+		},
+		"required": {
+			Type:         schema.TypeString,
+			Optional:     true,
+			RequiredWith: []string{"protocol", "port_range_min"},
+			Default:      "tcp",
+			Description:  "Required field.",
+		},
+	})
+
+	assert.Equal(t, "Conflicting field. Conflicts with `a`, `b`, and `c`. Changing this creates a new port.",
+		s["conflicts"].Description)
+	assert.Equal(t, "Pair field. Specify either `pair` or `other`.", s["pair"].Description)
+	assert.Equal(t, "Triple field. Exactly one of `triple`, `x`, and `y` must be specified.", s["triple"].Description)
+	assert.Equal(t, "Least field. At least one of `least` and `x` must be specified.", s["least"].Description)
+	assert.Equal(t, "Required field. Requires `protocol` and `port_range_min`. The default value is `tcp`.",
+		s["required"].Description)
+}
+
 func TestResourceDocsIDSchemas(t *testing.T) {
 	docs := resourceDocs{Name: "public port"}
 
@@ -63,7 +108,7 @@ func TestResourceDocsIDSchemas(t *testing.T) {
 	assert.True(t, res.Computed)
 	assert.Equal(t, "Unique identifier of the public port.", res.Description)
 
-	identity := docs.idIdentitySchema("Copy it from the card.")
+	identity := docs.idIdentitySchema(exampleResourceID, "Copy it from the card.")
 	assert.True(t, identity.RequiredForImport)
 	assert.Equal(t,
 		"Unique identifier of the public port, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. Copy it from the card.",

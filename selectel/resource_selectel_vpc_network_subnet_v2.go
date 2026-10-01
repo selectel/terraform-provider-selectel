@@ -44,14 +44,14 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 			upgradeGuideNote,
 		Schema: vpcNetworkSubnetDocs.withDocsHints(map[string]*schema.Schema{
 			"id":         vpcNetworkSubnetDocs.idResourceSchema(),
-			"project_id": projectIDResourceSchema(),
+			"project_id": vpcNetworkSubnetDocs.projectIDResourceSchema(),
 			"region":     vpcNetworkSubnetDocs.regionResourceSchema(),
 			"network_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 				Description: "Unique identifier of the parent network. " +
-					"Retrieved from the [selectel_vpc_network_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_v2) resource.",
+					networkIDFromResource,
 			},
 			"cidr": {
 				Type:         schema.TypeString,
@@ -100,15 +100,14 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 				ConflictsWith: []string{"no_gateway"},
 				ValidateFunc:  validation.IsIPAddress,
 				Description: "Gateway of the subnet, for example, `192.168.199.1`. " +
-					"Conflicts with `no_gateway`. Default value is the first address of the subnet.",
+					"Default value is the first address of the subnet.",
 			},
 			"no_gateway": {
 				Type:          schema.TypeBool,
 				Optional:      true,
 				Default:       false,
 				ConflictsWith: []string{"gateway_ip"},
-				Description: "Specifies whether to create the subnet without a gateway. " +
-					"Conflicts with `gateway_ip`.",
+				Description:   "Specifies whether to create the subnet without a gateway.",
 			},
 			"ip_version": {
 				Type:     schema.TypeInt,

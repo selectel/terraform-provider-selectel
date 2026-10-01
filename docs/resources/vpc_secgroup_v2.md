@@ -41,9 +41,9 @@ resource "selectel_vpc_secgroup_v2" "secgroup_2" {
 
 ### Optional
 
-- `delete_default_rules` (Boolean) Specifies whether to delete the default egress rules. Default value is `false`. Changing this creates a new security group. The default value is `false`.
+- `delete_default_rules` (Boolean) Specifies whether to delete the default egress rules. Changing this creates a new security group. The default value is `false`.
 - `description` (String) Description of the security group.
-- `stateful` (Boolean) Specifies if the security group is stateful. Default value is `false`.
+- `stateful` (Boolean) Specifies if the security group is stateful.
 - `tags` (Set of String) Tags of the security group.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 

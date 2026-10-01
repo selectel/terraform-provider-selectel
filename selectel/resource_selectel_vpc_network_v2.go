@@ -35,11 +35,11 @@ func resourceVPCNetworkV2() *schema.Resource {
 			StateContext: resourceVPCNetworkV2ImportState,
 		},
 		Description: "Creates and manages a private network using public API v2. " +
-			"For more information about private networks, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/).\n\n" +
+			privateNetworksMoreInfo + "\n\n" +
 			upgradeGuideNote,
 		Schema: vpcNetworkDocs.withDocsHints(map[string]*schema.Schema{
 			"id":         vpcNetworkDocs.idResourceSchema(),
-			"project_id": projectIDResourceSchema(),
+			"project_id": vpcNetworkDocs.projectIDResourceSchema(),
 			"region":     vpcNetworkDocs.regionResourceSchema(),
 			"name": {
 				Type:        schema.TypeString,

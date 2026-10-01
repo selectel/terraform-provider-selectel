@@ -42,9 +42,9 @@ resource "selectel_vpc_router_interface_v2" "interface_2" {
 
 ### Optional
 
-- `force_destroy` (Boolean) Specifies if static routes of the router that point into the attached subnet are deleted before the interface is detached. Default value is `false`. The default value is `false`.
-- `port_id` (String) Unique identifier of the port to attach. Conflicts with `subnet_id`. Port passed as `port_id` must have exactly one fixed IP. Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource. Changing this creates a new router interface.
-- `subnet_id` (String) Unique identifier of the subnet to attach. Conflicts with `port_id`. When attach through `subnet_id` creates the port for the interface. Retrieved from the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource. Changing this creates a new router interface.
+- `force_destroy` (Boolean) Specifies if static routes of the router that point into the attached subnet are deleted before the interface is detached. The default value is `false`.
+- `port_id` (String) Unique identifier of the port to attach. Port passed as `port_id` must have exactly one fixed IP. Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource. Specify either `port_id` or `subnet_id`. Changing this creates a new router interface.
+- `subnet_id` (String) Unique identifier of the subnet to attach. When attach through `subnet_id` creates the port for the interface. Retrieved from the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource. Specify either `subnet_id` or `port_id`. Changing this creates a new router interface.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only

@@ -30,7 +30,7 @@ resource "selectel_vpc_router_v2" "router_1" {
 
 ### Optional
 
-- `admin_state_up` (Boolean) Specifies if the router is administratively up. Default value is `true`. The default value is `true`.
+- `admin_state_up` (Boolean) Specifies if the router is administratively up. The default value is `true`.
 - `availability_zone_hints` (List of String) Pool segments requested for allocating the router. Learn more about available pools in [Product availability by location](https://docs.selectel.ru/en/infrastructure/product-availability-by-location/). Changing this creates a new router.
 - `description` (String) Description of the router.
 - `enable_snat` (Boolean) Specifies if source NAT is enabled on the gateway. Requires `external_network_id`.

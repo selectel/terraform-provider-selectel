@@ -40,20 +40,20 @@ func resourceVPCPortForwardingV2() *schema.Resource {
 			upgradeGuideNote,
 		Schema: portForwardingV2Docs.withDocsHints(map[string]*schema.Schema{
 			"id":         portForwardingV2Docs.idResourceSchema(),
-			"project_id": projectIDResourceSchema(),
+			"project_id": portForwardingV2Docs.projectIDResourceSchema(),
 			"region":     portForwardingV2Docs.regionResourceSchema(),
 			"floatingip_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 				Description: "Unique identifier of the public floating IP address the rule belongs to. " +
-					"Retrieved from the [selectel_vpc_floatingip_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_floatingip_v2) resource.",
+					floatingIPIDFromResource,
 			},
 			"internal_port_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				Description: "Unique identifier of the port traffic is forwarded to. " +
-					"Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.",
+					portIDFromResource,
 			},
 			"internal_ip_address": {
 				Type:         schema.TypeString,
@@ -67,7 +67,7 @@ func resourceVPCPortForwardingV2() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.IntBetween(1, 65535),
 				ExactlyOneOf: []string{"internal_port", "internal_port_range"},
-				Description:  "Port traffic is forwarded to. Specify either `internal_port` or `internal_port_range`. Available port range is from 1 to 65535.",
+				Description:  "Port traffic is forwarded to. Available port range is from 1 to 65535.",
 			},
 			"internal_port_range": {
 				Type:         schema.TypeString,
@@ -76,7 +76,6 @@ func resourceVPCPortForwardingV2() *schema.Resource {
 				ValidateFunc: validateVPCPortForwardingV2PortRange,
 				ExactlyOneOf: []string{"internal_port", "internal_port_range"},
 				Description: "Range of ports traffic is forwarded to, for example, `8000:8002`. " +
-					"Specify either `internal_port` or `internal_port_range`. " +
 					"Must have the same size as `external_port_range`. " +
 					"To forward every port of `external_port_range` to one internal port, specify `internal_port` instead. " +
 					"The available range is from 1 to 65535.",
@@ -88,7 +87,6 @@ func resourceVPCPortForwardingV2() *schema.Resource {
 				ValidateFunc: validation.IntBetween(1, 65535),
 				ExactlyOneOf: []string{"external_port", "external_port_range"},
 				Description: "Port traffic arrives at. " +
-					"Specify either `external_port` or `external_port_range`. " +
 					"The available range is from 1 to 65535.",
 			},
 			"external_port_range": {
@@ -98,7 +96,6 @@ func resourceVPCPortForwardingV2() *schema.Resource {
 				ValidateFunc: validateVPCPortForwardingV2PortRange,
 				ExactlyOneOf: []string{"external_port", "external_port_range"},
 				Description: "Range of ports traffic arrives at, for example, `9000:9002`. " +
-					"Specify either `external_port` or `external_port_range`. " +
 					"Must have the same size as `internal_port_range`, or `internal_port` must be specified to forward every port of the range to one internal port. " +
 					"The available range is from 1 to 65535.",
 			},

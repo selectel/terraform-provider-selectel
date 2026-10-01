@@ -29,18 +29,18 @@ func resourceVPCSecGroupRuleV2() *schema.Resource {
 			StateContext: resourceVPCSecGroupRuleV2ImportState,
 		},
 		Description: "Creates and manages a rule of a security group using public API v2. " +
-			"For more information about security groups, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/security-groups/).\n\n" +
+			securityGroupsMoreInfo + "\n\n" +
 			upgradeGuideNote,
 		Schema: secGroupRuleDocs.withDocsHints(map[string]*schema.Schema{
 			"id":         secGroupRuleDocs.idResourceSchema(),
-			"project_id": projectIDResourceSchema(),
+			"project_id": secGroupRuleDocs.projectIDResourceSchema(),
 			"region":     secGroupRuleDocs.regionResourceSchema(),
 			"security_group_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 				Description: "Unique identifier of the security group the rule belongs to. " +
-					"Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource.",
+					secGroupIDFromResource,
 			},
 			"direction": {
 				Type:         schema.TypeString,
@@ -71,7 +71,7 @@ func resourceVPCSecGroupRuleV2() *schema.Resource {
 				Description: "Protocol of the rule. " +
 					"As an alternative, you can specify an IP protocol number from `0` to `255` as a string. " +
 					"If not specified, the rule matches any protocol. " +
-					"Learn more about the security group rules in the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/security-groups/about-security-groups/).",
+					securityGroupRulesLearnMore,
 			},
 			"port_range_min": {
 				Type:         schema.TypeInt,
@@ -80,9 +80,9 @@ func resourceVPCSecGroupRuleV2() *schema.Resource {
 				ForceNew:     true,
 				RequiredWith: []string{"protocol"},
 				ValidateFunc: validation.IntBetween(0, 65535),
-				Description: "Lower bound of the port range. Available values are from `0` to `65535`. Requires `protocol`. " +
+				Description: "Lower bound of the port range. Available values are from `0` to `65535`. " +
 					"With `protocol = \"icmp\"`, specifies the ICMP **type** from `0` to `255` and can be set without `port_range_max`. " +
-					"Learn more about the security group rules in the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/security-groups/about-security-groups/).",
+					securityGroupRulesLearnMore,
 			},
 			"port_range_max": {
 				Type:         schema.TypeInt,
@@ -92,8 +92,8 @@ func resourceVPCSecGroupRuleV2() *schema.Resource {
 				RequiredWith: []string{"protocol", "port_range_min"},
 				ValidateFunc: validation.IntBetween(0, 65535),
 				Description: "Upper bound of the port range. Available values are from `0` to `65535`. " +
-					"Requires `protocol` and `port_range_min`. With `protocol = \"icmp\"`, specifies the ICMP **code** from `0` to `255`. " +
-					"Learn more about the security group rules in the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/security-groups/about-security-groups/).",
+					"With `protocol = \"icmp\"`, specifies the ICMP **code** from `0` to `255`. " +
+					securityGroupRulesLearnMore,
 			},
 			"remote_group_id": {
 				Type:          schema.TypeString,
@@ -102,7 +102,6 @@ func resourceVPCSecGroupRuleV2() *schema.Resource {
 				ForceNew:      true,
 				ConflictsWith: []string{"remote_ip_prefix"},
 				Description: "Unique identifier of the security group whose members the rule matches. " +
-					"Conflicts with `remote_ip_prefix`. " +
 					"Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/vpc_secgroup_v2) data source.",
 			},
 			"remote_ip_prefix": {
@@ -113,8 +112,7 @@ func resourceVPCSecGroupRuleV2() *schema.Resource {
 				ConflictsWith:    []string{"remote_group_id"},
 				DiffSuppressFunc: suppressVPCSecGroupRuleV2PrefixDiff,
 				ValidateFunc:     validation.IsCIDR,
-				Description: "CIDR the rule matches, for example `192.168.1.0/24`. " +
-					"Conflicts with `remote_group_id`.",
+				Description:      "CIDR the rule matches, for example `192.168.1.0/24`.",
 			},
 		}),
 	}

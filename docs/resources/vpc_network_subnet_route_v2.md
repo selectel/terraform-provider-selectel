@@ -2,7 +2,7 @@
 page_title: "Selectel: selectel_vpc_network_subnet_route_v2"
 description: |-
   Creates and manages a single route of a subnet using public API v2. For more information about static routes, see the official Selectel documentation https://docs.selectel.ru/en/cloud-servers/cloud-networks/static-routes/.
-  The resource manages a single entry of the subnet's host_routes list and leaves the other entries alone. Do not manage the same routes both with this resource and the host_routers argument of selectel_vpc_network_subnet_v2.
+  The resource manages a single entry of the subnet's host_routes list and leaves the other entries alone. Do not manage the same routes both with this resource and the host_routes argument of selectel_vpc_network_subnet_v2.
   If you are upgrading from a version earlier than 9.0.0, follow the upgrade guide https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9 to migrate your resources from the OpenStack provider.
 ---
 
@@ -10,7 +10,7 @@ description: |-
 
 Creates and manages a single route of a subnet using public API v2. For more information about static routes, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/static-routes/).
 
-The resource manages a single entry of the subnet's `host_routes` list and leaves the other entries alone. Do not manage the same routes both with this resource and the `host_routers` argument of `selectel_vpc_network_subnet_v2`.
+The resource manages a single entry of the subnet's `host_routes` list and leaves the other entries alone. Do not manage the same routes both with this resource and the `host_routes` argument of `selectel_vpc_network_subnet_v2`.
 
 If you are upgrading from a version earlier than 9.0.0, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack provider.
 
@@ -31,15 +31,15 @@ resource "selectel_vpc_network_subnet_route_v2" "route_1" {
 
 ### Required
 
-- `destination_cidr` (String) Destination CIDR of the route, for example, `10.0.0.0/8`. Changing this creates a new route.
-- `next_hop` (String) IP address of the next hop gateway, for example, `192.168.199.10`. Changing this creates a new route.
-- `project_id` (String) Unique identifier of the associated project, for example, `a07abc12310546f1b9291ab3013a7d75`. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/). Changing this creates a new route.
-- `region` (String) Pool where the subnet is located, for example, `ru-6`. Learn more about available pools in [Product availability by location](https://docs.selectel.ru/en/infrastructure/product-availability-by-location/). Changing this creates a new route.
-- `subnet_id` (String) Unique identifier of the subnet the route belongs to. Retrieved from the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource. Changing this creates a new route.
+- `destination_cidr` (String) Destination CIDR of the route, for example, `10.0.0.0/8`. Changing this creates a new subnet route.
+- `next_hop` (String) IP address of the next hop gateway, for example, `192.168.199.10`. Changing this creates a new subnet route.
+- `project_id` (String) Unique identifier of the associated project, for example, `a07abc12310546f1b9291ab3013a7d75`. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/). Changing this creates a new subnet route.
+- `region` (String) Pool where the subnet route is located, for example, `ru-6`. Learn more about available pools in [Product availability by location](https://docs.selectel.ru/en/infrastructure/product-availability-by-location/). Changing this creates a new subnet route.
+- `subnet_id` (String) Unique identifier of the subnet the route belongs to. Retrieved from the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource. Changing this creates a new subnet route.
 
 ### Read-Only
 
-- `id` (String) Unique identifier of the route. Composite identifier of the subnet route association in format `<subnet_id>-route-<destination_cidr>-<next_hop>`, for example, `8f6c1e9b-2a3d-4f50-9b8a-1c2d3e4f5a6b-route-10.0.0.0/8-192.168.199.10`.
+- `id` (String) Composite identifier of the route in the format `<subnet_id>-route-<destination_cidr>-<next_hop>`, for example, `b311ce58-2658-46b5-b733-7a0f418703f2-route-10.0.0.0/8-192.168.199.10`.
 
 ## Import
 

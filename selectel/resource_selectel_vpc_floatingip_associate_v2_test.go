@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const testAccVPCFloatingIPAssociateV2ResourceName = "selectel_vpc_floatingip_associate_v2.association_tf_acc_test_1"
+const testAccVPCFloatingIPAssociateV2ResourceName = "selectel_vpc_floatingip_associate_v2.association_tf_acc_test_1" //nolint:gosec
 
 func TestVPCFloatingIPAssociateV2Result(t *testing.T) {
 	const address = "203.0.113.10"

@@ -30,8 +30,8 @@ resource "selectel_vpc_public_subnet_v2" "subnet_1" {
 
 ### Optional
 
-- `ip_version` (String) Internet protocol version supported in the public subnet. Available versions are `ipv4` or `ipv6`. Default value is `ipv4`. Changing this creates a new public subnet. The default value is `ipv4`.
-- `prefix_length` (Number) Prefix length of the public subnet. Available values are from `24` to `29`. Default value is `29`. Changing this creates a new public subnet. The default value is `29`.
+- `ip_version` (String) Internet protocol version supported in the public subnet. Available versions are `ipv4` or `ipv6`. Changing this creates a new public subnet. The default value is `ipv4`.
+- `prefix_length` (Number) Prefix length of the public subnet. Available values are from `24` to `29`. Changing this creates a new public subnet. The default value is `29`.
 
 ### Read-Only
 

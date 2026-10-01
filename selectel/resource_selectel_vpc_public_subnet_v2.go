@@ -31,7 +31,7 @@ func resourceVPCPublicSubnetV2() *schema.Resource {
 			upgradeGuideNote,
 		Schema: vpcPublicSubnetDocs.withDocsHints(map[string]*schema.Schema{
 			"id":         vpcPublicSubnetDocs.idResourceSchema(),
-			"project_id": projectIDResourceSchema(),
+			"project_id": vpcPublicSubnetDocs.projectIDResourceSchema(),
 			"region":     vpcPublicSubnetDocs.regionResourceSchema(),
 			"prefix_length": {
 				Type:         schema.TypeInt,

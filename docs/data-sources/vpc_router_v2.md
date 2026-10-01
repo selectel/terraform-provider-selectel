@@ -47,7 +47,7 @@ data "selectel_vpc_router_v2" "router_1" {
 - `external_fixed_ip` (List of Object) Gateway addresses of the router. (see [below for nested schema](#nestedatt--external_fixed_ip))
 - `external_network_id` (String) Unique identifier of the external network the gateway is attached to.
 - `ha` (Boolean) Specifies if the router runs in high availability mode.
-- `id` (String) The ID of this resource.
+- `id` (String) Unique identifier of the router.
 - `routes` (List of Object) Static routes of the router. (see [below for nested schema](#nestedatt--routes))
 - `status` (String) Status of the router.
 

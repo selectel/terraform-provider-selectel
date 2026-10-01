@@ -32,18 +32,18 @@ func resourceVPCPortV2() *schema.Resource {
 			StateContext: resourceVPCPortV2ImportState,
 		},
 		Description: "Creates and manages a port using public API v2. " +
-			"For more information about ports, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/ports/).\n\n" +
+			portsMoreInfo + "\n\n" +
 			upgradeGuideNote,
 		Schema: portV2Docs.withDocsHints(map[string]*schema.Schema{
 			"id":         portV2Docs.idResourceSchema(),
-			"project_id": projectIDResourceSchema(),
+			"project_id": portV2Docs.projectIDResourceSchema(),
 			"region":     portV2Docs.regionResourceSchema(),
 			"network_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 				Description: "Unique identifier of the network the port belongs to. " +
-					"Retrieved from the [selectel_vpc_network_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_v2) resource.",
+					networkIDFromResource,
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -89,7 +89,7 @@ func resourceVPCPortV2() *schema.Resource {
 				Type:          schema.TypeList,
 				Optional:      true,
 				ConflictsWith: []string{"no_fixed_ip"},
-				Description: "Fixed IPs of the port. Conflicts with `no_fixed_ip`. " +
+				Description: "Fixed IPs of the port. " +
 					"If neither is specified, allocates an address from one of the subnets of the network.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -98,7 +98,7 @@ func resourceVPCPortV2() *schema.Resource {
 							Optional: true,
 							Description: "Unique identifier of the subnet the address is allocated from. " +
 								"If not specified, selects a suitable subnet of the network. " +
-								"Retrieved from the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource.",
+								networkSubnetIDFromResource,
 						},
 						"ip_address": {
 							Type:         schema.TypeString,
@@ -116,7 +116,7 @@ func resourceVPCPortV2() *schema.Resource {
 				Optional:      true,
 				Default:       false,
 				ConflictsWith: []string{"fixed_ip"},
-				Description:   "Specifies whether to create the port without any fixed IP. Conflicts with `fixed_ip`.",
+				Description:   "Specifies whether to create the port without any fixed IP.",
 			},
 			"all_fixed_ips": vpcComputedFixedIPsSchema("All fixed IPs of the port."),
 			"security_group_ids": {
@@ -125,17 +125,15 @@ func resourceVPCPortV2() *schema.Resource {
 				ConflictsWith: []string{"no_security_groups"},
 				Elem:          &schema.Schema{Type: schema.TypeString},
 				Description: "Unique identifiers of security groups assigned to the port. " +
-					"Conflicts with `no_security_groups`. " +
 					"If not specified, the port gets the default security group of the project. " +
-					"Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource.",
+					secGroupIDFromResource,
 			},
 			"no_security_groups": {
 				Type:          schema.TypeBool,
 				Optional:      true,
 				Default:       false,
 				ConflictsWith: []string{"security_group_ids"},
-				Description: "Specifies whether to create the port without any security group. " +
-					"Conflicts with `security_group_ids`.",
+				Description:   "Specifies whether to create the port without any security group.",
 			},
 			"all_security_group_ids": {
 				Type:        schema.TypeSet,

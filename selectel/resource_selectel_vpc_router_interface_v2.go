@@ -36,7 +36,7 @@ func resourceVPCRouterInterfaceV2() *schema.Resource {
 			StateContext: resourceVPCRouterInterfaceV2ImportState,
 		},
 		Description: "Creates and manages an interface that attaches a cloud router to a network using public API v2. " +
-			"For more information about cloud routers, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/cloud-routers/).\n\n" +
+			cloudRoutersMoreInfo + "\n\n" +
 			upgradeGuideNote,
 		Schema: routerInterfaceDocs.withDocsHints(map[string]*schema.Schema{
 			"id": {
@@ -44,14 +44,14 @@ func resourceVPCRouterInterfaceV2() *schema.Resource {
 				Computed:    true,
 				Description: "Unique identifier of the port the router is attached through, for example, `" + exampleResourceID + "`.",
 			},
-			"project_id": projectIDResourceSchema(),
+			"project_id": routerInterfaceDocs.projectIDResourceSchema(),
 			"region":     routerInterfaceDocs.regionResourceSchema(),
 			"router_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 				Description: "Unique identifier of the router the network is attached to. " +
-					"Retrieved from the [selectel_vpc_router_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_v2) resource.",
+					routerIDFromResource,
 			},
 			"network_id": {
 				Type:        schema.TypeString,
@@ -65,9 +65,8 @@ func resourceVPCRouterInterfaceV2() *schema.Resource {
 				ForceNew:     true,
 				ExactlyOneOf: []string{"subnet_id", "port_id"},
 				Description: "Unique identifier of the subnet to attach. " +
-					"Conflicts with `port_id`. " +
 					"When attach through `subnet_id` creates the port for the interface. " +
-					"Retrieved from the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource.",
+					networkSubnetIDFromResource,
 			},
 			"port_id": {
 				Type:         schema.TypeString,
@@ -76,9 +75,8 @@ func resourceVPCRouterInterfaceV2() *schema.Resource {
 				ForceNew:     true,
 				ExactlyOneOf: []string{"subnet_id", "port_id"},
 				Description: "Unique identifier of the port to attach. " +
-					"Conflicts with `subnet_id`. " +
 					"Port passed as `port_id` must have exactly one fixed IP. " +
-					"Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource.",
+					portIDFromResource,
 			},
 			"force_destroy": {
 				Type:        schema.TypeBool,

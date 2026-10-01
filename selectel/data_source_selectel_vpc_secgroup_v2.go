@@ -13,15 +13,18 @@ import (
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/convert"
 )
 
+var vpcSecGroupDataSourceDocs = dataSourceDocs{Name: "security group"}
+
 func dataSourceVPCSecGroupV2() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceVPCSecGroupV2Read,
 		Description: "Provides a security group. " +
-			"For more information about security groups, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/security-groups/).\n\n" +
+			securityGroupsMoreInfo + "\n\n" +
 			upgradeGuideNote,
 		Schema: map[string]*schema.Schema{
-			"project_id": projectIDDataSourceSchema(),
-			"region":     regionDataSourceSchema("security group"),
+			"id":         vpcSecGroupDataSourceDocs.idSchema(),
+			"project_id": vpcSecGroupDataSourceDocs.projectIDSchema(),
+			"region":     vpcSecGroupDataSourceDocs.regionSchema(),
 			"secgroup_id": {
 				Type:     schema.TypeString,
 				Optional: true,

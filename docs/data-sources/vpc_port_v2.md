@@ -39,7 +39,7 @@ data "selectel_vpc_port_v2" "port_1" {
 - `fixed_ip` (String) Address among the port fixed IP addresses, for example `192.168.1.10`.
 - `mac_address` (String) MAC address of the port, for example `fa:16:3e:4c:2c:30`.
 - `name` (String) Name of the port.
-- `network_id` (String) Unique identifier of the network the port belongs to. To get the network ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ copy the ID of the required network. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack network list` and copy the `ID` field.
+- `network_id` (String) Unique identifier of the network the port belongs to. To get the network ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ the **Private Network** tab ⟶ copy the ID of the required network.
 - `port_id` (String) Unique identifier of the port. To get the port ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ the network page ⟶ the **Ports** tab ⟶ copy the ID of the required port. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack port list` and copy the `ID` field.
 - `security_group_ids` (Set of String) Unique identifiers of security groups of which the port must have at least one assigned.
 - `status` (String) Status of the port. Available statuses are `ACTIVE` or `DOWN`.
@@ -54,7 +54,7 @@ data "selectel_vpc_port_v2" "port_1" {
 - `blocked` (Boolean) Specifies if the port is administratively blocked.
 - `dhcp_blocked` (Boolean) Specifies if DHCP is administratively blocked on the port.
 - `extra_dhcp_option` (Set of Object) Extra DHCP options configured on the port. (see [below for nested schema](#nestedatt--extra_dhcp_option))
-- `id` (String) The ID of this resource.
+- `id` (String) Unique identifier of the port.
 - `port_security_enabled` (Boolean) Specifies if port security is enabled.
 
 <a id="nestedatt--all_fixed_ips"></a>

@@ -39,12 +39,12 @@ resource "selectel_vpc_port_v2" "port_1" {
 - `device_owner` (String) Owner of the device the port is attached to. Changing this creates a new port.
 - `dns_name` (String) DNS name of the port. Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/).
 - `extra_dhcp_option` (Block Set) Extra DHCP options configured on the port. (see [below for nested schema](#nestedblock--extra_dhcp_option))
-- `fixed_ip` (Block List) Fixed IPs of the port. Conflicts with `no_fixed_ip`. If specify neither, allocates an address from one of the subnets of the network. (see [below for nested schema](#nestedblock--fixed_ip))
+- `fixed_ip` (Block List) Fixed IPs of the port. If neither is specified, allocates an address from one of the subnets of the network. Conflicts with `no_fixed_ip`. (see [below for nested schema](#nestedblock--fixed_ip))
 - `mac_address` (String) MAC address of the port, for example `fa:16:3e:4c:2c:30`. If not specified, it allocates one automatically. Changing this creates a new port.
 - `name` (String) Name of the port.
-- `no_fixed_ip` (Boolean) Specifies whether to create the port without any fixed IP. Conflicts with `fixed_ip`. Default value is `false`. The default value is `false`.
-- `no_security_groups` (Boolean) Specifies whether to create the port without any security group. The default value is `false`. Conflicts with `security_group_ids`. The default value is `false`.
-- `security_group_ids` (Set of String) Unique identifiers of security groups assigned to the port. Conflicts with `no_security_groups`. If not specified, the port gets the default security group of the project. Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource.
+- `no_fixed_ip` (Boolean) Specifies whether to create the port without any fixed IP. Conflicts with `fixed_ip`. The default value is `false`.
+- `no_security_groups` (Boolean) Specifies whether to create the port without any security group. Conflicts with `security_group_ids`. The default value is `false`.
+- `security_group_ids` (Set of String) Unique identifiers of security groups assigned to the port. If not specified, the port gets the default security group of the project. Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource. Conflicts with `no_security_groups`.
 - `tags` (Set of String) Tags of the port.
 
 ### Read-Only
@@ -89,7 +89,7 @@ Optional:
 Optional:
 
 - `ip_address` (String) Specific address to assign, for example `192.168.1.10`. If not specified, it allocates one from the subnet.
-- `subnet_id` (String) Unique identifier of the subnet the address is allocated from. If do not specify it, selects a suitable subnet of the network. Retrieved from the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource.
+- `subnet_id` (String) Unique identifier of the subnet the address is allocated from. If not specified, selects a suitable subnet of the network. Retrieved from the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource.
 
 
 <a id="nestedatt--all_fixed_ips"></a>

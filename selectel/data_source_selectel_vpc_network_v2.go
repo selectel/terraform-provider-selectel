@@ -16,22 +16,24 @@ import (
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemaconfig"
 )
 
+var vpcNetworkDataSourceDocs = dataSourceDocs{Name: "network"}
+
 func dataSourceVPCNetworkV2() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceVPCNetworkV2Read,
 		Description: "Provides a private network. " +
-			"For more information about private networks, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/).\n\n" +
+			privateNetworksMoreInfo + "\n\n" +
 			upgradeGuideNote,
 		Schema: map[string]*schema.Schema{
-			"project_id": projectIDDataSourceSchema(),
-			"region":     regionDataSourceSchema("network"),
+			"id":         vpcNetworkDataSourceDocs.idSchema(),
+			"project_id": vpcNetworkDataSourceDocs.projectIDSchema(),
+			"region":     vpcNetworkDataSourceDocs.regionSchema(),
 			"network_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				Description: "Unique identifier of the network. " +
-					"To get the network ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ copy the ID of the required network. " +
-					"As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack network list` and copy the `ID` field.",
+					networkIDFromControlPanel,
 			},
 			"name": {
 				Type:        schema.TypeString,

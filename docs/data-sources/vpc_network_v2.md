@@ -36,7 +36,7 @@ data "selectel_vpc_network_v2" "network_1" {
 - `matching_subnet_cidr` (String) CIDR of a subnet within the network, for example `192.168.1.0/24`.
 - `mtu` (Number) Maximum transmission unit of the network, for example `1500`.
 - `name` (String) Name of the network.
-- `network_id` (String) Unique identifier of the network. To get the network ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ copy the ID of the required network. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack network list` and copy the `ID` field.
+- `network_id` (String) Unique identifier of the network. To get the network ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ the **Private Network** tab ⟶ copy the ID of the required network.
 - `status` (String) Status of the network. Available statuses are `ACTIVE`, `DOWN`, `BUILD`, or `ERROR`.
 - `tags` (Set of String) Tags of the network.
 
@@ -48,7 +48,7 @@ data "selectel_vpc_network_v2" "network_1" {
 - `availability_zones` (List of String) Pool segments where the network is actually allocated.
 - `blocked` (Boolean) Specifies if the network is administratively blocked.
 - `dns_domain` (String) DNS domain of the network.
-- `id` (String) The ID of this resource.
+- `id` (String) Unique identifier of the network.
 - `is_dns_enabled` (Boolean) Specifies if the Private DNS service is enabled for the network.
 - `is_public` (Boolean) Specifies if the network is public.
 - `port_security_enabled` (Boolean) Specifies if port security is enabled by default for the ports of the network.

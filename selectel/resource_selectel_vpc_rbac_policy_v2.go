@@ -40,7 +40,7 @@ func resourceVPCRBACPolicyV2() *schema.Resource {
 			upgradeGuideNote,
 		Schema: rbacPolicyDocs.withDocsHints(map[string]*schema.Schema{
 			"id":         rbacPolicyDocs.idResourceSchema(),
-			"project_id": projectIDResourceSchema(),
+			"project_id": rbacPolicyDocs.projectIDResourceSchema(),
 			"region":     rbacPolicyDocs.regionResourceSchema(),
 			"action": {
 				Type:         schema.TypeString,

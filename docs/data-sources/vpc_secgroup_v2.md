@@ -47,7 +47,7 @@ data "selectel_vpc_secgroup_v2" "secgroup_2" {
 ### Read-Only
 
 - `all_tags` (Set of String) All tags of the security group.
-- `id` (String) The ID of this resource.
+- `id` (String) Unique identifier of the security group.
 - `security_group_rules` (List of String) Unique identifiers of rules contained in the security group.
 - `shared` (Boolean) Specifies if another project has been granted access to this group.
 - `stateful` (Boolean) Specifies if the security group is stateful.

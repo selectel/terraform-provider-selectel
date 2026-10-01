@@ -15,15 +15,18 @@ import (
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemaconfig"
 )
 
+var vpcRouterDataSourceDocs = dataSourceDocs{Name: "router"}
+
 func dataSourceVPCRouterV2() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceVPCRouterV2Read,
 		Description: "Provides a cloud router. " +
-			"For more information about cloud routers, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/cloud-routers/).\n\n" +
+			cloudRoutersMoreInfo + "\n\n" +
 			upgradeGuideNote,
 		Schema: map[string]*schema.Schema{
-			"project_id": projectIDDataSourceSchema(),
-			"region":     regionDataSourceSchema("router"),
+			"id":         vpcRouterDataSourceDocs.idSchema(),
+			"project_id": vpcRouterDataSourceDocs.projectIDSchema(),
+			"region":     vpcRouterDataSourceDocs.regionSchema(),
 			"router_id": {
 				Type:        schema.TypeString,
 				Optional:    true,

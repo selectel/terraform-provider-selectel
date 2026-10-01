@@ -12,7 +12,7 @@ import (
 	"github.com/selectel/vpc-go/pkg/v2/port"
 )
 
-const testAccVPCPortSecGroupAssociateV2ResourceName = "selectel_vpc_port_secgroup_associate_v2.associate_tf_acc_test_1"
+const testAccVPCPortSecGroupAssociateV2ResourceName = "selectel_vpc_port_secgroup_associate_v2.associate_tf_acc_test_1" //nolint:gosec
 
 func TestAccVPCPortSecGroupAssociateV2Additive(t *testing.T) {
 	projectID, region := vpcV2TestEnv()
@@ -281,8 +281,8 @@ resource "selectel_vpc_port_secgroup_associate_v2" "associate_tf_acc_test_1" {
 }
 
 const (
-	testAccVPCPortSecGroupAssociateV2SecondGroup = "selectel_vpc_secgroup_v2.secgroup_tf_acc_test_2.id"
-	testAccVPCPortSecGroupAssociateV2ThirdGroup  = "selectel_vpc_secgroup_v2.secgroup_tf_acc_test_3.id"
+	testAccVPCPortSecGroupAssociateV2SecondGroup = "selectel_vpc_secgroup_v2.secgroup_tf_acc_test_2.id" //nolint:gosec
+	testAccVPCPortSecGroupAssociateV2ThirdGroup  = "selectel_vpc_secgroup_v2.secgroup_tf_acc_test_3.id" //nolint:gosec
 )
 
 func testAccVPCPortSecGroupAssociateV2Managed(projectID, region, groups string, enforce bool) string {
