@@ -20,6 +20,8 @@ resource "selectel_vpc_port_forwarding_v2" "port_forwarding_1" {
   floatingip_id       = selectel_vpc_floatingip_v2.floatingip_1.id
   internal_port_id    = selectel_vpc_port_v2.port_1.id
   internal_ip_address = "192.168.199.50"
+  internal_port       = 80
+  external_port       = 8080
   protocol            = "tcp"
 }
 ```
@@ -40,8 +42,8 @@ resource "selectel_vpc_port_forwarding_v2" "port_forwarding_1" {
 
 - `description` (String) Description of the rule.
 - `external_port` (Number) Port traffic arrives at. The available range is from 1 to 65535. Specify either `external_port` or `external_port_range`.
-- `external_port_range` (String) Range of ports traffic arrives at, for example, `9000:9002`. Must have the same size as `internal_port_range`, or `internal_port` must be specified to forward every port of the range to one internal port. The available range is from 1 to 65535. Specify either `external_port_range` or `external_port`.
-- `internal_port` (Number) Port traffic is forwarded to. Available port range is from 1 to 65535. Specify either `internal_port` or `internal_port_range`.
+- `external_port_range` (String) Range of ports traffic arrives at, for example, `9000:9002`. Must have the same size as `internal_port_range`. If `internal_port` is specified instead, every port of the range is forwarded to it. The available range is from 1 to 65535. Specify either `external_port_range` or `external_port`.
+- `internal_port` (Number) Port traffic is forwarded to. The available range is from 1 to 65535. Specify either `internal_port` or `internal_port_range`.
 - `internal_port_range` (String) Range of ports traffic is forwarded to, for example, `8000:8002`. Must have the same size as `external_port_range`. To forward every port of `external_port_range` to one internal port, specify `internal_port` instead. The available range is from 1 to 65535. Specify either `internal_port_range` or `internal_port`.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 

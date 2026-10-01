@@ -62,7 +62,7 @@ func resourceVPCRouterV2() *schema.Resource {
 				Computed: true,
 				Description: "Specifies if the router runs in high availability mode. " +
 					"Changing it on an existing router disables the router for the time of the change, so traffic through it is interrupted. " +
-					"Default value is `false`.",
+					"If not specified, high availability is disabled.",
 			},
 			"external_network_id": {
 				Type:     schema.TypeString,

@@ -58,7 +58,7 @@ resource "selectel_vpc_router_routes_v2" "routes_1" {
 Required:
 
 - `destination_cidr` (String) Destination CIDR of the route, for example, `10.0.0.0/8`.
-- `next_hop` (String) IP address of the next hop gateway, for example, `192.168.199.10`. Must be an address in a subnet connected to one of the router's internal interfaces. Can not use an address from the router's external gateway subnet.
+- `next_hop` (String) IP address of the next hop gateway, for example, `192.168.199.10`. Must be an address in a subnet connected to one of the router's internal interfaces. Cannot be an address from the router's external gateway subnet.
 
 ## Import
 

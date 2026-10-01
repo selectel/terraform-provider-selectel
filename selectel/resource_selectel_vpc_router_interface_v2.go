@@ -65,7 +65,7 @@ func resourceVPCRouterInterfaceV2() *schema.Resource {
 				ForceNew:     true,
 				ExactlyOneOf: []string{"subnet_id", "port_id"},
 				Description: "Unique identifier of the subnet to attach. " +
-					"When attach through `subnet_id` creates the port for the interface. " +
+					"The port for the interface is created automatically. " +
 					networkSubnetIDFromResource,
 			},
 			"port_id": {
@@ -75,7 +75,7 @@ func resourceVPCRouterInterfaceV2() *schema.Resource {
 				ForceNew:     true,
 				ExactlyOneOf: []string{"subnet_id", "port_id"},
 				Description: "Unique identifier of the port to attach. " +
-					"Port passed as `port_id` must have exactly one fixed IP. " +
+					"The port must have exactly one fixed IP. " +
 					portIDFromResource,
 			},
 			"force_destroy": {

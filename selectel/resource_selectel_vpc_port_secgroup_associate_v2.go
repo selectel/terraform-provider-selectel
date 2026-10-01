@@ -55,10 +55,12 @@ func resourceVPCPortSecGroupAssociateV2() *schema.Resource {
 					secGroupIDFromResource,
 			},
 			"enforce": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-				Description: "Specifies if `security_group_ids` replaces the port's list of security groups or is appended to it.",
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				Description: "Specifies if `security_group_ids` replaces the port's list of security groups or is appended to it. " +
+					"If `false`, deleting the resource removes from the port only the groups listed in `security_group_ids`. " +
+					"If `true`, deleting the resource removes all security groups from the port.",
 			},
 			"all_security_group_ids": {
 				Type:        schema.TypeSet,

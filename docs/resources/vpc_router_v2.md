@@ -35,7 +35,7 @@ resource "selectel_vpc_router_v2" "router_1" {
 - `description` (String) Description of the router.
 - `enable_snat` (Boolean) Specifies if source NAT is enabled on the gateway. Requires `external_network_id`.
 - `external_network_id` (String) Unique identifier of the external network the gateway is attached to. Retrieved from the [selectel_vpc_network_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/vpc_network_v2) data source with `external = true` filter.
-- `ha` (Boolean) Specifies if the router runs in high availability mode. Changing it on an existing router disables the router for the time of the change, so traffic through it is interrupted. Default value is `false`.
+- `ha` (Boolean) Specifies if the router runs in high availability mode. Changing it on an existing router disables the router for the time of the change, so traffic through it is interrupted. If not specified, high availability is disabled.
 - `name` (String) Name of the router.
 - `tags` (Set of String) Tags of the router.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))

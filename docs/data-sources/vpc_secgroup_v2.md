@@ -14,14 +14,16 @@ If you are upgrading from a version earlier than 9.0.0, follow the [upgrade guid
 ## Example Usage
 
 ```terraform
-# Find the group by name
+# Security group found by name
 data "selectel_vpc_secgroup_v2" "secgroup_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-6"
   name       = "secgroup-1"
 }
+```
 
-# Find the default group of the project
+```terraform
+# Default security group of the project
 data "selectel_vpc_secgroup_v2" "secgroup_2" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-6"

@@ -33,7 +33,7 @@ resource "selectel_vpc_router_route_v2" "route_1" {
 ### Required
 
 - `destination_cidr` (String) Destination CIDR of the route, for example, `10.0.0.0/8`. Changing this creates a new route.
-- `next_hop` (String) Next hop IP address for the route, for example, `192.168.199.10`. Must be an address in a subnet connected to one of the router's internal interfaces. Can not use an address from the router's external gateway subnet. Changing this creates a new route.
+- `next_hop` (String) Next hop IP address for the route, for example, `192.168.199.10`. Must be an address in a subnet connected to one of the router's internal interfaces. Cannot be an address from the router's external gateway subnet. Changing this creates a new route.
 - `project_id` (String) Unique identifier of the associated project, for example, `a07abc12310546f1b9291ab3013a7d75`. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/). Changing this creates a new route.
 - `region` (String) Pool where the route is located, for example, `ru-6`. Learn more about available pools in [Product availability by location](https://docs.selectel.ru/en/infrastructure/product-availability-by-location/). Changing this creates a new route.
 - `router_id` (String) Unique identifier of the router the route belongs to. Retrieved from the [selectel_vpc_router_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_router_v2) resource. Changing this creates a new route.

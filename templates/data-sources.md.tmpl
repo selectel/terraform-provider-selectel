@@ -8,10 +8,13 @@ description: |-
 
 {{ .Description | trimspace }}
 
-{{ if .HasExample -}}
+{{ if .HasExamples -}}
 ## Example Usage
 
-{{ tffile .ExampleFile }}
+{{- range .ExampleFiles }}
+
+{{ tffile . }}
+{{- end }}
 {{- end }}
 
 {{ .SchemaMarkdown | trimspace }}

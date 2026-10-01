@@ -52,7 +52,7 @@ func resourceVPCSecGroupV2() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
-				Description: "Specifies if the security group is stateful.",
+				Description: "Specifies if the security group is stateful. If not specified, the security group is stateful.",
 			},
 			"delete_default_rules": {
 				Type:        schema.TypeBool,

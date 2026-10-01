@@ -17,15 +17,17 @@ If you are upgrading from a version earlier than 9.0.0, follow the [upgrade guid
 ## Example Usage
 
 ```terraform
-# Adding a group to whatever the port already has
+# Security group added to the existing groups of the port
 resource "selectel_vpc_port_secgroup_associate_v2" "associate_1" {
   project_id         = selectel_vpc_project_v2.project_1.id
   region             = "ru-6"
   port_id            = data.selectel_vpc_port_v2.port_1.id
   security_group_ids = [selectel_vpc_secgroup_v2.secgroup_1.id]
 }
+```
 
-# Making Terraform the sole authority over the port's groups
+```terraform
+# Security groups that replace the existing groups of the port
 resource "selectel_vpc_port_secgroup_associate_v2" "associate_2" {
   project_id         = selectel_vpc_project_v2.project_1.id
   region             = "ru-6"
@@ -47,7 +49,7 @@ resource "selectel_vpc_port_secgroup_associate_v2" "associate_2" {
 
 ### Optional
 
-- `enforce` (Boolean) Specifies if `security_group_ids` replaces the port's list of security groups or is appended to it. The default value is `false`.
+- `enforce` (Boolean) Specifies if `security_group_ids` replaces the port's list of security groups or is appended to it. If `false`, deleting the resource removes from the port only the groups listed in `security_group_ids`. If `true`, deleting the resource removes all security groups from the port. The default value is `false`.
 
 ### Read-Only
 

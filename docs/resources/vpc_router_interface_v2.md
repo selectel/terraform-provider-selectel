@@ -14,15 +14,17 @@ If you are upgrading from a version earlier than 9.0.0, follow the [upgrade guid
 ## Example Usage
 
 ```terraform
-# Attaching through a subnet: the API creates the port
+# Router interface attached through a subnet
 resource "selectel_vpc_router_interface_v2" "interface_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-6"
   router_id  = selectel_vpc_router_v2.router_1.id
   subnet_id  = selectel_vpc_network_subnet_v2.subnet_1.id
 }
+```
 
-# Attaching through a port you created yourself
+```terraform
+# Router interface attached through an existing port
 resource "selectel_vpc_router_interface_v2" "interface_2" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-6"
@@ -43,8 +45,8 @@ resource "selectel_vpc_router_interface_v2" "interface_2" {
 ### Optional
 
 - `force_destroy` (Boolean) Specifies if static routes of the router that point into the attached subnet are deleted before the interface is detached. The default value is `false`.
-- `port_id` (String) Unique identifier of the port to attach. Port passed as `port_id` must have exactly one fixed IP. Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource. Specify either `port_id` or `subnet_id`. Changing this creates a new router interface.
-- `subnet_id` (String) Unique identifier of the subnet to attach. When attach through `subnet_id` creates the port for the interface. Retrieved from the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource. Specify either `subnet_id` or `port_id`. Changing this creates a new router interface.
+- `port_id` (String) Unique identifier of the port to attach. The port must have exactly one fixed IP. Retrieved from the [selectel_vpc_port_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_port_v2) resource. Specify either `port_id` or `subnet_id`. Changing this creates a new router interface.
+- `subnet_id` (String) Unique identifier of the subnet to attach. The port for the interface is created automatically. Retrieved from the [selectel_vpc_network_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_subnet_v2) resource. Specify either `subnet_id` or `port_id`. Changing this creates a new router interface.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only

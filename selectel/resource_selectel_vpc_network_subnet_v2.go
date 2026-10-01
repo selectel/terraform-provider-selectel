@@ -100,7 +100,7 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 				ConflictsWith: []string{"no_gateway"},
 				ValidateFunc:  validation.IsIPAddress,
 				Description: "Gateway of the subnet, for example, `192.168.199.1`. " +
-					"Default value is the first address of the subnet.",
+					"If not specified, the first address of the subnet is used.",
 			},
 			"no_gateway": {
 				Type:          schema.TypeBool,
@@ -141,7 +141,7 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 				Computed:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice(vpcNetworkSubnetV2IPv6Modes, false),
-				Description: "IPv6 address assignment mode. Requires `ip_version` is `6`. " +
+				Description: "IPv6 address assignment mode. Requires `ip_version` to be `6`. " +
 					"Available modes are `slaac`, `dhcpv6-stateful`, or `dhcpv6-stateless`.",
 			},
 			"ipv6_ra_mode": {

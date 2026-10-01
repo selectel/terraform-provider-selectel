@@ -14,14 +14,16 @@ If you are upgrading from a version earlier than 9.0.0, follow the [upgrade guid
 ## Example Usage
 
 ```terraform
-# Creating a security group
+# Security group with the default egress rules
 resource "selectel_vpc_secgroup_v2" "secgroup_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-6"
   name       = "secgroup-1"
 }
+```
 
-# Starting from an empty group, without the egress rules the API adds
+```terraform
+# Security group without the default egress rules
 resource "selectel_vpc_secgroup_v2" "secgroup_2" {
   project_id           = selectel_vpc_project_v2.project_1.id
   region               = "ru-6"
@@ -43,7 +45,7 @@ resource "selectel_vpc_secgroup_v2" "secgroup_2" {
 
 - `delete_default_rules` (Boolean) Specifies whether to delete the default egress rules. Changing this creates a new security group. The default value is `false`.
 - `description` (String) Description of the security group.
-- `stateful` (Boolean) Specifies if the security group is stateful.
+- `stateful` (Boolean) Specifies if the security group is stateful. If not specified, the security group is stateful.
 - `tags` (Set of String) Tags of the security group.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 

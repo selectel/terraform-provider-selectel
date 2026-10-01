@@ -63,7 +63,7 @@ func resourceVPCRouterRouteV2() *schema.Resource {
 				ValidateFunc: validation.IsIPAddress,
 				Description: "Next hop IP address for the route, for example, `192.168.199.10`. " +
 					"Must be an address in a subnet connected to one of the router's internal interfaces. " +
-					"Can not use an address from the router's external gateway subnet.",
+					"Cannot be an address from the router's external gateway subnet.",
 			},
 		}),
 	}
