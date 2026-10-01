@@ -3,6 +3,7 @@ package schemadiff
 
 import (
 	"context"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -16,10 +17,8 @@ import (
 // set unknown in the plan lets the value from Read land in the state right away.
 func RecomputeOnChange(computed string, triggers ...string) schema.CustomizeDiffFunc {
 	return func(_ context.Context, d *schema.ResourceDiff, _ any) error {
-		for _, key := range triggers {
-			if d.HasChange(key) {
-				return d.SetNewComputed(computed)
-			}
+		if slices.ContainsFunc(triggers, d.HasChange) {
+			return d.SetNewComputed(computed)
 		}
 
 		return nil

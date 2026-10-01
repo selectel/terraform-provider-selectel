@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -130,9 +131,7 @@ func (r resourceDocs) identitySchema(regionHint string, attrs map[string]*schema
 		"project_id": r.projectIDIdentitySchema(),
 		"region":     r.regionIdentitySchema(regionHint),
 	}
-	for name, attr := range attrs {
-		result[name] = attr
-	}
+	maps.Copy(result, attrs)
 
 	return result
 }
