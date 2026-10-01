@@ -39,8 +39,8 @@ data "selectel_vpc_port_v2" "port_1" {
 - `fixed_ip` (String) Address among the port fixed IP addresses, for example `192.168.1.10`.
 - `mac_address` (String) MAC address of the port, for example `fa:16:3e:4c:2c:30`.
 - `name` (String) Name of the port.
-- `network_id` (String) Unique identifier of the network the port belongs to. To get the network ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ the **Private Network** tab ⟶ copy the ID of the required network.
-- `port_id` (String) Unique identifier of the port. To get the port ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ the network page ⟶ the **Ports** tab ⟶ copy the ID of the required port. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack port list` and copy the `ID` field.
+- `network_id` (String) Unique identifier of the network the port belongs to. To get the network ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Private networks** tab ⟶ the network page ⟶ copy the ID under the network name.
+- `port_id` (String) Unique identifier of the port. To get the port ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Private networks** tab ⟶ the network page ⟶ the **Ports** tab ⟶ copy the ID of the required port.
 - `security_group_ids` (Set of String) Unique identifiers of security groups of which the port must have at least one assigned.
 - `status` (String) Status of the port. Available statuses are `ACTIVE` or `DOWN`.
 - `tags` (Set of String) Tags of the port.

@@ -35,6 +35,11 @@ func resourceVPCRBACPolicyV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCRBACPolicyV2ImportState,
 		},
+		Identity: &schema.ResourceIdentity{
+			SchemaFunc: func() map[string]*schema.Schema {
+				return rbacPolicyDocs.identitySchemaByID(exampleResourceID, rbacPolicyIDFromOpenStackCLI, networkRegionFromControlPanel)
+			},
+		},
 		Description: "Creates and manages an RBAC policy that grants another project access to a networking object using public API v2. " +
 			"For more information about managing network access, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/manage-access/).\n\n" +
 			upgradeGuideNote,
@@ -113,6 +118,8 @@ func resourceVPCRBACPolicyV2Read(ctx context.Context, d *schema.ResourceData, me
 	d.Set("object_type", found.ObjectType)
 	d.Set("object_id", found.ObjectID)
 	d.Set("target_tenant", found.TargetTenant)
+
+	setProjectRegionIdentity(d)
 
 	return nil
 }

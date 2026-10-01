@@ -32,6 +32,11 @@ func resourceVPCRouterV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCRouterV2ImportState,
 		},
+		Identity: &schema.ResourceIdentity{
+			SchemaFunc: func() map[string]*schema.Schema {
+				return routerDocs.identitySchemaByID(exampleResourceID, routerIDFromControlPanel, routerRegionFromControlPanel)
+			},
+		},
 		Description: "Creates and manages a cloud router using public API v2. " +
 			cloudRoutersMoreInfo + "\n\n" +
 			upgradeGuideNote,
@@ -179,6 +184,8 @@ func resourceVPCRouterV2Read(ctx context.Context, d *schema.ResourceData, meta a
 	}
 
 	flattenVPCRouterV2(d, found)
+
+	setProjectRegionIdentity(d)
 
 	return nil
 }

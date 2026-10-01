@@ -28,6 +28,11 @@ func resourceVPCSecGroupRuleV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCSecGroupRuleV2ImportState,
 		},
+		Identity: &schema.ResourceIdentity{
+			SchemaFunc: func() map[string]*schema.Schema {
+				return secGroupRuleDocs.identitySchemaByID(exampleResourceID, secGroupRuleIDFromOpenStackCLI, secGroupRegionFromControlPanel)
+			},
+		},
 		Description: "Creates and manages a rule of a security group using public API v2. " +
 			securityGroupsMoreInfo + "\n\n" +
 			upgradeGuideNote,
@@ -156,6 +161,8 @@ func resourceVPCSecGroupRuleV2Read(ctx context.Context, d *schema.ResourceData, 
 	d.Set("port_range_max", found.PortRangeMax)
 	d.Set("remote_group_id", found.RemoteGroupID)
 	d.Set("remote_ip_prefix", found.RemoteIPPrefix)
+
+	setProjectRegionIdentity(d)
 
 	return nil
 }

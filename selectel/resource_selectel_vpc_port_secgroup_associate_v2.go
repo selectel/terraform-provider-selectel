@@ -27,6 +27,11 @@ func resourceVPCPortSecGroupAssociateV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCPortSecGroupAssociateV2ImportState,
 		},
+		Identity: &schema.ResourceIdentity{
+			SchemaFunc: func() map[string]*schema.Schema {
+				return portV2Docs.identitySchemaByID(exampleResourceID, portIDFromControlPanel, networkRegionFromControlPanel)
+			},
+		},
 		Description: "Creates and manages the association between security groups and an existing port using public API v2. " +
 			securityGroupsMoreInfo + "\n\n" +
 			"The resource addresses the port by identifier, never creates or deletes it, and does not manage any of its other attributes. " +
@@ -133,6 +138,8 @@ func resourceVPCPortSecGroupAssociateV2Read(ctx context.Context, d *schema.Resou
 	if err := d.Set("security_group_ids", managed); err != nil {
 		log.Print(errSettingComplexAttr("security_group_ids", err))
 	}
+
+	setProjectRegionIdentity(d)
 
 	return nil
 }

@@ -63,7 +63,7 @@ import {
 
 - `id` (String) Unique identifier of the public port, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the public port ID, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Direct public IP addresses** tab ⟶ copy the ID of the public port on the right side of the public port card.
 - `project_id` (String) Unique identifier of the associated project, for example, `a07abc12310546f1b9291ab3013a7d75`. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
-- `region` (String) Pool where the public port is located, for example, `ru-6`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Direct public IP addresses** tab. The pool is under the IP address. Learn more about available pools in [Product availability by location](https://docs.selectel.ru/en/infrastructure/product-availability-by-location/).
+- `region` (String) Pool where the public port is located, for example, `ru-6`. To get the pool, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Direct public IP addresses** tab. The pool is under the IP address. Learn more about available pools in [Product availability by location](https://docs.selectel.ru/en/infrastructure/product-availability-by-location/).
 
 ### In Terraform 1.5.0 and later
 

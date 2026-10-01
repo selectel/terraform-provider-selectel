@@ -25,6 +25,11 @@ func resourceVPCRouterRoutesV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCRouterRoutesV2ImportState,
 		},
+		Identity: &schema.ResourceIdentity{
+			SchemaFunc: func() map[string]*schema.Schema {
+				return routerDocs.identitySchemaByID(exampleResourceID, routerIDFromControlPanel, routerRegionFromControlPanel)
+			},
+		},
 		Description: "Creates and manages the complete set of static routes of a cloud router using public API v2. " +
 			staticRoutesMoreInfo + "\n\n" +
 			"Do not manage the same router with both resources: `selectel_vpc_router_route_v2` and `selectel_vpc_router_routes_v2`.\n\n" +
@@ -121,6 +126,8 @@ func resourceVPCRouterRoutesV2Read(ctx context.Context, d *schema.ResourceData, 
 	if err := d.Set("routes", flattenVPCRouterRoutesV2(found.Routes)); err != nil {
 		log.Print(errSettingComplexAttr("routes", err))
 	}
+
+	setProjectRegionIdentity(d)
 
 	return nil
 }

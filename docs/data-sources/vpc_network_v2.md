@@ -36,7 +36,7 @@ data "selectel_vpc_network_v2" "network_1" {
 - `matching_subnet_cidr` (String) CIDR of a subnet within the network, for example `192.168.1.0/24`.
 - `mtu` (Number) Maximum transmission unit of the network, for example `1500`.
 - `name` (String) Name of the network.
-- `network_id` (String) Unique identifier of the network. To get the network ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ the **Private Network** tab ⟶ copy the ID of the required network.
+- `network_id` (String) Unique identifier of the network. To get the network ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Private networks** tab ⟶ the network page ⟶ copy the ID under the network name.
 - `status` (String) Status of the network. Available statuses are `ACTIVE`, `DOWN`, `BUILD`, or `ERROR`.
 - `tags` (Set of String) Tags of the network.
 

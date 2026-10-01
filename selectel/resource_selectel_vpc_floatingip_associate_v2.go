@@ -14,7 +14,10 @@ import (
 
 const vpcFloatingIPAssociateV2Object = "VPC floating ip association" //nolint:gosec
 
-var floatingIPAssociateV2Docs = resourceDocs{Name: "association"}
+var (
+	floatingIPAssociateV2Docs = resourceDocs{Name: "association"}
+	publicFloatingIPDocs      = resourceDocs{Name: "public floating IP address"}
+)
 
 func resourceVPCFloatingIPAssociateV2() *schema.Resource {
 	return &schema.Resource{
@@ -28,6 +31,11 @@ func resourceVPCFloatingIPAssociateV2() *schema.Resource {
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCFloatingIPAssociateV2ImportState,
+		},
+		Identity: &schema.ResourceIdentity{
+			SchemaFunc: func() map[string]*schema.Schema {
+				return publicFloatingIPDocs.identitySchemaByID(exampleResourceID, floatingIPIDFromControlPanel, floatingIPRegionFromControlPanel)
+			},
 		},
 		Description: "Creates and manages the association between an existing public floating IP address and an existing port using public API v2. " +
 			"For more information about public floating IP addresses, see the " +
@@ -134,6 +142,8 @@ func resourceVPCFloatingIPAssociateV2Read(
 	}
 
 	flattenVPCFloatingIPAssociateV2(d, found)
+
+	setProjectRegionIdentity(d)
 
 	return nil
 }

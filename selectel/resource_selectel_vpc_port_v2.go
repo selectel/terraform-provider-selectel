@@ -31,6 +31,11 @@ func resourceVPCPortV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCPortV2ImportState,
 		},
+		Identity: &schema.ResourceIdentity{
+			SchemaFunc: func() map[string]*schema.Schema {
+				return portV2Docs.identitySchemaByID(exampleResourceID, portIDFromControlPanel, networkRegionFromControlPanel)
+			},
+		},
 		Description: "Creates and manages a port using public API v2. " +
 			portsMoreInfo + "\n\n" +
 			upgradeGuideNote,
@@ -317,6 +322,8 @@ func resourceVPCPortV2Read(ctx context.Context, d *schema.ResourceData, meta any
 	}
 
 	flattenVPCPortV2(d, found)
+
+	setProjectRegionIdentity(d)
 
 	return nil
 }

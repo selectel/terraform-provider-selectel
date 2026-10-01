@@ -39,8 +39,8 @@ data "selectel_vpc_network_subnet_v2" "subnet_1" {
 - `ipv6_address_mode` (String) IPv6 address assignment mode. Available modes are `slaac`, `dhcpv6-stateful`, or `dhcpv6-stateless`.
 - `ipv6_ra_mode` (String) IPv6 router advertisement mode. Available modes are `slaac`, `dhcpv6-stateful`, or `dhcpv6-stateless`.
 - `name` (String) Name of the subnet.
-- `network_id` (String) Unique identifier of the parent network. To get the network ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ the **Private Network** tab ⟶ copy the ID of the required network.
-- `subnet_id` (String) Unique identifier of the subnet. To get the subnet ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ the network page ⟶ the **Subnets** tab ⟶ copy the ID of the required subnet. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack subnet list` and copy the `ID` field.
+- `network_id` (String) Unique identifier of the parent network. To get the network ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Private networks** tab ⟶ the network page ⟶ copy the ID under the network name.
+- `subnet_id` (String) Unique identifier of the subnet. To get the subnet ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Private networks** tab ⟶ the network page ⟶ the **Subnets** tab ⟶ copy the ID of the required subnet.
 - `tags` (Set of String) Tags of the subnet.
 
 ### Read-Only

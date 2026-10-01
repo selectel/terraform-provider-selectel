@@ -43,7 +43,7 @@ data "selectel_vpc_secgroup_v2" "secgroup_2" {
 
 - `description` (String) Description of the security group.
 - `name` (String) Name of the security group.
-- `secgroup_id` (String) Unique identifier of the security group. To get the security group ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Security Groups** tab ⟶ copy the ID of the required security group. As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack security group list` and copy the `ID` field.
+- `secgroup_id` (String) Unique identifier of the security group. To get the security group ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ **Security groups** ⟶ copy the ID in the card of the required security group.
 - `tags` (Set of String) Tags of the security group.
 
 ### Read-Only

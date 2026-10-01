@@ -39,6 +39,11 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCNetworkSubnetV2ImportState,
 		},
+		Identity: &schema.ResourceIdentity{
+			SchemaFunc: func() map[string]*schema.Schema {
+				return vpcNetworkSubnetDocs.identitySchemaByID(exampleResourceID, networkSubnetIDFromControlPanel, networkRegionFromControlPanel)
+			},
+		},
 		Description: "Creates and manages a subnet of a private network using public API v2. " +
 			"For more information about private networks and subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/).\n\n" +
 			upgradeGuideNote,
@@ -255,6 +260,8 @@ func resourceVPCNetworkSubnetV2Read(ctx context.Context, d *schema.ResourceData,
 	}
 
 	flattenVPCNetworkSubnetV2(d, found)
+
+	setProjectRegionIdentity(d)
 
 	return nil
 }

@@ -29,6 +29,21 @@ func resourceVPCRouterRouteV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCRouterRouteV2ImportState,
 		},
+		Identity: &schema.ResourceIdentity{
+			SchemaFunc: func() map[string]*schema.Schema {
+				return routerRouteDocs.identitySchema(routerRegionFromControlPanel, map[string]*schema.Schema{
+					"router_id": identityAttrSchema(
+						"Unique identifier of the router the route belongs to, for example, `"+exampleResourceID+"`.",
+						routerIDFromControlPanel),
+					"destination_cidr": identityAttrSchema(
+						"Destination CIDR of the route, for example, `10.0.0.0/8`.",
+						routerRouteDestinationFromOpenStackCLI),
+					"next_hop": identityAttrSchema(
+						"IP address of the next hop gateway, for example, `192.168.199.10`.",
+						routerRouteNextHopFromOpenStackCLI),
+				})
+			},
+		},
 		Description: "Creates and manages a single static route of a cloud router using public API v2. " +
 			staticRoutesMoreInfo + "\n\n" +
 			"Do not manage the same router with both resources: `selectel_vpc_router_route_v2` and `selectel_vpc_router_routes_v2`.\n\n" +
@@ -133,6 +148,8 @@ func resourceVPCRouterRouteV2Read(ctx context.Context, d *schema.ResourceData, m
 	d.Set("destination_cidr", route.Destination)
 	d.Set("next_hop", route.NextHop)
 
+	setIdentity(d, "router_id", "destination_cidr", "next_hop")
+
 	return nil
 }
 
@@ -177,7 +194,26 @@ func resourceVPCRouterRouteV2Delete(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceVPCRouterRouteV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
-	if err := importProjectRegion(d, meta); err != nil {
+	if identity, ok := importIdentity(d); ok {
+		route := router.Route{
+			Destination: identity.Get("destination_cidr").(string),
+			NextHop:     identity.Get("next_hop").(string),
+		}
+		routerID := identity.Get("router_id").(string)
+
+		d.SetId(vpcRouterRouteV2ID(routerID, route))
+		d.Set("router_id", routerID)
+		d.Set("destination_cidr", route.Destination)
+		d.Set("next_hop", route.NextHop)
+
+		if err := setProjectRegionFromIdentity(d, identity); err != nil {
+			return nil, err
+		}
+
+		return []*schema.ResourceData{d}, nil
+	}
+
+	if err := importProjectRegionFromConfig(d, meta); err != nil {
 		return nil, err
 	}
 

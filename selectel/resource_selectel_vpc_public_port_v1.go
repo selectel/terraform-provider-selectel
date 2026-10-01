@@ -3,13 +3,13 @@ package selectel
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	publicnetapi "github.com/selectel/public-net-api-go/pkg/v1"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemaconfig"
 )
 
 var publicPortDocs = resourceDocs{Name: "public port"}
@@ -24,7 +24,9 @@ func resourceVPCPublicPortV1() *schema.Resource {
 			StateContext: resourceVPCPublicPortV1ImportState,
 		},
 		Identity: &schema.ResourceIdentity{
-			SchemaFunc: resourceVPCPublicPortV1IdentitySchema,
+			SchemaFunc: func() map[string]*schema.Schema {
+				return publicPortDocs.identitySchemaByID(exampleResourceID, publicPortIDFromControlPanel, publicPortRegionFromControlPanel)
+			},
 		},
 		Description: "Creates and manages a direct public IP address (public port) in VPC using public API v1. " +
 			"For more information about direct public IP addresses, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses).",
@@ -80,17 +82,6 @@ func resourceVPCPublicPortV1() *schema.Resource {
 	}
 }
 
-func resourceVPCPublicPortV1IdentitySchema() map[string]*schema.Schema {
-	return map[string]*schema.Schema{
-		"id": publicPortDocs.idIdentitySchema(
-			exampleResourceID,
-			"To get the public port ID, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Direct public IP addresses** tab ⟶ copy the ID of the public port on the right side of the public port card."),
-		"project_id": publicPortDocs.projectIDIdentitySchema(),
-		"region": publicPortDocs.regionIdentitySchema(
-			"To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Direct public IP addresses** tab. The pool is under the IP address."),
-	}
-}
-
 func resourceVPCPublicPortV1Create(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -109,9 +100,8 @@ func resourceVPCPublicPortV1Create(
 	adminStateUp := d.Get("admin_state_up").(bool)
 	dto.AdminStateUp = &adminStateUp
 
-	securityGroupIDsVal := d.Get("security_group_ids")
-	if securityGroupIDsVal != nil {
-		dto.SecurityGroupIDs = expandStringList(securityGroupIDsVal.([]any))
+	if schemaconfig.IsSet(d, "security_group_ids") {
+		dto.SecurityGroupIDs = expandStringList(d.Get("security_group_ids").([]any))
 	}
 
 	log.Print(msgCreate(objectPublicPort, dto))
@@ -217,33 +207,9 @@ func resourceVPCPublicPortV1ImportState(
 	d *schema.ResourceData,
 	meta any,
 ) ([]*schema.ResourceData, error) {
-	// Import by identity: Terraform 1.12+ passes id, project_id and region in the identity block.
-	if d.Id() == "" {
-		identity, err := d.Identity()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get public port identity: %w", err)
-		}
-
-		d.SetId(identity.Get("id").(string))
-		_ = d.Set("project_id", identity.Get("project_id"))
-		_ = d.Set("region", identity.Get("region"))
-
-		return []*schema.ResourceData{d}, nil
+	if err := importProjectRegion(d, meta); err != nil {
+		return nil, err
 	}
-
-	// Import by string ID: project and region come from the provider configuration.
-	config := meta.(*Config)
-
-	if config.ProjectID == "" {
-		return nil, fmt.Errorf("project_id must be set in your environment")
-	}
-
-	if config.Region == "" {
-		return nil, fmt.Errorf("region must be set in your environment")
-	}
-
-	_ = d.Set("project_id", config.ProjectID)
-	_ = d.Set("region", config.Region)
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -258,11 +224,7 @@ func fillVPCPublicPortData(port *publicnetapi.Port, d *schema.ResourceData) {
 	_ = d.Set("admin_state_up", port.AdminStateUp)
 	_ = d.Set("security_group_ids", port.SecurityGroupIDs)
 
-	if identity, err := d.Identity(); err == nil {
-		_ = identity.Set("id", d.Id())
-		_ = identity.Set("project_id", port.ProjectID)
-		_ = identity.Set("region", d.Get("region"))
-	}
+	setProjectRegionIdentity(d)
 }
 
 func expandStringList(raw []any) []string {

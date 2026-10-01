@@ -35,6 +35,18 @@ func resourceVPCPortForwardingV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCPortForwardingV2ImportState,
 		},
+		Identity: &schema.ResourceIdentity{
+			SchemaFunc: func() map[string]*schema.Schema {
+				return portForwardingV2Docs.identitySchema(floatingIPRegionFromControlPanel, map[string]*schema.Schema{
+					"id": identityAttrSchema(
+						"Unique identifier of the port forwarding rule, for example, `e3f2a1d4-5b6c-4d7e-8f90-a1b2c3d4e5f6`.",
+						portForwardingIDFromOpenStackCLI),
+					"floatingip_id": identityAttrSchema(
+						"Unique identifier of the public floating IP address the rule belongs to, for example, `"+exampleResourceID+"`.",
+						floatingIPIDFromControlPanel),
+				})
+			},
+		},
 		Description: "Creates and manages a port-forwarding rule of a public floating IP address using public API v2. " +
 			"For more information about public floating IP addresses, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/public-floating-ip-addresses/).\n\n" +
 			upgradeGuideNote,
@@ -185,6 +197,8 @@ func resourceVPCPortForwardingV2Read(ctx context.Context, d *schema.ResourceData
 	d.Set("external_port_range", found.ExternalPortRange)
 	d.Set("description", found.Description)
 
+	setIdentity(d, "id", "floatingip_id")
+
 	return nil
 }
 
@@ -288,7 +302,18 @@ func resourceVPCPortForwardingV2Delete(ctx context.Context, d *schema.ResourceDa
 }
 
 func resourceVPCPortForwardingV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
-	if err := importProjectRegion(d, meta); err != nil {
+	if identity, ok := importIdentity(d); ok {
+		d.SetId(identity.Get("id").(string))
+		d.Set("floatingip_id", identity.Get("floatingip_id"))
+
+		if err := setProjectRegionFromIdentity(d, identity); err != nil {
+			return nil, err
+		}
+
+		return []*schema.ResourceData{d}, nil
+	}
+
+	if err := importProjectRegionFromConfig(d, meta); err != nil {
 		return nil, err
 	}
 

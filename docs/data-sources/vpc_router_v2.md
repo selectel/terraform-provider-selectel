@@ -34,7 +34,7 @@ data "selectel_vpc_router_v2" "router_1" {
 - `admin_state_up` (Boolean) Specifies if the router is administratively up.
 - `description` (String) Description of the router.
 - `name` (String) Name of the router.
-- `router_id` (String) Unique identifier of the router.
+- `router_id` (String) Unique identifier of the router. To get the router ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Cloud routers** tab ⟶ copy the ID in the card of the required router.
 - `tags` (Set of String) Tags of the router.
 
 ### Read-Only

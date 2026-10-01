@@ -30,8 +30,7 @@ func dataSourceVPCSecGroupV2() *schema.Resource {
 				Optional: true,
 				Computed: true,
 				Description: "Unique identifier of the security group. " +
-					"To get the security group ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Security Groups** tab ⟶ copy the ID of the required security group. " +
-					"As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack security group list` and copy the `ID` field.",
+					secGroupIDFromControlPanel,
 			},
 			"name": {
 				Type:        schema.TypeString,

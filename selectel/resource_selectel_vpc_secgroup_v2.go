@@ -31,6 +31,11 @@ func resourceVPCSecGroupV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCSecGroupV2ImportState,
 		},
+		Identity: &schema.ResourceIdentity{
+			SchemaFunc: func() map[string]*schema.Schema {
+				return secGroupDocs.identitySchemaByID(exampleResourceID, secGroupIDFromControlPanel, secGroupRegionFromControlPanel)
+			},
+		},
 		Description: "Creates and manages a security group using public API v2. " +
 			securityGroupsMoreInfo + "\n\n" +
 			upgradeGuideNote,
@@ -139,6 +144,8 @@ func resourceVPCSecGroupV2Read(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	flattenVPCSecGroupV2(d, found)
+
+	setProjectRegionIdentity(d)
 
 	return nil
 }

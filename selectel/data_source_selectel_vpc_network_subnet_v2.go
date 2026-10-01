@@ -32,8 +32,7 @@ func dataSourceVPCNetworkSubnetV2() *schema.Resource {
 				Optional: true,
 				Computed: true,
 				Description: "Unique identifier of the subnet. " +
-					"To get the subnet ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ the network page ⟶ the **Subnets** tab ⟶ copy the ID of the required subnet. " +
-					"As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack subnet list` and copy the `ID` field.",
+					networkSubnetIDFromControlPanel,
 			},
 			"name": {
 				Type:        schema.TypeString,

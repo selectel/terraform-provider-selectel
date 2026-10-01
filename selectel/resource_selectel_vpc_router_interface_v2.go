@@ -35,6 +35,11 @@ func resourceVPCRouterInterfaceV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCRouterInterfaceV2ImportState,
 		},
+		Identity: &schema.ResourceIdentity{
+			SchemaFunc: func() map[string]*schema.Schema {
+				return portV2Docs.identitySchemaByID(exampleResourceID, portIDFromControlPanel, networkRegionFromControlPanel)
+			},
+		},
 		Description: "Creates and manages an interface that attaches a cloud router to a network using public API v2. " +
 			cloudRoutersMoreInfo + "\n\n" +
 			upgradeGuideNote,
@@ -155,6 +160,8 @@ func resourceVPCRouterInterfaceV2Read(ctx context.Context, d *schema.ResourceDat
 	if subnetID := vpcRouterInterfaceV2SubnetFromPort(found.FixedIPs); subnetID != "" {
 		d.Set("subnet_id", subnetID)
 	}
+
+	setProjectRegionIdentity(d)
 
 	return nil
 }

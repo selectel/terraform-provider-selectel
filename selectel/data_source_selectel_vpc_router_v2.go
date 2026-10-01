@@ -28,10 +28,11 @@ func dataSourceVPCRouterV2() *schema.Resource {
 			"project_id": vpcRouterDataSourceDocs.projectIDSchema(),
 			"region":     vpcRouterDataSourceDocs.regionSchema(),
 			"router_id": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				Description: "Unique identifier of the router.",
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				Description: "Unique identifier of the router. " +
+					routerIDFromControlPanel,
 			},
 			"name": {
 				Type:        schema.TypeString,

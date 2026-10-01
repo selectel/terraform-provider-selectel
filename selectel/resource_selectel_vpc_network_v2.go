@@ -34,6 +34,11 @@ func resourceVPCNetworkV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCNetworkV2ImportState,
 		},
+		Identity: &schema.ResourceIdentity{
+			SchemaFunc: func() map[string]*schema.Schema {
+				return vpcNetworkDocs.identitySchemaByID(exampleResourceID, networkIDFromControlPanel, networkRegionFromControlPanel)
+			},
+		},
 		Description: "Creates and manages a private network using public API v2. " +
 			privateNetworksMoreInfo + "\n\n" +
 			upgradeGuideNote,
@@ -198,6 +203,7 @@ func resourceVPCNetworkV2Read(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	flattenVPCNetworkV2(d, found)
+	setProjectRegionIdentity(d)
 
 	return nil
 }

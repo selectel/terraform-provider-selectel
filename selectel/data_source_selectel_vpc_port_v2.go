@@ -33,8 +33,7 @@ func dataSourceVPCPortV2() *schema.Resource {
 				Optional: true,
 				Computed: true,
 				Description: "Unique identifier of the port. " +
-					"To get the port ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ **Network** ⟶ the **Private Network** tab ⟶ the network page ⟶ the **Ports** tab ⟶ copy the ID of the required port. " +
-					"As an alternative, you can use [OpenStack CLI](https://docs.selectel.ru/en/cloud-servers/tools/openstack-cli/) command `openstack port list` and copy the `ID` field.",
+					portIDFromControlPanel,
 			},
 			"name": {
 				Type:        schema.TypeString,
