@@ -65,7 +65,7 @@ resource "selectel_dbaas_clickhouse_datastore_v2" "cluster_1" {
 
 ## Argument Reference
 
-* `name` - (Required) Cluster name. Changing this creates a new cluster.
+* `name` - (Required) Cluster name. Changing this updates the name.
 
 * `project_id` - (Required) Unique identifier of the associated project. Changing this creates a new cluster. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
@@ -75,7 +75,7 @@ resource "selectel_dbaas_clickhouse_datastore_v2" "cluster_1" {
 
 * `type_id` - (Required) Unique identifier of the cluster type. Changing this creates a new cluster. Retrieved from the [selectel_dbaas_datastore_type_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_datastore_type_v2) data source.
 
-* `password` - (Required) Password for the cluster. Changing this updates the password.
+* `password` - (Required) Password for the cluster. Changing this updates the password in the cluster.
 
 * `node_group` - (Required) List of node groups in the cluster. A cluster must contain at least one node group.
 
