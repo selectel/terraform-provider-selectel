@@ -2,11 +2,13 @@
 
 FEATURES:
 
-* Add resources: `selectel_dbaas_clickhouse_datastore_v2` — Creates and manages a ClickHouse cluster using public API v2.
-* Add resources: `selectel_dbaas_clickhouse_shard_group_v2` — Creates and manages a ClickHouse shard group.
-* Add data sources: `selectel_dbaas_clickhouse_configuration_parameter_v2` — Provides a list of configuration parameters available for Managed ClickHouse clusters.
-* Add data sources: `selectel_dbaas_datastore_type_v2` — Provides a list of available cluster types using public API v2.
-* Add data sources: `selectel_dbaas_flavor_v2` — Provides a list of available flavors using public API v2. Supports filtering by `allowed_role` (e.g. `KEEPER`, `DATA`).
+* Add new resources ([#429](https://github.com/selectel/terraform-provider-selectel/pull/429)):
+  * `selectel_dbaas_clickhouse_datastore_v2`
+  * `selectel_dbaas_clickhouse_shard_group_v2`
+* Add new data sources ([#429](https://github.com/selectel/terraform-provider-selectel/pull/429)):
+  * `selectel_dbaas_clickhouse_configuration_parameter_v2`
+  * `selectel_dbaas_datastore_type_v2`
+  * `selectel_dbaas_flavor_v2`
 
 ## 8.5.0 (September 30, 2026)
 
