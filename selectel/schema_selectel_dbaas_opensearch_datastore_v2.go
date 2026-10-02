@@ -17,7 +17,7 @@ func resourceDBaaSV2OpensearchDatastoreSchema() map[string]*schema.Schema {
 		Description: "Datastore password",
 	}
 
-	datastoreSchema["node_groups"] = &schema.Schema{
+	datastoreSchema["node_group"] = &schema.Schema{
 		Type:     schema.TypeList,
 		Required: true,
 		MinItems: 1,
