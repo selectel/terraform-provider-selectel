@@ -40,11 +40,17 @@ func resourceDBaaSUserV1Create(ctx context.Context, d *schema.ResourceData, meta
 		return diagErr
 	}
 
+	roles := []string{}
+	if d.Get("roles") != nil {
+		roles = d.Get("roles").([]string)
+	}
+
 	userCreateOpts := dbaas.UserCreateOpts{
 		DatastoreID: d.Get("datastore_id").(string),
 		Name:        d.Get("name").(string),
 		Password:    d.Get("password").(string),
 		Settings:    expandDBaaSUserV1Settings(d),
+		Roles:       roles,
 	}
 
 	log.Print(msgCreate(objectUser, userCreateOpts))
@@ -78,6 +84,7 @@ func resourceDBaaSUserV1Read(ctx context.Context, d *schema.ResourceData, meta a
 	}
 	d.Set("datastore_id", user.DatastoreID)
 	d.Set("name", user.Name)
+	d.Set("roles", user.Roles)
 	d.Set("status", user.Status)
 	if err := d.Set("settings", flattenDBaaSUserV1Settings(user.Settings)); err != nil {
 		log.Print(errSettingComplexAttr("settings", err))
@@ -114,6 +121,25 @@ func resourceDBaaSUserV1Update(ctx context.Context, d *schema.ResourceData, meta
 	if d.HasChange("settings") {
 		if err := updateDBaaSUserV1Settings(ctx, d, dbaasClient); err != nil {
 			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("roles") {
+		updateOpts := dbaas.UserRolesUpdateOpts{
+			Roles: d.Get("roles").([]string),
+		}
+
+		log.Print(msgUpdate(objectUser, d.Id(), updateOpts))
+		_, err := dbaasClient.UpdateUserRoles(ctx, d.Id(), updateOpts)
+		if err != nil {
+			return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
+		}
+
+		log.Printf("[DEBUG] waiting for user %s to become 'ACTIVE'", d.Id())
+		timeout := d.Timeout(schema.TimeoutCreate)
+		err = waiters.WaitForDBaaSUserV1ActiveState(ctx, dbaasClient, d.Id(), timeout)
+		if err != nil {
+			return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
 		}
 	}
 
