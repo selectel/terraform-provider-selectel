@@ -123,12 +123,12 @@ func expandRolesSearchFilter(filterSet *schema.Set) (rolesSearchFilter, error) {
 	return filter, nil
 }
 
-func filterRolesByDatastoreTypeID(roles []dbaas.Roles, datastoreTypeID string) []dbaas.Roles {
+func filterRolesByDatastoreTypeID(roles []dbaas.Role, datastoreTypeID string) []dbaas.Role {
 	if datastoreTypeID == "" {
 		return roles
 	}
 
-	var filteredRoles []dbaas.Roles
+	var filteredRoles []dbaas.Role
 	for _, param := range roles {
 		if param.DatastoreTypeID == datastoreTypeID {
 			filteredRoles = append(filteredRoles, param)
@@ -138,12 +138,12 @@ func filterRolesByDatastoreTypeID(roles []dbaas.Roles, datastoreTypeID string) [
 	return filteredRoles
 }
 
-func filterRolesByName(roles []dbaas.Roles, name string) []dbaas.Roles {
+func filterRolesByName(roles []dbaas.Role, name string) []dbaas.Role {
 	if name == "" {
 		return roles
 	}
 
-	var filteredRoles []dbaas.Roles
+	var filteredRoles []dbaas.Role
 	for _, param := range roles {
 		if param.Name == name {
 			filteredRoles = append(filteredRoles, param)
@@ -153,7 +153,7 @@ func filterRolesByName(roles []dbaas.Roles, name string) []dbaas.Roles {
 	return filteredRoles
 }
 
-func flattenDBaaSRoles(roles []dbaas.Roles) []any {
+func flattenDBaaSRoles(roles []dbaas.Role) []any {
 	rolesList := make([]any, len(roles))
 	for i, param := range roles {
 		rolesMap := make(map[string]any)

@@ -14,7 +14,7 @@ import (
 
 func TestAccDBaaSRolesV1Basic(t *testing.T) {
 	var (
-		dbaasRoles []dbaas.Roles
+		dbaasRoles []dbaas.Role
 		project    projects.Project
 	)
 
@@ -40,7 +40,7 @@ func TestAccDBaaSRolesV1Basic(t *testing.T) {
 	})
 }
 
-func testAccDBaaSRolesV1Exists(n string, dbaasRoles *[]dbaas.Roles) resource.TestCheckFunc {
+func testAccDBaaSRolesV1Exists(n string, dbaasRoles *[]dbaas.Role) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
