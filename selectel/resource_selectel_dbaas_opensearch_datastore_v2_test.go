@@ -90,7 +90,7 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 	}
 	dataOneHasPublicIps := false
 	managersBlock := `
-	node_groups {
+	node_group {
 	  name       = "managers"
 	  role       = "MANAGER"
 	  node_count = 3
@@ -116,7 +116,7 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 	updatedDatastoreSG := "${openstack_networking_secgroup_v2.ds_sg.id}"
 	updatedDataOneHasPublicIps := true
 	updatedDashboardBlock := `
-	node_groups {
+	node_group {
 	  name       = "dashboard"
 	  role       = "DASHBOARD"
 	  node_count = 1
@@ -150,21 +150,21 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "status", string(dbaas_v2_common.DatastoreStatusActive)),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "state", string(dbaas_v2_common.DatastoreStateRunning)),
 
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.#", "2"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.0.name", "managers"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.0.node_count", "3"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.0.role", "MANAGER"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.0.flavor.0.type", "FIXED"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.#", "2"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.name", "managers"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.node_count", "3"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.role", "MANAGER"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.flavor.0.type", "FIXED"),
 
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.name", "data1"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.node_count", "1"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.role", "DATA"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.name", "data1"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.node_count", "1"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.role", "DATA"),
 
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.flavor.0.type", string(dataOneFlavor.Type)),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.flavor.0.vcpus", strconv.Itoa(dataOneFlavor.VCPUs)),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.flavor.0.ram", strconv.Itoa(dataOneFlavor.RAM)),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.flavor.0.disk", strconv.Itoa(dataOneFlavor.Disk)),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.flavor.0.disk_type", string(dataOneFlavor.DiskType)),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.type", string(dataOneFlavor.Type)),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.vcpus", strconv.Itoa(dataOneFlavor.VCPUs)),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.ram", strconv.Itoa(dataOneFlavor.RAM)),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.disk", strconv.Itoa(dataOneFlavor.Disk)),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.disk_type", string(dataOneFlavor.DiskType)),
 
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "security_groups.#", "0"),
 				),
@@ -197,7 +197,7 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, updatedDatastoreSG, managersBlock, dataOneNodeCount, dataOneFlavor, updatedDataOneHasPublicIps, dashboardBlock),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "name", updatedDatastoreName),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.has_public_ips", "true"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.has_public_ips", "true"),
 				),
 			},
 			// Resize data1 by flavor
@@ -205,13 +205,13 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, updatedDatastoreSG, managersBlock, dataOneNodeCount, updatedDataOneFlavor, updatedDataOneHasPublicIps, dashboardBlock),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "name", updatedDatastoreName),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.node_count", "1"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.has_public_ips", "true"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.flavor.0.type", string(updatedDataOneFlavor.Type)),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.flavor.0.vcpus", strconv.Itoa(updatedDataOneFlavor.VCPUs)),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.flavor.0.ram", strconv.Itoa(updatedDataOneFlavor.RAM)),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.flavor.0.disk", strconv.Itoa(updatedDataOneFlavor.Disk)),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.flavor.0.disk_type", string(updatedDataOneFlavor.DiskType)),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.node_count", "1"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.has_public_ips", "true"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.type", string(updatedDataOneFlavor.Type)),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.vcpus", strconv.Itoa(updatedDataOneFlavor.VCPUs)),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.ram", strconv.Itoa(updatedDataOneFlavor.RAM)),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.disk", strconv.Itoa(updatedDataOneFlavor.Disk)),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.disk_type", string(updatedDataOneFlavor.DiskType)),
 				),
 			},
 			// Add dashboard node group
@@ -220,21 +220,21 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "name", updatedDatastoreName),
 
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.#", "3"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.0.name", "managers"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.0.node_count", "3"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.0.role", "MANAGER"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.0.flavor.0.type", "FIXED"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.#", "3"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.name", "managers"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.node_count", "3"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.role", "MANAGER"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.flavor.0.type", "FIXED"),
 
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.name", "data1"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.node_count", "1"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.role", "DATA"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.flavor.0.type", string(updatedDataOneFlavor.Type)),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.name", "data1"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.node_count", "1"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.role", "DATA"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.type", string(updatedDataOneFlavor.Type)),
 
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.2.name", "dashboard"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.2.node_count", "1"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.2.role", "DASHBOARD"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.2.flavor.0.type", "FLEXIBLE"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.name", "dashboard"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.node_count", "1"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.role", "DASHBOARD"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.flavor.0.type", "FLEXIBLE"),
 				),
 			},
 			// Update node count for data1 (add node)
@@ -243,22 +243,22 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "name", updatedDatastoreName),
 
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.#", "3"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.0.name", "managers"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.0.node_count", "3"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.0.role", "MANAGER"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.0.flavor.0.type", "FIXED"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.#", "3"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.name", "managers"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.node_count", "3"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.role", "MANAGER"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.flavor.0.type", "FIXED"),
 
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.name", "data1"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.node_count", "2"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.role", "DATA"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.has_public_ips", "true"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.1.flavor.0.type", string(updatedDataOneFlavor.Type)),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.name", "data1"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.node_count", "2"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.role", "DATA"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.has_public_ips", "true"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.type", string(updatedDataOneFlavor.Type)),
 
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.2.name", "dashboard"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.2.node_count", "1"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.2.role", "DASHBOARD"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_groups.2.flavor.0.type", "FLEXIBLE"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.name", "dashboard"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.node_count", "1"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.role", "DASHBOARD"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.flavor.0.type", "FLEXIBLE"),
 				),
 			},
 		},
@@ -360,7 +360,7 @@ resource "selectel_dbaas_opensearch_datastore_v2" "datastore_tf_acc_test_1" {
   // managers
   %s
 
-  node_groups {
+  node_group {
     name       = "data1" 
     role       = "DATA"
     node_count = "%d"
