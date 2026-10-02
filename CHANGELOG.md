@@ -1,3 +1,21 @@
+## 8.6.0 (October 2, 2026)
+
+FEATURES:
+
+* Add new resources ([#429](https://github.com/selectel/terraform-provider-selectel/pull/429)):
+  * `selectel_dbaas_clickhouse_datastore_v2`
+  * `selectel_dbaas_clickhouse_shard_group_v2`
+* Add new data sources ([#429](https://github.com/selectel/terraform-provider-selectel/pull/429)):
+  * `selectel_dbaas_clickhouse_configuration_parameter_v2`
+  * `selectel_dbaas_datastore_type_v2`
+  * `selectel_dbaas_flavor_v2`
+
+## 8.5.0 (September 30, 2026)
+
+IMPROVEMENTS:
+
+* Switched documentation to auto-generation via `tfplugindocs` ([#432](https://github.com/selectel/terraform-provider-selectel/pull/432))
+
 ## 8.4.0 (September 21, 2026)
 
 BUG FIXES:
