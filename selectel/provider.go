@@ -46,6 +46,7 @@ const (
 	objectAvailableExtensions          = "available-extensions"
 	objectFlavors                      = "flavors"
 	objectConfigurationParameters      = "configuration-parameters"
+	objectRoles                        = "roles"
 	objectPrometheusMetricToken        = "prometheus-metric-token"
 	objectFeatureGates                 = "feature-gates"
 	objectAdmissionControllers         = "admission-controllers"
@@ -139,6 +140,7 @@ func Provider(providerVersion string) *schema.Provider {
 			"selectel_dbaas_available_extension_v1":     dataSourceDBaaSAvailableExtensionV1(),
 			"selectel_dbaas_flavor_v1":                  dataSourceDBaaSFlavorV1(),
 			"selectel_dbaas_configuration_parameter_v1": dataSourceDBaaSConfigurationParameterV1(),
+			"selectel_dbaas_roles_v1":                   dataSourceDBaaSRolesV1(),
 			"selectel_dbaas_prometheus_metric_token_v1": dataSourceDBaaSPrometheusMetricTokenV1(),
 			"selectel_mks_kubeconfig_v1":                dataSourceMKSKubeconfigV1(),
 			"selectel_mks_kube_versions_v1":             dataSourceMKSKubeVersionsV1(),
