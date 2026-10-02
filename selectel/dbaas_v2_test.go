@@ -3,11 +3,17 @@ package selectel
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/dbaas-go"
 	dbaas_v2 "github.com/selectel/dbaas-go/v2"
+)
+
+var (
+	dbaasRegion    = os.Getenv("INFRA_REGION")
+	dbaasProjectID = os.Getenv("INFRA_PROJECT_ID")
 )
 
 func newTestDBaaSV2Client(_ context.Context, rs *terraform.ResourceState, testAccProvider *schema.Provider) (*dbaas_v2.API, error) {
