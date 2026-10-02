@@ -1,3 +1,10 @@
+## 8.5.0 (September 30, 2026)
+
+IMPROVEMENTS:
+
+* Migrate provider documentation to the new format: docs are now generated with `tfplugindocs` from `templates/` and `examples/` into `docs/`, legacy `website/` docs removed ([#432](https://github.com/selectel/terraform-provider-selectel/pull/432))
+* Add `docs-check`, `examples-check` and `docs-misspell` jobs to CI workflow ([#432](https://github.com/selectel/terraform-provider-selectel/pull/432))
+
 ## 8.4.0 (September 21, 2026)
 
 BUG FIXES:
