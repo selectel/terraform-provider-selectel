@@ -1,13 +1,13 @@
 ---
 page_title: "Selectel: selectel_vpc_rbac_policy_v2"
 description: |-
-  Creates and manages an RBAC policy that grants another project access to a networking object using public API v2. For more information about managing network access, see the official Selectel documentation https://docs.selectel.ru/en/cloud-servers/cloud-networks/manage-access/.
+  Creates and manages an RBAC policy that grants another project access to a networking object using the v2 public API. For more information about managing network access, see the official Selectel documentation https://docs.selectel.ru/en/cloud-servers/cloud-networks/manage-access/.
   If you are upgrading from a version earlier than 9.0.0, follow the upgrade guide https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9 to migrate your resources from the OpenStack provider.
 ---
 
 # selectel_vpc_rbac_policy_v2
 
-Creates and manages an RBAC policy that grants another project access to a networking object using public API v2. For more information about managing network access, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/manage-access/).
+Creates and manages an RBAC policy that grants another project access to a networking object using the v2 public API. For more information about managing network access, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/manage-access/).
 
 If you are upgrading from a version earlier than 9.0.0, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack provider.
 
@@ -15,12 +15,12 @@ If you are upgrading from a version earlier than 9.0.0, follow the [upgrade guid
 
 ```terraform
 resource "selectel_vpc_rbac_policy_v2" "rbac_1" {
-  project_id    = selectel_vpc_project_v2.project_1.id
-  region        = "ru-6"
-  action        = "access_as_shared"
-  object_type   = "network"
-  object_id     = selectel_vpc_network_v2.network_1.id
-  target_tenant = selectel_vpc_project_v2.project_2.id
+  project_id        = selectel_vpc_project_v2.project_1.id
+  region            = "ru-6"
+  action            = "access_as_shared"
+  object_type       = "network"
+  object_id         = selectel_vpc_network_v2.network_1.id
+  target_project_id = selectel_vpc_project_v2.project_2.id
 }
 ```
 
@@ -34,7 +34,7 @@ resource "selectel_vpc_rbac_policy_v2" "rbac_1" {
 - `object_type` (String) Type of the object to share. Available values are `network` and `security_group`. Changing this creates a new RBAC policy.
 - `project_id` (String) Unique identifier of the associated project, for example, `a07abc12310546f1b9291ab3013a7d75`. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/). Changing this creates a new RBAC policy.
 - `region` (String) Pool where the RBAC policy is located, for example, `ru-6`. Learn more about available pools in [Product availability by location](https://docs.selectel.ru/en/infrastructure/product-availability-by-location/). Changing this creates a new RBAC policy.
-- `target_tenant` (String) Unique identifier of the project the access is granted to. Changing this moves the grant from one project to another. To get the ID of an existing project, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project.
+- `target_project_id` (String) Unique identifier of the project the access is granted to. Changing this moves the grant from one project to another. To get the ID of an existing project, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project.
 
 ### Read-Only
 

@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -128,6 +129,28 @@ func TestAccVPCRouterInterfaceV2Port(t *testing.T) {
 	})
 }
 
+func TestAccVPCRouterInterfaceV2Disappears(t *testing.T) {
+	var found port.Port
+	projectID, region := vpcV2TestEnv()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectIDAndRegion(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCRouterInterfaceV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVPCRouterInterfaceV2Subnet(projectID, region),
+				Check:  testAccCheckVPCRouterInterfaceV2Exists(&found),
+			},
+			{
+				Config:             testAccVPCRouterInterfaceV2Subnet(projectID, region),
+				Check:              testAccCheckVPCRouterInterfaceV2DeleteOutOfBand(),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func TestAccVPCRouterInterfaceV2ForceDestroy(t *testing.T) {
 	projectID, region := vpcV2TestEnv()
 
@@ -174,6 +197,37 @@ func testAccCheckVPCRouterInterfaceV2Exists(found *port.Port) resource.TestCheck
 		*found = *result
 
 		return nil
+	}
+}
+
+func testAccCheckVPCRouterInterfaceV2DeleteOutOfBand() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		handle, routerID, err := testAccVPCRouterInterfaceV2Router(s)
+		if err != nil {
+			return err
+		}
+
+		ctx := context.Background()
+		if _, err := router.RemoveInterface(ctx, handle.client, routerID,
+			router.InterfaceRequest{PortID: handle.id}); err != nil {
+			return err
+		}
+
+		for range 15 {
+			_, err := port.Get(ctx, handle.client, handle.id)
+			if err == nil {
+				time.Sleep(2 * time.Second)
+
+				continue
+			}
+			if vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
+				return nil
+			}
+
+			return err
+		}
+
+		return fmt.Errorf("router interface port %s still exists after the interface was removed", handle.id)
 	}
 }
 

@@ -36,7 +36,7 @@ func resourceVPCPortV2() *schema.Resource {
 				return portV2Docs.identitySchemaByID(exampleResourceID, portIDFromControlPanel, networkRegionFromControlPanel)
 			},
 		},
-		Description: "Creates and manages a port using public API v2. " +
+		Description: "Creates and manages a port using the v2 public API. " +
 			portsMoreInfo + "\n\n" +
 			upgradeGuideNote,
 		Schema: portV2Docs.withDocsHints(map[string]*schema.Schema{

@@ -7,12 +7,50 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/rbacpolicy"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestVPCRBACPolicyV2CustomizeDiff(t *testing.T) {
+	for _, c := range []struct {
+		name       string
+		action     string
+		objectType string
+		wantErr    bool
+	}{
+		{name: "external access to a network", action: "access_as_external", objectType: "network"},
+		{name: "shared access to a network", action: "access_as_shared", objectType: "network"},
+		{name: "shared access to a security group", action: "access_as_shared", objectType: "security_group"},
+		{name: "external access to a security group", action: "access_as_external", objectType: "security_group", wantErr: true},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			err := planVPCV2ResourceDiff(t, resourceVPCRBACPolicyV2(), map[string]cty.Value{
+				"project_id":        cty.StringVal("project-id"),
+				"region":            cty.StringVal("ru-1"),
+				"action":            cty.StringVal(c.action),
+				"object_type":       cty.StringVal(c.objectType),
+				"object_id":         cty.StringVal("object-id"),
+				"target_project_id": cty.StringVal("target-project-id"),
+			})
+
+			if !c.wantErr {
+				assert.NoError(t, err)
+
+				return
+			}
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "action")
+			assert.Contains(t, err.Error(), "object_type")
+		})
+	}
+}
 
 const testAccVPCRBACPolicyV2ResourceName = "selectel_vpc_rbac_policy_v2.rbac_tf_acc_test_1"
 
@@ -32,7 +70,7 @@ func vpcRBACPolicyV2TestTargets() vpcRBACPolicyV2Targets {
 
 func (targets vpcRBACPolicyV2Targets) check(target string) resource.TestCheckFunc {
 	return resource.TestCheckResourceAttrPair(
-		testAccVPCRBACPolicyV2ResourceName, "target_tenant",
+		testAccVPCRBACPolicyV2ResourceName, "target_project_id",
 		strings.TrimSuffix(target, ".id"), "id",
 	)
 }
@@ -222,12 +260,12 @@ const (
 func testAccVPCRBACPolicyV2Basic(projectID, region, targetPrefix, target string) string {
 	return testAccVPCRBACPolicyV2Prerequisites(projectID, region, targetPrefix) + fmt.Sprintf(`
 resource "selectel_vpc_rbac_policy_v2" "rbac_tf_acc_test_1" {
-  project_id    = local.project_id
-  region        = "%[1]s"
-  action        = "access_as_shared"
-  object_type   = "network"
-  object_id     = selectel_vpc_network_v2.network_tf_acc_test_1.id
-  target_tenant = %[2]s
+  project_id        = local.project_id
+  region            = "%[1]s"
+  action            = "access_as_shared"
+  object_type       = "network"
+  object_id         = selectel_vpc_network_v2.network_tf_acc_test_1.id
+  target_project_id = %[2]s
 }
 `, region, target)
 }
@@ -241,12 +279,12 @@ resource "selectel_vpc_network_v2" "network_tf_acc_test_2" {
 }
 
 resource "selectel_vpc_rbac_policy_v2" "rbac_tf_acc_test_1" {
-  project_id    = local.project_id
-  region        = "%[1]s"
-  action        = "access_as_shared"
-  object_type   = "network"
-  object_id     = selectel_vpc_network_v2.network_tf_acc_test_2.id
-  target_tenant = %[2]s
+  project_id        = local.project_id
+  region            = "%[1]s"
+  action            = "access_as_shared"
+  object_type       = "network"
+  object_id         = selectel_vpc_network_v2.network_tf_acc_test_2.id
+  target_project_id = %[2]s
 }
 `, region, target)
 }

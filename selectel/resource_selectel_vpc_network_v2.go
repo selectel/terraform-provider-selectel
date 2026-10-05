@@ -39,7 +39,7 @@ func resourceVPCNetworkV2() *schema.Resource {
 				return vpcNetworkDocs.identitySchemaByID(exampleResourceID, networkIDFromControlPanel, networkRegionFromControlPanel)
 			},
 		},
-		Description: "Creates and manages a private network using public API v2. " +
+		Description: "Creates and manages a private network using the v2 public API. " +
 			privateNetworksMoreInfo + "\n\n" +
 			upgradeGuideNote,
 		Schema: vpcNetworkDocs.withDocsHints(map[string]*schema.Schema{
@@ -143,7 +143,7 @@ func resourceVPCNetworkV2() *schema.Resource {
 			"is_dns_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Specifies if the private DNS service is enabled for the network.",
+				Description: "Specifies if the Private DNS service is enabled for the network.",
 			},
 		}),
 	}

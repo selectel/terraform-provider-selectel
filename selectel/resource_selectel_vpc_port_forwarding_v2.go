@@ -47,7 +47,8 @@ func resourceVPCPortForwardingV2() *schema.Resource {
 				})
 			},
 		},
-		Description: "Creates and manages a port-forwarding rule of a public floating IP address using public API v2. " +
+		CustomizeDiff: resourceVPCPortForwardingV2CustomizeDiff,
+		Description: "Creates and manages a port-forwarding rule of a public floating IP address using the v2 public API. " +
 			"For more information about public floating IP addresses, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/public-floating-ip-addresses/).\n\n" +
 			upgradeGuideNote,
 		Schema: portForwardingV2Docs.withDocsHints(map[string]*schema.Schema{
@@ -369,4 +370,59 @@ func validateVPCPortForwardingV2PortRange(value any, key string) ([]string, []er
 	}
 
 	return nil, nil
+}
+
+// resourceVPCPortForwardingV2CustomizeDiff rejects ranges of different sizes at plan time.
+// The check reads the raw configuration because both range attributes are Computed:
+// a value kept in state from a previous apply must not take part in the comparison.
+func resourceVPCPortForwardingV2CustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ any) error {
+	internalRange, okInternal := vpcPortForwardingV2RawConfigString(d, "internal_port_range")
+	externalRange, okExternal := vpcPortForwardingV2RawConfigString(d, "external_port_range")
+	if !okInternal || !okExternal {
+		return nil
+	}
+
+	internalSize, okInternal := vpcPortForwardingV2PortRangeSize(internalRange)
+	externalSize, okExternal := vpcPortForwardingV2PortRangeSize(externalRange)
+	if !okInternal || !okExternal || internalSize == externalSize {
+		return nil
+	}
+
+	return fmt.Errorf(
+		"invalid selectel_vpc_port_forwarding_v2: internal_port_range %q has %d ports, "+
+			"but external_port_range %q has %d; the ranges must have the same size",
+		internalRange, internalSize, externalRange, externalSize)
+}
+
+// vpcPortForwardingV2RawConfigString returns a string attribute set in the configuration.
+// Unknown, null, and missing values report false.
+func vpcPortForwardingV2RawConfigString(d *schema.ResourceDiff, name string) (string, bool) {
+	config := d.GetRawConfig()
+	if config.IsNull() || !config.IsKnown() || !config.Type().HasAttribute(name) {
+		return "", false
+	}
+
+	value := config.GetAttr(name)
+	if value.IsNull() || !value.IsKnown() {
+		return "", false
+	}
+
+	return value.AsString(), true
+}
+
+// vpcPortForwardingV2PortRangeSize returns the number of ports in a valid <first>:<last> range.
+// Invalid ranges report false; the attribute validator reports them.
+func vpcPortForwardingV2PortRangeSize(portRange string) (int, bool) {
+	bounds := strings.Split(portRange, ":")
+	if len(bounds) != 2 {
+		return 0, false
+	}
+
+	first, errFirst := strconv.Atoi(bounds[0])
+	last, errLast := strconv.Atoi(bounds[1])
+	if errFirst != nil || errLast != nil || first > last {
+		return 0, false
+	}
+
+	return last - first + 1, true
 }

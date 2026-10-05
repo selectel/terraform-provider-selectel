@@ -1,13 +1,13 @@
 ---
 page_title: "Selectel: selectel_vpc_network_v2"
 description: |-
-  Creates and manages a private network using public API v2. For more information about private networks, see the official Selectel documentation https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/.
+  Creates and manages a private network using the v2 public API. For more information about private networks, see the official Selectel documentation https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/.
   If you are upgrading from a version earlier than 9.0.0, follow the upgrade guide https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9 to migrate your resources from the OpenStack provider.
 ---
 
 # selectel_vpc_network_v2
 
-Creates and manages a private network using public API v2. For more information about private networks, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/).
+Creates and manages a private network using the v2 public API. For more information about private networks, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/).
 
 If you are upgrading from a version earlier than 9.0.0, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack provider.
 
@@ -45,7 +45,7 @@ resource "selectel_vpc_network_v2" "network_1" {
 - `blocked` (Boolean) Specifies if the network is administratively blocked.
 - `external` (Boolean) Specifies if the network has an external routing facility.
 - `id` (String) Unique identifier of the network.
-- `is_dns_enabled` (Boolean) Specifies if the private DNS service is enabled for the network.
+- `is_dns_enabled` (Boolean) Specifies if the Private DNS service is enabled for the network.
 - `is_public` (Boolean) Specifies if the network is public.
 - `mtu` (Number) Maximum transmission unit of the network.
 - `port_security_enabled` (Boolean) Specifies if port security is enabled by default for the ports of the network.

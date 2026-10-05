@@ -237,6 +237,7 @@ The native resources use the required `project_id` argument instead of `tenant_i
 * Subnet `prefix_length` and subnet-pool allocation are not supported. The OpenStack resource uses `prefix_length` with `subnetpool_id` to allocate a CIDR automatically; the native resource requires an explicit `cidr`. Before migration, copy the allocated CIDR from the existing resource state into the new configuration.
 * Port `all_fixed_ips` changes from a list of IP address strings to a list of objects with `subnet_id` and `ip_address`. For example, replace `all_fixed_ips[0]` with `all_fixed_ips[0].ip_address`.
 * Security group `description` is no longer computed when omitted. Copy a non-empty existing description into the configuration if it must be preserved.
+* RBAC policy `target_tenant` is renamed to `target_project_id`; it still holds the ID of the project the access is granted to. Rename the argument when changing the resource type.
 
 #### Changed defaults
 

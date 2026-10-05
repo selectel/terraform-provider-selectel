@@ -40,7 +40,7 @@ func resourceVPCRouterInterfaceV2() *schema.Resource {
 				return portV2Docs.identitySchemaByID(exampleResourceID, portIDFromControlPanel, networkRegionFromControlPanel)
 			},
 		},
-		Description: "Creates and manages an interface that attaches a cloud router to a network using public API v2. " +
+		Description: "Creates and manages an interface that attaches a cloud router to a network using the v2 public API. " +
 			cloudRoutersMoreInfo + "\n\n" +
 			upgradeGuideNote,
 		Schema: routerInterfaceDocs.withDocsHints(map[string]*schema.Schema{

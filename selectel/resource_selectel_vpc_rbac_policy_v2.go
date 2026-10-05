@@ -2,6 +2,7 @@ package selectel
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -40,7 +41,8 @@ func resourceVPCRBACPolicyV2() *schema.Resource {
 				return rbacPolicyDocs.identitySchemaByID(exampleResourceID, rbacPolicyIDFromOpenStackCLI, networkRegionFromControlPanel)
 			},
 		},
-		Description: "Creates and manages an RBAC policy that grants another project access to a networking object using public API v2. " +
+		CustomizeDiff: resourceVPCRBACPolicyV2CustomizeDiff,
+		Description: "Creates and manages an RBAC policy that grants another project access to a networking object using the v2 public API. " +
 			"For more information about managing network access, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/manage-access/).\n\n" +
 			upgradeGuideNote,
 		Schema: rbacPolicyDocs.withDocsHints(map[string]*schema.Schema{
@@ -69,7 +71,7 @@ func resourceVPCRBACPolicyV2() *schema.Resource {
 				Description: "Unique identifier of the object being shared. " +
 					"Retrieved from the [selectel_vpc_network_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_network_v2) or [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource.",
 			},
-			"target_tenant": {
+			"target_project_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				Description: "Unique identifier of the project the access is granted to. " +
@@ -91,7 +93,7 @@ func resourceVPCRBACPolicyV2Create(ctx context.Context, d *schema.ResourceData, 
 		ObjectType:   d.Get("object_type").(string),
 		ObjectID:     d.Get("object_id").(string),
 		Action:       d.Get("action").(string),
-		TargetTenant: d.Get("target_tenant").(string),
+		TargetTenant: d.Get("target_project_id").(string),
 	})
 	if err != nil {
 		return diag.FromErr(errCreatingObject(vpcRBACPolicyV2Object, err))
@@ -117,7 +119,7 @@ func resourceVPCRBACPolicyV2Read(ctx context.Context, d *schema.ResourceData, me
 	d.Set("action", found.Action)
 	d.Set("object_type", found.ObjectType)
 	d.Set("object_id", found.ObjectID)
-	d.Set("target_tenant", found.TargetTenant)
+	d.Set("target_project_id", found.TargetTenant)
 
 	setProjectRegionIdentity(d)
 
@@ -130,10 +132,10 @@ func resourceVPCRBACPolicyV2Update(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	if d.HasChange("target_tenant") {
+	if d.HasChange("target_project_id") {
 		log.Printf("[DEBUG] updating VPC rbac policy %s", d.Id())
 		if _, err := rbacpolicy.Update(ctx, client, d.Id(), rbacpolicy.UpdateRequest{
-			TargetTenant: d.Get("target_tenant").(string),
+			TargetTenant: d.Get("target_project_id").(string),
 		}); err != nil {
 			return diag.FromErr(errUpdatingObject(vpcRBACPolicyV2Object, d.Id(), err))
 		}
@@ -163,4 +165,15 @@ func resourceVPCRBACPolicyV2ImportState(_ context.Context, d *schema.ResourceDat
 	}
 
 	return []*schema.ResourceData{d}, nil
+}
+
+// resourceVPCRBACPolicyV2CustomizeDiff rejects the combination the API refuses at apply time.
+func resourceVPCRBACPolicyV2CustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ any) error {
+	if d.Get("action").(string) == "access_as_external" && d.Get("object_type").(string) == "security_group" {
+		return errors.New(
+			"invalid selectel_vpc_rbac_policy_v2: action \"access_as_external\" " +
+				"is applicable only when object_type is \"network\", got object_type \"security_group\"")
+	}
+
+	return nil
 }

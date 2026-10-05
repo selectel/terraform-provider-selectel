@@ -36,7 +36,7 @@ func resourceVPCSecGroupV2() *schema.Resource {
 				return secGroupDocs.identitySchemaByID(exampleResourceID, secGroupIDFromControlPanel, secGroupRegionFromControlPanel)
 			},
 		},
-		Description: "Creates and manages a security group using public API v2. " +
+		Description: "Creates and manages a security group using the v2 public API. " +
 			securityGroupsMoreInfo + "\n\n" +
 			upgradeGuideNote,
 		Schema: secGroupDocs.withDocsHints(map[string]*schema.Schema{

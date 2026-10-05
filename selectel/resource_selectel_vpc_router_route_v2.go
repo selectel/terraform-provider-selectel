@@ -44,7 +44,7 @@ func resourceVPCRouterRouteV2() *schema.Resource {
 				})
 			},
 		},
-		Description: "Creates and manages a single static route of a cloud router using public API v2. " +
+		Description: "Creates and manages a single static route of a cloud router using the v2 public API. " +
 			staticRoutesMoreInfo + "\n\n" +
 			"Do not manage the same router with both resources: `selectel_vpc_router_route_v2` and `selectel_vpc_router_routes_v2`.\n\n" +
 			upgradeGuideNote,

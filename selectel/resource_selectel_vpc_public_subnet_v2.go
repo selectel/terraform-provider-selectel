@@ -26,7 +26,7 @@ func resourceVPCPublicSubnetV2() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCSubnetV2ImportState,
 		},
-		Description: "Creates and manages a public subnet using public API v2. " +
+		Description: "Creates and manages a public subnet using the v2 public API. " +
 			"For more information about public subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/public-subnets/).\n\n" +
 			upgradeGuideNote,
 		Schema: vpcPublicSubnetDocs.withDocsHints(map[string]*schema.Schema{

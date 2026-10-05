@@ -37,7 +37,7 @@ func resourceVPCRouterV2() *schema.Resource {
 				return routerDocs.identitySchemaByID(exampleResourceID, routerIDFromControlPanel, routerRegionFromControlPanel)
 			},
 		},
-		Description: "Creates and manages a cloud router using public API v2. " +
+		Description: "Creates and manages a cloud router using the v2 public API. " +
 			cloudRoutersMoreInfo + "\n\n" +
 			upgradeGuideNote,
 		Schema: routerDocs.withDocsHints(map[string]*schema.Schema{

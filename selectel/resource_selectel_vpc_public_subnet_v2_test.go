@@ -97,14 +97,14 @@ func testAccCheckVPCV2SubnetExists(n string, subnet *subnets.Subnet) resource.Te
 func testAccVPCPublicSubnetPrefixLength(t *testing.T) int {
 	t.Helper()
 
-	raw := os.Getenv("INFRA_PUBLIC_SUBNET_PREFIX_LENGTH")
+	raw := os.Getenv("SELECTEL_ACC_PUBLIC_SUBNET_PREFIX_LENGTH")
 	if raw == "" {
 		return 29
 	}
 
 	prefixLength, err := strconv.Atoi(raw)
 	if err != nil || prefixLength < 24 || prefixLength > 29 {
-		t.Fatalf("INFRA_PUBLIC_SUBNET_PREFIX_LENGTH must be an integer from 24 to 29, got %q", raw)
+		t.Fatalf("SELECTEL_ACC_PUBLIC_SUBNET_PREFIX_LENGTH must be an integer from 24 to 29, got %q", raw)
 	}
 
 	return prefixLength

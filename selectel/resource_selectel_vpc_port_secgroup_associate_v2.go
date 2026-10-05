@@ -32,7 +32,7 @@ func resourceVPCPortSecGroupAssociateV2() *schema.Resource {
 				return portV2Docs.identitySchemaByID(exampleResourceID, portIDFromControlPanel, networkRegionFromControlPanel)
 			},
 		},
-		Description: "Creates and manages the association between security groups and an existing port using public API v2. " +
+		Description: "Creates and manages the association between security groups and an existing port using the v2 public API. " +
 			securityGroupsMoreInfo + "\n\n" +
 			"The resource addresses the port by identifier, never creates or deletes it, and does not manage any of its other attributes. " +
 			"Do not manage the same port with both this resource and the `security_group_ids` argument of `selectel_vpc_port_v2`.\n\n" +

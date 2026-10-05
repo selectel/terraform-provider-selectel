@@ -44,7 +44,7 @@ func resourceVPCNetworkSubnetRouteV2() *schema.Resource {
 				})
 			},
 		},
-		Description: "Creates and manages a single route of a subnet using public API v2. " +
+		Description: "Creates and manages a single route of a subnet using the v2 public API. " +
 			staticRoutesMoreInfo + "\n\n" +
 			"The resource manages a single entry of the subnet's `host_routes` list and leaves the other entries alone. " +
 			"Do not manage the same routes both with this resource and the `host_routes` argument of `selectel_vpc_network_subnet_v2`.\n\n" +

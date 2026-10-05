@@ -37,7 +37,7 @@ func resourceVPCFloatingIPAssociateV2() *schema.Resource {
 				return publicFloatingIPDocs.identitySchemaByID(exampleResourceID, floatingIPIDFromControlPanel, floatingIPRegionFromControlPanel)
 			},
 		},
-		Description: "Creates and manages the association between an existing public floating IP address and an existing port using public API v2. " +
+		Description: "Creates and manages the association between an existing public floating IP address and an existing port using the v2 public API. " +
 			"For more information about public floating IP addresses, see the " +
 			"[official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/public-floating-ip-addresses/).\n\n" +
 			"The resource manages only the association and never creates or deletes the public floating IP address or the port.\n\n" +
@@ -99,7 +99,8 @@ func resourceVPCFloatingIPAssociateV2Create(
 		return diag.FromErr(fmt.Errorf("error finding floating ip %q: %w", address, err))
 	}
 
-	floatingIPID, err := vpcFloatingIPAssociateV2Result(found, address)
+	floatingIPID, err := vpcFloatingIPAssociateV2Result(
+		found, address, d.Get("project_id").(string), d.Get("region").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -211,15 +212,22 @@ func resourceVPCFloatingIPAssociateV2ImportState(
 }
 
 func vpcFloatingIPAssociateV2Result(
-	found []floatingip.FloatingIP, address string,
+	found []floatingip.FloatingIP, address, projectID, region string,
 ) (string, error) {
 	switch len(found) {
 	case 0:
-		return "", fmt.Errorf("no floating ip found with address %q", address)
+		return "", fmt.Errorf(
+			"no floating ip found with address %q in project %q and region %q: "+
+				"the search is limited to the project_id and region of this resource, "+
+				"please check that the address belongs to that project and region and try again",
+			address, projectID, region)
 	case 1:
 		return found[0].ID, nil
 	default:
-		return "", fmt.Errorf("more than one floating ip found with address %q", address)
+		return "", fmt.Errorf(
+			"more than one floating ip found with address %q in project %q and region %q: "+
+				"please check the address and the project_id and region of this resource and try again",
+			address, projectID, region)
 	}
 }
 

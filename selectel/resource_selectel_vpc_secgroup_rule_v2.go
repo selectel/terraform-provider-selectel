@@ -33,7 +33,7 @@ func resourceVPCSecGroupRuleV2() *schema.Resource {
 				return secGroupRuleDocs.identitySchemaByID(exampleResourceID, secGroupRuleIDFromOpenStackCLI, secGroupRegionFromControlPanel)
 			},
 		},
-		Description: "Creates and manages a rule of a security group using public API v2. " +
+		Description: "Creates and manages a rule of a security group using the v2 public API. " +
 			securityGroupsMoreInfo + "\n\n" +
 			upgradeGuideNote,
 		Schema: secGroupRuleDocs.withDocsHints(map[string]*schema.Schema{

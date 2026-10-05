@@ -18,26 +18,36 @@ import (
 const testAccVPCFloatingIPAssociateV2ResourceName = "selectel_vpc_floatingip_associate_v2.association_tf_acc_test_1" //nolint:gosec
 
 func TestVPCFloatingIPAssociateV2Result(t *testing.T) {
-	const address = "203.0.113.10"
+	const (
+		address   = "203.0.113.10"
+		projectID = "project-id"
+		region    = "ru-3"
+	)
 
 	t.Run("none", func(t *testing.T) {
-		_, err := vpcFloatingIPAssociateV2Result(nil, address)
+		_, err := vpcFloatingIPAssociateV2Result(nil, address, projectID, region)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "no floating ip")
+		assert.Contains(t, err.Error(), projectID)
+		assert.Contains(t, err.Error(), region)
+		assert.Contains(t, err.Error(), "try again")
 	})
 
 	t.Run("one", func(t *testing.T) {
 		id, err := vpcFloatingIPAssociateV2Result(
-			[]floatingip.FloatingIP{{ID: "floating-ip-id"}}, address)
+			[]floatingip.FloatingIP{{ID: "floating-ip-id"}}, address, projectID, region)
 		require.NoError(t, err)
 		assert.Equal(t, "floating-ip-id", id)
 	})
 
 	t.Run("many", func(t *testing.T) {
 		_, err := vpcFloatingIPAssociateV2Result(
-			[]floatingip.FloatingIP{{ID: "first"}, {ID: "second"}}, address)
+			[]floatingip.FloatingIP{{ID: "first"}, {ID: "second"}}, address, projectID, region)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "more than one")
+		assert.Contains(t, err.Error(), projectID)
+		assert.Contains(t, err.Error(), region)
+		assert.Contains(t, err.Error(), "try again")
 	})
 }
 

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -386,4 +387,18 @@ func TestVPCV2ConflictIsTransient(t *testing.T) {
 	assert.True(t, vpcV2ConflictIsTransient(newTestAPIError(http.StatusConflict, vpc.ErrorClassConflict)))
 	assert.False(t, vpcV2ConflictIsTransient(newTestAPIError(http.StatusNotFound, vpc.ErrorClassNotFound)))
 	assert.False(t, vpcV2ConflictIsTransient(newTestTransportError()))
+}
+
+func planVPCV2ResourceDiff(t *testing.T, r *schema.Resource, values map[string]cty.Value) error {
+	t.Helper()
+
+	block := r.CoreConfigSchema()
+	configValue, err := block.CoerceValue(cty.ObjectVal(values))
+	require.NoError(t, err)
+
+	// Terraform passes the raw configuration through the prior state, also on create.
+	state := &terraform.InstanceState{RawConfig: configValue}
+	_, err = r.Diff(context.Background(), state, terraform.NewResourceConfigShimmed(configValue, block), nil)
+
+	return err
 }

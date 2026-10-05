@@ -1,22 +1,32 @@
 ---
 page_title: "Selectel: selectel_vpc_router_v2"
 description: |-
-  Creates and manages a cloud router using public API v2. For more information about cloud routers, see the official Selectel documentation https://docs.selectel.ru/en/cloud-servers/cloud-networks/cloud-routers/.
+  Creates and manages a cloud router using the v2 public API. For more information about cloud routers, see the official Selectel documentation https://docs.selectel.ru/en/cloud-servers/cloud-networks/cloud-routers/.
   If you are upgrading from a version earlier than 9.0.0, follow the upgrade guide https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9 to migrate your resources from the OpenStack provider.
 ---
 
 # selectel_vpc_router_v2
 
-Creates and manages a cloud router using public API v2. For more information about cloud routers, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/cloud-routers/).
+Creates and manages a cloud router using the v2 public API. For more information about cloud routers, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/cloud-routers/).
 
 If you are upgrading from a version earlier than 9.0.0, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack provider.
 
 ## Example Usage
 
 ```terraform
+# Router with default settings
 resource "selectel_vpc_router_v2" "router_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-6"
+}
+```
+
+```terraform
+# Router with high availability
+resource "selectel_vpc_router_v2" "router_1" {
+  project_id = selectel_vpc_project_v2.project_1.id
+  region     = "ru-6"
+  ha         = true
 }
 ```
 

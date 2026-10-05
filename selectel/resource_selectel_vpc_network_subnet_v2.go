@@ -44,7 +44,7 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 				return vpcNetworkSubnetDocs.identitySchemaByID(exampleResourceID, networkSubnetIDFromControlPanel, networkRegionFromControlPanel)
 			},
 		},
-		Description: "Creates and manages a subnet of a private network using public API v2. " +
+		Description: "Creates and manages a subnet of a private network using the v2 public API. " +
 			"For more information about private networks and subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/private-networks-and-subnets/).\n\n" +
 			upgradeGuideNote,
 		Schema: vpcNetworkSubnetDocs.withDocsHints(map[string]*schema.Schema{

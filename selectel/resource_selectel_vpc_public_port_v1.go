@@ -28,7 +28,7 @@ func resourceVPCPublicPortV1() *schema.Resource {
 				return publicPortDocs.identitySchemaByID(exampleResourceID, publicPortIDFromControlPanel, publicPortRegionFromControlPanel)
 			},
 		},
-		Description: "Creates and manages a direct public IP address (public port) in VPC using public API v1. " +
+		Description: "Creates and manages a direct public IP address (public port) in VPC using the v1 public API. " +
 			"For more information about direct public IP addresses, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses).",
 		Schema: publicPortDocs.withDocsHints(map[string]*schema.Schema{
 			"id":         publicPortDocs.idResourceSchema(),

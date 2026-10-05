@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
@@ -69,6 +70,52 @@ func TestVPCPortForwardingV2PortRangeValidation(t *testing.T) {
 
 			require.NotEmpty(t, errs)
 			assert.Contains(t, errs[0].Error(), c.wantErr)
+		})
+	}
+}
+
+func TestVPCPortForwardingV2CustomizeDiff(t *testing.T) {
+	for _, c := range []struct {
+		name     string
+		internal cty.Value
+		external cty.Value
+		wantErr  string
+	}{
+		{name: "ranges of the same size", internal: cty.StringVal("80:82"), external: cty.StringVal("9000:9002")},
+		{name: "a single port range on both sides", internal: cty.StringVal("80:80"), external: cty.StringVal("9000:9000")},
+		{name: "ranges of different sizes", internal: cty.StringVal("80:82"), external: cty.StringVal("9000:9005"), wantErr: "same size"},
+		{name: "only the external range is set", internal: cty.NullVal(cty.String), external: cty.StringVal("9000:9005")},
+		{name: "the internal range is unknown", internal: cty.UnknownVal(cty.String), external: cty.StringVal("9000:9005")},
+		{name: "a malformed range is left to the validator", internal: cty.StringVal("80"), external: cty.StringVal("9000:9005")},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			values := map[string]cty.Value{
+				"project_id":          cty.StringVal("project-id"),
+				"region":              cty.StringVal("ru-1"),
+				"floatingip_id":       cty.StringVal("floatingip-id"),
+				"internal_port_id":    cty.StringVal("port-id"),
+				"internal_ip_address": cty.StringVal("192.168.0.10"),
+				"protocol":            cty.StringVal("tcp"),
+				"external_port_range": c.external,
+			}
+			if !c.internal.IsNull() {
+				values["internal_port_range"] = c.internal
+			} else {
+				values["internal_port"] = cty.NumberIntVal(80)
+			}
+
+			err := planVPCV2ResourceDiff(t, resourceVPCPortForwardingV2(), values)
+
+			if c.wantErr == "" {
+				assert.NoError(t, err)
+
+				return
+			}
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), c.wantErr)
+			assert.Contains(t, err.Error(), "internal_port_range")
+			assert.Contains(t, err.Error(), "external_port_range")
 		})
 	}
 }
