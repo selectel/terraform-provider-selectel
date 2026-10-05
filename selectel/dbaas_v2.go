@@ -17,8 +17,10 @@ import (
 	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dbaas"
 )
 
-const clickhouseDatastoreType = "clickhouse"
-const opensearchDatastoreType = "opensearch"
+const (
+	clickhouseDatastoreType = "clickhouse"
+	opensearchDatastoreType = "opensearch"
+)
 
 func getDBaaSV2Client(d *schema.ResourceData, meta any) (*dbaas_v2.API, diag.Diagnostics) {
 	config := meta.(*Config)
@@ -410,12 +412,10 @@ func expandDBaaSV2ConfigurationParameterSearchFilter(filterSet *schema.Set) dbaa
 	return filter
 }
 
-// Opensearch
+// Opensearch.
 func flattenDBaaSV2DatastoreOpensearchNodeGroups(nodeGroups []dbaas_v2_os.NodeGroupResponse) []any {
-
 	flattenedNodeGroups := make([]any, len(nodeGroups))
 	for i, ng := range nodeGroups {
-
 		flattenedInstances := make([]any, len(ng.Instances))
 		for j, instance := range ng.Instances {
 			flattenedInstance := map[string]any{
@@ -446,7 +446,6 @@ func flattenDBaaSV2DatastoreOpensearchNodeGroups(nodeGroups []dbaas_v2_os.NodeGr
 }
 
 func flattenDBaaSV2OpensearchNodeGroupFlavor(f dbaas_v2_os.FlavorResponse) []any {
-
 	if f.Type == dbaas_v2_common.FlavorTypeFlexible {
 		return []any{
 			map[string]any{
@@ -457,13 +456,13 @@ func flattenDBaaSV2OpensearchNodeGroupFlavor(f dbaas_v2_os.FlavorResponse) []any
 				"disk_type": f.DiskType,
 			},
 		}
-	} else {
-		return []any{
-			map[string]any{
-				"id":   f.ID,
-				"type": f.Type,
-			},
-		}
+	}
+
+	return []any{
+		map[string]any{
+			"id":   f.ID,
+			"type": f.Type,
+		},
 	}
 }
 
@@ -491,6 +490,7 @@ func expandDBaaSV2OpensearchNodeGroupCreate(raw any) dbaas_v2_os.NodeGroupCreate
 		h := hasFIP.(bool)
 		req.HasPublicIPs = &h
 	}
+
 	return req
 }
 
@@ -528,20 +528,8 @@ func expandDBaaSV2OpensearchDatastoreLogPlatform(raw any) (dbaas_v2_os.Datastore
 
 	logGroup := logPlatform[0].(map[string]any)
 	res.LogGroup = logGroup["log_group"].(string)
+
 	return res, nil
-}
-
-func expandDBaaSV2OpensearchShardNameFromSet(shardNamesSet *schema.Set) []string {
-	if shardNamesSet == nil {
-		return nil
-	}
-
-	result := make([]string, 0, shardNamesSet.Len())
-	for _, value := range shardNamesSet.List() {
-		result = append(result, value.(string))
-	}
-
-	return result
 }
 
 func updateDBaaSV2OpensearchDatastoreName(ctx context.Context, d *schema.ResourceData, client *dbaas_v2.API) error {

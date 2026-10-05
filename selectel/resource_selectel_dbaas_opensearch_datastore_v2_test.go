@@ -17,7 +17,6 @@ import (
 const resourceDBaaSOpensearchDatastoreV2Name = "selectel_dbaas_opensearch_datastore_v2.datastore_tf_acc_test_1"
 
 func testAccCheckDBaaSV2OpensearchDatastoreDestroy(s *terraform.State) error {
-
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "selectel_dbaas_opensearch_datastore_v2" {
 			continue
@@ -35,7 +34,6 @@ func testAccCheckDBaaSV2OpensearchDatastoreDestroy(s *terraform.State) error {
 				rs.Primary.ID,
 			)
 		}
-
 	}
 
 	return nil
@@ -78,7 +76,7 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 	var dbaasDatastore dbaas_v2_os.DatastoreResponse
 
 	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
-	datastorePassword := "Iu2YgYlk!ORz"
+	datastorePassword := "Iu2YgYlk!ORz" //nolint:gosec // used in acceptance tests only.
 	datastoreSG := ""
 	dataOneNodeCount := 1
 	dataOneFlavor := dbaas_v2_os.FlavorForNodeGroupRequest{
@@ -103,7 +101,7 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 	`
 	dashboardBlock := ""
 	updatedDatastoreName := acctest.RandomWithPrefix("tf-acc-ds-updated")
-	updatedDatastorePassword := "Iu2YgYlk!ORzUpd"
+	updatedDatastorePassword := "Iu2YgYlk!ORzUpd" //nolint:gosec // used in acceptance tests only.
 
 	updateddataOneNodeCountTwo := 2
 	updatedDataOneFlavor := dbaas_v2_os.FlavorForNodeGroupRequest{
@@ -276,6 +274,7 @@ func testAccDBaaSOpensearchDatastoreV2Basic(datastoreName, datastorePassword, da
 	if dataOneHasPublicIps {
 		HasPublicIPsBlock = "has_public_ips = true"
 	}
+
 	return fmt.Sprintf(`
 locals {
   project_id = "%s"

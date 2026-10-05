@@ -110,6 +110,7 @@ func resourceDBaaSV2OpensearchDatastoreRead(ctx context.Context, d *schema.Resou
 			d.SetId("")
 			return nil
 		}
+
 		return diag.FromErr(errGettingObject(objectDatastore, d.Id(), err))
 	}
 
@@ -136,7 +137,7 @@ func resourceDBaaSV2OpensearchDatastoreRead(ctx context.Context, d *schema.Resou
 	sortedNodeGroups := make([]any, 0, len(apiNodeGroups))
 
 	for _, ng := range configNodeGroups {
-		ngMap := ng.(map[string]interface{})
+		ngMap := ng.(map[string]any)
 		name := ngMap["name"].(string)
 
 		if apiNG, found := apiNodeGroupsMap[name]; found {
@@ -144,7 +145,6 @@ func resourceDBaaSV2OpensearchDatastoreRead(ctx context.Context, d *schema.Resou
 			// delete ng which was handeled
 			delete(apiNodeGroupsMap, name)
 		}
-
 	}
 	// add an api node group that is not in the HCL (not created using Terraform)
 	for _, apiGroup := range apiNodeGroupsMap {
@@ -193,7 +193,6 @@ func resourceDBaaSV2OpensearchDatastoreUpdate(ctx context.Context, d *schema.Res
 		); err != nil {
 			return diag.FromErr(err)
 		}
-
 	}
 
 	if d.HasChange("security_groups") {
@@ -219,7 +218,6 @@ func reconcileDBaaSV2OpensearchNodeGroups(
 	newGroups []any,
 	timeout time.Duration,
 ) error {
-
 	oldByName := opensearchNodeGroupsByName(oldGroups)
 	newByName := opensearchNodeGroupsByName(newGroups)
 
@@ -233,6 +231,7 @@ func reconcileDBaaSV2OpensearchNodeGroups(
 			); err != nil {
 				return fmt.Errorf("creating node group error: %w", err)
 			}
+
 			continue
 		}
 
@@ -246,7 +245,6 @@ func reconcileDBaaSV2OpensearchNodeGroups(
 
 	// Delete.
 	for name, oldGroup := range oldByName {
-
 		if _, exists := newByName[name]; exists {
 			continue
 		}
@@ -335,6 +333,7 @@ func resourceDBaaSV2OpensearchDatastoreDelete(ctx context.Context, d *schema.Res
 	if err != nil {
 		return diag.FromErr(errDeletingObject(objectDatastore, d.Id(), err))
 	}
+
 	return nil
 }
 
@@ -354,9 +353,9 @@ func resourceDBaaSV2OpensearchDatastoreImportState(_ context.Context, d *schema.
 }
 
 func validateDBaaSV2OpensearchDatastoreDiff(
-	ctx context.Context,
+	_ context.Context,
 	diff *schema.ResourceDiff,
-	meta any,
+	_ any,
 ) error {
 	rawNewGroups, ok := diff.Get("node_group").([]any)
 	if !ok {
@@ -382,6 +381,7 @@ func validateDBaaSV2OpensearchDatastoreDiff(
 	if err := validateDBaaSV2OpensearchNodeGroupsDiff(diff); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -390,7 +390,7 @@ func validateDBaaSV2OpensearchNodeGroup(group map[string]any) error {
 	nodeCount := group["node_count"].(int)
 
 	if name == "" {
-		return errors.New("node group with empty name.")
+		return errors.New("node group with empty name")
 	}
 
 	if nodeCount < 1 {
