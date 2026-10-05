@@ -137,7 +137,6 @@ func dbaasV2OpensearchNodeGroupSchema() map[string]*schema.Schema {
 
 func dbaasV2OpensearchFlavorSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
-
 		"id": {
 			Type:     schema.TypeString,
 			Optional: true,
