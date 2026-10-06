@@ -28,7 +28,7 @@ func resourceDBaaSUserV1Schema() map[string]*schema.Schema {
 			Sensitive: true,
 		},
 		"roles": {
-			Type:     schema.TypeList,
+			Type:     schema.TypeSet,
 			Optional: true,
 			Elem: &schema.Schema{
 				Type:         schema.TypeString,

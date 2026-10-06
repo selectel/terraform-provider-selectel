@@ -40,17 +40,17 @@ func resourceDBaaSUserV1Create(ctx context.Context, d *schema.ResourceData, meta
 		return diagErr
 	}
 
-	roles := []string{}
-	if d.Get("roles") != nil {
-		roles = d.Get("roles").([]string)
-	}
-
 	userCreateOpts := dbaas.UserCreateOpts{
 		DatastoreID: d.Get("datastore_id").(string),
 		Name:        d.Get("name").(string),
 		Password:    d.Get("password").(string),
 		Settings:    expandDBaaSUserV1Settings(d),
-		Roles:       roles,
+	}
+
+	rolesRaw, rolesOk := d.GetOk("roles")
+	if rolesOk {
+		rolesSet := rolesRaw.(*schema.Set)
+		userCreateOpts.Roles = expandDBaaSUserRolesV1FromSet(rolesSet)
 	}
 
 	log.Print(msgCreate(objectUser, userCreateOpts))
@@ -125,8 +125,10 @@ func resourceDBaaSUserV1Update(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	if d.HasChange("roles") {
+		rolesRaw := d.Get("roles")
+		rolesSet := rolesRaw.(*schema.Set)
 		updateOpts := dbaas.UserRolesUpdateOpts{
-			Roles: d.Get("roles").([]string),
+			Roles: expandDBaaSUserRolesV1FromSet(rolesSet),
 		}
 
 		log.Print(msgUpdate(objectUser, d.Id(), updateOpts))

@@ -771,3 +771,12 @@ func dbaasLogsUpdate(ctx context.Context, d *schema.ResourceData, client *dbaas.
 
 	return dbaasLogsEnable(ctx, d, client)
 }
+
+func expandDBaaSUserRolesV1FromSet(rolesSet *schema.Set) []string {
+	result := make([]string, 0, rolesSet.Len())
+	for _, value := range rolesSet.List() {
+		result = append(result, value.(string))
+	}
+
+	return result
+}
