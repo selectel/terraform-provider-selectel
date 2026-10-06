@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"maps"
 	"net/http"
 	"time"
 
@@ -50,7 +51,7 @@ func resourceDBaaSV2OpensearchDatastoreCreate(ctx context.Context, d *schema.Res
 		return diagErr
 	}
 
-	nodeGroups := expandDBaasV2OpensearchNodeGroupsCreate(d.Get("node_group").([]any))
+	nodeGroups := expandDBaasV2OpensearchNodeGroupsCreate(d.Get("node_group").(*schema.Set).List())
 
 	datastoreCreateOpts := dbaas_v2_os.DatastoreCreateRequest{
 		Name:       d.Get("name").(string),
@@ -130,28 +131,34 @@ func resourceDBaaSV2OpensearchDatastoreRead(ctx context.Context, d *schema.Resou
 		})
 	}
 
-	// sort node goups from api as in config
-	apiNodeGroups := flattenDBaaSV2DatastoreOpensearchNodeGroups(datastore.NodeGroups)
-	apiNodeGroupsMap := opensearchNodeGroupsByName(apiNodeGroups)
-	configNodeGroups := d.Get("node_group").([]any)
-	sortedNodeGroups := make([]any, 0, len(apiNodeGroups))
+	apiGroups := flattenDBaaSV2DatastoreOpensearchNodeGroups(datastore.NodeGroups)
+	apiByID := opensearchNodeGroupsByID(apiGroups)
+	apiByName := opensearchNodeGroupsByName(apiGroups) // ← функция остаётся! фолбэк create-path
 
-	for _, ng := range configNodeGroups {
-		ngMap := ng.(map[string]any)
-		name := ngMap["name"].(string)
+	stateGroups := d.Get("node_group").(*schema.Set).List()
+	result := make([]any, 0, len(stateGroups))
 
-		if apiNG, found := apiNodeGroupsMap[name]; found {
-			sortedNodeGroups = append(sortedNodeGroups, apiNG)
-			// delete ng which was handeled
-			delete(apiNodeGroupsMap, name)
+	for _, raw := range stateGroups {
+		st := raw.(map[string]any)
+
+		apiNG := opensearchMatchAPIGroup(st, apiByID, apiByName)
+		if apiNG == nil {
+			continue // группа удалена вне Terraform — выпадает из state
 		}
-	}
-	// add an api node group that is not in the HCL (not created using Terraform)
-	for _, apiGroup := range apiNodeGroupsMap {
-		sortedNodeGroups = append(sortedNodeGroups, apiGroup)
+		delete(apiByID, apiNG["id"].(string)) // пометить сматченной
+
+		elem := opensearchNodeGroupFromAPI(apiNG)
+		elem["key"] = st["key"] // идентичность — из state
+		result = append(result, elem)
 	}
 
-	if err := d.Set("node_group", sortedNodeGroups); err != nil {
+	for _, apiNG := range apiByID { // в мапе остались только несматченные
+		elem := opensearchNodeGroupFromAPI(apiNG)
+		elem["key"] = opensearchImportedNodeGroupKey(apiNG["id"].(string))
+		result = append(result, elem)
+	}
+
+	if err := d.Set("node_group", result); err != nil {
 		log.Print(errSettingComplexAttr("node_group", err))
 	}
 
@@ -180,8 +187,8 @@ func resourceDBaaSV2OpensearchDatastoreUpdate(ctx context.Context, d *schema.Res
 	if d.HasChange("node_group") {
 		oldRaw, newRaw := d.GetChange("node_group")
 
-		oldGroups := oldRaw.([]any)
-		newGroups := newRaw.([]any)
+		oldGroups := oldRaw.(*schema.Set).List()
+		newGroups := newRaw.(*schema.Set).List()
 
 		if err := reconcileDBaaSV2OpensearchNodeGroups(
 			ctx,
@@ -454,10 +461,7 @@ func validateDBaaSV2OpensearchDatastoreDiff(
 	diff *schema.ResourceDiff,
 	_ any,
 ) error {
-	rawNewGroups, ok := diff.Get("node_group").([]any)
-	if !ok {
-		return nil
-	}
+	rawNewGroups := diff.Get("node_group").(*schema.Set).List()
 
 	seen := make(map[string]map[string]any, len(rawNewGroups))
 	for _, rawNewGroup := range rawNewGroups {
@@ -513,6 +517,47 @@ func opensearchNodeGroupsByName(groups []any) map[string]map[string]any {
 	return result
 }
 
+const opensearchImportedNodeGroupKeyPrefix = "imported-"
+
+// opensearchNodeGroupsByID indexes node groups from the API by their id.
+func opensearchNodeGroupsByID(groups []any) map[string]map[string]any {
+	byID := make(map[string]map[string]any, len(groups))
+	for _, raw := range groups {
+		g := raw.(map[string]any)
+		byID[g["id"].(string)] = g
+	}
+
+	return byID
+}
+
+// opensearchMatchAPIGroup finds an API group for a state element:
+// by id (update/refresh) or, if id is not set yet, by name (create path).
+func opensearchMatchAPIGroup(
+	st map[string]any,
+	byID, byName map[string]map[string]any,
+) map[string]any {
+	if id, ok := st["id"].(string); ok {
+		return byID[id]
+	}
+	if name, ok := st["name"].(string); ok {
+		return byName[name]
+	}
+
+	return nil
+}
+
+// opensearchNodeGroupFromAPI copies a flattened API group without the key.
+func opensearchNodeGroupFromAPI(g map[string]any) map[string]any {
+	elem := make(map[string]any, len(g)+1)
+	maps.Copy(elem, g)
+
+	return elem
+}
+
+func opensearchImportedNodeGroupKey(id string) string {
+	return opensearchImportedNodeGroupKeyPrefix + id
+}
+
 func validateDBaaSV2OpensearchNodeGroupsDiff(diff *schema.ResourceDiff) error {
 	rawOld, rawNew := diff.GetChange("node_group")
 
@@ -544,17 +589,6 @@ func validateDBaaSV2OpensearchNodeGroupsDiff(diff *schema.ResourceDiff) error {
 				"node_group: changing role of node group %q is not allowed",
 				name,
 			)
-		}
-	}
-
-	if len(oldByName) == len(newByName) {
-		for name := range oldByName {
-			if _, exists := newByName[name]; !exists {
-				return fmt.Errorf(
-					"node_group: changing name of node group %q is not allowed",
-					name,
-				)
-			}
 		}
 	}
 
