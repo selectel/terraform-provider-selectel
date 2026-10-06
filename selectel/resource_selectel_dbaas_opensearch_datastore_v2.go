@@ -210,6 +210,103 @@ func resourceDBaaSV2OpensearchDatastoreUpdate(ctx context.Context, d *schema.Res
 	return resourceDBaaSV2OpensearchDatastoreRead(ctx, d, meta)
 }
 
+func updateDBaaSV2OpensearchDatastoreName(ctx context.Context, d *schema.ResourceData, client *dbaas_v2.API) error {
+	var updateOpts dbaas_v2_os.DatastoreUpdateRequest
+	updateOpts.Name = d.Get("name").(string)
+
+	log.Print(msgUpdate(objectDatastore, d.Id(), updateOpts))
+	_, err := client.Opensearch.UpdateDatastore(ctx, d.Id(), updateOpts)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, client.Opensearch, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func updateDBaaSV2OpensearchDatastorePassword(ctx context.Context, d *schema.ResourceData, client *dbaas_v2.API) error {
+	var updateOpts dbaas_v2_os.DatastoreUpdatePasswordRequest
+	log.Print(msgUpdate(objectDatastore, d.Id(), updateOpts))
+	// do after log to avoid exposing the password
+	updateOpts.NewPassword = d.Get("password").(string)
+	_, err := client.Opensearch.UpdateDatastorePassword(ctx, d.Id(), updateOpts)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, client.Opensearch, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func updateDBaaSV2OpensearchDatastoreLogPlatform(ctx context.Context, d *schema.ResourceData, client *dbaas_v2.API) error {
+	var updateOpts dbaas_v2_os.DatastoreLogPlatformRequest
+	var err error
+
+	log.Print(msgUpdate(objectDatastore, d.Id(), updateOpts))
+	rawLogPlatform, ok := d.GetOk("log_platform")
+	if ok {
+		logGroup, expandErr := expandDBaaSV2OpensearchDatastoreLogPlatform(rawLogPlatform)
+		if expandErr != nil {
+			return errUpdatingObject(objectDatastore, d.Id(), expandErr)
+		}
+		updateOpts.LogPlatform = logGroup
+		_, err = client.Opensearch.EnableLogPlatform(ctx, d.Id(), updateOpts)
+	} else {
+		err = client.Opensearch.DisableLogPlatform(ctx, d.Id())
+	}
+
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, client.Opensearch, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
+func updateDBaaSV2OpensearchDatastoreSecurityGroups(ctx context.Context, d *schema.ResourceData, client *dbaas_v2.API) error {
+	rawSG := d.Get("security_groups")
+
+	securityGroupsSet := rawSG.(*schema.Set)
+	securityGroups := expandDBaaSV2DatastoreSecurityGroupsFromSet(securityGroupsSet)
+
+	updateOpts := dbaas_v2_os.DatastoreSecurityGroupsRequest{
+		SecurityGroups: securityGroups,
+	}
+
+	log.Print(msgUpdate(objectDatastore, d.Id(), updateOpts))
+
+	if _, err := client.Opensearch.UpdateDatastoreSecurityGroups(ctx, d.Id(), updateOpts); err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err := waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, client.Opensearch, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectDatastore, d.Id(), err)
+	}
+
+	return nil
+}
+
 func reconcileDBaaSV2OpensearchNodeGroups(
 	ctx context.Context,
 	client *dbaas_v2.API,
