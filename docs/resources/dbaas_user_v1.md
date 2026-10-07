@@ -95,6 +95,8 @@ resource "selectel_dbaas_user_v1" "user_1" {
 
   * `default_transaction_read_only` - Whether transactions are read-only by default.
 
+* `roles` - (Optional) List of user roles. Each role is specified by its UUID. You can retrieve available roles with the [selectel_dbaas_roles_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_roles_v1) data source.
+
 ## Attributes Reference
 
 * `status` - User status.
