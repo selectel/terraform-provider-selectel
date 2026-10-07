@@ -138,7 +138,7 @@ func resourceDBaaSUserV1Update(ctx context.Context, d *schema.ResourceData, meta
 		}
 
 		log.Printf("[DEBUG] waiting for user %s to become 'ACTIVE'", d.Id())
-		timeout := d.Timeout(schema.TimeoutCreate)
+		timeout := d.Timeout(schema.TimeoutUpdate)
 		err = waiters.WaitForDBaaSUserV1ActiveState(ctx, dbaasClient, d.Id(), timeout)
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))

@@ -11,6 +11,10 @@ FEATURES:
 * Add `roles` argument to `selectel_dbaas_user_v1` resource ([#434](https://github.com/selectel/terraform-provider-selectel/pull/434))
 * Add new data sources ([#434](https://github.com/selectel/terraform-provider-selectel/pull/434)): `selectel_dbaas_roles_v1`
 
+BUG FIXES:
+
+* `selectel_dbaas_postgresql_datastore_v1`, `selectel_dbaas_mysql_datastore_v1`, `selectel_dbaas_redis_datastore_v1`, `selectel_dbaas_kafka_datastore_v1`: set `security_groups` as `Computed` to prevent permanent drift. API requires at least one security group per cluster and creates a default group automatically when none are specified.
+
 ## 9.2.0 (October 14, 2026)
 
 FEATURES:

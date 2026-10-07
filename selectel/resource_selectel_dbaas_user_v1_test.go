@@ -27,7 +27,7 @@ func TestAccDBaaSUserV1Basic(t *testing.T) {
 	userRoles := "" // no roles
 
 	updatedPassword := acctest.RandomWithPrefix("tf-acc-pass")
-	updatedRolessBlock := `
+	updatedRolesBlock := `
 	roles = [
 		data.selectel_dbaas_roles_v1.role_dbaas_admin.roles[0].id,
 	]`
@@ -60,7 +60,7 @@ func TestAccDBaaSUserV1Basic(t *testing.T) {
 			},
 			// update roles
 			{
-				Config: testAccDBaaSUserV1Basic(projectName, datastoreName, userName, updatedPassword, nodeCount, updatedRolessBlock),
+				Config: testAccDBaaSUserV1Basic(projectName, datastoreName, userName, updatedPassword, nodeCount, updatedRolesBlock),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "name", userName),
 					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "password", updatedPassword),
