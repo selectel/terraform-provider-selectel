@@ -139,6 +139,7 @@ func resourceDBaaSDatastoreV1BaseSchema() map[string]*schema.Schema {
 				Type:         schema.TypeString,
 				ValidateFunc: validation.IsUUID,
 			},
+			Computed: true, // When creating a cluster without groups, the API itself sets the default group.
 		},
 	}
 }
