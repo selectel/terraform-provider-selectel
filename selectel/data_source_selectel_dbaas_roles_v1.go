@@ -81,13 +81,13 @@ func dataSourceDBaaSRolesV1Read(ctx context.Context, d *schema.ResourceData, met
 		rolesIDs = append(rolesIDs, param.ID)
 	}
 
-	filter, err := expandRolesSearchFilter(d.Get("filter").(*schema.Set))
+	filter, err := expandDBaaSRolesSearchFilter(d.Get("filter").(*schema.Set))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	roles = filterRolesByDatastoreTypeID(roles, filter.datastoreTypeID)
-	roles = filterRolesByName(roles, filter.name)
+	roles = filterDBaaSRolesByDatastoreTypeID(roles, filter.datastoreTypeID)
+	roles = filterDBaaSRolesByName(roles, filter.name)
 
 	rolesFlatter := flattenDBaaSRoles(roles)
 	if err := d.Set("roles", rolesFlatter); err != nil {
@@ -102,7 +102,7 @@ func dataSourceDBaaSRolesV1Read(ctx context.Context, d *schema.ResourceData, met
 	return nil
 }
 
-func expandRolesSearchFilter(filterSet *schema.Set) (rolesSearchFilter, error) {
+func expandDBaaSRolesSearchFilter(filterSet *schema.Set) (rolesSearchFilter, error) {
 	filter := rolesSearchFilter{}
 	if filterSet.Len() == 0 {
 		return filter, nil
@@ -123,7 +123,7 @@ func expandRolesSearchFilter(filterSet *schema.Set) (rolesSearchFilter, error) {
 	return filter, nil
 }
 
-func filterRolesByDatastoreTypeID(roles []dbaas.Role, datastoreTypeID string) []dbaas.Role {
+func filterDBaaSRolesByDatastoreTypeID(roles []dbaas.Role, datastoreTypeID string) []dbaas.Role {
 	if datastoreTypeID == "" {
 		return roles
 	}
@@ -138,15 +138,15 @@ func filterRolesByDatastoreTypeID(roles []dbaas.Role, datastoreTypeID string) []
 	return filteredRoles
 }
 
-func filterRolesByName(roles []dbaas.Role, name string) []dbaas.Role {
+func filterDBaaSRolesByName(roles []dbaas.Role, name string) []dbaas.Role {
 	if name == "" {
 		return roles
 	}
 
 	var filteredRoles []dbaas.Role
-	for _, param := range roles {
-		if param.Name == name {
-			filteredRoles = append(filteredRoles, param)
+	for _, role := range roles {
+		if role.Name == name {
+			filteredRoles = append(filteredRoles, role)
 		}
 	}
 
@@ -155,11 +155,11 @@ func filterRolesByName(roles []dbaas.Role, name string) []dbaas.Role {
 
 func flattenDBaaSRoles(roles []dbaas.Role) []any {
 	rolesList := make([]any, len(roles))
-	for i, param := range roles {
+	for i, role := range roles {
 		rolesMap := make(map[string]any)
-		rolesMap["id"] = param.ID
-		rolesMap["datastore_type_id"] = param.DatastoreTypeID
-		rolesMap["name"] = param.Name
+		rolesMap["id"] = role.ID
+		rolesMap["datastore_type_id"] = role.DatastoreTypeID
+		rolesMap["name"] = role.Name
 
 		rolesList[i] = rolesMap
 	}
