@@ -2,11 +2,13 @@ package selectel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
@@ -32,7 +34,10 @@ func resourceVPCNetworkSubnetV2() *schema.Resource {
 		ReadContext:   resourceVPCNetworkSubnetV2Read,
 		UpdateContext: resourceVPCNetworkSubnetV2Update,
 		DeleteContext: resourceVPCNetworkSubnetV2Delete,
-		CustomizeDiff: schemadiff.RecomputeOnChange("all_tags", "tags"),
+		CustomizeDiff: customdiff.All(
+			schemadiff.RecomputeOnChange("all_tags", "tags"),
+			validateVPCNetworkSubnetV2GatewayEnabled,
+		),
 		Timeouts: &schema.ResourceTimeout{
 			Delete: schema.DefaultTimeout(vpcV2DefaultDeleteTimeout),
 		},
@@ -384,6 +389,17 @@ func flattenVPCNetworkSubnetV2Common(d *schema.ResourceData, found *subnet.Subne
 		log.Print(errSettingComplexAttr("host_routes", err))
 	}
 	flattenVPCTagsV2(d, found.Tags)
+}
+
+func validateVPCNetworkSubnetV2GatewayEnabled(_ context.Context, d *schema.ResourceDiff, _ any) error {
+	if d.Id() == "" || !d.HasChange("no_gateway") || d.Get("no_gateway").(bool) {
+		return nil
+	}
+	if !d.NewValueKnown("gateway_ip") || d.Get("gateway_ip").(string) != "" {
+		return nil
+	}
+
+	return errors.New("`gateway_ip` must be set to enable the gateway of a subnet created with `no_gateway = true`")
 }
 
 func validateVPCNetworkSubnetV2CIDR(v any, k string) ([]string, []error) {

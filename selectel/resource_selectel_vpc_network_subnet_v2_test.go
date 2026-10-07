@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -80,6 +82,72 @@ func TestVPCNetworkSubnetV2HostRoutes(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, resourceVPCNetworkSubnetV2().Schema, nil)
 	flattenVPCNetworkSubnetV2(d, &subnet.Subnet{HostRoutes: routes})
 	assert.Equal(t, want, d.Get("host_routes"))
+}
+
+func TestVPCNetworkSubnetV2PlanNoGateway(t *testing.T) {
+	state := func(noGateway, gatewayIP string) *terraform.InstanceState {
+		return &terraform.InstanceState{
+			ID: "subnet-id",
+			Attributes: map[string]string{
+				"id":         "subnet-id",
+				"project_id": "project-id",
+				"region":     "ru-3",
+				"network_id": "network-id",
+				"cidr":       "192.168.199.0/24",
+				"no_gateway": noGateway,
+				"gateway_ip": gatewayIP,
+			},
+		}
+	}
+	config := func(extra map[string]any) *terraform.ResourceConfig {
+		raw := map[string]any{
+			"project_id": "project-id",
+			"region":     "ru-3",
+			"network_id": "network-id",
+			"cidr":       "192.168.199.0/24",
+		}
+		maps.Copy(raw, extra)
+
+		return terraform.NewResourceConfigRaw(raw)
+	}
+
+	for name, c := range map[string]struct {
+		state   *terraform.InstanceState
+		config  *terraform.ResourceConfig
+		wantErr string
+	}{
+		"no_gateway true to false without gateway_ip is rejected": {
+			state:   state("true", ""),
+			config:  config(map[string]any{"no_gateway": false}),
+			wantErr: "gateway_ip",
+		},
+		"no_gateway attribute removed without gateway_ip is rejected": {
+			state:   state("true", ""),
+			config:  config(nil),
+			wantErr: "gateway_ip",
+		},
+		"no_gateway true to false with gateway_ip is allowed": {
+			state:  state("true", ""),
+			config: config(map[string]any{"no_gateway": false, "gateway_ip": "192.168.199.1"}),
+		},
+		"no_gateway stays true is allowed": {
+			state:  state("true", ""),
+			config: config(map[string]any{"no_gateway": true}),
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := resourceVPCNetworkSubnetV2().Diff(context.Background(), c.state, c.config, nil)
+
+			if c.wantErr == "" {
+				require.NoError(t, err)
+
+				return
+			}
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), c.wantErr)
+		})
+	}
 }
 
 func TestAccVPCNetworkSubnetV2Basic(t *testing.T) {
@@ -223,6 +291,22 @@ func TestAccVPCNetworkSubnetV2Update(t *testing.T) {
 			},
 			{
 				Config:   testAccVPCNetworkSubnetV2NoGateway(projectID, region, updatedName),
+				PlanOnly: true,
+			},
+			{
+				Config:      testAccVPCNetworkSubnetV2GatewayEnabled(projectID, region, updatedName, ""),
+				ExpectError: regexp.MustCompile("`gateway_ip` must be set"),
+			},
+			{
+				Config: testAccVPCNetworkSubnetV2GatewayEnabled(projectID, region, updatedName, "192.168.199.1"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCNetworkSubnetV2SameID(testAccVPCNetworkSubnetV2ResourceName, &found),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "no_gateway", "false"),
+					resource.TestCheckResourceAttr(testAccVPCNetworkSubnetV2ResourceName, "gateway_ip", "192.168.199.1"),
+				),
+			},
+			{
+				Config:   testAccVPCNetworkSubnetV2GatewayEnabled(projectID, region, updatedName, "192.168.199.1"),
 				PlanOnly: true,
 			},
 		},
@@ -441,6 +525,33 @@ resource "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
   }
 }
 `, region, subnetName)
+}
+
+func testAccVPCNetworkSubnetV2GatewayEnabled(projectID, region, subnetName, gatewayIP string) string {
+	gateway := ""
+	if gatewayIP != "" {
+		gateway = fmt.Sprintf("gateway_ip      = %q", gatewayIP)
+	}
+
+	return testAccVPCNetworkSubnetV2Network(projectID, region) + fmt.Sprintf(`
+resource "selectel_vpc_network_subnet_v2" "subnet_tf_acc_test_1" {
+  project_id      = local.project_id
+  region          = "%s"
+  network_id      = selectel_vpc_network_v2.network_tf_acc_test_1.id
+  cidr            = "192.168.199.0/24"
+  name            = "%s"
+  description     = "updated by the acceptance test"
+  %s
+  enable_dhcp     = true
+  dns_nameservers = ["8.8.8.8"]
+  tags            = ["tf-acc", "updated"]
+
+  allocation_pool {
+    start = "192.168.199.30"
+    end   = "192.168.199.40"
+  }
+}
+`, region, subnetName, gateway)
 }
 
 func testAccVPCNetworkSubnetV2IPv6(projectID, region string) string {
