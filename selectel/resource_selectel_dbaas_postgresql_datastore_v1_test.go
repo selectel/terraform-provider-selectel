@@ -48,7 +48,13 @@ func TestAccDBaaSPostgreSQLDatastoreV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_dbaas_postgresql_datastore_v1.datastore_tf_acc_test_1", "config.transform_null_equals", "true"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_postgresql_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_postgresql_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
+					resource.TestCheckResourceAttrSet("selectel_dbaas_postgresql_datastore_v1.datastore_tf_acc_test_1", "security_groups.#"),
 				),
+			},
+			// terraform plan whichout apply — check drift only
+			{
+				Config:   testAccDBaaSPostgreSQLDatastoreV1Basic(projectName, datastoreName, nodeCount),
+				PlanOnly: true,
 			},
 			{
 				Config: testAccDBaaSPostgreSQLDatastoreV1UpdateName(projectName, updatedDatastoreName, nodeCount),
