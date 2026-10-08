@@ -5,7 +5,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	dbaas_v2_common "github.com/selectel/dbaas-go/v2/common"
 	dbaas_v2_os "github.com/selectel/dbaas-go/v2/opensearch"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/hashcode"
 )
 
 func resourceDBaaSV2OpensearchDatastoreSchema() map[string]*schema.Schema {
@@ -19,10 +18,9 @@ func resourceDBaaSV2OpensearchDatastoreSchema() map[string]*schema.Schema {
 	}
 
 	datastoreSchema["node_group"] = &schema.Schema{
-		Type:     schema.TypeSet,
+		Type:     schema.TypeList,
 		Required: true,
 		MinItems: 1,
-		Set:      nodeGroupKeyHash,
 		Elem: &schema.Resource{
 			Schema: dbaasV2OpensearchNodeGroupSchema(),
 		},
@@ -65,9 +63,10 @@ func dbaasV2OpensearchNodeGroupSchema() map[string]*schema.Schema {
 		},
 
 		"key": {
-			Type:        schema.TypeString,
-			Required:    true,
-			Description: "Stable identifier of the node group. Changing it recreates the group.",
+			Type:         schema.TypeString,
+			Required:     true,
+			Description:  "Stable identifier of the node group. Changing it recreates the group.",
+			ValidateFunc: validation.StringIsNotEmpty,
 		},
 
 		"name": {
@@ -186,8 +185,4 @@ func dbaasV2OpensearchFlavorSchema() map[string]*schema.Schema {
 			),
 		},
 	}
-}
-
-func nodeGroupKeyHash(v any) int {
-	return hashcode.String(v.(map[string]any)["key"].(string))
 }

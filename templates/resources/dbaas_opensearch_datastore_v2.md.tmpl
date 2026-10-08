@@ -20,6 +20,7 @@ resource "selectel_dbaas_opensearch_datastore_v2" "cluster_1" {
   password   = "secretsecretsecretsecret"
 
   node_group {
+    key        = "managers"
     name       = "managers"
     role       = "MANAGER"
     node_count = 3
@@ -30,6 +31,7 @@ resource "selectel_dbaas_opensearch_datastore_v2" "cluster_1" {
   }
 
   node_group {
+    key            = "data1"
     name           = "data1"
     role           = "DATA"
     node_count     = 2
@@ -44,6 +46,7 @@ resource "selectel_dbaas_opensearch_datastore_v2" "cluster_1" {
   }
 
   node_group {
+    key            = "data2"
     name           = "data2"
     role           = "DATA"
     node_count     = 1
@@ -75,9 +78,11 @@ resource "selectel_dbaas_opensearch_datastore_v2" "cluster_1" {
 
 * `password` - (Required) Password for the cluster. Changing this updates the password in the cluster.
 
-* `node_group` - (Required) List of node groups in the cluster. A cluster must contain at least one `DATA` node group and one `MANAGER` node group.
+* `node_group` - (Required) List of node groups in the cluster. A cluster must contain at least one `DATA` node group and one `MANAGER` node group. Each node group is identified by its `key`.
 
-  * `name` - (Required) Name of the node group. Must be unique within the cluster.
+  * `key` - (Required) Stable identifier of the node group used by the provider to match node groups between the configuration and the state. Must be unique within the cluster and not empty. Must not change during the lifetime of the node group: changing `key` is treated as deleting the old node group and creating a new one. To rename a node group, change `name` and keep `key` unchanged.
+
+  * `name` - (Required) Name of the node group. Can be changed in-place by keeping the `key` unchanged.
 
   * `role` - (Required) Role of the node group. Available values are `DATA`, `MANAGER` and `DASHBOARD`. Node group with role `DASHBOARD` is not required.
 
@@ -107,15 +112,17 @@ resource "selectel_dbaas_opensearch_datastore_v2" "cluster_1" {
 
 ## Important notes about node groups
 
-* The order of `node_group` blocks is significant because `node_group` is a list (`TypeList`). After adding or removing a group in the middle, Terraform shows a difference for subsequent groups. This is only a display artifact — the provider manages groups by name.
+* The provider identifies node groups by the `key` field, not by their position in the list or by `name`. `node_group` is a list (`TypeList`), so the order of blocks is reflected in the state, but it does not affect which group is created, updated or deleted.
 
-* Do not change the `name` of an existing node group. The provider identifies groups by `name`. Keeping the name allows in-place updates (`node_count`, `has_public_ips`, `flavor`). Changing a name when the number of groups is unchanged causes a `terraform plan` error. Changing a name while also adding or removing groups is treated as deleting the old group and creating a new one.
+* Do not change the `key` of an existing node group. Changing `key` is treated as deleting the old node group and creating a new one. To rename a node group, change only `name` and keep `key` unchanged — the group is renamed in-place, without recreation.
 
-* Do not change the `role` of an existing node group. Changing the role is prohibited by the provider and returns an error: `node_group: changing role of node group "<name>" is not allowed`.
+* Changing `node_count`, `has_public_ips` or `flavor` of an existing node group updates it in-place.
 
-* Add new node groups to the end of the list. This minimizes display differences in the Terraform state.
+* Do not change the `role` of an existing node group. Changing the role is prohibited by the provider and returns an error: `node_group: changing role of node group with key "<key>" is not allowed`.
 
-* When deleting a node group from the middle or beginning of the list, Terraform shows a difference for the groups after the deleted one. The correct group is deleted by name. This difference in display is expected and does not affect the actual infrastructure.
+* Adding or removing a node group in the middle of the list, or reordering blocks, makes Terraform show a difference for the affected positions in the plan. This is only a display artifact — the provider matches node groups by `key`, and no redundant actions are performed. Adding new node groups to the end of the list minimizes the display churn.
+
+* Node groups that were created outside of Terraform (for example, from the Control panel) are added to the state during the next refresh with the `imported-<node_group_id>` key. Such a node group is not described in the configuration, so the next `terraform apply` deletes it. To keep the node group, add it to the configuration with the `imported-<node_group_id>` key, or replace the key in the state with your own value first.
 
 ## Attributes Reference
 
@@ -124,6 +131,8 @@ resource "selectel_dbaas_opensearch_datastore_v2" "cluster_1" {
 * `state` - Cluster state.
 
 * `node_group` - List of node groups. Each group includes the following computed attributes in addition to the configured ones:
+
+  * `id` - Unique identifier of the node group.
 
   * `status` - Status of the node group.
 

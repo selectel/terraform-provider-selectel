@@ -538,12 +538,38 @@ func createDBaaSV2OpensearchNodeGroup(
 	datastoreID string,
 	nodeGroupData any,
 	timeout time.Duration,
-) error {
+) (string, error) {
 	createOpts := expandDBaaSV2OpensearchNodeGroupCreate(nodeGroupData)
 	extraMsg := fmt.Sprintf("create node group %+v", createOpts)
 
 	log.Print(msgUpdate(objectDatastore, datastoreID, extraMsg))
-	_, err := client.Opensearch.CreateNodeGroup(ctx, datastoreID, createOpts)
+	response, err := client.Opensearch.CreateNodeGroup(ctx, datastoreID, createOpts)
+	if err != nil {
+		return "", errUpdatingObject(objectDatastore, datastoreID, err)
+	}
+
+	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", datastoreID)
+	err = waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, client.Opensearch, datastoreID, timeout)
+	if err != nil {
+		return "", errUpdatingObject(objectDatastore, datastoreID, err)
+	}
+
+	return response.ID, nil
+}
+
+func updateDBaaSV2OpensearchNodeGroup(
+	ctx context.Context,
+	client *dbaas_v2.API,
+	datastoreID string,
+	nodeGroupID string,
+	updateData dbaas_v2_os.NodeGroupUpdateRequest,
+	timeout time.Duration,
+) error {
+	extraMsg := fmt.Sprintf("update node group %s: %+v", nodeGroupID, updateData)
+
+	log.Print(msgUpdate(objectDatastore, datastoreID, extraMsg))
+
+	_, err := client.Opensearch.UpdateNodeGroup(ctx, datastoreID, nodeGroupID, updateData)
 	if err != nil {
 		return errUpdatingObject(objectDatastore, datastoreID, err)
 	}

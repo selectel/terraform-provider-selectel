@@ -74,10 +74,13 @@ func testAccCheckDBaaSV2OpensearchDatastoreExists(n string, dbaasDatastore *dbaa
 
 func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 	var dbaasDatastore dbaas_v2_os.DatastoreResponse
+	var dataOneNodeGroupID string
 
 	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
 	datastorePassword := "Iu2YgYlk!ORz" //nolint:gosec // used in acceptance tests only.
 	datastoreSG := ""
+	dataOneName := "data1"
+	dataOneNameRenamed := "data1-renamed"
 	dataOneNodeCount := 1
 	dataOneFlavor := dbaas_v2_os.FlavorForNodeGroupRequest{
 		Type:     dbaas_v2_common.FlavorTypeFlexible,
@@ -89,6 +92,7 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 	dataOneHasPublicIps := false
 	managersBlock := `
 	node_group {
+	  key        = "managers"
 	  name       = "managers"
 	  role       = "MANAGER"
 	  node_count = 3
@@ -103,7 +107,7 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 	updatedDatastoreName := acctest.RandomWithPrefix("tf-acc-ds-updated")
 	updatedDatastorePassword := "Iu2YgYlk!ORzUpd" //nolint:gosec // used in acceptance tests only.
 
-	updateddataOneNodeCountTwo := 2
+	updatedDataOneNodeCountTwo := 2
 	updatedDataOneFlavor := dbaas_v2_os.FlavorForNodeGroupRequest{
 		Type:     dbaas_v2_common.FlavorTypeFlexible,
 		VCPUs:    4,
@@ -115,6 +119,7 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 	updatedDataOneHasPublicIps := true
 	updatedDashboardBlock := `
 	node_group {
+	  key        = "dashboard"
 	  name       = "dashboard"
 	  role       = "DASHBOARD"
 	  node_count = 1
@@ -140,7 +145,7 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 		CheckDestroy:      testAccCheckDBaaSV2OpensearchDatastoreDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDBaaSOpensearchDatastoreV2Basic(datastoreName, datastorePassword, datastoreSG, managersBlock, dataOneNodeCount, dataOneFlavor, dataOneHasPublicIps, dashboardBlock),
+				Config: testAccDBaaSOpensearchDatastoreV2Basic(datastoreName, datastorePassword, datastoreSG, managersBlock, dataOneName, dataOneNodeCount, dataOneFlavor, dataOneHasPublicIps, dashboardBlock),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDBaaSV2OpensearchDatastoreExists(resourceDBaaSOpensearchDatastoreV2Name, &dbaasDatastore),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "name", datastoreName),
@@ -149,15 +154,18 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "state", string(dbaas_v2_common.DatastoreStateRunning)),
 
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.#", "2"),
+					// The 'node_group' attribute is a TypeList, elements are stored
+					// in the configuration order: managers, data1.
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.key", "managers"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.name", "managers"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.node_count", "3"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.role", "MANAGER"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.node_count", "3"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.flavor.0.type", "FIXED"),
 
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.name", "data1"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.node_count", "1"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.key", "data1"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.name", dataOneName),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.role", "DATA"),
-
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.node_count", "1"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.type", string(dataOneFlavor.Type)),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.vcpus", strconv.Itoa(dataOneFlavor.VCPUs)),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.ram", strconv.Itoa(dataOneFlavor.RAM)),
@@ -169,40 +177,45 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 			},
 			// Update datastore name
 			{
-				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, datastorePassword, datastoreSG, managersBlock, dataOneNodeCount, dataOneFlavor, dataOneHasPublicIps, dashboardBlock),
+				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, datastorePassword, datastoreSG, managersBlock, dataOneName, dataOneNodeCount, dataOneFlavor, dataOneHasPublicIps, dashboardBlock),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "name", updatedDatastoreName),
 				),
 			},
 			// Update datastore password
 			{
-				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, datastoreSG, managersBlock, dataOneNodeCount, dataOneFlavor, dataOneHasPublicIps, dashboardBlock),
+				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, datastoreSG, managersBlock, dataOneName, dataOneNodeCount, dataOneFlavor, dataOneHasPublicIps, dashboardBlock),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "name", updatedDatastoreName),
 				),
 			},
 			// Update datastore security groups
 			{
-				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, updatedDatastoreSG, managersBlock, dataOneNodeCount, dataOneFlavor, dataOneHasPublicIps, dashboardBlock),
+				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, updatedDatastoreSG, managersBlock, dataOneName, dataOneNodeCount, dataOneFlavor, dataOneHasPublicIps, dashboardBlock),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "name", updatedDatastoreName),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "security_groups.#", "1"),
-					resource.TestCheckResourceAttrSet(resourceDBaaSOpensearchDatastoreV2Name, "security_groups.0"), // first item is not empty string
+					// The 'security_groups' attribute is a TypeSet, so items are addressed
+					// by hash instead of index. Check that the security group resource ID
+					// is present in the set.
+					resource.TestCheckTypeSetElemAttrPair(resourceDBaaSOpensearchDatastoreV2Name, "security_groups.*", "openstack_networking_secgroup_v2.ds_sg", "id"),
 				),
 			},
 			// Update data1 add public ips
 			{
-				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, updatedDatastoreSG, managersBlock, dataOneNodeCount, dataOneFlavor, updatedDataOneHasPublicIps, dashboardBlock),
+				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, updatedDatastoreSG, managersBlock, dataOneName, dataOneNodeCount, dataOneFlavor, updatedDataOneHasPublicIps, dashboardBlock),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "name", updatedDatastoreName),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.key", "data1"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.has_public_ips", "true"),
 				),
 			},
 			// Resize data1 by flavor
 			{
-				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, updatedDatastoreSG, managersBlock, dataOneNodeCount, updatedDataOneFlavor, updatedDataOneHasPublicIps, dashboardBlock),
+				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, updatedDatastoreSG, managersBlock, dataOneName, dataOneNodeCount, updatedDataOneFlavor, updatedDataOneHasPublicIps, dashboardBlock),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "name", updatedDatastoreName),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.key", "data1"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.node_count", "1"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.has_public_ips", "true"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.type", string(updatedDataOneFlavor.Type)),
@@ -214,49 +227,108 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 			},
 			// Add dashboard node group
 			{
-				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, updatedDatastoreSG, managersBlock, dataOneNodeCount, updatedDataOneFlavor, updatedDataOneHasPublicIps, updatedDashboardBlock),
+				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, updatedDatastoreSG, managersBlock, dataOneName, dataOneNodeCount, updatedDataOneFlavor, updatedDataOneHasPublicIps, updatedDashboardBlock),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "name", updatedDatastoreName),
 
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.#", "3"),
+					// Configuration order: managers, data1, dashboard.
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.key", "managers"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.name", "managers"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.node_count", "3"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.role", "MANAGER"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.node_count", "3"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.flavor.0.type", "FIXED"),
 
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.name", "data1"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.node_count", "1"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.key", "data1"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.name", dataOneName),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.role", "DATA"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.node_count", "1"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.type", string(updatedDataOneFlavor.Type)),
 
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.key", "dashboard"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.name", "dashboard"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.node_count", "1"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.role", "DASHBOARD"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.node_count", "1"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.flavor.0.type", "FLEXIBLE"),
 				),
 			},
 			// Update node count for data1 (add node)
 			{
-				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, updatedDatastoreSG, managersBlock, updateddataOneNodeCountTwo, updatedDataOneFlavor, updatedDataOneHasPublicIps, updatedDashboardBlock),
+				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, updatedDatastoreSG, managersBlock, dataOneName, updatedDataOneNodeCountTwo, updatedDataOneFlavor, updatedDataOneHasPublicIps, updatedDashboardBlock),
 				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDBaaSV2OpensearchDatastoreExists(resourceDBaaSOpensearchDatastoreV2Name, &dbaasDatastore),
+					// Capture the current data1 node group ID to verify
+					// later that renaming is in-place and does not recreate
+					// the node group.
+					func(_ *terraform.State) error {
+						for _, nodeGroup := range dbaasDatastore.NodeGroups {
+							if nodeGroup.Name != dataOneName {
+								continue
+							}
+							dataOneNodeGroupID = nodeGroup.ID
+
+							return nil
+						}
+
+						return fmt.Errorf("node group with name %q not found in datastore", dataOneName)
+					},
+
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "name", updatedDatastoreName),
 
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.#", "3"),
+					// Configuration order: managers, data1, dashboard.
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.key", "managers"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.name", "managers"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.node_count", "3"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.role", "MANAGER"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.node_count", "3"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.0.flavor.0.type", "FIXED"),
 
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.name", "data1"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.node_count", "2"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.key", "data1"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.name", dataOneName),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.role", "DATA"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.node_count", "2"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.has_public_ips", "true"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.type", string(updatedDataOneFlavor.Type)),
 
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.key", "dashboard"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.name", "dashboard"),
-					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.node_count", "1"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.role", "DASHBOARD"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.node_count", "1"),
 					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.2.flavor.0.type", "FLEXIBLE"),
+				),
+			},
+			// Rename data1 node group in-place, its key is not changed
+			{
+				Config: testAccDBaaSOpensearchDatastoreV2Basic(updatedDatastoreName, updatedDatastorePassword, updatedDatastoreSG, managersBlock, dataOneNameRenamed, updatedDataOneNodeCountTwo, updatedDataOneFlavor, updatedDataOneHasPublicIps, updatedDashboardBlock),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDBaaSV2OpensearchDatastoreExists(resourceDBaaSOpensearchDatastoreV2Name, &dbaasDatastore),
+					// The renamed node group must keep its ID.
+					func(_ *terraform.State) error {
+						for _, nodeGroup := range dbaasDatastore.NodeGroups {
+							if nodeGroup.ID != dataOneNodeGroupID {
+								continue
+							}
+							if nodeGroup.Name != dataOneNameRenamed {
+								return fmt.Errorf("node group %s has name %q, expected %q",
+									nodeGroup.ID, nodeGroup.Name, dataOneNameRenamed)
+							}
+
+							return nil
+						}
+
+						return fmt.Errorf("node group with ID %s not found after rename, it was probably recreated",
+							dataOneNodeGroupID)
+					},
+
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.#", "3"),
+					// The renamed group stays at index 1: in-place rename does
+					// not change the key or the position.
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.key", "data1"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.name", dataOneNameRenamed),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.role", "DATA"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.node_count", strconv.Itoa(updatedDataOneNodeCountTwo)),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.has_public_ips", "true"),
+					resource.TestCheckResourceAttr(resourceDBaaSOpensearchDatastoreV2Name, "node_group.1.flavor.0.type", string(updatedDataOneFlavor.Type)),
 				),
 			},
 		},
@@ -264,7 +336,7 @@ func TestAccDBaaSOpensearchDatastoreV2Basic(t *testing.T) {
 }
 
 // testAccDBaaSOpensearchDatastoreV2Basic is a simple cluster with one data node group and manager node group.
-func testAccDBaaSOpensearchDatastoreV2Basic(datastoreName, datastorePassword, datastoreSG, managersBlock string, dataOneNodeCount int, dataOneFlavor dbaas_v2_os.FlavorForNodeGroupRequest, dataOneHasPublicIps bool, dashboardBlock string) string {
+func testAccDBaaSOpensearchDatastoreV2Basic(datastoreName, datastorePassword, datastoreSG, managersBlock, dataOneName string, dataOneNodeCount int, dataOneFlavor dbaas_v2_os.FlavorForNodeGroupRequest, dataOneHasPublicIps bool, dashboardBlock string) string {
 	securityGroupsBlock := ""
 	if datastoreSG != "" {
 		securityGroupsBlock = fmt.Sprintf("security_groups = [\"%s\"]", datastoreSG)
@@ -360,7 +432,8 @@ resource "selectel_dbaas_opensearch_datastore_v2" "datastore_tf_acc_test_1" {
   %s
 
   node_group {
-    name       = "data1" 
+    key        = "data1"
+    name       = "%s"
     role       = "DATA"
     node_count = "%d"
     %s // has_public_ips
@@ -376,5 +449,5 @@ resource "selectel_dbaas_opensearch_datastore_v2" "datastore_tf_acc_test_1" {
   
   // dashboard
   %s
-}`, dbaasProjectID, dbaasRegion, datastoreName, datastorePassword, securityGroupsBlock, managersBlock, dataOneNodeCount, HasPublicIPsBlock, dataOneFlavor.Type, dataOneFlavor.VCPUs, dataOneFlavor.RAM, dataOneFlavor.Disk, dataOneFlavor.DiskType, dashboardBlock)
+}`, dbaasProjectID, dbaasRegion, datastoreName, datastorePassword, securityGroupsBlock, managersBlock, dataOneName, dataOneNodeCount, HasPublicIPsBlock, dataOneFlavor.Type, dataOneFlavor.VCPUs, dataOneFlavor.RAM, dataOneFlavor.Disk, dataOneFlavor.DiskType, dashboardBlock)
 }
