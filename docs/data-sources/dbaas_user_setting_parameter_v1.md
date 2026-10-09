@@ -6,7 +6,7 @@ description: |-
 
 # selectel\_dbaas\_user\_setting\_parameter\_v1
 
-Provides a list of per-user setting parameters available for Managed Databases. Supported only for PostgreSQL, PostgreSQL for 1C, and PostgreSQL TimescaleDB. For more information about user settings, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/manage-users/).
+Provides a list of per-user setting parameters available for Managed Databases. Supported only for PostgreSQL, PostgreSQL for 1C, PostgreSQL TimescaleDB, and PGVector. For more information about user settings, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/en/managed-databases/postgresql/manage-users/), [PostgreSQL for 1C](https://docs.selectel.ru/en/managed-databases/postgresql-for-1c/manage-users-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/managed-databases/timescaledb/manage-users/), and [PGVector](https://docs.selectel.ru/en/managed-databases/pgvector/manage-users/).
 
 ## Example Usage
 
@@ -21,7 +21,7 @@ data "selectel_dbaas_user_setting_parameter_v1" "user_setting_parameter_1" {
 }
 ```
 
-Filter by `datastore_id` to list only the parameters that are relevant to the type of a specific cluster. Without this filter, the same parameter is returned multiple times, once per each supported cluster type (PostgreSQL, PostgreSQL for 1C, and PostgreSQL TimescaleDB):
+Filter by `datastore_id` to list only the parameters that are relevant to the type of a specific cluster. Without this filter, the same parameter is returned multiple times, once per each supported cluster type (PostgreSQL, PostgreSQL for 1C, PostgreSQL TimescaleDB, and PGVector):
 
 ```terraform
 data "selectel_dbaas_user_setting_parameter_v1" "user_setting_parameter_2" {
@@ -66,7 +66,7 @@ data "selectel_dbaas_user_setting_parameter_v1" "user_setting_parameter_2" {
 
   * `max` - Maximum value of the user setting parameter. Might be empty.
 
-  * `default_value` - Default value of the user setting parameter. Might be empty.
+  * `default_value` - Default value of the user setting parameter. Might be empty. When a key is removed from the `settings` block of the `selectel_dbaas_user_v1` resource, the parameter is reset to this default value.
 
   * `choices` - Available choices for the user setting parameter. Some parameters have a list of available options.
 
