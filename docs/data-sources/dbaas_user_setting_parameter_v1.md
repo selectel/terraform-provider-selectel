@@ -21,6 +21,19 @@ data "selectel_dbaas_user_setting_parameter_v1" "user_setting_parameter_1" {
 }
 ```
 
+Filter by `datastore_id` to list only the parameters that are relevant to the type of a specific cluster. Without this filter, the same parameter is returned multiple times, once per each supported cluster type (PostgreSQL, PostgreSQL for 1C, and PostgreSQL TimescaleDB):
+
+```terraform
+data "selectel_dbaas_user_setting_parameter_v1" "user_setting_parameter_2" {
+  project_id = selectel_vpc_project_v2.project_1.id
+  region     = "ru-3"
+
+  filter {
+    datastore_id = selectel_dbaas_postgresql_datastore_v1.datastore_1.id
+  }
+}
+```
+
 ## Argument Reference
 
 * `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
@@ -35,7 +48,7 @@ data "selectel_dbaas_user_setting_parameter_v1" "user_setting_parameter_1" {
 
   * `datastore_type_id` - (Optional) Unique identifier of the cluster type to list user setting parameters for. You can retrieve information about available cluster types with the [selectel_dbaas_datastore_type_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_datastore_type_v1) data source.
 
-  * `datastore_id` - (Optional) Unique identifier of the cluster. Used to list user setting parameters for the cluster type of this cluster. Takes precedence over `datastore_type_id`. Retrieved from the [selectel_dbaas_postgresql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_datastore_v1) resource.
+  * `datastore_id` - (Optional) Unique identifier of the cluster. Used to list user setting parameters for the cluster type of this cluster. Takes precedence over `datastore_type_id`. Retrieved from the [selectel_dbaas_postgresql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_datastore_v1) resource. Recommended when you need parameters for a specific cluster: without it, the same parameter is listed multiple times, once per each supported cluster type.
 
 ## Attributes Reference
 
