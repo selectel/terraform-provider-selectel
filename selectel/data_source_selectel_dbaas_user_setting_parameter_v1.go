@@ -120,10 +120,7 @@ func dataSourceDBaaSUserSettingParameterV1Read(ctx context.Context, d *schema.Re
 		return diagErr
 	}
 
-	filter, err := expandUserSettingParameterSearchFilter(d.Get("filter").(*schema.Set))
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	filter := expandDBaaSUserSettingParameterSearchFilter(d.Get("filter").(*schema.Set))
 
 	params := &dbaas.UserSettingParameterQueryParams{
 		ID:              filter.id,
@@ -154,10 +151,10 @@ func dataSourceDBaaSUserSettingParameterV1Read(ctx context.Context, d *schema.Re
 	return nil
 }
 
-func expandUserSettingParameterSearchFilter(filterSet *schema.Set) (userSettingParameterSearchFilter, error) {
+func expandDBaaSUserSettingParameterSearchFilter(filterSet *schema.Set) userSettingParameterSearchFilter {
 	filter := userSettingParameterSearchFilter{}
 	if filterSet.Len() == 0 {
-		return filter, nil
+		return filter
 	}
 
 	resourceFilterMap := filterSet.List()[0].(map[string]any)
@@ -175,7 +172,7 @@ func expandUserSettingParameterSearchFilter(filterSet *schema.Set) (userSettingP
 		filter.datastoreID = datastoreID.(string)
 	}
 
-	return filter, nil
+	return filter
 }
 
 func flattenDBaaSUserSettingParameters(userSettingParameters []dbaas.UserSettingParameter) []any {

@@ -125,23 +125,8 @@ func resourceDBaaSUserV1Update(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	if d.HasChange("roles") {
-		rolesRaw := d.Get("roles")
-		rolesSet := rolesRaw.(*schema.Set)
-		updateOpts := dbaas.UserRolesUpdateOpts{
-			Roles: expandDBaaSUserRolesV1FromSet(rolesSet),
-		}
-
-		log.Print(msgUpdate(objectUser, d.Id(), updateOpts))
-		_, err := dbaasClient.UpdateUserRoles(ctx, d.Id(), updateOpts)
-		if err != nil {
-			return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
-		}
-
-		log.Printf("[DEBUG] waiting for user %s to become 'ACTIVE'", d.Id())
-		timeout := d.Timeout(schema.TimeoutUpdate)
-		err = waiters.WaitForDBaaSUserV1ActiveState(ctx, dbaasClient, d.Id(), timeout)
-		if err != nil {
-			return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
+		if err := updateDBaaSUserV1Roles(ctx, d, dbaasClient); err != nil {
+			return diag.FromErr(err)
 		}
 	}
 
@@ -191,4 +176,84 @@ func resourceDBaaSUserV1ImportState(_ context.Context, d *schema.ResourceData, m
 	d.Set("region", config.Region)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func updateDBaaSUserV1Settings(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	oldSettingsRaw, _ := d.GetChange("settings")
+	oldSettings, _ := oldSettingsRaw.(map[string]any)
+
+	settings := expandDBaaSUserV1Settings(d)
+	if settings == nil {
+		settings = map[string]any{}
+	}
+	// Settings that are present in the state but missing from the desired
+	// configuration are unset (reset to their default values).
+	for key := range oldSettings {
+		if _, ok := settings[key]; !ok {
+			settings[key] = nil
+		}
+	}
+
+	// The API rejects an empty settings map, and there is nothing to
+	// set or unset when both the desired state and the current
+	// server-side settings are empty.
+	if len(settings) == 0 {
+		return nil
+	}
+
+	opts := dbaas.UserSettingsUpdateOpts{Settings: settings}
+	log.Print(msgUpdate(objectUser, d.Id(), opts))
+	_, err := client.UpdateUserSettings(ctx, d.Id(), opts)
+	if err != nil {
+		return errUpdatingObject(objectUser, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for user %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waiters.WaitForDBaaSUserV1ActiveState(ctx, client, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectUser, d.Id(), err)
+	}
+
+	return nil
+}
+
+func updateDBaaSUserV1Roles(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	rolesRaw := d.Get("roles")
+	rolesSet := rolesRaw.(*schema.Set)
+	updateRolesOpts := dbaas.UserRolesUpdateOpts{
+		Roles: expandDBaaSUserRolesV1FromSet(rolesSet),
+	}
+
+	log.Print(msgUpdate(objectUser, d.Id(), updateRolesOpts))
+	_, err := client.UpdateUserRoles(ctx, d.Id(), updateRolesOpts)
+	if err != nil {
+		return errUpdatingObject(objectUser, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for user %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waiters.WaitForDBaaSUserV1ActiveState(ctx, client, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectUser, d.Id(), err)
+	}
+
+	return nil
+}
+
+func expandDBaaSUserV1Settings(d *schema.ResourceData) map[string]any {
+	if _, ok := d.GetOk("settings"); !ok {
+		return nil
+	}
+
+	return d.Get("settings").(map[string]any)
+}
+
+func flattenDBaaSUserV1Settings(apiSettings map[string]any) map[string]any {
+	settings := make(map[string]any, len(apiSettings))
+	for key, value := range apiSettings {
+		settings[key] = convertFieldToStringByType(value)
+	}
+
+	return settings
 }
