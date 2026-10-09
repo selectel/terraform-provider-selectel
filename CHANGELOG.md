@@ -1,3 +1,10 @@
+## 9.6.0 (November 03, 2026)
+
+FEATURES:
+
+* Add new resources ([#435](https://github.com/selectel/terraform-provider-selectel/pull/435)):
+  * `selectel_dbaas_opensearch_datastore_v2`
+
 ## 9.5.0 (October 30, 2026)
 
 FEATURES:
