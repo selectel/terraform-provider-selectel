@@ -2,9 +2,9 @@
 
 FEATURES:
 
-* Add `roles` argument to `selectel_dbaas_user_v1` resource ([#2](https://github.com/iymarch/terraform-provider-selectel/pull/2))
-* Add `settings` argument to `selectel_dbaas_user_v1` resource ([#2](https://github.com/iymarch/terraform-provider-selectel/pull/2))
-* Add new data sources ([#2](https://github.com/iymarch/terraform-provider-selectel/pull/2)):
+* Add `roles` argument to `selectel_dbaas_user_v1` resource ([#437](https://github.com/selectel/terraform-provider-selectel/pull/437))
+* Add `settings` argument to `selectel_dbaas_user_v1` resource ([#437](https://github.com/selectel/terraform-provider-selectel/pull/437))
+* Add new data sources ([#437](https://github.com/selectel/terraform-provider-selectel/pull/437)):
   * `selectel_dbaas_roles_v1`
   * `selectel_dbaas_user_setting_parameter_v1`
 
