@@ -644,11 +644,27 @@ func validateDBaaSV2OpensearchNodeGroupsDiff(diff *schema.ResourceDiff) error {
 		oldRole, _ := oldGroup["role"].(string)
 		newRole, _ := newGroup["role"].(string)
 
+		// validate change of roles
 		if oldRole != newRole {
 			return fmt.Errorf(
 				"node_group: changing role of node group with key %q is not allowed",
 				key,
 			)
+		}
+
+		// validate delete node groups with roles MANAGER and DATA
+		for key, oldGroup := range oldByKey {
+			if _, exists := newByKey[key]; exists {
+				continue
+			}
+
+			role, _ := oldGroup["role"].(string)
+			if role == string(dbaas_v2_os.NodeGroupRoleData) || role == string(dbaas_v2_os.NodeGroupRoleManager) {
+				return fmt.Errorf(
+					"node_group: deleting node group (key %q) with role %s is not allowed",
+					key, role,
+				)
+			}
 		}
 	}
 
