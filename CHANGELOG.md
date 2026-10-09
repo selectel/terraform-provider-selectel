@@ -1,15 +1,14 @@
 ## Unreleased
 
-IMPROVEMENTS:
-
-* `selectel_dbaas_user_v1`: add PostgreSQL `settings` block for role attributes and GUCs. Settings are applied on create and updated via a dedicated API endpoint. Removing a key from the block unsets it.
-* __New Data Source:__ `selectel_dbaas_user_setting_parameter_v1` — catalog of per-user PostgreSQL settings.
-## 8.7.0 (October 7, 2026)
-
 FEATURES:
 
 * Add `roles` argument to `selectel_dbaas_user_v1` resource ([#434](https://github.com/selectel/terraform-provider-selectel/pull/434))
 * Add new data sources ([#434](https://github.com/selectel/terraform-provider-selectel/pull/434)): `selectel_dbaas_roles_v1`
+
+IMPROVEMENTS:
+
+* `selectel_dbaas_user_v1`: add PostgreSQL `settings` block for role attributes and GUCs. Settings are applied on create and updated via a dedicated API endpoint. Removing a key from the block unsets it.
+* __New Data Source:__ `selectel_dbaas_user_setting_parameter_v1` — catalog of per-user PostgreSQL settings.
 
 BUG FIXES:
 
