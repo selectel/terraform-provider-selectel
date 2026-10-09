@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.1
 	github.com/selectel/cloudbackup-go v1.0.1-0.20251028081814-eed36cddb45b
 	github.com/selectel/craas-go v0.4.2
-	github.com/selectel/dbaas-go v0.20.0
+	github.com/selectel/dbaas-go v0.22.1
 	github.com/selectel/dedicated-go/v2 v2.1.3
 	github.com/selectel/domains-go v1.0.2
 	github.com/selectel/globalrouter-go v1.2.1
@@ -71,7 +71,7 @@ require (
 	github.com/zclconf/go-cty v1.18.1 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
 	golang.org/x/mod v0.41.0 // indirect
-	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
 	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.42.0 // indirect

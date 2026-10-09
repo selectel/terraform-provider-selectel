@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"testing"
 
@@ -16,11 +15,6 @@ import (
 )
 
 const resourceDBaaSClickhouseDatastoreV2Name = "selectel_dbaas_clickhouse_datastore_v2.datastore_tf_acc_test_1"
-
-var (
-	dbaasRegion    = os.Getenv("INFRA_REGION")
-	dbaasProjectID = os.Getenv("INFRA_PROJECT_ID")
-)
 
 func testAccCheckDBaaSV2ClickhouseDatastoreDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
