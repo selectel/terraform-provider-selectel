@@ -66,18 +66,22 @@ func TestAccDBaaSUserV1Settings(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccCheckDBaaSUserV1Exists("selectel_dbaas_user_v1.user_tf_acc_test_1", &dbaasUser),
-					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.0.conn_limit", "20"),
-					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.0.statement_timeout", "5000"),
-					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.0.login", "true"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.conn_limit", "20"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.statement_timeout", "5000"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.login", "true"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.bypassrls", "true"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.synchronous_commit", "on"),
 				),
 			},
 			{
 				Config: testAccDBaaSUserV1WithSettings(projectName, datastoreName, userName, userPassword, nodeCount, 20, 1000),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDBaaSUserV1Exists("selectel_dbaas_user_v1.user_tf_acc_test_1", &dbaasUser),
-					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.0.conn_limit", "20"),
-					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.0.statement_timeout", "1000"),
-					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.0.login", "true"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.conn_limit", "20"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.statement_timeout", "1000"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.login", "true"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.bypassrls", "true"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.synchronous_commit", "on"),
 				),
 			},
 		},
@@ -197,10 +201,12 @@ resource "selectel_dbaas_user_v1" "user_tf_acc_test_1" {
   name = "%s"
   password = "%s"
 
-  settings {
-    conn_limit        = %d
-    statement_timeout = %d
-    login             = true
+  settings = {
+    conn_limit        = "%d"
+    statement_timeout = "%d"
+    login             = "true"
+    bypassrls         = "true"
+    synchronous_commit = "on"
   }
 }`, projectName, datastoreName, nodeCount, userName, userPassword, connLimit, statementTimeout)
 }

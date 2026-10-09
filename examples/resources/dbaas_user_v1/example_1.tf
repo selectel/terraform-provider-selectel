@@ -5,10 +5,11 @@ resource "selectel_dbaas_user_v1" "user_1" {
   name         = "user"
   password     = "secret"
 
-  settings {
-    conn_limit        = 20
-    statement_timeout = 5000
-    login             = true
+  settings = {
+    conn_limit         = "20"
+    statement_timeout  = "5000"
+    login              = "true"
+    synchronous_commit = "on"
   }
 }
 

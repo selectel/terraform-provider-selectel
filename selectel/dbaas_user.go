@@ -25,6 +25,13 @@ func updateDBaaSUserV1Settings(ctx context.Context, d *schema.ResourceData, clie
 		}
 	}
 
+	// The API rejects an empty settings map, and there is nothing to
+	// set or unset when both the desired state and the current
+	// server-side settings are empty.
+	if len(settings) == 0 {
+		return nil
+	}
+
 	opts := dbaas.UserSettingsUpdateOpts{Settings: settings}
 	log.Print(msgUpdate(objectUser, d.Id(), opts))
 	_, err = client.UpdateUserSettings(ctx, d.Id(), opts)
@@ -47,47 +54,14 @@ func expandDBaaSUserV1Settings(d *schema.ResourceData) map[string]any {
 		return nil
 	}
 
-	settings := make(map[string]any)
-	for _, key := range dbaasUserSettingsKeys {
-		rawKey := "settings.0." + key
-		if v, exists := d.GetOkExists(rawKey); exists { //nolint:staticcheck // GetOkExists distinguishes unset from zero values
-			settings[key] = v
-		}
+	return d.Get("settings").(map[string]any)
+}
+
+func flattenDBaaSUserV1Settings(apiSettings map[string]any) map[string]any {
+	settings := make(map[string]any, len(apiSettings))
+	for key, value := range apiSettings {
+		settings[key] = convertFieldToStringByType(value)
 	}
 
 	return settings
-}
-
-func flattenDBaaSUserV1Settings(apiSettings map[string]any) []any {
-	if len(apiSettings) == 0 {
-		return nil
-	}
-
-	settings := make(map[string]any)
-	knownKeys := make(map[string]struct{}, len(dbaasUserSettingsKeys))
-	for _, key := range dbaasUserSettingsKeys {
-		knownKeys[key] = struct{}{}
-	}
-	for key, value := range apiSettings {
-		if _, ok := knownKeys[key]; !ok || value == nil {
-			continue
-		}
-		settings[key] = coerceDBaaSUserV1SettingValue(value)
-	}
-	if len(settings) == 0 {
-		return nil
-	}
-
-	return []any{settings}
-}
-
-func coerceDBaaSUserV1SettingValue(value any) any {
-	switch typed := value.(type) {
-	case float64:
-		return int(typed)
-	case float32:
-		return int(typed)
-	default:
-		return value
-	}
 }

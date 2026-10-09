@@ -41,7 +41,8 @@ func TestAccDBaaSUserSettingParametersV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", "user_setting_parameters.0.apply_mechanism", "guc"),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", "user_setting_parameters.0.is_available_for_customer", "true"),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", "user_setting_parameters.0.is_changeable", "true"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", "user_setting_parameters.0.datastore_group_name", "postgresql"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", "user_setting_parameters.0.default_value", "0"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", "user_setting_parameters.0.can_be_empty", "true"),
 				),
 			},
 			{
@@ -61,6 +62,8 @@ func TestAccDBaaSUserSettingParametersV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", "user_setting_parameters.0.choices.3", "read uncommitted"),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", "user_setting_parameters.0.apply_mechanism", "guc"),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", "user_setting_parameters.0.is_changeable", "true"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", "user_setting_parameters.0.default_value", "read committed"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", "user_setting_parameters.0.can_be_empty", "true"),
 				),
 			},
 		},
@@ -98,11 +101,20 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
 }
 
+data "selectel_dbaas_datastore_type_v1" "dt_tf_acc_test_1" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region     = "ru-3"
+  filter {
+    engine = "postgresql"
+    version = "12"
+  }
+}
+
 data "selectel_dbaas_user_setting_parameter_v1" "user_setting_param_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
   filter {
-    datastore_group_name = "postgresql"
+    datastore_type_id = "${data.selectel_dbaas_datastore_type_v1.dt_tf_acc_test_1.datastore_types[0].id}"
     name = "%s"
   }
 }

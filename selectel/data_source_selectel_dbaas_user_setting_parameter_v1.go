@@ -9,11 +9,10 @@ import (
 )
 
 type userSettingParameterSearchFilter struct {
-	id                 string
-	name               string
-	datastoreGroupName string
-	datastoreTypeID    string
-	datastoreID        string
+	id              string
+	name            string
+	datastoreTypeID string
+	datastoreID     string
 }
 
 func dataSourceDBaaSUserSettingParameterV1() *schema.Resource {
@@ -41,10 +40,6 @@ func dataSourceDBaaSUserSettingParameterV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
-						"datastore_group_name": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
 						"datastore_type_id": {
 							Type:     schema.TypeString,
 							Optional: true,
@@ -62,10 +57,6 @@ func dataSourceDBaaSUserSettingParameterV1() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"datastore_group_name": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -89,6 +80,10 @@ func dataSourceDBaaSUserSettingParameterV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"default_value": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"choices": {
 							Type:     schema.TypeList,
 							Computed: true,
@@ -105,6 +100,10 @@ func dataSourceDBaaSUserSettingParameterV1() *schema.Resource {
 							Computed: true,
 						},
 						"is_changeable": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
+						"can_be_empty": {
 							Type:     schema.TypeBool,
 							Computed: true,
 						},
@@ -127,11 +126,10 @@ func dataSourceDBaaSUserSettingParameterV1Read(ctx context.Context, d *schema.Re
 	}
 
 	params := &dbaas.UserSettingParameterQueryParams{
-		ID:                 filter.id,
-		Name:               filter.name,
-		DatastoreGroupName: filter.datastoreGroupName,
-		DatastoreTypeID:    filter.datastoreTypeID,
-		DatastoreID:        filter.datastoreID,
+		ID:              filter.id,
+		Name:            filter.name,
+		DatastoreTypeID: filter.datastoreTypeID,
+		DatastoreID:     filter.datastoreID,
 	}
 
 	userSettingParameters, err := dbaasClient.UserSettingParameters(ctx, params)
@@ -170,9 +168,6 @@ func expandUserSettingParameterSearchFilter(filterSet *schema.Set) (userSettingP
 	if name, ok := resourceFilterMap["name"]; ok {
 		filter.name = name.(string)
 	}
-	if groupName, ok := resourceFilterMap["datastore_group_name"]; ok {
-		filter.datastoreGroupName = groupName.(string)
-	}
 	if datastoreTypeID, ok := resourceFilterMap["datastore_type_id"]; ok {
 		filter.datastoreTypeID = datastoreTypeID.(string)
 	}
@@ -188,16 +183,17 @@ func flattenDBaaSUserSettingParameters(userSettingParameters []dbaas.UserSetting
 	for i, param := range userSettingParameters {
 		userSettingParametersMap := make(map[string]any)
 		userSettingParametersMap["id"] = param.ID
-		userSettingParametersMap["datastore_group_name"] = param.DatastoreGroupName
 		userSettingParametersMap["name"] = param.Name
 		userSettingParametersMap["type"] = param.Type
 		userSettingParametersMap["unit"] = param.Unit
 		userSettingParametersMap["min"] = convertFieldToStringByType(param.Min)
 		userSettingParametersMap["max"] = convertFieldToStringByType(param.Max)
+		userSettingParametersMap["default_value"] = param.DefaultValue
 		userSettingParametersMap["choices"] = convertListParametersTypes(param.Choices)
 		userSettingParametersMap["apply_mechanism"] = param.ApplyMechanism
 		userSettingParametersMap["is_available_for_customer"] = param.IsAvailableForCustomer
 		userSettingParametersMap["is_changeable"] = param.IsChangeable
+		userSettingParametersMap["can_be_empty"] = param.CanBeEmpty
 
 		userSettingParametersList[i] = userSettingParametersMap
 	}
