@@ -20,18 +20,6 @@ data "selectel_dbaas_roles_v1" "roles" {
 }
 ```
 
-Filter by `datastore_id` to list only the roles that are available for the type of a specific cluster:
-
-```terraform
-data "selectel_dbaas_roles_v1" "roles_2" {
-  project_id = selectel_vpc_project_v2.project_1.id
-  region     = "ru-3"
-  filter {
-    datastore_id = selectel_dbaas_postgresql_datastore_v1.datastore_1.id
-  }
-}
-```
-
 ## Argument Reference
 
 * `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
@@ -41,8 +29,6 @@ data "selectel_dbaas_roles_v1" "roles_2" {
 * `filter` - (Optional) Values to filter available roles.
 
   * `datastore_type_id` - (Optional) Unique identifier of the cluster type. You can retrieve information about available cluster types with the [selectel_dbaas_datastore_type_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_datastore_type_v1) data source.
-
-  * `datastore_id` - (Optional) Unique identifier of the cluster. Used to list the roles available for the cluster type of this cluster. Takes precedence over `datastore_type_id`. Retrieved from the [selectel_dbaas_postgresql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_datastore_v1) resource.
 
   * `name` - (Optional) Name of the role to search.
 

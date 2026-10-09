@@ -4,7 +4,6 @@ IMPROVEMENTS:
 
 * `selectel_dbaas_user_v1`: add PostgreSQL `settings` block for role attributes and GUCs. Settings are applied on create and updated via a dedicated API endpoint. Removing a key from the block unsets it.
 * __New Data Source:__ `selectel_dbaas_user_setting_parameter_v1` — catalog of per-user PostgreSQL settings.
-* `selectel_dbaas_roles_v1` data source: add optional `datastore_id` filter to list only the roles available for the cluster type of a specific cluster.
 ## 8.7.0 (October 7, 2026)
 
 FEATURES:

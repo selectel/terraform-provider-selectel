@@ -9,7 +9,6 @@ import (
 )
 
 type rolesSearchFilter struct {
-	datastoreID     string
 	datastoreTypeID string
 	name            string
 }
@@ -31,10 +30,6 @@ func dataSourceDBaaSRolesV1() *schema.Resource {
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"datastore_id": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
 						"datastore_type_id": {
 							Type:     schema.TypeString,
 							Optional: true,
@@ -91,18 +86,6 @@ func dataSourceDBaaSRolesV1Read(ctx context.Context, d *schema.ResourceData, met
 		return diag.FromErr(err)
 	}
 
-	if filter.datastoreID != "" {
-		datastore, err := dbaasClient.Datastore(ctx, filter.datastoreID)
-		if err != nil {
-			return diag.FromErr(errGettingObjects(objectDatastore, err))
-		}
-		if filter.datastoreTypeID != "" && filter.datastoreTypeID != datastore.TypeID {
-			return diag.Errorf("filter datastore_type_id (%s) doesn't match the type of the datastore %s (%s)",
-				filter.datastoreTypeID, filter.datastoreID, datastore.TypeID)
-		}
-		filter.datastoreTypeID = datastore.TypeID
-	}
-
 	roles = filterDBaaSRolesByDatastoreTypeID(roles, filter.datastoreTypeID)
 	roles = filterDBaaSRolesByName(roles, filter.name)
 
@@ -126,10 +109,6 @@ func expandDBaaSRolesSearchFilter(filterSet *schema.Set) (rolesSearchFilter, err
 	}
 
 	resourceFilterMap := filterSet.List()[0].(map[string]any)
-
-	if datastoreID, ok := resourceFilterMap["datastore_id"]; ok {
-		filter.datastoreID = datastoreID.(string)
-	}
 
 	datastoreTypeID, ok := resourceFilterMap["datastore_type_id"]
 	if ok {
