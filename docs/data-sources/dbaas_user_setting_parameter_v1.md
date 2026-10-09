@@ -76,4 +76,4 @@ data "selectel_dbaas_user_setting_parameter_v1" "user_setting_parameter_2" {
 
   * `is_changeable` - Shows if the parameter can be changed.
 
-  * `can_be_empty` - Shows if the parameter value can be empty.
+  * `can_be_empty` - Shows if the parameter value can be empty. For such parameters, setting an empty value resets the parameter to its default value (`default_value`).
