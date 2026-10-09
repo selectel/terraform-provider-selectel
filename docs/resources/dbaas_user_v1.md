@@ -93,7 +93,7 @@ resource "selectel_dbaas_user_v1" "user_1" {
 
   * `synchronous_commit` - Synchronous commit mode. Available values are `on`, `off`, `local`, `remote_write`, `remote_apply`.
 
-  * `default_transaction_read_only` - (Optional) Whether transactions are read-only by default.
+  * `default_transaction_read_only` - Whether transactions are read-only by default.
 
 ## Attributes Reference
 
