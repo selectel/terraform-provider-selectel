@@ -1,3 +1,17 @@
+## 9.2.0 (October 14, 2026)
+
+FEATURES:
+
+* Add new resource `selectel_compute_volume_v3` implemented with Terraform Plugin Framework ([#438](https://github.com/selectel/terraform-provider-selectel/pull/438)).
+* Add new data sources implemented with Terraform Plugin Framework ([#438](https://github.com/selectel/terraform-provider-selectel/pull/438)):
+  * `selectel_compute_volume_v3`
+  * `selectel_compute_volume_type_v3`
+  * `selectel_compute_snapshot_v3`
+
+IMPROVEMENTS:
+
+* Mark the provider `password` argument as sensitive ([#438](https://github.com/selectel/terraform-provider-selectel/pull/438)).
+
 ## 9.1.0 (October 13, 2026)
 
 FEATURES:

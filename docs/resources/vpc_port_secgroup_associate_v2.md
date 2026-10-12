@@ -16,8 +16,9 @@ If you are upgrading from a version earlier than 9.1.0, follow the [upgrade guid
 
 ## Example Usage
 
+### Security group added to the existing groups of the port
+
 ```terraform
-# Security group added to the existing groups of the port
 resource "selectel_vpc_port_secgroup_associate_v2" "associate_1" {
   project_id         = selectel_vpc_project_v2.project_1.id
   region             = "ru-6"
@@ -26,8 +27,9 @@ resource "selectel_vpc_port_secgroup_associate_v2" "associate_1" {
 }
 ```
 
+### Security groups that replace the existing groups of the port
+
 ```terraform
-# Security groups that replace the existing groups of the port
 resource "selectel_vpc_port_secgroup_associate_v2" "associate_2" {
   project_id         = selectel_vpc_project_v2.project_1.id
   region             = "ru-6"

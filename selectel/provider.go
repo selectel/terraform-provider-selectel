@@ -128,6 +128,7 @@ func Provider(providerVersion string) *schema.Provider {
 			"password": {
 				Type:        schema.TypeString,
 				Required:    true,
+				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("OS_PASSWORD", nil),
 				Description: "Service user password",
 			},

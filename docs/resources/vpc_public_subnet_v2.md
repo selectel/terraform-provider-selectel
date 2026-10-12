@@ -67,4 +67,3 @@ terraform import selectel_vpc_public_subnet_v2.subnet_1 <id>
 ```
 
 `<domain_name>`, `<username>`, and `<password>` are the arguments of the [provider configuration](https://registry.terraform.io/providers/selectel/selectel/latest/docs).
-Other identity attributes are described above in the import or resource sections.

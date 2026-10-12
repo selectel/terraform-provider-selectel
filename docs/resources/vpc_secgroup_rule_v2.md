@@ -13,8 +13,9 @@ If you are upgrading from a version earlier than 9.1.0, follow the [upgrade guid
 
 ## Example Usage
 
+### Rule that allows inbound SSH traffic from a subnet
+
 ```terraform
-# Rule that allows inbound SSH traffic from a subnet
 resource "selectel_vpc_secgroup_rule_v2" "rule_1" {
   project_id        = selectel_vpc_project_v2.project_1.id
   region            = "ru-6"
@@ -28,8 +29,9 @@ resource "selectel_vpc_secgroup_rule_v2" "rule_1" {
 }
 ```
 
+### Rule that allows outbound traffic to another security group
+
 ```terraform
-# Rule that allows outbound traffic to another security group
 resource "selectel_vpc_secgroup_rule_v2" "rule_2" {
   project_id        = selectel_vpc_project_v2.project_1.id
   region            = "ru-6"

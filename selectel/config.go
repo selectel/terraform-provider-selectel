@@ -57,6 +57,19 @@ func getConfig(d *schema.ResourceData, userAgent string) (*Config, diag.Diagnost
 	return cfgSingletone, nil
 }
 
+func (c *Config) selvpcClientOptions(projectID string) *selvpcclient.ClientOptions {
+	return &selvpcclient.ClientOptions{
+		DomainName:     c.DomainName,
+		Username:       c.Username,
+		Password:       c.Password,
+		ProjectID:      projectID,
+		AuthURL:        c.AuthURL,
+		AuthRegion:     c.AuthRegion,
+		UserDomainName: c.UserDomainName,
+		UserAgent:      c.UserAgent,
+	}
+}
+
 func (c *Config) GetSelVPCClient() (*selvpcclient.Client, error) {
 	return c.GetSelVPCClientWithProjectScope("")
 }
@@ -71,18 +84,7 @@ func (c *Config) GetSelVPCClientWithProjectScope(projectID string) (*selvpcclien
 		return client, nil
 	}
 
-	opts := &selvpcclient.ClientOptions{
-		DomainName:     c.DomainName,
-		Username:       c.Username,
-		Password:       c.Password,
-		ProjectID:      projectID,
-		AuthURL:        c.AuthURL,
-		AuthRegion:     c.AuthRegion,
-		UserDomainName: c.UserDomainName,
-		UserAgent:      c.UserAgent,
-	}
-
-	client, err := selvpcclient.NewClient(opts)
+	client, err := selvpcclient.NewClient(c.selvpcClientOptions(projectID))
 	if err != nil {
 		return nil, err
 	}
