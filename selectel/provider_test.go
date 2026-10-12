@@ -1,11 +1,13 @@
 package selectel
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -16,6 +18,9 @@ var (
 	testAccProviders              map[string]func() (*schema.Provider, error)
 	testAccProvidersWithOpenStack map[string]func() (*schema.Provider, error)
 	testAccProvider               *schema.Provider
+	// testAccProtoV6ProviderFactories serves the provider through the same mux as
+	// main.go, plus the selectel_mux_test data source.
+	testAccProtoV6ProviderFactories map[string]func() (tfprotov6.ProviderServer, error)
 	// global router TestAcc env variables.
 	globalRouterDedicatedNetworkVLAN  = os.Getenv("GLOBAL_ROUTER_DEICATED_NETWORK_VLAN")
 	globalRouterDedicatedRegion       = os.Getenv("GLOBAL_ROUTER_DEDICATED_REGION")
@@ -42,6 +47,18 @@ func init() {
 		},
 		"openstack": func() (*schema.Provider, error) {
 			return openstack.Provider(), nil
+		},
+	}
+	testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
+		"selectel": func() (tfprotov6.ProviderServer, error) {
+			sdk := Provider("test")
+			server, err := muxProviderServer(context.Background(), sdk,
+				testFrameworkProvider{&frameworkProvider{sdk: sdk, version: "test"}})
+			if err != nil {
+				return nil, err
+			}
+
+			return server(), nil
 		},
 	}
 }

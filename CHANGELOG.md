@@ -1,3 +1,9 @@
+## 9.0.0 (October 12, 2026)
+
+BREAKING CHANGES:
+
+* Switched the provider to plugin protocol 6. Terraform 1.1.5 or later is now required. Resources and data sources are unchanged. ([#436](https://github.com/selectel/terraform-provider-selectel/pull/436))
+
 ## 8.6.0 (October 2, 2026)
 
 FEATURES:

@@ -69,11 +69,7 @@ func (r resourceDocs) withDocsHints(s map[string]*schema.Schema) map[string]*sch
 			attr.Description += fmt.Sprintf(" Changing this creates a new %s.", r.Name)
 		}
 		if attr.Default != nil {
-			if attr.Default == "" {
-				attr.Description += " The default value is an empty string."
-			} else {
-				attr.Description += fmt.Sprintf(" The default value is `%v`.", attr.Default)
-			}
+			attr.Description += defaultHint(attr.Default)
 		}
 		if nested, ok := attr.Elem.(*schema.Resource); ok {
 			r.withDocsHints(nested.Schema)
@@ -81,6 +77,14 @@ func (r resourceDocs) withDocsHints(s map[string]*schema.Schema) map[string]*sch
 	}
 
 	return s
+}
+
+func defaultHint(v any) string {
+	if v == "" {
+		return " The default value is an empty string."
+	}
+
+	return fmt.Sprintf(" The default value is `%v`.", v)
 }
 
 func projectIDResourceSchema() *schema.Schema {
