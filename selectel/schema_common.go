@@ -46,7 +46,7 @@ const (
 	privateDNSLearnMore         = "Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/)."
 	securityGroupRulesLearnMore = "Learn more about [Security group rules](https://docs.selectel.ru/en/cloud-servers/security-groups/about-security-groups/)."
 
-	upgradeGuideNote = "If you are upgrading from a version earlier than 9.0.0, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack provider."
+	upgradeGuideNote = "If you are upgrading from a version earlier than 9.1.0, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack provider."
 
 	exampleRegion     = "ru-6"
 	exampleResourceID = "b311ce58-2658-46b5-b733-7a0f418703f2"

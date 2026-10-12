@@ -2,14 +2,14 @@
 page_title: "Selectel: selectel_vpc_port_v2"
 description: |-
   Provides a port. For more information about ports, see the official Selectel documentation https://docs.selectel.ru/en/cloud-servers/cloud-networks/ports/.
-  If you are upgrading from a version earlier than 9.0.0, follow the upgrade guide https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9 to migrate your resources from the OpenStack provider.
+  If you are upgrading from a version earlier than 9.1.0, follow the upgrade guide https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9 to migrate your resources from the OpenStack provider.
 ---
 
 # selectel_vpc_port_v2
 
 Provides a port. For more information about ports, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/ports/).
 
-If you are upgrading from a version earlier than 9.0.0, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack provider.
+If you are upgrading from a version earlier than 9.1.0, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack provider.
 
 ## Example Usage
 

@@ -3,7 +3,7 @@ page_title: "Selectel: selectel_vpc_floatingip_associate_v2"
 description: |-
   Creates and manages the association between an existing public floating IP address and an existing port using the v2 public API. For more information about public floating IP addresses, see the official Selectel documentation https://docs.selectel.ru/en/cloud-servers/cloud-networks/public-floating-ip-addresses/.
   The resource manages only the association and never creates or deletes the public floating IP address or the port.
-  If you are upgrading from a version earlier than 9.0.0, follow the upgrade guide https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9 to migrate your resources from the OpenStack provider.
+  If you are upgrading from a version earlier than 9.1.0, follow the upgrade guide https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9 to migrate your resources from the OpenStack provider.
 ---
 
 # selectel_vpc_floatingip_associate_v2
@@ -12,7 +12,7 @@ Creates and manages the association between an existing public floating IP addre
 
 The resource manages only the association and never creates or deletes the public floating IP address or the port.
 
-If you are upgrading from a version earlier than 9.0.0, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack provider.
+If you are upgrading from a version earlier than 9.1.0, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack provider.
 
 ## Example Usage
 

@@ -6,7 +6,7 @@ description: |-
 
 # selectel\_vpc\_subnet\_v2
 
-!> **Deprecated since 9.0.0**
+!> **Deprecated since 9.1.0**
 This resource is no longer maintained and will be removed in a future major release. To continue receiving updates, please migrate to [selectel\_vpc\_public\_subnet\_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_public_subnet_v2). To migrate an existing resource, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9).
 
 Creates and manages a public subnet using the v2 public API. For more information about public subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/public-subnets/).

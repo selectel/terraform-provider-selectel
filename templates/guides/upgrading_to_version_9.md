@@ -1,12 +1,12 @@
 ---
-page_title: "Upgrading Terraform Selectel Provider to version 9.0.0"
+page_title: "Upgrading Terraform Selectel Provider to version 9.1.0 and later"
 description: |-
-  How to upgrade Terraform Selectel Provider to version 9.0.0.
+  How to upgrade Terraform Selectel Provider to version 9.1.0 and later.
 ---
 
-# Upgrading Terraform Selectel Provider to version 9.0.0
+# Upgrading Terraform Selectel Provider to version 9.1.0 and later
 
-In version 9.0.0, Terraform Selectel Provider introduces the following changes:
+In version 9.1.0, Terraform Selectel Provider introduces the following changes:
 
 - deprecates the `selectel_vpc_subnet_v2` resource and adds the `selectel_vpc_public_subnet_v2` resource as a replacement
 - adds networking resources and data sources that replace the corresponding `terraform-provider-openstack` resources and data sources. For the exact list, see [Selectel and OpenStack resource and data source mapping](#selectel-openstack-resource-data-source-mapping).
@@ -20,7 +20,7 @@ This guide explains how to migrate without recreating the resources. It covers:
 - [Migrating the deprecated `selectel_vpc_subnet_v2` resource](#migrating-the-deprecated-selectel_vpc_subnet_v2-resource)
 - [Migrating resources and data sources from terraform-provider-openstack](#migrating-resources-and-data-sources-from-terraform-provider-openstack).
 
-Before upgrading to version 9.0.0, upgrade to the latest 8.X version of the provider and ensure that your environment successfully runs `terraform plan`. You should not see any unexpected changes or deprecation notices.
+Before upgrading to version 9.1.0, upgrade to the latest 8.X version of the provider and ensure that your environment successfully runs `terraform plan`. You should not see any unexpected changes or deprecation notices.
 
 ## Upgrade the version {#upgrade-the-version}
 
@@ -33,7 +33,7 @@ Upgrade the version, before any of the migrations below.
      required_providers {
        selectel = {
          source  = "selectel/selectel"
-         version = "~> 9.0"
+         version = "~> 9.1"
        }
        openstack = {
          source  = "terraform-provider-openstack/openstack"
@@ -106,7 +106,7 @@ Before you start, [upgrade the version](#upgrade-the-version).
 
 ## Migrating resources and data sources from terraform-provider-openstack
 
-Version 9.0.0 ships no migration tool: no generator for `terraform state rm` and `terraform import` commands, no bulk-import script, and no conversion utility for `.tf` files.
+Version 9.1.0 ships no migration tool: no generator for `terraform state rm` and `terraform import` commands, no bulk-import script, and no conversion utility for `.tf` files.
 
 Migration is manual and per-resource. If you manage dozens of resources, migrate each of them separately and check every imported object with `terraform plan` before applying anything.
 

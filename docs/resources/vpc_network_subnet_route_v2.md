@@ -3,7 +3,7 @@ page_title: "Selectel: selectel_vpc_network_subnet_route_v2"
 description: |-
   Creates and manages a single route of a subnet using the v2 public API. For more information about static routes, see the official Selectel documentation https://docs.selectel.ru/en/cloud-servers/cloud-networks/static-routes/.
   The resource manages a single entry of the subnet's host_routes list and leaves the other entries alone. Do not manage the same routes both with this resource and the host_routes argument of selectel_vpc_network_subnet_v2.
-  If you are upgrading from a version earlier than 9.0.0, follow the upgrade guide https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9 to migrate your resources from the OpenStack provider.
+  If you are upgrading from a version earlier than 9.1.0, follow the upgrade guide https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9 to migrate your resources from the OpenStack provider.
 ---
 
 # selectel_vpc_network_subnet_route_v2
@@ -12,7 +12,7 @@ Creates and manages a single route of a subnet using the v2 public API. For more
 
 The resource manages a single entry of the subnet's `host_routes` list and leaves the other entries alone. Do not manage the same routes both with this resource and the `host_routes` argument of `selectel_vpc_network_subnet_v2`.
 
-If you are upgrading from a version earlier than 9.0.0, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack provider.
+If you are upgrading from a version earlier than 9.1.0, follow the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources from the OpenStack provider.
 
 ## Example Usage
 
