@@ -14,6 +14,8 @@ const (
 	privateDNSDefaultMinRetryWait = time.Second
 	privateDNSDefaultMaxRetryWait = 5 * time.Second
 	privateDNSDefaultRetry        = 5
+
+	privateDNSLearnMore = "Learn more about [Private DNS](https://docs.selectel.ru/en/cloud-servers/private-dns/)."
 )
 
 func getPrivateDNSClient(d *schema.ResourceData, meta any) (*privatedns.PrivateDNSClient, diag.Diagnostics) {
