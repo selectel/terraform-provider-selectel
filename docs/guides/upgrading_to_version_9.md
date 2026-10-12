@@ -11,7 +11,7 @@ In version 9.0.0, Terraform Selectel Provider introduces the following changes:
 - deprecates the `selectel_vpc_subnet_v2` resource and adds the `selectel_vpc_public_subnet_v2` resource as a replacement
 - adds networking resources and data sources that replace the corresponding `terraform-provider-openstack` resources and data sources. For the exact list, see [Selectel and OpenStack resource and data source mapping](#selectel-openstack-resource-data-source-mapping).
 
-You can continue to use the `terraform-provider-openstack` resources, but we recommend migrating to the Selectel resources, because their behavior matches the actual Selectel API.
+You can continue to use the `terraform-provider-openstack` resources, but we recommend migrating to the Selectel resources, because their behavior matches the current Selectel API.
 
 This guide explains how to migrate without recreating the resources. It covers:
 
@@ -20,7 +20,7 @@ This guide explains how to migrate without recreating the resources. It covers:
 - [Migrating the deprecated `selectel_vpc_subnet_v2` resource](#migrating-the-deprecated-selectel_vpc_subnet_v2-resource)
 - [Migrating resources and data sources from terraform-provider-openstack](#migrating-resources-and-data-sources-from-terraform-provider-openstack).
 
-Before upgrading to version 9.0.0, upgrade to the most recent 8.X version of the provider and ensure that your environment successfully runs `terraform plan`. You should not see changes you do not expect or deprecation notices.
+Before upgrading to version 9.0.0, upgrade to the latest 8.X version of the provider and ensure that your environment successfully runs `terraform plan`. You should not see any unexpected changes or deprecation notices.
 
 ## Upgrade the version {#upgrade-the-version}
 
@@ -53,7 +53,7 @@ Upgrade the version, before any of the migrations below.
 
 ## Migrating the deprecated `selectel_vpc_subnet_v2` resource
 
-The `selectel_vpc_subnet_v2` resource is deprecated. Existing configurations continue to work, but use `selectel_vpc_public_subnet_v2` for new configurations. Both resources manage the same kind of public subnet and use the same arguments and attributes.
+The `selectel_vpc_subnet_v2` resource is deprecated. Existing configurations continue to work, but use `selectel_vpc_public_subnet_v2` for new configurations. Both resources manage the same type of public subnet and use the same arguments and attributes. For existing configurations, migrate to the new resource before upgrading to the next major version.
 
 Before you start, [upgrade the version](#upgrade-the-version).
 
@@ -341,7 +341,7 @@ Use `terraform import` when the object was never tracked in the `.tfstate` file 
    }
    ```
 
-2. Copy the ID of the existing object. Any of these works:
+2. Copy the ID of the existing object. Any of the following applies:
 
    - if the resource is in a state file you can read — run `terraform state show openstack_networking_router_v2.example` and copy `id`
    - in the [Control panel](https://my.selectel.ru/), on the page of the object
@@ -378,7 +378,7 @@ The `terraform import` commands in this guide use these environment variables:
 * `OS_DOMAIN_NAME` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [registration](https://docs.selectel.ru/en/account/registration/).
 * `OS_USERNAME` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [service users](https://docs.selectel.ru/en/access-control/user-types/#service-users).
 * `OS_PASSWORD` — Password of the service user.
-* `INFRA_PROJECT_ID` — Unique identifier of the project. To get the ID, in the [Control panel](https://my.selectel.ru/), go to the product section in the navigation menu ⟶ project name ⟶ copy the ID of the required project. Learn more about [projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
+* `INFRA_PROJECT_ID` — Unique identifier of the project. Use this value only to import resources associated with a specific project. To get the ID, in the [Control panel](https://my.selectel.ru/), go to the product section in the navigation menu ⟶ project name ⟶ copy the ID of the required project. Learn more about [projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
 * `INFRA_REGION` — Pool, for example, `ru-6`. Learn more about available pools in [Product availability by location](https://docs.selectel.ru/en/infrastructure/product-availability-by-location/).
 
 Selectel resources take `project_id` and `region` from `INFRA_PROJECT_ID` and `INFRA_REGION` during import rather than from the import string. The import fails if these variables are not set. `INFRA_REGION` is not needed for `selectel_vpc_public_subnet_v2`.
