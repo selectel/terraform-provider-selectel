@@ -110,7 +110,7 @@ func TestProviderVPCRegistration(t *testing.T) {
 	} {
 		if _, ok := provider.DataSourcesMap[name]; !ok {
 			t.Errorf("expected data source %s to be registered", name)
-	}
+		}
 	}
 }
 
