@@ -14,6 +14,10 @@ import (
 	sdkschema "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// providerTypeName is the provider type name and the prefix of every
+// framework resource and data source name.
+const providerTypeName = "selectel"
+
 // frameworkProvider serves the terraform-plugin-framework resources next to
 // the SDKv2 provider.
 type frameworkProvider struct {
@@ -49,7 +53,7 @@ func muxProviderServer(ctx context.Context, sdk *sdkschema.Provider, fw provider
 }
 
 func (p *frameworkProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "selectel"
+	resp.TypeName = providerTypeName
 	resp.Version = p.version
 }
 

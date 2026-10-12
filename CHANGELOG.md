@@ -1,4 +1,4 @@
-## 9.0.0 (October 8, 2026)
+## 9.0.0 (October 12, 2026)
 
 BREAKING CHANGES:
 
