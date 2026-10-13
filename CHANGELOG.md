@@ -25,7 +25,7 @@ FEATURES:
   * `selectel_vpc_router_v2`
   * `selectel_vpc_secgroup_v2`
 
-  These resources and data sources replace the corresponding resources and data sources of the OpenStack provider. For the exact mapping and migration steps, see the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9).
+  These resources and data sources replace the corresponding resources and data sources of the OpenStack provider. For the exact mapping and migration steps, see the [upgrade guide](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9_1).
 
 DEPRECATIONS:
 

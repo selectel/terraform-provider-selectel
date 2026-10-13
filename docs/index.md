@@ -10,7 +10,7 @@ To manage Selectel product resources, use the [Selectel provider](https://docs.s
 
 Starting with version 9.1.0, we recommend using the [OpenStack Terraform provider](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest) only for resources that are not yet available in the Selectel provider.
 
-Backward compatibility is not guaranteed. Some Selectel functionality may be unavailable or implemented differently in the OpenStack Terraform provider. If you are upgrading to version 9.1.0 or later, follow our guides for example [upgrading to version 9](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9) to migrate your resources to the Selectel provider.
+Backward compatibility is not guaranteed. Some Selectel functionality may be unavailable or implemented differently in the OpenStack Terraform provider. If you are upgrading to version 9.1.0 or later, follow our guides for example [upgrading to version 9.1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/guides/upgrading_to_version_9_1) to migrate your resources to the Selectel provider.
 
 ## Example Usage
 
@@ -19,7 +19,7 @@ terraform {
   required_providers {
     selectel = {
       source = "selectel/selectel"
-      version = "~> 9.1.0"
+      version = "~> 9.1"
     }
   }
 }
