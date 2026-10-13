@@ -1,8 +1,8 @@
-## 9.1.0 (Unreleased)
+## 9.1.0 (October 13, 2026)
 
 FEATURES:
 
-* Add new resources:
+* Add new resources ([#439](https://github.com/selectel/terraform-provider-selectel/pull/439)):
   * `selectel_vpc_public_subnet_v2`
   * `selectel_vpc_network_v2`
   * `selectel_vpc_network_subnet_v2`
@@ -18,7 +18,7 @@ FEATURES:
   * `selectel_vpc_rbac_policy_v2`
   * `selectel_vpc_secgroup_v2`
   * `selectel_vpc_secgroup_rule_v2`
-* Add new data sources:
+* Add new data sources ([#439](https://github.com/selectel/terraform-provider-selectel/pull/439)):
   * `selectel_vpc_network_v2`
   * `selectel_vpc_network_subnet_v2`
   * `selectel_vpc_port_v2`
@@ -29,7 +29,7 @@ FEATURES:
 
 DEPRECATIONS:
 
-* `selectel_vpc_subnet_v2` (resource): deprecated and will be removed in a future major release. Use `selectel_vpc_public_subnet_v2` instead.
+* `selectel_vpc_subnet_v2` (resource): deprecated and will be removed in a future major release. Use `selectel_vpc_public_subnet_v2` instead ([#439](https://github.com/selectel/terraform-provider-selectel/pull/439)).
 
 ## 9.0.0 (October 12, 2026)
 
