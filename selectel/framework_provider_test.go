@@ -9,10 +9,12 @@ import (
 	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadoc"
 )
 
 type testFrameworkProvider struct {
@@ -98,7 +100,12 @@ func TestProviderServerSchema(t *testing.T) {
 			require.NoError(t, err)
 			assert.Empty(t, resp.Diagnostics)
 			assert.Contains(t, resp.ResourceSchemas, "selectel_vpc_project_v2")
+			assert.Contains(t, resp.ResourceSchemas, "selectel_compute_volume_v3")
+			assert.Contains(t, resp.DataSourceSchemas, "selectel_compute_volume_v3")
 			assert.Contains(t, resp.DataSourceSchemas, "selectel_mux_test")
+			for _, attribute := range resp.Provider.Block.Attributes {
+				assert.Equal(t, attribute.Name == "password", attribute.Sensitive, attribute.Name)
+			}
 		})
 	}
 }
@@ -159,4 +166,32 @@ func nullConfig(t *testing.T, s *tfprotov6.Schema) *tfprotov6.DynamicValue {
 	require.NoError(t, err)
 
 	return &value
+}
+
+// TestSchemaDocumentation is the schemadoc lint: every rule of a Framework
+// resource or data source must be stated in its attribute description.
+// Run it alone with make schemadoc.
+func TestSchemaDocumentation(t *testing.T) {
+	ctx := context.Background()
+	p := &frameworkProvider{}
+	for _, newResource := range p.Resources(ctx) {
+		res := newResource()
+		var metadata resource.MetadataResponse
+		res.Metadata(ctx, resource.MetadataRequest{ProviderTypeName: "selectel"}, &metadata)
+		var schemaResponse resource.SchemaResponse
+		res.Schema(ctx, resource.SchemaRequest{}, &schemaResponse)
+		for _, problem := range schemadoc.Lint(schemaResponse.Schema) {
+			t.Errorf("resource %s: %s", metadata.TypeName, problem)
+		}
+	}
+	for _, newDataSource := range p.DataSources(ctx) {
+		source := newDataSource()
+		var metadata datasource.MetadataResponse
+		source.Metadata(ctx, datasource.MetadataRequest{ProviderTypeName: "selectel"}, &metadata)
+		var schemaResponse datasource.SchemaResponse
+		source.Schema(ctx, datasource.SchemaRequest{}, &schemaResponse)
+		for _, problem := range schemadoc.Lint(schemaResponse.Schema) {
+			t.Errorf("data source %s: %s", metadata.TypeName, problem)
+		}
+	}
 }

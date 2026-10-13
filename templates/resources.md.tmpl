@@ -12,8 +12,21 @@ description: |-
 ## Example Usage
 
 {{- range .ExampleFiles }}
+{{- /* A leading "# Title" comment of an example becomes its heading. */}}
+{{- $lines := split (tffile .) "\n" }}
+{{- $title := index $lines 1 }}
+{{- if and (gt (len $title) 2) (eq (slice $title 0 2) "# ") }}
+
+### {{ slice $title 2 }}
+
+{{ index $lines 0 }}
+{{- range slice $lines 2 }}
+{{ . }}
+{{- end }}
+{{- else }}
 
 {{ tffile . }}
+{{- end }}
 {{- end }}
 {{- end }}
 
@@ -49,5 +62,7 @@ Use the [`terraform import` command](https://developer.hashicorp.com/terraform/c
 {{ codefile "shell" .ImportFile }}
 
 `<domain_name>`, `<username>`, and `<password>` are the arguments of the [provider configuration](https://registry.terraform.io/providers/selectel/selectel/latest/docs).
+{{- if .HasImportIdentityConfig }}
 Other identity attributes are described above in the import or resource sections.
+{{- end }}
 {{- end }}

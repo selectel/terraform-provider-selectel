@@ -13,8 +13,9 @@ If you are upgrading from a version earlier than 9.1.0, follow the [upgrade guid
 
 ## Example Usage
 
+### Security group with the default egress rules
+
 ```terraform
-# Security group with the default egress rules
 resource "selectel_vpc_secgroup_v2" "secgroup_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-6"
@@ -22,8 +23,9 @@ resource "selectel_vpc_secgroup_v2" "secgroup_1" {
 }
 ```
 
+### Security group without the default egress rules
+
 ```terraform
-# Security group without the default egress rules
 resource "selectel_vpc_secgroup_v2" "secgroup_2" {
   project_id           = selectel_vpc_project_v2.project_1.id
   region               = "ru-6"

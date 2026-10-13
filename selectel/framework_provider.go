@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
 	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 	sdkschema "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/blockstorage"
 )
 
 // providerTypeName is the provider type name and the prefix of every
@@ -67,6 +68,7 @@ func (p *frameworkProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 		attrs[name] = providerschema.StringAttribute{
 			Required:    required,
 			Optional:    !required,
+			Sensitive:   s.Sensitive,
 			Description: s.Description,
 		}
 	}
@@ -90,11 +92,15 @@ func (p *frameworkProvider) Configure(_ context.Context, _ provider.ConfigureReq
 }
 
 func (p *frameworkProvider) Resources(_ context.Context) []func() resource.Resource {
-	return nil
+	return []func() resource.Resource{blockstorage.NewVolumeResource}
 }
 
 func (p *frameworkProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return nil
+	return []func() datasource.DataSource{
+		blockstorage.NewVolumeDataSource,
+		blockstorage.NewSnapshotDataSource,
+		blockstorage.NewVolumeTypeDataSource,
+	}
 }
 
 func sdkDefault(s *sdkschema.Schema) string {

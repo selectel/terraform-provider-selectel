@@ -43,6 +43,10 @@ test-compile:
 
 all: fmt import golangci-lint test testacc semgrep pin-sha-tags test-compile
 
+# schemadoc checks that Framework attribute descriptions state every rule.
+schemadoc:
+	go test ./selectel -run '^TestSchemaDocumentation$$' -count=1
+
 docs:
 	$(TFPLUGINDOCS) generate
 
@@ -99,4 +103,4 @@ pin-sha-tags:
 		-v ${PWD}/.github/workflows:/workflows \
 		mheap/pin-github-action@sha256:1a336147444c5be62b5bade8a7b82d971d138aac3c799f9ad72d0598331210aa .
 
-.PHONY: golangci-lint go-fix build test testacc fmt test-compile docs docs-check examples-fmt examples-check docs-misspell trivy semgrep pin-sha-tags
+.PHONY: golangci-lint go-fix build test testacc fmt test-compile schemadoc docs docs-check examples-fmt examples-check docs-misspell trivy semgrep pin-sha-tags

@@ -14,4 +14,5 @@ const (
 	DataProtectV2      = "data-protectv2"
 	GlobalRouter       = "global-router"
 	PublicNetAPI       = "public-net-api"
+	BlockStorage       = "volumev3"
 )
