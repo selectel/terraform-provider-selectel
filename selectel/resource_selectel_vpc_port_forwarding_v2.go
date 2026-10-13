@@ -1,0 +1,428 @@
+package selectel
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"strconv"
+	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	vpc "github.com/selectel/vpc-go/pkg/v2"
+	"github.com/selectel/vpc-go/pkg/v2/floatingip"
+)
+
+const (
+	vpcPortForwardingV2Object      = "VPC port forwarding"
+	vpcPortForwardingV2IDSeparator = "/"
+)
+
+var vpcPortForwardingV2Protocols = []string{"tcp", "udp", "icmp", "ipv6-icmp", "sctp", "dccp"}
+
+var portForwardingV2Docs = resourceDocs{Name: "port forwarding rule"}
+
+func resourceVPCPortForwardingV2() *schema.Resource {
+	return &schema.Resource{
+		CreateContext: resourceVPCPortForwardingV2Create,
+		ReadContext:   resourceVPCPortForwardingV2Read,
+		UpdateContext: resourceVPCPortForwardingV2Update,
+		DeleteContext: resourceVPCPortForwardingV2Delete,
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(vpcV2DefaultStatusTimeout),
+		},
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceVPCPortForwardingV2ImportState,
+		},
+		Identity: &schema.ResourceIdentity{
+			SchemaFunc: func() map[string]*schema.Schema {
+				return portForwardingV2Docs.identitySchema(floatingIPRegionFromControlPanel, map[string]*schema.Schema{
+					"id": identityAttrSchema(
+						"Unique identifier of the port forwarding rule, for example, `e3f2a1d4-5b6c-4d7e-8f90-a1b2c3d4e5f6`.",
+						portForwardingIDFromOpenStackCLI),
+					"floatingip_id": identityAttrSchema(
+						"Unique identifier of the public floating IP address the rule belongs to, for example, `"+exampleResourceID+"`.",
+						floatingIPIDFromControlPanel),
+				})
+			},
+		},
+		CustomizeDiff: resourceVPCPortForwardingV2CustomizeDiff,
+		Description: "Creates and manages a port-forwarding rule of a public floating IP address using the v2 public API. " +
+			"For more information about public floating IP addresses, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/public-floating-ip-addresses/).\n\n" +
+			upgradeGuideNote,
+		Schema: portForwardingV2Docs.withDocsHints(map[string]*schema.Schema{
+			"id":         portForwardingV2Docs.idResourceSchema(),
+			"project_id": portForwardingV2Docs.projectIDResourceSchema(),
+			"region":     portForwardingV2Docs.regionResourceSchema(),
+			"floatingip_id": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+				Description: "Unique identifier of the public floating IP address the rule belongs to. " +
+					floatingIPIDFromResource,
+			},
+			"internal_port_id": {
+				Type:     schema.TypeString,
+				Required: true,
+				Description: "Unique identifier of the port traffic is forwarded to. " +
+					portIDFromResource,
+			},
+			"internal_ip_address": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.IsIPv4Address,
+				Description:  "IPv4 address to which traffic is forwarded. Must be one of the fixed IPs of the internal port `internal_port_id`.",
+			},
+			"internal_port": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IntBetween(1, 65535),
+				ExactlyOneOf: []string{"internal_port", "internal_port_range"},
+				Description:  "Port traffic is forwarded to. The available range is from 1 to 65535.",
+			},
+			"internal_port_range": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validateVPCPortForwardingV2PortRange,
+				ExactlyOneOf: []string{"internal_port", "internal_port_range"},
+				Description: "Range of ports traffic is forwarded to, for example, `8000:8002`. " +
+					"Must have the same size as `external_port_range`. " +
+					"To forward every port of `external_port_range` to one internal port, specify `internal_port` instead. " +
+					"The available range is from 1 to 65535.",
+			},
+			"external_port": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IntBetween(1, 65535),
+				ExactlyOneOf: []string{"external_port", "external_port_range"},
+				Description: "Port traffic arrives at. " +
+					"The available range is from 1 to 65535.",
+			},
+			"external_port_range": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validateVPCPortForwardingV2PortRange,
+				ExactlyOneOf: []string{"external_port", "external_port_range"},
+				Description: "Range of ports traffic arrives at, for example, `9000:9002`. " +
+					"Must have the same size as `internal_port_range`. If `internal_port` is specified instead, every port of the range is forwarded to it. " +
+					"The available range is from 1 to 65535.",
+			},
+			"protocol": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringInSlice(vpcPortForwardingV2Protocols, false),
+				Description: "Protocol of the forwarded traffic. " +
+					"Available values are `tcp`, `udp`, `icmp`, `ipv6-icmp`, `sctp`, and `dccp`.",
+			},
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Description of the rule.",
+			},
+		}),
+	}
+}
+
+func resourceVPCPortForwardingV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	floatingIPID := d.Get("floatingip_id").(string)
+
+	request := floatingip.PortForwardingCreateRequest{
+		Protocol:          d.Get("protocol").(string),
+		InternalPortID:    d.Get("internal_port_id").(string),
+		InternalIPAddress: d.Get("internal_ip_address").(string),
+	}
+	if v, ok := d.GetOk("internal_port"); ok {
+		request.InternalPort = new(v.(int))
+	}
+	if v, ok := d.GetOk("internal_port_range"); ok {
+		request.InternalPortRange = new(v.(string))
+	}
+	if v, ok := d.GetOk("external_port"); ok {
+		request.ExternalPort = new(v.(int))
+	}
+	if v, ok := d.GetOk("external_port_range"); ok {
+		request.ExternalPortRange = new(v.(string))
+	}
+	if v, ok := d.GetOk("description"); ok {
+		request.Description = new(v.(string))
+	}
+
+	log.Printf("[DEBUG] creating port forwarding on floating ip %s", floatingIPID)
+	created, err := floatingip.CreatePortForwarding(ctx, client, floatingIPID, request)
+	if err != nil {
+		return diag.FromErr(errCreatingObject(vpcPortForwardingV2Object, err))
+	}
+
+	d.SetId(created.ID)
+
+	diags := waitForVPCFloatingIPV2Active(ctx, client, floatingIPID,
+		vpcV2StatusPollInterval, d.Timeout(schema.TimeoutCreate))
+	if diags.HasError() {
+		return diags
+	}
+
+	return append(diags, resourceVPCPortForwardingV2Read(ctx, d, meta)...)
+}
+
+func resourceVPCPortForwardingV2Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	floatingIPID := d.Get("floatingip_id").(string)
+
+	log.Printf("[DEBUG] getting port forwarding %s on floating ip %s", d.Id(), floatingIPID)
+	found, err := floatingip.GetPortForwarding(ctx, client, floatingIPID, d.Id())
+	if err != nil {
+		return vpcCheckDeleted(d, err, vpcPortForwardingV2Object)
+	}
+
+	d.Set("floatingip_id", floatingIPID)
+	d.Set("protocol", found.Protocol)
+	d.Set("internal_port_id", found.InternalPortID)
+	d.Set("internal_ip_address", found.InternalIPAddress)
+	d.Set("internal_port", found.InternalPort)
+	d.Set("external_port", found.ExternalPort)
+	d.Set("internal_port_range", found.InternalPortRange)
+	d.Set("external_port_range", found.ExternalPortRange)
+	d.Set("description", found.Description)
+
+	setIdentity(d, "id", "floatingip_id")
+
+	return nil
+}
+
+func resourceVPCPortForwardingV2Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	var (
+		request     floatingip.PortForwardingUpdateRequest
+		needsUpdate bool
+	)
+
+	if d.HasChange("protocol") {
+		request.Protocol = new(d.Get("protocol").(string))
+		needsUpdate = true
+	}
+	if d.HasChange("internal_port_id") {
+		request.InternalPortID = new(d.Get("internal_port_id").(string))
+		needsUpdate = true
+	}
+	if d.HasChange("internal_ip_address") {
+		request.InternalIPAddress = new(d.Get("internal_ip_address").(string))
+		needsUpdate = true
+	}
+	if d.HasChange("internal_port") {
+		request.InternalPort = new(d.Get("internal_port").(int))
+		needsUpdate = true
+	}
+	if d.HasChange("internal_port_range") {
+		request.InternalPortRange = new(d.Get("internal_port_range").(string))
+		needsUpdate = true
+	}
+	if d.HasChange("external_port") {
+		request.ExternalPort = new(d.Get("external_port").(int))
+		needsUpdate = true
+	}
+	if d.HasChange("external_port_range") {
+		request.ExternalPortRange = new(d.Get("external_port_range").(string))
+		needsUpdate = true
+	}
+	if d.HasChange("description") {
+		request.Description = new(d.Get("description").(string))
+		needsUpdate = true
+	}
+
+	if !needsUpdate {
+		return resourceVPCPortForwardingV2Read(ctx, d, meta)
+	}
+
+	floatingIPID := d.Get("floatingip_id").(string)
+
+	// The API ignores a new internal port range when the internal target moves in
+	// the same request, so the target moves first and the ports follow in a second
+	// request. Internal and external ports travel together: the API validates their
+	// relation within one request.
+	var trailing *floatingip.PortForwardingUpdateRequest
+	if request.InternalPortRange != nil &&
+		(d.HasChange("internal_port_id") || d.HasChange("internal_ip_address")) {
+		trailing = &floatingip.PortForwardingUpdateRequest{
+			InternalPort:      request.InternalPort,
+			InternalPortRange: request.InternalPortRange,
+			ExternalPort:      request.ExternalPort,
+			ExternalPortRange: request.ExternalPortRange,
+		}
+		request.InternalPort, request.InternalPortRange = nil, nil
+		request.ExternalPort, request.ExternalPortRange = nil, nil
+	}
+
+	log.Printf("[DEBUG] updating port forwarding %s on floating ip %s", d.Id(), floatingIPID)
+	if _, err := floatingip.UpdatePortForwarding(ctx, client, floatingIPID, d.Id(), request); err != nil {
+		return diag.FromErr(errUpdatingObject(vpcPortForwardingV2Object, d.Id(), err))
+	}
+
+	if trailing != nil {
+		log.Printf("[DEBUG] updating the ports of port forwarding %s on floating ip %s", d.Id(), floatingIPID)
+		if _, err := floatingip.UpdatePortForwarding(ctx, client, floatingIPID, d.Id(), *trailing); err != nil {
+			return diag.FromErr(errUpdatingObject(vpcPortForwardingV2Object, d.Id(), err))
+		}
+	}
+
+	return resourceVPCPortForwardingV2Read(ctx, d, meta)
+}
+
+func resourceVPCPortForwardingV2Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	client, err := vpcV2Client(meta, d.Get("project_id").(string), d.Get("region").(string))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	floatingIPID := d.Get("floatingip_id").(string)
+
+	log.Printf("[DEBUG] deleting port forwarding %s on floating ip %s", d.Id(), floatingIPID)
+	if err := floatingip.DeletePortForwarding(ctx, client, floatingIPID, d.Id()); err != nil &&
+		!vpc.IsErrorClass(err, vpc.ErrorClassNotFound) {
+		return diag.FromErr(errDeletingObject(vpcPortForwardingV2Object, d.Id(), err))
+	}
+
+	return nil
+}
+
+func resourceVPCPortForwardingV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
+	if identity, ok := importIdentity(d); ok {
+		d.SetId(identity.Get("id").(string))
+		d.Set("floatingip_id", identity.Get("floatingip_id"))
+
+		if err := setProjectRegionFromIdentity(d, identity); err != nil {
+			return nil, err
+		}
+
+		return []*schema.ResourceData{d}, nil
+	}
+
+	if err := importProjectRegionFromConfig(d, meta); err != nil {
+		return nil, err
+	}
+
+	floatingIPID, ruleID, err := parseVPCPortForwardingV2ID(d.Id())
+	if err != nil {
+		return nil, err
+	}
+
+	d.SetId(ruleID)
+	d.Set("floatingip_id", floatingIPID)
+
+	return []*schema.ResourceData{d}, nil
+}
+
+func parseVPCPortForwardingV2ID(id string) (string, string, error) {
+	parts := strings.Split(id, vpcPortForwardingV2IDSeparator)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return "", "", fmt.Errorf(
+			"unable to parse %s ID '%s': expected the format <floatingip_id>%s<id>",
+			vpcPortForwardingV2Object, id, vpcPortForwardingV2IDSeparator)
+	}
+
+	return parts[0], parts[1], nil
+}
+
+func validateVPCPortForwardingV2PortRange(value any, key string) ([]string, []error) {
+	portRange := value.(string)
+	if portRange == "" {
+		return nil, nil
+	}
+
+	bounds := strings.Split(portRange, ":")
+	if len(bounds) != 2 {
+		return nil, []error{fmt.Errorf(
+			"invalid %s %q for selectel_vpc_port_forwarding_v2: expected <first>:<last>",
+			key, portRange)}
+	}
+
+	ports := make([]int, 0, len(bounds))
+	for _, bound := range bounds {
+		port, err := strconv.Atoi(bound)
+		if err != nil || port < 1 || port > 65535 {
+			return nil, []error{fmt.Errorf(
+				"invalid %s %q for selectel_vpc_port_forwarding_v2: ports must be between 1 and 65535",
+				key, portRange)}
+		}
+		ports = append(ports, port)
+	}
+	if ports[0] > ports[1] {
+		return nil, []error{fmt.Errorf(
+			"invalid %s %q for selectel_vpc_port_forwarding_v2: the first port must not exceed the last one",
+			key, portRange)}
+	}
+
+	return nil, nil
+}
+
+// resourceVPCPortForwardingV2CustomizeDiff rejects ranges of different sizes at plan time.
+// The check reads the raw configuration because both range attributes are Computed:
+// a value kept in state from a previous apply must not take part in the comparison.
+func resourceVPCPortForwardingV2CustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ any) error {
+	internalRange, okInternal := vpcPortForwardingV2RawConfigString(d, "internal_port_range")
+	externalRange, okExternal := vpcPortForwardingV2RawConfigString(d, "external_port_range")
+	if !okInternal || !okExternal {
+		return nil
+	}
+
+	internalSize, okInternal := vpcPortForwardingV2PortRangeSize(internalRange)
+	externalSize, okExternal := vpcPortForwardingV2PortRangeSize(externalRange)
+	if !okInternal || !okExternal || internalSize == externalSize {
+		return nil
+	}
+
+	return fmt.Errorf(
+		"invalid selectel_vpc_port_forwarding_v2: internal_port_range %q has %d ports, "+
+			"but external_port_range %q has %d; the ranges must have the same size",
+		internalRange, internalSize, externalRange, externalSize)
+}
+
+// vpcPortForwardingV2RawConfigString returns a string attribute set in the configuration.
+// Unknown, null, and missing values report false.
+func vpcPortForwardingV2RawConfigString(d *schema.ResourceDiff, name string) (string, bool) {
+	config := d.GetRawConfig()
+	if config.IsNull() || !config.IsKnown() || !config.Type().HasAttribute(name) {
+		return "", false
+	}
+
+	value := config.GetAttr(name)
+	if value.IsNull() || !value.IsKnown() {
+		return "", false
+	}
+
+	return value.AsString(), true
+}
+
+// vpcPortForwardingV2PortRangeSize returns the number of ports in a valid <first>:<last> range.
+// Invalid ranges report false; the attribute validator reports them.
+func vpcPortForwardingV2PortRangeSize(portRange string) (int, bool) {
+	bounds := strings.Split(portRange, ":")
+	if len(bounds) != 2 {
+		return 0, false
+	}
+
+	first, errFirst := strconv.Atoi(bounds[0])
+	last, errLast := strconv.Atoi(bounds[1])
+	if errFirst != nil || errLast != nil || first > last {
+		return 0, false
+	}
+
+	return last - first + 1, true
+}

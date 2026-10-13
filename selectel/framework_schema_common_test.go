@@ -154,6 +154,6 @@ func TestFrameworkHelpersMatchSDKv2(t *testing.T) {
 
 	assert.Equal(t, docs.regionResourceSchema().Description, docs.regionFrameworkResourceSchema().Description)
 	assert.Equal(t, docs.regionIdentitySchema(hint).Description, docs.regionFrameworkIdentitySchema(hint).Description)
-	assert.Equal(t, projectIDResourceSchema().Description, projectIDFrameworkResourceSchema().Description)
-	assert.Equal(t, projectIDIdentitySchema().Description, projectIDFrameworkIdentitySchema().Description)
+	assert.Equal(t, docs.projectIDResourceSchema().Description, projectIDFrameworkResourceSchema().Description)
+	assert.Equal(t, docs.projectIDIdentitySchema().Description, projectIDFrameworkIdentitySchema().Description)
 }

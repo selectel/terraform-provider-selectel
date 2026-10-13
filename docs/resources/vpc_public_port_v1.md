@@ -1,12 +1,12 @@
 ---
 page_title: "Selectel: selectel_vpc_public_port_v1"
 description: |-
-  Creates and manages a direct public IP address (public port) in VPC using the V1 public API. For more information about direct public IP addresses, see the official Selectel documentation https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses.
+  Creates and manages a direct public IP address (public port) in VPC using the v1 public API. For more information about direct public IP addresses, see the official Selectel documentation https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses.
 ---
 
 # selectel_vpc_public_port_v1
 
-Creates and manages a direct public IP address (public port) in VPC using the V1 public API. For more information about direct public IP addresses, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses).
+Creates and manages a direct public IP address (public port) in VPC using the v1 public API. For more information about direct public IP addresses, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses).
 
 ## Example Usage
 
@@ -27,17 +27,17 @@ resource "selectel_vpc_public_port_v1" "port_1" {
 
 ### Optional
 
-- `admin_state_up` (Boolean) Enables (`true`) or disables (`false`) the public port administratively. The default value is `true`.
-- `description` (String) Public port description. The default value is an empty string.
-- `security_group_ids` (List of String) List of OpenStack security group identifiers to associate with the public port. Learn more about the [openstack_networking_secgroup_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_secgroup_v2) resource in the official OpenStack documentation. The default value is the identifier of the default security group in the project.
+- `admin_state_up` (Boolean) Specifies if the port is administratively up. The default value is `true`.
+- `description` (String) Description of the public port. The default value is an empty string.
+- `security_group_ids` (List of String) Unique identifiers of security groups associated with the public port. If not specified, the port gets the default security group of the project. Retrieved from the [selectel_vpc_secgroup_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_secgroup_v2) resource.
 
 ### Read-Only
 
 - `gateway` (String) IP address of the subnet gateway.
 - `id` (String) Unique identifier of the public port.
 - `ip_address` (String) Direct public IP address assigned to the public port.
-- `network_id` (String) Identifier of the service network to which the public port is attached.
-- `subnet` (String) CIDR of the subnet in which the public port IP address is allocated.
+- `network_id` (String) Unique identifier of the service network from which the public port is allocated.
+- `subnet` (String) CIDR of the subnet from which the public port IP address is allocated.
 
 ## Import
 
@@ -61,9 +61,9 @@ import {
 
 #### Required
 
-- `id` (String) Unique identifier of the public port, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the public port ID, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Cloud Platform** ⟶ **Network** ⟶ the **Direct public IP addresses** tab ⟶ copy the ID of the public port on the right side of the public port card.
+- `id` (String) Unique identifier of the public port, for example, `b311ce58-2658-46b5-b733-7a0f418703f2`. To get the public port ID, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Direct public IP addresses** tab ⟶ copy the ID of the public port on the right side of the public port card.
 - `project_id` (String) Unique identifier of the associated project, for example, `a07abc12310546f1b9291ab3013a7d75`. To get the project ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Products** ⟶ **Cloud Servers** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
-- `region` (String) Pool where the public port is located, for example, `ru-6`. To get information about the pool, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Direct public IP addresses** tab. The pool is under the IP address. Learn more about available pools in [Product availability by location](https://docs.selectel.ru/en/infrastructure/product-availability-by-location/).
+- `region` (String) Pool where the public port is located, for example, `ru-6`. To get the pool, in the [Control panel](https://my.selectel.ru/vpc/default/networks), go to **Products** ⟶ **Cloud Servers** ⟶ **Network** ⟶ the **Direct public IP addresses** tab. The pool is under the IP address. Learn more about available pools in [Product availability by location](https://docs.selectel.ru/en/infrastructure/product-availability-by-location/).
 
 ### In Terraform 1.5.0 and later
 

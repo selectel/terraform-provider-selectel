@@ -18,7 +18,7 @@ resource "selectel_dbaas_postgresql_datastore_v1" "cluster_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-3"
   type_id    = data.selectel_dbaas_datastore_type_v1.datastore_type_1.datastore_types[0].id
-  subnet_id  = selectel_vpc_subnet_v2.subnet.subnet_id
+  subnet_id  = selectel_vpc_public_subnet_v2.subnet.subnet_id
   node_count = 3
   flavor {
     vcpus     = 4
@@ -42,7 +42,7 @@ resource "selectel_dbaas_postgresql_datastore_v1" "cluster_1" {
   project_id = selectel_vpc_project_v2.project_1.id
   region     = "ru-3"
   type_id    = data.selectel_dbaas_datastore_type_v1.datastore_type_1.datastore_types[0].id
-  subnet_id  = selectel_vpc_subnet_v2.subnet.subnet_id
+  subnet_id  = selectel_vpc_public_subnet_v2.subnet.subnet_id
   node_count = 3
   flavor {
     vcpus     = 4
@@ -62,7 +62,7 @@ resource "selectel_dbaas_postgresql_datastore_v1" "cluster_1" {
 
 * `region` - (Required) Pool where the cluster is located, for example, `ru-3`. Changing this creates a new cluster. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-databases).
 
-* `subnet_id` - (Required) Unique identifier of the associated subnet. Changing this creates a new cluster. Retrieved from the [selectel_vpc_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_subnet_v2) resource for a public subnet, or from the [openstack_networking_subnet_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_subnet_v2) resource of the OpenStack provider for a private subnet.
+* `subnet_id` - (Required) Unique identifier of the associated subnet. Changing this creates a new cluster. Retrieved from the [selectel_vpc_public_subnet_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_public_subnet_v2) resource for a public subnet, or from the [openstack_networking_subnet_v2](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs/resources/networking_subnet_v2) resource of the OpenStack provider for a private subnet.
 
 * `type_id` - (Required) Unique identifier of the cluster type. Changing this creates a new cluster. Retrieved from the [selectel_dbaas_datastore_type_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_datastore_type_v1) data source.
 

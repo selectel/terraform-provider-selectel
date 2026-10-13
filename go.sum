@@ -179,6 +179,8 @@ github.com/selectel/public-net-api-go v1.0.1 h1:oHkh96+osdXNpi/khyEcovBUZr9y8Xfr
 github.com/selectel/public-net-api-go v1.0.1/go.mod h1:ilQXF2PQssdx2P6Nohil6T5olqtRNr2/CyioTC3OhPI=
 github.com/selectel/secretsmanager-go v0.2.1 h1:OSBrA/07lm/Ecpwg59IJHFAoUHZR29oyfwUgTpr/dos=
 github.com/selectel/secretsmanager-go v0.2.1/go.mod h1:DUPexhiJWLTyZEvse7grJWdcA8p8TEI93gNu1dDu7Yg=
+github.com/selectel/vpc-go v1.1.0 h1:XysRblOgON/YQZBP4ki0YsFHf037ZBEJ4x04jVIrd1Y=
+github.com/selectel/vpc-go v1.1.0/go.mod h1:QZdUVaBzApPPfmrLsUztddQUwEBS2V0ea2e1O0xgcvE=
 github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 h1:n661drycOFuPLCN3Uc8sB6B/s6Z4t2xvBgU1htSHuq8=
 github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3/go.mod h1:A0bzQcvG0E7Rwjx0REVgAGH58e96+X0MeOfepqsbeW4=
 github.com/skeema/knownhosts v1.3.1 h1:X2osQ+RAjK76shCbvhHHHVl3ZlgDm8apHEHFqRjnBY8=

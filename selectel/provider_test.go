@@ -69,6 +69,51 @@ func TestProvider(t *testing.T) {
 	}
 }
 
+func TestProviderVPCRegistration(t *testing.T) {
+	provider := Provider("test")
+
+	for _, name := range []string{
+		"selectel_vpc_floatingip_v2",
+		"selectel_vpc_network_v2",
+		"selectel_vpc_network_subnet_v2",
+		"selectel_vpc_network_subnet_route_v2",
+		"selectel_vpc_port_v2",
+		"selectel_vpc_port_forwarding_v2",
+		"selectel_vpc_port_secgroup_associate_v2",
+		"selectel_vpc_floatingip_associate_v2",
+		"selectel_vpc_router_v2",
+		"selectel_vpc_router_interface_v2",
+		"selectel_vpc_router_route_v2",
+		"selectel_vpc_router_routes_v2",
+		"selectel_vpc_rbac_policy_v2",
+		"selectel_vpc_secgroup_v2",
+		"selectel_vpc_secgroup_rule_v2",
+		"selectel_vpc_subnet_v2",
+		"selectel_vpc_public_subnet_v2",
+	} {
+		if _, ok := provider.ResourcesMap[name]; !ok {
+			t.Errorf("expected managed resource %s to be registered", name)
+		}
+	}
+
+	deprecatedSubnet := provider.ResourcesMap["selectel_vpc_subnet_v2"]
+	if deprecatedSubnet.DeprecationMessage == "" {
+		t.Error("expected selectel_vpc_subnet_v2 to be marked as deprecated")
+	}
+
+	for _, name := range []string{
+		"selectel_vpc_network_v2",
+		"selectel_vpc_network_subnet_v2",
+		"selectel_vpc_port_v2",
+		"selectel_vpc_router_v2",
+		"selectel_vpc_secgroup_v2",
+	} {
+		if _, ok := provider.DataSourcesMap[name]; !ok {
+			t.Errorf("expected data source %s to be registered", name)
+		}
+	}
+}
+
 func testAccSelectelPreCheck(t *testing.T) {
 	if v := os.Getenv("OS_DOMAIN_NAME"); v == "" {
 		t.Fatal("OS_DOMAIN_NAME must be set for acceptance tests")
@@ -87,6 +132,13 @@ func testAccSelectelPreCheckWithProjectID(t *testing.T) {
 	testAccSelectelPreCheck(t)
 	if v := os.Getenv("INFRA_PROJECT_ID"); v == "" {
 		t.Fatal("INFRA_PROJECT_ID must be set for acceptance tests")
+	}
+}
+
+func testAccSelectelPreCheckWithProjectIDAndRegion(t *testing.T) {
+	testAccSelectelPreCheckWithProjectID(t)
+	if v := os.Getenv("INFRA_REGION"); v == "" {
+		t.Fatal("INFRA_REGION must be set for acceptance tests")
 	}
 }
 

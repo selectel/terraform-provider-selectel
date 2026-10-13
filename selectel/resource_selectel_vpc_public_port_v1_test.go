@@ -215,7 +215,7 @@ func testAccVPCPublicPortV1CheckDestroy(s *terraform.State) error {
 			return fmt.Errorf("selectel_vpc_public_port_v1.port %q still exists", rs.Primary.ID)
 		}
 
-		if isNotFound(err) {
+		if !isNotFound(err) {
 			return err
 		}
 	}

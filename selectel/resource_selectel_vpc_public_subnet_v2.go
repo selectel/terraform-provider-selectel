@@ -1,0 +1,216 @@
+package selectel
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"net"
+	"net/http"
+	"strconv"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient/clients"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/subnets"
+)
+
+var vpcPublicSubnetDocs = resourceDocs{Name: "public subnet"}
+
+func resourceVPCPublicSubnetV2() *schema.Resource {
+	return &schema.Resource{
+		CreateContext: resourceVPCSubnetV2Create,
+		ReadContext:   resourceVPCSubnetV2Read,
+		DeleteContext: resourceVPCSubnetV2Delete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceVPCSubnetV2ImportState,
+		},
+		Description: "Creates and manages a public subnet using the v2 public API. " +
+			"For more information about public subnets, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/public-subnets/).\n\n" +
+			upgradeGuideNote,
+		Schema: vpcPublicSubnetDocs.withDocsHints(map[string]*schema.Schema{
+			"id":         vpcPublicSubnetDocs.idResourceSchema(),
+			"project_id": vpcPublicSubnetDocs.projectIDResourceSchema(),
+			"region":     vpcPublicSubnetDocs.regionResourceSchema(),
+			"prefix_length": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ForceNew:     true,
+				Default:      29,
+				ValidateFunc: validation.IntBetween(24, 29),
+				Description:  "Prefix length of the public subnet. Available values are from `24` to `29`.",
+			},
+			"ip_version": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Default:  selvpcclient.IPv4,
+				ValidateFunc: validation.StringInSlice([]string{
+					string(selvpcclient.IPv4),
+					string(selvpcclient.IPv6),
+				}, false),
+				Description: "Internet protocol version supported in the public subnet. Available versions are `ipv4` or `ipv6`.",
+			},
+			"cidr": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "CIDR of the public subnet.",
+			},
+			"network_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Unique identifier of the parent service network.",
+			},
+			"subnet_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Unique identifier of the associated subnet in the parent service network.",
+			},
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Status of the public subnet.",
+			},
+			"servers": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Set:      hashServers,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Unique identifier of the cloud server.",
+						},
+						"name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Name of the cloud server.",
+						},
+						"status": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Status of the cloud server.",
+						},
+					},
+				},
+				Description: "List of cloud servers that are located in the public subnet.",
+			},
+		}),
+	}
+}
+
+func resourceVPCSubnetV2Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	config := meta.(*Config)
+	projectID := d.Get("project_id").(string)
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for subnet object: %w", err))
+	}
+
+	region := d.Get("region").(string)
+	err = validateRegion(selvpcClient, clients.ResellServiceType, region)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't validate region: %w", err))
+	}
+
+	opts := subnets.SubnetOpts{
+		Region:       region,
+		Type:         selvpcclient.IPVersion(d.Get("ip_version").(string)),
+		PrefixLength: d.Get("prefix_length").(int),
+	}
+
+	log.Print(msgCreate(objectSubnet, opts))
+	subnetsResponse, _, err := subnets.Create(selvpcClient, projectID, opts)
+	if err != nil {
+		return diag.FromErr(errCreatingObject(objectSubnet, err))
+	}
+	d.SetId(strconv.Itoa(subnetsResponse.ID))
+
+	return resourceVPCSubnetV2Read(ctx, d, meta)
+}
+
+func resourceVPCSubnetV2Read(_ context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	config := meta.(*Config)
+	projectID := d.Get("project_id").(string)
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for subnet object: %w", err))
+	}
+
+	log.Print(msgGet(objectSubnet, d.Id()))
+	subnet, response, err := subnets.Get(selvpcClient, d.Id())
+	if err != nil {
+		if response != nil {
+			if response.StatusCode == http.StatusNotFound {
+				d.SetId("")
+				return nil
+			}
+		}
+
+		return diag.FromErr(errGettingObject(objectSubnet, d.Id(), err))
+	}
+
+	d.Set("cidr", subnet.CIDR)
+	d.Set("network_id", subnet.NetworkID)
+	d.Set("subnet_id", subnet.SubnetID)
+	d.Set("project_id", subnet.ProjectID)
+	d.Set("region", subnet.Region)
+	d.Set("status", subnet.Status)
+
+	ip, network, err := net.ParseCIDR(subnet.CIDR)
+	if err != nil {
+		log.Print(errParsingPrefixLength(objectSubnet, d.Id(), err))
+	} else {
+		prefixLength, _ := network.Mask.Size()
+		d.Set("prefix_length", prefixLength)
+		if ip.To4() == nil {
+			d.Set("ip_version", string(selvpcclient.IPv6))
+		} else {
+			d.Set("ip_version", string(selvpcclient.IPv4))
+		}
+	}
+
+	associatedServers := serversMapsFromStructs(subnet.Servers)
+	if err := d.Set("servers", associatedServers); err != nil {
+		log.Print(errSettingComplexAttr("servers", err))
+	}
+
+	return nil
+}
+
+func resourceVPCSubnetV2Delete(_ context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	config := meta.(*Config)
+	projectID := d.Get("project_id").(string)
+	selvpcClient, err := config.GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("can't get selvpc client for subnet object: %w", err))
+	}
+
+	log.Print(msgDelete(objectSubnet, d.Id()))
+	response, err := subnets.Delete(selvpcClient, d.Id())
+	if err != nil {
+		if response != nil {
+			if response.StatusCode == http.StatusNotFound {
+				d.SetId("")
+				return nil
+			}
+		}
+
+		return diag.FromErr(errDeletingObject(objectSubnet, d.Id(), err))
+	}
+
+	return nil
+}
+
+func resourceVPCSubnetV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
+	config := meta.(*Config)
+	if config.ProjectID == "" {
+		return nil, fmt.Errorf("INFRA_PROJECT_ID must be set for the resource import")
+	}
+
+	d.Set("project_id", config.ProjectID)
+
+	return []*schema.ResourceData{d}, nil
+}

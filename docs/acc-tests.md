@@ -18,6 +18,12 @@ For tests that require a project scope, also set:
 export INFRA_PROJECT_ID="your-project-id"
 ```
 
+For the public subnet test (`TestAccVPCV2SubnetBasic`), you can optionally set the prefix length of the created subnet (an integer from 24 to 29, `29` by default), for example, if you are limited by address pool quotas:
+
+```sh
+export SELECTEL_ACC_PUBLIC_SUBNET_PREFIX_LENGTH="28"
+```
+
 ## Running Acceptance tests for Global Router
 
 Acceptance tests for Global Router requires definition Environment variables, because tests use references on existing Network resources in Cloud and Dedicated servers.
