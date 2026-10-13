@@ -70,14 +70,14 @@ func resourceDBaaSV2ClickhouseShardGroupCreate(ctx context.Context, d *schema.Re
 		return diag.FromErr(errCreatingObject(objectShardGroup, err))
 	}
 
+	d.SetId(shardGroup.ID)
+
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", datastore.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
 	err = waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, dbaasClient.ClickHouse, datastore.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectDatastore, err))
 	}
-
-	d.SetId(shardGroup.ID)
 
 	return resourceDBaaSV2ClickhouseShardGroupRead(ctx, d, meta)
 }

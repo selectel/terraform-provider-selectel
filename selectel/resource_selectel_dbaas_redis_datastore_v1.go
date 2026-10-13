@@ -110,14 +110,14 @@ func resourceDBaaSRedisDatastoreV1Create(ctx context.Context, d *schema.Resource
 		return diag.FromErr(errCreatingObject(objectDatastore, err))
 	}
 
+	d.SetId(datastore.ID)
+
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", datastore.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
 	err = waiters.WaitForDBaaSDatastoreV1ActiveState(ctx, dbaasClient, datastore.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectDatastore, err))
 	}
-
-	d.SetId(datastore.ID)
 
 	return resourceDBaaSRedisDatastoreV1Read(ctx, d, meta)
 }

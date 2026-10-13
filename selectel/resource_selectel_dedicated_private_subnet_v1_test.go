@@ -12,6 +12,8 @@ import (
 )
 
 func TestAccDedicatedPrivateSubnetV1Basic(t *testing.T) {
+	testAccDedicatedNetworkPreCheck(t)
+
 	var (
 		project      projects.Project
 		subnetID     string

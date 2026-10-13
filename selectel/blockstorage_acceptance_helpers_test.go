@@ -8,14 +8,10 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	blockstorage "github.com/selectel/blockstorage-go/pkg/v1"
 	"github.com/selectel/blockstorage-go/pkg/v1/volume"
-	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -39,46 +35,6 @@ func testAccBlockStorageSetup(t *testing.T) {
 		t.Fatalf("INFRA_REGION must be %s for Block Storage acceptance tests, got %q",
 			testAccBlockStorageRegion, region)
 	}
-}
-
-// testAccBlockStorageProject creates an extra project that the test deletes.
-// API fixtures in it need the project before resource.Test, so its cleanup is
-// registered first and runs after Terraform and the fixture cleanups.
-func testAccBlockStorageProject(t *testing.T) string {
-	t.Helper()
-	projectID, err := testAccCreateBlockStorageProject()
-	require.NoError(t, err)
-	t.Logf("Created acceptance project %s", projectID)
-	t.Cleanup(func() {
-		assert.NoError(t, testAccDeleteBlockStorageProject(projectID), "delete acceptance project %s", projectID)
-	})
-
-	return projectID
-}
-
-func testAccCreateBlockStorageProject() (string, error) {
-	client, err := testAccConfigFromEnv().GetSelVPCClient()
-	if err != nil {
-		return "", err
-	}
-	project, _, err := projects.Create(client, projects.CreateOpts{
-		Name: acctest.RandomWithPrefix("tf-acc-blockstorage"),
-	})
-	if err != nil {
-		return "", err
-	}
-
-	return project.ID, nil
-}
-
-func testAccDeleteBlockStorageProject(projectID string) error {
-	client, err := testAccConfigFromEnv().GetSelVPCClient()
-	if err != nil {
-		return err
-	}
-	_, err = projects.Delete(client, projectID)
-
-	return err
 }
 
 func testAccComputeVolumeV3Config(

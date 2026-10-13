@@ -11,7 +11,7 @@ import (
 func TestAccSelectelComputeVolumeV3_Replacement(t *testing.T) {
 	testAccBlockStorageSetup(t)
 	initialProjectID := os.Getenv("INFRA_PROJECT_ID")
-	replacementProjectID := testAccBlockStorageProject(t)
+	replacementProjectID := testAccExtraProject(t)
 	name := acctest.RandomWithPrefix("tf-acc-selectel-volume-replacement")
 	initialConfig := testAccComputeVolumeV3Config(name, "", "", 1)
 	replacementConfig := testAccComputeVolumeV3ConfigWithScope(

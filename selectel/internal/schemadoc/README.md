@@ -3,7 +3,8 @@
 `schemadoc` собирает описание атрибута Terraform Plugin Framework из правил,
 которые этот атрибут проверяют. Лимиты, допустимые значения, зависимости,
 default и пересоздание объявляются один раз — в валидаторе или модификаторе.
-Текст и порядок предложений следуют правилам техписателей `DOC-SCHEMA-*`.
+Текст и порядок предложений соответствуют требованиям технических писателей
+к описаниям атрибутов.
 
 ## Как описать ресурс
 
@@ -41,17 +42,22 @@ Blocks: map[string]schema.Block{
    на него ведёт ссылка в описании `region`.
 2. Общие атрибуты берите готовыми: `ID()`, `ProjectID()`, `Region()`, `Timeouts()`.
    У ресурса и data source с одним существительным описания совпадают дословно.
-3. Остальные атрибуты оборачивайте в `String`, `Int64`, `Bool` или `Map`
+3. Остальные атрибуты оборачивайте в `String`, `Int64`, `Bool`, `Map`, `Set` или `List`
    **после** того, как заданы validators, default и plan modifiers.
 4. В `Field` пишите только то, что не следует из правил:
    - `Definition` — первое предложение;
    - `Behavior` — особенности API и импорта;
-   - `Source` — откуда взять ID или имя: `FromDataSource`, `FromResource`, `FromOpenStackCLI`;
+   - `Source` — откуда взять ID или имя: `FromDataSource`, `FromResource`, `FromOpenStackCLI`.
+     Несколько источников склеивайте в порядке, который требуют технические писатели:
+     ресурс, data source, OpenStack CLI; уточнение к источнику (например, фильтры
+     data source) — следующим предложением там же:
+     в `Behavior` источник окажется раньше остальных;
    - `Concept` — ссылка «Learn more about …»; для документации вендора задайте `Vendor`, и ссылка будет в формате «For more information about …, see the [official … documentation](…)».
 5. Запустите `make schemadoc` и `make docs`.
 
-Порядок предложений задаёт `render`: определение → ограничения → зависимости →
-Behavior → Source → default → Learn more → пересоздание.
+Порядок предложений задаёт `render` по требованиям технических писателей:
+определение → ограничения → зависимости → Behavior → исключение из пересоздания →
+Source → default → Learn more → пересоздание.
 
 Describer'ы пишут текст в `MarkdownDescription`. Для атрибутов, описанных вручную
 без describer'а, действует обычная практика Plugin Framework: текст с разметкой
@@ -61,12 +67,13 @@ Describer'ы пишут текст в `MarkdownDescription`. Для атрибу
 
 | Правило | Что пишет в описание |
 | --- | --- |
-| `LengthAtMost`, `LengthAtLeast`, `Between` | лимит |
+| `LengthAtMost`, `LengthAtLeast`, `Between`, `AtLeast` | лимит |
 | `OneOf` | допустимые значения |
 | `UUID`, `Trimmed`, `NonEmptyTrimmed` | формат |
 | `ConflictsWith`, `ExactlyOneOf`, `AlsoRequires` | зависимость; подходят для атрибута любого вида |
-| `StaticString`, `StaticBool` | default |
+| `StaticString`, `StaticBool`, `StaticInt64` | default |
 | `RequiresReplace` | «Changing this creates a new …» |
+| `RequiresReplaceIf` | исключение отдельным предложением и «Changing this creates a new …» последним |
 
 `UseStateForUnknown` ничего не меняет для пользователя и используется как есть.
 
@@ -82,6 +89,9 @@ func volumeTypeIDValidator() validator.String {
     ), "The format is a lowercase UUID or `default` to select the default volume type.")
 }
 ```
+
+Для валидаторов Set и Map есть `DescribeSet` и `DescribeMap`. Перечень значений
+в своём тексте собирайте через `CodeList`: он ставит Oxford comma.
 
 Собственный тип правила встраивает `schemadoc.Facts` — этого достаточно, чтобы
 реализовать `schemadoc.Documented`.
@@ -102,11 +112,11 @@ schemadoc, он пропускает: её авторы документирую
 ## Как расширить пакет
 
 - **Новое правило** — функция в `rules.go`: стандартный валидатор HashiCorp плюс `Facts`.
-- **Новый вид атрибута** (List, Set, Float64): describer-методы у `Resource`
+- **Новый вид атрибута** (например, Float64): describer-методы у `Resource`
   и `DataSource` в `doc.go`. Правила любого вида атрибута `rulesOf` уже читает.
   Пока describer'а нет, `make schemadoc` сообщит о правилах такого атрибута.
 - **Новый общий атрибут** — метод в `attributes.go` для обоих видов, чтобы
   ресурс и data source описывали его одинаково.
 
-Тексты продуктовых особенностей и ссылок пишет автор, их проверяет ревью и
-docs-reviewer гейта.
+Тексты продуктовых особенностей и ссылок пишет автор, их проверяют на ревью
+технические писатели.

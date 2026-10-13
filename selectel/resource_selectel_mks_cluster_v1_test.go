@@ -237,6 +237,8 @@ func TestAccMKSClusterV1PrivateKubeAPI(t *testing.T) {
 }
 
 func TestAccMKSClusterV1MultiAZ(t *testing.T) {
+	testAccMKSMultiAZPreCheck(t)
+
 	var (
 		mksCluster cluster.GetView
 		project    projects.Project

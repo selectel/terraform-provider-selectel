@@ -19,6 +19,8 @@ import (
 )
 
 func TestAccDedicatedServerV1Basic(t *testing.T) {
+	testAccDedicatedServersPreCheck(t)
+
 	var (
 		project projects.Project
 
@@ -622,6 +624,8 @@ func Test_resourceDedicatedServerV1UpdateValidatePreconditions(t *testing.T) {
 }
 
 func TestAccDedicatedServerV1ImportState(t *testing.T) {
+	testAccDedicatedServersPreCheck(t)
+
 	var (
 		project projects.Project
 
