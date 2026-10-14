@@ -21,7 +21,7 @@ func TestAccDBaaSMySQLDatastoreV1ImportBasic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDBaaSMySQLDatastoreV1Basic(projectName, datastoreName, datastoreTypeEngine, nodeCount),
-				Check:  testAccCheckSelectelImportEnv(resourceName),
+				Check:  testAccCheckSelectelImportEnv(t, resourceName),
 			},
 			{
 				ResourceName:      resourceName,
@@ -46,7 +46,7 @@ func TestAccDBaaSMySQLNativeDatastoreV1ImportBasic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDBaaSMySQLDatastoreV1Basic(projectName, datastoreName, datastoreTypeEngine, nodeCount),
-				Check:  testAccCheckSelectelImportEnv(resourceName),
+				Check:  testAccCheckSelectelImportEnv(t, resourceName),
 			},
 			{
 				ResourceName:      resourceName,

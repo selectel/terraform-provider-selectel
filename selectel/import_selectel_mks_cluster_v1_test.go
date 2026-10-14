@@ -22,7 +22,7 @@ func TestAccMKSClusterV1ImportBasic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccMKSClusterV1Basic(projectName, clusterName, kubeVersion, maintenanceWindowStart),
-				Check:  testAccCheckSelectelImportEnv(resourceName),
+				Check:  testAccCheckSelectelImportEnv(t, resourceName),
 			},
 			{
 				ResourceName:      resourceName,
@@ -47,7 +47,7 @@ func TestAccMKSClusterV1ImportZonal(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccMKSClusterV1Zonal(projectName, clusterName, kubeVersion, maintenanceWindowStart),
-				Check:  testAccCheckSelectelImportEnv(resourceName),
+				Check:  testAccCheckSelectelImportEnv(t, resourceName),
 			},
 			{
 				ResourceName:      resourceName,

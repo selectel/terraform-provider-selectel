@@ -42,7 +42,7 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
 }
 
 data "selectel_cloudbackup_plan_v2" "plans" {
-  project_id = "53c3fcf719044d1487e6a9d72d66b0a8"
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-1"
 
   filter {

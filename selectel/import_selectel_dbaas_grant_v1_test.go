@@ -23,7 +23,7 @@ func TestAccDBaaSGrantV1ImportBasic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDBaaSGrantV1Basic(projectName, datastoreName, userName, userPassword, databaseName, nodeCount),
-				Check:  testAccCheckSelectelImportEnv(resourceName),
+				Check:  testAccCheckSelectelImportEnv(t, resourceName),
 			},
 			{
 				ResourceName:      resourceName,

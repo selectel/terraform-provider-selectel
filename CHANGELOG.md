@@ -1,3 +1,9 @@
+## 9.3.1 (October 15, 2026)
+
+BUG FIXES:
+
+* Fix acceptance tests ([#440](https://github.com/selectel/terraform-provider-selectel/pull/440)).
+
 ## 9.3.0 (October 14, 2026)
 
 FEATURES:

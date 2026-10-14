@@ -71,7 +71,7 @@ func TestAccDomainsRRSetV2TXTUnquotedContent(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccDomainsRRSetV2WithZoneBasic(projectName, resourceRRSetName, testRRSetName, string(testRRSetType), "unquoted_value", testRRSetTTL, resourceZoneName, testZoneName),
-				ExpectError: regexp.MustCompile("TXT record content must be enclosed in double quotes"),
+				ExpectError: regexp.MustCompile("TXT record content must be one or more double-quoted strings"),
 			},
 		},
 	})
@@ -137,7 +137,7 @@ func TestAccDomainsRRSetV2TXTMultiStringUnbalancedContent(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccDomainsRRSetV2WithZoneBasic(projectName, resourceRRSetName, testRRSetName, string(testRRSetType), `"string1" "string2`, testRRSetTTL, resourceZoneName, testZoneName),
-				ExpectError: regexp.MustCompile("unbalanced double quotes"),
+				ExpectError: regexp.MustCompile("TXT record content must be one or more double-quoted strings"),
 			},
 		},
 	})
@@ -179,7 +179,7 @@ func TestAccDomainsRRSetV2TXTMultiLineUnbalancedContent(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccDomainsRRSetV2WithZoneBasic(projectName, resourceRRSetName, testRRSetName, string(testRRSetType), "\"line1\\nline2", testRRSetTTL, resourceZoneName, testZoneName),
-				ExpectError: regexp.MustCompile("unbalanced double quotes"),
+				ExpectError: regexp.MustCompile("TXT record content must be one or more double-quoted strings"),
 			},
 		},
 	})

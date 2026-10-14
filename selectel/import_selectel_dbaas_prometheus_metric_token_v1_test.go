@@ -19,7 +19,7 @@ func TestAccDBaaSPrometheusMetricTokenV1ImportBasic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDBaaSPrometheusMetricTokenV1Basic(projectName, tokenName),
-				Check:  testAccCheckSelectelImportEnv(resourceName),
+				Check:  testAccCheckSelectelImportEnv(t, resourceName),
 			},
 			{
 				ResourceName:      resourceName,

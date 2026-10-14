@@ -22,7 +22,7 @@ func TestAccMKSNodegroupV1ImportBasic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccMKSNodegroupV1Basic(projectName, clusterName, kubeVersion, maintenanceWindowStart),
-				Check:  testAccCheckSelectelImportEnv(resourceName),
+				Check:  testAccCheckSelectelImportEnv(t, resourceName),
 			},
 			{
 				ResourceName:            resourceName,

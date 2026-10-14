@@ -20,7 +20,7 @@ func TestAccDBaaSConfigurationParametersV1Basic(t *testing.T) {
 
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	datastoreTypeEngine := "postgresql"
-	datastoreTypeVersion := "12"
+	datastoreTypeVersion := "16"
 	parameterName := "work_mem"
 	parameterNameWithChoices := "session_replication_role"
 
@@ -39,7 +39,7 @@ func TestAccDBaaSConfigurationParametersV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.unit", "kB"),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.min", "64"),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.max", "2147483647"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.default_value", "32768"),
+					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.default_value", ""),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.choices.#", "0"),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.invalid_values.#", "0"),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.is_restart_required", "false"),

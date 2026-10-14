@@ -20,8 +20,8 @@ func TestAccDBaaSRolesV1Basic(t *testing.T) {
 
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	datastoreTypeEngine := "postgresql"
-	datastoreTypeVersion := "12"
-	parameterName := "pg_read_all_data"
+	datastoreTypeVersion := "16"
+	parameterName := "pg_read_all_stats"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
