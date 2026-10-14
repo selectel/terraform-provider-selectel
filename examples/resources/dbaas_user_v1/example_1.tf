@@ -4,4 +4,12 @@ resource "selectel_dbaas_user_v1" "user_1" {
   datastore_id = selectel_dbaas_postgresql_datastore_v1.cluster_1.id
   name         = "user"
   password     = "secret"
+
+  settings = {
+    conn_limit         = "20"
+    statement_timeout  = "5000"
+    login              = "true"
+    synchronous_commit = "on"
+  }
 }
+

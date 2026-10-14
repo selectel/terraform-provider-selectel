@@ -6,7 +6,7 @@ description: |-
 
 # selectel\_dbaas\_user\_v1
 
-Creates and manages a user in Managed Databases using public API v1. Not applicable to Redis. For more information about managing users in Managed Databases, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/en/cloud/managed-databases/postgresql/manage-users/), [PostgreSQL for 1C](https://docs.selectel.ru/en/cloud/managed-databases/postgresql-for-1c/manage-users-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/cloud/managed-databases/timescaledb/manage-users/), [MySQL semi-sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-semi-sync/manage-users/), [MySQL sync](https://docs.selectel.ru/en/cloud/managed-databases/mysql-sync/manage-users/), and [Kafka](https://docs.selectel.ru/en/cloud/managed-databases/kafka/manage-users/).
+Creates and manages a user in Managed Databases using public API v1. Not applicable to Redis. For more information about managing users in Managed Databases, see the official Selectel documentation for [PostgreSQL](https://docs.selectel.ru/en/managed-databases/postgresql/manage-users/), [PostgreSQL for 1C](https://docs.selectel.ru/en/managed-databases/postgresql-for-1c/manage-users-1c/), [PostgreSQL TimescaleDB](https://docs.selectel.ru/en/managed-databases/timescaledb/manage-users/), [PGVector](https://docs.selectel.ru/en/managed-databases/pgvector/manage-users/), [MySQL semi-sync](https://docs.selectel.ru/en/managed-databases/mysql-semi-sync/manage-users/), [MySQL sync](https://docs.selectel.ru/en/managed-databases/mysql-sync/manage-users/), and [Kafka](https://docs.selectel.ru/en/managed-databases/kafka/manage-users/).
 
 ## Example usage
 
@@ -19,6 +19,13 @@ resource "selectel_dbaas_user_v1" "user_1" {
   datastore_id = selectel_dbaas_postgresql_datastore_v1.cluster_1.id
   name         = "user"
   password     = "secret"
+
+  settings = {
+    conn_limit         = "20"
+    statement_timeout  = "5000"
+    login              = "true"
+    synchronous_commit = "on"
+  }
 }
 ```
 
@@ -57,6 +64,38 @@ resource "selectel_dbaas_user_v1" "user_1" {
 * `region` - (Required) Pool where the database is located, for example, `ru-3`. Changing this creates a new user. Learn more about available pools in the [Availability matrix](https://docs.selectel.ru/en/control-panel-actions/availability-matrix/#managed-databases).
 
 * `datastore_id` - (Required) Unique identifier of the associated cluster. Changing this creates a new user. Retrieved from the [selectel_dbaas_postgresql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_postgresql_datastore_v1) or [selectel_dbaas_mysql_datastore_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/dbaas_mysql_datastore_v1) resource depending on the cluster type you use.
+
+* `settings` - (Optional) Map of PostgreSQL role settings. Supported only for PostgreSQL, PostgreSQL for 1C, PostgreSQL TimescaleDB, and PGVector. You can set settings on create. Changing settings updates only this map (password is updated separately). All values are specified as strings and are converted to the appropriate types automatically, for example, `conn_limit = "20"` or `login = "true"`. Remove a key from the map to unset the setting (it returns to its default value). The set of available parameters depends on the cluster type and version. To retrieve available parameters and their constraints, use the [selectel_dbaas_user_setting_parameter_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_user_setting_parameter_v1) data source.
+
+  * `conn_limit` - Maximum number of concurrent connections. Use `-1` for unlimited.
+
+  * `login` - Whether the user is allowed to log in.
+
+  * `bypassrls` - Whether the user bypasses every row-level security (RLS) policy.
+
+  * `statement_timeout` - Abort statements running longer than this value, in milliseconds. `0` disables the timeout.
+
+  * `lock_timeout` - Abort statements waiting for a lock longer than this value, in milliseconds. `0` disables the timeout.
+
+  * `idle_in_transaction_session_timeout` - Terminate sessions idle in a transaction longer than this value, in milliseconds. `0` disables the timeout.
+
+  * `idle_session_timeout` - Terminate idle sessions outside a transaction after this timeout, in milliseconds. Requires PostgreSQL 14+. `0` disables.
+
+  * `temp_file_limit` - Maximum disk space for temporary files, in kB. Use `-1` for unlimited.
+
+  * `work_mem` - Memory for sort/hash operations, in kB.
+
+  * `log_min_duration_statement` - Log statements running at least this long, in milliseconds. Use `-1` to disable.
+
+  * `default_transaction_isolation` - Default transaction isolation level. Available values are `serializable`, `repeatable read`, `read committed`, `read uncommitted`.
+
+  * `log_statement` - Which SQL statements are logged. Available values are `none`, `ddl`, `mod`, `all`.
+
+  * `synchronous_commit` - Synchronous commit mode. Available values are `on`, `off`, `local`, `remote_write`, `remote_apply`.
+
+  * `default_transaction_read_only` - Whether transactions are read-only by default.
+
+* `roles` - (Optional) List of user roles. Each role is specified by its UUID. You can retrieve available roles with the [selectel_dbaas_roles_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/dbaas_roles_v1) data source.
 
 ## Attributes Reference
 

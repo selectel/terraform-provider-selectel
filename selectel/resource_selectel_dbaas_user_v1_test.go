@@ -24,6 +24,13 @@ func TestAccDBaaSUserV1Basic(t *testing.T) {
 	userName := RandomWithPrefix("tf_acc_user")
 	userPassword := acctest.RandomWithPrefix("tf-acc-pass")
 	nodeCount := 1
+	userRoles := "" // no roles
+
+	updatedPassword := acctest.RandomWithPrefix("tf-acc-pass")
+	updatedRolesBlock := `
+	roles = [
+		data.selectel_dbaas_roles_v1.role_dbaas_admin.roles[0].id,
+	]`
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -31,13 +38,78 @@ func TestAccDBaaSUserV1Basic(t *testing.T) {
 		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDBaaSUserV1Basic(projectName, datastoreName, userName, userPassword, nodeCount),
+				Config: testAccDBaaSUserV1Basic(projectName, datastoreName, userName, userPassword, nodeCount, userRoles),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccCheckDBaaSUserV1Exists("selectel_dbaas_user_v1.user_tf_acc_test_1", &dbaasUser),
 					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "name", userName),
 					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "password", userPassword),
 					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "status", string(dbaas.StatusActive)),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "roles.#", "0"),
+				),
+			},
+			// update password
+			{
+				Config: testAccDBaaSUserV1Basic(projectName, datastoreName, userName, updatedPassword, nodeCount, userRoles),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "name", userName),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "password", updatedPassword),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "status", string(dbaas.StatusActive)),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "roles.#", "0"),
+				),
+			},
+			// update roles
+			{
+				Config: testAccDBaaSUserV1Basic(projectName, datastoreName, userName, updatedPassword, nodeCount, updatedRolesBlock),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "name", userName),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "password", updatedPassword),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "status", string(dbaas.StatusActive)),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "roles.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDBaaSUserV1Settings(t *testing.T) {
+	var (
+		dbaasUser dbaas.User
+		project   projects.Project
+	)
+
+	projectName := acctest.RandomWithPrefix("tf-acc")
+	datastoreName := acctest.RandomWithPrefix("tf-acc-ds")
+	userName := RandomWithPrefix("tf_acc_user")
+	userPassword := acctest.RandomWithPrefix("tf-acc-pass")
+	nodeCount := 1
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDBaaSUserV1WithSettings(projectName, datastoreName, userName, userPassword, nodeCount, 20, 5000),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
+					testAccCheckDBaaSUserV1Exists("selectel_dbaas_user_v1.user_tf_acc_test_1", &dbaasUser),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.conn_limit", "20"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.statement_timeout", "5000"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.login", "true"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.bypassrls", "true"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.synchronous_commit", "on"),
+				),
+			},
+			{
+				Config: testAccDBaaSUserV1WithSettings(projectName, datastoreName, userName, userPassword, nodeCount, 20, 1000),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDBaaSUserV1Exists("selectel_dbaas_user_v1.user_tf_acc_test_1", &dbaasUser),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.conn_limit", "20"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.statement_timeout", "1000"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.login", "true"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.bypassrls", "true"),
+					resource.TestCheckResourceAttr("selectel_dbaas_user_v1.user_tf_acc_test_1", "settings.synchronous_commit", "on"),
 				),
 			},
 		},
@@ -73,13 +145,67 @@ func testAccCheckDBaaSUserV1Exists(n string, dbaasUser *dbaas.User) resource.Tes
 	}
 }
 
-func testAccDBaaSUserV1Basic(projectName, datastoreName, userName, userPassword string, nodeCount int) string {
+func testAccDBaaSUserV1Basic(projectName, datastoreName, userName, userPassword string, nodeCount int, rolesBlock string) string {
+	return fmt.Sprintf(`
+		resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
+			name        = "%s"
+		}
+
+resource "selectel_vpc_public_subnet_v2" "subnet_tf_acc_test_1" {
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region     = "ru-3"
+}
+
+		data "selectel_dbaas_datastore_type_v1" "dt" {
+			project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+			region = "ru-3"
+			filter {
+				engine = "postgresql"
+				version = "17"
+			}
+		}
+
+		data "selectel_dbaas_roles_v1" "role_dbaas_admin" {
+			project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+			region = "ru-3"
+			filter {
+				name = "dbaas_admin"
+				datastore_type_id = data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id
+			}
+		}
+
+resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
+  name = "%s"
+  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  region = "ru-3"
+  type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
+  subnet_id = "${selectel_vpc_public_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
+  node_count = "%d"
+  flavor {
+    vcpus = 2
+    ram = 4096
+    disk = 32
+  }
+}
+
+		resource "selectel_dbaas_user_v1" "user_tf_acc_test_1" {
+			project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+			region = "ru-3"
+			datastore_id = "${selectel_dbaas_datastore_v1.datastore_tf_acc_test_1.id}"
+			name = "%s"
+			password = "%s"
+			%s  // roles
+		}
+	`, projectName, datastoreName, nodeCount, userName, userPassword, rolesBlock)
+}
+
+func testAccDBaaSUserV1WithSettings(projectName, datastoreName, userName, userPassword string, nodeCount, connLimit, statementTimeout int) string {
 	return fmt.Sprintf(`
 resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
 }
 
-resource "selectel_vpc_public_subnet_v2" "subnet_tf_acc_test_1" {
+resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
 }
@@ -98,7 +224,7 @@ resource "selectel_dbaas_datastore_v1" "datastore_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
   type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
-  subnet_id = "${selectel_vpc_public_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
+  subnet_id = "${selectel_vpc_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
   node_count = "%d"
   flavor {
     vcpus = 2
@@ -113,5 +239,13 @@ resource "selectel_dbaas_user_v1" "user_tf_acc_test_1" {
   datastore_id = "${selectel_dbaas_datastore_v1.datastore_tf_acc_test_1.id}"
   name = "%s"
   password = "%s"
-}`, projectName, datastoreName, nodeCount, userName, userPassword)
+
+  settings = {
+    conn_limit        = "%d"
+    statement_timeout = "%d"
+    login             = "true"
+    bypassrls         = "true"
+    synchronous_commit = "on"
+  }
+}`, projectName, datastoreName, nodeCount, userName, userPassword, connLimit, statementTimeout)
 }

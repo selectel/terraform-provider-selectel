@@ -44,6 +44,13 @@ func resourceDBaaSUserV1Create(ctx context.Context, d *schema.ResourceData, meta
 		DatastoreID: d.Get("datastore_id").(string),
 		Name:        d.Get("name").(string),
 		Password:    d.Get("password").(string),
+		Settings:    expandDBaaSUserV1Settings(d),
+	}
+
+	rolesRaw, rolesOk := d.GetOk("roles")
+	if rolesOk {
+		rolesSet := rolesRaw.(*schema.Set)
+		userCreateOpts.Roles = expandDBaaSUserRolesV1FromSet(rolesSet)
 	}
 
 	log.Print(msgCreate(objectUser, userCreateOpts))
@@ -77,7 +84,11 @@ func resourceDBaaSUserV1Read(ctx context.Context, d *schema.ResourceData, meta a
 	}
 	d.Set("datastore_id", user.DatastoreID)
 	d.Set("name", user.Name)
+	d.Set("roles", user.Roles)
 	d.Set("status", user.Status)
+	if err := d.Set("settings", flattenDBaaSUserV1Settings(user.Settings)); err != nil {
+		log.Print(errSettingComplexAttr("settings", err))
+	}
 
 	return nil
 }
@@ -100,10 +111,22 @@ func resourceDBaaSUserV1Update(ctx context.Context, d *schema.ResourceData, meta
 		}
 
 		log.Printf("[DEBUG] waiting for user %s to become 'ACTIVE'", d.Id())
-		timeout := d.Timeout(schema.TimeoutCreate)
+		timeout := d.Timeout(schema.TimeoutUpdate)
 		err = waiters.WaitForDBaaSUserV1ActiveState(ctx, dbaasClient, d.Id(), timeout)
 		if err != nil {
 			return diag.FromErr(errUpdatingObject(objectUser, d.Id(), err))
+		}
+	}
+
+	if d.HasChange("settings") {
+		if err := updateDBaaSUserV1Settings(ctx, d, dbaasClient); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChange("roles") {
+		if err := updateDBaaSUserV1Roles(ctx, d, dbaasClient); err != nil {
+			return diag.FromErr(err)
 		}
 	}
 
@@ -153,4 +176,84 @@ func resourceDBaaSUserV1ImportState(_ context.Context, d *schema.ResourceData, m
 	d.Set("region", config.Region)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func updateDBaaSUserV1Settings(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	oldSettingsRaw, _ := d.GetChange("settings")
+	oldSettings, _ := oldSettingsRaw.(map[string]any)
+
+	settings := expandDBaaSUserV1Settings(d)
+	if settings == nil {
+		settings = map[string]any{}
+	}
+	// Settings that are present in the state but missing from the desired
+	// configuration are unset (reset to their default values).
+	for key := range oldSettings {
+		if _, ok := settings[key]; !ok {
+			settings[key] = nil
+		}
+	}
+
+	// The API rejects an empty settings map, and there is nothing to
+	// set or unset when both the desired state and the current
+	// server-side settings are empty.
+	if len(settings) == 0 {
+		return nil
+	}
+
+	opts := dbaas.UserSettingsUpdateOpts{Settings: settings}
+	log.Print(msgUpdate(objectUser, d.Id(), opts))
+	_, err := client.UpdateUserSettings(ctx, d.Id(), opts)
+	if err != nil {
+		return errUpdatingObject(objectUser, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for user %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waiters.WaitForDBaaSUserV1ActiveState(ctx, client, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectUser, d.Id(), err)
+	}
+
+	return nil
+}
+
+func updateDBaaSUserV1Roles(ctx context.Context, d *schema.ResourceData, client *dbaas.API) error {
+	rolesRaw := d.Get("roles")
+	rolesSet := rolesRaw.(*schema.Set)
+	updateRolesOpts := dbaas.UserRolesUpdateOpts{
+		Roles: expandDBaaSUserRolesV1FromSet(rolesSet),
+	}
+
+	log.Print(msgUpdate(objectUser, d.Id(), updateRolesOpts))
+	_, err := client.UpdateUserRoles(ctx, d.Id(), updateRolesOpts)
+	if err != nil {
+		return errUpdatingObject(objectUser, d.Id(), err)
+	}
+
+	log.Printf("[DEBUG] waiting for user %s to become 'ACTIVE'", d.Id())
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waiters.WaitForDBaaSUserV1ActiveState(ctx, client, d.Id(), timeout)
+	if err != nil {
+		return errUpdatingObject(objectUser, d.Id(), err)
+	}
+
+	return nil
+}
+
+func expandDBaaSUserV1Settings(d *schema.ResourceData) map[string]any {
+	if _, ok := d.GetOk("settings"); !ok {
+		return nil
+	}
+
+	return d.Get("settings").(map[string]any)
+}
+
+func flattenDBaaSUserV1Settings(apiSettings map[string]any) map[string]any {
+	settings := make(map[string]any, len(apiSettings))
+	for key, value := range apiSettings {
+		settings[key] = convertFieldToStringByType(value)
+	}
+
+	return settings
 }

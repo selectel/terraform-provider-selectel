@@ -40,7 +40,7 @@ func resourceDBaaSV2ClickhouseDatastoreSchema() map[string]*schema.Schema {
 	datastoreSchema["security_groups"] = &schema.Schema{
 		Type:     schema.TypeSet,
 		Optional: true,
-		Computed: true, // When creating a cluster without groups, the API itself sets the default group..
+		Computed: true, // When creating a cluster without groups, the API itself sets the default group.
 		Elem: &schema.Schema{
 			Type:         schema.TypeString,
 			ValidateFunc: validation.IsUUID,
