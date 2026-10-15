@@ -24,7 +24,7 @@ func TestAccDBaaSPostgreSQLLogicalReplicationSlotV1ImportBasic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDBaaSPostgreSQLLogicalReplicationSlotV1Basic(projectName, datastoreName, userName, userPassword, databaseName, slotName, nodeCount),
-				Check:  testAccCheckSelectelImportEnv(resourceName),
+				Check:  testAccCheckSelectelImportEnv(t, resourceName),
 			},
 			{
 				ResourceName:      resourceName,

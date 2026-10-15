@@ -46,7 +46,7 @@ func TestAccDBaaSV2FlavorsBasic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v2.flavor_tf_acc_test_1", "flavors.0.ram"),
 					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v2.flavor_tf_acc_test_1", "flavors.0.disk"),
 					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v2.flavor_tf_acc_test_1", "flavors.0.fl_size"),
-					resource.TestCheckResourceAttr("data.selectel_dbaas_flavor_v2.flavor_tf_acc_test_1", "flavors.0.datastore_type_ids.#", "2"),
+					resource.TestCheckTypeSetElemAttrPair("data.selectel_dbaas_flavor_v2.flavor_tf_acc_test_1", "flavors.0.datastore_type_ids.*", "data.selectel_dbaas_datastore_type_v2.dt", "datastore_types.0.id"),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_flavor_v2.flavor_tf_acc_test_1", "flavors.0.allowed_roles.#", "2"),
 				),
 			},

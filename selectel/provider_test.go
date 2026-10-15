@@ -154,7 +154,11 @@ func testAccSelectelPreCheckWithAuth(t *testing.T) {
 	}
 }
 
-func testAccCheckSelectelImportEnv(resourceName string) resource.TestCheckFunc {
+// testAccCheckSelectelImportEnv points INFRA_PROJECT_ID and INFRA_REGION at the
+// project and region of the resource, so the next import step finds it: the
+// importers take them from the provider configuration. t.Setenv restores the
+// variables when the test ends, so later tests keep their own values.
+func testAccCheckSelectelImportEnv(t *testing.T, resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
@@ -164,43 +168,11 @@ func testAccCheckSelectelImportEnv(resourceName string) resource.TestCheckFunc {
 			return errors.New("no ID is set")
 		}
 
-		var projectID, region string
 		if v, ok := rs.Primary.Attributes["project_id"]; ok {
-			projectID = v
+			t.Setenv("INFRA_PROJECT_ID", v)
 		}
 		if v, ok := rs.Primary.Attributes["region"]; ok {
-			region = v
-		}
-
-		if err := os.Setenv("INFRA_PROJECT_ID", projectID); err != nil {
-			return fmt.Errorf("error setting INFRA_PROJECT_ID: %s", err)
-		}
-		if err := os.Setenv("INFRA_REGION", region); err != nil {
-			return fmt.Errorf("error setting INFRA_REGION: %s", err)
-		}
-
-		return nil
-	}
-}
-
-func testAccCheckSelectelCRaaSImportEnv(resourceName string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("not found: %s", resourceName)
-		}
-		if rs.Primary.ID == "" {
-			return errors.New("no ID is set")
-		}
-
-		var projectID string
-
-		if v, ok := rs.Primary.Attributes["project_id"]; ok {
-			projectID = v
-		}
-
-		if err := os.Setenv("INFRA_PROJECT_ID", projectID); err != nil {
-			return fmt.Errorf("error setting INFRA_PROJECT_ID: %s", err)
+			t.Setenv("INFRA_REGION", v)
 		}
 
 		return nil

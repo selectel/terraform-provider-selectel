@@ -106,7 +106,7 @@ data "selectel_dbaas_datastore_type_v1" "dt_tf_acc_test_1" {
   region     = "ru-3"
   filter {
     engine = "postgresql"
-    version = "12"
+    version = "16"
   }
 }
 

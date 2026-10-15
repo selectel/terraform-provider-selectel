@@ -19,7 +19,7 @@ func TestAccCRaaSRegistryV1ImportBasic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCRaaSRegistryV1Basic(projectName, registryName),
-				Check:  testAccCheckSelectelCRaaSImportEnv(resourceName),
+				Check:  testAccCheckSelectelImportEnv(t, resourceName),
 			},
 			{
 				ResourceName:      resourceName,
