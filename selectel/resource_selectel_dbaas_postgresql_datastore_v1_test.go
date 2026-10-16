@@ -188,7 +188,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   region = "ru-3"
   filter {
     engine = "postgresql"
-    version = "13"
+    version = "17"
   }
 }
 
@@ -229,7 +229,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   region = "ru-3"
   filter {
     engine = "postgresql"
-    version = "13"
+    version = "17"
   }
 }
 
@@ -270,7 +270,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   region = "ru-3"
   filter {
     engine = "postgresql"
-    version = "13"
+    version = "17"
   }
 }
 
@@ -315,7 +315,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   region = "ru-3"
   filter {
     engine = "postgresql"
-    version = "13"
+    version = "17"
   }
 }
 
@@ -360,7 +360,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   region = "ru-3"
   filter {
     engine = "postgresql"
-    version = "13"
+    version = "17"
   }
 }
 
@@ -405,7 +405,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
   region = "ru-3"
   filter {
     engine = "postgresql"
-    version = "13"
+    version = "17"
   }
 }
 

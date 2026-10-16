@@ -145,7 +145,7 @@ func resourceIAMOIDCFederationV1Read(ctx context.Context, d *schema.ResourceData
 	d.Set("description", federation.Description)
 	d.Set("issuer", federation.Issuer)
 	d.Set("client_id", federation.ClientID)
-	d.Set("client_secret", federation.ClientSecret)
+	// The API never returns client_secret, so the state keeps the configured value.
 	d.Set("auth_url", federation.AuthURL)
 	d.Set("token_url", federation.TokenURL)
 	d.Set("jwks_url", federation.JWKSURL)

@@ -3,34 +3,28 @@ package selectel
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/dbaas-go"
-	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
 )
 
 func TestAccDBaaSDatastoreTypesV1Basic(t *testing.T) {
-	var (
-		dbaasDatastoreTypes []dbaas.DatastoreType
-		project             projects.Project
-	)
+	var dbaasDatastoreTypes []dbaas.DatastoreType
 
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 	datastoreTypeEngine := "postgresql"
 	datastoreTypeVersion := "16"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDBaaSDatastoreTypesV1Basic(projectName, datastoreTypeEngine, datastoreTypeVersion),
+				Config: testAccDBaaSDatastoreTypesV1Basic(projectID, datastoreTypeEngine, datastoreTypeVersion),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccDBaaSDatastoreTypesV1Exists("data.selectel_dbaas_datastore_type_v1.datastore_type_tf_acc_test_1", &dbaasDatastoreTypes),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_datastore_type_v1.datastore_type_tf_acc_test_1", "datastore_types.0.engine", datastoreTypeEngine),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_datastore_type_v1.datastore_type_tf_acc_test_1", "datastore_types.0.version", datastoreTypeVersion),
@@ -65,19 +59,19 @@ func testAccDBaaSDatastoreTypesV1Exists(n string, dbaasDatastoreTypes *[]dbaas.D
 	}
 }
 
-func testAccDBaaSDatastoreTypesV1Basic(projectName, engine, version string) string {
+func testAccDBaaSDatastoreTypesV1Basic(projectID, engine, version string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dbaas_datastore_type_v1" "datastore_type_tf_acc_test_1" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   region     = "ru-3"
   filter {
     engine = "%s"
     version = "%s"
   }
 }
-`, projectName, engine, version)
+`, projectID, engine, version)
 }

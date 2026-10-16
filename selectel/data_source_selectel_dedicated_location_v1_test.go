@@ -3,29 +3,24 @@ package selectel
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
 )
 
 func TestAccDedicatedLocationV1Basic(t *testing.T) {
-	var project projects.Project
-
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 	locationName := "MSK-2"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDedicatedLocationV1Basic(projectName, locationName),
+				Config: testAccDedicatedLocationV1Basic(projectID, locationName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccDedicatedLocationV1Exists("data.selectel_dedicated_location_v1.location_tf_acc_test_1", locationName),
 					resource.TestCheckResourceAttr("data.selectel_dedicated_location_v1.location_tf_acc_test_1", "locations.0.name", locationName),
 				),
@@ -62,17 +57,17 @@ func testAccDedicatedLocationV1Exists(
 	}
 }
 
-func testAccDedicatedLocationV1Basic(projectName, locationName string) string {
+func testAccDedicatedLocationV1Basic(projectID, locationName string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dedicated_location_v1" "location_tf_acc_test_1" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   filter {
     name = "%s"
   }
 }
-`, projectName, locationName)
+`, projectID, locationName)
 }

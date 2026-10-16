@@ -2,27 +2,22 @@ package selectel
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
 )
 
 func TestAccCloudBackupPlanV2Basic(t *testing.T) {
-	var (
-		project     projects.Project
-		projectName = acctest.RandomWithPrefix("tf-acc")
-	)
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCloudBackupPlanV2Basic(projectName),
+				Config: testAccCloudBackupPlanV2Basic(projectID),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					resource.TestCheckResourceAttr(
 						"data.selectel_cloudbackup_plan_v2.plans", "plans.list.#", "0",
 					),
@@ -35,14 +30,14 @@ func TestAccCloudBackupPlanV2Basic(t *testing.T) {
 	})
 }
 
-func testAccCloudBackupPlanV2Basic(projectName string) string {
+func testAccCloudBackupPlanV2Basic(projectID string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_cloudbackup_plan_v2" "plans" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   region     = "ru-1"
 
   filter {
@@ -51,5 +46,5 @@ data "selectel_cloudbackup_plan_v2" "plans" {
     status = "started"
   }
 }
-`, projectName)
+`, projectID)
 }

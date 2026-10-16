@@ -2,20 +2,18 @@ package selectel
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
-	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAccDedicatedPrivateSubnetV1DataSource(t *testing.T) {
 	var (
-		project      projects.Project
-		projectName  = acctest.RandomWithPrefix("tf-acc")
+		projectID    = os.Getenv("INFRA_PROJECT_ID")
 		locationName = "SPB-5"
 		vlan         = "2989"
 		subnet       = "10.10.10.0/24"
@@ -23,13 +21,12 @@ func TestAccDedicatedPrivateSubnetV1DataSource(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheckWithAuth(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithAuth(t); testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDedicatedPrivateSubnetV1DataSourceBasic(projectName),
+				Config: testAccDedicatedPrivateSubnetV1DataSourceBasic(projectID),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					resource.TestCheckResourceAttrSet("data.selectel_dedicated_private_subnet_v1.subnet_ds", "subnets.#"),
 					resource.TestCheckResourceAttrSet("data.selectel_dedicated_private_subnet_v1.subnet_ds", "subnets.0.id"),
 					resource.TestCheckResourceAttrSet("data.selectel_dedicated_private_subnet_v1.subnet_ds", "subnets.0.subnet"),
@@ -38,18 +35,18 @@ func TestAccDedicatedPrivateSubnetV1DataSource(t *testing.T) {
 				),
 			},
 			{
-				Config:   testAccDedicatedPrivateSubnetV1DataSourceBasic(projectName),
+				Config:   testAccDedicatedPrivateSubnetV1DataSourceBasic(projectID),
 				PlanOnly: true,
 			},
 			{
-				Config: testAccDedicatedPrivateSubnetV1DataSourceWithLocationFilter(projectName, locationName),
+				Config: testAccDedicatedPrivateSubnetV1DataSourceWithLocationFilter(projectID, locationName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccDedicatedLocationV1Exists("data.selectel_dedicated_location_v1.location_tf_acc_test_1", locationName),
 					resource.TestCheckResourceAttr("data.selectel_dedicated_private_subnet_v1.subnet_ds", "subnets.#", "1"),
 				),
 			},
 			{
-				Config: testAccDedicatedPrivateSubnetV1DataSourceWithVLANFilter(projectName, vlan),
+				Config: testAccDedicatedPrivateSubnetV1DataSourceWithVLANFilter(projectID, vlan),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.selectel_dedicated_private_subnet_v1.subnet_ds", "subnets.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -60,7 +57,7 @@ func TestAccDedicatedPrivateSubnetV1DataSource(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccDedicatedPrivateSubnetV1DataSourceWithSubnetFilter(projectName, subnet),
+				Config: testAccDedicatedPrivateSubnetV1DataSourceWithSubnetFilter(projectID, subnet),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.selectel_dedicated_private_subnet_v1.subnet_ds", "subnets.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -71,7 +68,7 @@ func TestAccDedicatedPrivateSubnetV1DataSource(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccDedicatedPrivateSubnetV1DataSourceWithIPFilter(projectName, ip),
+				Config: testAccDedicatedPrivateSubnetV1DataSourceWithIPFilter(projectID, ip),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.selectel_dedicated_private_subnet_v1.subnet_ds", "subnets.#", "1"),
 					resource.TestCheckResourceAttr(
@@ -82,17 +79,17 @@ func TestAccDedicatedPrivateSubnetV1DataSource(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccDedicatedPrivateSubnetV1DataSourceWithIPFilter(projectName, "1.1.1.1"),
+				Config: testAccDedicatedPrivateSubnetV1DataSourceWithIPFilter(projectID, "1.1.1.1"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.selectel_dedicated_private_subnet_v1.subnet_ds", "subnets.#", "0"),
 				),
 			},
 			{
-				Config:      testAccDedicatedPrivateSubnetV1DataSourceWithVLANFilter(projectName, "wrong"),
+				Config:      testAccDedicatedPrivateSubnetV1DataSourceWithVLANFilter(projectID, "wrong"),
 				ExpectError: regexp.MustCompile(`invalid parameters to filter on tag or vlan`),
 			},
 			{
-				Config:      testAccDedicatedPrivateSubnetV1DataSourceWithIPFilter(projectName, "wrong"),
+				Config:      testAccDedicatedPrivateSubnetV1DataSourceWithIPFilter(projectID, "wrong"),
 				ExpectError: regexp.MustCompile(`invalid`),
 			},
 		},
@@ -224,80 +221,80 @@ func Test_filterDedicatedPrivateSubnets(t *testing.T) {
 	}
 }
 
-func testAccDedicatedPrivateSubnetV1DataSourceBasic(projectName string) string {
+func testAccDedicatedPrivateSubnetV1DataSourceBasic(projectID string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
- name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dedicated_private_subnet_v1" "subnet_ds" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
-}`, projectName)
+  project_id = local.project_id
+}`, projectID)
 }
 
-func testAccDedicatedPrivateSubnetV1DataSourceWithLocationFilter(projectName, locationName string) string {
+func testAccDedicatedPrivateSubnetV1DataSourceWithLocationFilter(projectID, locationName string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
- name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dedicated_location_v1" "location_tf_acc_test_1" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   filter {
     name = "%s"
   }
 }
 
 data "selectel_dedicated_private_subnet_v1" "subnet_ds" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   
   filter {
     location_id = "${data.selectel_dedicated_location_v1.location_tf_acc_test_1.locations[0].id}"
   }
-}`, projectName, locationName)
+}`, projectID, locationName)
 }
 
-func testAccDedicatedPrivateSubnetV1DataSourceWithVLANFilter(projectName, vlan string) string {
+func testAccDedicatedPrivateSubnetV1DataSourceWithVLANFilter(projectID, vlan string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
- name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dedicated_private_subnet_v1" "subnet_ds" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   
   filter {
     vlan = "%s"
   }
-}`, projectName, vlan)
+}`, projectID, vlan)
 }
 
-func testAccDedicatedPrivateSubnetV1DataSourceWithSubnetFilter(projectName, subnet string) string {
+func testAccDedicatedPrivateSubnetV1DataSourceWithSubnetFilter(projectID, subnet string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
- name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dedicated_private_subnet_v1" "subnet_ds" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   
   filter {
     subnet = "%s"
   }
-}`, projectName, subnet)
+}`, projectID, subnet)
 }
 
-func testAccDedicatedPrivateSubnetV1DataSourceWithIPFilter(projectName, ip string) string {
+func testAccDedicatedPrivateSubnetV1DataSourceWithIPFilter(projectID, ip string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
- name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dedicated_private_subnet_v1" "subnet_ds" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   
   filter {
     ip = "%s"
   }
-}`, projectName, ip)
+}`, projectID, ip)
 }

@@ -79,12 +79,12 @@ resource "selectel_iam_group_v1" "group_tf_acc_test_2" {
 resource "selectel_iam_oidc_federation_v1" "federation_tf_acc_test_1" {
   name                  = "federation name"
   description           = "simple description"
-  issuer                = "http://localhost:8080/realms/master"
+  issuer                = "https://idp.example.com/realms/master"
   client_id             = "my-client-id"
   client_secret         = "my-client-secret"
-  auth_url              = "http://localhost:8080/realms/master/protocol/openid-connect/auth"
-  token_url             = "http://localhost:8080/realms/master/protocol/openid-connect/token"
-  jwks_url              = "http://localhost:8080/realms/master/protocol/openid-connect/certs"
+  auth_url              = "https://idp.example.com/realms/master/protocol/openid-connect/auth"
+  token_url             = "https://idp.example.com/realms/master/protocol/openid-connect/token"
+  jwks_url              = "https://idp.example.com/realms/master/protocol/openid-connect/certs"
   session_max_age_hours = 24
 }
 
@@ -120,12 +120,12 @@ resource "selectel_iam_group_v1" "group_tf_acc_test_2" {
 resource "selectel_iam_oidc_federation_v1" "federation_tf_acc_test_1" {
   name                  = "federation name"
   description           = "simple description"
-  issuer                = "http://localhost:8080/realms/master"
+  issuer                = "https://idp.example.com/realms/master"
   client_id             = "my-client-id"
   client_secret         = "my-client-secret"
-  auth_url              = "http://localhost:8080/realms/master/protocol/openid-connect/auth"
-  token_url             = "http://localhost:8080/realms/master/protocol/openid-connect/token"
-  jwks_url              = "http://localhost:8080/realms/master/protocol/openid-connect/certs"
+  auth_url              = "https://idp.example.com/realms/master/protocol/openid-connect/auth"
+  token_url             = "https://idp.example.com/realms/master/protocol/openid-connect/token"
+  jwks_url              = "https://idp.example.com/realms/master/protocol/openid-connect/certs"
   session_max_age_hours = 24
 }
 

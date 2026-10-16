@@ -4,42 +4,38 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
-	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAccDedicatedServersV1Basic(t *testing.T) {
-	var project projects.Project
-
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 	// serverName is a substring of the user-assigned custom name stored in server.UserDesc
 	// (the user_desc field from GET /resource, e.g. "test-server-01").
 	// Update this value to match a substring of an existing server's custom name in your test environment.
 	serverName := "test-server"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDedicatedServersV1Basic(projectName),
+				Config: testAccDedicatedServersV1Basic(projectID),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccDedicatedServersV1Exists("data.selectel_dedicated_servers_v1.servers_tf_acc_test_1", serverName),
 					resource.TestCheckResourceAttr("data.selectel_dedicated_servers_v1.servers_tf_acc_test_1", "servers.0.name", serverName),
 				),
 			},
 			{
-				Config: testAccDedicatedServersV1WithFilter(projectName, serverName),
+				Config: testAccDedicatedServersV1WithFilter(projectID, serverName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.selectel_dedicated_servers_v1.servers_filtered_tf_acc_test_1", "servers.0.name", serverName),
 				),
@@ -77,32 +73,32 @@ func testAccDedicatedServersV1Exists(n, serverName string) resource.TestCheckFun
 	}
 }
 
-func testAccDedicatedServersV1Basic(projectName string) string {
+func testAccDedicatedServersV1Basic(projectID string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
- name = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dedicated_servers_v1" "servers_tf_acc_test_1" {
- project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+ project_id = local.project_id
 }
-`, projectName)
+`, projectID)
 }
 
-func testAccDedicatedServersV1WithFilter(projectName, serverName string) string {
+func testAccDedicatedServersV1WithFilter(projectID, serverName string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
- name = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dedicated_servers_v1" "servers_filtered_tf_acc_test_1" {
- project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+ project_id = local.project_id
 
  filter {
    name             = "%s"
  }
 }
-`, projectName, serverName)
+`, projectID, serverName)
 }
 
 func TestFilterDedicatedServers(t *testing.T) {

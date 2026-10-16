@@ -3,36 +3,30 @@ package selectel
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/dbaas-go"
-	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
 )
 
 func TestAccDBaaSConfigurationParametersV1Basic(t *testing.T) {
-	var (
-		dbaasConfigurationParameters []dbaas.ConfigurationParameter
-		project                      projects.Project
-	)
+	var dbaasConfigurationParameters []dbaas.ConfigurationParameter
 
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 	datastoreTypeEngine := "postgresql"
 	datastoreTypeVersion := "16"
 	parameterName := "work_mem"
 	parameterNameWithChoices := "session_replication_role"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDBaaSConfigurationParametersV1Basic(projectName, datastoreTypeEngine, datastoreTypeVersion, parameterName),
+				Config: testAccDBaaSConfigurationParametersV1Basic(projectID, datastoreTypeEngine, datastoreTypeVersion, parameterName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccDBaaSConfigurationParametersV1Exists("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", &dbaasConfigurationParameters),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.name", parameterName),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.type", "int"),
@@ -47,9 +41,8 @@ func TestAccDBaaSConfigurationParametersV1Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccDBaaSConfigurationParametersV1Basic(projectName, datastoreTypeEngine, datastoreTypeVersion, parameterNameWithChoices),
+				Config: testAccDBaaSConfigurationParametersV1Basic(projectID, datastoreTypeEngine, datastoreTypeVersion, parameterNameWithChoices),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccDBaaSConfigurationParametersV1Exists("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", &dbaasConfigurationParameters),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.name", parameterNameWithChoices),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1", "configuration_parameters.0.type", "str"),
@@ -95,14 +88,14 @@ func testAccDBaaSConfigurationParametersV1Exists(n string, dbaasConfigurationPar
 	}
 }
 
-func testAccDBaaSConfigurationParametersV1Basic(projectName, engine, version, name string) string {
+func testAccDBaaSConfigurationParametersV1Basic(projectID, engine, version, name string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dbaas_datastore_type_v1" "dt" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   region     = "ru-3"
   filter {
     engine = "%s"
@@ -111,7 +104,7 @@ data "selectel_dbaas_datastore_type_v1" "dt" {
 }
 
 data "selectel_dbaas_configuration_parameter_v1" "configuration_param_tf_acc_test_1" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   region     = "ru-3"
   filter {
     datastore_type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
@@ -122,5 +115,5 @@ data "selectel_dbaas_configuration_parameter_v1" "configuration_param_tf_acc_tes
 output "config" {
   value = data.selectel_dbaas_configuration_parameter_v1.configuration_param_tf_acc_test_1.configuration_parameters[0]
 }
-`, projectName, engine, version, name)
+`, projectID, engine, version, name)
 }

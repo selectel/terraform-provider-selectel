@@ -3,31 +3,26 @@ package selectel
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	dbaas_v2 "github.com/selectel/dbaas-go/v2/common"
-	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
 )
 
 func TestAccDBaaSV2FlavorsBasic(t *testing.T) {
-	var (
-		dbaasFlavors []dbaas_v2.FlavorResponse
-		project      projects.Project
-	)
+	var dbaasFlavors []dbaas_v2.FlavorResponse
 
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDBaaSV2FlavorsBasic(projectName),
+				Config: testAccDBaaSV2FlavorsBasic(projectID),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccDBaaSV2FlavorsExists("data.selectel_dbaas_flavor_v2.flavor_tf_acc_test_1", &dbaasFlavors),
 					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v2.flavor_tf_acc_test_1", "flavors.0.id"),
 					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v2.flavor_tf_acc_test_1", "flavors.0.vcpus"),
@@ -37,9 +32,8 @@ func TestAccDBaaSV2FlavorsBasic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccDBaaSV2FlavorsClickHouseFlavor(projectName),
+				Config: testAccDBaaSV2FlavorsClickHouseFlavor(projectID),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccDBaaSV2FlavorsExists("data.selectel_dbaas_flavor_v2.flavor_tf_acc_test_1", &dbaasFlavors),
 					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v2.flavor_tf_acc_test_1", "flavors.0.id"),
 					resource.TestCheckResourceAttrSet("data.selectel_dbaas_flavor_v2.flavor_tf_acc_test_1", "flavors.0.vcpus"),
@@ -79,27 +73,27 @@ func testAccDBaaSV2FlavorsExists(n string, dbaasFlavors *[]dbaas_v2.FlavorRespon
 	}
 }
 
-func testAccDBaaSV2FlavorsBasic(projectName string) string {
+func testAccDBaaSV2FlavorsBasic(projectID string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dbaas_flavor_v2" "flavor_tf_acc_test_1" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   region     = "ru-1"
 }
-`, projectName)
+`, projectID)
 }
 
-func testAccDBaaSV2FlavorsClickHouseFlavor(projectName string) string {
+func testAccDBaaSV2FlavorsClickHouseFlavor(projectID string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dbaas_datastore_type_v2" "dt" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   region     = "ru-1"
   filter {
     engine = "clickhouse"
@@ -107,12 +101,12 @@ data "selectel_dbaas_datastore_type_v2" "dt" {
 }
 
 data "selectel_dbaas_flavor_v2" "flavor_tf_acc_test_1" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   region     = "ru-1"
   filter {
     datastore_type_id = "${data.selectel_dbaas_datastore_type_v2.dt.datastore_types[0].id}"
 	allowed_role = "DATA"
   }
 }
-`, projectName)
+`, projectID)
 }

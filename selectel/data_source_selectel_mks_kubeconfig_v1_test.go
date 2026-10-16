@@ -66,7 +66,7 @@ func testAccMKSKubeconfigV1Basic(projectName, clusterName, kubeVersion, maintena
 data "selectel_mks_kubeconfig_v1" "kubeconfig_tf_acc_test_1" {
   cluster_id    = "${selectel_mks_cluster_v1.cluster_tf_acc_test_1.id}"
   project_id    = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
-  region        = "ru-3"
+  region        = selectel_mks_cluster_v1.cluster_tf_acc_test_1.region
 }
 `, testAccMKSClusterV1Basic(projectName, clusterName, kubeVersion, maintenanceWindowStart))
 }

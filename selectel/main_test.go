@@ -1,16 +1,12 @@
 package selectel
 
 import (
-	"fmt"
-	"os"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
+// TestMain runs the tests, or only the sweepers when -sweep is set.
 func TestMain(m *testing.M) {
-	code := m.Run()
-	if err := testAccDeleteBlockStorageSharedProject(); err != nil {
-		fmt.Fprintf(os.Stderr, "delete Block Storage acceptance project: %v\n", err)
-		code = 1
-	}
-	os.Exit(code)
+	resource.TestMain(m)
 }
