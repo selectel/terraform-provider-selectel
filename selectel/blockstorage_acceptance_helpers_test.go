@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"sync"
 	"testing"
 	"time"
 
@@ -21,48 +20,25 @@ import (
 
 const (
 	testAccBlockStorageRegion = "ru-6"
-	testAccBlockStorageZone   = "ru-6a"
-	testAccBlockStorageType   = "universal2.ru-6a"
+	testAccBlockStorageZone   = "ru-6b"
+	testAccBlockStorageType   = "universal2.ru-6b"
 )
 
+// testAccBlockStorageSetup runs the tests in the INFRA_PROJECT_ID project like
+// the other acceptance tests. The framework provider uses the SDKv2 Config,
+// which keeps the import scope of the first configuration in the process, so
+// a project of its own would send the imports of later tests there.
 func testAccBlockStorageSetup(t *testing.T) {
 	t.Helper()
 	if os.Getenv("TF_ACC") == "" {
 		t.Skip("TF_ACC must be set for acceptance tests")
 	}
 	testAccSelectelPreCheckWithAuth(t)
-	t.Setenv("INFRA_PROJECT_ID", testAccBlockStorageSharedProject(t))
-	t.Setenv("INFRA_REGION", testAccBlockStorageRegion)
-}
-
-// testAccBlockStorageShared is the project of all Block Storage acceptance
-// tests in the process. The framework provider uses the SDKv2 Config, which
-// keeps the import scope of the first configuration in the process, so a
-// project per test would import into the wrong project. TestMain deletes it.
-var testAccBlockStorageShared struct {
-	once      sync.Once
-	projectID string
-	err       error
-}
-
-func testAccBlockStorageSharedProject(t *testing.T) string {
-	t.Helper()
-	testAccBlockStorageShared.once.Do(func() {
-		testAccBlockStorageShared.projectID, testAccBlockStorageShared.err = testAccCreateBlockStorageProject()
-	})
-	require.NoError(t, testAccBlockStorageShared.err)
-
-	return testAccBlockStorageShared.projectID
-}
-
-// testAccDeleteBlockStorageSharedProject runs after every test of the package,
-// when the fixture cleanups have already run.
-func testAccDeleteBlockStorageSharedProject() error {
-	if testAccBlockStorageShared.projectID == "" {
-		return nil
+	testAccSelectelPreCheckWithProjectID(t)
+	if region := os.Getenv("INFRA_REGION"); region != testAccBlockStorageRegion {
+		t.Fatalf("INFRA_REGION must be %s for Block Storage acceptance tests, got %q",
+			testAccBlockStorageRegion, region)
 	}
-
-	return testAccDeleteBlockStorageProject(testAccBlockStorageShared.projectID)
 }
 
 // testAccBlockStorageProject creates an extra project that the test deletes.
@@ -81,7 +57,7 @@ func testAccBlockStorageProject(t *testing.T) string {
 }
 
 func testAccCreateBlockStorageProject() (string, error) {
-	client, err := testAccBlockStorageConfig().GetSelVPCClient()
+	client, err := testAccConfigFromEnv().GetSelVPCClient()
 	if err != nil {
 		return "", err
 	}
@@ -96,7 +72,7 @@ func testAccCreateBlockStorageProject() (string, error) {
 }
 
 func testAccDeleteBlockStorageProject(projectID string) error {
-	client, err := testAccBlockStorageConfig().GetSelVPCClient()
+	client, err := testAccConfigFromEnv().GetSelVPCClient()
 	if err != nil {
 		return err
 	}
@@ -397,7 +373,7 @@ func testAccComputeVolumeV3Client(
 	)
 }
 
-func testAccBlockStorageConfig() *Config {
+func testAccConfigFromEnv() *Config {
 	return &Config{
 		AuthURL:        os.Getenv("OS_AUTH_URL"),
 		AuthRegion:     os.Getenv("OS_REGION_NAME"),
@@ -412,13 +388,13 @@ func testAccBlockStorageConfig() *Config {
 func testAccBlockStorageClient(t *testing.T, projectID, region string) (*blockstorage.Client, error) {
 	t.Helper()
 
-	return testAccBlockStorageConfig().BlockStorageClient(t.Context(), projectID, region)
+	return testAccConfigFromEnv().BlockStorageClient(t.Context(), projectID, region)
 }
 
 // testAccOpenStackServiceClient is for fixture operations that blockstorage-go
 // does not implement, such as snapshot writes and Glance images.
 func testAccOpenStackServiceClient(projectID, region, serviceType string) (*gophercloud.ServiceClient, error) {
-	config := testAccBlockStorageConfig()
+	config := testAccConfigFromEnv()
 	endpoint, token, err := config.projectEndpoint(context.Background(), projectID, region, serviceType)
 	if err != nil {
 		return nil, err

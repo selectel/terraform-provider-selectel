@@ -3,34 +3,28 @@ package selectel
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/dbaas-go"
-	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
 )
 
 func TestAccDBaaSUserSettingParametersV1Basic(t *testing.T) {
-	var (
-		dbaasUserSettingParameters []dbaas.UserSettingParameter
-		project                    projects.Project
-	)
+	var dbaasUserSettingParameters []dbaas.UserSettingParameter
 
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 	parameterName := "statement_timeout"
 	parameterNameWithChoices := "default_transaction_isolation"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDBaaSUserSettingParametersV1Basic(projectName, parameterName),
+				Config: testAccDBaaSUserSettingParametersV1Basic(projectID, parameterName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccDBaaSUserSettingParametersV1Exists("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", &dbaasUserSettingParameters),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", "user_setting_parameters.0.name", parameterName),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", "user_setting_parameters.0.type", "int"),
@@ -46,9 +40,8 @@ func TestAccDBaaSUserSettingParametersV1Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccDBaaSUserSettingParametersV1Basic(projectName, parameterNameWithChoices),
+				Config: testAccDBaaSUserSettingParametersV1Basic(projectID, parameterNameWithChoices),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccDBaaSUserSettingParametersV1Exists("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", &dbaasUserSettingParameters),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", "user_setting_parameters.0.name", parameterNameWithChoices),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1", "user_setting_parameters.0.type", "str"),
@@ -95,14 +88,14 @@ func testAccDBaaSUserSettingParametersV1Exists(n string, dbaasUserSettingParamet
 	}
 }
 
-func testAccDBaaSUserSettingParametersV1Basic(projectName, name string) string {
+func testAccDBaaSUserSettingParametersV1Basic(projectID, name string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dbaas_datastore_type_v1" "dt_tf_acc_test_1" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   region     = "ru-3"
   filter {
     engine = "postgresql"
@@ -111,7 +104,7 @@ data "selectel_dbaas_datastore_type_v1" "dt_tf_acc_test_1" {
 }
 
 data "selectel_dbaas_user_setting_parameter_v1" "user_setting_param_tf_acc_test_1" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   region     = "ru-3"
   filter {
     datastore_type_id = "${data.selectel_dbaas_datastore_type_v1.dt_tf_acc_test_1.datastore_types[0].id}"
@@ -122,5 +115,5 @@ data "selectel_dbaas_user_setting_parameter_v1" "user_setting_param_tf_acc_test_
 output "user_setting" {
   value = data.selectel_dbaas_user_setting_parameter_v1.user_setting_param_tf_acc_test_1.user_setting_parameters[0]
 }
-`, projectName, name)
+`, projectID, name)
 }

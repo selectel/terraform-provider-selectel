@@ -3,32 +3,26 @@ package selectel
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/selectel/dbaas-go"
-	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
 )
 
 func TestAccDBaaSDataSourcePrometheusMetricTokenV1Basic(t *testing.T) {
-	var (
-		dbaasTokens []dbaas.PrometheusMetricToken
-		project     projects.Project
-	)
+	var dbaasTokens []dbaas.PrometheusMetricToken
 
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDBaaSDataSourcePrometheusMetricTokenV1Basic(projectName),
+				Config: testAccDBaaSDataSourcePrometheusMetricTokenV1Basic(projectID),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccDBaaSPrometheusMetricTokensV1Exists("data.selectel_dbaas_prometheus_metric_token_v1.prometheus_metric_token_tf_acc_test_1", &dbaasTokens),
 				),
 			},
@@ -61,15 +55,15 @@ func testAccDBaaSPrometheusMetricTokensV1Exists(n string, dbaasTokens *[]dbaas.P
 	}
 }
 
-func testAccDBaaSDataSourcePrometheusMetricTokenV1Basic(projectName string) string {
+func testAccDBaaSDataSourcePrometheusMetricTokenV1Basic(projectID string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dbaas_prometheus_metric_token_v1" "prometheus_metric_token_tf_acc_test_1" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   region     = "ru-3"
 }
-`, projectName)
+`, projectID)
 }

@@ -90,15 +90,16 @@ locals {
 
 provider openstack {
 	tenant_id = local.project_id
+	region    = local.region_name
 }
 
 resource "openstack_networking_secgroup_v2" "ds_sg" {
-  name        = "secgroup_test"
+  name        = "tf-acc-secgroup"
 }
 
 resource "openstack_networking_network_v2" "ds_net" {
  	region = local.region_name
-  	name = "network_test"
+  	name = "tf-acc-network"
 }
 
 resource "openstack_networking_subnet_v2" "ds_subnet" {
@@ -106,7 +107,7 @@ resource "openstack_networking_subnet_v2" "ds_subnet" {
   cidr       = "192.168.1.0/24"
   ip_version = 4
   enable_dhcp = false
-  name = "subnet_test"
+  name = "tf-acc-subnet"
 }
 
 data "selectel_dbaas_datastore_type_v2" "dt" {
@@ -158,7 +159,7 @@ resource "selectel_dbaas_clickhouse_datastore_v2" "datastore_tf_acc_test_1" {
     flavor {
       type  = "FLEXIBLE"
       vcpus = 2
-      ram   = 4096
+      ram   = 8192
       disk  = 32
       disk_type = "LOCAL"
     }
@@ -171,7 +172,7 @@ resource "selectel_dbaas_clickhouse_datastore_v2" "datastore_tf_acc_test_1" {
     flavor {
       type  = "FLEXIBLE"
       vcpus = 2
-      ram   = 4096
+      ram   = 8192
       disk  = 32
       disk_type = "NETWORK_ULTRA"
     }

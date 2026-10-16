@@ -3,36 +3,30 @@ package selectel
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	dbaas_v2_ch "github.com/selectel/dbaas-go/v2/clickhouse"
-	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
 )
 
 func TestAccDBaaSV2ClickhouseConfigurationParametersBasic(t *testing.T) {
-	var (
-		dbaasConfigurationParameters []dbaas_v2_ch.DatastoreConfigurationParameterResponse
-		project                      projects.Project
-	)
+	var dbaasConfigurationParameters []dbaas_v2_ch.DatastoreConfigurationParameterResponse
 
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 	datastoreTypeEngine := "clickhouse"
 	datastoreTypeVersion := "26.3.12.3"
 	parameterName := "server_settings.async_insert_threads"
 	parameterNameWithChoices := "merge_tree_settings.deduplicate_merge_projection_mode"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDBaaSV2ClickhouseConfigurationParametersBasic(projectName, datastoreTypeEngine, datastoreTypeVersion, parameterName),
+				Config: testAccDBaaSV2ClickhouseConfigurationParametersBasic(projectID, datastoreTypeEngine, datastoreTypeVersion, parameterName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccDBaaSV2ClickhouseConfigurationParametersExists("data.selectel_dbaas_clickhouse_configuration_parameter_v2.configuration_param_tf_acc_test_1", &dbaasConfigurationParameters),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_clickhouse_configuration_parameter_v2.configuration_param_tf_acc_test_1", "configuration_parameters.0.name", parameterName),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_clickhouse_configuration_parameter_v2.configuration_param_tf_acc_test_1", "configuration_parameters.0.type", "int"),
@@ -48,9 +42,8 @@ func TestAccDBaaSV2ClickhouseConfigurationParametersBasic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccDBaaSV2ClickhouseConfigurationParametersBasic(projectName, datastoreTypeEngine, datastoreTypeVersion, parameterNameWithChoices),
+				Config: testAccDBaaSV2ClickhouseConfigurationParametersBasic(projectID, datastoreTypeEngine, datastoreTypeVersion, parameterNameWithChoices),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccDBaaSV2ClickhouseConfigurationParametersExists("data.selectel_dbaas_clickhouse_configuration_parameter_v2.configuration_param_tf_acc_test_1", &dbaasConfigurationParameters),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_clickhouse_configuration_parameter_v2.configuration_param_tf_acc_test_1", "configuration_parameters.0.name", parameterNameWithChoices),
 					resource.TestCheckResourceAttr("data.selectel_dbaas_clickhouse_configuration_parameter_v2.configuration_param_tf_acc_test_1", "configuration_parameters.0.type", "str"),
@@ -98,14 +91,14 @@ func testAccDBaaSV2ClickhouseConfigurationParametersExists(n string, dbaasConfig
 	}
 }
 
-func testAccDBaaSV2ClickhouseConfigurationParametersBasic(projectName, engine, version, name string) string {
+func testAccDBaaSV2ClickhouseConfigurationParametersBasic(projectID, engine, version, name string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dbaas_datastore_type_v2" "dt" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   region     = "ru-1"
   filter {
     engine = "%s"
@@ -114,7 +107,7 @@ data "selectel_dbaas_datastore_type_v2" "dt" {
 }
 
 data "selectel_dbaas_clickhouse_configuration_parameter_v2" "configuration_param_tf_acc_test_1" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   region     = "ru-1"
   filter {
     datastore_type_id = "${data.selectel_dbaas_datastore_type_v2.dt.datastore_types[0].id}"
@@ -125,5 +118,5 @@ data "selectel_dbaas_clickhouse_configuration_parameter_v2" "configuration_param
 output "config" {
   value = data.selectel_dbaas_clickhouse_configuration_parameter_v2.configuration_param_tf_acc_test_1.configuration_parameters[0]
 }
-`, projectName, engine, version, name)
+`, projectID, engine, version, name)
 }

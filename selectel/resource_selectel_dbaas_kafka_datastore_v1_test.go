@@ -76,7 +76,7 @@ func TestAccDBaaSKafkaDatastoreV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_dbaas_kafka_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(2)),
 					resource.TestCheckResourceAttr("selectel_dbaas_kafka_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(8192)),
 					resource.TestCheckResourceAttr("selectel_dbaas_kafka_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(64)),
-					resource.TestCheckResourceAttr("selectel_dbaas_kafka_datastore_v1.datastore_tf_acc_test_1", "config.log.retention.ms", "1000"),
+					resource.TestCheckResourceAttr("selectel_dbaas_kafka_datastore_v1.datastore_tf_acc_test_1", "config.log.retention.ms", "10000"),
 					resource.TestCheckResourceAttr("selectel_dbaas_kafka_datastore_v1.datastore_tf_acc_test_1", "config.log.retention.bytes", "1024"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_kafka_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_kafka_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),

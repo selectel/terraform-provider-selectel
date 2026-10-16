@@ -12,10 +12,11 @@ export OS_USERNAME="your-service-user"
 export OS_PASSWORD="your-service-password"
 ```
 
-For tests that require a project scope, also set:
+For tests that require a project scope, also set the project and its region. The block storage tests use the `ru-6b` zone, so set `ru-6`:
 
 ```sh
 export INFRA_PROJECT_ID="your-project-id"
+export INFRA_REGION="ru-6"
 ```
 
 For the public subnet test (`TestAccVPCV2SubnetBasic`), you can optionally set the prefix length of the created subnet (an integer from 24 to 29, `29` by default), for example, if you are limited by address pool quotas:

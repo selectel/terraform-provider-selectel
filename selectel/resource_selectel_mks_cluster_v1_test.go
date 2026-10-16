@@ -185,7 +185,7 @@ func TestAccMKSClusterV1Zonal(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.client_id", "test"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.username_claim", "email"),
 					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.groups_claim", "groups"),
-					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.ca_certs", "ca_certs"),
+					resource.TestCheckResourceAttr("selectel_mks_cluster_v1.cluster_tf_acc_test_1", "oidc.0.ca_certs", strings.ReplaceAll(cert, `\n`, "\n")),
 				),
 			},
 		},
@@ -475,9 +475,9 @@ func testAccMKSClusterV1Zonal(projectName, clusterName, kubeVersion, maintenance
 	 issuer_url     = "https://keycloak.example.com/realms/kubernetes"
 	 username_claim = "email"
 	 groups_claim   = "groups"
-	 ca_certs       = "ca_certs"
+	 ca_certs       = "%s"
    }
- }`, projectName, clusterName, kubeVersion, maintenanceWindowStart)
+ }`, projectName, clusterName, kubeVersion, maintenanceWindowStart, cert)
 }
 
 func testAccMKSClusterV1PrivateKubeAPI(projectName, clusterName, kubeVersion, maintenanceWindowStart string) string {

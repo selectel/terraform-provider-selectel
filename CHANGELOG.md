@@ -1,3 +1,12 @@
+## 9.3.2 (October 16, 2026)
+
+BUG FIXES:
+
+* Fix acceptance tests and add sweepers for the resources they leave behind ([#441](https://github.com/selectel/terraform-provider-selectel/pull/441)).
+* Fix the empty `flavor` attribute of `selectel_dbaas_redis_datastore_v1` ([#441](https://github.com/selectel/terraform-provider-selectel/pull/441)).
+* Fix the permanent diff on `client_secret` of `selectel_iam_oidc_federation_v1` ([#441](https://github.com/selectel/terraform-provider-selectel/pull/441)).
+* Fix `is_recursor_enabled` of `selectel_private_dns_service_v1` not being read from the API ([#441](https://github.com/selectel/terraform-provider-selectel/pull/441)).
+
 ## 9.3.1 (October 15, 2026)
 
 BUG FIXES:
