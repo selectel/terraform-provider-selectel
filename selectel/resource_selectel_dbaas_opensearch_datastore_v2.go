@@ -636,36 +636,47 @@ func validateDBaaSV2OpensearchNodeGroupsDiff(diff *schema.ResourceDiff) error {
 	newByKey := opensearchNodeGroupsByKey(newGroups)
 
 	for key, oldGroup := range oldByKey {
-		newGroup, exists := newByKey[key]
-		if !exists {
-			continue
+		if err := validateOpensearchNodeGroupChangeRole(key, oldGroup, newByKey[key]); err != nil {
+			return err
 		}
 
-		oldRole, _ := oldGroup["role"].(string)
-		newRole, _ := newGroup["role"].(string)
-
-		// validate change of roles
-		if oldRole != newRole {
-			return fmt.Errorf(
-				"node_group: changing role of node group with key %q is not allowed",
-				key,
-			)
+		if err := validateOpensearchNodeGroupDeletion(key, oldGroup, newByKey[key]); err != nil {
+			return err
 		}
+	}
 
-		// validate delete node groups with roles MANAGER and DATA
-		for key, oldGroup := range oldByKey {
-			if _, exists := newByKey[key]; exists {
-				continue
-			}
+	return nil
+}
 
-			role, _ := oldGroup["role"].(string)
-			if role == string(dbaas_v2_os.NodeGroupRoleData) || role == string(dbaas_v2_os.NodeGroupRoleManager) {
-				return fmt.Errorf(
-					"node_group: deleting node group (key %q) with role %s is not allowed",
-					key, role,
-				)
-			}
-		}
+func validateOpensearchNodeGroupChangeRole(key string, oldGroup, newGroup map[string]any) error {
+	if newGroup == nil {
+		return nil
+	}
+
+	oldRole, _ := oldGroup["role"].(string)
+	newRole, _ := newGroup["role"].(string)
+
+	if oldRole != newRole {
+		return fmt.Errorf(
+			"node_group: changing role of node group with key %q is not allowed",
+			key,
+		)
+	}
+
+	return nil
+}
+
+func validateOpensearchNodeGroupDeletion(key string, oldGroup, newGroup map[string]any) error {
+	if newGroup != nil {
+		return nil
+	}
+
+	role, _ := oldGroup["role"].(string)
+	if role == string(dbaas_v2_os.NodeGroupRoleData) || role == string(dbaas_v2_os.NodeGroupRoleManager) {
+		return fmt.Errorf(
+			"node_group: deleting node group (key %q) with role %s is not allowed",
+			key, role,
+		)
 	}
 
 	return nil
