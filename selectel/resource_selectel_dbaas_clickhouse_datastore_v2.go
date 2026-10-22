@@ -775,11 +775,7 @@ func updateDBaaSV2ClickhouseDatastoreSecurityGroups(ctx context.Context, d *sche
 	rawSG := d.Get("security_groups")
 
 	securityGroupsSet := rawSG.(*schema.Set)
-	// may be use v2 expand
-	securityGroups, err := resourceDBaaSDatastoreV1SecurityGroupsFromSet(securityGroupsSet)
-	if err != nil {
-		return errParseDatastoreV1SecurityGroups(err)
-	}
+	securityGroups := expandDBaaSV2DatastoreSecurityGroupsFromSet(securityGroupsSet)
 
 	updateOpts := dbaas_v2_ch.DatastoreSecurityGroupsRequest{
 		SecurityGroups: securityGroups,
@@ -793,7 +789,7 @@ func updateDBaaSV2ClickhouseDatastoreSecurityGroups(ctx context.Context, d *sche
 
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", d.Id())
 	timeout := d.Timeout(schema.TimeoutUpdate)
-	err = waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, client.ClickHouse, d.Id(), timeout)
+	err := waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, client.ClickHouse, d.Id(), timeout)
 	if err != nil {
 		return errUpdatingObject(objectDatastore, d.Id(), err)
 	}
