@@ -101,14 +101,14 @@ func TestAccCloudPrivateDNSZoneV1RecordsOrder(t *testing.T) {
 func testAccCloudPrivateDNSZoneV1WithOrderedRecords(region, projectID string, names ...string) string {
 	var records strings.Builder
 	for i, name := range names {
-		records.WriteString(fmt.Sprintf(`
+		fmt.Fprintf(&records, `
 	records {
 		domain = "%s.example.com."
 		type = "A"
 		ttl = 60
 		values = ["192.168.0.%d"]
 	}
-`, name, i+1))
+`, name, i+1)
 	}
 
 	return fmt.Sprintf(`
