@@ -1,3 +1,9 @@
+## 9.3.3 (October 22, 2026)
+
+BUG FIXES:
+
+* Fix the permanent diff on `records` of `selectel_private_dns_zone_v1` caused by the API returning records in an undefined order ([#443](https://github.com/selectel/terraform-provider-selectel/pull/443)).
+
 ## 9.3.2 (October 16, 2026)
 
 BUG FIXES:
