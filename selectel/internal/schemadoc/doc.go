@@ -39,7 +39,7 @@ type Field struct {
 // Link renders "Learn more about [Title](URL)." or, with Topic,
 // "Learn more about <Topic> in [Title](URL).". A Vendor link points outside the
 // Selectel documentation and renders "For more information about <Topic>, see
-// the [official <Vendor> documentation](URL)." (DOC-SCHEMA-CONCEPT).
+// the [official <Vendor> documentation](URL).".
 type Link struct {
 	Topic  string
 	Title  string
@@ -48,11 +48,14 @@ type Link struct {
 }
 
 // Facts are the user-facing effects of a validator, default or plan modifier.
+// ReplacementException is a sentence about the changes that do not replace the
+// resource, for a modifier that replaces it only in some cases.
 type Facts struct {
-	Constraint       string
-	Dependency       string
-	Default          string
-	ReplacesResource bool
+	Constraint           string
+	Dependency           string
+	Default              string
+	ReplacesResource     bool
+	ReplacementException string
 }
 
 func (f Facts) Documentation() Facts { return f }
@@ -64,7 +67,7 @@ type Documented interface {
 	Documentation() Facts
 }
 
-// String, Int64, Bool and Map document the completed attribute. Call them
+// String, Int64, Bool, Map, Set and List document the completed attribute. Call them
 // after setting defaults, validators and plan modifiers.
 func (r Resource) String(a schema.StringAttribute, field Field) schema.StringAttribute {
 	a.MarkdownDescription = render(r.Name, field, rulesOf(a))
@@ -82,6 +85,16 @@ func (r Resource) Bool(a schema.BoolAttribute, field Field) schema.BoolAttribute
 }
 
 func (r Resource) Map(a schema.MapAttribute, field Field) schema.MapAttribute {
+	a.MarkdownDescription = render(r.Name, field, rulesOf(a))
+	return a
+}
+
+func (r Resource) Set(a schema.SetAttribute, field Field) schema.SetAttribute {
+	a.MarkdownDescription = render(r.Name, field, rulesOf(a))
+	return a
+}
+
+func (r Resource) List(a schema.ListAttribute, field Field) schema.ListAttribute {
 	a.MarkdownDescription = render(r.Name, field, rulesOf(a))
 	return a
 }
@@ -106,12 +119,23 @@ func (d DataSource) Map(a dsschema.MapAttribute, field Field) dsschema.MapAttrib
 	return a
 }
 
-// render orders sentences by the DOC-SCHEMA rules of the technical writers:
-// definition, constraints, dependencies, behavior, source, default, link, replacement.
+func (d DataSource) Set(a dsschema.SetAttribute, field Field) dsschema.SetAttribute {
+	a.MarkdownDescription = render(d.Name, field, rulesOf(a))
+	return a
+}
+
+func (d DataSource) List(a dsschema.ListAttribute, field Field) dsschema.ListAttribute {
+	a.MarkdownDescription = render(d.Name, field, rulesOf(a))
+	return a
+}
+
+// render orders sentences as the technical writers require:
+// definition, constraints, dependencies, behavior, replacement exception, source,
+// default, link, replacement.
 func render(noun string, field Field, rules []any) string {
 	parts := []string{field.Definition}
 	var dependencies []string
-	var defaultText string
+	var defaultText, exception string
 	var replace bool
 	for _, rule := range rules {
 		if rule, ok := rule.(Documented); ok {
@@ -122,10 +146,13 @@ func render(noun string, field Field, rules []any) string {
 				defaultText = facts.Default
 			}
 			replace = replace || facts.ReplacesResource
+			if facts.ReplacementException != "" {
+				exception = facts.ReplacementException
+			}
 		}
 	}
 	parts = append(parts, dependencies...)
-	parts = append(parts, field.Behavior, field.Source, defaultText)
+	parts = append(parts, field.Behavior, exception, field.Source, defaultText)
 	if link := field.Concept; link.Vendor != "" {
 		parts = append(parts, fmt.Sprintf("For more information about %s, see the [official %s documentation](%s).", link.Topic, link.Vendor, link.URL))
 	} else if link.URL != "" {
@@ -160,7 +187,7 @@ func FromDataSource(name, what string) string {
 }
 
 // FromResource names the resource that exports the value. On resource pages it
-// takes priority over FromDataSource (DOC-SCHEMA-SOURCE).
+// takes priority over FromDataSource.
 func FromResource(name, what string) string {
 	return fmt.Sprintf("You can retrieve the %s from the [%s](%sresources/%s) resource.",
 		what, name, registry, strings.TrimPrefix(name, "selectel_"))
@@ -173,8 +200,9 @@ func FromOpenStackCLI(what, command, column string) string {
 		what, command, column)
 }
 
-// codeList joins values as an English list of inline code: `a`, `b`, and `c`.
-func codeList(values []string) string {
+// CodeList joins values as an English list of inline code: `a`, `b`, and `c`.
+// Use it for a list of values in a description written with DescribeString.
+func CodeList(values []string) string {
 	quoted := make([]string, len(values))
 	for i, value := range values {
 		quoted[i] = "`" + value + "`"

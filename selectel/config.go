@@ -10,11 +10,6 @@ import (
 	"github.com/selectel/go-selvpcclient/v5/selvpcclient"
 )
 
-var (
-	cfgSingletone *Config
-	once          sync.Once
-)
-
 // Config contains all available configuration options.
 type Config struct {
 	Region    string
@@ -33,28 +28,29 @@ type Config struct {
 	UserAgent string
 }
 
+// getConfig builds the Config of one provider configuration. A process that
+// configures the provider again, such as an acceptance test run, gets the new
+// project and region.
 func getConfig(d *schema.ResourceData, userAgent string) (*Config, diag.Diagnostics) {
-	once.Do(func() {
-		cfgSingletone = &Config{
-			Username:   d.Get("username").(string),
-			Password:   d.Get("password").(string),
-			DomainName: d.Get("domain_name").(string),
-			AuthURL:    d.Get("auth_url").(string),
-			AuthRegion: d.Get("auth_region").(string),
-			UserAgent:  userAgent,
-		}
-		if v, ok := d.GetOk("user_domain_name"); ok {
-			cfgSingletone.UserDomainName = v.(string)
-		}
-		if v, ok := d.GetOk("project_id"); ok {
-			cfgSingletone.ProjectID = v.(string)
-		}
-		if v, ok := d.GetOk("region"); ok {
-			cfgSingletone.Region = v.(string)
-		}
-	})
+	config := &Config{
+		Username:   d.Get("username").(string),
+		Password:   d.Get("password").(string),
+		DomainName: d.Get("domain_name").(string),
+		AuthURL:    d.Get("auth_url").(string),
+		AuthRegion: d.Get("auth_region").(string),
+		UserAgent:  userAgent,
+	}
+	if v, ok := d.GetOk("user_domain_name"); ok {
+		config.UserDomainName = v.(string)
+	}
+	if v, ok := d.GetOk("project_id"); ok {
+		config.ProjectID = v.(string)
+	}
+	if v, ok := d.GetOk("region"); ok {
+		config.Region = v.(string)
+	}
 
-	return cfgSingletone, nil
+	return config, nil
 }
 
 func (c *Config) selvpcClientOptions(projectID string) *selvpcclient.ClientOptions {
@@ -96,4 +92,21 @@ func (c *Config) GetSelVPCClientWithProjectScope(projectID string) (*selvpcclien
 	c.clientsCache[clientsCacheKey] = client
 
 	return client, nil
+}
+
+// projectEndpoint returns the public endpoint of a service and a fresh token
+// scoped to the project.
+func (c *Config) projectEndpoint(ctx context.Context, projectID, region, serviceType string) (string, string, error) {
+	opts := c.selvpcClientOptions(projectID)
+	opts.Context = ctx
+	client, err := selvpcclient.NewClient(opts)
+	if err != nil {
+		return "", "", fmt.Errorf("authenticate project %s: %w", projectID, err)
+	}
+	endpoint, err := client.Catalog.GetEndpoint(serviceType, region)
+	if err != nil {
+		return "", "", err
+	}
+
+	return endpoint.URL, client.GetXAuthToken(), nil
 }

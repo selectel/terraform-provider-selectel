@@ -84,14 +84,14 @@ func resourceDBaaSV2ClickhouseDatastoreCreate(ctx context.Context, d *schema.Res
 		return diag.FromErr(errCreatingObject(objectDatastore, err))
 	}
 
+	d.SetId(datastore.ID)
+
 	log.Printf("[DEBUG] waiting for datastore %s to become 'ACTIVE'", datastore.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
 	err = waiters.WaitForDBaaSV2DatastoreRunningActive(ctx, dbaasClient.ClickHouse, datastore.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectDatastore, err))
 	}
-
-	d.SetId(datastore.ID)
 
 	d.Set("allow_reduce_nodes", d.Get("allow_reduce_nodes"))
 

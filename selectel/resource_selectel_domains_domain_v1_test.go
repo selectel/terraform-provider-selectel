@@ -14,6 +14,8 @@ import (
 )
 
 func TestAccDomainsDomainV1Basic(t *testing.T) {
+	testAccDomainsV1PreCheck(t)
+
 	var testDomain domain.View
 
 	testDomainName := fmt.Sprintf("%s.xyz", acctest.RandomWithPrefix("tf-acc"))

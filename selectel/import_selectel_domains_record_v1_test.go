@@ -9,6 +9,8 @@ import (
 )
 
 func TestAccDomainsRecordV1ImportBasic(t *testing.T) {
+	testAccDomainsV1PreCheck(t)
+
 	resourceName := "selectel_domains_record_v1.record_a_tf_acc_test_1"
 	testDomainName := fmt.Sprintf("%s.xyz", acctest.RandomWithPrefix("tf-acc"))
 	testRecordName := fmt.Sprintf("a.%s", testDomainName)

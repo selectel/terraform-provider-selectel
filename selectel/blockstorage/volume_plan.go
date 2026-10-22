@@ -130,8 +130,10 @@ func (r *volumeResource) ModifyPlan(
 	}
 }
 
-// Framework invokes resource plan modification separately from attribute plan
-// modifiers, so their RequiresReplace paths are not available in this response.
+// hasCreationChange reports whether the plan replaces the volume. It repeats
+// the RequiresReplace rules of the schema, so change both together: Framework
+// runs ModifyPlan with an empty RequiresReplace list, and the decisions of the
+// attribute plan modifiers are not available here.
 func hasCreationChange(prior, plan volumeModel) bool {
 	for _, change := range []struct{ before, after types.String }{
 		{prior.ProjectID, plan.ProjectID},
@@ -143,7 +145,7 @@ func hasCreationChange(prior, plan volumeModel) bool {
 		{prior.ImageID, plan.ImageID},
 		{prior.BackupID, plan.BackupID},
 	} {
-		if !change.after.IsUnknown() && !change.after.Equal(change.before) {
+		if !change.after.Equal(change.before) {
 			return true
 		}
 	}

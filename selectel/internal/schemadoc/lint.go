@@ -88,6 +88,9 @@ func (l *linter) lintAttribute(at string, v reflect.Value) {
 		if facts.ReplacesResource && !strings.Contains(description, replacementPrefix) {
 			report("description lacks the replacement sentence")
 		}
+		if facts.ReplacementException != "" && !strings.Contains(description, facts.ReplacementException) {
+			report("description lacks %q", facts.ReplacementException)
+		}
 	}
 }
 

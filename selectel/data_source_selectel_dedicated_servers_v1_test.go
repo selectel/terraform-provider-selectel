@@ -17,6 +17,8 @@ import (
 )
 
 func TestAccDedicatedServersV1Basic(t *testing.T) {
+	testAccDedicatedServersPreCheck(t)
+
 	projectID := os.Getenv("INFRA_PROJECT_ID")
 	// serverName is a substring of the user-assigned custom name stored in server.UserDesc
 	// (the user_desc field from GET /resource, e.g. "test-server-01").

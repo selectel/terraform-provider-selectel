@@ -59,14 +59,14 @@ func resourceDBaaSUserV1Create(ctx context.Context, d *schema.ResourceData, meta
 		return diag.FromErr(errCreatingObject(objectUser, err))
 	}
 
+	d.SetId(user.ID)
+
 	log.Printf("[DEBUG] waiting for user %s to become 'ACTIVE'", user.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
 	err = waiters.WaitForDBaaSUserV1ActiveState(ctx, dbaasClient, user.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectUser, err))
 	}
-
-	d.SetId(user.ID)
 
 	return resourceDBaaSUserV1Read(ctx, d, meta)
 }

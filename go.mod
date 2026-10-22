@@ -21,6 +21,7 @@ require (
 	github.com/selectel/globalrouter-go v1.2.1
 	github.com/selectel/go-selvpcclient/v5 v5.0.0
 	github.com/selectel/iam-go v0.9.0
+	github.com/selectel/images-go v0.1.0
 	github.com/selectel/mks-go v1.1.0
 	github.com/selectel/private-dns-go v1.1.0
 	github.com/selectel/public-net-api-go v1.0.1

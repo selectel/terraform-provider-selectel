@@ -13,6 +13,8 @@ import (
 )
 
 func TestAccIAMV1UserBasic(t *testing.T) {
+	testAccIAMUsersPreCheck(t)
+
 	var user users.User
 	userEmail := acctest.RandomWithPrefix("tf-acc") + "@example.com"
 
@@ -36,6 +38,8 @@ func TestAccIAMV1UserBasic(t *testing.T) {
 }
 
 func TestAccIAMV1UserUpdateRoles(t *testing.T) {
+	testAccIAMUsersPreCheck(t)
+
 	var user users.User
 	userEmail := acctest.RandomWithPrefix("tf-acc") + "@example.com"
 
