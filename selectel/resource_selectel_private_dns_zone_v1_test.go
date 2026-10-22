@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -98,16 +99,16 @@ func TestAccCloudPrivateDNSZoneV1RecordsOrder(t *testing.T) {
 }
 
 func testAccCloudPrivateDNSZoneV1WithOrderedRecords(region, projectID string, names ...string) string {
-	records := ""
+	var records strings.Builder
 	for i, name := range names {
-		records += fmt.Sprintf(`
+		records.WriteString(fmt.Sprintf(`
 	records {
 		domain = "%s.example.com."
 		type = "A"
 		ttl = 60
 		values = ["192.168.0.%d"]
 	}
-`, name, i+1)
+`, name, i+1))
 	}
 
 	return fmt.Sprintf(`
@@ -117,7 +118,7 @@ resource "selectel_private_dns_zone_v1" "zone" {
 	domain = "example.com."
 	ttl = 1800
 %s}
-`, region, projectID, records)
+`, region, projectID, records.String())
 }
 
 func testAccCloudPrivateDNSZoneV1Basic(region string, ttl int, projectID string) string {
