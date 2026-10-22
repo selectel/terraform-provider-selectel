@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	sdkschema "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadoc"
@@ -23,11 +24,12 @@ type testFrameworkProvider struct {
 
 func (p testFrameworkProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return append(p.frameworkProvider.DataSources(ctx), func() datasource.DataSource {
-		return &muxTestDataSource{}
+		return &muxTestDataSource{sdk: p.sdk}
 	})
 }
 
 type muxTestDataSource struct {
+	sdk    *sdkschema.Provider
 	config *Config
 }
 
@@ -48,7 +50,7 @@ func (d *muxTestDataSource) Configure(_ context.Context, req datasource.Configur
 }
 
 func (d *muxTestDataSource) Read(ctx context.Context, _ datasource.ReadRequest, resp *datasource.ReadResponse) {
-	if d.config == nil || d.config != cfgSingletone {
+	if d.config == nil || d.config != d.sdk.Meta() {
 		resp.Diagnostics.AddError("Config not shared", "The data source did not get the Config the SDKv2 provider uses.")
 
 		return

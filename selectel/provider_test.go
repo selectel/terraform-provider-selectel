@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -35,7 +36,7 @@ var (
 )
 
 func init() {
-	testAccProvider = Provider("test")
+	testAccProvider = testAccCapTimeouts(Provider("test"))
 	testAccProviders = map[string]func() (*schema.Provider, error){
 		"selectel": func() (*schema.Provider, error) {
 			return testAccProvider, nil
@@ -51,7 +52,7 @@ func init() {
 	}
 	testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
 		"selectel": func() (tfprotov6.ProviderServer, error) {
-			sdk := Provider("test")
+			sdk := testAccCapTimeouts(Provider("test"))
 			server, err := muxProviderServer(context.Background(), sdk,
 				testFrameworkProvider{&frameworkProvider{sdk: sdk, version: "test"}})
 			if err != nil {
@@ -61,6 +62,39 @@ func init() {
 			return server(), nil
 		},
 	}
+}
+
+// testAccCapTimeouts sets the operation timeouts of the SDKv2 resources to at
+// most SELECTEL_ACC_OPERATION_TIMEOUT, for example "30m". Go cannot stop one
+// test of a running package, so the cap is what ends a test that waits for a
+// stuck object: the operation fails after the cap instead of the resource
+// default, which can be an hour, and the next tests run. Resources without
+// their own timeouts keep the SDK default of 20 minutes.
+func testAccCapTimeouts(p *schema.Provider) *schema.Provider {
+	v := os.Getenv("SELECTEL_ACC_OPERATION_TIMEOUT")
+	if v == "" {
+		return p
+	}
+	limit, err := time.ParseDuration(v)
+	if err != nil {
+		panic(fmt.Sprintf("SELECTEL_ACC_OPERATION_TIMEOUT: %s", err))
+	}
+
+	capped := func(d *time.Duration) *time.Duration {
+		if d == nil || *d <= limit {
+			return d
+		}
+
+		return &limit
+	}
+	for _, r := range p.ResourcesMap {
+		if t := r.Timeouts; t != nil {
+			t.Create, t.Read, t.Update = capped(t.Create), capped(t.Read), capped(t.Update)
+			t.Delete, t.Default = capped(t.Delete), capped(t.Default)
+		}
+	}
+
+	return p
 }
 
 func TestProvider(t *testing.T) {
@@ -219,6 +253,45 @@ func testAccGlobalRouterStaticRoutePreCheck(t *testing.T) {
 	if globalRouterNextHop == "" {
 		t.Skip("GLOBAL_ROUTER_STATIC_ROUTE_NEXT_HOP must be set for acceptance tests of Global Router static router in VPC subnet")
 	}
+}
+
+// testAccSkipUnlessEnv skips a test that an ordinary account cannot run,
+// unless the variable is set. The reason tells what the account needs.
+func testAccSkipUnlessEnv(t *testing.T, name, reason string) {
+	t.Helper()
+	if os.Getenv(name) == "" {
+		t.Skipf("%s must be set to run this test: %s", name, reason)
+	}
+}
+
+func testAccDedicatedServersPreCheck(t *testing.T) {
+	t.Helper()
+	testAccSkipUnlessEnv(t, "SELECTEL_ACC_DEDICATED_SERVERS",
+		"the test orders a real dedicated server or looks for a server created by hand")
+}
+
+func testAccDedicatedNetworkPreCheck(t *testing.T) {
+	t.Helper()
+	testAccSkipUnlessEnv(t, "SELECTEL_ACC_DEDICATED_NETWORK",
+		"the test needs VLAN 2989 of a dedicated network in SPB-5")
+}
+
+func testAccDomainsV1PreCheck(t *testing.T) {
+	t.Helper()
+	testAccSkipUnlessEnv(t, "SELECTEL_ACC_DOMAINS_V1",
+		"Domains API v1 answers 403 to accounts without access to it")
+}
+
+func testAccIAMUsersPreCheck(t *testing.T) {
+	t.Helper()
+	testAccSkipUnlessEnv(t, "SELECTEL_ACC_IAM_USERS",
+		"the test creates users with example.com emails, and some accounts accept internal emails only")
+}
+
+func testAccMKSMultiAZPreCheck(t *testing.T) {
+	t.Helper()
+	testAccSkipUnlessEnv(t, "SELECTEL_ACC_MKS_MULTI_AZ",
+		"the project needs the mks_cluster_high_availability_multi_az quota")
 }
 
 func testAccDBaaSV2PreCheck(t *testing.T) {

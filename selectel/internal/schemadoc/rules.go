@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -25,6 +26,16 @@ type int64Rule struct {
 	Facts
 }
 
+type setRule struct {
+	validator.Set
+	Facts
+}
+
+type mapRule struct {
+	validator.Map
+	Facts
+}
+
 type stringDefault struct {
 	defaults.String
 	Facts
@@ -32,6 +43,11 @@ type stringDefault struct {
 
 type boolDefault struct {
 	defaults.Bool
+	Facts
+}
+
+type int64Default struct {
+	defaults.Int64
 	Facts
 }
 
@@ -60,6 +76,12 @@ func Between(minimum, maximum int64) validator.Int64 {
 	}}
 }
 
+func AtLeast(minimum int64) validator.Int64 {
+	return int64Rule{int64validator.AtLeast(minimum), Facts{
+		Constraint: fmt.Sprintf("The minimum value is `%d`.", minimum),
+	}}
+}
+
 // relationValidator is a HashiCorp schema validator that works for every
 // attribute kind, such as the result of stringvalidator.ConflictsWith.
 type relationValidator interface {
@@ -81,7 +103,7 @@ type Relation struct {
 func ConflictsWith(attributes ...string) Relation {
 	return Relation{
 		stringvalidator.ConflictsWith(rootPaths(attributes)...).(relationValidator),
-		Facts{Dependency: "This argument conflicts with " + codeList(attributes) + "."},
+		Facts{Dependency: "This argument conflicts with " + CodeList(attributes) + "."},
 	}
 }
 
@@ -91,7 +113,7 @@ func ConflictsWith(attributes ...string) Relation {
 func ExactlyOneOf(attributes ...string) Relation {
 	return Relation{
 		stringvalidator.ExactlyOneOf(rootPaths(attributes)...).(relationValidator),
-		Facts{Dependency: "Set exactly one of " + codeList(attributes) + "."},
+		Facts{Dependency: "Set exactly one of " + CodeList(attributes) + "."},
 	}
 }
 
@@ -100,7 +122,7 @@ func ExactlyOneOf(attributes ...string) Relation {
 func AlsoRequires(attributes ...string) Relation {
 	return Relation{
 		stringvalidator.AlsoRequires(rootPaths(attributes)...).(relationValidator),
-		Facts{Dependency: "This argument requires " + codeList(attributes) + "."},
+		Facts{Dependency: "This argument requires " + CodeList(attributes) + "."},
 	}
 }
 
@@ -163,10 +185,25 @@ func StaticBool(value bool) defaults.Bool {
 	}}
 }
 
+func StaticInt64(value int64) defaults.Int64 {
+	return int64Default{int64default.StaticInt64(value), Facts{
+		Default: fmt.Sprintf("The default value is `%d`.", value),
+	}}
+}
+
 // RequiresReplace has the same behavior as stringplanmodifier.RequiresReplace.
-// Conditional replacement modifiers must document their condition explicitly.
 func RequiresReplace() planmodifier.String {
 	return stringReplacement{stringplanmodifier.RequiresReplace(), Facts{ReplacesResource: true}}
+}
+
+// RequiresReplaceIf has the same behavior as stringplanmodifier.RequiresReplaceIf.
+// exception is a sentence about the changes that do not replace the resource.
+// The description still ends with the replacement sentence.
+func RequiresReplaceIf(replace stringplanmodifier.RequiresReplaceIfFunc, exception string) planmodifier.String {
+	return stringReplacement{
+		stringplanmodifier.RequiresReplaceIf(replace, exception, exception),
+		Facts{ReplacesResource: true, ReplacementException: exception},
+	}
 }
 
 // DescribeString attaches a service-specific explanation to an existing validator.
@@ -176,11 +213,21 @@ func DescribeString(rule validator.String, description string) validator.String 
 	return stringRule{rule, Facts{Constraint: description}}
 }
 
+// DescribeSet attaches an explanation to an existing Set validator, as DescribeString does.
+func DescribeSet(rule validator.Set, description string) validator.Set {
+	return setRule{rule, Facts{Constraint: description}}
+}
+
+// DescribeMap attaches an explanation to an existing Map validator, as DescribeString does.
+func DescribeMap(rule validator.Map, description string) validator.Map {
+	return mapRule{rule, Facts{Constraint: description}}
+}
+
 // OneOf uses the same case-sensitive values for validation and documentation.
 func OneOf(values ...string) validator.String {
-	text := "Available values are " + codeList(values) + "."
+	text := "Available values are " + CodeList(values) + "."
 	if len(values) == 1 {
-		text = "The only available value is " + codeList(values) + "."
+		text = "The only available value is " + CodeList(values) + "."
 	}
 
 	return DescribeString(stringvalidator.OneOf(values...), text)

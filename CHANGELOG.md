@@ -1,8 +1,26 @@
-## 9.3.3 (October 22, 2026)
+## 9.4.1 (October 22, 2026)
 
 BUG FIXES:
 
 * Fix the permanent diff on `records` of `selectel_private_dns_zone_v1` caused by the API returning records in an undefined order ([#443](https://github.com/selectel/terraform-provider-selectel/pull/443)).
+
+## 9.4.0 (October 21, 2026)
+
+FEATURES:
+
+* Add new resources implemented with Terraform Plugin Framework ([#442](https://github.com/selectel/terraform-provider-selectel/pull/442)):
+  * `selectel_compute_image_v2`
+  * `selectel_compute_image_access_v2`
+  * `selectel_compute_image_access_accept_v2`
+* Add new data sources implemented with Terraform Plugin Framework ([#442](https://github.com/selectel/terraform-provider-selectel/pull/442)):
+  * `selectel_compute_image_v2`
+  * `selectel_compute_image_ids_v2`
+
+BUG FIXES:
+
+* DBaaS resources: an object that is created but does not become active, such as a datastore in `ERROR`, now stays in the state as tainted, so Terraform can replace or destroy it ([#442](https://github.com/selectel/terraform-provider-selectel/pull/442)).
+* `selectel_compute_volume_v3`: a temporary API error, such as `503` or `429`, while Terraform waits for the volume no longer fails the operation and does not taint the volume ([#442](https://github.com/selectel/terraform-provider-selectel/pull/442)).
+* `selectel_compute_volume_v3`: shrinking the volume or removing IOPS no longer fails the plan when the volume is replaced because of a value known only after apply ([#442](https://github.com/selectel/terraform-provider-selectel/pull/442)).
 
 ## 9.3.2 (October 16, 2026)
 

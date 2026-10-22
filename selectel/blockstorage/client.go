@@ -73,6 +73,18 @@ func waitVolumeDeleted(ctx context.Context, client *sdk.Client, id string, inter
 	return confirmVolumeAbsent(ctx, client, id)
 }
 
+// isTransient reports whether a failed read may succeed when repeated. Such an
+// error does not end a wait: the volume keeps changing on the service side.
+func isTransient(err error) bool {
+	for _, kind := range []sdk.Kind{sdk.KindRateLimited, sdk.KindServerError, sdk.KindTransport, sdk.KindTimeout} {
+		if sdk.IsKind(err, kind) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // waitVolume polls the volume status until the operation deadline, which every
 // caller sets. An empty target waits for the volume to disappear.
 func waitVolume(
@@ -83,6 +95,9 @@ func waitVolume(
 	pending, target []string,
 ) (any, error) {
 	deadline, _ := ctx.Deadline()
+	// The last observed volume answers a poll that failed with a transient
+	// error: a nil result would count as a missing volume.
+	last := &volume.View{ID: id, Status: pending[0]}
 	wait := retry.StateChangeConf{
 		Pending:      pending,
 		Target:       target,
@@ -90,12 +105,15 @@ func waitVolume(
 		PollInterval: interval,
 		Refresh: func() (any, string, error) {
 			current, _, err := volume.Get(ctx, client, id)
-			if sdk.IsKind(err, sdk.KindNotFound) {
+			switch {
+			case sdk.IsKind(err, sdk.KindNotFound):
 				return nil, "", nil
-			}
-			if err != nil {
+			case isTransient(err):
+				return last, last.Status, nil
+			case err != nil:
 				return nil, "", fmt.Errorf("observe volume %s: %w", id, err)
 			}
+			last = current
 
 			return current, current.Status, nil
 		},

@@ -51,14 +51,14 @@ func resourceDBaaSPostgreSQLExtensionV1Create(ctx context.Context, d *schema.Res
 		return diag.FromErr(errCreatingObject(objectExtension, err))
 	}
 
+	d.SetId(extension.ID)
+
 	log.Printf("[DEBUG] waiting for extension %s to become 'ACTIVE'", extension.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
 	err = waiters.WaitForDBaaSExtensionV1ActiveState(ctx, dbaasClient, extension.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectExtension, err))
 	}
-
-	d.SetId(extension.ID)
 
 	return resourceDBaaSPostgreSQLExtensionV1Read(ctx, d, meta)
 }

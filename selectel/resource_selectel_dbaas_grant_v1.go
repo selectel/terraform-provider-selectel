@@ -51,14 +51,14 @@ func resourceDBaaSGrantV1Create(ctx context.Context, d *schema.ResourceData, met
 		return diag.FromErr(errCreatingObject(objectGrant, err))
 	}
 
+	d.SetId(grant.ID)
+
 	log.Printf("[DEBUG] waiting for grant %s to become 'ACTIVE'", grant.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
 	err = waiters.WaitForDBaaSGrantV1ActiveState(ctx, dbaasClient, grant.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectGrant, err))
 	}
-
-	d.SetId(grant.ID)
 
 	return resourceDBaaSGrantV1Read(ctx, d, meta)
 }

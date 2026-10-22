@@ -144,50 +144,46 @@ func TestVolumeWhitespace(t *testing.T) {
 }
 
 func TestVolumePlanValidation(t *testing.T) {
-	for scenario, wantError := range map[string]string{
-		"unchanged": "", "shrink": "Volume shrinking is unsupported", "replace smaller": "", "grow": "",
-		"unknown size": "", "remove iops": "Cannot remove IOPS", "null metadata": "Cannot remove IOPS",
-		"unknown metadata": "", "create": "", "destroy": "",
+	smaller := func(m *volumeModel) { m.Size = types.Int64Value(9) }
+	for name, tc := range map[string]struct {
+		change          func(*volumeModel)
+		create, destroy bool
+		err             string
+	}{
+		"unchanged":       {change: func(*volumeModel) {}},
+		"shrink":          {change: smaller, err: "Volume shrinking is unsupported"},
+		"replace smaller": {change: func(m *volumeModel) { smaller(m); m.VolumeType = types.StringValue("other") }},
+		// An unknown volume type replaces the volume, as RequiresReplace does.
+		"replace smaller, type not known yet": {change: func(m *volumeModel) { smaller(m); m.VolumeType = types.StringUnknown() }},
+		"grow":                                {change: func(m *volumeModel) { m.Size = types.Int64Value(11) }},
+		"unknown size":                        {change: func(m *volumeModel) { m.Size = types.Int64Unknown() }},
+		"remove iops":                         {change: func(m *volumeModel) { m.Metadata = metadata(map[string]string{}) }, err: "Cannot remove IOPS"},
+		"null metadata":                       {change: func(m *volumeModel) { m.Metadata = types.MapNull(types.StringType) }, err: "Cannot remove IOPS"},
+		"unknown metadata":                    {change: func(m *volumeModel) { m.Metadata = types.MapUnknown(types.StringType) }},
+		"create":                              {change: smaller, create: true},
+		"destroy":                             {change: smaller, destroy: true},
 	} {
-		t.Run(scenario, func(t *testing.T) {
+		t.Run(name, func(t *testing.T) {
 			r := testResource(nil)
 			prior := model()
 			prior.Metadata = metadata(map[string]string{iopsKey: "2000"})
 			plan := prior
-			switch scenario {
-			case "shrink", "replace smaller":
-				plan.Size = types.Int64Value(9)
-			case "grow":
-				plan.Size = types.Int64Value(11)
-			case "unknown size":
-				plan.Size = types.Int64Unknown()
-			case "remove iops":
-				plan.Metadata = metadata(map[string]string{})
-			case "null metadata":
-				plan.Metadata = types.MapNull(types.StringType)
-			case "unknown metadata":
-				plan.Metadata = types.MapUnknown(types.StringType)
-			}
+			tc.change(&plan)
 			req := resource.ModifyPlanRequest{State: stateOf(t, r, prior), Plan: planOf(t, r, plan)}
-			if scenario == "create" {
+			if tc.create {
 				req.State.Raw = tftypes.NewValue(req.State.Raw.Type(), nil)
 			}
-			if scenario == "destroy" {
+			if tc.destroy {
 				req.Plan.Raw = tftypes.NewValue(req.Plan.Raw.Type(), nil)
 			}
 			resp := resource.ModifyPlanResponse{Plan: req.Plan}
-			if scenario == "replace smaller" {
-				plan.VolumeType = types.StringValue("other")
-				req.Plan = planOf(t, r, plan)
-				resp.Plan = req.Plan
-			}
 			r.ModifyPlan(context.Background(), req, &resp)
-			if wantError == "" {
+			if tc.err == "" {
 				assert.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
-			} else {
-				require.Len(t, resp.Diagnostics.Errors(), 1, "%v", resp.Diagnostics)
-				assert.Equal(t, wantError, resp.Diagnostics.Errors()[0].Summary())
+				return
 			}
+			require.Len(t, resp.Diagnostics.Errors(), 1, "%v", resp.Diagnostics)
+			assert.Equal(t, tc.err, resp.Diagnostics.Errors()[0].Summary())
 		})
 	}
 }

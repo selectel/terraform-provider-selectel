@@ -12,6 +12,8 @@ import (
 )
 
 func TestAccDedicatedPrivateSubnetV1DataSource(t *testing.T) {
+	testAccDedicatedNetworkPreCheck(t)
+
 	var (
 		projectID    = os.Getenv("INFRA_PROJECT_ID")
 		locationName = "SPB-5"

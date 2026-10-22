@@ -8,7 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
@@ -100,6 +103,79 @@ func TestRangeAndDefaultFollowDeclarations(t *testing.T) {
 	}
 }
 
+func TestCollectionsAndInt64Rules(t *testing.T) {
+	ctx := context.Background()
+	docs := schemadoc.Resource{Name: "image"}
+	tags := docs.Set(schema.SetAttribute{
+		Optional: true, ElementType: types.StringType,
+		Validators: []validator.Set{schemadoc.DescribeSet(setvalidator.SizeAtMost(2), "The maximum number of tags is `2`.")},
+	}, schemadoc.Field{Definition: "Set of image tags."})
+	assert.Equal(t, "Set of image tags. The maximum number of tags is `2`.", tags.MarkdownDescription)
+	properties := docs.Map(schema.MapAttribute{
+		Optional: true, ElementType: types.StringType,
+		Validators: []validator.Map{schemadoc.DescribeMap(mapvalidator.SizeAtMost(1), "The maximum number of properties is `1`.")},
+	}, schemadoc.Field{Definition: "Image properties."})
+	assert.Equal(t, "Image properties. The maximum number of properties is `1`.", properties.MarkdownDescription)
+	ids := schemadoc.DataSource{Name: "image"}.List(dsschema.ListAttribute{
+		Computed: true, ElementType: types.StringType,
+	}, schemadoc.Field{Definition: "List of image IDs."})
+	assert.Equal(t, "List of image IDs.", ids.MarkdownDescription)
+
+	// A described validator keeps the behavior of the wrapped one.
+	three := []attr.Value{types.StringValue("a"), types.StringValue("b"), types.StringValue("c")}
+	var setResponse validator.SetResponse
+	tags.Validators[0].ValidateSet(ctx, validator.SetRequest{
+		ConfigValue: types.SetValueMust(types.StringType, three),
+	}, &setResponse)
+	assert.True(t, setResponse.Diagnostics.HasError())
+
+	minRAM := docs.Int64(schema.Int64Attribute{
+		Optional: true, Computed: true,
+		Default:    schemadoc.StaticInt64(0),
+		Validators: []validator.Int64{schemadoc.AtLeast(0)},
+	}, schemadoc.Field{Definition: "Minimum RAM in MB."})
+	assert.Equal(t, "Minimum RAM in MB. The minimum value is `0`. The default value is `0`.", minRAM.MarkdownDescription)
+	for _, value := range []int64{-1, 0} {
+		var response validator.Int64Response
+		minRAM.Validators[0].ValidateInt64(ctx, validator.Int64Request{ConfigValue: types.Int64Value(value)}, &response)
+		assert.Equal(t, value >= 0, !response.Diagnostics.HasError())
+	}
+	var defaultResponse defaults.Int64Response
+	minRAM.Default.DefaultInt64(ctx, defaults.Int64Request{}, &defaultResponse)
+	assert.Equal(t, types.Int64Value(0), defaultResponse.PlanValue)
+}
+
+func TestConditionalReplacement(t *testing.T) {
+	ctx := context.Background()
+	attribute := schemadoc.Resource{Name: "image"}.String(schema.StringAttribute{
+		Optional: true,
+		PlanModifiers: []planmodifier.String{schemadoc.RequiresReplaceIf(
+			func(_ context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
+				resp.RequiresReplace = !req.StateValue.IsNull()
+			},
+			"Setting the URL on an imported image does not replace it.",
+		)},
+	}, schemadoc.Field{
+		Definition: "URL of the image file.",
+		Behavior:   "The API downloads the file.",
+		Source:     schemadoc.FromResource("selectel_vpc_project_v2", "URL"),
+	})
+	// The exception follows the behavior, and the replacement sentence stays last.
+	assert.Equal(t, "URL of the image file. The API downloads the file. "+
+		"Setting the URL on an imported image does not replace it. "+
+		schemadoc.FromResource("selectel_vpc_project_v2", "URL")+" Changing this creates a new image.",
+		attribute.MarkdownDescription)
+	raw := tftypes.NewValue(tftypes.Object{AttributeTypes: map[string]tftypes.Type{}}, map[string]tftypes.Value{})
+	for _, prior := range []types.String{types.StringNull(), types.StringValue("https://a")} {
+		var response planmodifier.StringResponse
+		attribute.PlanModifiers[0].PlanModifyString(ctx, planmodifier.StringRequest{
+			State: tfsdk.State{Raw: raw}, Plan: tfsdk.Plan{Raw: raw},
+			StateValue: prior, PlanValue: types.StringValue("https://b"),
+		}, &response)
+		assert.Equal(t, !prior.IsNull(), response.RequiresReplace)
+	}
+}
+
 func TestEnumInDataSource(t *testing.T) {
 	// Adding a format changes both the accepted configuration and its documentation.
 	for _, formats := range [][]string{{"raw"}, {"raw", "qcow2"}, {"raw", "qcow2", "vmdk"}} {
@@ -156,6 +232,13 @@ func TestLint(t *testing.T) {
 	undocumented := docs.String(schema.StringAttribute{
 		Optional: true, Validators: []validator.String{stringvalidator.LengthAtMost(1)},
 	}, schemadoc.Field{Definition: "Name."})
+	withoutException := schema.StringAttribute{
+		Optional: true, Description: "URL. Changing this creates a new network volume.",
+		PlanModifiers: []planmodifier.String{schemadoc.RequiresReplaceIf(
+			func(context.Context, planmodifier.StringRequest, *stringplanmodifier.RequiresReplaceIfFuncResponse) {},
+			"Setting the URL does not replace the network volume.",
+		)},
+	}
 	nested := schema.SetNestedAttribute{Computed: true, NestedObject: schema.NestedAttributeObject{
 		Attributes: map[string]schema.Attribute{"inner": undocumented},
 	}}
@@ -165,8 +248,10 @@ func TestLint(t *testing.T) {
 		"plain: description lacks \"The only available value is `a`.\"",
 		"stale: description lacks \"The maximum length is `128` characters.\"",
 		"undocumented: stringvalidator.lengthAtMostValidator has no documentation facts; use a schemadoc rule or DescribeString",
+		"withoutException: description lacks \"Setting the URL does not replace the network volume.\"",
 	}, schemadoc.Lint(schema.Schema{Attributes: map[string]schema.Attribute{
 		"documented": documented, "stale": stale, "plain": plain, "undocumented": undocumented, "nested": nested,
+		"withoutException": withoutException,
 	}}))
 }
 

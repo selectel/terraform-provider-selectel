@@ -12,13 +12,17 @@ import (
 
 	"github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/selectel/dbaas-go"
+	dbaas_v2_common "github.com/selectel/dbaas-go/v2/common"
 	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/keypairs"
+	"github.com/selectel/images-go/pkg/v1/image"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/network"
 	"github.com/selectel/vpc-go/pkg/v2/port"
 	"github.com/selectel/vpc-go/pkg/v2/router"
 	"github.com/selectel/vpc-go/pkg/v2/securitygroup"
 	"github.com/selectel/vpc-go/pkg/v2/subnet"
+	waiters "github.com/terraform-providers/terraform-provider-selectel/selectel/waiters/dbaas"
 )
 
 // The sweepers delete what failed acceptance runs leave behind:
@@ -31,14 +35,22 @@ import (
 // objects older than testSweepMinAge, so a run in progress keeps its objects.
 const testSweepMinAge = time.Hour
 
+// testSweepDBaaSDeleteTimeout limits the wait for all datastore deletes of
+// one region, so that the sweep job keeps time for the other sweepers.
+const testSweepDBaaSDeleteTimeout = 20 * time.Minute
+
 func init() {
 	resource.AddTestSweepers("selectel_vpc_router_v2", &resource.Sweeper{
 		Name: "selectel_vpc_router_v2",
 		F:    testSweepVPCRouters,
 	})
+	resource.AddTestSweepers("selectel_dbaas_clickhouse_datastore_v2", &resource.Sweeper{
+		Name: "selectel_dbaas_clickhouse_datastore_v2",
+		F:    testSweepDBaaSClickhouseDatastores,
+	})
 	resource.AddTestSweepers("selectel_vpc_network_v2", &resource.Sweeper{
 		Name:         "selectel_vpc_network_v2",
-		Dependencies: []string{"selectel_vpc_router_v2"},
+		Dependencies: []string{"selectel_vpc_router_v2", "selectel_dbaas_clickhouse_datastore_v2"},
 		F:            testSweepVPCNetworks,
 	})
 	resource.AddTestSweepers("selectel_vpc_secgroup_v2", &resource.Sweeper{
@@ -49,6 +61,10 @@ func init() {
 	resource.AddTestSweepers("selectel_compute_volume_v3", &resource.Sweeper{
 		Name: "selectel_compute_volume_v3",
 		F:    testSweepComputeVolumes,
+	})
+	resource.AddTestSweepers("selectel_compute_image_v2", &resource.Sweeper{
+		Name: "selectel_compute_image_v2",
+		F:    testSweepComputeImages,
 	})
 	resource.AddTestSweepers("selectel_vpc_keypair_v2", &resource.Sweeper{
 		Name: "selectel_vpc_keypair_v2",
@@ -84,10 +100,14 @@ func testSweepRouterInterface(deviceOwner string) bool {
 	return false
 }
 
-// testSweepOld reports whether an object with an RFC 3339 creation time is
-// older than testSweepMinAge. An object of unknown age stays.
+// testSweepOld reports whether an object is older than testSweepMinAge. The
+// creation time is RFC 3339, or UTC without a zone as DBaaS returns it. An
+// object of unknown age stays.
 func testSweepOld(createdAt string) bool {
 	created, err := time.Parse(time.RFC3339, createdAt)
+	if err != nil {
+		created, err = time.Parse("2006-01-02T15:04:05.999999", createdAt)
+	}
 
 	return err == nil && time.Since(created) > testSweepMinAge
 }
@@ -221,6 +241,56 @@ func testSweepVPCNetwork(ctx context.Context, client *vpc.Client, projectID stri
 	return network.Delete(ctx, client, n.ID)
 }
 
+// testSweepDBaaSClickhouseDatastores waits until the datastores are deleted:
+// their servers keep ports in the test subnets, and the network sweeper runs
+// next. A datastore that is already DELETING gets no second delete.
+func testSweepDBaaSClickhouseDatastores(region string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), testSweepDBaaSDeleteTimeout)
+	defer cancel()
+	projectID, err := testSweepProjectID()
+	if err != nil {
+		return err
+	}
+	selvpcClient, err := testAccConfigFromEnv().GetSelVPCClientWithProjectScope(projectID)
+	if err != nil {
+		return err
+	}
+	endpoint, err := selvpcClient.Catalog.GetEndpoint(DBaaSv2, region)
+	if err != nil {
+		return err
+	}
+	client, err := dbaas.NewDBAASClientV2(selvpcClient.GetXAuthToken(), endpoint.URL)
+	if err != nil {
+		return err
+	}
+	datastores, err := client.ClickHouse.GetDatastoreList(ctx)
+	if err != nil {
+		return fmt.Errorf("list clickhouse datastores: %w", err)
+	}
+
+	var errs []error
+	var deleted []string
+	for _, ds := range datastores {
+		if !testSweepName(ds.Name) || !testSweepOld(ds.CreatedAt) || ds.Status == dbaas_v2_common.DatastoreStatusDeleting {
+			continue
+		}
+		log.Printf("[INFO] Sweeping clickhouse datastore %s (%s, %s) in %s", ds.ID, ds.Name, ds.Status, region)
+		if err := client.ClickHouse.DeleteDatastore(ctx, ds.ID); err != nil {
+			errs = append(errs, fmt.Errorf("delete clickhouse datastore %s (%s): %w", ds.ID, ds.Name, err))
+
+			continue
+		}
+		deleted = append(deleted, ds.ID)
+	}
+	for _, id := range deleted {
+		if err := waiters.WaitForDBaaSV2DatastoreDeleted(ctx, client.ClickHouse, id, testSweepDBaaSDeleteTimeout); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
 func testSweepVPCSecGroups(region string) error {
 	ctx := context.Background()
 	client, projectID, err := testSweepVPCClient(region)
@@ -240,6 +310,44 @@ func testSweepVPCSecGroups(region string) error {
 		log.Printf("[INFO] Sweeping security group %s (%s) in %s", g.ID, g.Name, region)
 		if err := securitygroup.Delete(ctx, client, g.ID); err != nil {
 			errs = append(errs, fmt.Errorf("delete security group %s (%s): %w", g.ID, g.Name, err))
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+// testSweepComputeImages removes the protection first: a protected image
+// cannot be deleted, and a failed test may leave one.
+func testSweepComputeImages(region string) error {
+	ctx := context.Background()
+	projectID, err := testSweepProjectID()
+	if err != nil {
+		return err
+	}
+	client, err := testAccConfigFromEnv().ImagesClient(ctx, projectID, region)
+	if err != nil {
+		return err
+	}
+	all, err := image.List(ctx, client, image.ListOpts{Owner: projectID})
+	if err != nil {
+		return fmt.Errorf("list images: %w", err)
+	}
+
+	var errs []error
+	for _, i := range all {
+		if !testSweepName(i.Name) || time.Since(i.CreatedAt) <= testSweepMinAge {
+			continue
+		}
+		log.Printf("[INFO] Sweeping image %s (%s) in %s", i.ID, i.Name, region)
+		if i.Protected {
+			unprotect := []image.PatchOp{{Op: image.OpReplace, Path: "/protected", Value: false}}
+			if _, _, err := image.Update(ctx, client, i.ID, unprotect); err != nil {
+				errs = append(errs, fmt.Errorf("unprotect image %s (%s): %w", i.ID, i.Name, err))
+				continue
+			}
+		}
+		if _, err := image.Delete(ctx, client, i.ID); err != nil {
+			errs = append(errs, fmt.Errorf("delete image %s (%s): %w", i.ID, i.Name, err))
 		}
 	}
 

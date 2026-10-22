@@ -39,7 +39,7 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "nodes_count", "2"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "nodes.#", "2"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "cpus", "1"),
-					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "ram_mb", "1024"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "ram_mb", "4096"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "volume_gb", "10"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "volume_type", "fast.ru-9a"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "enable_autoscale", "true"),
@@ -72,7 +72,7 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "nodes_count", "3"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "nodes.#", "3"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "cpus", "1"),
-					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "ram_mb", "1024"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "ram_mb", "4096"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "volume_gb", "10"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "volume_type", "fast.ru-9a"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "enable_autoscale", "false"),
@@ -168,7 +168,7 @@ func TestAccMKSNodegroupV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "nodes_count", "2"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "nodes.#", "2"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "cpus", "1"),
-					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "ram_mb", "1024"),
+					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "ram_mb", "4096"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "volume_gb", "10"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "volume_type", "fast.ru-9a"),
 					resource.TestCheckResourceAttr("selectel_mks_nodegroup_v1.nodegroup_tf_acc_test_1", "enable_autoscale", "true"),
@@ -256,7 +256,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
   availability_zone   = "ru-9a"
   nodes_count         = 2
   cpus                = 1
-  ram_mb              = 1024
+  ram_mb              = 4096
   volume_gb           = 10
   volume_type         = "fast.ru-9a"
   enable_autoscale    = true
@@ -309,7 +309,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
   availability_zone   = "ru-9a"
   nodes_count         = 3
   cpus                = 1
-  ram_mb              = 1024
+  ram_mb              = 4096
   volume_gb           = 10
   volume_type         = "fast.ru-9a"
   enable_autoscale    = false
@@ -461,7 +461,7 @@ resource "selectel_mks_nodegroup_v1" "nodegroup_tf_acc_test_1" {
   availability_zone   = "ru-9a"
   nodes_count         = 2
   cpus                = 1
-  ram_mb              = 1024
+  ram_mb              = 4096
   volume_gb           = 10
   volume_type         = "fast.ru-9a"
   enable_autoscale    = true
