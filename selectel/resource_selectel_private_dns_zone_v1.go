@@ -224,7 +224,11 @@ func resourcePrivateDNSZoneV1ImportState(_ context.Context, d *schema.ResourceDa
 
 func privateDNSRecordKey(v any) string {
 	m := v.(map[string]any)
-	return m["type"].(string) + " " + m["domain"].(string)
+	return buildPrivateDNSRecordKey(m["type"].(string), m["domain"].(string))
+}
+
+func buildPrivateDNSRecordKey(recType, domain string) string {
+	return recType + " " + domain
 }
 
 func orderPrivateDNSRecordsLike(records []*privatedns.Record, prior []any) []*privatedns.Record {
@@ -233,12 +237,10 @@ func orderPrivateDNSRecordsLike(records []*privatedns.Record, prior []any) []*pr
 		position[privateDNSRecordKey(rec)] = i
 	}
 
-	key := func(r *privatedns.Record) string { return r.Type + " " + r.Domain }
-
 	ordered := slices.Clone(records)
 	slices.SortFunc(ordered, func(a, b *privatedns.Record) int {
-		posA, okA := position[key(a)]
-		posB, okB := position[key(b)]
+		posA, okA := position[buildPrivateDNSRecordKey(a.Type, a.Domain)]
+		posB, okB := position[buildPrivateDNSRecordKey(b.Type, b.Domain)]
 		switch {
 		case okA && okB:
 			return posA - posB
