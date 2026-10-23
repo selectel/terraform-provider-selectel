@@ -1,9 +1,12 @@
 package selectel
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"log"
+	"slices"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -221,7 +224,36 @@ func resourcePrivateDNSZoneV1ImportState(_ context.Context, d *schema.ResourceDa
 
 func privateDNSRecordKey(v any) string {
 	m := v.(map[string]any)
-	return m["type"].(string) + " " + m["domain"].(string)
+	return buildPrivateDNSRecordKey(m["type"].(string), m["domain"].(string))
+}
+
+func buildPrivateDNSRecordKey(recType, domain string) string {
+	return recType + " " + domain
+}
+
+func orderPrivateDNSRecordsLike(records []*privatedns.Record, prior []any) []*privatedns.Record {
+	position := make(map[string]int, len(prior))
+	for i, rec := range prior {
+		position[privateDNSRecordKey(rec)] = i
+	}
+
+	ordered := slices.Clone(records)
+	slices.SortFunc(ordered, func(a, b *privatedns.Record) int {
+		posA, okA := position[buildPrivateDNSRecordKey(a.Type, a.Domain)]
+		posB, okB := position[buildPrivateDNSRecordKey(b.Type, b.Domain)]
+		switch {
+		case okA && okB:
+			return posA - posB
+		case okA:
+			return -1
+		case okB:
+			return 1
+		}
+
+		return cmp.Or(strings.Compare(a.Type, b.Type), strings.Compare(a.Domain, b.Domain))
+	})
+
+	return ordered
 }
 
 func fillPrivateDNSZoneV1Data(zone *privatedns.ZoneDetails, d *schema.ResourceData) {
@@ -238,8 +270,11 @@ func fillPrivateDNSZoneV1Data(zone *privatedns.ZoneDetails, d *schema.ResourceDa
 	}
 	d.Set("bindings", bindings)
 
-	records := make([]any, 0, len(zone.Records))
-	for _, record := range zone.Records {
+	priorRecords, _ := d.Get("records").([]any)
+	ordered := orderPrivateDNSRecordsLike(zone.Records, priorRecords)
+
+	records := make([]any, 0, len(ordered))
+	for _, record := range ordered {
 		records = append(records, map[string]any{
 			"domain": record.Domain,
 			"type":   record.Type,
