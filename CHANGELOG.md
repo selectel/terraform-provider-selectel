@@ -1,3 +1,19 @@
+## 9.8.0 (November 17, 2026)
+
+IMPROVEMENTS:
+
+* `selectel_vpc_project_v2`: `quotas` values are now refreshed from the API, so changes made outside of Terraform are detected. Only quotas specified in the configuration are tracked ([#315](https://github.com/selectel/terraform-provider-selectel/issues/315))
+
+BUG FIXES:
+
+* `selectel_vpc_project_v2`: import now populates `quotas` with the project's current quotas, so they appear in configuration generated with `terraform plan -generate-config-out` ([#315](https://github.com/selectel/terraform-provider-selectel/issues/315))
+* `selectel_vpc_project_v2`: removing the `quotas` block from the configuration no longer fails with `got empty quotas`. Terraform stops managing quotas in this case and leaves the project's actual quotas unchanged; `plan` shows `quotas` being removed ([#315](https://github.com/selectel/terraform-provider-selectel/issues/315))
+
+NOTES:
+
+* `selectel_vpc_project_v2`: if quota values in your configuration differ from the project's actual quotas (for example, they were changed outside of Terraform), the next `plan` will show a diff to restore the configured values. Review the plan before applying.
+* `selectel_vpc_project_v2`: when a project is imported into a configuration without a `quotas` block, the first `plan` shows `quotas` being removed. Applying it does not change the project's quotas.
+
 ## 9.7.0 (November 11, 2026)
 
 FEATURES:
