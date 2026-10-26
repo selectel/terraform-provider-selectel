@@ -1,10 +1,12 @@
 package selectel
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccVPCV2ProjectImportBasic(t *testing.T) {
@@ -23,8 +25,22 @@ func TestAccVPCV2ProjectImportBasic(t *testing.T) {
 				ResourceName:            resourceName,
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"all_quotas"},
+				ImportStateVerifyIgnore: []string{"all_quotas", "quotas"},
+				ImportStateCheck:        testAccCheckVPCV2ProjectImportedQuotas,
 			},
 		},
 	})
+}
+
+func testAccCheckVPCV2ProjectImportedQuotas(states []*terraform.InstanceState) error {
+	if len(states) != 1 {
+		return fmt.Errorf("expected 1 imported state, got %d", len(states))
+	}
+
+	count, ok := states[0].Attributes["quotas.#"]
+	if !ok || count == "" || count == "0" {
+		return fmt.Errorf("expected quotas to be set after import, got quotas.# = %q", count)
+	}
+
+	return nil
 }

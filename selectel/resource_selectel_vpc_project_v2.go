@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/go-selvpcclient/v5/selvpcclient/quotamanager/quotas"
 	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
+	resellQuotas "github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/quotas"
 )
 
 func resourceVPCProjectV2() *schema.Resource {
@@ -19,7 +20,7 @@ func resourceVPCProjectV2() *schema.Resource {
 		UpdateContext: resourceVPCProjectV2Update,
 		DeleteContext: resourceVPCProjectV2Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceVPCProjectV2ImportState,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -292,4 +293,46 @@ func resourceVPCProjectV2Delete(_ context.Context, d *schema.ResourceData, meta 
 	}
 
 	return nil
+}
+
+func resourceVPCProjectV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
+	config := meta.(*Config)
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return nil, fmt.Errorf("can't get selvpc client for project object: %w", err)
+	}
+
+	log.Print(msgImport(objectProject, d.Id()))
+	project, _, err := projects.Get(selvpcClient, d.Id())
+	if err != nil {
+		return nil, errGettingObject(objectProject, d.Id(), err)
+	}
+
+	if err := d.Set("quotas", resourceVPCProjectV2QuotasForImport(project.Quotas)); err != nil {
+		return nil, fmt.Errorf("error setting quotas on import: %w", err)
+	}
+
+	return []*schema.ResourceData{d}, nil
+}
+
+func resourceVPCProjectV2QuotasForImport(quotas []resellQuotas.Quota) []any {
+	result := make([]any, 0, len(quotas))
+
+	for _, q := range quotas {
+		rq := make([]any, 0, len(q.ResourceQuotasEntities))
+		for _, e := range q.ResourceQuotasEntities {
+			rq = append(rq, map[string]any{
+				"region": e.Region,
+				"zone":   e.Zone,
+				"value":  e.Value,
+			})
+		}
+
+		result = append(result, map[string]any{
+			"resource_name":   q.Name,
+			"resource_quotas": schema.NewSet(hashResourceQuotas, rq),
+		})
+	}
+
+	return result
 }
