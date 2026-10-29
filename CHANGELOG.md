@@ -1,3 +1,18 @@
+## 9.5.0 (October 30, 2026)
+
+FEATURES:
+
+* Add new resources implemented with Terraform Plugin Framework ([#445](https://github.com/selectel/terraform-provider-selectel/pull/445)):
+  * `selectel_filestorage_share_v2`
+  * `selectel_filestorage_share_access_v2`
+* Add new data sources implemented with Terraform Plugin Framework ([#445](https://github.com/selectel/terraform-provider-selectel/pull/445)):
+  * `selectel_filestorage_share_v2`
+  * `selectel_filestorage_availability_zones_v2`
+
+BUG FIXES:
+
+* Add sweepers for the file storage shares and the test projects with their DBaaS datastores that acceptance runs leave behind ([#445](https://github.com/selectel/terraform-provider-selectel/pull/445)).
+
 ## 9.4.1 (October 22, 2026)
 
 BUG FIXES:

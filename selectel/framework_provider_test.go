@@ -105,6 +105,14 @@ func TestProviderServerSchema(t *testing.T) {
 			assert.Contains(t, resp.ResourceSchemas, "selectel_compute_volume_v3")
 			assert.Contains(t, resp.DataSourceSchemas, "selectel_compute_volume_v3")
 			assert.Contains(t, resp.DataSourceSchemas, "selectel_mux_test")
+			for _, name := range []string{"selectel_filestorage_share_v2", "selectel_filestorage_share_access_v2"} {
+				assert.Contains(t, resp.ResourceSchemas, name)
+			}
+			for _, name := range []string{
+				"selectel_filestorage_share_v2", "selectel_filestorage_availability_zones_v2",
+			} {
+				assert.Contains(t, resp.DataSourceSchemas, name)
+			}
 			for _, attribute := range resp.Provider.Block.Attributes {
 				assert.Equal(t, attribute.Name == "password", attribute.Sensitive, attribute.Name)
 			}

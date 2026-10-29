@@ -48,12 +48,12 @@ schemadoc:
 	go test ./selectel -run '^TestSchemaDocumentation$$' -count=1
 
 docs:
-	$(TFPLUGINDOCS) generate
+	$(TFPLUGINDOCS) generate --provider-name selectel
 
 docs-check:
 	@snapshot=$$(mktemp -d); trap 'rm -rf "$$snapshot"' EXIT; cp -R docs "$$snapshot/docs" || exit 1; \
 	for cmd in generate validate; do \
-		if ! out=$$($(TFPLUGINDOCS) $$cmd 2>&1); then \
+		if ! out=$$($(TFPLUGINDOCS) $$cmd --provider-name selectel 2>&1); then \
 			err=$$(echo "$$out" | sed -n '/^Error executing command/,$$p'); echo "$${err:-$$out}"; exit 1; \
 		fi; \
 	done; \

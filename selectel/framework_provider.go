@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 	sdkschema "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/blockstorage"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/filestorage"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/images"
 )
 
@@ -95,6 +96,8 @@ func (p *frameworkProvider) Configure(_ context.Context, _ provider.ConfigureReq
 func (p *frameworkProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		blockstorage.NewVolumeResource,
+		filestorage.NewShareResource,
+		filestorage.NewShareAccessResource,
 		images.NewImageResource,
 		images.NewAccessResource,
 		images.NewAccessAcceptResource,
@@ -106,6 +109,8 @@ func (p *frameworkProvider) DataSources(_ context.Context) []func() datasource.D
 		blockstorage.NewVolumeDataSource,
 		blockstorage.NewSnapshotDataSource,
 		blockstorage.NewVolumeTypeDataSource,
+		filestorage.NewShareDataSource,
+		filestorage.NewAvailabilityZonesDataSource,
 		images.NewImageDataSource,
 		images.NewImageIDsDataSource,
 	}
