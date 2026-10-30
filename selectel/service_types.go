@@ -16,4 +16,5 @@ const (
 	PublicNetAPI       = "public-net-api"
 	BlockStorage       = "volumev3"
 	Image              = "image"
+	FileStorage        = "sharev2"
 )

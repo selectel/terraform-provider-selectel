@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 	"maps"
+	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,7 +16,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/selectel/dbaas-go"
 	dbaas_v2_common "github.com/selectel/dbaas-go/v2/common"
+	filestorage "github.com/selectel/filestorage-go/pkg/v1"
+	"github.com/selectel/filestorage-go/pkg/v1/share"
+	"github.com/selectel/filestorage-go/pkg/v1/sharenetwork"
 	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/keypairs"
+	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
 	"github.com/selectel/images-go/pkg/v1/image"
 	vpc "github.com/selectel/vpc-go/pkg/v2"
 	"github.com/selectel/vpc-go/pkg/v2/network"
@@ -35,9 +41,16 @@ import (
 // objects older than testSweepMinAge, so a run in progress keeps its objects.
 const testSweepMinAge = time.Hour
 
-// testSweepDBaaSDeleteTimeout limits the wait for all datastore deletes of
-// one region, so that the sweep job keeps time for the other sweepers.
-const testSweepDBaaSDeleteTimeout = 20 * time.Minute
+// testSweepDeleteTimeout limits the wait for all deletes of one sweeper run,
+// so that the sweep job keeps time for the other sweepers.
+const testSweepDeleteTimeout = 20 * time.Minute
+
+// testSweepPollInterval is the pause between the reads of a deleted object.
+const testSweepPollInterval = 10 * time.Second
+
+// testSweepDBaaSV1Region is the pool where the DBaaS v1 tests create their
+// datastores, each test in a project of its own.
+const testSweepDBaaSV1Region = "ru-3"
 
 func init() {
 	resource.AddTestSweepers("selectel_vpc_router_v2", &resource.Sweeper{
@@ -48,10 +61,16 @@ func init() {
 		Name: "selectel_dbaas_clickhouse_datastore_v2",
 		F:    testSweepDBaaSClickhouseDatastores,
 	})
+	resource.AddTestSweepers("selectel_filestorage_share_v2", &resource.Sweeper{
+		Name: "selectel_filestorage_share_v2",
+		F:    testSweepFileStorageShares,
+	})
 	resource.AddTestSweepers("selectel_vpc_network_v2", &resource.Sweeper{
-		Name:         "selectel_vpc_network_v2",
-		Dependencies: []string{"selectel_vpc_router_v2", "selectel_dbaas_clickhouse_datastore_v2"},
-		F:            testSweepVPCNetworks,
+		Name: "selectel_vpc_network_v2",
+		Dependencies: []string{
+			"selectel_vpc_router_v2", "selectel_dbaas_clickhouse_datastore_v2", "selectel_filestorage_share_v2",
+		},
+		F: testSweepVPCNetworks,
 	})
 	resource.AddTestSweepers("selectel_vpc_secgroup_v2", &resource.Sweeper{
 		Name:         "selectel_vpc_secgroup_v2",
@@ -69,6 +88,10 @@ func init() {
 	resource.AddTestSweepers("selectel_vpc_keypair_v2", &resource.Sweeper{
 		Name: "selectel_vpc_keypair_v2",
 		F:    testSweepVPCKeypairs,
+	})
+	resource.AddTestSweepers("selectel_vpc_project_v2", &resource.Sweeper{
+		Name: "selectel_vpc_project_v2",
+		F:    testSweepVPCProjects,
 	})
 	resource.AddTestSweepers("selectel_iam_serviceuser_v1", &resource.Sweeper{
 		Name:         "selectel_iam_serviceuser_v1",
@@ -245,7 +268,7 @@ func testSweepVPCNetwork(ctx context.Context, client *vpc.Client, projectID stri
 // their servers keep ports in the test subnets, and the network sweeper runs
 // next. A datastore that is already DELETING gets no second delete.
 func testSweepDBaaSClickhouseDatastores(region string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), testSweepDBaaSDeleteTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), testSweepDeleteTimeout)
 	defer cancel()
 	projectID, err := testSweepProjectID()
 	if err != nil {
@@ -283,12 +306,118 @@ func testSweepDBaaSClickhouseDatastores(region string) error {
 		deleted = append(deleted, ds.ID)
 	}
 	for _, id := range deleted {
-		if err := waiters.WaitForDBaaSV2DatastoreDeleted(ctx, client.ClickHouse, id, testSweepDBaaSDeleteTimeout); err != nil {
+		if err := waiters.WaitForDBaaSV2DatastoreDeleted(ctx, client.ClickHouse, id, testSweepDeleteTimeout); err != nil {
 			errs = append(errs, err)
 		}
 	}
 
 	return errors.Join(errs...)
+}
+
+// testSweepFileStorageShares deletes the shares with their access rules and
+// waits until the shares and their service share networks are gone: the share
+// server keeps a port in the test subnet, and the network sweeper runs next.
+// A share that is already deleting gets no second delete.
+func testSweepFileStorageShares(region string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), testSweepDeleteTimeout)
+	defer cancel()
+	projectID, err := testSweepProjectID()
+	if err != nil {
+		return err
+	}
+	client, err := testAccConfigFromEnv().FileStorageClient(ctx, projectID, region)
+	if err != nil {
+		return err
+	}
+	shares, err := share.ListDetail(ctx, client, share.ListOpts{})
+	if err != nil {
+		return fmt.Errorf("list file storages: %w", err)
+	}
+
+	var errs []error
+	var deleted []share.View
+	for _, s := range shares {
+		if !testSweepName(s.Name) || !testSweepOld(s.CreatedAt) {
+			continue
+		}
+		log.Printf("[INFO] Sweeping file storage %s (%s, %s) in %s", s.ID, s.Name, s.Status, region)
+		if s.Status != "deleting" {
+			if _, err := share.Delete(ctx, client, s.ID); err != nil && !filestorage.IsKind(err, filestorage.KindNotFound) {
+				errs = append(errs, fmt.Errorf("delete file storage %s (%s): %w", s.ID, s.Name, err))
+
+				continue
+			}
+		}
+		deleted = append(deleted, s)
+	}
+	for _, s := range deleted {
+		if err := testSweepFileStorageShareDeleted(ctx, client, s); err != nil {
+			errs = append(errs, fmt.Errorf("file storage %s (%s): %w", s.ID, s.Name, err))
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+// testSweepFileStorageShareDeleted waits for the share and then for the share
+// network, which the fork deletes after the share when the share metadata
+// carries delete_empty_share_network and the network has no other subnets.
+// A share that failed to delete stays in error_deleting until an administrator
+// removes it.
+func testSweepFileStorageShareDeleted(ctx context.Context, client *filestorage.Client, s share.View) error {
+	networkID := ""
+	if _, flagged := s.Metadata["delete_empty_share_network"]; flagged && s.ShareNetworkID != "" {
+		// The network is read while the share still holds it.
+		network, _, err := sharenetwork.Get(ctx, client, s.ShareNetworkID)
+		switch {
+		case filestorage.IsKind(err, filestorage.KindNotFound):
+		case err != nil:
+			return fmt.Errorf("read share network %s: %w", s.ShareNetworkID, err)
+		case len(network.Subnets) > 1:
+			log.Printf("[INFO] Share network %s has %d subnets, the service keeps it", network.ID, len(network.Subnets))
+		default:
+			networkID = network.ID
+		}
+	}
+	for {
+		current, _, err := share.Get(ctx, client, s.ID)
+		if filestorage.IsKind(err, filestorage.KindNotFound) {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("read: %w", err)
+		}
+		if current.Status == "error_deleting" {
+			return errors.New("delete failed with status error_deleting")
+		}
+		if err := testSweepPause(ctx); err != nil {
+			return fmt.Errorf("wait for the delete: %w", err)
+		}
+	}
+	if networkID == "" {
+		return nil
+	}
+	for {
+		_, _, err := sharenetwork.Get(ctx, client, networkID)
+		if filestorage.IsKind(err, filestorage.KindNotFound) {
+			return nil
+		}
+		if err != nil {
+			return fmt.Errorf("read share network %s: %w", networkID, err)
+		}
+		if err := testSweepPause(ctx); err != nil {
+			return fmt.Errorf("wait for the delete of share network %s: %w", networkID, err)
+		}
+	}
+}
+
+func testSweepPause(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(testSweepPollInterval):
+		return nil
+	}
 }
 
 func testSweepVPCSecGroups(region string) error {
@@ -386,6 +515,124 @@ func testSweepComputeVolumes(region string) error {
 	}
 
 	return errors.Join(errs...)
+}
+
+// testSweepVPCProjects deletes the test projects of the account with their
+// DBaaS v1 datastores in testSweepDBaaSV1Region, whatever regions -sweep
+// lists. Keystone does not return the creation time of a project, so a
+// project takes the age of its datastores, and an empty one has no age
+// check: the acceptance resource group keeps runs from overlapping. A project
+// whose datastores are young, already deleting or fail to delete stays.
+func testSweepVPCProjects(_ string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), testSweepDeleteTimeout)
+	defer cancel()
+	client, err := testAccConfigFromEnv().GetSelVPCClient()
+	if err != nil {
+		return err
+	}
+	all, _, err := projects.List(client)
+	if err != nil {
+		return fmt.Errorf("list projects: %w", err)
+	}
+
+	// The datastores of all projects are deleted first and then awaited
+	// together, so that the slowest delete bounds the wait.
+	var errs []error
+	var sweeps []testSweepProject
+	for _, p := range all {
+		if !testSweepName(p.Name) {
+			continue
+		}
+		sweep, err := testSweepDBaaSV1Datastores(ctx, p)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("project %s (%s) stays: %w", p.ID, p.Name, err))
+
+			continue
+		}
+		sweeps = append(sweeps, sweep)
+	}
+	for _, sweep := range sweeps {
+		if err := sweep.waitDatastoresDeleted(ctx); err != nil {
+			errs = append(errs, fmt.Errorf("project %s (%s) stays: %w", sweep.project.ID, sweep.project.Name, err))
+
+			continue
+		}
+		log.Printf("[INFO] Sweeping project %s (%s)", sweep.project.ID, sweep.project.Name)
+		if _, err := projects.Delete(client, sweep.project.ID); err != nil {
+			errs = append(errs, fmt.Errorf("delete project %s (%s): %w", sweep.project.ID, sweep.project.Name, err))
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+// testSweepProject is a test project whose datastores are being deleted.
+type testSweepProject struct {
+	project    *projects.Project
+	client     *dbaas.API
+	datastores []string
+}
+
+// testSweepDBaaSV1Datastores deletes the datastores of a test project. It
+// fails when the project keeps a datastore: one that is not an old test
+// object, or one already PENDING_DELETE, which gets no second delete and no
+// wait because the service may keep it there for days.
+func testSweepDBaaSV1Datastores(ctx context.Context, p *projects.Project) (testSweepProject, error) {
+	sweep := testSweepProject{project: p}
+	selvpcClient, err := testAccConfigFromEnv().GetSelVPCClientWithProjectScope(p.ID)
+	if err != nil {
+		return sweep, err
+	}
+	endpoint, err := selvpcClient.Catalog.GetEndpoint(DBaaS, testSweepDBaaSV1Region)
+	if err != nil {
+		return sweep, err
+	}
+	sweep.client, err = dbaas.NewDBAASClient(selvpcClient.GetXAuthToken(), endpoint.URL)
+	if err != nil {
+		return sweep, err
+	}
+	datastores, err := sweep.client.Datastores(ctx, nil)
+	if err != nil {
+		return sweep, fmt.Errorf("list datastores: %w", err)
+	}
+
+	var errs []error
+	for _, ds := range datastores {
+		switch {
+		case !testSweepName(ds.Name) || !testSweepOld(ds.CreatedAt):
+			errs = append(errs, fmt.Errorf("datastore %s (%s) is not an old test datastore", ds.ID, ds.Name))
+		case ds.Status == dbaas.StatusPendingDelete:
+			errs = append(errs, fmt.Errorf("datastore %s (%s) is %s since %s", ds.ID, ds.Name, ds.Status, ds.UpdatedAt))
+		default:
+			log.Printf("[INFO] Sweeping datastore %s (%s, %s) of project %s", ds.ID, ds.Name, ds.Status, p.ID)
+			if err := sweep.client.DeleteDatastore(ctx, ds.ID); err != nil {
+				errs = append(errs, fmt.Errorf("delete datastore %s (%s): %w", ds.ID, ds.Name, err))
+
+				continue
+			}
+			sweep.datastores = append(sweep.datastores, ds.ID)
+		}
+	}
+
+	return sweep, errors.Join(errs...)
+}
+
+func (s testSweepProject) waitDatastoresDeleted(ctx context.Context) error {
+	for _, id := range s.datastores {
+		wait := &resource.StateChangeConf{
+			Pending:    []string{strconv.Itoa(http.StatusOK)},
+			Target:     []string{strconv.Itoa(http.StatusNotFound)},
+			Refresh:    waiters.DBaaSDatastoreV1DeleteStateRefreshFunc(ctx, s.client, id),
+			Timeout:    testSweepDeleteTimeout,
+			Delay:      10 * time.Second,
+			MinTimeout: 20 * time.Second,
+		}
+		if _, err := wait.WaitForStateContext(ctx); err != nil {
+			return fmt.Errorf("wait for deleted datastore %s: %w", id, err)
+		}
+	}
+
+	return nil
 }
 
 func testSweepVPCKeypairs(_ string) error {
