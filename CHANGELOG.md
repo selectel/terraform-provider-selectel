@@ -1,4 +1,4 @@
-## 9.6.0 (November 03, 2026)
+## 9.6.0 (November 3, 2026)
 
 FEATURES:
 
