@@ -199,6 +199,7 @@ func testAccIAMV1UserEnabled(userEmail string, enabled, extraRole bool) string {
     scope     = "account"
   }`
 	}
+
 	return fmt.Sprintf(`
 resource "selectel_iam_user_v1" "user_tf_acc_test_1" {
   email   = %q

@@ -177,8 +177,8 @@ github.com/selectel/globalrouter-go v1.2.1 h1:7daw9GX67h04gV1wfviIIveIUwS2ju56j2
 github.com/selectel/globalrouter-go v1.2.1/go.mod h1:3FlK0iJBZx8Lil3KOkOsU72yv7EcetdV7xNOvfX2+/U=
 github.com/selectel/go-selvpcclient/v5 v5.0.0 h1:jDlWiP61cFuZVcDslR7S1W/IWZAvEm8CZ9qvxczrax8=
 github.com/selectel/go-selvpcclient/v5 v5.0.0/go.mod h1:ul4sKOkZaO4RXCZVPgIOvNK96kF2bmR4xvr6oewVUec=
-github.com/selectel/iam-go v0.9.0 h1:iivGpZR4jHC3sSLWEY+vGPLjgM4kmSjPf1n4xa81yP8=
-github.com/selectel/iam-go v0.9.0/go.mod h1:OIAkW7MZK97YUm+uvUgYbgDhkI9SdzTCxwd4yZoOR1o=
+github.com/selectel/iam-go v0.10.0 h1:IiRTVQnPkMs4T5FE+6k/X/EWUcs0bhF56VOZ8F9f/TA=
+github.com/selectel/iam-go v0.10.0/go.mod h1:OIAkW7MZK97YUm+uvUgYbgDhkI9SdzTCxwd4yZoOR1o=
 github.com/selectel/images-go v0.1.0 h1:zaR+hJpyb0rhBpJzwNJnB8OMMirb1rkRRmj++YhrgMQ=
 github.com/selectel/images-go v0.1.0/go.mod h1:z8ZsA88iy6/q7HEuNBN+pSVPjEcsVTPocyONxqioCmU=
 github.com/selectel/mks-go v1.1.0 h1:puJW2uuleAwsVyJaaAeRBwrK8+1cQ8tL7deBjLOyToQ=
