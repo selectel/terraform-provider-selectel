@@ -51,14 +51,14 @@ func resourceDBaaSPostgreSQLLogicalReplicationSlotV1Create(ctx context.Context, 
 		return diag.FromErr(errCreatingObject(objectLogicalReplicationSlot, err))
 	}
 
+	d.SetId(slot.ID)
+
 	log.Printf("[DEBUG] waiting for slot %s to become 'ACTIVE'", slot.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
 	err = waiters.WaitForDBaaSLogicalReplicationSlotV1ActiveState(ctx, dbaasClient, slot.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectLogicalReplicationSlot, err))
 	}
-
-	d.SetId(slot.ID)
 
 	return resourceDBaaSPostgreSQLLogicalReplicationSlotV1Read(ctx, d, meta)
 }

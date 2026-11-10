@@ -14,6 +14,7 @@ func TestAccDBaaSUserV1ImportBasic(t *testing.T) {
 	userName := RandomWithPrefix("tf_acc_user")
 	userPassword := acctest.RandomWithPrefix("tf-acc-pass")
 	nodeCount := 1
+	rolesBlock := "roles = []"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -21,8 +22,8 @@ func TestAccDBaaSUserV1ImportBasic(t *testing.T) {
 		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDBaaSUserV1Basic(projectName, datastoreName, userName, userPassword, nodeCount),
-				Check:  testAccCheckSelectelImportEnv(resourceName),
+				Config: testAccDBaaSUserV1Basic(projectName, datastoreName, userName, userPassword, nodeCount, rolesBlock),
+				Check:  testAccCheckSelectelImportEnv(t, resourceName),
 			},
 			{
 				ResourceName:            resourceName,

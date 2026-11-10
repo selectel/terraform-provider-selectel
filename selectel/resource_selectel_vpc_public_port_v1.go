@@ -3,14 +3,16 @@ package selectel
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	publicnetapi "github.com/selectel/public-net-api-go/pkg/v1"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemaconfig"
 )
+
+var publicPortDocs = resourceDocs{Name: "public port"}
 
 func resourceVPCPublicPortV1() *schema.Resource {
 	return &schema.Resource{
@@ -21,41 +23,48 @@ func resourceVPCPublicPortV1() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVPCPublicPortV1ImportState,
 		},
-		Schema: map[string]*schema.Schema{
-			"region": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+		Identity: &schema.ResourceIdentity{
+			SchemaFunc: func() map[string]*schema.Schema {
+				return publicPortDocs.identitySchemaByID(exampleResourceID, publicPortIDFromControlPanel, publicPortRegionFromControlPanel)
 			},
-			"project_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
+		},
+		Description: "Creates and manages a direct public IP address (public port) in VPC using the v1 public API. " +
+			"For more information about direct public IP addresses, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud-servers/cloud-networks/direct-public-ip-addresses).",
+		Schema: publicPortDocs.withDocsHints(map[string]*schema.Schema{
+			"id":         publicPortDocs.idResourceSchema(),
+			"region":     publicPortDocs.regionResourceSchema(),
+			"project_id": publicPortDocs.projectIDResourceSchema(),
 			"network_id": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Unique identifier of the service network from which the public port is allocated.",
 			},
 			"ip_address": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Direct public IP address assigned to the public port.",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "",
+				Description: "Description of the public port.",
 			},
 			"subnet": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "CIDR of the subnet from which the public port IP address is allocated.",
 			},
 			"gateway": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "IP address of the subnet gateway.",
 			},
 			"admin_state_up": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Specifies if the port is administratively up.",
 			},
 			"security_group_ids": {
 				Type:     schema.TypeList,
@@ -65,8 +74,11 @@ func resourceVPCPublicPortV1() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				MaxItems: 20,
+				Description: "Unique identifiers of security groups associated with the public port. " +
+					"If not specified, the port gets the default security group of the project. " +
+					secGroupIDFromResource,
 			},
-		},
+		}),
 	}
 }
 
@@ -88,9 +100,8 @@ func resourceVPCPublicPortV1Create(
 	adminStateUp := d.Get("admin_state_up").(bool)
 	dto.AdminStateUp = &adminStateUp
 
-	securityGroupIDsVal := d.Get("security_group_ids")
-	if securityGroupIDsVal != nil {
-		dto.SecurityGroupIDs = expandStringList(securityGroupIDsVal.([]any))
+	if schemaconfig.IsSet(d, "security_group_ids") {
+		dto.SecurityGroupIDs = expandStringList(d.Get("security_group_ids").([]any))
 	}
 
 	log.Print(msgCreate(objectPublicPort, dto))
@@ -196,18 +207,9 @@ func resourceVPCPublicPortV1ImportState(
 	d *schema.ResourceData,
 	meta any,
 ) ([]*schema.ResourceData, error) {
-	config := meta.(*Config)
-
-	if config.ProjectID == "" {
-		return nil, fmt.Errorf("project_id must be set in your environment")
+	if err := importProjectRegion(d, meta); err != nil {
+		return nil, err
 	}
-
-	if config.Region == "" {
-		return nil, fmt.Errorf("region must be set in your environment")
-	}
-
-	_ = d.Set("project_id", config.ProjectID)
-	_ = d.Set("region", config.Region)
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -221,6 +223,8 @@ func fillVPCPublicPortData(port *publicnetapi.Port, d *schema.ResourceData) {
 	_ = d.Set("gateway", port.Gateway)
 	_ = d.Set("admin_state_up", port.AdminStateUp)
 	_ = d.Set("security_group_ids", port.SecurityGroupIDs)
+
+	setProjectRegionIdentity(d)
 }
 
 func expandStringList(raw []any) []string {

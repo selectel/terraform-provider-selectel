@@ -8,6 +8,8 @@ import (
 )
 
 func TestAccIAMV1UserImportBasic(t *testing.T) {
+	testAccIAMUsersPreCheck(t)
+
 	resourceName := "selectel_iam_user_v1.user_tf_acc_test_1"
 	userEmail := acctest.RandomWithPrefix("tf-acc") + "@example.com"
 

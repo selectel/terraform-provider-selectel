@@ -20,7 +20,7 @@ func TestAccDBaaSPostgreSQLDatastoreV1ImportBasic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDBaaSPostgreSQLDatastoreV1Basic(projectName, datastoreName, nodeCount),
-				Check:  testAccCheckSelectelImportEnv(resourceName),
+				Check:  testAccCheckSelectelImportEnv(t, resourceName),
 			},
 			{
 				ResourceName:      resourceName,

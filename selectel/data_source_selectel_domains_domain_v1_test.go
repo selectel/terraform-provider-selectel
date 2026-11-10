@@ -11,6 +11,8 @@ import (
 )
 
 func TestAccDomainsDomainV1DataSourceBasic(t *testing.T) {
+	testAccDomainsV1PreCheck(t)
+
 	testDomainName := fmt.Sprintf("%s.xyz", acctest.RandomWithPrefix("tf-acc"))
 
 	resource.Test(t, resource.TestCase{

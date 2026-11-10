@@ -2,13 +2,12 @@ package selectel
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
 )
 
 const (
@@ -17,9 +16,7 @@ const (
 )
 
 func TestAccMKSAvailableFeatureGatesV1Basic(t *testing.T) {
-	var project projects.Project
-
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
 	kubeVersionMinor, err := kubeVersionTrimToMinor(kubeVersion)
 	if err != nil {
@@ -27,14 +24,12 @@ func TestAccMKSAvailableFeatureGatesV1Basic(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testKubeOptionsV1BasicConfig(projectName, dataSourceFeatureGates, kubeVersion),
+				Config: testKubeOptionsV1BasicConfig(projectID, dataSourceFeatureGates, kubeVersion),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					resource.TestCheckResourceAttr(getDataSourceName(dataSourceFeatureGates), "feature_gates.0.kube_version", kubeVersionMinor),
 					testFeatureGatesIsNotEmpty(getDataSourceName(dataSourceFeatureGates)),
 				),
@@ -44,19 +39,15 @@ func TestAccMKSAvailableFeatureGatesV1Basic(t *testing.T) {
 }
 
 func TestAccMKSAvailableFeatureGatesV1NoFilter(t *testing.T) {
-	var project projects.Project
-
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testKubeOptionsV1ConfigNoFilter(projectName, dataSourceFeatureGates),
+				Config: testKubeOptionsV1ConfigNoFilter(projectID, dataSourceFeatureGates),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testFeatureGatesNoFilter(getDataSourceName(dataSourceFeatureGates)),
 				),
 			},
@@ -65,9 +56,7 @@ func TestAccMKSAvailableFeatureGatesV1NoFilter(t *testing.T) {
 }
 
 func TestAccMKSAvailableAdmissionControllersV1Basic(t *testing.T) {
-	var project projects.Project
-
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 	kubeVersion := testAccMKSClusterV1GetDefaultKubeVersion(t)
 	kubeVersionMinor, err := kubeVersionTrimToMinor(kubeVersion)
 	if err != nil {
@@ -75,14 +64,12 @@ func TestAccMKSAvailableAdmissionControllersV1Basic(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testKubeOptionsV1BasicConfig(projectName, dataSourceAdmissionControllers, kubeVersion),
+				Config: testKubeOptionsV1BasicConfig(projectID, dataSourceAdmissionControllers, kubeVersion),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					resource.TestCheckResourceAttr(getDataSourceName(dataSourceAdmissionControllers), "admission_controllers.0.kube_version", kubeVersionMinor),
 					testAdmissionControllersIsNotEmpty(getDataSourceName(dataSourceAdmissionControllers)),
 				),
@@ -92,19 +79,15 @@ func TestAccMKSAvailableAdmissionControllersV1Basic(t *testing.T) {
 }
 
 func TestAccMKSAvailableAdmissionControllersV1NoFilter(t *testing.T) {
-	var project projects.Project
-
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testKubeOptionsV1ConfigNoFilter(projectName, dataSourceAdmissionControllers),
+				Config: testKubeOptionsV1ConfigNoFilter(projectID, dataSourceAdmissionControllers),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAdmissionControllersNoFilter(getDataSourceName(dataSourceAdmissionControllers)),
 				),
 			},
@@ -204,33 +187,33 @@ func testAdmissionControllersNoFilter(n string) resource.TestCheckFunc {
 	}
 }
 
-func testKubeOptionsV1BasicConfig(projectName, dataSource, kubeVersion string) string {
+func testKubeOptionsV1BasicConfig(projectID, dataSource, kubeVersion string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "%s" "dt" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   region     = "ru-3"
   filter {
     kube_version = "%s"
   }
 }
-`, projectName, dataSource, kubeVersion)
+`, projectID, dataSource, kubeVersion)
 }
 
-func testKubeOptionsV1ConfigNoFilter(projectName, dataSource string) string {
+func testKubeOptionsV1ConfigNoFilter(projectID, dataSource string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "%s" "dt" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   region     = "ru-3"
 }
-`, projectName, dataSource)
+`, projectID, dataSource)
 }
 
 func getDataSourceName(dataSource string) string {

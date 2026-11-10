@@ -139,6 +139,7 @@ func resourceDBaaSDatastoreV1BaseSchema() map[string]*schema.Schema {
 				Type:         schema.TypeString,
 				ValidateFunc: validation.IsUUID,
 			},
+			Computed: true, // When creating a cluster without groups, the API itself sets the default group.
 		},
 	}
 }
@@ -166,6 +167,43 @@ func resourceDBaaSDatabaseV1BaseSchema() map[string]*schema.Schema {
 			ForceNew: true,
 		},
 		"status": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+	}
+}
+
+func resourceDBaaSV2DatastoreBaseSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"name": {
+			Type:     schema.TypeString,
+			Required: true,
+		},
+		"project_id": {
+			Type:     schema.TypeString,
+			Required: true,
+			ForceNew: true,
+		},
+		"region": {
+			Type:     schema.TypeString,
+			Required: true,
+			ForceNew: true,
+		},
+		"subnet_id": {
+			Type:     schema.TypeString,
+			Required: true,
+			ForceNew: true,
+		},
+		"type_id": {
+			Type:     schema.TypeString,
+			Required: true,
+			ForceNew: true,
+		},
+		"status": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"state": {
 			Type:     schema.TypeString,
 			Computed: true,
 		},

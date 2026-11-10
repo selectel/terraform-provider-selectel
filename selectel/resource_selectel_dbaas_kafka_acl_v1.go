@@ -55,14 +55,14 @@ func resourceDBaaSACLV1Create(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(errCreatingObject(objectACL, err))
 	}
 
+	d.SetId(acl.ID)
+
 	log.Printf("[DEBUG] waiting for acl %s to become 'ACTIVE'", acl.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
 	err = waiters.WaitForDBaaSACLV1ActiveState(ctx, dbaasClient, acl.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectACL, err))
 	}
-
-	d.SetId(acl.ID)
 
 	return resourceDBaaSACLV1Read(ctx, d, meta)
 }

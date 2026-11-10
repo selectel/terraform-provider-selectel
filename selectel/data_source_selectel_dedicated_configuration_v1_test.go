@@ -3,32 +3,27 @@ package selectel
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
-	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAccDedicatedConfigurationV1Basic(t *testing.T) {
-	var project projects.Project
-
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 	configurationName := "EL50-SSD"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDedicatedConfigurationV1Basic(projectName, configurationName),
+				Config: testAccDedicatedConfigurationV1Basic(projectID, configurationName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccDedicatedConfigurationV1Exists("data.selectel_dedicated_configuration_v1.server_configuration_tf_acc_test_1", configurationName),
 					resource.TestCheckResourceAttr("data.selectel_dedicated_configuration_v1.server_configuration_tf_acc_test_1", "configurations.0.name", configurationName),
 					resource.TestCheckResourceAttrSet("data.selectel_dedicated_configuration_v1.server_configuration_tf_acc_test_1", "configurations.0.config_name"),
@@ -71,18 +66,18 @@ func testAccDedicatedConfigurationV1Exists(
 	}
 }
 
-func testAccDedicatedConfigurationV1Basic(projectName, configurationName string) string {
+func testAccDedicatedConfigurationV1Basic(projectID, configurationName string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dedicated_configuration_v1" "server_configuration_tf_acc_test_1" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
 
   deep_filter = "{\"name\": \"%s\"}"
 }
-`, projectName, configurationName)
+`, projectID, configurationName)
 }
 
 func TestFilterDedicatedConfigurations(t *testing.T) {

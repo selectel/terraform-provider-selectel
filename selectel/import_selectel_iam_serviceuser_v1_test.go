@@ -10,7 +10,7 @@ import (
 func TestAccIAMV1ServiceUserImportBasic(t *testing.T) {
 	resourceName := "selectel_iam_serviceuser_v1.serviceuser_tf_acc_test_1"
 	serviceUserName := acctest.RandomWithPrefix("tf-acc")
-	serviceUserPassword := "A" + acctest.RandString(8) + "1"
+	serviceUserPassword := "A" + acctest.RandString(25) + "1!"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },

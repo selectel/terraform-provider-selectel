@@ -18,6 +18,7 @@ func TestAccVPCV2LicenseImportBasic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVPCV2LicenseBasic(projectName),
+				Check:  testAccCheckSelectelImportEnv(t, resourceName),
 			},
 			{
 				ResourceName:      resourceName,

@@ -62,7 +62,7 @@ func testAccIAMV1GroupMembershipBasic() string {
 	return `
 resource "selectel_iam_serviceuser_v1" "serviceuser_tf_acc_test_1" {
   name        = "test-service-user-1"
-  password    = "Qazwsxedc123"
+  password    = "Qazwsxedc123Qazwsxedc123Qaz!"
   role {
     role_name = "reader"
     scope = "account"
@@ -71,7 +71,7 @@ resource "selectel_iam_serviceuser_v1" "serviceuser_tf_acc_test_1" {
 
 resource "selectel_iam_serviceuser_v1" "serviceuser_tf_acc_test_2" {
   name        = "test-service-user-2"
-  password    = "Qazwsxedc123"
+  password    = "Qazwsxedc123Qazwsxedc123Qaz!"
   role {
     role_name = "reader"
     scope = "account"
@@ -100,7 +100,7 @@ func testAccIAMV1GroupMembershipUpdate() string {
 	return `
 resource "selectel_iam_serviceuser_v1" "serviceuser_tf_acc_test_1" {
   name        = "test-service-user-1"
-  password    = "Qazwsxedc123"
+  password    = "Qazwsxedc123Qazwsxedc123Qaz!"
   role {
     role_name = "reader"
     scope = "account"
@@ -109,7 +109,7 @@ resource "selectel_iam_serviceuser_v1" "serviceuser_tf_acc_test_1" {
 
 resource "selectel_iam_serviceuser_v1" "serviceuser_tf_acc_test_2" {
   name        = "test-service-user-2"
-  password    = "Qazwsxedc123"
+  password    = "Qazwsxedc123Qazwsxedc123Qaz!"
   role {
     role_name = "reader"
     scope = "account"

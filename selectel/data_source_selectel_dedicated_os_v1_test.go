@@ -3,30 +3,25 @@ package selectel
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
 )
 
 func TestAccDedicatedOSV1Basic(t *testing.T) {
-	var project projects.Project
-
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 	osName := "Ubuntu"
 	osVersion := "2204"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDedicatedOSV1Basic(projectName, osName, osVersion),
+				Config: testAccDedicatedOSV1Basic(projectID, osName, osVersion),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					testAccDedicatedOSV1Exists("data.selectel_dedicated_os_v1.os_tf_acc_test_1", osName, osVersion),
 					resource.TestCheckResourceAttr("data.selectel_dedicated_os_v1.os_tf_acc_test_1", "os.0.name", osName),
 					resource.TestCheckResourceAttr("data.selectel_dedicated_os_v1.os_tf_acc_test_1", "os.0.version_value", osVersion),
@@ -64,19 +59,19 @@ func testAccDedicatedOSV1Exists(
 	}
 }
 
-func testAccDedicatedOSV1Basic(projectName, osName, osVersion string) string {
+func testAccDedicatedOSV1Basic(projectID, osName, osVersion string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dedicated_os_v1" "os_tf_acc_test_1" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
 
   filter {
     name             = "%s"
     version_value    = "%s"
   }
 }
-`, projectName, osName, osVersion)
+`, projectID, osName, osVersion)
 }

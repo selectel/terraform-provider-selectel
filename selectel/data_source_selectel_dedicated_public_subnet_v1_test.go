@@ -3,30 +3,25 @@ package selectel
 import (
 	"fmt"
 	"net"
+	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	dedicated "github.com/selectel/dedicated-go/v2/pkg/v2"
-	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAccDedicatedPublicSubnetV1Basic(t *testing.T) {
-	var project projects.Project
-
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 	locationName := "MSK-2"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDedicatedPublicSubnetV1Basic(projectName, locationName),
+				Config: testAccDedicatedPublicSubnetV1Basic(projectID, locationName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVPCV2ProjectExists("selectel_vpc_project_v2.project_tf_acc_test_1", &project),
 					resource.TestCheckResourceAttr("data.selectel_dedicated_public_subnet_v1.public_subnet_tf_acc_test_1", "subnets.#", "0"),
 				),
 			},
@@ -34,27 +29,27 @@ func TestAccDedicatedPublicSubnetV1Basic(t *testing.T) {
 	})
 }
 
-func testAccDedicatedPublicSubnetV1Basic(projectName, locationName string) string {
+func testAccDedicatedPublicSubnetV1Basic(projectID, locationName string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_dedicated_location_v1" "location_tf_acc_test_1" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   filter {
     name = "%s"
   }
 }
 
 data "selectel_dedicated_public_subnet_v1" "public_subnet_tf_acc_test_1" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
 
   filter {
     location_id = "${data.selectel_dedicated_location_v1.location_tf_acc_test_1.locations.0.id}"
   }
 }
-`, projectName, locationName)
+`, projectID, locationName)
 }
 
 func Test_filterDedicatedPublicSubnets(t *testing.T) {

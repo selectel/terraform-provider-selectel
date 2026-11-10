@@ -3,6 +3,7 @@ package selectel
 const (
 	PrivateDNS         = "private-dns"
 	DBaaS              = "managed-database"
+	DBaaSv2            = "managed-database-v2"
 	MKS                = "managed-kubernetes"
 	CRaaS              = "container-registry"
 	IAM                = "iam"
@@ -13,4 +14,7 @@ const (
 	DataProtectV2      = "data-protectv2"
 	GlobalRouter       = "global-router"
 	PublicNetAPI       = "public-net-api"
+	BlockStorage       = "volumev3"
+	Image              = "image"
+	FileStorage        = "sharev2"
 )

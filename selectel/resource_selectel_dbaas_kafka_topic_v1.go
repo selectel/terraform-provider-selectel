@@ -52,14 +52,14 @@ func resourceDBaaSTopicV1Create(ctx context.Context, d *schema.ResourceData, met
 		return diag.FromErr(errCreatingObject(objectTopic, err))
 	}
 
+	d.SetId(topic.ID)
+
 	log.Printf("[DEBUG] waiting for topic %s to become 'ACTIVE'", topic.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
 	err = waiters.WaitForDBaaSTopicV1ActiveState(ctx, dbaasClient, topic.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectTopic, err))
 	}
-
-	d.SetId(topic.ID)
 
 	return resourceDBaaSTopicV1Read(ctx, d, meta)
 }

@@ -76,7 +76,7 @@ func TestAccDBaaSKafkaDatastoreV1Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("selectel_dbaas_kafka_datastore_v1.datastore_tf_acc_test_1", "flavor.0.vcpus", strconv.Itoa(2)),
 					resource.TestCheckResourceAttr("selectel_dbaas_kafka_datastore_v1.datastore_tf_acc_test_1", "flavor.0.ram", strconv.Itoa(8192)),
 					resource.TestCheckResourceAttr("selectel_dbaas_kafka_datastore_v1.datastore_tf_acc_test_1", "flavor.0.disk", strconv.Itoa(64)),
-					resource.TestCheckResourceAttr("selectel_dbaas_kafka_datastore_v1.datastore_tf_acc_test_1", "config.log.retention.ms", "1000"),
+					resource.TestCheckResourceAttr("selectel_dbaas_kafka_datastore_v1.datastore_tf_acc_test_1", "config.log.retention.ms", "10000"),
 					resource.TestCheckResourceAttr("selectel_dbaas_kafka_datastore_v1.datastore_tf_acc_test_1", "config.log.retention.bytes", "1024"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_kafka_datastore_v1.datastore_tf_acc_test_1", "connections.master"),
 					resource.TestCheckResourceAttrSet("selectel_dbaas_kafka_datastore_v1.datastore_tf_acc_test_1", "connections.MASTER"),
@@ -92,7 +92,7 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
 }
 
-resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
+resource "selectel_vpc_public_subnet_v2" "subnet_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
 }
@@ -111,7 +111,7 @@ resource "selectel_dbaas_kafka_datastore_v1" "datastore_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region = "ru-3"
   type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
-  subnet_id = "${selectel_vpc_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
+  subnet_id = "${selectel_vpc_public_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
   node_count = "%d"
   flavor {
     vcpus = 2
@@ -130,7 +130,7 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
 }
 
-resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
+resource "selectel_vpc_public_subnet_v2" "subnet_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
 }
@@ -149,7 +149,7 @@ resource "selectel_dbaas_kafka_datastore_v1" "datastore_tf_acc_test_1" {
 	project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
 	region = "ru-3"
 	type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
-	subnet_id = "${selectel_vpc_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
+	subnet_id = "${selectel_vpc_public_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
 	node_count = "%d"
 	flavor {
 	  vcpus = 2
@@ -169,7 +169,7 @@ resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
   name        = "%s"
 }
 
-resource "selectel_vpc_subnet_v2" "subnet_tf_acc_test_1" {
+resource "selectel_vpc_public_subnet_v2" "subnet_tf_acc_test_1" {
   project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
   region     = "ru-3"
 }
@@ -188,7 +188,7 @@ resource "selectel_dbaas_kafka_datastore_v1" "datastore_tf_acc_test_1" {
 	project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
 	region = "ru-3"
 	type_id = "${data.selectel_dbaas_datastore_type_v1.dt.datastore_types[0].id}"
-	subnet_id = "${selectel_vpc_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
+	subnet_id = "${selectel_vpc_public_subnet_v2.subnet_tf_acc_test_1.subnet_id}"
 	node_count = "%d"
 	flavor {
 	  vcpus = 2

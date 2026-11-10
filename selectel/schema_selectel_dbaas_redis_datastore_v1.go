@@ -44,6 +44,10 @@ func resourceDBaaSRedisDatastoreV1Schema() map[string]*schema.Schema {
 					Type:     schema.TypeInt,
 					Computed: true,
 				},
+				"disk_type": {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
 			},
 		},
 	}

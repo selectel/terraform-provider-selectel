@@ -76,11 +76,12 @@ func testAccCloudPrivateDNSServiceV1Basic(region, projectID string, enableRecurs
 	return fmt.Sprintf(`
 provider openstack {
 	tenant_id = "%s"
+	region    = "%s"
 }
 
 resource "openstack_networking_network_v2" "network_one" {
  	region = "%s"
-  	name = "network_one"
+  	name = "tf-acc-network"
 }
 
 resource "openstack_networking_subnet_v2" "subnet" {
@@ -88,7 +89,7 @@ resource "openstack_networking_subnet_v2" "subnet" {
   cidr       = "192.168.1.0/24"
   ip_version = 4
   enable_dhcp = false
-  name = "subnet"
+  name = "tf-acc-subnet"
 }
 
 resource "selectel_private_dns_service_v1" "service" {
@@ -97,7 +98,7 @@ resource "selectel_private_dns_service_v1" "service" {
     network_id = openstack_networking_network_v2.network_one.id
 	is_recursor_enabled = %t
 }
-`, projectID, region, region, projectID, enableRecursor)
+`, projectID, region, region, region, projectID, enableRecursor)
 }
 
 func testAccCloudPrivateDNSServiceV1Destroy(s *terraform.State) error {

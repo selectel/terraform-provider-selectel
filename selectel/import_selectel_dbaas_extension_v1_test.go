@@ -24,7 +24,7 @@ func TestAccDBaaSExtensionV1ImportBasic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDBaaSExtensionV1Basic(projectName, datastoreName, userName, userPassword, databaseName, extensionName, nodeCount),
-				Check:  testAccCheckSelectelImportEnv(resourceName),
+				Check:  testAccCheckSelectelImportEnv(t, resourceName),
 			},
 			{
 				ResourceName:      resourceName,

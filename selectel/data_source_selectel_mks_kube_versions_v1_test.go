@@ -3,22 +3,21 @@ package selectel
 import (
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccMKSKubeVersionsV1DataSourceBasic(t *testing.T) {
-	projectName := acctest.RandomWithPrefix("tf-acc")
+	projectID := os.Getenv("INFRA_PROJECT_ID")
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccSelectelPreCheck(t) },
+		PreCheck:          func() { testAccSelectelPreCheckWithProjectID(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVPCV2ProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMKSKubeVersionsV1Basic(projectName),
+				Config: testAccMKSKubeVersionsV1Basic(projectID),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMKSKubeVersionsV1("data.selectel_mks_kube_versions_v1.kube_versions_tf_acc_test_1"),
 				),
@@ -47,15 +46,15 @@ func testAccCheckMKSKubeVersionsV1(name string) resource.TestCheckFunc {
 	}
 }
 
-func testAccMKSKubeVersionsV1Basic(projectName string) string {
+func testAccMKSKubeVersionsV1Basic(projectID string) string {
 	return fmt.Sprintf(`
-resource "selectel_vpc_project_v2" "project_tf_acc_test_1" {
-  name        = "%s"
+locals {
+  project_id = "%s"
 }
 
 data "selectel_mks_kube_versions_v1" "kube_versions_tf_acc_test_1" {
-  project_id = "${selectel_vpc_project_v2.project_tf_acc_test_1.id}"
+  project_id = local.project_id
   region     = "ru-3"
 }
-`, projectName)
+`, projectID)
 }

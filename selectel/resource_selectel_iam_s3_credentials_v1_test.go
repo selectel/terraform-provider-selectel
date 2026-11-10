@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/selectel/iam-go/iamerrors"
 	"github.com/selectel/iam-go/service/s3credentials"
 )
 
@@ -17,7 +18,7 @@ func TestAccIAMV1S3CredentialsBasic(t *testing.T) {
 	s3CredsName := acctest.RandomWithPrefix("tf-acc")
 	projectName := acctest.RandomWithPrefix("tf-acc")
 	userName := acctest.RandomWithPrefix("tf-acc")
-	userPassword := "A" + acctest.RandString(8) + "1"
+	userPassword := "A" + acctest.RandString(25) + "1!"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccSelectelPreCheck(t) },
@@ -50,7 +51,13 @@ func testAccCheckIAMV1S3CredentialsDestroy(s *terraform.State) error {
 			continue
 		}
 
-		response, _ := iamClient.S3Credentials.List(context.Background(), rs.Primary.Attributes["user_id"])
+		response, err := iamClient.S3Credentials.List(context.Background(), rs.Primary.Attributes["user_id"])
+		if errors.Is(err, iamerrors.ErrUserNotFound) {
+			continue
+		}
+		if err != nil {
+			return fmt.Errorf("error listing s3 credentials: %w", err)
+		}
 		for _, cred := range response.Credentials {
 			if cred.AccessKey == rs.Primary.ID {
 				return errors.New("s3 credentials still exist")

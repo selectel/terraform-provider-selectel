@@ -54,14 +54,14 @@ func resourceDBaaSDatabaseV1Create(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(errCreatingObject(objectDatabase, err))
 	}
 
+	d.SetId(database.ID)
+
 	log.Printf("[DEBUG] waiting for database %s to become 'ACTIVE'", database.ID)
 	timeout := d.Timeout(schema.TimeoutCreate)
 	err = waiters.WaitForDBaaSDatabaseV1ActiveState(ctx, dbaasClient, database.ID, timeout)
 	if err != nil {
 		return diag.FromErr(errCreatingObject(objectDatabase, err))
 	}
-
-	d.SetId(database.ID)
 
 	return resourceDBaaSDatabaseV1Read(ctx, d, meta)
 }

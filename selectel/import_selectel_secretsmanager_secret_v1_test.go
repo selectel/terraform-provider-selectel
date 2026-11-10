@@ -29,7 +29,7 @@ func TestAccSecretsManagerSecretV1ImportBasic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSecretsManagerSecretV1WithoutProjectBasic(secretKey, secretDescription, secretValue, projectID),
-				Check:  testAccCheckSelectelImportEnv(resourceName),
+				Check:  testAccCheckSelectelImportEnv(t, resourceName),
 			},
 			{
 				ResourceName:            resourceName,
@@ -69,7 +69,7 @@ func testAccCheckSecretsManagerV1SecretDestroy(s *terraform.State) error {
 
 		_, key, _ := resourceSecretsManagerSecretV1ParseID(rs.Primary.ID)
 		_, err := smImportClient.Secrets.Get(context.Background(), key)
-		if !errors.Is(err, secretsmanagererrors.ErrBadRequestStatusText) {
+		if !errors.Is(err, secretsmanagererrors.ErrNotFoundStatusText) {
 			return errors.New("secret still exists")
 		}
 	}
