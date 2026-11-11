@@ -1,3 +1,9 @@
+## 9.7.0 (November 11, 2026)
+
+FEATURES:
+
+* Add the `enabled` argument to `selectel_iam_user_v1` to enable and disable local panel users ([#431](https://github.com/selectel/terraform-provider-selectel/pull/431)).
+
 ## 9.6.0 (November 3, 2026)
 
 FEATURES:
