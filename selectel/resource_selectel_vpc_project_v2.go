@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/selectel/go-selvpcclient/v5/selvpcclient/quotamanager/quotas"
 	"github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/projects"
+	resellQuotas "github.com/selectel/go-selvpcclient/v5/selvpcclient/resell/v2/quotas"
 )
 
 func resourceVPCProjectV2() *schema.Resource {
@@ -19,7 +20,7 @@ func resourceVPCProjectV2() *schema.Resource {
 		UpdateContext: resourceVPCProjectV2Update,
 		DeleteContext: resourceVPCProjectV2Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceVPCProjectV2ImportState,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -208,7 +209,42 @@ func resourceVPCProjectV2Read(_ context.Context, d *schema.ResourceData, meta an
 		log.Print(errSettingComplexAttr("all_quotas", err))
 	}
 
+	if v, ok := d.GetOk("quotas"); ok {
+		managedQuotas := resourceVPCProjectV2ManagedQuotas(v.(*schema.Set), project.Quotas)
+		if err := d.Set("quotas", flattenVPCProjectV2Quotas(managedQuotas)); err != nil {
+			log.Print(errSettingComplexAttr("quotas", err))
+		}
+	}
+
 	return nil
+}
+
+func resourceVPCProjectV2ManagedQuotas(managed *schema.Set, apiQuotas []resellQuotas.Quota) []resellQuotas.Quota {
+	keys := make(map[string]struct{})
+	for _, q := range managed.List() {
+		quota := q.(map[string]any)
+		name := quota["resource_name"].(string)
+		for _, rq := range quota["resource_quotas"].(*schema.Set).List() {
+			entity := rq.(map[string]any)
+			keys[name+"/"+entity["region"].(string)+"/"+entity["zone"].(string)] = struct{}{}
+		}
+	}
+
+	var result []resellQuotas.Quota
+	for _, q := range apiQuotas {
+		var entities []resellQuotas.ResourceQuotaEntity
+		for _, rq := range q.ResourceQuotasEntities {
+			if _, ok := keys[q.Name+"/"+rq.Region+"/"+rq.Zone]; ok {
+				entities = append(entities, rq)
+			}
+		}
+		if len(entities) > 0 {
+			q.ResourceQuotasEntities = entities
+			result = append(result, q)
+		}
+	}
+
+	return result
 }
 
 func resourceVPCProjectV2Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
@@ -292,4 +328,46 @@ func resourceVPCProjectV2Delete(_ context.Context, d *schema.ResourceData, meta 
 	}
 
 	return nil
+}
+
+func resourceVPCProjectV2ImportState(_ context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
+	config := meta.(*Config)
+	selvpcClient, err := config.GetSelVPCClient()
+	if err != nil {
+		return nil, fmt.Errorf("can't get selvpc client for project object: %w", err)
+	}
+
+	log.Print(msgImport(objectProject, d.Id()))
+	project, _, err := projects.Get(selvpcClient, d.Id())
+	if err != nil {
+		return nil, errGettingObject(objectProject, d.Id(), err)
+	}
+
+	if err := d.Set("quotas", flattenVPCProjectV2Quotas(project.Quotas)); err != nil {
+		return nil, fmt.Errorf("error setting quotas on import: %w", err)
+	}
+
+	return []*schema.ResourceData{d}, nil
+}
+
+func flattenVPCProjectV2Quotas(quotas []resellQuotas.Quota) []any {
+	result := make([]any, 0, len(quotas))
+
+	for _, q := range quotas {
+		rq := make([]any, 0, len(q.ResourceQuotasEntities))
+		for _, e := range q.ResourceQuotasEntities {
+			rq = append(rq, map[string]any{
+				"region": e.Region,
+				"zone":   e.Zone,
+				"value":  e.Value,
+			})
+		}
+
+		result = append(result, map[string]any{
+			"resource_name":   q.Name,
+			"resource_quotas": schema.NewSet(hashResourceQuotas, rq),
+		})
+	}
+
+	return result
 }
