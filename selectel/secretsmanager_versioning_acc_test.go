@@ -24,7 +24,7 @@ func TestAccSecretsManagerVersioning(t *testing.T) {
 				rotated = testAccSecretsManagerSecretV1BasicConfig(projectName, name, "versioning", "rotated-value")
 				address = "selectel_secretsmanager_secret_v1.secret_tf_acc_test_1"
 			}
-			var steps []resource.TestStep
+			steps := make([]resource.TestStep, 0, 6)
 			for _, step := range []struct {
 				config  string
 				pin     int

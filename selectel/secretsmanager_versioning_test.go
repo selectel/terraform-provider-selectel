@@ -46,6 +46,7 @@ func testSecretsManagerServer(t *testing.T, requests []secretsManagerRequest) *C
 					map[string]any{"type": CertificateManager, "endpoints": []any{map[string]string{"interface": "public", "region": "ru-1", "region_id": "ru-1", "url": endpoint + "/cm"}}},
 				},
 			}}))
+
 			return
 		}
 		i := int(index.Add(1)) - 1
@@ -76,6 +77,7 @@ func testSecretsManagerServer(t *testing.T, requests []secretsManagerRequest) *C
 		server.Close()
 		assert.Equal(t, len(requests), int(index.Load()), "all API requests must be consumed")
 	})
+
 	return &Config{AuthURL: endpoint + "/v3", AuthRegion: "ru-1", Username: "user", Password: "test-password", DomainName: "domain", ProjectID: "project"}
 }
 
@@ -98,6 +100,7 @@ func testSecretsManagerVersionResource(kind string) secretsManagerVersionResourc
 			id: "certificate-id", path: "/cm/v1/cert/certificate-id", payload: "private_key",
 		}
 	}
+
 	return secretsManagerVersionResource{
 		resource: resourceSecretsManagerSecretV1(),
 		config:   map[string]any{"key": "test", "project_id": "project", "value": "old-value", "description": "old-description"},
@@ -109,6 +112,7 @@ func testSecretsManagerVersionResponse(kind string, version int) string {
 	if kind == "certificate" {
 		return fmt.Sprintf(`{"id":"certificate-id","name":"test","version":%d}`, version)
 	}
+
 	return fmt.Sprintf(`{"name":"test","description":"old-description","version":{"version_id":%d,"created_at":"2026-01-01","value":"b2xkLXZhbHVl"}}`, version)
 }
 
@@ -116,6 +120,7 @@ func testSecretsManagerUploadResponse(kind string, version int) string {
 	if kind == "certificate" {
 		return testSecretsManagerVersionResponse(kind, version)
 	}
+
 	return fmt.Sprintf(`{"version_id":%d,"created_at":"2026-01-01"}`, version)
 }
 
@@ -125,6 +130,7 @@ func testSecretsManagerVersionState(t *testing.T, fixture secretsManagerVersionR
 	d.SetId(fixture.id)
 	require.NoError(t, d.Set("version", version))
 	require.NoError(t, d.Set("current_version", pin))
+
 	return d.State()
 }
 
@@ -136,6 +142,7 @@ func testSecretsManagerApply(t *testing.T, fixture secretsManagerVersionResource
 	next, diags := fixture.resource.Apply(context.Background(), state, diff, meta)
 	require.Equal(t, wantError, diags.HasError(), "%+v", diags)
 	require.NotNil(t, next)
+
 	return next
 }
 
