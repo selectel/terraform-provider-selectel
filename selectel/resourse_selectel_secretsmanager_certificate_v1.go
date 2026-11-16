@@ -7,6 +7,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/selectel/secretsmanager-go/secretsmanagererrors"
 	"github.com/selectel/secretsmanager-go/service/certs"
 )
 
@@ -127,11 +129,22 @@ func resourceSecretsManagerCertificateV1() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 			},
+			"current_version": {
+				Description:  "desired active version; 0 automatically activates new versions, positive values pin an existing version",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      0,
+				ValidateFunc: validation.IntAtLeast(0),
+			},
 		},
 	}
 }
 
 func resourceSecretsManagerCertificateV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	if d.Get("current_version").(int) > 1 {
+		return diag.Errorf("current_version must be 0 or 1 when creating a certificate")
+	}
+
 	cl, diagErr := getSecretsManagerClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -159,6 +172,7 @@ func resourceSecretsManagerCertificateV1Create(ctx context.Context, d *schema.Re
 	}
 
 	d.SetId(createdCert.ID)
+	d.Set("version", createdCert.Version)
 
 	return resourceSecretsManagerCertificateV1Read(ctx, d, meta)
 }
@@ -170,7 +184,7 @@ func resourceSecretsManagerCertificateV1Read(ctx context.Context, d *schema.Reso
 	}
 
 	log.Print(msgGet(objectCertificate, d.Id()))
-	cert, errGet := cl.Certificates.Get(ctx, d.Get("id").(string))
+	cert, errGet := cl.Certificates.Get(ctx, d.Id())
 	if errGet != nil {
 		return diag.FromErr(errGettingObject(objectCertificate, d.Id(), errGet))
 	}
@@ -180,6 +194,9 @@ func resourceSecretsManagerCertificateV1Read(ctx context.Context, d *schema.Reso
 	d.Set("serial", cert.Serial)
 	d.Set("validity", convertSMValidityToList(cert.Validity))
 	d.Set("version", cert.Version)
+	if d.Get("current_version").(int) > 0 {
+		d.Set("current_version", cert.Version)
+	}
 	// Set fields in case called from resourceSecretsManagerCertificateV1ImportState.
 	d.Set("name", cert.Name)
 	d.Set("id", cert.ID)
@@ -190,6 +207,7 @@ func resourceSecretsManagerCertificateV1Read(ctx context.Context, d *schema.Reso
 func resourceSecretsManagerCertificateV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	cl, diagErr := getSecretsManagerClient(d, meta)
 	if diagErr != nil {
+		d.Partial(true)
 		return diagErr
 	}
 
@@ -200,10 +218,12 @@ func resourceSecretsManagerCertificateV1Update(ctx context.Context, d *schema.Re
 
 		errUpd := cl.Certificates.UpdateName(ctx, d.Id(), newName)
 		if errUpd != nil {
+			d.Partial(true)
 			return diag.FromErr(errUpdatingObject(objectCertificate, d.Id(), errUpd))
 		}
 	}
 
+	currentVersion := d.Get("current_version").(int)
 	if d.HasChange("certificates") || d.HasChange("private_key") {
 		rawCertificates := d.Get("certificates").([]any)
 		certificates := convertToStringSlice(rawCertificates)
@@ -217,9 +237,37 @@ func resourceSecretsManagerCertificateV1Update(ctx context.Context, d *schema.Re
 
 		log.Print(msgUpdate(objectCertificate, d.Id(), "updated pem"))
 
-		errUpd := cl.Certificates.UpdateVersion(ctx, d.Id(), upd)
+		version, errUpd := cl.Certificates.CreateVersion(ctx, d.Id(), upd, currentVersion == 0)
 		if errUpd != nil {
+			restoreSecretsManagerInputs(d, "certificates", "private_key", "current_version")
 			return diag.FromErr(errUpdatingObject(objectCertificate, d.Id(), errUpd))
+		}
+		if currentVersion == 0 {
+			d.Set("version", version.Version)
+		}
+	}
+
+	if currentVersion > 0 {
+		cert, err := cl.Certificates.Get(ctx, d.Id())
+		if err != nil {
+			restoreSecretsManagerInputs(d, "current_version")
+			return diag.FromErr(errGettingObject(objectCertificate, d.Id(), err))
+		}
+		d.Set("version", cert.Version)
+		d.Set("current_version", cert.Version)
+		if cert.Version != int64(currentVersion) {
+			activated, err := cl.Certificates.ActivateVersion(ctx, d.Id(), uint64(currentVersion))
+			if errors.Is(err, secretsmanagererrors.ErrConflictStatusText) {
+				refreshed := resourceSecretsManagerCertificateV1Read(ctx, d, meta)
+				if !refreshed.HasError() && d.Get("version").(int) == currentVersion {
+					return nil
+				}
+			}
+			if err != nil {
+				return diag.FromErr(errUpdatingObject(objectCertificate, d.Id(), err))
+			}
+			d.Set("version", activated.Version)
+			d.Set("current_version", activated.Version)
 		}
 	}
 

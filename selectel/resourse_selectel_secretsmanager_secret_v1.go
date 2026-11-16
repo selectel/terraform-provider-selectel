@@ -9,6 +9,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/selectel/secretsmanager-go/secretsmanagererrors"
 	"github.com/selectel/secretsmanager-go/service/secrets"
 )
 
@@ -61,11 +63,27 @@ func resourceSecretsManagerSecretV1() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
+			"version": {
+				Description: "active version of the secret",
+				Type:        schema.TypeInt,
+				Computed:    true,
+			},
+			"current_version": {
+				Description:  "desired active version; 0 automatically activates new versions, positive values pin an existing version",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      0,
+				ValidateFunc: validation.IntAtLeast(0),
+			},
 		},
 	}
 }
 
 func resourceSecretsManagerSecretV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	if d.Get("current_version").(int) > 1 {
+		return diag.Errorf("current_version must be 0 or 1 when creating a secret")
+	}
+
 	cl, diagErr := getSecretsManagerClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -90,6 +108,7 @@ func resourceSecretsManagerSecretV1Create(ctx context.Context, d *schema.Resourc
 
 	projectID := d.Get("project_id").(string)
 	d.SetId(resourceSecretV1BuildID(projectID, key))
+	d.Set("version", 1)
 
 	return resourceSecretsManagerSecretV1Read(ctx, d, meta)
 }
@@ -119,6 +138,10 @@ func resourceSecretsManagerSecretV1Read(ctx context.Context, d *schema.ResourceD
 		d.Set("value", "UNKNOWN")
 	}
 	d.Set("created_at", secret.Version.CreatedAt)
+	d.Set("version", secret.Version.VersionID)
+	if d.Get("current_version").(int) > 0 {
+		d.Set("current_version", secret.Version.VersionID)
+	}
 
 	return nil
 }
@@ -144,22 +167,60 @@ func resourceSecretsManagerSecretV1Delete(ctx context.Context, d *schema.Resourc
 func resourceSecretsManagerSecretV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	cl, diagErr := getSecretsManagerClient(d, meta)
 	if diagErr != nil {
+		d.Partial(true)
 		return diagErr
 	}
 
 	key := d.Get("key").(string)
-	desc := d.Get("description").(string)
-
-	secret := secrets.UserSecret{
-		Key:         key,
-		Description: desc,
+	if d.HasChange("description") {
+		secret := secrets.UserSecret{
+			Key:         key,
+			Description: d.Get("description").(string),
+		}
+		log.Print(msgUpdate(objectSecret, d.Id(), "updated description"))
+		if err := cl.Secrets.Update(ctx, secret); err != nil {
+			d.Partial(true)
+			return diag.FromErr(errUpdatingObject(objectSecret, d.Id(), err))
+		}
 	}
 
-	log.Print(msgUpdate(objectSecret, d.Id(), secret))
+	currentVersion := d.Get("current_version").(int)
+	if d.HasChange("value") {
+		version, err := cl.Secrets.CreateVersion(ctx, key, d.Get("value").(string), currentVersion == 0)
+		if err != nil {
+			restoreSecretsManagerInputs(d, "value", "current_version")
+			return diag.FromErr(errUpdatingObject(objectSecret, d.Id(), err))
+		}
+		if currentVersion == 0 {
+			d.Set("version", version.VersionID)
+			d.Set("created_at", version.CreatedAt)
+		}
+	}
 
-	errUpd := cl.Secrets.Update(ctx, secret)
-	if errUpd != nil {
-		return diag.FromErr(errUpdatingObject(objectSecret, d.Id(), errUpd))
+	if currentVersion > 0 {
+		secret, err := cl.Secrets.Get(ctx, key)
+		if err != nil {
+			restoreSecretsManagerInputs(d, "current_version")
+			return diag.FromErr(errGettingObject(objectSecret, d.Id(), err))
+		}
+		d.Set("version", secret.Version.VersionID)
+		d.Set("current_version", secret.Version.VersionID)
+		d.Set("created_at", secret.Version.CreatedAt)
+		if secret.Version.VersionID != uint(currentVersion) {
+			activated, err := cl.Secrets.ActivateVersion(ctx, key, uint64(currentVersion))
+			if errors.Is(err, secretsmanagererrors.ErrConflictStatusText) {
+				refreshed := resourceSecretsManagerSecretV1Read(ctx, d, meta)
+				if !refreshed.HasError() && d.Get("version").(int) == currentVersion {
+					return nil
+				}
+			}
+			if err != nil {
+				return diag.FromErr(errUpdatingObject(objectSecret, d.Id(), err))
+			}
+			d.Set("version", activated.VersionID)
+			d.Set("current_version", activated.VersionID)
+			d.Set("created_at", activated.CreatedAt)
+		}
 	}
 
 	return resourceSecretsManagerSecretV1Read(ctx, d, meta)

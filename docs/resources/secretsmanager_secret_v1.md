@@ -29,11 +29,45 @@ resource "selectel_secretsmanager_secret_v1" "secret_1" {
 
 * `description` - (Optional) Secret description.
 
+* `current_version` - (Optional) Desired active version. Defaults to `0` (automatic activation on value changes). Positive values select an existing version. Must be non-negative; only `0` or `1` is valid when creating a secret.
+
+## Version Management
+
+Changing `value` creates a new version. With `current_version = 0`, the new version becomes active. Changing only `description` does not create a version.
+
+To roll back, set `current_version` to an existing version number and apply. Keep `value` unchanged during rollback: it represents the last value uploaded by Terraform, not necessarily the active version's value. The provider does not replace it with the rolled-back value during refresh.
+
+When `current_version` is positive, changing `value` uploads an **inactive** version and keeps the selected version active. To activate the uploaded version, set `current_version` to its version number in a subsequent apply. Setting `current_version` back to `0` leaves the active version unchanged; subsequent value changes activate their new versions.
+
+`version` reports the observed active version, not the latest uploaded version. With a positive `current_version`, refresh detects external activation changes and the next apply restores the configured version. With `0`, external activation changes are accepted.
+
+Versions cannot be deleted individually through this resource. Destroying the resource deletes the entire secret, including its versions.
+
+### Pin or roll back an existing secret
+
+```terraform
+# Apply this change to an existing secret. Keep its last uploaded value unchanged.
+# Version 1 also exists immediately after creation.
+resource "selectel_secretsmanager_secret_v1" "secret_1" {
+  key             = "secret"
+  value           = "verysecret"
+  project_id      = selectel_vpc_project_v2.project_1.id
+  description     = "secret from .tf"
+  current_version = 1
+}
+
+# Changing value while pinned uploads an inactive version.
+# Set current_version to that version number in a subsequent apply to activate it.
+# Set current_version to 0 to automatically activate future value changes.
+```
+
 ## Attributes Reference
 
-* `created_at` - Time when the secret was created.
+* `created_at` - Time when the active secret version was created.
 
 * `name` - Secret name, same as the secret key.
+
+* `version` - Active secret version number (computed).
 
 ## Import
 
