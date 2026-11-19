@@ -16,7 +16,7 @@ import (
 
 func resourceSecretsManagerSecretV1() *schema.Resource {
 	return &schema.Resource{
-		Description: "represents a Secret — entity from SecretsManager service",
+		Description: "Creates and manages a secret in Secrets Manager using public API v1.",
 
 		CreateContext: resourceSecretsManagerSecretV1Create,
 		ReadContext:   resourceSecretsManagerSecretV1Read,
@@ -29,47 +29,47 @@ func resourceSecretsManagerSecretV1() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"key": {
-				Description: "unique key,name of the secret",
+				Description: "Secret name, unique within the project. Must contain 1 to 255 ASCII letters, digits, underscores, or hyphens. Changing this value recreates the secret and deletes all its versions.",
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 			},
 			"description": {
-				Description: "optional description of the secret",
+				Description: "Secret description. Defaults to an empty string. Maximum length is 1024 characters; each character must use at most three UTF-8 bytes. Changing only the description does not create a version.",
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
 			},
 			"value": {
-				Description: "secret value, e.g. password, API key, certificate key, or other",
+				Description: "Sensitive secret value as non-empty plain UTF-8 text, up to 262144 bytes. The SDK handles Base64 encoding. Changing this value creates a version; a positive current_version leaves the uploaded version inactive. Refresh and rollback preserve the last uploaded value. Import does not retrieve plaintext and sets an absent value to UNKNOWN; supply value in the configuration before applying.",
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
 				ForceNew:    false, // otherwise, will replace existing secret if you import it
 			},
 			"project_id": {
-				Description: "id of a project where secret is used",
+				Description: "Unique identifier of the associated project. Changing this value recreates the secret and deletes all its versions.",
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 			},
 			"name": {
-				Description: "computed name of the secret same as key",
+				Description: "Secret name, equal to key.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"created_at": {
-				Description: "time when the secret was created",
+				Description: "Creation time of the active secret version in RFC3339 format.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"version": {
-				Description: "active version of the secret",
+				Description: "Active secret version number, not necessarily the latest uploaded version.",
 				Type:        schema.TypeInt,
 				Computed:    true,
 			},
 			"current_version": {
-				Description:  "desired active version; 0 automatically activates new versions, positive values pin an existing version",
+				Description:  "Desired active version. Defaults to 0, which automatically activates new versions when value changes. Positive values pin an existing version. Must be non-negative; only 0 or 1 is valid on creation. Resetting to 0 does not immediately change the active version.",
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      0,

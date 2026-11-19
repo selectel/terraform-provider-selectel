@@ -14,7 +14,7 @@ import (
 
 func resourceSecretsManagerCertificateV1() *schema.Resource {
 	return &schema.Resource{
-		Description: "represents a Certificate — entity from SecretsManager service",
+		Description: "Creates and manages a certificate in Certificates Manager using public API v1.",
 
 		CreateContext: resourceSecretsManagerCertificateV1Create,
 		ReadContext:   resourceSecretsManagerCertificateV1Read,
@@ -26,33 +26,33 @@ func resourceSecretsManagerCertificateV1() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Description: "name of the certificate",
+				Description: "Certificate name. Changing only the name does not create a version.",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"certificates": {
-				Description: "ca_chain list of public certs for certificate",
+				Description: "PEM certificate chain. Changing certificates or private_key uploads both configured values as a new version; current_version controls activation.",
 				Type:        schema.TypeList,
 				Elem: &schema.Schema{
-					Description: "certificate — that must begin with -----BEGIN CERTIFICATE----- and end with -----END CERTIFICATE-----",
+					Description: "PEM certificate beginning with -----BEGIN CERTIFICATE----- and ending with -----END CERTIFICATE-----.",
 					Type:        schema.TypeString,
 				},
 				Required: true,
 			},
 			"private_key": {
-				Description: "that should start with -----BEGIN PRIVATE KEY----- and end with -----END PRIVATE KEY-----", // nosemgrep: generic.secrets.gitleaks.private-key.private-key
+				Description: "PEM-encoded private key matching the primary certificate, in PKCS#8, PKCS#1, or EC format. Changing the key uploads a new version with the configured certificates.", // nosemgrep: generic.secrets.gitleaks.private-key.private-key
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
 			},
 			"project_id": {
-				Description: "id of a project where secret is used",
+				Description: "Unique identifier of the associated project. Changing this creates a new certificate and deletes the previous certificate and all its versions.",
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 			},
 			"dns_names": {
-				Description: "computed list of Subject Alternative Names",
+				Description: "Domain names covered by the active leaf certificate. The common name is returned when Subject Alternative Names are absent.",
 				Type:        schema.TypeList,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -60,12 +60,12 @@ func resourceSecretsManagerCertificateV1() *schema.Resource {
 				Computed: true,
 			},
 			"id": {
-				Description: "computed id of a certificate",
+				Description: "Unique identifier of the certificate.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"issued_by": {
-				Description: "information that is incorporated into certificate",
+				Description: "Active certificate issuer information: country, locality, serial_number, and street_address.",
 				Type:        schema.TypeSet,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -99,12 +99,12 @@ func resourceSecretsManagerCertificateV1() *schema.Resource {
 				Computed: true,
 			},
 			"serial": {
-				Description: "number written in the certificate that was chosen by the CA which issued the certificate",
+				Description: "Active certificate serial number assigned by its issuing Certificate Authority.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"validity": {
-				Description: "validity of a certificate in terms of notBefore and notAfter timestamps.",
+				Description: "Active certificate validity: not_before and not_after timestamps in RFC3339 format, and the API basic_constraints flag.",
 				Type:        schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -125,12 +125,12 @@ func resourceSecretsManagerCertificateV1() *schema.Resource {
 				Computed: true,
 			},
 			"version": {
-				Description: "of the certificate",
+				Description: "Observed active certificate version number, not the latest uploaded version.",
 				Type:        schema.TypeInt,
 				Computed:    true,
 			},
 			"current_version": {
-				Description:  "desired active version; 0 automatically activates new versions, positive values pin an existing version",
+				Description:  "Desired active version. Defaults to 0, which activates new versions on content changes. Must be non-negative; only 0 or 1 is valid at creation. Positive values pin an existing version and keep new uploads inactive. Returning to 0 leaves the active version unchanged until the next content change.",
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      0,
