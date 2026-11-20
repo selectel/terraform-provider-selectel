@@ -726,6 +726,22 @@ func TestClusterNameCaseOnlyChange(t *testing.T) {
 	assert.Equal(t, types.StringValue("tf-V2"), got.Name)
 }
 
+func TestClusterResourceConfigure(t *testing.T) {
+	r := &clusterResource{}
+	resp := resource.ConfigureResponse{}
+	r.Configure(context.Background(), resource.ConfigureRequest{}, &resp)
+	assert.False(t, resp.Diagnostics.HasError())
+
+	invalidResp := resource.ConfigureResponse{}
+	r.Configure(context.Background(), resource.ConfigureRequest{ProviderData: "not-a-config"}, &invalidResp)
+	assert.True(t, invalidResp.Diagnostics.HasError())
+	assert.Equal(t, "Invalid provider configuration", invalidResp.Diagnostics.Errors()[0].Summary())
+
+	metadataResp := resource.MetadataResponse{}
+	NewClusterResource().Metadata(context.Background(), resource.MetadataRequest{ProviderTypeName: "selectel"}, &metadataResp)
+	assert.Equal(t, "selectel_mks_cluster_v2", metadataResp.TypeName)
+}
+
 func TestClusterX509OnCreateFails(t *testing.T) {
 	fake := newFakeAPI(t)
 	fake.fail(routePatchCluster, http.StatusConflict)
