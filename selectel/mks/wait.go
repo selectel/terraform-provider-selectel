@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"slices"
 	"strings"
@@ -251,11 +252,14 @@ func callAndWait(ctx context.Context, client *mksv2.ServiceClient, clusterID str
 }
 
 // poll calls check every pollInterval until it reports done, fails, or ctx
-// ends.
+// ends. A transient failure keeps waiting; any other error ends the wait.
 func poll(ctx context.Context, check func() (bool, error)) error {
 	for {
 		done, err := check()
-		if err != nil || done {
+		if done {
+			return err
+		}
+		if err != nil && !isTransient(err) {
 			return err
 		}
 
@@ -265,6 +269,25 @@ func poll(ctx context.Context, check func() (bool, error)) error {
 		case <-time.After(pollInterval):
 		}
 	}
+}
+
+// isTransient reports whether a failed check may succeed when repeated. Such
+// an error does not end a wait: the cluster keeps changing on the service
+// side. A 4xx other than 429 is a real answer and ends the wait.
+func isTransient(err error) bool {
+	var mksErr mksclient.MKSError
+	if errors.As(err, &mksErr) {
+		return mksErr.StatusCode == http.StatusTooManyRequests || mksErr.StatusCode >= 500
+	}
+
+	return errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) || isNetError(err)
+}
+
+// isNetError reports whether err is a transport failure.
+func isNetError(err error) bool {
+	var netErr net.Error
+
+	return errors.As(err, &netErr)
 }
 
 // valueOrZero dereferences an optional field of an API model.
