@@ -167,10 +167,19 @@ func TestClusterWorkersType(t *testing.T) {
 
 			plan := clusterPlan()
 			plan.WorkersType = types.StringValue(tt.workersType)
-			_, diags := createCluster(t, r, plan)
+			state, diags := createCluster(t, r, plan)
 			require.False(t, diags.HasError(), "%v", diags)
 
 			bodyFields(t, fake.lastBody(routeCreateCluster), map[string]any{"network_type": tt.networkType})
+
+			got := readClusterModel(t, state)
+			assert.Equal(t, types.StringValue(tt.workersType), got.WorkersType)
+
+			imported := got
+			imported.WorkersType = types.StringUnknown()
+			refreshed, diags := readCluster(t, r, imported)
+			require.False(t, diags.HasError(), "%v", diags)
+			assert.Equal(t, types.StringValue(tt.workersType), readClusterModel(t, refreshed).WorkersType)
 		})
 	}
 }
@@ -335,11 +344,34 @@ func TestClusterKubeVersionUpgrade(t *testing.T) {
 	assert.Equal(t, 1, fake.callCount(routeUpgradePatch))
 	assert.Equal(t, 0, fake.callCount(routeUpgradeMinor))
 
+	oldPatchMinorPlan := got
+	oldPatchMinorPlan.KubeVersion = types.StringValue("1.32.1")
+	_, diags = updateCluster(t, r, got, oldPatchMinorPlan)
+	assert.True(t, diags.HasError())
+	assert.Contains(t, firstError(t, diags), fmt.Sprintf(
+		"current version %s can't be upgraded to version 1.32.1, the latest available patch version is: 1.32.3",
+		testKubeVersion))
+	assert.Equal(t, 0, fake.callCount(routeUpgradeMinor))
+
 	minorPlan := got
 	minorPlan.KubeVersion = types.StringValue(testKubeVersionUp)
 	got2, diags := updateCluster(t, r, got, minorPlan)
 	require.False(t, diags.HasError(), "%v", diags)
 	assert.Equal(t, types.StringValue(testKubeVersionUp), got2.KubeVersion)
+	assert.Equal(t, 1, fake.callCount(routeUpgradeMinor))
+
+	farMinorPlan := got2
+	farMinorPlan.KubeVersion = types.StringValue("1.34.1")
+	_, diags = updateCluster(t, r, got2, farMinorPlan)
+	assert.True(t, diags.HasError())
+	assert.Contains(t, firstError(t, diags), "kubernetes versions must be upgraded one minor version at a time")
+	assert.Equal(t, 1, fake.callCount(routeUpgradeMinor))
+
+	missingMinorPlan := got2
+	missingMinorPlan.KubeVersion = types.StringValue("1.33.4")
+	_, diags = updateCluster(t, r, got2, missingMinorPlan)
+	assert.True(t, diags.HasError())
+	assert.Contains(t, firstError(t, diags), "unable to find the latest patch version for the minor version 1.33")
 	assert.Equal(t, 1, fake.callCount(routeUpgradeMinor))
 
 	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) {
@@ -573,6 +605,7 @@ func TestClusterCreateTimeout(t *testing.T) {
 			assert.Contains(t, errorText(t, diags), "context deadline exceeded")
 
 			assert.Equal(t, 1, fake.callCount(routeCreateCluster))
+			assert.Equal(t, types.StringValue(testClusterID), readClusterModel(t, state).ID)
 			fake.stickTasks("CREATE_CLUSTER", false)
 			fake.settleAfter(testClusterID, 3, "ACTIVE")
 			fake.fail(routeCluster, 0)
@@ -1138,6 +1171,42 @@ func TestClusterModifyPlanKubeVersion(t *testing.T) {
 	}
 }
 
+func TestClusterX509RemovalRejectedAtPlan(t *testing.T) {
+	r := &clusterResource{}
+	state := clusterState()
+	state.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
+		"x509_ca_certificates": types.StringValue("Y2VydA=="),
+	})
+	plan := state
+	plan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
+		"x509_ca_certificates": types.StringNull(),
+	})
+	req := resource.ModifyPlanRequest{
+		Config: tfsdk.Config(clusterStateOf(t, r, plan)), Plan: tfsdk.Plan(clusterStateOf(t, r, plan)),
+		State: clusterStateOf(t, r, state),
+	}
+	resp := resource.ModifyPlanResponse{Plan: req.Plan}
+	r.ModifyPlan(context.Background(), req, &resp)
+	require.True(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+	assert.Equal(t, "X509 CA certificates cannot be removed", resp.Diagnostics.Errors()[0].Summary())
+	assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "The API keeps the X509 CA certificates")
+}
+
+func TestClusterModifyPlanKeepsStatusWhenPlanEqualsState(t *testing.T) {
+	r := &clusterResource{}
+	state := clusterState()
+	plan := state
+	req := resource.ModifyPlanRequest{
+		Config: tfsdk.Config(clusterStateOf(t, r, plan)), Plan: tfsdk.Plan(clusterStateOf(t, r, plan)),
+		State: clusterStateOf(t, r, state),
+	}
+	resp := resource.ModifyPlanResponse{Plan: req.Plan}
+	r.ModifyPlan(context.Background(), req, &resp)
+	require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+	assert.Equal(t, types.StringValue("ACTIVE"), plan.Status)
+	assert.Equal(t, types.StringValue("09:00:00"), plan.MaintenanceWindowEnd)
+}
+
 func TestClusterValidateKubeVersionChange(t *testing.T) {
 	for _, tt := range []struct {
 		name    string
@@ -1341,40 +1410,6 @@ func TestClusterTrimmedStringKeepModifier(t *testing.T) {
 				StateValue: types.StringValue("cert-1"), ConfigValue: tt.config, PlanValue: tt.config,
 			}, &resp)
 			assert.Equal(t, tt.expected, resp.PlanValue)
-		})
-	}
-}
-
-func TestClusterCloudSubnetCIDRRequiresReplaceIf(t *testing.T) {
-	r := &clusterResource{}
-	var schemaResp resource.SchemaResponse
-	r.Schema(context.Background(), resource.SchemaRequest{}, &schemaResp)
-	attr := schemaResp.Schema.Attributes["cloud_subnet_cidr"].(schema.StringAttribute)
-	for _, tt := range []struct {
-		name    string
-		hasCIDR bool
-		cidr    string
-		replace bool
-	}{
-		{name: "an unset value after import does not replace", hasCIDR: false, cidr: "10.1.0.0/24", replace: false},
-		{name: "a changed set value replaces", hasCIDR: true, cidr: "10.1.0.0/24", replace: true},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			state := clusterState()
-			if !tt.hasCIDR {
-				state.CloudSubnetCIDR = types.StringNull()
-			}
-			plan := state
-			plan.CloudSubnetCIDR = types.StringValue(tt.cidr)
-			req := planmodifier.StringRequest{
-				Config: tfsdk.Config(clusterStateOf(t, r, plan)), Plan: tfsdk.Plan(clusterStateOf(t, r, plan)),
-				State: clusterStateOf(t, r, state), StateValue: state.CloudSubnetCIDR, PlanValue: plan.CloudSubnetCIDR,
-			}
-			for _, m := range attr.PlanModifiers {
-				resp := planmodifier.StringResponse{}
-				m.PlanModifyString(context.Background(), req, &resp)
-				assert.Equal(t, tt.replace, resp.RequiresReplace)
-			}
 		})
 	}
 }

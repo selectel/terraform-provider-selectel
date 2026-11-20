@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/selectel/mks-go/v2/pkg/mksclient"
+	"github.com/selectel/mks-go/v2/pkg/task"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -79,7 +80,7 @@ func TestIsTransient(t *testing.T) {
 }
 
 func mksError(status int) error {
-	return mksclient.MKSError{StatusCode: status, Message: "fake error"}
+	return &mksclient.MKSError{StatusCode: status, Message: "fake error"}
 }
 
 func TestWaitDeletableErrorStatus(t *testing.T) {
@@ -111,13 +112,13 @@ func TestTaskWaiterTaskAPIError(t *testing.T) {
 
 	fake.seedCluster(testClusterID)
 	fake.seedTask(testClusterID, "", "CREATE_CLUSTER", false)
-	fake.fail(routeTask, http.StatusInternalServerError)
+	fake.fail(routeTask, http.StatusForbidden)
 	err = newCreatedTaskWaiter(client, testClusterID, "").Wait(context.Background())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "error getting task")
 
 	fake.fail(routeTask, 0)
-	fake.fail(routeTasks, http.StatusInternalServerError)
+	fake.fail(routeTasks, http.StatusForbidden)
 	_, err = newTaskWaiter(context.Background(), client, testClusterID, "")
 	require.Error(t, err)
 
@@ -152,4 +153,32 @@ func TestTaskWaiterAdvanceStatuses(t *testing.T) {
 	err = w.WaitClusterDeleted(ctx)
 	require.Error(t, err)
 	assert.True(t, strings.Contains(err.Error(), "task") || strings.Contains(err.Error(), "timeout"), err)
+}
+
+func TestTaskWaiterSurvivesTransientAPIErrors(t *testing.T) {
+	fake := newFakeAPI(t)
+	client := fake.client()
+
+	fake.seedCluster(testClusterID)
+	fake.failFor(routeTasks, http.StatusServiceUnavailable, 1)
+	fake.failFor(routeTask, http.StatusTooManyRequests, 1)
+	fake.seedTask(testClusterID, "", "CREATE_CLUSTER", false)
+	err := newCreatedTaskWaiter(client, testClusterID, "").Wait(context.Background())
+	require.NoError(t, err)
+
+	fake.failFor(routeTasks, http.StatusTooManyRequests, 1)
+	fake.failFor(routeTask, http.StatusServiceUnavailable, 1)
+	fake.removeCluster(testClusterID)
+	err = newCreatedTaskWaiter(client, testClusterID, "").WaitClusterDeleted(context.Background())
+	require.NoError(t, err)
+}
+
+func TestRealSDKErrorIsTransient(t *testing.T) {
+	fake := newFakeAPI(t)
+	client := fake.client()
+	fake.seedCluster(testClusterID)
+	fake.fail(routeTask, http.StatusTooManyRequests)
+	_, err := task.Get(context.Background(), client, testClusterID, "missing")
+	require.Error(t, err)
+	assert.True(t, isTransient(err))
 }

@@ -32,6 +32,7 @@ type fakeAPI struct {
 	clusters           map[string]mksclient.ClusterDetailed
 	kubeVersions       []mksclient.KubeVersionInfo
 	failures           map[string]int
+	failNext           map[string]fakeFailure
 	failureBodies      map[string]fakeBody
 	tasks              []*fakeTask
 	failedTaskTypes    map[string]bool
@@ -46,6 +47,13 @@ type fakeAPI struct {
 type fakeBody struct {
 	contentType string
 	body        string
+}
+
+// fakeFailure is a transient route failure: status applies to the next left
+// requests.
+type fakeFailure struct {
+	status int
+	left   int
 }
 
 type fakeSettle struct {
@@ -86,6 +94,7 @@ func newFakeAPI(t *testing.T) *fakeAPI {
 
 		clusters:      map[string]mksclient.ClusterDetailed{},
 		failures:      map[string]int{},
+		failNext:      map[string]fakeFailure{},
 		failureBodies: map[string]fakeBody{},
 
 		failedTaskTypes:    map[string]bool{},
@@ -138,6 +147,13 @@ func (f *fakeAPI) handle(mux *http.ServeMux, pattern string, handler http.Handle
 			f.bodies[pattern] = body
 		}
 		r.Body = io.NopCloser(bytes.NewReader(body))
+		if ff, ok := f.failNext[pattern]; ok && ff.left > 0 {
+			f.failNext[pattern] = fakeFailure{status: ff.status, left: ff.left - 1}
+			objectType, id := fakeObject(r)
+			writeAPIError(f.t, w, ff.status, objectType, id)
+
+			return
+		}
 		status, ok := f.failures[pattern]
 		raw, hasBody := f.failureBodies[pattern]
 		if ok && hasBody {
@@ -388,8 +404,18 @@ func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 		latest := map[string]string{}
 		for _, v := range f.kubeVersions {
 			minor, err := kubeVersionTrimToMinor(valueOrZero(v.Version))
-			if err == nil && (latest[minor] == "") {
+			if err != nil {
+				continue
+			}
+			// The API upgrades to the latest patch of the target minor.
+			current, ok := latest[minor]
+			if !ok {
 				latest[minor] = valueOrZero(v.Version)
+				continue
+			}
+			newer, err := compareTwoKubeVersionsByPatch(valueOrZero(v.Version), current)
+			if err == nil && newer == valueOrZero(v.Version) {
+				latest[minor] = newer
 			}
 		}
 		if latest[targetMinor] == "" {
@@ -634,6 +660,13 @@ func (f *fakeAPI) fail(route string, status int) {
 		return
 	}
 	f.failures[route] = status
+}
+
+func (f *fakeAPI) failFor(route string, status, requests int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.failNext[route] = fakeFailure{status: status, left: requests}
 }
 
 func (f *fakeAPI) failWithBody(route string, status int, contentType, body string) {

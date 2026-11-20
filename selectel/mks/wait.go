@@ -119,15 +119,23 @@ func newCreatedTaskWaiter(client *mksv2.ServiceClient, clusterID, nodegroupID st
 // Wait polls the new tasks until all of them are DONE. No new tasks means
 // the call was synchronous.
 func (w *taskWaiter) Wait(ctx context.Context) error {
-	pending, err := w.newTasks(ctx)
-	if err != nil {
-		return err
-	}
+	pending := []mksclient.Task(nil)
 
 	return poll(ctx, func() (bool, error) {
-		pending, err = w.advance(ctx, pending)
+		if pending == nil {
+			var err error
+			pending, err = w.newTasks(ctx)
+			if err != nil {
+				return false, err
+			}
+		}
+		advanced, err := w.advance(ctx, pending)
+		if err != nil {
+			return false, err
+		}
+		pending = advanced
 
-		return len(pending) == 0, err
+		return len(pending) == 0, nil
 	})
 }
 
@@ -144,22 +152,27 @@ func (w *taskWaiter) WaitClusterDeleted(ctx context.Context) error {
 // waitDeleted polls until get answers 404. A 404 on the tasks means the
 // cluster, and everything in it, is gone.
 func (w *taskWaiter) waitDeleted(ctx context.Context, get func() error) error {
-	pending, err := w.newTasks(ctx)
-	if isNotFound(err) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
+	pending := []mksclient.Task(nil)
 
 	return poll(ctx, func() (bool, error) {
-		pending, err = w.advance(ctx, pending)
+		if pending == nil {
+			var err error
+			pending, err = w.newTasks(ctx)
+			if isNotFound(err) {
+				return true, nil
+			}
+			if err != nil {
+				return false, err
+			}
+		}
+		advanced, err := w.advance(ctx, pending)
 		if isNotFound(err) {
 			return true, nil
 		}
 		if err != nil {
 			return false, err
 		}
+		pending = advanced
 
 		err = get()
 		if isNotFound(err) {
@@ -275,7 +288,7 @@ func poll(ctx context.Context, check func() (bool, error)) error {
 // an error does not end a wait: the cluster keeps changing on the service
 // side. A 4xx other than 429 is a real answer and ends the wait.
 func isTransient(err error) bool {
-	var mksErr mksclient.MKSError
+	var mksErr *mksclient.MKSError
 	if errors.As(err, &mksErr) {
 		return mksErr.StatusCode == http.StatusTooManyRequests || mksErr.StatusCode >= 500
 	}
