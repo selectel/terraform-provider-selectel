@@ -135,3 +135,33 @@ func TestMKSV2BaseURL(t *testing.T) {
 		assert.Equal(t, tc.want, mksV2BaseURL(tc.endpoint), tc.endpoint)
 	}
 }
+
+func TestFrameworkMKSV2ClientEndpointError(t *testing.T) {
+	var endpoint string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		assert.Equal(t, "/v3/auth/tokens", r.URL.Path)
+		w.Header().Set("X-Subject-Token", "scoped-token")
+		if r.Method == http.MethodPost {
+			w.WriteHeader(http.StatusCreated)
+		}
+		assert.NoError(t, json.NewEncoder(w).Encode(map[string]any{"token": map[string]any{
+			"expires_at": "2099-01-01T00:00:00.000000Z", "issued_at": "2026-01-01T00:00:00.000000Z", "methods": []string{"password"}, "project": map[string]string{"id": "project"},
+			"catalog": []any{
+				map[string]any{"type": "identity", "name": "keystone", "endpoints": []any{
+					map[string]string{"interface": "public", "region": "ru-1", "region_id": "ru-1", "url": endpoint + "/v3"},
+				}},
+				map[string]any{"type": MKSV2, "name": "managed-kubernetes", "endpoints": []any{
+					map[string]string{"interface": "public", "region": "ru-1", "region_id": "ru-2", "url": endpoint + "/ru-2/v2"},
+				}},
+			},
+		}}))
+	}))
+	t.Cleanup(server.Close)
+	endpoint = server.URL
+
+	config := &Config{AuthURL: endpoint + "/v3", AuthRegion: "ru-1", Username: "user", Password: "test-password", DomainName: "domain", ProjectID: "project", Region: "ru-1"}
+	_, err := config.MKSV2Client(context.Background(), "project", "ru-1")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to get endpoint")
+}

@@ -2,6 +2,7 @@ package mks
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"net/http"
@@ -397,14 +398,29 @@ func TestClusterImport(t *testing.T) {
 func TestClusterImportNeedsProviderConfig(t *testing.T) {
 	for _, tt := range []struct {
 		name   string
-		config testProviderConfig
+		config *testProviderConfig
 		want   string
 	}{
-		{name: "no project", config: testProviderConfig{pool: "ru-1"}, want: "INFRA_PROJECT_ID must be set for the resource import"},
-		{name: "no pool", config: testProviderConfig{project: testProject}, want: "INFRA_REGION must be set for the resource import"},
+		{name: "no configuration", config: nil, want: "INFRA_PROJECT_ID must be set for the resource import"},
+		{name: "no project", config: &testProviderConfig{pool: "ru-1"}, want: "INFRA_PROJECT_ID must be set for the resource import"},
+		{name: "no pool", config: &testProviderConfig{project: testProject}, want: "INFRA_REGION must be set for the resource import"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &clusterResource{connection: connection{config: &tt.config}}
+			config := tt.config
+			if config == nil {
+				var untyped ProviderConfig
+				r := &clusterResource{connection: connection{config: untyped}}
+				empty := clusterStateOf(t, r, clusterState())
+				empty.Raw = empty.Raw.Copy()
+				resp := resource.ImportStateResponse{State: empty}
+				r.ImportState(context.Background(), resource.ImportStateRequest{ID: testClusterID}, &resp)
+
+				require.True(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+				assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), tt.want)
+
+				return
+			}
+			r := &clusterResource{connection: connection{config: config}}
 			empty := clusterStateOf(t, r, clusterState())
 			empty.Raw = empty.Raw.Copy()
 			resp := resource.ImportStateResponse{State: empty}
@@ -1300,6 +1316,14 @@ func TestClusterSameProjectIDModifier(t *testing.T) {
 			assert.Equal(t, tt.expected, resp.PlanValue)
 		})
 	}
+
+	t.Run("null state keeps the plan", func(t *testing.T) {
+		resp := planmodifier.StringResponse{PlanValue: types.StringValue("x")}
+		sameProjectID{}.PlanModifyString(context.Background(), planmodifier.StringRequest{
+			StateValue: types.StringNull(),
+		}, &resp)
+		assert.Equal(t, types.StringValue("x"), resp.PlanValue)
+	})
 }
 
 func TestClusterTrimmedStringKeepModifier(t *testing.T) {
@@ -1373,4 +1397,121 @@ func TestClusterReadDeleteNoCallsOnMissingProject(t *testing.T) {
 	assert.Equal(t, "Missing project ID", diags.Errors()[0].Summary())
 	assert.Equal(t, 0, fake.callCount(routeDeleteCluster))
 	assert.Equal(t, seeded, fake.clusterCount())
+}
+
+func TestClusterClientInitFails(t *testing.T) {
+	fake := newFakeAPI(t)
+	r := fake.resource()
+	cfg := r.config.(*testProviderConfig)
+	cfg.clientErr = errors.New("no such auth token")
+
+	plan := clusterPlan()
+	_, diags := createCluster(t, r, plan)
+	assert.True(t, diags.HasError())
+	assert.Contains(t, errorText(t, diags), "Error initializing MKS client")
+	assert.Contains(t, errorText(t, diags), "connect to Managed Kubernetes")
+
+	_, diags = readCluster(t, r, clusterState())
+	assert.True(t, diags.HasError())
+	assert.Equal(t, "Error initializing MKS client", diags.Errors()[0].Summary())
+
+	newPlan := clusterState()
+	newPlan.Name = types.StringValue("renamed")
+	_, diags = updateCluster(t, r, clusterState(), newPlan)
+	assert.True(t, diags.HasError())
+	assert.Equal(t, "Error initializing MKS client", diags.Errors()[0].Summary())
+
+	diags = deleteCluster(t, r, clusterState())
+	assert.True(t, diags.HasError())
+	assert.Equal(t, "Error initializing MKS client", diags.Errors()[0].Summary())
+	assert.Equal(t, 0, fake.callCount(routeCluster))
+}
+
+func TestClusterClientNotConfigured(t *testing.T) {
+	var untyped ProviderConfig
+	r := &clusterResource{connection: connection{config: untyped}}
+
+	_, err := r.client(context.Background(), "abc", "ru-1")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "managed kubernetes provider is not configured")
+
+	diags := r.configure("not-a-config")
+	require.True(t, diags.HasError(), "%v", diags)
+}
+
+func TestClusterClientCanceledContext(t *testing.T) {
+	r := &clusterResource{connection: connection{config: &testProviderConfig{}}}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := r.client(ctx, "abc", "ru-1")
+	require.Error(t, err)
+	assert.ErrorIs(t, err, context.Canceled)
+}
+
+func TestClusterCreateSaveOnWaitFailure(t *testing.T) {
+	fake := newFakeAPI(t)
+	fake.stickTasks("CREATE_CLUSTER", true)
+	r := fake.resource()
+
+	plan := clusterPlan()
+	plan.Timeouts = clusterTimeouts(time.Second, 2*time.Second, 2*time.Second)
+	state, diags := createCluster(t, r, plan)
+	assert.True(t, diags.HasError())
+	assert.Contains(t, errorText(t, diags), "Error waiting for the cluster to become ready")
+	got := readClusterModel(t, state)
+	assert.Equal(t, types.StringValue(testClusterID), got.ID)
+	assert.Equal(t, types.StringValue(testProject), got.ProjectID)
+}
+
+func TestClusterReadAPIError(t *testing.T) {
+	fake := newFakeAPI(t)
+	fake.fail(routeCluster, http.StatusInternalServerError)
+	r := fake.resource()
+
+	_, diags := readCluster(t, r, clusterState())
+	assert.True(t, diags.HasError())
+	assert.Contains(t, errorText(t, diags), "Error reading cluster")
+	assert.Contains(t, errorText(t, diags), "'"+testClusterID+"'")
+}
+
+func TestClusterCluster404IsRemovalOnlyInRead(t *testing.T) {
+	fake := newFakeAPI(t)
+	fake.seedKubeVersions(
+		mksclient.KubeVersionInfo{Version: new(testKubeVersion)},
+	)
+	r := fake.resource()
+
+	plan := clusterPlan()
+	state, diags := createCluster(t, r, plan)
+	require.False(t, diags.HasError(), "%v", diags)
+	fake.removeCluster(testClusterID)
+
+	prior := readClusterModel(t, state)
+	newPlan := prior
+	newPlan.KubeVersion = types.StringValue(testKubeVersionOld)
+	_, diags = updateCluster(t, r, prior, newPlan)
+	assert.True(t, diags.HasError())
+	assert.Contains(t, errorText(t, diags), "Error upgrading cluster")
+	assert.Contains(t, errorText(t, diags), "'"+testClusterID+"'")
+
+	diags = deleteCluster(t, r, prior)
+	assert.False(t, diags.HasError(), "%v", diags)
+}
+
+func TestClusterUpdateReadBackError(t *testing.T) {
+	fake := newFakeAPI(t)
+	r := fake.resource()
+
+	plan := clusterPlan()
+	state, diags := createCluster(t, r, plan)
+	require.False(t, diags.HasError(), "%v", diags)
+	prior := readClusterModel(t, state)
+
+	fake.fail(routeCluster, http.StatusInternalServerError)
+	newPlan := prior
+	newPlan.Name = types.StringValue("renamed")
+	_, diags = updateCluster(t, r, prior, newPlan)
+	assert.True(t, diags.HasError())
+	assert.Contains(t, errorText(t, diags), "Error reading cluster")
 }

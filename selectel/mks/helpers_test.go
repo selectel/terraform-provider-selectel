@@ -18,12 +18,16 @@ import (
 
 type testProviderConfig struct {
 	client        *mksv2.ServiceClient
+	clientErr     error
 	project, pool string
 	gotProject    []string
 }
 
 func (c *testProviderConfig) MKSV2Client(_ context.Context, projectID, _ string) (*mksv2.ServiceClient, error) {
 	c.gotProject = append(c.gotProject, projectID)
+	if c.clientErr != nil {
+		return nil, c.clientErr
+	}
 
 	return c.client, nil
 }
