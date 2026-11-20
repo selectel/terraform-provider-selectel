@@ -292,7 +292,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			}, schemadoc.Field{
 				Definition: "CIDR of the cloud subnet to which the master nodes are connected. " +
 					"Applicable only if `workers_type` is `DEDICATED`. If omitted, the API uses `10.20.0.0/24`. " +
-					"The API does not return it, so an imported cluster has no value.",
+					"The provider keeps the configured value, so an imported cluster has no value.",
 			}),
 			"private_kube_api": clusterDocs.Bool(schema.BoolAttribute{
 				Optional:      true,
@@ -414,9 +414,8 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 								Behavior:   "If `false`, omit the other arguments of `oidc`. If omitted when the cluster is created, the value is `false`.",
 							}),
 							"provider_name": clusterDocs.String(oidcParam(""), schemadoc.Field{
-								Definition: "Name of the connection, for identification only. " +
-									"A change of only this field ends in an API error: change it together with `enabled`.",
-								Behavior: "If `enabled` is `false`, omit this argument.",
+								Definition: "Name of the connection, for identification only.",
+								Behavior:   "If `enabled` is `false`, omit this argument.",
 							}),
 							"issuer_url": clusterDocs.String(oidcParam(""), schemadoc.Field{
 								Definition: "URL of the OIDC provider. It must start with `https://`.",

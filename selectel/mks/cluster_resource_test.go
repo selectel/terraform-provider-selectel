@@ -312,6 +312,32 @@ func TestClusterAutoUpgradeFalse(t *testing.T) {
 	bodyFields(t, fake.lastBody(routePatchCluster), map[string]any{"enable_patch_version_auto_upgrade": false})
 }
 
+func TestClusterPatchSendsOnlyChangedFields(t *testing.T) {
+	fake := newFakeAPI(t)
+	r := fake.resource()
+
+	plan := clusterPlan()
+	state, diags := createCluster(t, r, plan)
+	require.False(t, diags.HasError(), "%v", diags)
+	got := readClusterModel(t, state)
+
+	windowPlan := got
+	windowPlan.MaintenanceWindowStart = types.StringValue("07:00:00")
+	got2, diags := updateCluster(t, r, got, windowPlan)
+	require.False(t, diags.HasError(), "%v", diags)
+	body, _ := fake.lastBody(routePatchCluster)["cluster"].(map[string]any)
+	require.Len(t, body, 1)
+	assert.Equal(t, "07:00:00", body["maintenance_window_start"])
+
+	autorepairPlan := got2
+	autorepairPlan.EnableAutorepair = types.BoolValue(false)
+	_, diags = updateCluster(t, r, got2, autorepairPlan)
+	require.False(t, diags.HasError(), "%v", diags)
+	body, _ = fake.lastBody(routePatchCluster)["cluster"].(map[string]any)
+	require.Len(t, body, 1)
+	assert.Equal(t, false, body["enable_autorepair"])
+}
+
 func TestClusterBasicClusterAutoUpgrade(t *testing.T) {
 	fake := newFakeAPI(t)
 	r := fake.resource()
