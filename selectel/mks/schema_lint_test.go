@@ -11,8 +11,6 @@ import (
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadoc"
 )
 
-// The cluster resource is not registered in the provider yet, so
-// `make schemadoc` cannot lint it; this test keeps the schema lint-clean.
 func TestClusterSchemaLint(t *testing.T) {
 	r := &clusterResource{}
 	var schemaResp resource.SchemaResponse

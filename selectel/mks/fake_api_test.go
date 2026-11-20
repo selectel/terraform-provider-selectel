@@ -139,7 +139,8 @@ func (f *fakeAPI) handle(mux *http.ServeMux, pattern string, handler http.Handle
 		}
 		r.Body = io.NopCloser(bytes.NewReader(body))
 		status, ok := f.failures[pattern]
-		if raw, hasBody := f.failureBodies[pattern]; ok && hasBody {
+		raw, hasBody := f.failureBodies[pattern]
+		if ok && hasBody {
 			w.Header().Set("Content-Type", raw.contentType)
 			w.WriteHeader(status)
 			_, _ = io.WriteString(w, raw.body)
@@ -159,7 +160,8 @@ func (f *fakeAPI) handle(mux *http.ServeMux, pattern string, handler http.Handle
 
 func (f *fakeAPI) getCluster(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("cluster_id")
-	if status, settled := f.settle(id); settled {
+	status, settled := f.settle(id)
+	if settled {
 		f.updateClusterLocked(id, status)
 	}
 	c, ok := f.clusters[id]
@@ -407,7 +409,8 @@ func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 
 func (f *fakeAPI) listTasks(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("cluster_id")
-	if _, ok := f.clusters[id]; !ok {
+	_, ok := f.clusters[id]
+	if !ok {
 		writeAPIError(f.t, w, http.StatusNotFound, objectCluster, id)
 
 		return
@@ -674,7 +677,8 @@ const (
 )
 
 func fakeObject(r *http.Request) (string, string) {
-	if id := r.PathValue("task_id"); id != "" {
+	id := r.PathValue("task_id")
+	if id != "" {
 		return objectTask, id
 	}
 

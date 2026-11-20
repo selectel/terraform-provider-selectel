@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -40,7 +39,8 @@ func kubeOptionsObject(overrides map[string]attr.Value) types.Object {
 
 func bodyFields(t *testing.T, body map[string]any, want map[string]any, absent ...string) {
 	t.Helper()
-	if cluster, ok := body["cluster"].(map[string]any); ok {
+	cluster, ok := body["cluster"].(map[string]any)
+	if ok {
 		body = cluster
 	}
 	for key, value := range want {
@@ -434,12 +434,8 @@ func TestClusterImportDashedProject(t *testing.T) {
 	require.False(t, diags.HasError(), "%v", diags)
 	kube := readClusterModel(t, state2)
 	assert.Equal(t, types.StringValue(testClusterID), kube.ID)
-	// The import resolved the project from the dashed form the API returns,
-	// and the read kept it in the keystone form.
 	assert.Equal(t, types.StringValue(keystoneProject), kube.ProjectID)
-	// The API never returns cloud_subnet_cidr, so the imported state has none.
 	assert.True(t, kube.CloudSubnetCIDR.IsNull())
-	// kube_version is kept from the API even without a configured one.
 	assert.Equal(t, types.StringValue(testKubeVersion), kube.KubeVersion)
 }
 
@@ -810,9 +806,10 @@ func TestClusterOIDCCACertsWhitespace(t *testing.T) {
 	var oidc clusterOIDCModel
 	diags3 := kubeOptions.OIDC.As(context.Background(), &oidc, basetypes.ObjectAsOptions{})
 	require.False(t, diags3.HasError())
-	// The API stores the trimmed cert, and semantic equality must see the
-	// configured wrapped one as unchanged.
 	same, diags4 := oidc.CACerts.StringSemanticEquals(context.Background(), trimmedString("cert-1"))
+	require.False(t, diags4.HasError())
+	assert.True(t, same, "the state value must equal a differently-wrapped identical cert")
+	same, diags4 = oidc.CACerts.StringSemanticEquals(context.Background(), trimmedString(" cert-1 "))
 	require.False(t, diags4.HasError())
 	assert.True(t, same, "the state value must equal a differently-wrapped identical cert")
 }
@@ -941,8 +938,6 @@ func TestClusterOIDCUnknownWhileDisabled(t *testing.T) {
 		"enabled": false, "provider_name": "", "issuer_url": "", "client_id": "", "username_claim": "", "groups_claim": "",
 	}, oidc)
 
-	// The disabled-OIDC zeroing plans the empty string the API stores for an
-	// omitted parameter; reverting the modifier leaves the null config.
 	modReq := planmodifier.StringRequest{
 		Config:      tfsdk.Config(clusterStateOf(t, r, newPlan)),
 		State:       clusterStateOf(t, r, prior),
@@ -1226,19 +1221,27 @@ func TestClusterOIDCKeepsStateWhileEnabled(t *testing.T) {
 		"ca_certs":       trimmedStringValue{StringValue: types.StringNull()},
 	})
 	plan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"oidc": enabledOIDC})
+
+	var schemaResp resource.SchemaResponse
+	r.Schema(context.Background(), resource.SchemaRequest{}, &schemaResp)
+	kubeOptions := schemaResp.Schema.Attributes["kubernetes_options"].(schema.SingleNestedAttribute)
+	oidc := kubeOptions.Attributes["oidc"].(schema.SingleNestedAttribute)
+	attr := oidc.Attributes["provider_name"].(schema.StringAttribute)
+	require.NotEmpty(t, attr.PlanModifiers)
+
 	modReq := planmodifier.StringRequest{
 		Config:      tfsdk.Config(clusterStateOf(t, r, plan)),
 		State:       clusterStateOf(t, r, plan),
+		PlanValue:   types.StringUnknown(),
 		StateValue:  types.StringValue("keycloak"),
 		ConfigValue: types.StringNull(),
 		Path:        path.Root("kubernetes_options").AtName("oidc").AtName("provider_name"),
 	}
-	chainReq := modReq
-	chainReq.PlanValue = types.StringUnknown()
-	keepResp := planmodifier.StringResponse{PlanValue: chainReq.PlanValue}
-	stringplanmodifier.UseStateForUnknown().PlanModifyString(context.Background(), chainReq, &keepResp)
-	resp := planmodifier.StringResponse{PlanValue: keepResp.PlanValue}
-	oidcPlanModifier{}.PlanModifyString(context.Background(), modReq, &resp)
+	resp := planmodifier.StringResponse{PlanValue: modReq.PlanValue}
+	for _, m := range attr.PlanModifiers {
+		m.PlanModifyString(context.Background(), modReq, &resp)
+		modReq.PlanValue = resp.PlanValue
+	}
 	require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
 	assert.Equal(t, types.StringValue("keycloak"), resp.PlanValue)
 }
@@ -1350,4 +1353,24 @@ func TestClusterCloudSubnetCIDRRequiresReplaceIf(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestClusterReadDeleteNoCallsOnMissingProject(t *testing.T) {
+	fake := newFakeAPI(t)
+	r := fake.resource()
+	r.config = &testProviderConfig{client: fake.client(), project: "", pool: ""}
+	seeded := fake.clusterCount()
+
+	prior := clusterState()
+	prior.ProjectID = types.StringNull()
+	_, diags := readCluster(t, r, prior)
+	require.True(t, diags.HasError())
+	assert.Equal(t, "Missing project ID", diags.Errors()[0].Summary())
+	assert.Equal(t, 0, fake.callCount(routeCluster))
+
+	diags = deleteCluster(t, r, prior)
+	require.True(t, diags.HasError())
+	assert.Equal(t, "Missing project ID", diags.Errors()[0].Summary())
+	assert.Equal(t, 0, fake.callCount(routeDeleteCluster))
+	assert.Equal(t, seeded, fake.clusterCount())
 }
