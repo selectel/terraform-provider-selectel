@@ -19,8 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// privateStateTestProvider serves only the cluster resource, so its private
-// state can be driven through the provider protocol the way Terraform does.
 type privateStateTestProvider struct {
 	config *testProviderConfig
 }
@@ -40,8 +38,6 @@ func (p privateStateTestProvider) Resources(_ context.Context) []func() resource
 	return []func() resource.Resource{NewClusterResource}
 }
 
-// configureClusterProvider runs ConfigureProvider, which the server must see
-// before it passes the provider data to resources.
 func configureClusterProvider(t *testing.T, config *testProviderConfig) tfprotov6.ProviderServer {
 	t.Helper()
 

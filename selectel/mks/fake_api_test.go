@@ -49,8 +49,6 @@ type fakeBody struct {
 	body        string
 }
 
-// fakeFailure is a transient route failure: status applies to the next left
-// requests.
 type fakeFailure struct {
 	status int
 	left   int
@@ -147,7 +145,8 @@ func (f *fakeAPI) handle(mux *http.ServeMux, pattern string, handler http.Handle
 			f.bodies[pattern] = body
 		}
 		r.Body = io.NopCloser(bytes.NewReader(body))
-		if ff, ok := f.failNext[pattern]; ok && ff.left > 0 {
+		ff, ok := f.failNext[pattern]
+		if ok && ff.left > 0 {
 			f.failNext[pattern] = fakeFailure{status: ff.status, left: ff.left - 1}
 			objectType, id := fakeObject(r)
 			writeAPIError(f.t, w, ff.status, objectType, id)
@@ -407,7 +406,6 @@ func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 			if err != nil {
 				continue
 			}
-			// The API upgrades to the latest patch of the target minor.
 			current, ok := latest[minor]
 			if !ok {
 				latest[minor] = valueOrZero(v.Version)

@@ -263,7 +263,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						resp.Diagnostics.Append(diags...)
 						resp.RequiresReplace = !req.StateValue.IsNull() || len(imported) == 0
 					},
-					"A change from an unset value, for example, after import, does not replace the cluster.")},
+					"A change from an unset value after import does not replace the cluster.")},
 			}, schemadoc.Field{
 				Definition: "CIDR of the subnet the API creates for the cluster. The API does not return it, " +
 					"so an imported cluster has no value.",
@@ -512,29 +512,30 @@ func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("maintenance_window_end"), types.StringUnknown())...)
 	}
 
-	if x509Plan, ok := planX509(plan); ok {
-		if stateX509, ok := planX509(state); ok && stateX509 != "" && x509Plan == "" {
+	x509Plan := ""
+	planKubeOptions := plan.KubernetesOptions
+	if !planKubeOptions.IsNull() && !planKubeOptions.IsUnknown() {
+		var options clusterKubeOptionsModel
+		if !planKubeOptions.As(ctx, &options, basetypes.ObjectAsOptions{}).HasError() {
+			x509Plan = options.X509CACertificates.ValueString()
+		}
+	}
+	if x509Plan == "" {
+		x509State := ""
+		stateKubeOptions := state.KubernetesOptions
+		if !stateKubeOptions.IsNull() && !stateKubeOptions.IsUnknown() {
+			var options clusterKubeOptionsModel
+			if !stateKubeOptions.As(ctx, &options, basetypes.ObjectAsOptions{}).HasError() {
+				x509State = options.X509CACertificates.ValueString()
+			}
+		}
+		if x509State != "" {
 			resp.Diagnostics.AddAttributeError(path.Root("kubernetes_options").AtName("x509_ca_certificates"),
 				"X509 CA certificates cannot be removed",
 				"The API keeps the X509 CA certificates of the cluster, an empty value does not remove them. "+
 					"New certificates can be set instead.")
 		}
 	}
-}
-
-// planX509 returns the kubernetes_options.x509_ca_certificates of the model
-// when the options are a known object.
-func planX509(m clusterModel) (string, bool) {
-	if m.KubernetesOptions.IsNull() || m.KubernetesOptions.IsUnknown() {
-		return "", false
-	}
-	var options clusterKubeOptionsModel
-	diags := m.KubernetesOptions.As(context.Background(), &options, basetypes.ObjectAsOptions{})
-	if diags.HasError() {
-		return "", false
-	}
-
-	return options.X509CACertificates.ValueString(), true
 }
 
 // x509PendingKey marks a created cluster whose x509_ca_certificates failed to
