@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadoc"
+
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -108,7 +110,9 @@ func sameProject(a, b string) bool {
 
 // sameProjectID plans the state project_id for a configured one that names
 // the same project in another form, see keystoneProjectID.
-type sameProjectID struct{}
+type sameProjectID struct {
+	schemadoc.Facts
+}
 
 func (m sameProjectID) Description(_ context.Context) string {
 	return "A project ID that differs only in dashes or letter case keeps the state value."

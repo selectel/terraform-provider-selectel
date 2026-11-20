@@ -119,7 +119,7 @@ func kubeVersionTrimToMinorIncremented(kubeVersion string) (string, error) {
 func latestKubePatchVersions(ctx context.Context, client *mksv2.ServiceClient) (map[string]string, error) {
 	kubeVersions, err := kubeversion.List(ctx, client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting kube versions: %w", err)
 	}
 
 	result := map[string]string{}

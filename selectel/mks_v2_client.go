@@ -12,13 +12,15 @@ import (
 // MKSV2Defaults supplies the scope for UUID-based imports.
 func (c *Config) MKSV2Defaults() (string, string) { return c.ProjectID, c.Region }
 
-// MKSV2Client authenticates for each operation. mks-go takes a token string
-// that it cannot renew, so the cached selvpc client is not reused. The pool is
-// checked against the catalog first, like _v1 does, to list the valid pools.
+// MKSV2Client authenticates for each operation: mks-go takes a token string
+// that it cannot renew, and the pool is checked against the catalog first to
+// list the valid pools.
 func (c *Config) MKSV2Client(ctx context.Context, projectID, pool string) (*mksv2.ServiceClient, error) {
-	selvpcClient, err := c.projectClient(ctx, projectID)
+	opts := c.selvpcClientOptions(projectID)
+	opts.Context = ctx
+	selvpcClient, err := selvpcclient.NewClient(opts)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("authenticate project %s: %w", projectID, err)
 	}
 	err = validateRegion(selvpcClient, MKSV2, pool)
 	if err != nil {
@@ -33,19 +35,6 @@ func (c *Config) MKSV2Client(ctx context.Context, projectID, pool string) (*mksv
 		return nil, err
 	}
 	client.UserAgent = c.UserAgent
-
-	return client, nil
-}
-
-// projectClient authenticates a fresh selvpc client scoped to the project,
-// the way projectEndpoint does, but without the cache.
-func (c *Config) projectClient(ctx context.Context, projectID string) (*selvpcclient.Client, error) {
-	opts := c.selvpcClientOptions(projectID)
-	opts.Context = ctx
-	client, err := selvpcclient.NewClient(opts)
-	if err != nil {
-		return nil, fmt.Errorf("authenticate project %s: %w", projectID, err)
-	}
 
 	return client, nil
 }

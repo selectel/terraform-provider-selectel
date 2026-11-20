@@ -40,7 +40,11 @@ var (
 	_ resource.ResourceWithValidateConfig = &clusterResource{}
 )
 
-var clusterDocs = schemadoc.Resource{Name: "cluster"}
+// clusterLocation is the managed kubernetes section of the product
+// availability page.
+const clusterLocation = "managed-kubernetes"
+
+var clusterDocs = schemadoc.Resource{Name: "cluster", Location: clusterLocation}
 
 // workersType is the user-facing name of the API network_type.
 var workersTypes = map[string]string{
@@ -161,7 +165,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 		return schema.StringAttribute{
 			Optional:      true,
 			Computed:      true,
-			PlanModifiers: []planmodifier.String{oidcPlanModifier{enabledDefault: enabledDefault}},
+			PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), oidcPlanModifier{enabledDefault: enabledDefault}},
 		}
 	}
 
@@ -189,7 +193,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 					schemadoc.RequiresReplace(),
 				},
 			}, schemadoc.Field{
-				Definition: "Unique identifier of the associated project, for example, `a07abc12310546f1b9291ab301a7d75`.",
+				Definition: "Unique identifier of the associated project, for example, `a07abc12310546f1b9291ab301a7d75b`.",
 				Behavior:   "If omitted, the `project_id` of the provider configuration is used.",
 				Source:     schemadoc.FromResource("selectel_vpc_project_v2", "project ID"),
 				Concept: schemadoc.Link{
@@ -216,8 +220,8 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				)},
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), schemadoc.RequiresReplace()},
 			}, schemadoc.Field{
-				Definition: "Cluster type: `BASIC` for one master node, `HIGH_AVAILABILITY` for three master nodes in one availability zone, " +
-					"`HIGH_AVAILABILITY_MULTI_AZ` for three master nodes in three availability zones. " +
+				Definition: "One master node for `BASIC`, three master nodes in one availability zone for `HIGH_AVAILABILITY`, " +
+					"three master nodes in three availability zones for `HIGH_AVAILABILITY_MULTI_AZ`. " +
 					"If omitted, the API creates a `HIGH_AVAILABILITY` cluster.",
 			}),
 			"workers_type": clusterDocs.String(schema.StringAttribute{
@@ -244,8 +248,12 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Definition: "Unique identifier of the subnet of the cluster. If omitted, the API creates a subnet.",
 			}),
 			"cloud_subnet_cidr": clusterDocs.String(schema.StringAttribute{
-				Optional:      true,
-				PlanModifiers: []planmodifier.String{schemadoc.RequiresReplace()},
+				Optional: true,
+				PlanModifiers: []planmodifier.String{schemadoc.RequiresReplaceIf(
+					func(_ context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
+						resp.RequiresReplace = !req.StateValue.IsNull()
+					},
+					"A change from an unset value replaces the resource")},
 			}, schemadoc.Field{
 				Definition: "CIDR of the subnet the API creates for the cluster. The API does not return it, " +
 					"so an imported cluster has no value.",
@@ -254,7 +262,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Optional:      true,
 				Computed:      true,
 				Default:       schemadoc.StaticBool(false),
-				PlanModifiers: []planmodifier.Bool{boolplanmodifier.RequiresReplace()},
+				PlanModifiers: []planmodifier.Bool{schemadoc.BoolRequiresReplace()},
 			}, schemadoc.Field{
 				Definition: "Makes Kube API available only from the cluster network instead of the Internet.",
 			}),
@@ -281,7 +289,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				)},
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), schemadoc.RequiresReplace()},
 			}, schemadoc.Field{
-				Definition: "Type of CNI used by the cluster: `CALICO` or `CILIUM`. If omitted, the API uses `CALICO`.",
+				Definition: "If omitted, the API uses `CALICO`.",
 			}),
 			"cni_cilium_settings": schema.SingleNestedAttribute{
 				Optional:            true,
@@ -560,9 +568,8 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 }
 
 // applyX509 sends the planned x509_ca_certificates of a created cluster: the
-// API ignores them on create and stores them only on PATCH. The PATCH carries
-// the whole kubernetes_options, because the API replaces them. On error the
-// state is left as planned.
+// API ignores them on create and stores them only on a PATCH that carries the
+// whole kubernetes_options.
 func applyX509(ctx context.Context, client *mksv2.ServiceClient, state *clusterModel) error {
 	var options clusterKubeOptionsModel
 	diags := state.KubernetesOptions.As(ctx, &options, basetypes.ObjectAsOptions{})
@@ -609,6 +616,9 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	projectID, diags := r.projectID(state.ProjectID)
 	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	pool := state.Pool.ValueString()
 	client, err := r.client(ctx, projectID, pool)
 	if err != nil {
@@ -735,6 +745,9 @@ func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest
 	resp.Diagnostics.Append(diags...)
 	projectID, diags := r.projectID(state.ProjectID)
 	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	pool := state.Pool.ValueString()
 	client, err := r.client(ctx, projectID, pool)
 	if err != nil {
@@ -1080,10 +1093,9 @@ func expandKubeOptions(ctx context.Context, obj types.Object) (*mksclient.Kubern
 	return opts, diags
 }
 
-// fromAPI maps the cluster onto the model. cloud_subnet_cidr and
-// x509_ca_certificates are never returned, so they come from prior. After an
-// apply kube_version must equal the plan, otherwise it follows
-// kubeVersionKeepsState.
+// fromAPI maps the cluster onto the model, taking cloud_subnet_cidr and
+// x509_ca_certificates from prior, which the API never returns, and keeping
+// kube_version via kubeVersionKeepsState after a refresh.
 func (m *clusterModel) fromAPI(ctx context.Context, c *mksclient.ClusterDetailed, prior clusterModel, applied bool) diag.Diagnostics {
 	var diags diag.Diagnostics
 
@@ -1231,10 +1243,8 @@ const (
 	oidcGroupsClaim   = "groups"
 )
 
-// oidcPlanModifier plans an OIDC parameter of a configured oidc object the way the
-// API stores it. A disabled OIDC has every parameter empty: the API rejects
-// any other value and clears them on disable. An enabled OIDC that omits a
-// claim gets the API default; a configured value wins.
+// oidcPlanModifier plans an OIDC parameter the way the API stores it: empty
+// when OIDC is disabled, the API default for an omitted claim when enabled.
 type oidcPlanModifier struct {
 	enabledDefault string
 	schemadoc.Facts
