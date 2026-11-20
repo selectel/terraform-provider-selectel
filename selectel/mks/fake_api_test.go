@@ -219,7 +219,7 @@ func (f *fakeAPI) createCluster(w http.ResponseWriter, r *http.Request) {
 		NetworkId:                     cmp.Or(opts.NetworkId, "fake-network"),
 		SubnetId:                      cmp.Or(opts.SubnetId, "fake-subnet"),
 		PrivateKubeApi:                opts.PrivateKubeApi,
-		EnableAutorepair:              valueOrT(opts.EnableAutorepair, true),
+		EnableAutorepair:              valueOrT(opts.EnableAutorepair, opts.NetworkType != "L3VPN"),
 		EnablePatchVersionAutoUpgrade: valueOrT(opts.EnablePatchVersionAutoUpgrade, clusterType != mksclient.BASIC),
 		CniType:                       cniType,
 		KubeApiIp:                     "192.0.2.10",
@@ -230,7 +230,7 @@ func (f *fakeAPI) createCluster(w http.ResponseWriter, r *http.Request) {
 		cilium := valueOrZero(opts.CniCiliumSettings)
 		c.CniCiliumSettings = &mksclient.CNICiliumSettings{
 			EnvoyDaemonset: new(valueOrT(cilium.EnvoyDaemonset, true)),
-			HubbleRelay:    new(valueOrT(cilium.HubbleRelay, true)),
+			HubbleRelay:    new(valueOrT(cilium.HubbleRelay, false)),
 		}
 	}
 	if opts.KubernetesOptions != nil {

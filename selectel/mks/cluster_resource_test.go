@@ -106,6 +106,12 @@ func TestClusterCreateSendsFields(t *testing.T) {
 	bodyFields(t, body, map[string]any{
 		"network_type": "STANDARD", "basic": false, "cni_type": "CILIUM",
 	})
+	clusterBody := body
+	if nested, ok := body["cluster"].(map[string]any); ok {
+		clusterBody = nested
+	}
+	ciliumBody, _ := clusterBody["cni_cilium_settings"].(map[string]any)
+	assert.Equal(t, map[string]any{"envoy_daemonset": true, "hubble_relay": false}, ciliumBody)
 	oidc := oidcOf(body)
 	assert.Equal(t, map[string]any{
 		"enabled": true, "provider_name": "keycloak", "issuer_url": "https://issuer.example.com",
@@ -119,6 +125,12 @@ func TestClusterCreateSendsFields(t *testing.T) {
 	assert.Equal(t, types.StringValue("fake-network"), got.NetworkID)
 	assert.Equal(t, types.StringValue("fake-subnet"), got.SubnetID)
 	assert.True(t, got.CloudSubnetCIDR.IsNull())
+
+	var ciliumState clusterCiliumModel
+	diags2 := got.CNICiliumSettings.As(context.Background(), &ciliumState, basetypes.ObjectAsOptions{})
+	require.False(t, diags2.HasError())
+	assert.Equal(t, types.BoolValue(true), ciliumState.EnvoyDaemonset)
+	assert.Equal(t, types.BoolValue(false), ciliumState.HubbleRelay)
 
 	assert.Equal(t, types.StringValue(testProject), got.ProjectID)
 	assert.Equal(t, 1, fake.callCount(routeCreateCluster))
@@ -157,9 +169,10 @@ func TestClusterWorkersType(t *testing.T) {
 	for _, tt := range []struct {
 		workersType string
 		networkType string
+		autorepair  types.Bool
 	}{
-		{workersType: "CLOUD", networkType: "STANDARD"},
-		{workersType: "DEDICATED", networkType: "L3VPN"},
+		{workersType: "CLOUD", networkType: "STANDARD", autorepair: types.BoolValue(true)},
+		{workersType: "DEDICATED", networkType: "L3VPN", autorepair: types.BoolValue(false)},
 	} {
 		t.Run(tt.workersType, func(t *testing.T) {
 			fake := newFakeAPI(t)
@@ -167,6 +180,7 @@ func TestClusterWorkersType(t *testing.T) {
 
 			plan := clusterPlan()
 			plan.WorkersType = types.StringValue(tt.workersType)
+			plan.EnableAutorepair = tt.autorepair
 			state, diags := createCluster(t, r, plan)
 			require.False(t, diags.HasError(), "%v", diags)
 
@@ -174,6 +188,7 @@ func TestClusterWorkersType(t *testing.T) {
 
 			got := readClusterModel(t, state)
 			assert.Equal(t, types.StringValue(tt.workersType), got.WorkersType)
+			assert.Equal(t, tt.autorepair, got.EnableAutorepair)
 
 			imported := got
 			imported.WorkersType = types.StringUnknown()
@@ -380,6 +395,17 @@ func TestClusterKubeVersionUpgrade(t *testing.T) {
 	state2, diags := readCluster(t, r, got2)
 	require.False(t, diags.HasError(), "%v", diags)
 	assert.Equal(t, types.StringValue(testKubeVersionUp), readClusterModel(t, state2).KubeVersion)
+
+	patchBefore := fake.callCount(routePatchCluster)
+	behindState := prior
+	behindState.KubeVersion = types.StringValue(testKubeVersionOld)
+	behindPlan := prior
+	behindPlan.KubeVersion = types.StringValue(testKubeVersion)
+	_, diags = updateCluster(t, r, behindState, behindPlan)
+	require.False(t, diags.HasError(), "%v", diags)
+	assert.Equal(t, patchBefore, fake.callCount(routePatchCluster))
+	assert.Equal(t, 1, fake.callCount(routeUpgradePatch))
+	assert.Equal(t, 1, fake.callCount(routeUpgradeMinor))
 }
 
 func TestClusterKubeVersionUpgradedOutside(t *testing.T) {
@@ -1039,6 +1065,12 @@ func TestClusterStatusOnUpdate(t *testing.T) {
 	require.False(t, diags.HasError(), "%v", diags)
 	assert.Equal(t, types.StringValue("ACTIVE"), got2.Status)
 	assert.Greater(t, fake.callCount(routePatchCluster), 1)
+	ciliumPatch, _ := fake.lastBody(routePatchCluster)["cluster"].(map[string]any)
+	assert.Equal(t, map[string]any{"envoy_daemonset": true, "hubble_relay": true}, ciliumPatch["cni_cilium_settings"])
+	var ciliumState clusterCiliumModel
+	diags2 := got2.CNICiliumSettings.As(context.Background(), &ciliumState, basetypes.ObjectAsOptions{})
+	require.False(t, diags2.HasError())
+	assert.Equal(t, types.BoolValue(true), ciliumState.HubbleRelay)
 }
 
 func TestClusterCiliumSettingsNeedCilium(t *testing.T) {
@@ -1203,8 +1235,10 @@ func TestClusterModifyPlanKeepsStatusWhenPlanEqualsState(t *testing.T) {
 	resp := resource.ModifyPlanResponse{Plan: req.Plan}
 	r.ModifyPlan(context.Background(), req, &resp)
 	require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
-	assert.Equal(t, types.StringValue("ACTIVE"), plan.Status)
-	assert.Equal(t, types.StringValue("09:00:00"), plan.MaintenanceWindowEnd)
+	var got clusterModel
+	require.False(t, resp.Plan.Get(context.Background(), &got).HasError())
+	assert.Equal(t, types.StringValue("ACTIVE"), got.Status)
+	assert.Equal(t, types.StringValue("09:00:00"), got.MaintenanceWindowEnd)
 }
 
 func TestClusterValidateKubeVersionChange(t *testing.T) {
@@ -1245,6 +1279,180 @@ func TestClusterBasicClusterAutoUpgradeRejectedAtPlan(t *testing.T) {
 	assert.Equal(t, "Patch version auto-upgrade is not available for BASIC clusters", resp.Diagnostics.Errors()[0].Summary())
 }
 
+func TestClusterCreateUnknownFieldsLeftToAPI(t *testing.T) {
+	fake := newFakeAPI(t)
+	r := fake.resource()
+
+	plan := clusterPlan()
+	plan.EnablePatchVersionAutoUpgrade = types.BoolUnknown()
+	plan.CNIType = types.StringUnknown()
+	plan.CNICiliumSettings = types.ObjectUnknown(ciliumAttrTypes)
+	plan.KubernetesOptions = types.ObjectUnknown(kubeOptionsAttrTypes)
+	state, diags := createCluster(t, r, plan)
+	require.False(t, diags.HasError(), "%v", diags)
+
+	bodyFields(t, fake.lastBody(routeCreateCluster), nil,
+		"enable_patch_version_auto_upgrade", "cni_type", "cni_cilium_settings", "kubernetes_options")
+	got := readClusterModel(t, state)
+	assert.Equal(t, types.BoolValue(false), got.EnablePatchVersionAutoUpgrade)
+	assert.Equal(t, types.StringValue("CALICO"), got.CNIType)
+	assert.True(t, got.CNICiliumSettings.IsNull())
+}
+
+func TestClusterValidateConfigRules(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		mutate func(m *clusterModel)
+		want   string
+	}{
+		{
+			name: "cloud cluster rejects cloud_subnet_cidr",
+			mutate: func(m *clusterModel) {
+				m.WorkersType = types.StringValue("CLOUD")
+				m.CloudSubnetCIDR = types.StringValue("10.20.0.0/24")
+			},
+			want: "Cloud subnet CIDR is not available for cloud clusters",
+		},
+		{
+			name: "dedicated cluster rejects enable_autorepair true",
+			mutate: func(m *clusterModel) {
+				m.WorkersType = types.StringValue("DEDICATED")
+				m.EnableAutorepair = types.BoolValue(true)
+			},
+			want: "Auto-repair is not available for dedicated clusters",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &clusterResource{}
+			config := clusterPlan()
+			tt.mutate(&config)
+			resp := resource.ValidateConfigResponse{}
+			r.ValidateConfig(context.Background(), resource.ValidateConfigRequest{
+				Config: tfsdk.Config(clusterStateOf(t, r, config)),
+			}, &resp)
+			require.True(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+			assert.Equal(t, tt.want, resp.Diagnostics.Errors()[0].Summary())
+		})
+	}
+}
+
+func TestClusterValidateConfigAcceptsDedicatedCIDR(t *testing.T) {
+	r := &clusterResource{}
+	config := clusterPlan()
+	config.WorkersType = types.StringValue("DEDICATED")
+	config.EnableAutorepair = types.BoolValue(false)
+	config.CloudSubnetCIDR = types.StringValue("10.20.0.0/24")
+	resp := resource.ValidateConfigResponse{}
+	r.ValidateConfig(context.Background(), resource.ValidateConfigRequest{
+		Config: tfsdk.Config(clusterStateOf(t, r, config)),
+	}, &resp)
+	assert.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+}
+
+func TestClusterX509UnknownPlanSkipsTheCheck(t *testing.T) {
+	r := &clusterResource{}
+	state := clusterState()
+	state.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
+		"x509_ca_certificates": types.StringValue("Y2VydA=="),
+	})
+	plan := state
+	plan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
+		"x509_ca_certificates": types.StringUnknown(),
+	})
+	req := resource.ModifyPlanRequest{
+		Config: tfsdk.Config(clusterStateOf(t, r, plan)), Plan: tfsdk.Plan(clusterStateOf(t, r, plan)),
+		State: clusterStateOf(t, r, state),
+	}
+	resp := resource.ModifyPlanResponse{Plan: req.Plan}
+	r.ModifyPlan(context.Background(), req, &resp)
+	assert.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+}
+
+func TestClusterAuditSecretModifierRules(t *testing.T) {
+	r := &clusterResource{}
+	auditLogs := func(enabled types.Bool, secret types.String) types.Object {
+		return types.ObjectValueMust(auditLogsAttrTypes, map[string]attr.Value{
+			"enabled": enabled, "secret_name": secret,
+		})
+	}
+	for _, tt := range []struct {
+		name    string
+		config  types.String
+		audit   types.Object
+		want    types.String
+		wantErr string
+	}{
+		{
+			name:    "a non-empty name with audit logs disabled fails the plan",
+			config:  types.StringValue("siem"),
+			audit:   auditLogs(types.BoolValue(false), types.StringValue("siem")),
+			wantErr: "Audit logs secret name set while audit logs are disabled",
+		},
+		{
+			name:  "a null name with audit logs enabled plans the API default",
+			audit: auditLogs(types.BoolValue(true), types.StringNull()),
+			want:  types.StringValue("mks-audit-logs"),
+		},
+		{
+			name:  "a disabled object plans an empty name",
+			audit: auditLogs(types.BoolValue(false), types.StringNull()),
+			want:  types.StringValue(""),
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			config := clusterPlan()
+			config.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"audit_logs": tt.audit})
+			req := planmodifier.StringRequest{
+				Config:      tfsdk.Config(clusterStateOf(t, r, config)),
+				StateValue:  types.StringNull(),
+				ConfigValue: tt.config,
+				Path:        path.Root("kubernetes_options").AtName("audit_logs").AtName("secret_name"),
+			}
+			if !tt.config.IsUnknown() && tt.config.IsNull() {
+				req.ConfigValue = tt.config
+			}
+			resp := planmodifier.StringResponse{PlanValue: req.ConfigValue}
+			auditSecretPlanModifier{}.PlanModifyString(context.Background(), req, &resp)
+			if tt.wantErr != "" {
+				require.True(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+				assert.Equal(t, tt.wantErr, resp.Diagnostics.Errors()[0].Summary())
+
+				return
+			}
+			require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+			assert.Equal(t, tt.want, resp.PlanValue)
+		})
+	}
+}
+
+func TestClusterAuditSecretKeepsTheStateOfAnEnabledCluster(t *testing.T) {
+	r := &clusterResource{}
+	plan := clusterPlan()
+	plan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
+		"audit_logs": types.ObjectValueMust(auditLogsAttrTypes, map[string]attr.Value{
+			"enabled": types.BoolValue(true), "secret_name": types.StringNull(),
+		}),
+	})
+	state := clusterState()
+	state.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
+		"audit_logs": types.ObjectValueMust(auditLogsAttrTypes, map[string]attr.Value{
+			"enabled": types.BoolValue(true), "secret_name": types.StringValue("siem"),
+		}),
+	})
+
+	req := planmodifier.StringRequest{
+		Config:      tfsdk.Config(clusterStateOf(t, r, plan)),
+		State:       clusterStateOf(t, r, state),
+		ConfigValue: types.StringNull(),
+		StateValue:  types.StringValue("siem"),
+		Path:        path.Root("kubernetes_options").AtName("audit_logs").AtName("secret_name"),
+	}
+	resp := planmodifier.StringResponse{PlanValue: types.StringNull()}
+	auditSecretPlanModifier{}.PlanModifyString(context.Background(), req, &resp)
+	require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+	assert.Equal(t, types.StringValue("siem"), resp.PlanValue)
+}
+
 func TestClusterOIDCModifierRules(t *testing.T) {
 	r := &clusterResource{}
 	oidc := func(enabled bool) types.Object {
@@ -1254,6 +1462,17 @@ func TestClusterOIDCModifierRules(t *testing.T) {
 			"issuer_url":     types.StringValue("https://issuer.example.com"),
 			"client_id":      types.StringValue("kubernetes"),
 			"username_claim": types.StringNull(),
+			"groups_claim":   types.StringNull(),
+			"ca_certs":       trimmedStringValue{StringValue: types.StringNull()},
+		})
+	}
+	oidcWithEnabledAndClaim := func(enabled types.Bool, claim types.String) types.Object {
+		return types.ObjectValueMust(oidcAttrTypes, map[string]attr.Value{
+			"enabled":        enabled,
+			"provider_name":  types.StringNull(),
+			"issuer_url":     types.StringNull(),
+			"client_id":      types.StringNull(),
+			"username_claim": claim,
 			"groups_claim":   types.StringNull(),
 			"ca_certs":       trimmedStringValue{StringValue: types.StringNull()},
 		})
@@ -1291,6 +1510,60 @@ func TestClusterOIDCModifierRules(t *testing.T) {
 			assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), name+" cannot be empty while OIDC is enabled: omit it to get")
 		})
 	}
+	t.Run("null enabled with an enabled state keeps the plan", func(t *testing.T) {
+		config := clusterPlan()
+		config.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
+			"oidc": oidcWithEnabledAndClaim(types.BoolNull(), types.StringValue("https://issuer.example.com")),
+		})
+		state := clusterState()
+		state.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"oidc": oidc(true)})
+		modReq := planmodifier.StringRequest{
+			Config:      tfsdk.Config(clusterStateOf(t, r, config)),
+			State:       clusterStateOf(t, r, state),
+			ConfigValue: types.StringValue("https://issuer.example.com"),
+			StateValue:  types.StringValue("https://issuer.example.com"),
+			Path:        path.Root("kubernetes_options").AtName("oidc").AtName("issuer_url"),
+		}
+		resp := planmodifier.StringResponse{PlanValue: modReq.ConfigValue}
+		oidcPlanModifier{}.PlanModifyString(context.Background(), modReq, &resp)
+		require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+		assert.Equal(t, types.StringValue("https://issuer.example.com"), resp.PlanValue)
+	})
+	t.Run("null enabled on create plans an empty parameter", func(t *testing.T) {
+		config := clusterPlan()
+		config.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
+			"oidc": oidcWithEnabledAndClaim(types.BoolNull(), types.StringNull()),
+		})
+		modReq := planmodifier.StringRequest{
+			Config:      tfsdk.Config(clusterStateOf(t, r, config)),
+			ConfigValue: types.StringNull(),
+			StateValue:  types.StringNull(),
+			Path:        path.Root("kubernetes_options").AtName("oidc").AtName("issuer_url"),
+		}
+		resp := planmodifier.StringResponse{PlanValue: types.StringUnknown()}
+		oidcPlanModifier{}.PlanModifyString(context.Background(), modReq, &resp)
+		require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+		assert.Equal(t, types.StringValue(""), resp.PlanValue)
+	})
+	t.Run("null enabled with an enabled state and a null claim plans the default", func(t *testing.T) {
+		config := clusterPlan()
+		config.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
+			"oidc": oidcWithEnabledAndClaim(types.BoolNull(), types.StringNull()),
+		})
+		state := clusterState()
+		state.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"oidc": oidc(true)})
+		modReq := planmodifier.StringRequest{
+			Config:      tfsdk.Config(clusterStateOf(t, r, config)),
+			State:       clusterStateOf(t, r, state),
+			ConfigValue: types.StringNull(),
+			StateValue:  types.StringNull(),
+			Path:        path.Root("kubernetes_options").AtName("oidc").AtName("username_claim"),
+		}
+		resp := planmodifier.StringResponse{PlanValue: types.StringUnknown()}
+		oidcPlanModifier{enabledDefault: "sub"}.PlanModifyString(context.Background(), modReq, &resp)
+		require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+		assert.Equal(t, types.StringValue("sub"), resp.PlanValue)
+	})
 }
 
 func TestClusterOIDCKeepsStateWhileEnabled(t *testing.T) {

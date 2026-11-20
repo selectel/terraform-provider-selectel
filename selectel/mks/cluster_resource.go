@@ -5,11 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -45,6 +47,12 @@ var (
 const clusterLocation = "managed-kubernetes"
 
 var clusterDocs = schemadoc.Resource{Name: "cluster", Location: clusterLocation}
+
+// kubeVersionPattern pins the form the API accepts on create: it takes a
+// plain minor version too, and every later plan then fails.
+var kubeVersionPattern = regexp.MustCompile(`^\d+\.\d+\.\d+$`)
+
+var namePattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9-]*$`)
 
 // workersType is the user-facing name of the API network_type.
 var workersTypes = map[string]string{
@@ -168,6 +176,11 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), oidcPlanModifier{enabledDefault: enabledDefault}},
 		}
 	}
+	auditLogsSecretParam := schema.StringAttribute{
+		Optional:      true,
+		Computed:      true,
+		PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), auditSecretPlanModifier{}},
+	}
 
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Creates and manages a cluster in Managed Kubernetes using the v2 public API. " +
@@ -177,7 +190,13 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 		Attributes: map[string]schema.Attribute{
 			"id": clusterDocs.ID(),
 			"name": clusterDocs.String(schema.StringAttribute{
-				Required:      true,
+				Required: true,
+				Validators: []validator.String{
+					schemadoc.LengthAtMost(32),
+					schemadoc.DescribeString(stringvalidator.RegexMatches(namePattern, "must contain Latin letters, digits, and hyphens and not start with a hyphen"),
+						"The name can contain Latin letters, digits, and hyphens and cannot start with a hyphen. "+
+							"If `workers_type` is `DEDICATED`, the name must start with a letter."),
+				},
 				PlanModifiers: []planmodifier.String{nameCase{}, schemadoc.RequiresReplace()},
 			}, schemadoc.Field{
 				Definition: "Cluster name. It is included in the names of the cluster entities: " +
@@ -204,13 +223,19 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			}),
 			"kube_version": clusterDocs.String(schema.StringAttribute{
 				Required: true,
+				Validators: []validator.String{
+					schemadoc.DescribeString(stringvalidator.RegexMatches(kubeVersionPattern, "must be in the x.y.z form"),
+						"The format is `x.y.z`."),
+				},
 			}, schemadoc.Field{
 				Definition: "Kubernetes version of the cluster. The format is `x.y.z`. Raising it upgrades the cluster. " +
 					"A patch upgrade is possible only to the latest patch version of the current minor version. " +
 					"Another patch version fails the apply. " +
-					"A minor upgrade takes the next minor version. Skipping a minor version fails the plan. " +
+					"A minor upgrade is possible only to the latest patch version of the next minor version. " +
+					"Another patch version fails the apply. Skipping a minor version fails the plan. " +
 					"The cluster may run a newer version than configured, for example after patch auto-upgrade: " +
 					"a configured version lower than the one in the state is accepted with no change and never downgrades the cluster.",
+				Source: "You can retrieve the available versions with the [selectel_mks_kube_versions_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/mks_kube_versions_v1) data source.",
 			}),
 			"cluster_type": clusterDocs.String(schema.StringAttribute{
 				Optional: true,
@@ -244,7 +269,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			}, schemadoc.Field{
 				Definition: "Unique identifier of the network of the cluster.",
 				Behavior:   "If omitted, the API creates a network.",
-				Source:     schemadoc.FromResource("openstack_networking_network_v2", "network ID"),
+				Source:     schemadoc.FromResource("selectel_vpc_network_v2", "network ID"),
 			}),
 			"subnet_id": clusterDocs.String(schema.StringAttribute{
 				Optional:      true,
@@ -253,7 +278,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			}, schemadoc.Field{
 				Definition: "Unique identifier of the subnet of the cluster.",
 				Behavior:   "If omitted, the API creates a subnet.",
-				Source:     schemadoc.FromResource("openstack_networking_subnet_v2", "subnet ID"),
+				Source:     schemadoc.FromResource("selectel_vpc_network_subnet_v2", "subnet ID"),
 			}),
 			"cloud_subnet_cidr": clusterDocs.String(schema.StringAttribute{
 				Optional: true,
@@ -265,8 +290,9 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 					},
 					"A change from an unset value after import does not replace the cluster.")},
 			}, schemadoc.Field{
-				Definition: "CIDR of the subnet the API creates for the cluster. The API does not return it, " +
-					"so an imported cluster has no value.",
+				Definition: "CIDR of the cloud subnet to which the master nodes are connected. " +
+					"Applicable only if `workers_type` is `DEDICATED`. If omitted, the API uses `10.20.0.0/24`. " +
+					"The API does not return it, so an imported cluster has no value.",
 			}),
 			"private_kube_api": clusterDocs.Bool(schema.BoolAttribute{
 				Optional:      true,
@@ -277,18 +303,23 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Definition: "Whether the Kube API is available only from the cluster network instead of the Internet.",
 			}),
 			"maintenance_window_start": clusterDocs.String(optionalString(), schemadoc.Field{
-				Definition: "Time in UTC when maintenance in the cluster starts. The format is `hh:mm:ss`.",
+				Definition: "Time in UTC when maintenance in the cluster starts. The format is `hh:mm:ss`. " +
+					"You can change it only within `48` hours after the last maintenance of the cluster, " +
+					"so the change fails for a cluster without maintenance yet.",
 			}),
 			"enable_autorepair": clusterDocs.Bool(schema.BoolAttribute{
 				Optional:      true,
 				Computed:      true,
-				Default:       schemadoc.StaticBool(true),
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			}, schemadoc.Field{
 				Definition: "Enables or disables automatic reinstallation of worker nodes that are unavailable or unhealthy. " +
 					"Auto-recovery is unavailable with a single worker node and on dedicated servers, " +
-					"and it deletes all data on the boot disk of the node. " +
-					"For more information, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/reinstall-nodes/).",
+					"and it deletes all data on the boot disk of the node.",
+				Behavior: "If omitted, the API enables it, except for `DEDICATED` clusters, where it is always disabled.",
+				Concept: schemadoc.Link{
+					Title: "node auto-recovery",
+					URL:   "https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/reinstall-nodes/",
+				},
 			}),
 			"enable_patch_version_auto_upgrade": clusterDocs.Bool(optionalBool(), schemadoc.Field{
 				Definition: "Enables or disables automatic upgrade of the cluster to the latest patch version during the maintenance window. " +
@@ -316,7 +347,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						Definition: "Enables or disables the Envoy DaemonSet for Cilium. If omitted, the API uses `true`.",
 					}),
 					"hubble_relay": clusterDocs.Bool(optionalBool(), schemadoc.Field{
-						Definition: "Enables or disables Hubble Relay for Cilium. If omitted, the API uses `true`.",
+						Definition: "Enables or disables Hubble Relay for Cilium. If omitted, the API uses `false`.",
 					}),
 				},
 			},
@@ -352,17 +383,21 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						},
 					}),
 					"audit_logs": schema.SingleNestedAttribute{
-						Optional:            true,
-						Computed:            true,
-						MarkdownDescription: "Collection of Kubernetes audit logs. Learn how to [configure export of audit logs to a logging system](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/logs/#configure-export-of-audit-logs).",
-						PlanModifiers:       []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
+						Optional: true,
+						Computed: true,
+						MarkdownDescription: "Collection of Kubernetes audit logs. " +
+							"Learn more about [exporting audit logs to a logging system](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/logs/#configure-export-of-audit-logs).",
+						PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 						Attributes: map[string]schema.Attribute{
 							"enabled": clusterDocs.Bool(optionalBool(), schemadoc.Field{
 								Definition: "Enables or disables collection of audit logs.",
+								Behavior:   "If omitted when the cluster is created, the value is `false`.",
 							}),
-							"secret_name": clusterDocs.String(optionalString(), schemadoc.Field{
+							"secret_name": clusterDocs.String(auditLogsSecretParam, schemadoc.Field{
 								Definition: "Name of the secret in the `kube-system` namespace " +
-									"with the credentials of the logging system. The API does not apply a change of only this field.",
+									"with the credentials of the logging system. " +
+									"A change of only this field ends in an API error: change it together with `enabled`. " +
+									"If omitted while `enabled` is `true`, the API uses `mks-audit-logs`.",
 							}),
 						},
 					},
@@ -370,31 +405,36 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						Optional: true,
 						Computed: true,
 						MarkdownDescription: "Connection of an OpenID Connect (OIDC) provider to the cluster. " +
-							"Learn how to [configure the OIDC provider in the cluster](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/access-to-cluster-with-oidc-provider/#configure-oidc-connection). " +
-							"Disabling OIDC clears its settings, so with `enabled = false` omit the other arguments. A non-empty one fails the plan.",
+							"Disabling OIDC clears its settings, so with `enabled = false` omit the other arguments. A non-empty one fails the plan. " +
+							"Learn more about [connecting an OIDC provider to the cluster](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/access-to-cluster-with-oidc-provider/#configure-oidc-connection).",
 						PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 						Attributes: map[string]schema.Attribute{
 							"enabled": clusterDocs.Bool(optionalBool(), schemadoc.Field{
 								Definition: "Enables or disables authentication with OIDC.",
-								Behavior:   "If `false`, omit the other arguments of `oidc`.",
+								Behavior:   "If `false`, omit the other arguments of `oidc`. If omitted when the cluster is created, the value is `false`.",
 							}),
 							"provider_name": clusterDocs.String(oidcParam(""), schemadoc.Field{
 								Definition: "Name of the connection, for identification only. " +
-									"The API does not apply a change of only this field.",
+									"A change of only this field ends in an API error: change it together with `enabled`.",
+								Behavior: "If `enabled` is `false`, omit this argument.",
 							}),
 							"issuer_url": clusterDocs.String(oidcParam(""), schemadoc.Field{
 								Definition: "URL of the OIDC provider. It must start with `https://`.",
+								Behavior:   "If `enabled` is `false`, omit this argument.",
 							}),
 							"client_id": clusterDocs.String(oidcParam(""), schemadoc.Field{
 								Definition: "Client ID that all tokens must be issued for.",
+								Behavior:   "If `enabled` is `false`, omit this argument.",
 							}),
 							"username_claim": clusterDocs.String(oidcParam(oidcUsernameClaim), schemadoc.Field{
 								Definition: "JWT claim to use as the username. " +
 									"When OIDC is enabled, omit it to get `sub`. An empty value fails the plan.",
+								Behavior: "If `enabled` is `false`, omit this argument.",
 							}),
 							"groups_claim": clusterDocs.String(oidcParam(oidcGroupsClaim), schemadoc.Field{
 								Definition: "JWT claim to use as the user's group. " +
 									"When OIDC is enabled, omit it to get `groups`. An empty value fails the plan.",
+								Behavior: "If `enabled` is `false`, omit this argument.",
 							}),
 							"ca_certs": clusterDocs.String(schema.StringAttribute{
 								Optional:      true,
@@ -405,6 +445,8 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 								Definition: "CA certificates of the OIDC provider. The format is PEM. " +
 									"Leading and trailing whitespace is ignored.",
 							}),
+							// ca_certs carries no enabled=false sentence: any PEM content is a
+							// non-empty value the plan rejects, and whitespace is not content.
 						},
 					},
 					"x509_ca_certificates": clusterDocs.String(schema.StringAttribute{
@@ -413,8 +455,8 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						Definition: "Custom X509 CA certificates for the cluster components, base64-encoded. " +
 							"The API does not return them, so an imported cluster has no value. If setting them fails " +
 							"after the cluster is created, the apply ends with a warning and the next apply sets them. " +
-							"The API keeps the certificates of the cluster: removing them from the configuration " +
-							"does not remove them from the cluster. New certificates can be set instead.",
+							"The API keeps the certificates of the cluster, so removing them from the configuration " +
+							"or setting an empty value fails the plan. New certificates can be set instead.",
 					}),
 				},
 			},
@@ -444,11 +486,15 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 }
 
 func (r *clusterResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var clusterType, cniType types.String
-	var autoUpgrade types.Bool
+	var clusterType, cniType, workersType types.String
+	var cloudSubnetCIDR types.String
+	var autoUpgrade, autorepair types.Bool
 	var cilium types.Object
 	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("cluster_type"), &clusterType)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("workers_type"), &workersType)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("cloud_subnet_cidr"), &cloudSubnetCIDR)...)
 	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("enable_patch_version_auto_upgrade"), &autoUpgrade)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("enable_autorepair"), &autorepair)...)
 	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("cni_type"), &cniType)...)
 	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("cni_cilium_settings"), &cilium)...)
 	if resp.Diagnostics.HasError() {
@@ -469,6 +515,20 @@ func (r *clusterResource) ValidateConfig(ctx context.Context, req resource.Valid
 		resp.Diagnostics.AddAttributeError(path.Root("enable_patch_version_auto_upgrade"),
 			"Patch version auto-upgrade is not available for BASIC clusters",
 			"Set enable_patch_version_auto_upgrade to false or omit it when cluster_type is BASIC.")
+	}
+
+	// The API ignores the CIDR for a non-dedicated cluster.
+	if !cloudSubnetCIDR.IsNull() && !cloudSubnetCIDR.IsUnknown() && workersType.ValueString() == "CLOUD" {
+		resp.Diagnostics.AddAttributeError(path.Root("cloud_subnet_cidr"),
+			"Cloud subnet CIDR is not available for cloud clusters",
+			"Remove cloud_subnet_cidr or set workers_type to DEDICATED.")
+	}
+
+	// The API always disables auto-repair for a dedicated cluster.
+	if workersType.ValueString() == "DEDICATED" && autorepair.ValueBool() {
+		resp.Diagnostics.AddAttributeError(path.Root("enable_autorepair"),
+			"Auto-repair is not available for dedicated clusters",
+			"The API always disables enable_autorepair for a DEDICATED cluster, so setting it to true ends in an inconsistent result.")
 	}
 }
 
@@ -512,15 +572,21 @@ func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("maintenance_window_end"), types.StringUnknown())...)
 	}
 
-	x509Plan := ""
+	x509Plan, x509Known := "", false
 	planKubeOptions := plan.KubernetesOptions
-	if !planKubeOptions.IsNull() && !planKubeOptions.IsUnknown() {
+	if planKubeOptions.IsNull() || planKubeOptions.IsUnknown() {
+		x509Known = true
+	} else {
 		var options clusterKubeOptionsModel
-		if !planKubeOptions.As(ctx, &options, basetypes.ObjectAsOptions{}).HasError() {
+		if planKubeOptions.As(ctx, &options, basetypes.ObjectAsOptions{}).HasError() {
+			x509Known = true
+		} else {
 			x509Plan = options.X509CACertificates.ValueString()
+			// An unknown planned value reads as "", which would fail the plan.
+			x509Known = !options.X509CACertificates.IsUnknown()
 		}
 	}
-	if x509Plan == "" {
+	if x509Known && x509Plan == "" {
 		x509State := ""
 		stateKubeOptions := state.KubernetesOptions
 		if !stateKubeOptions.IsNull() && !stateKubeOptions.IsUnknown() {
@@ -1386,6 +1452,75 @@ func (m oidcPlanModifier) PlanModifyString(ctx context.Context, req planmodifier
 		return
 	}
 	resp.PlanValue = types.StringValue("")
+}
+
+// auditSecretPlanModifier plans audit_logs.secret_name the way the API stores
+// it: empty when audit logs are disabled, the state name or `mks-audit-logs`
+// when they are enabled.
+type auditSecretPlanModifier struct {
+	schemadoc.Facts
+}
+
+func (m auditSecretPlanModifier) Description(_ context.Context) string {
+	return "Plans the value the API stores for the audit logs secret."
+}
+
+func (m auditSecretPlanModifier) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (m auditSecretPlanModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	var auditLogs types.Object
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, req.Path.ParentPath(), &auditLogs)...)
+	if resp.Diagnostics.HasError() || auditLogs.IsNull() || auditLogs.IsUnknown() {
+		// An omitted audit_logs object keeps the state, see UseStateForUnknown.
+		return
+	}
+	enabled := auditLogs.Attributes()["enabled"].(types.Bool)
+	if enabled.IsUnknown() || enabled.IsNull() || !enabled.ValueBool() {
+		if !req.ConfigValue.IsNull() && req.ConfigValue.ValueString() != "" {
+			resp.Diagnostics.AddAttributeError(req.Path, "Audit logs secret name set while audit logs are disabled",
+				"The API rejects it: audit_logs.secret_name cannot be non-empty while audit_logs.enabled is false.")
+
+			return
+		}
+		resp.PlanValue = types.StringValue("")
+
+		return
+	}
+	if req.ConfigValue.IsUnknown() {
+		// The plan must keep an unknown configured value; the apply-time plan
+		// sees the known one.
+		return
+	}
+	if req.ConfigValue.IsNull() || req.ConfigValue.ValueString() == "" {
+		stateEnabled, known := auditLogsStateEnabled(ctx, req)
+		if known && stateEnabled && !req.StateValue.IsNull() && req.StateValue.ValueString() != "" {
+			// UseStateForUnknown would keep the state name, which is what the
+			// API stores for a cluster that already collects audit logs.
+			resp.PlanValue = req.StateValue
+
+			return
+		}
+		resp.PlanValue = types.StringValue("mks-audit-logs")
+
+		return
+	}
+}
+
+// auditLogsStateEnabled reports whether the state enabled the collection, so an
+// enabled cluster keeps its secret after the object was omitted.
+func auditLogsStateEnabled(ctx context.Context, req planmodifier.StringRequest) (bool, bool) {
+	if req.State.Raw.IsNull() {
+		return false, true
+	}
+	var stateEnabled types.Bool
+	resp := req.State.GetAttribute(ctx, req.Path.ParentPath().AtName("enabled"), &stateEnabled)
+	if resp.HasError() {
+		return false, false
+	}
+
+	return stateEnabled.ValueBool(), !stateEnabled.IsNull() && !stateEnabled.IsUnknown()
 }
 
 // oidcEnabled is the planned oidc.enabled: the configured value, otherwise
