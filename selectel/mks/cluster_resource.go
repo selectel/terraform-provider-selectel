@@ -1476,51 +1476,43 @@ func (m auditSecretPlanModifier) PlanModifyString(ctx context.Context, req planm
 		// An omitted audit_logs object keeps the state, see UseStateForUnknown.
 		return
 	}
-	enabled := auditLogs.Attributes()["enabled"].(types.Bool)
-	if enabled.IsUnknown() || enabled.IsNull() || !enabled.ValueBool() {
-		if !req.ConfigValue.IsNull() && req.ConfigValue.ValueString() != "" {
-			resp.Diagnostics.AddAttributeError(req.Path, "Audit logs secret name set while audit logs are disabled",
-				"The API rejects it: audit_logs.secret_name cannot be non-empty while audit_logs.enabled is false.")
+	var planned types.Object
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, req.Path.ParentPath(), &planned)...)
+	if resp.Diagnostics.HasError() || planned.IsNull() || planned.IsUnknown() {
+		return
+	}
+	enabled := planned.Attributes()["enabled"].(types.Bool)
+	if enabled.IsUnknown() {
+		if req.ConfigValue.IsNull() || req.ConfigValue.ValueString() == "" {
+			resp.PlanValue = types.StringUnknown()
+		}
 
+		return
+	}
+	if enabled.ValueBool() {
+		if req.ConfigValue.IsUnknown() {
+			// The apply-time plan sees the known value.
 			return
 		}
-		resp.PlanValue = types.StringValue("")
+		if req.ConfigValue.IsNull() || req.ConfigValue.ValueString() == "" {
+			if !req.StateValue.IsNull() && req.StateValue.ValueString() != "" {
+				// The API keeps the name of a cluster that already collects logs.
+				resp.PlanValue = req.StateValue
 
-		return
-	}
-	if req.ConfigValue.IsUnknown() {
-		// The plan must keep an unknown configured value; the apply-time plan
-		// sees the known one.
-		return
-	}
-	if req.ConfigValue.IsNull() || req.ConfigValue.ValueString() == "" {
-		stateEnabled, known := auditLogsStateEnabled(ctx, req)
-		if known && stateEnabled && !req.StateValue.IsNull() && req.StateValue.ValueString() != "" {
-			// UseStateForUnknown would keep the state name, which is what the
-			// API stores for a cluster that already collects audit logs.
-			resp.PlanValue = req.StateValue
-
-			return
+				return
+			}
+			resp.PlanValue = types.StringValue("mks-audit-logs")
 		}
-		resp.PlanValue = types.StringValue("mks-audit-logs")
 
 		return
 	}
-}
+	if !req.ConfigValue.IsNull() && req.ConfigValue.ValueString() != "" {
+		resp.Diagnostics.AddAttributeError(req.Path, "Audit logs secret name set while audit logs are disabled",
+			"The API rejects it: audit_logs.secret_name cannot be non-empty while audit_logs.enabled is false.")
 
-// auditLogsStateEnabled reports whether the state enabled the collection, so an
-// enabled cluster keeps its secret after the object was omitted.
-func auditLogsStateEnabled(ctx context.Context, req planmodifier.StringRequest) (bool, bool) {
-	if req.State.Raw.IsNull() {
-		return false, true
+		return
 	}
-	var stateEnabled types.Bool
-	resp := req.State.GetAttribute(ctx, req.Path.ParentPath().AtName("enabled"), &stateEnabled)
-	if resp.HasError() {
-		return false, false
-	}
-
-	return stateEnabled.ValueBool(), !stateEnabled.IsNull() && !stateEnabled.IsUnknown()
+	resp.PlanValue = types.StringValue("")
 }
 
 // oidcEnabled is the planned oidc.enabled: the configured value, otherwise

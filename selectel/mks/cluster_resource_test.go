@@ -107,7 +107,8 @@ func TestClusterCreateSendsFields(t *testing.T) {
 		"network_type": "STANDARD", "basic": false, "cni_type": "CILIUM",
 	})
 	clusterBody := body
-	if nested, ok := body["cluster"].(map[string]any); ok {
+	nested, ok := body["cluster"].(map[string]any)
+	if ok {
 		clusterBody = nested
 	}
 	ciliumBody, _ := clusterBody["cni_cilium_settings"].(map[string]any)
@@ -1375,42 +1376,63 @@ func TestClusterAuditSecretModifierRules(t *testing.T) {
 			"enabled": enabled, "secret_name": secret,
 		})
 	}
+	reqOf := func(t *testing.T, planned, configAudit types.Object) planmodifier.StringRequest {
+		t.Helper()
+		plannedModel := clusterPlan()
+		plannedModel.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"audit_logs": planned})
+		configModel := plannedModel
+		configModel.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"audit_logs": configAudit})
+		st := clusterStateOf(t, r, plannedModel)
+		req := planmodifier.StringRequest{
+			Config: tfsdk.Config(clusterStateOf(t, r, configModel)),
+			Plan:   tfsdk.Plan(st),
+			State:  st,
+			Path:   path.Root("kubernetes_options").AtName("audit_logs").AtName("secret_name"),
+		}
+
+		return req
+	}
 	for _, tt := range []struct {
 		name    string
-		config  types.String
-		audit   types.Object
+		planned types.Object
+		config  types.Object
+		configV types.String
 		want    types.String
 		wantErr string
 	}{
 		{
-			name:    "a non-empty name with audit logs disabled fails the plan",
-			config:  types.StringValue("siem"),
-			audit:   auditLogs(types.BoolValue(false), types.StringValue("siem")),
+			name:    "a non-empty name with audit logs planned disabled fails the plan",
+			planned: auditLogs(types.BoolValue(false), types.StringNull()),
+			config:  auditLogs(types.BoolValue(true), types.StringValue("siem")),
+			configV: types.StringValue("siem"),
 			wantErr: "Audit logs secret name set while audit logs are disabled",
 		},
 		{
-			name:  "a null name with audit logs enabled plans the API default",
-			audit: auditLogs(types.BoolValue(true), types.StringNull()),
-			want:  types.StringValue("mks-audit-logs"),
+			name:    "planned disabled with a null config name plans empty",
+			planned: auditLogs(types.BoolValue(false), types.StringNull()),
+			config:  auditLogs(types.BoolValue(false), types.StringNull()),
+			configV: types.StringNull(),
+			want:    types.StringValue(""),
 		},
 		{
-			name:  "a disabled object plans an empty name",
-			audit: auditLogs(types.BoolValue(false), types.StringNull()),
-			want:  types.StringValue(""),
+			name:    "a null name with audit logs planned enabled plans the API default",
+			planned: auditLogs(types.BoolValue(true), types.StringNull()),
+			config:  auditLogs(types.BoolValue(true), types.StringNull()),
+			configV: types.StringNull(),
+			want:    types.StringValue("mks-audit-logs"),
+		},
+		{
+			name:    "planned unknown enabled with a null config name plans unknown",
+			planned: auditLogs(types.BoolUnknown(), types.StringNull()),
+			config:  auditLogs(types.BoolNull(), types.StringNull()),
+			configV: types.StringNull(),
+			want:    types.StringUnknown(),
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			config := clusterPlan()
-			config.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"audit_logs": tt.audit})
-			req := planmodifier.StringRequest{
-				Config:      tfsdk.Config(clusterStateOf(t, r, config)),
-				StateValue:  types.StringNull(),
-				ConfigValue: tt.config,
-				Path:        path.Root("kubernetes_options").AtName("audit_logs").AtName("secret_name"),
-			}
-			if !tt.config.IsUnknown() && tt.config.IsNull() {
-				req.ConfigValue = tt.config
-			}
+			req := reqOf(t, tt.planned, tt.config)
+			req.ConfigValue = tt.configV
+			req.StateValue = types.StringNull()
 			resp := planmodifier.StringResponse{PlanValue: req.ConfigValue}
 			auditSecretPlanModifier{}.PlanModifyString(context.Background(), req, &resp)
 			if tt.wantErr != "" {
@@ -1427,30 +1449,47 @@ func TestClusterAuditSecretModifierRules(t *testing.T) {
 
 func TestClusterAuditSecretKeepsTheStateOfAnEnabledCluster(t *testing.T) {
 	r := &clusterResource{}
-	plan := clusterPlan()
-	plan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
-		"audit_logs": types.ObjectValueMust(auditLogsAttrTypes, map[string]attr.Value{
-			"enabled": types.BoolValue(true), "secret_name": types.StringNull(),
-		}),
-	})
-	state := clusterState()
-	state.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
-		"audit_logs": types.ObjectValueMust(auditLogsAttrTypes, map[string]attr.Value{
-			"enabled": types.BoolValue(true), "secret_name": types.StringValue("siem"),
-		}),
-	})
-
-	req := planmodifier.StringRequest{
-		Config:      tfsdk.Config(clusterStateOf(t, r, plan)),
-		State:       clusterStateOf(t, r, state),
-		ConfigValue: types.StringNull(),
-		StateValue:  types.StringValue("siem"),
-		Path:        path.Root("kubernetes_options").AtName("audit_logs").AtName("secret_name"),
+	auditLogs := func(enabled types.Bool, secret types.String) types.Object {
+		return types.ObjectValueMust(auditLogsAttrTypes, map[string]attr.Value{
+			"enabled": enabled, "secret_name": secret,
+		})
 	}
-	resp := planmodifier.StringResponse{PlanValue: types.StringNull()}
-	auditSecretPlanModifier{}.PlanModifyString(context.Background(), req, &resp)
-	require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
-	assert.Equal(t, types.StringValue("siem"), resp.PlanValue)
+	reqOf := func(planned, configAudit types.Object, configValue types.String) planmodifier.StringRequest {
+		plannedModel := clusterPlan()
+		plannedModel.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"audit_logs": planned})
+		configModel := plannedModel
+		configModel.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"audit_logs": configAudit})
+		st := clusterStateOf(t, r, plannedModel)
+
+		return planmodifier.StringRequest{
+			Config:      tfsdk.Config(clusterStateOf(t, r, configModel)),
+			Plan:        tfsdk.Plan(st),
+			State:       st,
+			ConfigValue: configValue,
+			StateValue:  types.StringValue("siem"),
+			Path:        path.Root("kubernetes_options").AtName("audit_logs").AtName("secret_name"),
+		}
+	}
+	t.Run("omitted enabled on an enabled state keeps collecting, so the state name stays", func(t *testing.T) {
+		req := reqOf(
+			auditLogs(types.BoolValue(true), types.StringValue("siem")),
+			auditLogs(types.BoolNull(), types.StringNull()),
+			types.StringNull())
+		resp := planmodifier.StringResponse{PlanValue: req.ConfigValue}
+		auditSecretPlanModifier{}.PlanModifyString(context.Background(), req, &resp)
+		require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+		assert.Equal(t, types.StringValue("siem"), resp.PlanValue)
+	})
+	t.Run("omitted enabled on a disabled state plans the API default", func(t *testing.T) {
+		req := reqOf(
+			auditLogs(types.BoolValue(false), types.StringNull()),
+			auditLogs(types.BoolNull(), types.StringNull()),
+			types.StringNull())
+		resp := planmodifier.StringResponse{PlanValue: req.ConfigValue}
+		auditSecretPlanModifier{}.PlanModifyString(context.Background(), req, &resp)
+		require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+		assert.Equal(t, types.StringValue(""), resp.PlanValue)
+	})
 }
 
 func TestClusterOIDCModifierRules(t *testing.T) {
