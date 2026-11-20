@@ -21,52 +21,34 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// testClusterID is the ID the fake assigns to every created cluster.
 const testClusterID = "5340b834-1a2b-4c2f-9d0a-89d24d99c0b8"
 
-// fakeAPI is an in-memory api behind httptest.Server. Tests seed it, call the
-// resource methods with its clients and read what the resource sent.
 type fakeAPI struct {
 	t  *testing.T
 	mu sync.Mutex
 
 	server *httptest.Server
 
-	clusters     map[string]mksclient.ClusterDetailed
-	kubeVersions []mksclient.KubeVersionInfo
-	// failures maps a route pattern to the HTTP status it answers with.
-	failures map[string]int
-	// failureBodies maps a route pattern to the raw body its forced failure
-	// answers with instead of the error the API model describes.
-	failureBodies map[string]fakeBody
-	tasks         []*fakeTask
-	// failedTaskTypes makes new tasks of a type end in ERROR.
-	failedTaskTypes map[string]bool
-	// stuckTaskTypes keeps the running tasks of a type running.
-	stuckTaskTypes map[string]bool
-	// settles maps a cluster ID to the GETs it answers before its status
-	// changes on its own, like after a task the API keeps running.
-	settles map[string]fakeSettle
-	// x509CACertificates keeps what PATCH stored; the API never returns it.
+	clusters           map[string]mksclient.ClusterDetailed
+	kubeVersions       []mksclient.KubeVersionInfo
+	failures           map[string]int
+	failureBodies      map[string]fakeBody
+	tasks              []*fakeTask
+	failedTaskTypes    map[string]bool
+	stuckTaskTypes     map[string]bool
+	settles            map[string]fakeSettle
 	x509CACertificates map[string]string
-	// queries keeps the last query string of every route.
-	queries map[string]string
-	// bodies keeps the last request body of every route, calls counts them.
-	bodies map[string][]byte
-	calls  map[string]int
+	queries            map[string]string
+	bodies             map[string][]byte
+	calls              map[string]int
 
-	// userAgents records every request the fake answered.
-	userAgents []string
 }
 
-// fakeBody is a raw response body and its content type.
 type fakeBody struct {
 	contentType string
 	body        string
 }
 
-// fakeSettle is the status an object reaches after gets more GETs; an empty
-// status removes the object.
 type fakeSettle struct {
 	gets   int
 	status string
@@ -78,8 +60,6 @@ type fakeTask struct {
 	effect func()
 }
 
-// keystoneProject is a project ID the way Keystone scopes a token by, and
-// apiProject is the same project the way the API returns it.
 const (
 	keystoneProject = "35b965e88e5948488eed5e509833033c"
 	apiProject      = "35b965e8-8e59-4848-8eed-5e509833033c"
@@ -97,12 +77,8 @@ const (
 	routeTask          = "GET /v2/clusters/{cluster_id}/tasks/{task_id}"
 )
 
-// shortPollInterval shortens the waiter polls once: the fake answers at once,
-// so parallel tests do not wait ten seconds on a first poll.
 var shortPollInterval sync.Once
 
-// newFakeAPI starts the fake. It touches no package state but the poll
-// interval, so tests using it may call t.Parallel.
 func newFakeAPI(t *testing.T) *fakeAPI {
 	t.Helper()
 
@@ -142,7 +118,6 @@ func newFakeAPI(t *testing.T) *fakeAPI {
 	return f
 }
 
-// client returns the service client that talks to the fake.
 func (f *fakeAPI) client() *mksv2.ServiceClient {
 	t := f.t
 	t.Helper()
@@ -152,14 +127,11 @@ func (f *fakeAPI) client() *mksv2.ServiceClient {
 	return client
 }
 
-// handle registers a route that records the User-Agent and answers with a
-// forced failure when one is set.
 func (f *fakeAPI) handle(mux *http.ServeMux, pattern string, handler http.HandlerFunc) {
 	mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
 		f.mu.Lock()
 		defer f.mu.Unlock()
 
-		f.userAgents = append(f.userAgents, r.Header.Get("User-Agent"))
 		f.calls[pattern]++
 		f.queries[pattern] = r.URL.RawQuery
 		body, _ := io.ReadAll(r.Body)
@@ -201,9 +173,6 @@ func (f *fakeAPI) getCluster(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, mksclient.ClusterResp{Cluster: &c})
 }
 
-// createCluster fills what the API defaults and starts CREATE_CLUSTER. The
-// cluster gets the constant ID and the project of the last client, dashed
-// like the API returns it.
 func (f *fakeAPI) createCluster(w http.ResponseWriter, r *http.Request) {
 	var body mksclient.ClusterCreateBody
 	err := json.NewDecoder(r.Body).Decode(&body)
@@ -222,7 +191,6 @@ func (f *fakeAPI) createCluster(w http.ResponseWriter, r *http.Request) {
 	if opts.CniType != nil {
 		cniType = mksclient.ClusterDetailedCniType(*opts.CniType)
 	}
-	// Like the API, the name is stored in lower case.
 	c := mksclient.ClusterDetailed{
 		Id:                            testClusterID,
 		Name:                          strings.ToLower(opts.Name),
@@ -257,7 +225,6 @@ func (f *fakeAPI) createCluster(w http.ResponseWriter, r *http.Request) {
 
 			return
 		}
-		// Create ignores them, see applyX509.
 		c.KubernetesOptions.X509CaCertificates = ""
 	}
 	f.clusters[c.Id] = c
@@ -266,9 +233,6 @@ func (f *fakeAPI) createCluster(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, mksclient.ClusterResp{Cluster: &c})
 }
 
-// patchCluster applies the sent fields: a kube options or Cilium change
-// starts a task and moves the cluster to PENDING_UPGRADE_CLUSTER_CONFIG
-// until the task is DONE.
 func (f *fakeAPI) patchCluster(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("cluster_id")
 	c, ok := f.clusters[id]
@@ -316,9 +280,6 @@ func (f *fakeAPI) patchCluster(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, mksclient.ClusterResp{Cluster: &c})
 }
 
-// patchKubeOptions stores the changed options the way the API does and
-// reports whether anything changed: audit_logs only with enabled, OIDC only
-// with a field other than provider_name, x509 whenever it is not empty.
 func (f *fakeAPI) patchKubeOptions(id string, c *mksclient.ClusterDetailed, requested mksclient.KubernetesOptions) (bool, error) {
 	current := &c.KubernetesOptions
 	var err error
@@ -354,13 +315,8 @@ func (f *fakeAPI) patchKubeOptions(id string, c *mksclient.ClusterDetailed, requ
 	return changed, nil
 }
 
-// errFakeOIDCDisabled mirrors the API rejection of a disabled OIDC that
-// carries parameters.
 var errFakeOIDCDisabled = errors.New("oidc parameters cannot be configured when it is disabled")
 
-// normaliseFakeOIDC validates and stores OIDC like the API: a disabled OIDC
-// with any parameter is rejected, an enabled one gets the claim defaults,
-// ca_certs is trimmed and a disabled OIDC is stored empty.
 func normaliseFakeOIDC(oidc mksclient.OIDC) (mksclient.OIDC, error) {
 	if !oidc.Enabled {
 		if oidc != (mksclient.OIDC{}) {
@@ -376,7 +332,6 @@ func normaliseFakeOIDC(oidc mksclient.OIDC) (mksclient.OIDC, error) {
 	return oidc, nil
 }
 
-// activateCluster is the effect of a finished cluster task.
 func (f *fakeAPI) activateCluster(id string) func() {
 	return func() {
 		c, ok := f.clusters[id]
@@ -387,8 +342,6 @@ func (f *fakeAPI) activateCluster(id string) func() {
 	}
 }
 
-// deleteCluster removes the cluster when DELETE_CLUSTER is DONE. It answers
-// 409 unless the cluster is in a status the delete takes.
 func (f *fakeAPI) deleteCluster(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("cluster_id")
 	c, ok := f.clusters[id]
@@ -411,8 +364,6 @@ func (f *fakeAPI) deleteCluster(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// upgradeCluster moves the cluster to the latest patch version of its minor
-// version, or of the next one, when the task is DONE.
 func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("cluster_id")
@@ -455,7 +406,6 @@ func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 	}
 }
 
-// listTasks pages the cluster tasks newest first, like the API.
 func (f *fakeAPI) listTasks(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("cluster_id")
 	if _, ok := f.clusters[id]; !ok {
@@ -480,8 +430,6 @@ func (f *fakeAPI) listTasks(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, mksclient.TaskList{Count: int64(len(tasks)), Tasks: tasks})
 }
 
-// getTask finishes a running task: DONE with its effect, or ERROR for a type
-// set by failTasks, which also sets its cluster to ERROR.
 func (f *fakeAPI) getTask(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("cluster_id")
 	taskID := r.PathValue("task_id")
@@ -507,7 +455,6 @@ func (f *fakeAPI) getTask(w http.ResponseWriter, r *http.Request) {
 		t.task.ErrorDetails = &mksclient.TaskErrorDetails{
 			Code: 42, Name: "fake failure", Details: new("fake details of " + t.task.Type),
 		}
-		// A failed task leaves its object in ERROR, which a delete takes.
 		f.updateClusterLocked(id, "ERROR")
 	default:
 		t.task.Status = mksclient.DONE
@@ -519,7 +466,6 @@ func (f *fakeAPI) getTask(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, mksclient.TaskResp{Task: t.task})
 }
 
-// addTask starts a task the way an API handler does before it responds.
 func (f *fakeAPI) addTask(clusterID, taskType string, effect func()) {
 	f.tasks = append(f.tasks, &fakeTask{
 		task: mksclient.Task{
@@ -532,8 +478,6 @@ func (f *fakeAPI) addTask(clusterID, taskType string, effect func()) {
 	})
 }
 
-// seedCluster adds a cluster behind the resource's back, like one created
-// outside Terraform.
 func (f *fakeAPI) seedCluster(id string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -546,8 +490,6 @@ func (f *fakeAPI) seedCluster(id string) {
 	}
 }
 
-// seedTask adds a task of a nodegroup, or of the cluster when nodegroupID is
-// empty; a stuck one never finishes.
 func (f *fakeAPI) seedTask(clusterID, nodegroupID, taskType string, stuck bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -560,8 +502,6 @@ func (f *fakeAPI) seedTask(clusterID, nodegroupID, taskType string, stuck bool) 
 	}
 }
 
-// stickTasks keeps the running tasks of taskType running, or lets them
-// finish again when stuck is false.
 func (f *fakeAPI) stickTasks(taskType string, stuck bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -569,8 +509,6 @@ func (f *fakeAPI) stickTasks(taskType string, stuck bool) {
 	f.stuckTaskTypes[taskType] = stuck
 }
 
-// failTasks makes the tasks of taskType started from now on end in ERROR,
-// or finish normally again when failed is false.
 func (f *fakeAPI) failTasks(taskType string, failed bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -578,7 +516,6 @@ func (f *fakeAPI) failTasks(taskType string, failed bool) {
 	f.failedTaskTypes[taskType] = failed
 }
 
-// lastBody decodes the last request body of the route.
 func (f *fakeAPI) lastBody(route string) map[string]any {
 	f.t.Helper()
 
@@ -599,7 +536,6 @@ func (f *fakeAPI) callCount(route string) int {
 	return f.calls[route]
 }
 
-// clusterCount is the number of clusters the fake still has.
 func (f *fakeAPI) clusterCount() int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -607,7 +543,6 @@ func (f *fakeAPI) clusterCount() int {
 	return len(f.clusters)
 }
 
-// withinCluster reads the cluster the fake has under its lock.
 func (f *fakeAPI) withinCluster(id string, read func(c mksclient.ClusterDetailed)) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -615,7 +550,6 @@ func (f *fakeAPI) withinCluster(id string, read func(c mksclient.ClusterDetailed
 	read(f.clusters[id])
 }
 
-// updateCluster changes a cluster behind the resource's back.
 func (f *fakeAPI) updateCluster(id string, update func(c *mksclient.ClusterDetailed)) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -625,7 +559,6 @@ func (f *fakeAPI) updateCluster(id string, update func(c *mksclient.ClusterDetai
 	f.clusters[id] = c
 }
 
-// removeCluster deletes a cluster behind the resource's back.
 func (f *fakeAPI) removeCluster(id string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -633,7 +566,6 @@ func (f *fakeAPI) removeCluster(id string) {
 	delete(f.clusters, id)
 }
 
-// clusterProject returns the project_id the fake returns for the cluster.
 func (f *fakeAPI) clusterProject(id string) string {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -641,8 +573,6 @@ func (f *fakeAPI) clusterProject(id string) string {
 	return f.clusters[id].ProjectId
 }
 
-// settleAfter makes the cluster id change to status on its own after it has
-// answered gets more GETs; an empty status removes it.
 func (f *fakeAPI) settleAfter(id string, gets int, status string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -650,7 +580,6 @@ func (f *fakeAPI) settleAfter(id string, gets int, status string) {
 	f.settles[id] = fakeSettle{gets: gets, status: status}
 }
 
-// settle counts a GET of id and reports the status it reaches with it.
 func (f *fakeAPI) settle(id string) (string, bool) {
 	s, ok := f.settles[id]
 	if !ok {
@@ -667,8 +596,6 @@ func (f *fakeAPI) settle(id string) (string, bool) {
 	return s.status, true
 }
 
-// updateClusterLocked sets the cluster status, or removes the cluster when
-// status is empty.
 func (f *fakeAPI) updateClusterLocked(id, status string) {
 	c, ok := f.clusters[id]
 	if !ok {
@@ -683,7 +610,6 @@ func (f *fakeAPI) updateClusterLocked(id, status string) {
 	f.clusters[id] = c
 }
 
-// setWindow sets a three-hour maintenance window.
 func (f *fakeAPI) setWindow(c *mksclient.ClusterDetailed, start string) {
 	c.MaintenanceWindowStart = start
 	parsed, err := time.Parse(time.TimeOnly, start)
@@ -702,8 +628,6 @@ func (f *fakeAPI) seedKubeVersions(versions ...mksclient.KubeVersionInfo) {
 	f.kubeVersions = versions
 }
 
-// fail makes the route answer with status until the test ends, or answer
-// normally again when status is 0.
 func (f *fakeAPI) fail(route string, status int) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -717,8 +641,6 @@ func (f *fakeAPI) fail(route string, status int) {
 	f.failures[route] = status
 }
 
-// failWithBody makes the route answer with status and the raw body until the
-// test ends, like a gateway or a status the API does not declare.
 func (f *fakeAPI) failWithBody(route string, status int, contentType, body string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -727,7 +649,6 @@ func (f *fakeAPI) failWithBody(route string, status int, contentType, body strin
 	f.failureBodies[route] = fakeBody{contentType: contentType, body: body}
 }
 
-// lastQuery returns the query string of the last request to the route.
 func (f *fakeAPI) lastQuery(route string) string {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -735,7 +656,6 @@ func (f *fakeAPI) lastQuery(route string) string {
 	return f.queries[route]
 }
 
-// storedX509 returns the X509 CA certificates PATCH stored for the cluster.
 func (f *fakeAPI) storedX509(id string) string {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -743,8 +663,6 @@ func (f *fakeAPI) storedX509(id string) string {
 	return f.x509CACertificates[id]
 }
 
-// fakeAPIProjectID returns a Keystone project ID the way the API returns it,
-// as a dashed UUID. An ID that is not 32 characters long stays as is.
 func fakeAPIProjectID(projectID string) string {
 	if len(projectID) != 32 {
 		return projectID
@@ -759,12 +677,10 @@ func writeJSON(w http.ResponseWriter, status int, body any) {
 	_ = json.NewEncoder(w).Encode(body)
 }
 
-// The object types of the API not-found errors.
 const (
 	objectTask = "Task"
 )
 
-// fakeObject names the most specific object of the request path.
 func fakeObject(r *http.Request) (string, string) {
 	if id := r.PathValue("task_id"); id != "" {
 		return objectTask, id
@@ -773,8 +689,6 @@ func fakeObject(r *http.Request) (string, string) {
 	return objectCluster, r.PathValue("cluster_id")
 }
 
-// writeAPIError answers like the API: a 404 names the object type in the
-// message and carries the ID in error.id.
 func writeAPIError(t *testing.T, w http.ResponseWriter, status int, objectType, id string) {
 	t.Helper()
 	if status == http.StatusNotFound {
@@ -791,7 +705,6 @@ func writeAPIError(t *testing.T, w http.ResponseWriter, status int, objectType, 
 	writeJSON(w, status, body)
 }
 
-// writeFakeBadRequest answers a rejected request body with the API message.
 func writeFakeBadRequest(t *testing.T, w http.ResponseWriter, err error) {
 	t.Helper()
 	var body mksclient.GenericError
@@ -805,9 +718,4 @@ func valueOrT[T any](v *T, fallback T) T {
 	}
 
 	return *v
-}
-
-//go:fix inline
-func ptrOf[T any](v T) *T {
-	return new(v)
 }

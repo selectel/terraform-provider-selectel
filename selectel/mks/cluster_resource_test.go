@@ -11,7 +11,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -20,8 +22,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// kubeOptionsObject builds the kubernetes_options object with the given
-// overrides on top of the settled options.
 func kubeOptionsObject(overrides map[string]attr.Value) types.Object {
 	values := map[string]attr.Value{
 		"feature_gates":         types.SetValueMust(types.StringType, []attr.Value{types.StringValue("TopologyAwareHints")}),
@@ -38,8 +38,6 @@ func kubeOptionsObject(overrides map[string]attr.Value) types.Object {
 	return types.ObjectValueMust(kubeOptionsAttrTypes, values)
 }
 
-// bodyFields checks fields of a request body, or of its "cluster" object when
-// it has one, and that the absent ones were not sent.
 func bodyFields(t *testing.T, body map[string]any, want map[string]any, absent ...string) {
 	t.Helper()
 	if cluster, ok := body["cluster"].(map[string]any); ok {
@@ -56,8 +54,6 @@ func bodyFields(t *testing.T, body map[string]any, want map[string]any, absent .
 	}
 }
 
-// oidcOf returns the oidc object of the kubernetes_options a request body
-// carries.
 func oidcOf(body map[string]any) map[string]any {
 	cluster, _ := body["cluster"].(map[string]any)
 	options, _ := cluster["kubernetes_options"].(map[string]any)
@@ -66,8 +62,6 @@ func oidcOf(body map[string]any) map[string]any {
 	return oidc
 }
 
-// enabledOIDCObject is the OIDC object of an enabled configuration with
-// only its required parameters set.
 func enabledOIDCObject() types.Object {
 	return types.ObjectValueMust(oidcAttrTypes, map[string]attr.Value{
 		"enabled":        types.BoolValue(true),
@@ -87,7 +81,6 @@ func TestClusterCreateSendsFields(t *testing.T) {
 
 	plan := clusterPlan()
 	plan.Name = types.StringValue("Test-Cluster")
-	// An unconfigured attribute carries null, not unknown, in a create plan.
 	plan.CloudSubnetCIDR = types.StringNull()
 	plan.ClusterType = types.StringValue("HIGH_AVAILABILITY")
 	plan.WorkersType = types.StringValue("CLOUD")
@@ -108,8 +101,6 @@ func TestClusterCreateSendsFields(t *testing.T) {
 	require.False(t, diags.HasError(), "%v", diags)
 	got := readClusterModel(t, state)
 
-	// The create body carries what the API defaults and what expandClusterPatch
-	// sends, and the nodegroup task never stalls the cluster create.
 	body := fake.lastBody(routeCreateCluster)
 	bodyFields(t, body, map[string]any{
 		"network_type": "STANDARD", "basic": false, "cni_type": "CILIUM",
@@ -126,11 +117,8 @@ func TestClusterCreateSendsFields(t *testing.T) {
 	assert.Equal(t, types.StringValue("192.0.2.10"), got.KubeAPIIP)
 	assert.Equal(t, types.StringValue("fake-network"), got.NetworkID)
 	assert.Equal(t, types.StringValue("fake-subnet"), got.SubnetID)
-	// cloud_subnet_cidr is never returned and was planned unknown: the
-	// state takes it null until the resource writes it.
 	assert.True(t, got.CloudSubnetCIDR.IsNull())
 
-	// The fake stored the project dashed, the state keeps the configured one.
 	assert.Equal(t, types.StringValue(testProject), got.ProjectID)
 	assert.Equal(t, 1, fake.callCount(routeCreateCluster))
 }
@@ -156,9 +144,7 @@ func TestClusterProjectIDForms(t *testing.T) {
 			require.False(t, diags.HasError(), "%v", diags)
 			got := readClusterModel(t, state)
 			assert.Equal(t, types.StringValue(tt.wantConfig), got.ProjectID)
-			// The fake stored it dashed.
 			assert.Equal(t, apiProject, fake.clusterProject(testClusterID))
-			// The client got the un-dashed form.
 			cfg := r.config.(*testProviderConfig)
 			require.NotEmpty(t, cfg.gotProject)
 			assert.Equal(t, keystone, cfg.gotProject[len(cfg.gotProject)-1])
@@ -199,8 +185,6 @@ func TestClusterCreateTaskError(t *testing.T) {
 		"task CREATE_CLUSTER task-1 of cluster "+testClusterID+" ended in ERROR: fake failure (code 42): fake details of CREATE_CLUSTER")
 }
 
-// The v2.0.0 SDK keeps only the JSON GenericError message: a plain-text body
-// no longer reaches the detail, unlike the fork C tested.
 func TestClusterCreateUndeclaredStatus(t *testing.T) {
 	for _, tt := range []struct {
 		name        string
@@ -243,7 +227,6 @@ func TestClusterCreateUndeclaredStatus(t *testing.T) {
 	}
 }
 
-// The API replaces kubernetes_options on PATCH, so the whole object goes.
 func TestClusterKubernetesOptionsSentWhole(t *testing.T) {
 	fake := newFakeAPI(t)
 	r := fake.resource()
@@ -278,8 +261,6 @@ func TestClusterKubernetesOptionsSentWhole(t *testing.T) {
 	assert.Greater(t, fake.callCount(routeTask), 0, "the provider must poll the UPGRADE_MASTERS_CONFIG task")
 }
 
-// TestClusterAutoUpgradeRecorded covers enable_patch_version_auto_upgrade:
-// explicit false survives on create and changes as sent on PATCH.
 func TestClusterAutoUpgradeFalse(t *testing.T) {
 	fake := newFakeAPI(t)
 	r := fake.resource()
@@ -292,7 +273,6 @@ func TestClusterAutoUpgradeFalse(t *testing.T) {
 	assert.Equal(t, types.BoolValue(false), got.EnablePatchVersionAutoUpgrade)
 	bodyFields(t, fake.lastBody(routeCreateCluster), map[string]any{"enable_patch_version_auto_upgrade": false})
 
-	// Enabling it PATCHes true, and disabling it back PATCHes false.
 	onPlan := got
 	onPlan.EnablePatchVersionAutoUpgrade = types.BoolValue(true)
 	got2, diags := updateCluster(t, r, got, onPlan)
@@ -306,8 +286,6 @@ func TestClusterAutoUpgradeFalse(t *testing.T) {
 	bodyFields(t, fake.lastBody(routePatchCluster), map[string]any{"enable_patch_version_auto_upgrade": false})
 }
 
-// An explicit enable_patch_version_auto_upgrade is sent on create: a BASIC
-// cluster does not default it on, so false goes in the body.
 func TestClusterBasicClusterAutoUpgrade(t *testing.T) {
 	fake := newFakeAPI(t)
 	r := fake.resource()
@@ -340,7 +318,6 @@ func TestClusterKubeVersionUpgrade(t *testing.T) {
 	assert.Equal(t, 0, fake.callCount(routeUpgradePatch))
 	assert.Equal(t, 0, fake.callCount(routeUpgradeMinor))
 
-	// A non-latest patch within the same minor is refused.
 	badPlan := prior
 	badPlan.KubeVersion = types.StringValue("1.31.7")
 	_, diags = updateCluster(t, r, prior, badPlan)
@@ -349,7 +326,6 @@ func TestClusterKubeVersionUpgrade(t *testing.T) {
 		"current version %s can't be upgraded to version 1.31.7, the latest available patch version is: %s",
 		testKubeVersionOld, testKubeVersion))
 
-	// The latest patch of the same minor goes through UPGRADE_PATCH_VERSION.
 	okPlan := prior
 	okPlan.KubeVersion = types.StringValue(testKubeVersion)
 	got, diags := updateCluster(t, r, prior, okPlan)
@@ -358,7 +334,6 @@ func TestClusterKubeVersionUpgrade(t *testing.T) {
 	assert.Equal(t, 1, fake.callCount(routeUpgradePatch))
 	assert.Equal(t, 0, fake.callCount(routeUpgradeMinor))
 
-	// The next minor goes through UPGRADE_MINOR_VERSION.
 	minorPlan := got
 	minorPlan.KubeVersion = types.StringValue(testKubeVersionUp)
 	got2, diags := updateCluster(t, r, got, minorPlan)
@@ -366,9 +341,6 @@ func TestClusterKubeVersionUpgrade(t *testing.T) {
 	assert.Equal(t, types.StringValue(testKubeVersionUp), got2.KubeVersion)
 	assert.Equal(t, 1, fake.callCount(routeUpgradeMinor))
 
-	// Patch auto-upgrade moved the cluster past the configuration: the
-	// refresh keeps the configured version when it is a prior patch of the
-	// same minor.
 	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) {
 		c.KubeVersion = "1.32.5"
 	})
@@ -377,8 +349,6 @@ func TestClusterKubeVersionUpgrade(t *testing.T) {
 	assert.Equal(t, types.StringValue(testKubeVersionUp), readClusterModel(t, state2).KubeVersion)
 }
 
-// A minor upgrade outside Terraform is read as is, so the next one-minor
-// upgrade is checked against the version the cluster runs.
 func TestClusterKubeVersionUpgradedOutside(t *testing.T) {
 	fake := newFakeAPI(t)
 	fake.seedKubeVersions(
@@ -394,7 +364,6 @@ func TestClusterKubeVersionUpgradedOutside(t *testing.T) {
 	require.False(t, diags.HasError(), "%v", diags)
 	prior := readClusterModel(t, state)
 
-	// Upgraded in the panel: the refresh takes the new version as is.
 	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) {
 		c.KubeVersion = "1.32.0"
 	})
@@ -402,8 +371,6 @@ func TestClusterKubeVersionUpgradedOutside(t *testing.T) {
 	require.False(t, diags.HasError(), "%v", diags)
 	assert.Equal(t, types.StringValue("1.32.0"), readClusterModel(t, refreshed).KubeVersion)
 
-	// The upgrade starts from the version the cluster runs: the minor jump
-	// lands on the latest patch of 1.33.
 	afterRefresh := readClusterModel(t, refreshed)
 	upPlan := afterRefresh
 	upPlan.KubeVersion = types.StringValue("1.33.1")
@@ -423,7 +390,6 @@ func TestClusterImport(t *testing.T) {
 	require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
 	got := readClusterModel(t, resp.State)
 	assert.Equal(t, types.StringValue(testClusterID), got.ID)
-	// The state takes the project the way the provider stores it: no dashes.
 	assert.Equal(t, types.StringValue(keystoneProject), got.ProjectID)
 	assert.Equal(t, types.StringValue("ru-2"), got.Pool)
 }
@@ -459,18 +425,22 @@ func TestClusterImportDashedProject(t *testing.T) {
 	_, diags := createCluster(t, r, plan)
 	require.False(t, diags.HasError(), "%v", diags)
 
-	// The provider project is dashed: the state takes it without dashes.
 	importedResp := importCluster(t, r)
 	require.False(t, importedResp.Diagnostics.HasError(), "%v", importedResp.Diagnostics)
 	got := readClusterModel(t, importedResp.State)
-	// The state takes the provider project without dashes.
 	assert.Equal(t, types.StringValue(keystoneProject), got.ProjectID)
 
-	// The config still keeps the dashed form from an import.
 	state2, diags := readCluster(t, r, got)
 	require.False(t, diags.HasError(), "%v", diags)
 	kube := readClusterModel(t, state2)
 	assert.Equal(t, types.StringValue(testClusterID), kube.ID)
+	// The import resolved the project from the dashed form the API returns,
+	// and the read kept it in the keystone form.
+	assert.Equal(t, types.StringValue(keystoneProject), kube.ProjectID)
+	// The API never returns cloud_subnet_cidr, so the imported state has none.
+	assert.True(t, kube.CloudSubnetCIDR.IsNull())
+	// kube_version is kept from the API even without a configured one.
+	assert.Equal(t, types.StringValue(testKubeVersion), kube.KubeVersion)
 }
 
 func TestClusterReadRemovedOutside(t *testing.T) {
@@ -502,8 +472,6 @@ func TestClusterDeleteTaskError(t *testing.T) {
 	assert.Contains(t, firstError(t, diags), "task DELETE_CLUSTER task-")
 	assert.Contains(t, firstError(t, diags), "ended in ERROR")
 
-	// The failed delete left the cluster in place with a status a delete
-	// takes: the retry deletes it.
 	fake.failTasks("DELETE_CLUSTER", false)
 	diags = deleteCluster(t, r, readClusterModel(t, state))
 	require.False(t, diags.HasError(), "%v", diags)
@@ -586,20 +554,12 @@ func TestClusterCreateTimeout(t *testing.T) {
 			r := fake.resource()
 
 			plan := clusterPlan()
-			plan.Timeouts = shortTimeouts()
-			plan.Timeouts.Object = types.ObjectValueMust(
-				map[string]attr.Type{"create": types.StringType, "update": types.StringType, "delete": types.StringType},
-				map[string]attr.Value{
-					"create": types.StringValue("1s"), "update": types.StringValue("2s"), "delete": types.StringValue("2s"),
-				},
-			)
+			plan.Timeouts = clusterTimeouts(time.Second, 2*time.Second, 2*time.Second)
 			state, diags := createCluster(t, r, plan)
 			assert.True(t, diags.HasError())
 			assert.Contains(t, errorText(t, diags), tt.wantError)
 			assert.Contains(t, errorText(t, diags), "context deadline exceeded")
 
-			// The timed-out cluster was saved in state: a retry-able delete
-			// later replaces it once the task unsticks.
 			assert.Equal(t, 1, fake.callCount(routeCreateCluster))
 			fake.stickTasks("CREATE_CLUSTER", false)
 			fake.settleAfter(testClusterID, 3, "ACTIVE")
@@ -628,13 +588,7 @@ func TestClusterDeleteWaitsForStatus(t *testing.T) {
 			r := fake.resource()
 
 			plan := clusterPlan()
-			plan.Timeouts = shortTimeouts()
-			plan.Timeouts.Object = types.ObjectValueMust(
-				map[string]attr.Type{"create": types.StringType, "update": types.StringType, "delete": types.StringType},
-				map[string]attr.Value{
-					"create": types.StringValue("2s"), "update": types.StringValue("2s"), "delete": types.StringValue("1s"),
-				},
-			)
+			plan.Timeouts = clusterTimeouts(2*time.Second, 2*time.Second, time.Second)
 			state, diags := createCluster(t, r, plan)
 			require.False(t, diags.HasError(), "%v", diags)
 
@@ -652,15 +606,11 @@ func TestClusterDeleteWaitsForStatus(t *testing.T) {
 				assert.Contains(t, errorText(t, diags), "context deadline exceeded")
 				assert.Equal(t, 0, fake.callCount(routeDeleteCluster))
 
-				// The cluster stays in state; a retry deletes it once ACTIVE.
 				fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "ACTIVE" })
 				diags = deleteCluster(t, r, readClusterModel(t, state))
 				assert.False(t, diags.HasError(), "%v", diags)
 			}
 			assert.Equal(t, 0, fake.clusterCount())
-			if !tt.wantErr {
-				assert.Equal(t, 0, fake.clusterCount())
-			}
 		})
 	}
 }
@@ -670,13 +620,7 @@ func TestClusterUpdateTimeout(t *testing.T) {
 	r := fake.resource()
 
 	plan := clusterPlan()
-	plan.Timeouts = shortTimeouts()
-	plan.Timeouts.Object = types.ObjectValueMust(
-		map[string]attr.Type{"create": types.StringType, "update": types.StringType, "delete": types.StringType},
-		map[string]attr.Value{
-			"create": types.StringValue("2s"), "update": types.StringValue("1s"), "delete": types.StringValue("2s"),
-		},
-	)
+	plan.Timeouts = clusterTimeouts(2*time.Second, time.Second, 2*time.Second)
 	state, diags := createCluster(t, r, plan)
 	require.False(t, diags.HasError(), "%v", diags)
 	prior := readClusterModel(t, state)
@@ -691,8 +635,6 @@ func TestClusterUpdateTimeout(t *testing.T) {
 	assert.Contains(t, errorText(t, diags), "Error updating cluster")
 	assert.Contains(t, firstError(t, diags), "context deadline exceeded")
 
-	// The API stored the options before its task: the refresh reads them
-	// and the task ends on its own.
 	fake.stickTasks("UPGRADE_MASTERS_CONFIG", false)
 	fake.settleAfter(testClusterID, 1, "ACTIVE")
 	state2, diags := readCluster(t, r, prior)
@@ -706,13 +648,7 @@ func TestClusterDeleteTimeout(t *testing.T) {
 	r := fake.resource()
 
 	plan := clusterPlan()
-	plan.Timeouts = shortTimeouts()
-	plan.Timeouts.Object = types.ObjectValueMust(
-		map[string]attr.Type{"create": types.StringType, "update": types.StringType, "delete": types.StringType},
-		map[string]attr.Value{
-			"create": types.StringValue("2s"), "update": types.StringValue("2s"), "delete": types.StringValue("1s"),
-		},
-	)
+	plan.Timeouts = clusterTimeouts(2*time.Second, 2*time.Second, time.Second)
 	state, diags := createCluster(t, r, plan)
 	require.False(t, diags.HasError(), "%v", diags)
 
@@ -721,15 +657,11 @@ func TestClusterDeleteTimeout(t *testing.T) {
 	assert.True(t, diags.HasError())
 	assert.Contains(t, errorText(t, diags), "Error deleting cluster")
 	assert.Contains(t, firstError(t, diags), "context deadline exceeded")
-	// Only one DELETE went out: the wait, not another request.
 	assert.Equal(t, 1, fake.callCount(routeDeleteCluster))
 
-	// The cluster stays PENDING_DELETE until the delete ends in the API.
 	fake.settleAfter(testClusterID, 3, "")
 	diags = deleteCluster(t, r, readClusterModel(t, state))
 	assert.False(t, diags.HasError(), "%v", diags)
-	// The second destroy waited for the first delete instead of sending
-	// another one, which the API would refuse with 409.
 	assert.Equal(t, 1, fake.callCount(routeDeleteCluster))
 	assert.Equal(t, 0, fake.clusterCount())
 }
@@ -748,7 +680,6 @@ func TestClusterX509OnCreate(t *testing.T) {
 	assert.Equal(t, 1, fake.callCount(routeCreateCluster))
 	assert.Equal(t, 1, fake.callCount(routePatchCluster))
 
-	// The create body carries no x509: the PATCH carries the whole object.
 	body := fake.lastBody(routePatchCluster)
 	cluster, _ := body["cluster"].(map[string]any)
 	require.Len(t, cluster, 1)
@@ -774,7 +705,6 @@ func TestClusterUpperCaseName(t *testing.T) {
 	require.False(t, diags.HasError(), "%v", diags)
 	got := readClusterModel(t, state)
 
-	// The API stores tf-v2; the state keeps the configured case.
 	bodyFields(t, fake.lastBody(routeCreateCluster), map[string]any{"name": "TF-v2"})
 	assert.Equal(t, types.StringValue("TF-v2"), got.Name)
 }
@@ -789,8 +719,6 @@ func TestClusterNameCaseOnlyChange(t *testing.T) {
 	require.False(t, diags.HasError(), "%v", diags)
 	prior := readClusterModel(t, state)
 
-	// Only the case changes: fromAPI keeps the prior value, so the state is
-	// consistent and the plan empty.
 	changed := prior
 	changed.Name = types.StringValue("tf-V2")
 	got, diags := updateCluster(t, r, prior, changed)
@@ -808,16 +736,15 @@ func TestClusterX509OnCreateFails(t *testing.T) {
 		"x509_ca_certificates": types.StringValue("Y2VydA=="),
 	})
 	state, diags := createCluster(t, r, plan)
-	// The create succeeds with a warning, the resource is not tainted.
 	require.False(t, diags.HasError(), "%v", diags)
 	assert.True(t, diags.WarningsCount() > 0)
+	assert.Equal(t, "X509 CA certificates of the cluster are not set", diags.Warnings()[0].Summary())
 	got := readClusterModel(t, state)
 	assert.Equal(t, types.StringValue(testClusterID), got.ID)
 	assert.Equal(t, 1, fake.callCount(routeCreateCluster))
 	assert.Equal(t, 1, fake.callCount(routePatchCluster))
 
 	fake.fail(routePatchCluster, 0)
-	// The next apply only PATCHes the x509.
 	prior := got
 	newPlan := prior
 	newPlan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
@@ -855,17 +782,23 @@ func TestClusterOIDCCACertsWhitespace(t *testing.T) {
 			"ca_certs":       trimmedString("cert-1\n"),
 		}),
 	})
-	_, diags := createCluster(t, r, plan)
+	state, diags := createCluster(t, r, plan)
 	require.False(t, diags.HasError(), "%v", diags)
 
-	// The plan carried the trailing newline, the API stores what it trimmed:
-	// like file("ca.pem"), the state keeps the configured form until the
-	// next apply converges it.
 	body := oidcOf(fake.lastBody(routeCreateCluster))
 	assert.Equal(t, "cert-1\n", body["ca_certs"])
-	fake.withinCluster(testClusterID, func(c mksclient.ClusterDetailed) {
-		assert.Equal(t, "cert-1", c.KubernetesOptions.Oidc.CaCerts)
-	})
+	got := readClusterModel(t, state)
+	var kubeOptions clusterKubeOptionsModel
+	diags2 := got.KubernetesOptions.As(context.Background(), &kubeOptions, basetypes.ObjectAsOptions{})
+	require.False(t, diags2.HasError())
+	var oidc clusterOIDCModel
+	diags3 := kubeOptions.OIDC.As(context.Background(), &oidc, basetypes.ObjectAsOptions{})
+	require.False(t, diags3.HasError())
+	// The API stores the trimmed cert, and semantic equality must see the
+	// configured wrapped one as unchanged.
+	same, diags4 := oidc.CACerts.StringSemanticEquals(context.Background(), trimmedString("cert-1"))
+	require.False(t, diags4.HasError())
+	assert.True(t, same, "the state value must equal a differently-wrapped identical cert")
 }
 
 func TestClusterOIDCClaimDefaults(t *testing.T) {
@@ -873,13 +806,10 @@ func TestClusterOIDCClaimDefaults(t *testing.T) {
 	r := fake.resource()
 
 	plan := clusterPlan()
-	// The claims omitted plan the API defaults, so the apply is consistent
-	// with what the API stores.
 	plan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
 		"oidc": enabledOIDCObject(),
 	})
 
-	// The plan-time modifier plans the API defaults.
 	statePlan := tfsdk.Plan(clusterStateOf(t, r, plan))
 	modifyResp := resource.ModifyPlanResponse{Plan: statePlan}
 	modifyReq := resource.ModifyPlanRequest{
@@ -889,8 +819,6 @@ func TestClusterOIDCClaimDefaults(t *testing.T) {
 	r.ModifyPlan(context.Background(), modifyReq, &modifyResp)
 	require.False(t, modifyResp.Diagnostics.HasError(), "%v", modifyResp.Diagnostics)
 
-	// The plan modifiers themselves run only inside the framework planner, so
-	// the claim defaults are checked on the modifier directly.
 	modifierReq := func(name string) planmodifier.StringRequest {
 		return planmodifier.StringRequest{
 			Config:      tfsdk.Config(clusterStateOf(t, r, plan)),
@@ -941,8 +869,6 @@ func TestClusterOIDCDisable(t *testing.T) {
 	require.False(t, diags.HasError(), "%v", diags)
 	prior := readClusterModel(t, state)
 
-	// Disabling it sends the parameters empty, which is the only form the
-	// API accepts, and the state clears them.
 	newPlan := prior
 	newPlan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
 		"oidc": types.ObjectValueMust(oidcAttrTypes, map[string]attr.Value{
@@ -963,8 +889,6 @@ func TestClusterOIDCDisable(t *testing.T) {
 	}, oidc)
 	assert.Contains(t, got.KubernetesOptions.String(), `"enabled":false`)
 
-	// Enabling it back sends the configured parameters, and the API rejects
-	// a disabled oidc with parameters.
 	reEnable := prior
 	_, diags = updateCluster(t, r, readClusterModel(t, state), reEnable)
 	require.False(t, diags.HasError(), "%v", diags)
@@ -982,8 +906,6 @@ func TestClusterOIDCUnknownWhileDisabled(t *testing.T) {
 	require.False(t, diags.HasError(), "%v", diags)
 	prior := readClusterModel(t, state)
 
-	// issuer_url is unknown until terraform_data is created: the apply-time
-	// plan carries it as null in a disabled oidc.
 	newPlan := prior
 	newPlan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
 		"oidc": types.ObjectValueMust(oidcAttrTypes, map[string]attr.Value{
@@ -1002,6 +924,20 @@ func TestClusterOIDCUnknownWhileDisabled(t *testing.T) {
 	assert.Equal(t, map[string]any{
 		"enabled": false, "provider_name": "", "issuer_url": "", "client_id": "", "username_claim": "", "groups_claim": "",
 	}, oidc)
+
+	// The disabled-OIDC zeroing plans the empty string the API stores for an
+	// omitted parameter; reverting the modifier leaves the null config.
+	modReq := planmodifier.StringRequest{
+		Config:      tfsdk.Config(clusterStateOf(t, r, newPlan)),
+		State:       clusterStateOf(t, r, prior),
+		ConfigValue: types.StringNull(),
+		StateValue:  types.StringValue("https://issuer.example.com"),
+		Path:        path.Root("kubernetes_options").AtName("oidc").AtName("issuer_url"),
+	}
+	resp := planmodifier.StringResponse{PlanValue: types.StringNull()}
+	oidcPlanModifier{}.PlanModifyString(context.Background(), modReq, &resp)
+	require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+	assert.True(t, !resp.PlanValue.IsNull() && resp.PlanValue.ValueString() == "")
 }
 
 func TestClusterStatusOnUpdate(t *testing.T) {
@@ -1021,8 +957,6 @@ func TestClusterStatusOnUpdate(t *testing.T) {
 	require.False(t, diags.HasError(), "%v", diags)
 	prior := readClusterModel(t, state)
 
-	// The refresh sees the cluster in its maintenance window; the finished
-	// task leaves it ACTIVE.
 	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "MAINTENANCE" })
 	newPlan := prior
 	newPlan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
@@ -1099,14 +1033,11 @@ func TestClusterUpdateTaskError(t *testing.T) {
 	assert.Contains(t, firstError(t, diags), "task UPGRADE_PATCH_VERSION task-")
 	assert.Contains(t, firstError(t, diags), "ended in ERROR")
 
-	// The cluster stays in state with the prior version, so the upgrade is
-	// planned again.
 	fake.failTasks("UPGRADE_PATCH_VERSION", false)
 	got, diags := updateCluster(t, r, readClusterModel(t, state), upPlan)
 	require.False(t, diags.HasError(), "%v", diags)
 	assert.Equal(t, types.StringValue(testKubeVersion), got.KubeVersion)
 
-	// Upgraded in place, not recreated.
 	assert.Equal(t, 1, fake.callCount(routeCreateCluster))
 	assert.Equal(t, 2, fake.callCount(routeUpgradePatch))
 
@@ -1122,8 +1053,6 @@ func TestClusterUpdateTaskError(t *testing.T) {
 	assert.Contains(t, firstError(t, diags), "task UPGRADE_MASTERS_CONFIG task-")
 	assert.Contains(t, firstError(t, diags), "ended in ERROR")
 
-	// The API stored the requested options before the task ran: the refresh
-	// reads them.
 	fake.failTasks("UPGRADE_MASTERS_CONFIG", false)
 	state2, diags := readCluster(t, r, got)
 	require.False(t, diags.HasError(), "%v", diags)
@@ -1137,8 +1066,6 @@ func TestTaskWaiterListsAllTasks(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	// More tasks than one page of the old paging; every old one is stuck, so
-	// the wait times out if the snapshot misses any of them.
 	const oldTasks = 250
 	for range oldTasks {
 		fake.seedTask(testClusterID, "", "OLD", true)
@@ -1150,7 +1077,261 @@ func TestTaskWaiterListsAllTasks(t *testing.T) {
 
 	err = waiter.Wait(ctx)
 	require.NoError(t, err)
-	// One call per listing: the snapshot and the new tasks.
 	assert.Equal(t, 2, fake.callCount(routeTasks))
 	assert.Contains(t, fake.lastQuery(routeTasks), "limit=0")
+}
+
+func TestClusterModifyPlanKubeVersion(t *testing.T) {
+	for _, tt := range []struct {
+		name  string
+		state string
+		plan  string
+	}{
+		{name: "lower same minor", state: "1.31.8", plan: "1.31.5"},
+		{name: "lower minor", state: "1.32.8", plan: "1.31.5"},
+		{name: "lower major", state: "2.31.1", plan: "1.31.5"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &clusterResource{}
+			state := clusterState()
+			state.KubeVersion = types.StringValue(tt.state)
+			plan := clusterState()
+			plan.KubeVersion = types.StringValue(tt.plan)
+			req := resource.ModifyPlanRequest{
+				Config: tfsdk.Config(clusterStateOf(t, r, plan)), Plan: tfsdk.Plan(clusterStateOf(t, r, plan)),
+				State: clusterStateOf(t, r, state),
+			}
+			resp := resource.ModifyPlanResponse{Plan: req.Plan}
+			r.ModifyPlan(context.Background(), req, &resp)
+			require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+			var got clusterModel
+			require.False(t, resp.Plan.Get(context.Background(), &got).HasError())
+			assert.Equal(t, types.StringValue(tt.state), got.KubeVersion)
+		})
+	}
+}
+
+func TestClusterValidateKubeVersionChange(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		current string
+		desired string
+		wantErr string
+	}{
+		{name: "skipped minor", current: "1.31.8", desired: "1.33.1", wantErr: "must be upgraded one minor version at a time"},
+		{name: "major change", current: "1.31.8", desired: "2.31.1", wantErr: "can't be upgraded to version"},
+		{name: "downgrade", current: "1.32.8", desired: "1.31.5", wantErr: "can't be downgraded to version"},
+		{name: "patch downgrade", current: "1.31.8", desired: "1.31.5", wantErr: "can't be downgraded to version"},
+		{name: "one minor up", current: "1.31.8", desired: "1.32.3"},
+		{name: "patch up", current: "1.31.8", desired: "1.31.9"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateKubeVersionChange(tt.current, tt.desired)
+			if tt.wantErr == "" {
+				assert.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestClusterBasicClusterAutoUpgradeRejectedAtPlan(t *testing.T) {
+	r := &clusterResource{}
+	config := clusterPlan()
+	config.ClusterType = types.StringValue("BASIC")
+	config.EnablePatchVersionAutoUpgrade = types.BoolValue(true)
+	plan := tfsdk.Config(clusterStateOf(t, r, config))
+	resp := resource.ValidateConfigResponse{}
+	r.ValidateConfig(context.Background(), resource.ValidateConfigRequest{Config: plan}, &resp)
+	require.True(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+	assert.Equal(t, "Patch version auto-upgrade is not available for BASIC clusters", resp.Diagnostics.Errors()[0].Summary())
+}
+
+func TestClusterOIDCModifierRules(t *testing.T) {
+	r := &clusterResource{}
+	oidc := func(enabled bool) types.Object {
+		return types.ObjectValueMust(oidcAttrTypes, map[string]attr.Value{
+			"enabled":        types.BoolValue(enabled),
+			"provider_name":  types.StringValue("keycloak"),
+			"issuer_url":     types.StringValue("https://issuer.example.com"),
+			"client_id":      types.StringValue("kubernetes"),
+			"username_claim": types.StringNull(),
+			"groups_claim":   types.StringNull(),
+			"ca_certs":       trimmedStringValue{StringValue: types.StringNull()},
+		})
+	}
+	t.Run("OIDC parameter set while OIDC is disabled", func(t *testing.T) {
+		config := clusterPlan()
+		config.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"oidc": oidc(false)})
+		modReq := planmodifier.StringRequest{
+			Config:      tfsdk.Config(clusterStateOf(t, r, config)),
+			ConfigValue: types.StringValue("keycloak"),
+			StateValue:  types.StringNull(),
+			Path:        path.Root("kubernetes_options").AtName("oidc").AtName("provider_name"),
+		}
+		resp := planmodifier.StringResponse{PlanValue: types.StringValue("keycloak")}
+		oidcPlanModifier{}.PlanModifyString(context.Background(), modReq, &resp)
+		require.True(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+		assert.Equal(t, "OIDC parameter set while OIDC is disabled", resp.Diagnostics.Errors()[0].Summary())
+		assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "oidc parameters cannot be configured when it is disabled")
+	})
+	for _, name := range []string{"username_claim", "groups_claim"} {
+		t.Run(name+" cannot be empty while enabled", func(t *testing.T) {
+			enabled := oidc(true)
+			enabledObj := clusterPlan()
+			enabledObj.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"oidc": enabled})
+			modReq := planmodifier.StringRequest{
+				Config:      tfsdk.Config(clusterStateOf(t, r, enabledObj)),
+				ConfigValue: types.StringValue(""),
+				StateValue:  types.StringNull(),
+				Path:        path.Root("kubernetes_options").AtName("oidc").AtName(name),
+			}
+			resp := planmodifier.StringResponse{PlanValue: types.StringValue("")}
+			oidcPlanModifier{enabledDefault: "sub"}.PlanModifyString(context.Background(), modReq, &resp)
+			require.True(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+			assert.Equal(t, "Empty OIDC claim while OIDC is enabled", resp.Diagnostics.Errors()[0].Summary())
+			assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), name+" cannot be empty while OIDC is enabled: omit it to get")
+		})
+	}
+}
+
+func TestClusterOIDCKeepsStateWhileEnabled(t *testing.T) {
+	r := &clusterResource{}
+	plan := clusterPlan()
+	enabledOIDC := types.ObjectValueMust(oidcAttrTypes, map[string]attr.Value{
+		"enabled":        types.BoolValue(true),
+		"provider_name":  types.StringNull(),
+		"issuer_url":     types.StringNull(),
+		"client_id":      types.StringNull(),
+		"username_claim": types.StringNull(),
+		"groups_claim":   types.StringNull(),
+		"ca_certs":       trimmedStringValue{StringValue: types.StringNull()},
+	})
+	plan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"oidc": enabledOIDC})
+	modReq := planmodifier.StringRequest{
+		Config:      tfsdk.Config(clusterStateOf(t, r, plan)),
+		State:       clusterStateOf(t, r, plan),
+		StateValue:  types.StringValue("keycloak"),
+		ConfigValue: types.StringNull(),
+		Path:        path.Root("kubernetes_options").AtName("oidc").AtName("provider_name"),
+	}
+	chainReq := modReq
+	chainReq.PlanValue = types.StringUnknown()
+	keepResp := planmodifier.StringResponse{PlanValue: chainReq.PlanValue}
+	stringplanmodifier.UseStateForUnknown().PlanModifyString(context.Background(), chainReq, &keepResp)
+	resp := planmodifier.StringResponse{PlanValue: keepResp.PlanValue}
+	oidcPlanModifier{}.PlanModifyString(context.Background(), modReq, &resp)
+	require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+	assert.Equal(t, types.StringValue("keycloak"), resp.PlanValue)
+}
+
+func TestClusterModifyPlanSetsUnknowns(t *testing.T) {
+	r := &clusterResource{}
+	changePlan := clusterState()
+	changePlan.KubeVersion = types.StringValue(testKubeVersionUp)
+	changePlan.MaintenanceWindowStart = types.StringValue("07:00:00")
+	req := resource.ModifyPlanRequest{
+		Config: tfsdk.Config(clusterStateOf(t, r, changePlan)),
+		Plan:   tfsdk.Plan(clusterStateOf(t, r, changePlan)), State: clusterStateOf(t, r, clusterState()),
+	}
+	resp := resource.ModifyPlanResponse{Plan: req.Plan}
+	r.ModifyPlan(context.Background(), req, &resp)
+	require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+	var got clusterModel
+	require.False(t, resp.Plan.Get(context.Background(), &got).HasError())
+	assert.True(t, got.Status.IsUnknown())
+	assert.True(t, got.MaintenanceWindowEnd.IsUnknown())
+}
+
+func TestClusterNameCaseModifier(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		plan     types.String
+		expected types.String
+	}{
+		{name: "case-only change keeps the state name", plan: types.StringValue("Test-Cluster"), expected: types.StringValue("test-cluster")},
+		{name: "a different name is not rewritten", plan: types.StringValue("other-cluster"), expected: types.StringValue("other-cluster")},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			resp := planmodifier.StringResponse{PlanValue: tt.plan}
+			nameCase{}.PlanModifyString(context.Background(), planmodifier.StringRequest{
+				StateValue: types.StringValue("test-cluster"), PlanValue: tt.plan,
+			}, &resp)
+			assert.Equal(t, tt.expected, resp.PlanValue)
+		})
+	}
+}
+
+func TestClusterSameProjectIDModifier(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		plan     types.String
+		expected types.String
+	}{
+		{name: "dashed form keeps the state project", plan: types.StringValue("a07abc12-3105-46f1-b929-1ab301a7d75b"), expected: types.StringValue("a07abc12310546f1b9291ab301a7d75b")},
+		{name: "another project is not rewritten", plan: types.StringValue("c07abc12310546f1b9291ab301a7d75b"), expected: types.StringValue("c07abc12310546f1b9291ab301a7d75b")},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			resp := planmodifier.StringResponse{PlanValue: tt.plan}
+			sameProjectID{}.PlanModifyString(context.Background(), planmodifier.StringRequest{
+				StateValue: types.StringValue("a07abc12310546f1b9291ab301a7d75b"), PlanValue: tt.plan,
+			}, &resp)
+			assert.Equal(t, tt.expected, resp.PlanValue)
+		})
+	}
+}
+
+func TestClusterTrimmedStringKeepModifier(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		config   types.String
+		expected types.String
+	}{
+		{name: "surrounding whitespace keeps the state value", config: types.StringValue("cert-1\n"), expected: types.StringValue("cert-1")},
+		{name: "a different value is not rewritten", config: types.StringValue("cert-2"), expected: types.StringValue("cert-2")},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			resp := planmodifier.StringResponse{PlanValue: tt.config}
+			trimmedStringKeep{}.PlanModifyString(context.Background(), planmodifier.StringRequest{
+				StateValue: types.StringValue("cert-1"), ConfigValue: tt.config, PlanValue: tt.config,
+			}, &resp)
+			assert.Equal(t, tt.expected, resp.PlanValue)
+		})
+	}
+}
+
+func TestClusterCloudSubnetCIDRRequiresReplaceIf(t *testing.T) {
+	r := &clusterResource{}
+	var schemaResp resource.SchemaResponse
+	r.Schema(context.Background(), resource.SchemaRequest{}, &schemaResp)
+	attr := schemaResp.Schema.Attributes["cloud_subnet_cidr"].(schema.StringAttribute)
+	for _, tt := range []struct {
+		name    string
+		hasCIDR bool
+		cidr    string
+		replace bool
+	}{
+		{name: "an unset value after import does not replace", hasCIDR: false, cidr: "10.1.0.0/24", replace: false},
+		{name: "a changed set value replaces", hasCIDR: true, cidr: "10.1.0.0/24", replace: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			state := clusterState()
+			if !tt.hasCIDR {
+				state.CloudSubnetCIDR = types.StringNull()
+			}
+			plan := state
+			plan.CloudSubnetCIDR = types.StringValue(tt.cidr)
+			req := planmodifier.StringRequest{
+				Config: tfsdk.Config(clusterStateOf(t, r, plan)), Plan: tfsdk.Plan(clusterStateOf(t, r, plan)),
+				State: clusterStateOf(t, r, state), StateValue: state.CloudSubnetCIDR, PlanValue: plan.CloudSubnetCIDR,
+			}
+			for _, m := range attr.PlanModifiers {
+				resp := planmodifier.StringResponse{}
+				m.PlanModifyString(context.Background(), req, &resp)
+				assert.Equal(t, tt.replace, resp.RequiresReplace)
+			}
+		})
+	}
 }

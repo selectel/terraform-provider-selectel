@@ -21,11 +21,6 @@ func TestFrameworkMKSV2Client(t *testing.T) {
 	}
 }
 
-// testFrameworkMKSV2Client fakes Keystone with a catalog of two pools
-// (ru-1 and ru-2) and takes a kube version request through the returned
-// client. The pool the request reaches names itself in the answer, so a
-// client scoped for the second pool is told apart from one scoped for the
-// first.
 func testFrameworkMKSV2Client(t *testing.T, scenario string) {
 	t.Helper()
 	var endpoint string
@@ -64,14 +59,8 @@ func testFrameworkMKSV2Client(t *testing.T, scenario string) {
 			service = "other"
 		}
 		poolHost := map[string]string{"ru-1": "mks-ru-1", "ru-2": "mks-ru-2"}
-		if scenario == "unknown pool" {
-			delete(poolHost, "ru-2")
-		}
 		endpoints := make([]any, 0, len(poolHost))
 		for pool := range poolHost {
-			// Every pool of the fake shares the server URL: the client only
-			// reads this endpoint, the request itself answers on the same
-			// server whatever the URL host claims.
 			endpoints = append(endpoints, map[string]string{
 				"interface": "public", "region": pool, "region_id": pool,
 				"url": endpoint + "/" + pool + "/v2",
@@ -110,12 +99,21 @@ func testFrameworkMKSV2Client(t *testing.T, scenario string) {
 		assert.Contains(t, err.Error(), "can't validate pool")
 		assert.Contains(t, err.Error(), "region value must contain one of the values")
 		assert.Contains(t, err.Error(), "ru-1")
+		assert.Contains(t, err.Error(), "ru-2")
 
 		return
 	}
 	if scenario != "scoped client" && scenario != "second pool" {
 		require.Error(t, err)
 		assert.Nil(t, client)
+		if scenario == "authentication error" {
+			assert.Contains(t, err.Error(), "authenticate project")
+			assert.Contains(t, err.Error(), "Authentication failed")
+		}
+		if scenario == "missing service" {
+			assert.Contains(t, err.Error(), "endpoints for managed-kubernetes-v2")
+			assert.Contains(t, err.Error(), "service type not found")
+		}
 
 		return
 	}

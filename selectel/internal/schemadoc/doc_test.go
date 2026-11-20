@@ -176,6 +176,22 @@ func TestConditionalReplacement(t *testing.T) {
 	}
 }
 
+func TestBoolRequiresReplace(t *testing.T) {
+	attribute := schemadoc.Resource{Name: "cluster"}.Bool(schema.BoolAttribute{
+		Optional:      true,
+		PlanModifiers: []planmodifier.Bool{schemadoc.BoolRequiresReplace()},
+	}, schemadoc.Field{Definition: "Whether the kube-API endpoint has only a private address."})
+	assert.Equal(t, "Whether the kube-API endpoint has only a private address. Changing this creates a new cluster.",
+		attribute.MarkdownDescription)
+	raw := tftypes.NewValue(tftypes.Object{AttributeTypes: map[string]tftypes.Type{}}, map[string]tftypes.Value{})
+	var response planmodifier.BoolResponse
+	attribute.PlanModifiers[0].PlanModifyBool(context.Background(), planmodifier.BoolRequest{
+		State: tfsdk.State{Raw: raw}, Plan: tfsdk.Plan{Raw: raw},
+		StateValue: types.BoolValue(true), PlanValue: types.BoolValue(false),
+	}, &response)
+	assert.True(t, response.RequiresReplace)
+}
+
 func TestEnumInDataSource(t *testing.T) {
 	// Adding a format changes both the accepted configuration and its documentation.
 	for _, formats := range [][]string{{"raw"}, {"raw", "qcow2"}, {"raw", "qcow2", "vmdk"}} {

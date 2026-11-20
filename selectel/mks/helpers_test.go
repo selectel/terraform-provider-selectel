@@ -3,6 +3,7 @@ package mks
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -15,18 +16,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// testProviderConfig implements ProviderConfig for the fake API server and
-// records the last scope it was asked for.
 type testProviderConfig struct {
 	client        *mksv2.ServiceClient
 	project, pool string
 	gotProject    []string
-	gotPool       []string
 }
 
 func (c *testProviderConfig) MKSV2Client(_ context.Context, projectID, pool string) (*mksv2.ServiceClient, error) {
 	c.gotProject = append(c.gotProject, projectID)
-	c.gotPool = append(c.gotPool, pool)
 
 	return c.client, nil
 }
@@ -40,17 +37,12 @@ func (f *fakeAPI) resource() *clusterResource {
 }
 
 const (
-	// testProject is a project ID in the dashed form a plan carries.
-	testProject = apiProject
-	// testKubeVersions are what the fake kube versions serve: two patches of
-	// 1.31 and one older minor.
+	testProject        = apiProject
 	testKubeVersion    = "1.31.8"
 	testKubeVersionOld = "1.31.5"
 	testKubeVersionUp  = "1.32.3"
 )
 
-// clusterState is the settled state of a cluster: what fromAPI returns
-// after the fake has created it.
 func clusterState() clusterModel {
 	kubeOptions := types.ObjectValueMust(kubeOptionsAttrTypes, map[string]attr.Value{
 		"feature_gates":         types.SetValueMust(types.StringType, []attr.Value{types.StringValue("CSIMigration")}),
@@ -84,7 +76,7 @@ func clusterState() clusterModel {
 		KubernetesOptions:             kubeOptions,
 		Status:                        types.StringValue("ACTIVE"),
 		KubeAPIIP:                     types.StringValue("192.0.2.10"),
-		Timeouts:                      shortTimeouts(),
+		Timeouts:                      clusterTimeouts(2*time.Second, 2*time.Second, 2*time.Second),
 	}
 }
 
@@ -100,18 +92,17 @@ func oidcObject() types.Object {
 	})
 }
 
-func shortTimeouts() timeouts.Value {
+func clusterTimeouts(create, update, delete time.Duration) timeouts.Value {
+	str := func(d time.Duration) types.String { return types.StringValue(d.String()) }
+
 	return timeouts.Value{Object: types.ObjectValueMust(
 		map[string]attr.Type{
 			"create": types.StringType, "update": types.StringType, "delete": types.StringType,
 		},
-		map[string]attr.Value{
-			"create": types.StringValue("2s"), "update": types.StringValue("2s"), "delete": types.StringValue("2s"),
-		},
+		map[string]attr.Value{"create": str(create), "update": str(update), "delete": str(delete)},
 	)}
 }
 
-// clusterPlan is the plan of a new cluster: every computed value is unknown.
 func clusterPlan() clusterModel {
 	m := clusterState()
 	m.ID = types.StringUnknown()
@@ -196,7 +187,6 @@ func importCluster(t *testing.T, r *clusterResource) resource.ImportStateRespons
 	return resp
 }
 
-// firstError returns the detail of the first diagnostic error.
 func firstError(t *testing.T, diags diag.Diagnostics) string {
 	t.Helper()
 	require.True(t, diags.HasError(), "want an error, got %v", diags)
@@ -204,8 +194,6 @@ func firstError(t *testing.T, diags diag.Diagnostics) string {
 	return diags.Errors()[0].Detail()
 }
 
-// errorText returns the summary and the detail of the first diagnostic
-// error as one string.
 func errorText(t *testing.T, diags diag.Diagnostics) string {
 	t.Helper()
 	require.True(t, diags.HasError(), "want an error, got %v", diags)
