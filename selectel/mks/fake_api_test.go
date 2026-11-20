@@ -41,7 +41,6 @@ type fakeAPI struct {
 	queries            map[string]string
 	bodies             map[string][]byte
 	calls              map[string]int
-
 }
 
 type fakeBody struct {
@@ -541,13 +540,6 @@ func (f *fakeAPI) clusterCount() int {
 	defer f.mu.Unlock()
 
 	return len(f.clusters)
-}
-
-func (f *fakeAPI) withinCluster(id string, read func(c mksclient.ClusterDetailed)) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
-	read(f.clusters[id])
 }
 
 func (f *fakeAPI) updateCluster(id string, update func(c *mksclient.ClusterDetailed)) {

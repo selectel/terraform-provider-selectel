@@ -6,9 +6,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadoc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadoc"
 )
 
 // The cluster resource is not registered in the provider yet, so

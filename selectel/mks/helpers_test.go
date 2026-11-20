@@ -22,7 +22,7 @@ type testProviderConfig struct {
 	gotProject    []string
 }
 
-func (c *testProviderConfig) MKSV2Client(_ context.Context, projectID, pool string) (*mksv2.ServiceClient, error) {
+func (c *testProviderConfig) MKSV2Client(_ context.Context, projectID, _ string) (*mksv2.ServiceClient, error) {
 	c.gotProject = append(c.gotProject, projectID)
 
 	return c.client, nil
@@ -92,14 +92,14 @@ func oidcObject() types.Object {
 	})
 }
 
-func clusterTimeouts(create, update, delete time.Duration) timeouts.Value {
+func clusterTimeouts(create, update, del time.Duration) timeouts.Value {
 	str := func(d time.Duration) types.String { return types.StringValue(d.String()) }
 
 	return timeouts.Value{Object: types.ObjectValueMust(
 		map[string]attr.Type{
 			"create": types.StringType, "update": types.StringType, "delete": types.StringType,
 		},
-		map[string]attr.Value{"create": str(create), "update": str(update), "delete": str(delete)},
+		map[string]attr.Value{"create": str(create), "update": str(update), "delete": str(del)},
 	)}
 }
 

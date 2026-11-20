@@ -6,13 +6,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadoc"
-
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	mksv2 "github.com/selectel/mks-go/v2/pkg"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadoc"
 )
 
 // ProviderConfig is the authentication boundary shared by the resources.

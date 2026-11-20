@@ -59,9 +59,9 @@ func TestPollTransientErrors(t *testing.T) {
 
 func TestIsTransient(t *testing.T) {
 	for _, tt := range []struct {
-		name  string
-		err   error
-		want  bool
+		name string
+		err  error
+		want bool
 	}{
 		{name: "rate limit", err: mksError(http.StatusTooManyRequests), want: true},
 		{name: "internal server error", err: mksError(http.StatusInternalServerError), want: true},
