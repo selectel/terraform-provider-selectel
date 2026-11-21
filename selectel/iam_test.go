@@ -1,6 +1,8 @@
 package selectel
 
 import (
+	"net/http"
+	"reflect"
 	"testing"
 
 	"github.com/selectel/iam-go/service/roles"
@@ -139,4 +141,16 @@ func TestIAMDiffRoles(t *testing.T) {
 			assert.Equal(tt.wantToAssign, actualRolesToAssign)
 		})
 	}
+}
+
+func TestNewIAMHTTPClientUsesProxyFromEnvironment(t *testing.T) {
+	client := newIAMHTTPClient()
+
+	transport, ok := client.Transport.(*http.Transport)
+	assert.True(t, ok)
+	assert.NotNil(t, transport.Proxy)
+	assert.Equal(t,
+		reflect.ValueOf(http.ProxyFromEnvironment).Pointer(),
+		reflect.ValueOf(transport.Proxy).Pointer(),
+	)
 }

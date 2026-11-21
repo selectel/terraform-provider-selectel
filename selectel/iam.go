@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -43,12 +45,30 @@ func getIAMClient(meta any) (*iam.Client, diag.Diagnostics) {
 		}),
 		iam.WithAPIUrl(apiURL),
 		iam.WithUserAgentPrefix(config.UserAgent),
+		iam.WithCustomHTTPClient(newIAMHTTPClient()),
 	)
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't create iam client: %w", err))
 	}
 
 	return iamClient, nil
+}
+
+// newIAMHTTPClient returns an HTTP client with the same settings as the iam-go
+// default one, but which respects HTTP_PROXY / HTTPS_PROXY / NO_PROXY.
+// The iam-go default transport has no Proxy set, so IAM requests ignore
+// proxy environment variables unlike the rest of the provider.
+func newIAMHTTPClient() *http.Client {
+	return &http.Client{
+		Timeout: 120 * time.Second,
+		Transport: &http.Transport{
+			Proxy:                 http.ProxyFromEnvironment,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       100 * time.Second,
+			TLSHandshakeTimeout:   60 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		},
+	}
 }
 
 func getEndpointForIAM(selvpcClient *selvpcclient.Client, region string) (string, error) {
