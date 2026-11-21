@@ -8,6 +8,7 @@ import (
 	"log"
 	"math"
 	"math/rand" // nosemgrep: go.lang.security.audit.crypto.math_random.math-random-used
+	"net/http"
 	"slices"
 	"sort"
 	"strconv"
@@ -28,7 +29,38 @@ const (
 	kafkaDatastoreType       = "kafka"
 	masterRole               = "MASTER"
 	replicaRole              = "REPLICA"
+
+	// dbaasHTTPTimeout limits a single DBaaS API request, the same value as the
+	// default timeout of the dbaas-go internal client.
+	dbaasHTTPTimeout = 120 * time.Second
 )
+
+// dbaasNoCacheTransport adds "Cache-Control: no-cache" to every DBaaS API request.
+//
+// The DBaaS API caches GET responses (see the X-Cache response header). While a
+// datastore is being created, GET /v1/datastores/{id} polled with the same token
+// keeps returning the cached PENDING_CREATE body long after the datastore becomes
+// ACTIVE, so the waiters never see the target status and fail on timeout.
+// "Cache-Control: no-cache" makes the API return a fresh response.
+type dbaasNoCacheTransport struct {
+	base http.RoundTripper
+}
+
+func (t dbaasNoCacheTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	r := req.Clone(req.Context())
+	r.Header.Set("Cache-Control", "no-cache")
+
+	return t.base.RoundTrip(r)
+}
+
+// newDBaaSHTTPClient returns the HTTP client for the DBaaS v1 API: the default
+// transport (proxy from environment, keep-alive) with cache bypass and a request timeout.
+func newDBaaSHTTPClient() *http.Client {
+	return &http.Client{
+		Timeout:   dbaasHTTPTimeout,
+		Transport: dbaasNoCacheTransport{base: http.DefaultTransport},
+	}
+}
 
 // getDBaaSClient is dbaas v1 client.
 func getDBaaSClient(d *schema.ResourceData, meta any) (*dbaas.API, diag.Diagnostics) {
@@ -51,7 +83,7 @@ func getDBaaSClient(d *schema.ResourceData, meta any) (*dbaas.API, diag.Diagnost
 		return nil, diag.FromErr(fmt.Errorf("can't get endpoint to init dbaas client: %w", err))
 	}
 
-	client, err := dbaas.NewDBAASClient(selvpcClient.GetXAuthToken(), endpoint.URL)
+	client, err := dbaas.NewDBAASClientV1WithCustomHTTP(newDBaaSHTTPClient(), selvpcClient.GetXAuthToken(), endpoint.URL)
 	if err != nil {
 		return nil, diag.FromErr(fmt.Errorf("can't create dbaas client: %w", err))
 	}
