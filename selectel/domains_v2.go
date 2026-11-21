@@ -35,6 +35,8 @@ func getDomainsV2Client(d *schema.ResourceData, meta any) (domainsV2.DNSClient[d
 	hdrs := http.Header{}
 	hdrs.Add("X-Auth-Token", selvpcClient.GetXAuthToken())
 	hdrs.Add("User-Agent", userAgent)
+	// DNS API v2 rejects request bodies without it (selectel/terraform-provider-selectel#447).
+	hdrs.Add("Content-Type", "application/json")
 
 	domainsClient := domainsV2.NewClient(endpoint.URL, httpClient, hdrs)
 
