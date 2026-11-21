@@ -1,16 +1,16 @@
 resource "selectel_secretsmanager_certificate_v1" "certificate_1" {
-  name         = "certificate"
+  name = "certificate"
   certificates = [
-      <<-EOF
+    <<-EOF
       -----BEGIN CERTIFICATE-----
       ...
-      ----END CERTIFICATE-----
+      -----END CERTIFICATE-----
       EOF
   ]
-  private_key  = <<-EOF
+  private_key = <<-EOF
   -----BEGIN PRIVATE KEY-----
   ...
   -----END PRIVATE KEY-----
   EOF
-  project_id   = selectel_vpc_project_v2.project_1.id
+  project_id  = selectel_vpc_project_v2.project_1.id
 }

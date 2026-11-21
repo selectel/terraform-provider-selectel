@@ -9,12 +9,14 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/selectel/secretsmanager-go/secretsmanagererrors"
 	"github.com/selectel/secretsmanager-go/service/secrets"
 )
 
 func resourceSecretsManagerSecretV1() *schema.Resource {
 	return &schema.Resource{
-		Description: "represents a Secret — entity from SecretsManager service",
+		Description: "Creates and manages a secret in Secrets Manager using public API v1.",
 
 		CreateContext: resourceSecretsManagerSecretV1Create,
 		ReadContext:   resourceSecretsManagerSecretV1Read,
@@ -27,45 +29,61 @@ func resourceSecretsManagerSecretV1() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"key": {
-				Description: "unique key,name of the secret",
+				Description: "Secret name, unique within the project. Must contain 1 to 255 ASCII letters, digits, underscores, or hyphens. Changing this value recreates the secret and deletes all its versions.",
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 			},
 			"description": {
-				Description: "optional description of the secret",
+				Description: "Secret description. Defaults to an empty string. Maximum length is 1024 characters; each character must use at most three UTF-8 bytes. Changing only the description does not create a version.",
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
 			},
 			"value": {
-				Description: "secret value, e.g. password, API key, certificate key, or other",
+				Description: "Sensitive secret value as non-empty plain UTF-8 text, up to 262144 bytes. The SDK handles Base64 encoding. Changing this value creates a version; a positive current_version leaves the uploaded version inactive. Refresh and rollback preserve the last uploaded value. Import does not retrieve plaintext and sets an absent value to UNKNOWN; supply value in the configuration before applying.",
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
 				ForceNew:    false, // otherwise, will replace existing secret if you import it
 			},
 			"project_id": {
-				Description: "id of a project where secret is used",
+				Description: "Unique identifier of the associated project. Changing this value recreates the secret and deletes all its versions.",
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 			},
 			"name": {
-				Description: "computed name of the secret same as key",
+				Description: "Secret name, equal to key.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"created_at": {
-				Description: "time when the secret was created",
+				Description: "Creation time of the active secret version in RFC3339 format.",
 				Type:        schema.TypeString,
 				Computed:    true,
+			},
+			"version": {
+				Description: "Active secret version number, not necessarily the latest uploaded version.",
+				Type:        schema.TypeInt,
+				Computed:    true,
+			},
+			"current_version": {
+				Description:  "Desired active version. Defaults to 0, which automatically activates new versions when value changes. Positive values pin an existing version. Must be non-negative; only 0 or 1 is valid on creation. Resetting to 0 does not immediately change the active version.",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      0,
+				ValidateFunc: validation.IntAtLeast(0),
 			},
 		},
 	}
 }
 
 func resourceSecretsManagerSecretV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	if d.Get("current_version").(int) > 1 {
+		return diag.Errorf("current_version must be 0 or 1 when creating a secret")
+	}
+
 	cl, diagErr := getSecretsManagerClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -90,6 +108,7 @@ func resourceSecretsManagerSecretV1Create(ctx context.Context, d *schema.Resourc
 
 	projectID := d.Get("project_id").(string)
 	d.SetId(resourceSecretV1BuildID(projectID, key))
+	d.Set("version", 1)
 
 	return resourceSecretsManagerSecretV1Read(ctx, d, meta)
 }
@@ -119,6 +138,10 @@ func resourceSecretsManagerSecretV1Read(ctx context.Context, d *schema.ResourceD
 		d.Set("value", "UNKNOWN")
 	}
 	d.Set("created_at", secret.Version.CreatedAt)
+	d.Set("version", secret.Version.VersionID)
+	if d.Get("current_version").(int) > 0 {
+		d.Set("current_version", secret.Version.VersionID)
+	}
 
 	return nil
 }
@@ -144,22 +167,60 @@ func resourceSecretsManagerSecretV1Delete(ctx context.Context, d *schema.Resourc
 func resourceSecretsManagerSecretV1Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	cl, diagErr := getSecretsManagerClient(d, meta)
 	if diagErr != nil {
+		d.Partial(true)
 		return diagErr
 	}
 
 	key := d.Get("key").(string)
-	desc := d.Get("description").(string)
-
-	secret := secrets.UserSecret{
-		Key:         key,
-		Description: desc,
+	if d.HasChange("description") {
+		secret := secrets.UserSecret{
+			Key:         key,
+			Description: d.Get("description").(string),
+		}
+		log.Print(msgUpdate(objectSecret, d.Id(), "updated description"))
+		if err := cl.Secrets.Update(ctx, secret); err != nil {
+			d.Partial(true)
+			return diag.FromErr(errUpdatingObject(objectSecret, d.Id(), err))
+		}
 	}
 
-	log.Print(msgUpdate(objectSecret, d.Id(), secret))
+	currentVersion := d.Get("current_version").(int)
+	if d.HasChange("value") {
+		version, err := cl.Secrets.CreateVersion(ctx, key, d.Get("value").(string), currentVersion == 0)
+		if err != nil {
+			restoreSecretsManagerInputs(d, "value", "current_version")
+			return diag.FromErr(errUpdatingObject(objectSecret, d.Id(), err))
+		}
+		if currentVersion == 0 {
+			d.Set("version", version.VersionID)
+			d.Set("created_at", version.CreatedAt)
+		}
+	}
 
-	errUpd := cl.Secrets.Update(ctx, secret)
-	if errUpd != nil {
-		return diag.FromErr(errUpdatingObject(objectSecret, d.Id(), errUpd))
+	if currentVersion > 0 {
+		secret, err := cl.Secrets.Get(ctx, key)
+		if err != nil {
+			restoreSecretsManagerInputs(d, "current_version")
+			return diag.FromErr(errGettingObject(objectSecret, d.Id(), err))
+		}
+		d.Set("version", secret.Version.VersionID)
+		d.Set("current_version", secret.Version.VersionID)
+		d.Set("created_at", secret.Version.CreatedAt)
+		if secret.Version.VersionID != uint(currentVersion) {
+			activated, err := cl.Secrets.ActivateVersion(ctx, key, uint64(currentVersion))
+			if errors.Is(err, secretsmanagererrors.ErrConflictStatusText) {
+				refreshed := resourceSecretsManagerSecretV1Read(ctx, d, meta)
+				if !refreshed.HasError() && d.Get("version").(int) == currentVersion {
+					return nil
+				}
+			}
+			if err != nil {
+				return diag.FromErr(errUpdatingObject(objectSecret, d.Id(), err))
+			}
+			d.Set("version", activated.VersionID)
+			d.Set("current_version", activated.VersionID)
+			d.Set("created_at", activated.CreatedAt)
+		}
 	}
 
 	return resourceSecretsManagerSecretV1Read(ctx, d, meta)
