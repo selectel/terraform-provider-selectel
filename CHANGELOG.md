@@ -2,12 +2,12 @@
 
 IMPROVEMENTS:
 
-* `selectel_vpc_project_v2`: `quotas` values are now refreshed from the API, so changes made outside of Terraform are detected. Only quotas specified in the configuration are tracked ([#315](https://github.com/selectel/terraform-provider-selectel/issues/315))
+* `selectel_vpc_project_v2`: `quotas` values are now refreshed from the API, so changes made outside of Terraform are detected. Only quotas specified in the configuration are tracked ([#444](https://github.com/selectel/terraform-provider-selectel/pull/444)).
 
 BUG FIXES:
 
-* `selectel_vpc_project_v2`: import now populates `quotas` with the project's current quotas, so they appear in configuration generated with `terraform plan -generate-config-out` ([#315](https://github.com/selectel/terraform-provider-selectel/issues/315))
-* `selectel_vpc_project_v2`: removing the `quotas` block from the configuration no longer fails with `got empty quotas`. Terraform stops managing quotas in this case and leaves the project's actual quotas unchanged; `plan` shows `quotas` being removed ([#315](https://github.com/selectel/terraform-provider-selectel/issues/315))
+* `selectel_vpc_project_v2`: import now populates `quotas` with the project's current quotas, so they appear in configuration generated with `terraform plan -generate-config-out` ([#444](https://github.com/selectel/terraform-provider-selectel/pull/444)).
+* `selectel_vpc_project_v2`: removing the `quotas` block from the configuration no longer fails with `got empty quotas`. Terraform stops managing quotas in this case and leaves the project's actual quotas unchanged; `plan` shows `quotas` being removed ([#444](https://github.com/selectel/terraform-provider-selectel/pull/444)).
 
 NOTES:
 
