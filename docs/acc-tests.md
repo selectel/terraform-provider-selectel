@@ -25,6 +25,16 @@ For the public subnet test (`TestAccVPCV2SubnetBasic`), you can optionally set t
 export SELECTEL_ACC_PUBLIC_SUBNET_PREFIX_LENGTH="28"
 ```
 
+Run all tests:
+```sh
+make testacc
+```
+
+Run specific tests (`TESTARGS` is passed to `go test`, `-run` takes a regex):
+```sh
+make testacc TEST=./selectel TESTARGS='-run=^TestAccVPCV2Project -v'
+```
+
 ## Running Acceptance tests for Global Router
 
 Acceptance tests for Global Router requires definition Environment variables, because tests use references on existing Network resources in Cloud and Dedicated servers.
