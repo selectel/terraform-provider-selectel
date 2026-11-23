@@ -154,9 +154,13 @@ func readCluster(t *testing.T, r *clusterResource, prior clusterModel) (tfsdk.St
 
 func updateCluster(t *testing.T, r *clusterResource, prior, plan clusterModel) (clusterModel, diag.Diagnostics) {
 	t.Helper()
-	planned := tfsdk.Plan(clusterStateOf(t, r, plan))
-	resp := resource.UpdateResponse{State: tfsdk.State(planned)}
-	r.Update(context.Background(), resource.UpdateRequest{State: clusterStateOf(t, r, prior), Plan: planned}, &resp)
+	resp := resource.UpdateResponse{State: emptyState(t, r)}
+	r.Update(context.Background(), resource.UpdateRequest{
+		State: clusterStateOf(t, r, prior), Plan: tfsdk.Plan(clusterStateOf(t, r, plan)),
+	}, &resp)
+	if resp.State.Raw.IsNull() {
+		return clusterModel{}, resp.Diagnostics
+	}
 
 	return readClusterModel(t, resp.State), resp.Diagnostics
 }

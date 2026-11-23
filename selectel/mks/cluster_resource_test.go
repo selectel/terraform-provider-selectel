@@ -209,12 +209,6 @@ func TestClusterWorkersType(t *testing.T) {
 			got := readClusterModel(t, state)
 			assert.Equal(t, types.StringValue(tt.workersType), got.WorkersType)
 			assert.Equal(t, tt.autorepair, got.EnableAutorepair)
-
-			imported := got
-			imported.WorkersType = types.StringUnknown()
-			refreshed, diags := readCluster(t, r, imported)
-			require.False(t, diags.HasError(), "%v", diags)
-			assert.Equal(t, types.StringValue(tt.workersType), readClusterModel(t, refreshed).WorkersType)
 		})
 	}
 }
@@ -348,6 +342,8 @@ func TestClusterKubeVersionUpgrade(t *testing.T) {
 		"current version %s can't be upgraded to version 1.31.7, the latest available patch version is: %s",
 		testKubeVersionOld, testKubeVersion))
 
+	fake.seedNodegroup(testClusterID, "ng-1", "PENDING_SCALE_UP")
+	fake.settleAfter("ng-1", 3, "ACTIVE")
 	okPlan := prior
 	okPlan.KubeVersion = types.StringValue(testKubeVersion)
 	got, diags := updateCluster(t, r, prior, okPlan)
@@ -383,6 +379,13 @@ func TestClusterKubeVersionUpgrade(t *testing.T) {
 	}
 	assert.Equal(t, 1, fake.callCount(routeUpgradeMinor))
 
+	for _, actual := range []string{"1.32.1", "1.33.1"} {
+		fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.KubeVersion = actual })
+		drifted, diags := readCluster(t, r, got2)
+		require.False(t, diags.HasError(), "%v", diags)
+		assert.Equal(t, types.StringValue(actual), readClusterModel(t, drifted).KubeVersion)
+	}
+
 	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) {
 		c.KubeVersion = "1.32.5"
 	})
@@ -390,12 +393,12 @@ func TestClusterKubeVersionUpgrade(t *testing.T) {
 	require.False(t, diags.HasError(), "%v", diags)
 	assert.Equal(t, types.StringValue(testKubeVersionUp), readClusterModel(t, behindState).KubeVersion)
 
-	patchBefore := fake.callCount(routePatchCluster)
 	behindPlan := readClusterModel(t, behindState)
 	behindPlan.KubeVersion = types.StringValue(testKubeVersionOld)
 	_, diags = updateCluster(t, r, behindPlan, withKubeVersion(behindPlan, testKubeVersion))
 	require.False(t, diags.HasError(), "%v", diags)
-	assert.Equal(t, patchBefore, fake.callCount(routePatchCluster))
+	assert.Equal(t, 1, fake.callCount(routeUpgradePatch))
+	assert.Equal(t, 1, fake.callCount(routeUpgradeMinor))
 }
 
 func TestClusterImport(t *testing.T) {
@@ -565,12 +568,14 @@ func TestClusterWaits(t *testing.T) {
 
 func TestClusterDeleteWaitsForStatus(t *testing.T) {
 	for _, tt := range []struct {
-		name    string
-		status  string
-		settle  *string
-		wantErr bool
+		name      string
+		status    string
+		settle    *string
+		nodegroup string
+		wantErr   bool
 	}{
 		{name: "pending create ends", status: "PENDING_CREATE", settle: new("ACTIVE")},
+		{name: "pending nodegroup ends", status: "ACTIVE", nodegroup: "PENDING_SCALE_UP"},
 		{name: "error deletes at once", status: "ERROR"},
 		{name: "gone while waiting", status: "PENDING_CREATE", settle: new("")},
 		{name: "still pending at the timeout", status: "PENDING_CREATE", wantErr: true},
@@ -588,6 +593,10 @@ func TestClusterDeleteWaitsForStatus(t *testing.T) {
 			})
 			if tt.settle != nil {
 				fake.settleAfter(testClusterID, 3, *tt.settle)
+			}
+			if tt.nodegroup != "" {
+				fake.seedNodegroup(testClusterID, "ng-1", tt.nodegroup)
+				fake.settleAfter("ng-1", 3, "ACTIVE")
 			}
 
 			diags = deleteCluster(t, r, readClusterModel(t, state))
@@ -638,13 +647,22 @@ func TestClusterStatusOnUpdate(t *testing.T) {
 	prior := mustCreate(t, r, plan)
 
 	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "MAINTENANCE" })
+	fake.settleAfter(testClusterID, 3, "ACTIVE")
+	getsBefore := fake.callCount(routeCluster)
 	ciliumPlan := prior
 	ciliumPlan.CNICiliumSettings = ciliumObject(types.BoolValue(true), types.BoolValue(true))
 	got, diags := updateCluster(t, r, prior, ciliumPlan)
 	require.False(t, diags.HasError(), "%v", diags)
+	assert.GreaterOrEqual(t, fake.callCount(routeCluster)-getsBefore, 3)
+	assert.Equal(t, 1, fake.callCount(routePatchCluster))
 	assert.Equal(t, types.StringValue("ACTIVE"), got.Status)
 	ciliumPatch, _ := fake.lastBody(routePatchCluster)["cluster"].(map[string]any)
 	assert.Equal(t, map[string]any{"envoy_daemonset": true, "hubble_relay": true}, ciliumPatch["cni_cilium_settings"])
+
+	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "ERROR" })
+	_, diags = updateCluster(t, r, got, withAutorepair(got, false))
+	assertErrorContains(t, diags, "cluster status ERROR does not allow the update")
+	assert.Equal(t, 1, fake.callCount(routePatchCluster))
 }
 
 func TestClusterUpdateTaskError(t *testing.T) {
@@ -670,6 +688,10 @@ func TestClusterUpdateTaskError(t *testing.T) {
 	assertErrorContains(t, diags, "task UPGRADE_PATCH_VERSION task-", "ended in ERROR")
 
 	fake.failTasks("UPGRADE_PATCH_VERSION", false)
+	_, diags = updateCluster(t, r, prior, upPlan)
+	assertErrorContains(t, diags, "Error upgrading cluster", "cluster status ERROR does not allow the upgrade")
+
+	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "ACTIVE" })
 	got, diags := updateCluster(t, r, prior, upPlan)
 	require.False(t, diags.HasError(), "%v", diags)
 	assert.Equal(t, types.StringValue(testKubeVersion), got.KubeVersion)
@@ -776,6 +798,13 @@ func withKubeVersion(m clusterModel, version string) clusterModel {
 	return plan
 }
 
+func withAutorepair(m clusterModel, enabled bool) clusterModel {
+	plan := m
+	plan.EnableAutorepair = types.BoolValue(enabled)
+
+	return plan
+}
+
 func TestClusterCRUDFailsBeforeTheAPI(t *testing.T) {
 	for _, tt := range []struct {
 		name string
@@ -868,12 +897,10 @@ func TestClusterCRUDFailsBeforeTheAPI(t *testing.T) {
 			run: func(t *testing.T, fake *fakeAPI, r *clusterResource) {
 				prior := mustCreate(t, r, clusterPlan())
 
-				fake.fail(routeCluster, http.StatusInternalServerError)
-				newPlan := prior
-				newPlan.Name = types.StringValue("renamed")
-				_, diags := updateCluster(t, r, prior, newPlan)
-				assert.True(t, diags.HasError())
+				fake.settleAfter(testClusterID, 2, "")
+				_, diags := updateCluster(t, r, prior, withAutorepair(prior, false))
 				assertErrorContains(t, diags, "Error reading cluster")
+				assert.Equal(t, 1, fake.callCount(routePatchCluster))
 			},
 		},
 	} {

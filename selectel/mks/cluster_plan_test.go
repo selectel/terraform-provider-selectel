@@ -75,7 +75,7 @@ func modifyPlan(t *testing.T, r *clusterResource, state, plan clusterModel) reso
 	return resp
 }
 
-func TestClusterModifyPlanX509Rules(t *testing.T) {
+func TestClusterModifyPlanRules(t *testing.T) {
 	r := &clusterResource{}
 	withX509 := func(m *clusterModel) {
 		m.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"x509_ca_certificates": types.StringValue("Y2VydA==")})
@@ -94,6 +94,12 @@ func TestClusterModifyPlanX509Rules(t *testing.T) {
 		{name: "unknown kubernetes_options skips the check", plan: func(m *clusterModel) {
 			m.KubernetesOptions = types.ObjectUnknown(kubeOptionsAttrTypes)
 		}},
+		{name: "a skipped minor version fails the plan", plan: func(m *clusterModel) {
+			m.KubeVersion = types.StringValue("1.33.1")
+		}, wantErr: "Invalid Kubernetes version change"},
+		{name: "a major version change fails the plan", plan: func(m *clusterModel) {
+			m.KubeVersion = types.StringValue("2.31.1")
+		}, wantErr: "Invalid Kubernetes version change"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			state := clusterState()

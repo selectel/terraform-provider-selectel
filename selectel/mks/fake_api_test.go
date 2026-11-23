@@ -28,6 +28,7 @@ type fakeAPI struct {
 	server *httptest.Server
 
 	clusters           map[string]mksclient.ClusterDetailed
+	nodegroups         map[string][]mksclient.NodegroupListItem
 	kubeVersions       []mksclient.KubeVersionInfo
 	failures           map[string]int
 	failNext           map[string]fakeFailure
@@ -78,6 +79,7 @@ const (
 	routeUpgradeMinor  = "POST /v2/clusters/{cluster_id}/upgrade-minor-version"
 	routeTasks         = "GET /v2/clusters/{cluster_id}/tasks"
 	routeTask          = "GET /v2/clusters/{cluster_id}/tasks/{task_id}"
+	routeNodegroups    = "GET /v2/clusters/{cluster_id}/nodegroups"
 )
 
 var shortPollInterval sync.Once
@@ -87,7 +89,8 @@ func newFakeAPI(t *testing.T) *fakeAPI {
 
 	f := &fakeAPI{
 		t:        t,
-		clusters: map[string]mksclient.ClusterDetailed{}, failures: map[string]int{},
+		clusters: map[string]mksclient.ClusterDetailed{}, nodegroups: map[string][]mksclient.NodegroupListItem{},
+		failures: map[string]int{},
 		failNext: map[string]fakeFailure{}, failureBodies: map[string]fakeBody{},
 		failedTaskTypes: map[string]bool{}, stuckTaskTypes: map[string]bool{},
 		settles: map[string]fakeSettle{}, x509CACertificates: map[string]string{},
@@ -106,6 +109,7 @@ func newFakeAPI(t *testing.T) *fakeAPI {
 	f.handle(mux, routeUpgradeMinor, f.upgradeCluster(true))
 	f.handle(mux, routeTasks, f.listTasks)
 	f.handle(mux, routeTask, f.getTask)
+	f.handle(mux, routeNodegroups, f.listNodegroups)
 	f.server = httptest.NewServer(mux)
 	t.Cleanup(f.server.Close)
 
@@ -229,6 +233,9 @@ func (f *fakeAPI) createCluster(w http.ResponseWriter, r *http.Request) {
 
 func (f *fakeAPI) patchCluster(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("cluster_id")
+	if f.conflict(w, id, []string{"ACTIVE", "PENDING_UPDATE_CONTROL_PLANE_LOGS"}, nil) {
+		return
+	}
 	c := f.clusters[id]
 	var body mksclient.ClusterUpdateBody
 	_ = json.NewDecoder(r.Body).Decode(&body)
@@ -318,6 +325,9 @@ func (f *fakeAPI) deleteCluster(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+	if f.conflict(w, id, []string{"ACTIVE", "MAINTENANCE", "ERROR"}, []string{"ACTIVE", "ERROR"}) {
+		return
+	}
 
 	c.Status = "PENDING_DELETE"
 	f.clusters[id] = c
@@ -328,6 +338,9 @@ func (f *fakeAPI) deleteCluster(w http.ResponseWriter, r *http.Request) {
 func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("cluster_id")
+		if f.conflict(w, id, []string{"ACTIVE"}, []string{"ACTIVE", "PENDING_CLEANUP"}) {
+			return
+		}
 		c := f.clusters[id]
 		target, taskType := kubeVersionTrimToMinor, "UPGRADE_PATCH_VERSION"
 		if minor {
@@ -357,6 +370,43 @@ func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 		})
 		writeJSON(w, http.StatusOK, mksclient.ClusterResp{Cluster: &c})
 	}
+}
+
+// conflict answers 409 the way mk-api-v2 does when the cluster or one of its
+// nodegroups is in a status the call does not take.
+func (f *fakeAPI) conflict(w http.ResponseWriter, id string, clusterStatuses, nodegroupStatuses []string) bool {
+	allowed := slices.Contains(clusterStatuses, string(f.clusters[id].Status))
+	for _, ng := range f.nodegroups[id] {
+		allowed = allowed && (nodegroupStatuses == nil || slices.Contains(nodegroupStatuses, string(ng.Status)))
+	}
+	if allowed {
+		return false
+	}
+
+	var body mksclient.GenericError
+	body.Error.Message = "cluster or one of nodegroups has invalid status to perform this operation"
+	writeJSON(w, http.StatusConflict, body)
+
+	return true
+}
+
+func (f *fakeAPI) listNodegroups(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("cluster_id")
+	_, ok := f.clusters[id]
+	if !ok {
+		writeNotFound(w, id)
+
+		return
+	}
+
+	nodegroups := f.nodegroups[id]
+	for i := range nodegroups {
+		status, settled := f.settle(nodegroups[i].Id)
+		if settled {
+			nodegroups[i].Status = mksclient.NodegroupListItemStatus(status)
+		}
+	}
+	writeJSON(w, http.StatusOK, mksclient.NodegroupList{Nodegroups: nodegroups})
 }
 
 func (f *fakeAPI) listTasks(w http.ResponseWriter, r *http.Request) {
@@ -428,6 +478,15 @@ func (f *fakeAPI) seedCluster(id string) {
 	f.clusters[id] = mksclient.ClusterDetailed{
 		Id: id, ProjectId: fakeAPIProjectID(keystoneProject), Pool: "ru-1", Status: "ACTIVE",
 	}
+}
+
+func (f *fakeAPI) seedNodegroup(clusterID, id, status string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.nodegroups[clusterID] = append(f.nodegroups[clusterID], mksclient.NodegroupListItem{
+		Id: id, ClusterId: clusterID, Status: mksclient.NodegroupListItemStatus(status),
+	})
 }
 
 func (f *fakeAPI) seedTask(clusterID, nodegroupID, taskType string, stuck bool) {

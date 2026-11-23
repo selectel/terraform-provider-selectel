@@ -376,7 +376,8 @@ func flattenKubeOptions(ctx context.Context, o mksclient.KubernetesOptions, x509
 	return obj, diags
 }
 
-// unknown into false.
+// knownBoolPointer returns nil for an unknown bool, which ValueBoolPointer
+// turns into false.
 func knownBoolPointer(v types.Bool) *bool {
 	if v.IsUnknown() {
 		return nil
@@ -385,7 +386,8 @@ func knownBoolPointer(v types.Bool) *bool {
 	return v.ValueBoolPointer()
 }
 
-// instead of losing it.
+// plannedState saves the plan with its unknown values as null, so Terraform
+// keeps a created cluster it could not read instead of losing it.
 func plannedState(plan tfsdk.Plan, state *tfsdk.State) diag.Diagnostics {
 	var diags diag.Diagnostics
 

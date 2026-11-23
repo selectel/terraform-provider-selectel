@@ -260,11 +260,14 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	clusterID := state.ID.ValueString()
 	if changed {
-		err = callAndWait(ctx, client, clusterID, func() error {
-			_, err := cluster.Patch(ctx, client, clusterID, patch)
+		err = waitStatus(ctx, client, clusterID, clusterUpdate)
+		if err == nil {
+			err = callAndWait(ctx, client, clusterID, func() error {
+				_, err := cluster.Patch(ctx, client, clusterID, patch)
 
-			return err
-		})
+				return err
+			})
+		}
 		if err != nil {
 			resp.Diagnostics.AddError("Error updating cluster", errUpdatingObject(objectCluster, clusterID, err).Error())
 
@@ -321,14 +324,7 @@ func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest
 	defer cancel()
 
 	clusterID := state.ID.ValueString()
-	err = waitDeletable(ctx, func() ([]statusValue, error) {
-		c, err := cluster.Get(ctx, client, clusterID)
-		if err != nil {
-			return nil, err
-		}
-
-		return []statusValue{{object: objectCluster, status: string(c.Status), accepted: clusterDeleteStatuses}}, nil
-	})
+	err = waitStatus(ctx, client, clusterID, clusterDelete)
 	var waiter *taskWaiter
 	if err == nil {
 		waiter, err = newTaskWaiter(ctx, client, clusterID)
@@ -367,6 +363,10 @@ func (r *clusterResource) ImportState(ctx context.Context, req resource.ImportSt
 // upgradeKubeVersion starts from the version the cluster runs, which patch
 // auto-upgrade can move past the state.
 func upgradeKubeVersion(ctx context.Context, client *mksv2.ServiceClient, clusterID, desired string) error {
+	err := waitStatus(ctx, client, clusterID, clusterUpgrade)
+	if err != nil {
+		return err
+	}
 	got, err := cluster.Get(ctx, client, clusterID)
 	if err != nil {
 		return err

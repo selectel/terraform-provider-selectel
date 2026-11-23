@@ -216,6 +216,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			}, schemadoc.Field{
 				Definition: "Time in UTC when maintenance in the cluster starts. The format is `hh:mm:ss`.",
+				Behavior:   "If omitted when the cluster is created, the API uses `01:00:00`.",
 			}),
 			"enable_autorepair": clusterDocs.Bool(optionalBool(), schemadoc.Field{
 				Definition: "Enables or disables automatic reinstallation of worker nodes that are unavailable or unhealthy. " +
@@ -307,7 +308,8 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 								Definition: "Name of the secret in the `kube-system` namespace " +
 									"with the credentials of the logging system. " +
 									"A change of only this field ends in an API error: change it together with `enabled`. " +
-									"If omitted while `enabled` is `true`, the API uses `mks-audit-logs`.",
+									"If omitted while `enabled` is `true`, the cluster keeps its current name, " +
+									"or the API uses `mks-audit-logs` when audit logs are turned on.",
 							}),
 						},
 					},

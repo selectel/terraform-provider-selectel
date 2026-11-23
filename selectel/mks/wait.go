@@ -13,6 +13,7 @@ import (
 	mksv2 "github.com/selectel/mks-go/v2/pkg"
 	"github.com/selectel/mks-go/v2/pkg/cluster"
 	"github.com/selectel/mks-go/v2/pkg/mksclient"
+	"github.com/selectel/mks-go/v2/pkg/nodegroup"
 	"github.com/selectel/mks-go/v2/pkg/task"
 )
 
@@ -36,38 +37,77 @@ func isNotFound(err error) bool {
 	return errors.As(err, &mksErr) && mksErr.StatusCode == http.StatusNotFound
 }
 
-// The statuses the API deletes a cluster in: any other status answers 409.
-var clusterDeleteStatuses = []string{"ACTIVE", "MAINTENANCE", "ERROR"}
+// clusterOperation is a call the API answers 409 to unless the cluster and
+// its nodegroups are in the statuses it names.
+type clusterOperation struct {
+	name              string
+	clusterStatuses   []string
+	nodegroupStatuses []string
+}
 
-// statusValue is the status of an object and the statuses a delete takes.
+var (
+	clusterUpdate = clusterOperation{
+		name:            "update",
+		clusterStatuses: []string{"ACTIVE", "PENDING_UPDATE_CONTROL_PLANE_LOGS"},
+	}
+	clusterUpgrade = clusterOperation{
+		name:              "upgrade",
+		clusterStatuses:   []string{"ACTIVE"},
+		nodegroupStatuses: []string{"ACTIVE", "PENDING_CLEANUP"},
+	}
+	clusterDelete = clusterOperation{
+		name:              "delete",
+		clusterStatuses:   []string{"ACTIVE", "MAINTENANCE", "ERROR"},
+		nodegroupStatuses: []string{"ACTIVE", "ERROR"},
+	}
+)
+
+// statusValue is the status of an object and the statuses an operation takes.
 type statusValue struct {
 	object   string
 	status   string
 	accepted []string
 }
 
-// waitDeletable polls get until every status is one the delete takes, so a
-// delete right after an interrupted create waits for the create to end
-// instead of failing with 409.
-func waitDeletable(ctx context.Context, get func() ([]statusValue, error)) error {
+// waitStatus polls until the cluster and its nodegroups are in statuses the
+// operation takes, so it does not fail with 409 while an earlier task runs.
+// An object in ERROR the operation does not take ends the wait at once.
+func waitStatus(ctx context.Context, client *mksv2.ServiceClient, clusterID string, op clusterOperation) error {
 	var unsettled []string
 	err := poll(ctx, func() (bool, error) {
-		statuses, err := get()
+		c, err := cluster.Get(ctx, client, clusterID)
 		if err != nil {
 			return false, err
+		}
+		var nodegroups []mksclient.NodegroupListItem
+		if op.nodegroupStatuses != nil {
+			nodegroups, err = nodegroup.List(ctx, client, clusterID)
+			if err != nil {
+				return false, err
+			}
+		}
+		statuses := []statusValue{{object: objectCluster, status: string(c.Status), accepted: op.clusterStatuses}}
+		for _, ng := range nodegroups {
+			statuses = append(statuses, statusValue{object: "nodegroup " + ng.Id, status: string(ng.Status), accepted: op.nodegroupStatuses})
 		}
 
 		unsettled = unsettled[:0]
 		for _, s := range statuses {
-			if !slices.Contains(s.accepted, s.status) {
-				unsettled = append(unsettled, s.object+" status "+s.status)
+			if slices.Contains(s.accepted, s.status) {
+				continue
 			}
+			if s.status == "ERROR" {
+				unsettled = nil
+
+				return true, fmt.Errorf("%s status ERROR does not allow the %s", s.object, op.name)
+			}
+			unsettled = append(unsettled, s.object+" status "+s.status)
 		}
 
 		return len(unsettled) == 0, nil
 	})
 	if err != nil && len(unsettled) > 0 {
-		return fmt.Errorf("%s does not allow the delete yet: %w", strings.Join(unsettled, ", "), err)
+		return fmt.Errorf("%s does not allow the %s yet: %w", strings.Join(unsettled, ", "), op.name, err)
 	}
 
 	return err
@@ -131,18 +171,9 @@ func (w *taskWaiter) Wait(ctx context.Context) error {
 }
 
 // WaitClusterDeleted polls until the cluster is gone and fails when one of
-// the new tasks fails first.
+// the new tasks fails first. A 404 on the tasks means the cluster, and
+// everything in it, is gone.
 func (w *taskWaiter) WaitClusterDeleted(ctx context.Context) error {
-	return w.waitDeleted(ctx, func() error {
-		_, err := cluster.Get(ctx, w.client, w.clusterID)
-
-		return err
-	})
-}
-
-// waitDeleted polls until get answers 404. A 404 on the tasks means the
-// cluster, and everything in it, is gone.
-func (w *taskWaiter) waitDeleted(ctx context.Context, get func() error) error {
 	pending := []mksclient.Task(nil)
 
 	return poll(ctx, func() (bool, error) {
@@ -165,7 +196,7 @@ func (w *taskWaiter) waitDeleted(ctx context.Context, get func() error) error {
 		}
 		pending = advanced
 
-		err = get()
+		_, err = cluster.Get(ctx, w.client, w.clusterID)
 		if isNotFound(err) {
 			return true, nil
 		}
@@ -215,10 +246,8 @@ func (w *taskWaiter) advance(ctx context.Context, pending []mksclient.Task) ([]m
 		case mksclient.DONE:
 		case mksclient.ERROR, mksclient.CANCELED:
 			return nil, waitTaskError(t)
-		case mksclient.INQUEUE, mksclient.INPROGRESS:
-			running = append(running, *t)
 		default:
-			// A status newer than the client: keep polling.
+			// INQUEUE, INPROGRESS, and a status newer than the client keep polling.
 			running = append(running, *t)
 		}
 	}
