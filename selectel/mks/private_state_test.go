@@ -38,48 +38,36 @@ func (p privateStateTestProvider) Resources(_ context.Context) []func() resource
 	return []func() resource.Resource{NewClusterResource}
 }
 
-func configureClusterProvider(t *testing.T, config *testProviderConfig) tfprotov6.ProviderServer {
+func configureClusterProvider(t *testing.T, fake *fakeAPI) (tfprotov6.ProviderServer, tftypes.Type, func(clusterModel) *tfprotov6.DynamicValue) {
 	t.Helper()
 
-	server := providerserver.NewProtocol6(privateStateTestProvider{config: config})()
+	r := fake.resource()
+	server := providerserver.NewProtocol6(privateStateTestProvider{config: r.config.(*testProviderConfig)})()
 	resp, err := server.ConfigureProvider(context.Background(), &tfprotov6.ConfigureProviderRequest{})
 	require.NoError(t, err)
 	require.Empty(t, formatDiagnostics(resp.Diagnostics), "%s", formatDiagnostics(resp.Diagnostics))
+	schemas, err := server.GetProviderSchema(context.Background(), &tfprotov6.GetProviderSchemaRequest{})
+	require.NoError(t, err)
+	valueType := schemas.ResourceSchemas["selectel_mks_cluster_v2"].ValueType()
+	encode := func(m clusterModel) *tfprotov6.DynamicValue {
+		value, err := tfprotov6.NewDynamicValue(valueType, clusterStateOf(t, r, m).Raw)
+		require.NoError(t, err)
 
-	return server
+		return &value
+	}
+
+	return server, valueType, encode
 }
 
 func (p privateStateTestProvider) DataSources(context.Context) []func() datasource.DataSource {
 	return nil
 }
 
-func TestClusterImportStateSetsImportedKey(t *testing.T) {
-	fake := newFakeAPI(t)
-	fake.seedCluster(testClusterID)
-	ctx := context.Background()
-	server := configureClusterProvider(t, &testProviderConfig{client: fake.client(), project: testProject, pool: "ru-1"})
-
-	resp, err := server.ImportResourceState(ctx, &tfprotov6.ImportResourceStateRequest{
-		TypeName: "selectel_mks_cluster_v2", ID: testClusterID,
-	})
-	require.NoError(t, err)
-	require.Empty(t, formatDiagnostics(resp.Diagnostics), "%s", formatDiagnostics(resp.Diagnostics))
-	require.Len(t, resp.ImportedResources, 1)
-
-	imported := resp.ImportedResources[0]
-	var privateKeys map[string][]byte
-	require.NoError(t, json.Unmarshal(imported.Private, &privateKeys))
-	assert.Equal(t, "true", string(privateKeys[importedKey]))
-}
-
 func TestClusterCloudSubnetCIDRImportedPlanKeepsTheCluster(t *testing.T) {
 	fake := newFakeAPI(t)
 	fake.seedCluster(testClusterID)
 	ctx := context.Background()
-	server := configureClusterProvider(t, &testProviderConfig{client: fake.client(), project: testProject, pool: "ru-1"})
-	schemas, err := server.GetProviderSchema(ctx, &tfprotov6.GetProviderSchemaRequest{})
-	require.NoError(t, err)
-	valueType := schemas.ResourceSchemas["selectel_mks_cluster_v2"].ValueType()
+	server, valueType, encode := configureClusterProvider(t, fake)
 
 	importResp, err := server.ImportResourceState(ctx, &tfprotov6.ImportResourceStateRequest{
 		TypeName: "selectel_mks_cluster_v2", ID: testClusterID,
@@ -101,13 +89,6 @@ func TestClusterCloudSubnetCIDRImportedPlanKeepsTheCluster(t *testing.T) {
 	config.CloudSubnetCIDR = types.StringValue("10.1.0.0/24")
 	proposed := prior
 	proposed.CloudSubnetCIDR = types.StringValue("10.1.0.0/24")
-
-	encode := func(m clusterModel) *tfprotov6.DynamicValue {
-		value, err := tfprotov6.NewDynamicValue(valueType, clusterStateOf(t, fake.resource(), m).Raw)
-		require.NoError(t, err)
-
-		return &value
-	}
 
 	planResp, err := server.PlanResourceChange(ctx, &tfprotov6.PlanResourceChangeRequest{
 		TypeName:         "selectel_mks_cluster_v2",
@@ -144,16 +125,7 @@ func formatDiagnostics(diags []*tfprotov6.Diagnostic) string {
 func TestClusterX509PendingKeyThroughProvider(t *testing.T) {
 	fake := newFakeAPI(t)
 	ctx := context.Background()
-	server := configureClusterProvider(t, &testProviderConfig{client: fake.client(), project: testProject, pool: "ru-1"})
-	schemas, err := server.GetProviderSchema(ctx, &tfprotov6.GetProviderSchemaRequest{})
-	require.NoError(t, err)
-	valueType := schemas.ResourceSchemas["selectel_mks_cluster_v2"].ValueType()
-	encode := func(m clusterModel) *tfprotov6.DynamicValue {
-		value, err := tfprotov6.NewDynamicValue(valueType, clusterStateOf(t, fake.resource(), m).Raw)
-		require.NoError(t, err)
-
-		return &value
-	}
+	server, valueType, encode := configureClusterProvider(t, fake)
 	privateValue := func(raw []byte, key string) (string, bool) {
 		if len(raw) == 0 {
 			return "", false

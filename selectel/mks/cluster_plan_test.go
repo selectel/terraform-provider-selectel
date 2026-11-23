@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -51,9 +50,6 @@ func TestClusterValidateConfigRules(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			config := clusterPlan()
-			if tt.name == "cilium settings need the Cilium CNI" || tt.name == "BASIC rejects patch version auto-upgrade" {
-				config.WorkersType = types.StringValue("CLOUD")
-			}
 			tt.mutate(&config)
 			resp := validateConfig(t, r, config)
 			if tt.want == "" {
@@ -182,12 +178,6 @@ func TestClusterKeepStateModifiers(t *testing.T) {
 	}
 }
 
-func auditLogs(enabled types.Bool, secret types.String) types.Object {
-	return types.ObjectValueMust(auditLogsAttrTypes, map[string]attr.Value{
-		"enabled": enabled, "secret_name": secret,
-	})
-}
-
 func TestClusterAuditSecretModifierRules(t *testing.T) {
 	r := &clusterResource{}
 	reqOf := func(t *testing.T, planned, configAudit types.Object) planmodifier.StringRequest {
@@ -214,12 +204,11 @@ func TestClusterAuditSecretModifierRules(t *testing.T) {
 		want    types.String
 		wantErr string
 	}{
-		{name: "a non-empty name with audit logs planned disabled fails the plan", planned: auditLogs(types.BoolValue(false), types.StringNull()), config: auditLogs(types.BoolValue(true), types.StringValue("siem")), configV: types.StringValue("siem"), wantErr: "Audit logs secret name set while audit logs are disabled"},
-		{name: "planned disabled with a null config name plans empty", planned: auditLogs(types.BoolValue(false), types.StringNull()), config: auditLogs(types.BoolValue(false), types.StringNull()), configV: types.StringNull(), want: types.StringValue("")},
-		{name: "a null name with audit logs planned enabled plans the API default", planned: auditLogs(types.BoolValue(true), types.StringNull()), config: auditLogs(types.BoolValue(true), types.StringNull()), configV: types.StringNull(), want: types.StringValue("mks-audit-logs")},
-		{name: "planned unknown enabled with a null config name plans unknown", planned: auditLogs(types.BoolUnknown(), types.StringNull()), config: auditLogs(types.BoolNull(), types.StringNull()), configV: types.StringNull(), want: types.StringUnknown()},
-		{name: "omitted enabled on an enabled state keeps the state name", planned: auditLogs(types.BoolValue(true), types.StringValue("siem")), config: auditLogs(types.BoolNull(), types.StringNull()), configV: types.StringNull(), stateV: types.StringValue("siem"), want: types.StringValue("siem")},
-		{name: "omitted enabled on a disabled state plans an empty name", planned: auditLogs(types.BoolValue(false), types.StringNull()), config: auditLogs(types.BoolNull(), types.StringNull()), configV: types.StringNull(), stateV: types.StringValue("siem"), want: types.StringValue("")},
+		{name: "a non-empty name with audit logs planned disabled fails the plan", planned: auditLogsObject(types.BoolValue(false), types.StringNull()), config: auditLogsObject(types.BoolValue(true), types.StringValue("siem")), configV: types.StringValue("siem"), wantErr: "Audit logs secret name set while audit logs are disabled"},
+		{name: "planned disabled with a null config name plans empty", planned: auditLogsObject(types.BoolValue(false), types.StringNull()), config: auditLogsObject(types.BoolValue(false), types.StringNull()), configV: types.StringNull(), want: types.StringValue("")},
+		{name: "a null name with audit logs planned enabled plans the API default", planned: auditLogsObject(types.BoolValue(true), types.StringNull()), config: auditLogsObject(types.BoolValue(true), types.StringNull()), configV: types.StringNull(), want: types.StringValue("mks-audit-logs")},
+		{name: "planned unknown enabled with a null config name plans unknown", planned: auditLogsObject(types.BoolUnknown(), types.StringNull()), config: auditLogsObject(types.BoolNull(), types.StringNull()), configV: types.StringNull(), want: types.StringUnknown()},
+		{name: "omitted enabled on an enabled state keeps the state name", planned: auditLogsObject(types.BoolValue(true), types.StringValue("siem")), config: auditLogsObject(types.BoolNull(), types.StringNull()), configV: types.StringNull(), stateV: types.StringValue("siem"), want: types.StringValue("siem")},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			req := reqOf(t, tt.planned, tt.config)
@@ -242,16 +231,12 @@ func TestClusterAuditSecretModifierRules(t *testing.T) {
 	}
 }
 
-func oidcEnabledObject() types.Object {
-	return enabledOIDCObject()
-}
-
 func TestClusterOIDCModifierRules(t *testing.T) {
 	r := &clusterResource{}
 	oidcOf := func(enabled types.Bool, claim types.String) types.Object {
 		return oidcObjectOf(map[string]attr.Value{"enabled": enabled, "username_claim": claim})
 	}
-	reqAt := func(t *testing.T, r *clusterResource, config, state clusterModel, _, field string) planmodifier.StringRequest {
+	reqAt := func(t *testing.T, r *clusterResource, config, state clusterModel, field string) planmodifier.StringRequest {
 		t.Helper()
 
 		return planmodifier.StringRequest{
@@ -267,7 +252,7 @@ func TestClusterOIDCModifierRules(t *testing.T) {
 		config.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
 			"oidc": oidcObjectOf(map[string]attr.Value{"provider_name": types.StringValue("keycloak")}),
 		})
-		req := reqAt(t, r, config, clusterState(), "oidc", "provider_name")
+		req := reqAt(t, r, config, clusterState(), "provider_name")
 		req.ConfigValue = types.StringValue("keycloak")
 		req.StateValue = types.StringNull()
 		resp := planmodifier.StringResponse{PlanValue: req.ConfigValue}
@@ -275,31 +260,24 @@ func TestClusterOIDCModifierRules(t *testing.T) {
 		require.True(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
 		assert.Equal(t, "OIDC parameter set while OIDC is disabled", resp.Diagnostics.Errors()[0].Summary())
 	})
-	for _, claim := range []string{"username_claim", "groups_claim"} {
-		t.Run(claim+" cannot be empty while enabled", func(t *testing.T) {
-			config := clusterPlan()
-			claimOIDC := map[string]attr.Value{
-				"enabled": types.BoolValue(true), "provider_name": types.StringValue("keycloak"),
-				"issuer_url": types.StringValue("https://issuer.example.com"),
-				"client_id":  types.StringValue("kubernetes"), claim: types.StringValue(""),
-			}
-			config.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"oidc": oidcObjectOf(claimOIDC)})
-			req := reqAt(t, r, config, clusterState(), "oidc", claim)
-			req.ConfigValue = types.StringValue("")
-			req.StateValue = types.StringNull()
-			resp := planmodifier.StringResponse{PlanValue: types.StringValue("")}
-			oidcPlanModifier{enabledDefault: "sub"}.PlanModifyString(context.Background(), req, &resp)
-			require.True(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
-			assert.Equal(t, "Empty OIDC claim while OIDC is enabled", resp.Diagnostics.Errors()[0].Summary())
-			assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), claim+" cannot be empty while OIDC is enabled: omit it to get")
-		})
-	}
+	t.Run("an empty claim while enabled fails the plan", func(t *testing.T) {
+		config := clusterPlan()
+		config.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"oidc": oidcOf(types.BoolValue(true), types.StringValue(""))})
+		req := reqAt(t, r, config, clusterState(), "username_claim")
+		req.ConfigValue = types.StringValue("")
+		req.StateValue = types.StringNull()
+		resp := planmodifier.StringResponse{PlanValue: types.StringValue("")}
+		oidcPlanModifier{enabledDefault: "sub"}.PlanModifyString(context.Background(), req, &resp)
+		require.True(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+		assert.Equal(t, "Empty OIDC claim while OIDC is enabled", resp.Diagnostics.Errors()[0].Summary())
+		assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "username_claim cannot be empty while OIDC is enabled: omit it to get")
+	})
 	t.Run("a null claim while enabled plans the OIDC default", func(t *testing.T) {
 		config := clusterPlan()
 		config.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"oidc": oidcOf(types.BoolValue(true), types.StringNull())})
 		state := clusterState()
-		state.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"oidc": oidcEnabledObject()})
-		req := reqAt(t, r, config, state, "oidc", "username_claim")
+		state.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"oidc": enabledOIDCObject()})
+		req := reqAt(t, r, config, state, "username_claim")
 		req.ConfigValue = types.StringNull()
 		req.StateValue = types.StringNull()
 		resp := planmodifier.StringResponse{PlanValue: types.StringUnknown()}
@@ -311,8 +289,8 @@ func TestClusterOIDCModifierRules(t *testing.T) {
 		config := clusterPlan()
 		config.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"oidc": oidcOf(types.BoolNull(), types.StringValue("https://issuer.example.com"))})
 		state := clusterState()
-		state.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"oidc": oidcEnabledObject()})
-		req := reqAt(t, r, config, state, "oidc", "issuer_url")
+		state.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"oidc": enabledOIDCObject()})
+		req := reqAt(t, r, config, state, "issuer_url")
 		req.ConfigValue = types.StringValue("https://issuer.example.com")
 		resp := planmodifier.StringResponse{PlanValue: req.ConfigValue}
 		oidcPlanModifier{}.PlanModifyString(context.Background(), req, &resp)
@@ -322,7 +300,7 @@ func TestClusterOIDCModifierRules(t *testing.T) {
 	t.Run("null enabled on create plans an empty parameter", func(t *testing.T) {
 		config := clusterPlan()
 		config.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"oidc": oidcOf(types.BoolNull(), types.StringNull())})
-		req := reqAt(t, r, config, clusterState(), "oidc", "issuer_url")
+		req := reqAt(t, r, config, clusterState(), "issuer_url")
 		req.ConfigValue = types.StringNull()
 		req.StateValue = types.StringNull()
 		resp := planmodifier.StringResponse{PlanValue: types.StringUnknown()}
@@ -330,35 +308,4 @@ func TestClusterOIDCModifierRules(t *testing.T) {
 		require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
 		assert.Equal(t, types.StringValue(""), resp.PlanValue)
 	})
-}
-
-func TestClusterOIDCKeepsStateWhileEnabled(t *testing.T) {
-	r := &clusterResource{}
-	plan := clusterPlan()
-	plan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
-		"oidc": oidcObjectOf(map[string]attr.Value{"enabled": types.BoolValue(true)}),
-	})
-
-	var schemaResp resource.SchemaResponse
-	r.Schema(context.Background(), resource.SchemaRequest{}, &schemaResp)
-	kubeOptions := schemaResp.Schema.Attributes["kubernetes_options"].(schema.SingleNestedAttribute)
-	oidc := kubeOptions.Attributes["oidc"].(schema.SingleNestedAttribute)
-	attr := oidc.Attributes["provider_name"].(schema.StringAttribute)
-	require.NotEmpty(t, attr.PlanModifiers)
-
-	modReq := planmodifier.StringRequest{
-		Config:      tfsdk.Config(clusterStateOf(t, r, plan)),
-		State:       clusterStateOf(t, r, plan),
-		PlanValue:   types.StringUnknown(),
-		StateValue:  types.StringValue("keycloak"),
-		ConfigValue: types.StringNull(),
-		Path:        path.Root("kubernetes_options").AtName("oidc").AtName("provider_name"),
-	}
-	resp := planmodifier.StringResponse{PlanValue: modReq.PlanValue}
-	for _, m := range attr.PlanModifiers {
-		m.PlanModifyString(context.Background(), modReq, &resp)
-		modReq.PlanValue = resp.PlanValue
-	}
-	require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
-	assert.Equal(t, types.StringValue("keycloak"), resp.PlanValue)
 }

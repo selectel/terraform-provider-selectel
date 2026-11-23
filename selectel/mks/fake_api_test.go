@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"cmp"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"slices"
-	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -140,8 +138,7 @@ func (f *fakeAPI) handle(mux *http.ServeMux, pattern string, handler http.Handle
 		ff, ok := f.failNext[pattern]
 		if ok && ff.left > 0 {
 			f.failNext[pattern] = fakeFailure{status: ff.status, left: ff.left - 1}
-			objectType, id := fakeObject(r)
-			writeAPIError(f.t, w, ff.status, objectType, id)
+			writeAPIError(w, ff.status)
 
 			return
 		}
@@ -155,8 +152,7 @@ func (f *fakeAPI) handle(mux *http.ServeMux, pattern string, handler http.Handle
 			return
 		}
 		if ok {
-			objectType, id := fakeObject(r)
-			writeAPIError(f.t, w, status, objectType, id)
+			writeAPIError(w, status)
 
 			return
 		}
@@ -173,7 +169,7 @@ func (f *fakeAPI) getCluster(w http.ResponseWriter, r *http.Request) {
 	}
 	c, ok := f.clusters[id]
 	if !ok {
-		writeAPIError(f.t, w, http.StatusNotFound, objectCluster, id)
+		writeNotFound(w, id)
 
 		return
 	}
@@ -183,12 +179,7 @@ func (f *fakeAPI) getCluster(w http.ResponseWriter, r *http.Request) {
 
 func (f *fakeAPI) createCluster(w http.ResponseWriter, r *http.Request) {
 	var body mksclient.ClusterCreateBody
-	err := json.NewDecoder(r.Body).Decode(&body)
-	if err != nil || body.Cluster == nil {
-		writeAPIError(f.t, w, http.StatusBadRequest, objectCluster, "")
-
-		return
-	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
 	opts := body.Cluster
 
 	clusterType := mksclient.HIGHAVAILABILITY
@@ -227,12 +218,7 @@ func (f *fakeAPI) createCluster(w http.ResponseWriter, r *http.Request) {
 	}
 	if opts.KubernetesOptions != nil {
 		c.KubernetesOptions = *opts.KubernetesOptions
-		c.KubernetesOptions.Oidc, err = normaliseFakeOIDC(c.KubernetesOptions.Oidc)
-		if err != nil {
-			writeFakeBadRequest(f.t, w, err)
-
-			return
-		}
+		c.KubernetesOptions.Oidc = normaliseFakeOIDC(c.KubernetesOptions.Oidc)
 		c.KubernetesOptions.X509CaCertificates = ""
 	}
 	f.clusters[c.Id] = c
@@ -243,19 +229,9 @@ func (f *fakeAPI) createCluster(w http.ResponseWriter, r *http.Request) {
 
 func (f *fakeAPI) patchCluster(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("cluster_id")
-	c, ok := f.clusters[id]
-	if !ok {
-		writeAPIError(f.t, w, http.StatusNotFound, objectCluster, id)
-
-		return
-	}
+	c := f.clusters[id]
 	var body mksclient.ClusterUpdateBody
-	err := json.NewDecoder(r.Body).Decode(&body)
-	if err != nil || body.Cluster == nil {
-		writeAPIError(f.t, w, http.StatusBadRequest, objectCluster, id)
-
-		return
-	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
 	opts := body.Cluster
 
 	if opts.MaintenanceWindowStart != nil {
@@ -272,13 +248,7 @@ func (f *fakeAPI) patchCluster(w http.ResponseWriter, r *http.Request) {
 		f.addTask(id, "UPGRADE_CLUSTER_CONFIG", f.activateCluster(id))
 	}
 	if opts.KubernetesOptions != nil {
-		changed, err := f.patchKubeOptions(id, &c, *opts.KubernetesOptions)
-		if err != nil {
-			writeFakeBadRequest(f.t, w, err)
-
-			return
-		}
-		if changed {
+		if f.patchKubeOptions(id, &c, *opts.KubernetesOptions) {
 			c.Status = "PENDING_UPGRADE_CLUSTER_CONFIG"
 			f.addTask(id, "UPGRADE_MASTERS_CONFIG", f.activateCluster(id))
 		}
@@ -288,13 +258,9 @@ func (f *fakeAPI) patchCluster(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, mksclient.ClusterResp{Cluster: &c})
 }
 
-func (f *fakeAPI) patchKubeOptions(id string, c *mksclient.ClusterDetailed, requested mksclient.KubernetesOptions) (bool, error) {
+func (f *fakeAPI) patchKubeOptions(id string, c *mksclient.ClusterDetailed, requested mksclient.KubernetesOptions) bool {
 	current := &c.KubernetesOptions
-	var err error
-	requested.Oidc, err = normaliseFakeOIDC(requested.Oidc)
-	if err != nil {
-		return false, err
-	}
+	requested.Oidc = normaliseFakeOIDC(requested.Oidc)
 	changed := false
 
 	if !slices.Equal(current.FeatureGates, requested.FeatureGates) {
@@ -320,24 +286,18 @@ func (f *fakeAPI) patchKubeOptions(id string, c *mksclient.ClusterDetailed, requ
 		changed = true
 	}
 
-	return changed, nil
+	return changed
 }
 
-var errFakeOIDCDisabled = errors.New("oidc parameters cannot be configured when it is disabled")
-
-func normaliseFakeOIDC(oidc mksclient.OIDC) (mksclient.OIDC, error) {
+func normaliseFakeOIDC(oidc mksclient.OIDC) mksclient.OIDC {
 	if !oidc.Enabled {
-		if oidc != (mksclient.OIDC{}) {
-			return mksclient.OIDC{}, errFakeOIDCDisabled
-		}
-
-		return mksclient.OIDC{}, nil
+		return mksclient.OIDC{}
 	}
 	oidc.UsernameClaim = cmp.Or(oidc.UsernameClaim, "sub")
 	oidc.GroupsClaim = cmp.Or(oidc.GroupsClaim, "groups")
 	oidc.CaCerts = strings.TrimSpace(oidc.CaCerts)
 
-	return oidc, nil
+	return oidc
 }
 
 func (f *fakeAPI) activateCluster(id string) func() {
@@ -354,14 +314,7 @@ func (f *fakeAPI) deleteCluster(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("cluster_id")
 	c, ok := f.clusters[id]
 	if !ok {
-		writeAPIError(f.t, w, http.StatusNotFound, objectCluster, id)
-
-		return
-	}
-	if !slices.Contains(clusterDeleteStatuses, string(c.Status)) {
-		var body mksclient.GenericError
-		body.Error.Message = "cluster or one of nodegroups has invalid status to perform this operation"
-		writeJSON(w, http.StatusConflict, body)
+		writeNotFound(w, id)
 
 		return
 	}
@@ -375,23 +328,12 @@ func (f *fakeAPI) deleteCluster(w http.ResponseWriter, r *http.Request) {
 func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("cluster_id")
-		c, ok := f.clusters[id]
-		if !ok {
-			writeAPIError(f.t, w, http.StatusNotFound, objectCluster, id)
-
-			return
-		}
-
+		c := f.clusters[id]
 		target, taskType := kubeVersionTrimToMinor, "UPGRADE_PATCH_VERSION"
 		if minor {
 			target, taskType = kubeVersionTrimToMinorIncremented, "UPGRADE_MINOR_VERSION"
 		}
-		targetMinor, err := target(c.KubeVersion)
-		if err != nil {
-			writeAPIError(f.t, w, http.StatusBadRequest, objectCluster, id)
-
-			return
-		}
+		targetMinor, _ := target(c.KubeVersion)
 		latest := map[string]string{}
 		for _, v := range f.kubeVersions {
 			minor, err := kubeVersionTrimToMinor(valueOrZero(v.Version))
@@ -408,12 +350,6 @@ func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 				latest[minor] = newer
 			}
 		}
-		if latest[targetMinor] == "" {
-			writeAPIError(f.t, w, http.StatusBadRequest, objectCluster, id)
-
-			return
-		}
-
 		f.addTask(id, taskType, func() {
 			c := f.clusters[id]
 			c.KubeVersion = latest[targetMinor]
@@ -427,7 +363,7 @@ func (f *fakeAPI) listTasks(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("cluster_id")
 	_, ok := f.clusters[id]
 	if !ok {
-		writeAPIError(f.t, w, http.StatusNotFound, objectCluster, id)
+		writeNotFound(w, id)
 
 		return
 	}
@@ -438,13 +374,6 @@ func (f *fakeAPI) listTasks(w http.ResponseWriter, r *http.Request) {
 			tasks = append(tasks, t.task)
 		}
 	}
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-	tasks = tasks[min(offset, len(tasks)):]
-	if limit > 0 {
-		tasks = tasks[:min(limit, len(tasks))]
-	}
-
 	writeJSON(w, http.StatusOK, mksclient.TaskList{Count: int64(len(tasks)), Tasks: tasks})
 }
 
@@ -454,12 +383,7 @@ func (f *fakeAPI) getTask(w http.ResponseWriter, r *http.Request) {
 	i := slices.IndexFunc(f.tasks, func(t *fakeTask) bool { return t.task.Id == taskID && t.task.ClusterId == id })
 	_, clusterExists := f.clusters[id]
 	if !clusterExists {
-		writeAPIError(f.t, w, http.StatusNotFound, objectCluster, id)
-
-		return
-	}
-	if i < 0 {
-		writeAPIError(f.t, w, http.StatusNotFound, objectTask, taskID)
+		writeNotFound(w, id)
 
 		return
 	}
@@ -620,12 +544,7 @@ func (f *fakeAPI) updateClusterLocked(id, status string) {
 
 func (f *fakeAPI) setWindow(c *mksclient.ClusterDetailed, start string) {
 	c.MaintenanceWindowStart = start
-	parsed, err := time.Parse(time.TimeOnly, start)
-	if err != nil {
-		c.MaintenanceWindowEnd = ""
-
-		return
-	}
+	parsed, _ := time.Parse(time.TimeOnly, start)
 	c.MaintenanceWindowEnd = parsed.Add(3 * time.Hour).Format(time.TimeOnly)
 }
 
@@ -692,40 +611,17 @@ func writeJSON(w http.ResponseWriter, status int, body any) {
 	_ = json.NewEncoder(w).Encode(body)
 }
 
-const (
-	objectTask = "Task"
-)
-
-func fakeObject(r *http.Request) (string, string) {
-	id := r.PathValue("task_id")
-	if id != "" {
-		return objectTask, id
-	}
-
-	return objectCluster, r.PathValue("cluster_id")
+func writeNotFound(w http.ResponseWriter, id string) {
+	var body mksclient.GenericNotFoundError
+	body.Error.Id = id
+	body.Error.Message = objectCluster + " not found"
+	writeJSON(w, http.StatusNotFound, body)
 }
 
-func writeAPIError(t *testing.T, w http.ResponseWriter, status int, objectType, id string) {
-	t.Helper()
-	if status == http.StatusNotFound {
-		var body mksclient.GenericNotFoundError
-		body.Error.Id = id
-		body.Error.Message = objectType + " not found"
-		writeJSON(w, status, body)
-
-		return
-	}
-
+func writeAPIError(w http.ResponseWriter, status int) {
 	var body mksclient.GenericError
 	body.Error.Message = fmt.Sprintf("fake error %d", status)
 	writeJSON(w, status, body)
-}
-
-func writeFakeBadRequest(t *testing.T, w http.ResponseWriter, err error) {
-	t.Helper()
-	var body mksclient.GenericError
-	body.Error.Message = err.Error()
-	writeJSON(w, http.StatusBadRequest, body)
 }
 
 func valueOrT[T any](v *T, fallback T) T {

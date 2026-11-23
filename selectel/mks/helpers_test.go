@@ -178,24 +178,11 @@ func importCluster(t *testing.T, r *clusterResource) resource.ImportStateRespons
 	return resp
 }
 
-func firstError(t *testing.T, diags diag.Diagnostics) string {
-	t.Helper()
-	require.True(t, diags.HasError(), "want an error, got %v", diags)
-
-	return diags.Errors()[0].Detail()
-}
-
-func errorText(t *testing.T, diags diag.Diagnostics) string {
+func assertErrorContains(t *testing.T, diags diag.Diagnostics, parts ...string) {
 	t.Helper()
 	require.True(t, diags.HasError(), "want an error, got %v", diags)
 	first := diags.Errors()[0]
-
-	return first.Summary() + ": " + first.Detail()
-}
-
-func assertErrorContains(t *testing.T, diags diag.Diagnostics, parts ...string) {
-	t.Helper()
 	for _, part := range parts {
-		assert.Contains(t, errorText(t, diags), part)
+		assert.Contains(t, first.Summary()+": "+first.Detail(), part)
 	}
 }

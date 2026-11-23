@@ -14,7 +14,7 @@ import (
 )
 
 func TestFrameworkMKSV2Client(t *testing.T) {
-	for _, scenario := range []string{"scoped client", "second pool", "authentication error", "missing service", "unknown pool"} {
+	for _, scenario := range []string{"scoped client", "second pool", "authentication error", "missing service", "unknown pool", "endpoint error"} {
 		t.Run(scenario, func(t *testing.T) {
 			testFrameworkMKSV2Client(t, scenario)
 		})
@@ -66,6 +66,9 @@ func testFrameworkMKSV2Client(t *testing.T, scenario string) {
 				"url": endpoint + "/" + pool + "/v2",
 			})
 		}
+		if scenario == "endpoint error" {
+			endpoints = []any{map[string]string{"interface": "public", "region": "ru-1", "region_id": "ru-2", "url": endpoint + "/ru-2/v2"}}
+		}
 		w.Header().Set("X-Subject-Token", "scoped-token")
 		if r.Method == http.MethodPost {
 			w.WriteHeader(http.StatusCreated)
@@ -114,6 +117,9 @@ func testFrameworkMKSV2Client(t *testing.T, scenario string) {
 			assert.Contains(t, err.Error(), "endpoints for managed-kubernetes-v2")
 			assert.Contains(t, err.Error(), "service type not found")
 		}
+		if scenario == "endpoint error" {
+			assert.Contains(t, err.Error(), "failed to get endpoint")
+		}
 
 		return
 	}
@@ -121,34 +127,4 @@ func testFrameworkMKSV2Client(t *testing.T, scenario string) {
 	_, err = kubeversion.List(context.Background(), client)
 	require.NoError(t, err)
 	assert.Equal(t, pool, reachedPool)
-}
-
-func TestFrameworkMKSV2ClientEndpointError(t *testing.T) {
-	var endpoint string
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		assert.Equal(t, "/v3/auth/tokens", r.URL.Path)
-		w.Header().Set("X-Subject-Token", "scoped-token")
-		if r.Method == http.MethodPost {
-			w.WriteHeader(http.StatusCreated)
-		}
-		assert.NoError(t, json.NewEncoder(w).Encode(map[string]any{"token": map[string]any{
-			"expires_at": "2099-01-01T00:00:00.000000Z", "issued_at": "2026-01-01T00:00:00.000000Z", "methods": []string{"password"}, "project": map[string]string{"id": "project"},
-			"catalog": []any{
-				map[string]any{"type": "identity", "name": "keystone", "endpoints": []any{
-					map[string]string{"interface": "public", "region": "ru-1", "region_id": "ru-1", "url": endpoint + "/v3"},
-				}},
-				map[string]any{"type": MKSV2, "name": "managed-kubernetes", "endpoints": []any{
-					map[string]string{"interface": "public", "region": "ru-1", "region_id": "ru-2", "url": endpoint + "/ru-2/v2"},
-				}},
-			},
-		}}))
-	}))
-	t.Cleanup(server.Close)
-	endpoint = server.URL
-
-	config := &Config{AuthURL: endpoint + "/v3", AuthRegion: "ru-1", Username: "user", Password: "test-password", DomainName: "domain", ProjectID: "project", Region: "ru-1"}
-	_, err := config.MKSV2Client(context.Background(), "project", "ru-1")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to get endpoint")
 }

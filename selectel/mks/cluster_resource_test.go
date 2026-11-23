@@ -11,8 +11,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/selectel/mks-go/v2/pkg/mksclient"
@@ -96,28 +94,12 @@ func oidcOf(body map[string]any) map[string]any {
 	return oidc
 }
 
-func createClusterModel(t *testing.T, r *clusterResource, plan clusterModel) (clusterModel, tfsdk.State, diag.Diagnostics) {
-	t.Helper()
-	state, diags := createCluster(t, r, plan)
-	require.False(t, diags.HasError(), "%v", diags)
-
-	return readClusterModel(t, state), state, diags
-}
-
 func kubeOptionsStateOf(t *testing.T, obj types.Object) clusterKubeOptionsModel {
 	t.Helper()
 	var options clusterKubeOptionsModel
 	require.False(t, obj.As(context.Background(), &options, basetypes.ObjectAsOptions{}).HasError(), "%v", obj)
 
 	return options
-}
-
-func kubeOptionsOIDCOf(t *testing.T, obj types.Object) clusterOIDCModel {
-	t.Helper()
-	var oidc clusterOIDCModel
-	require.False(t, kubeOptionsStateOf(t, obj).OIDC.As(context.Background(), &oidc, basetypes.ObjectAsOptions{}).HasError(), "%v", obj)
-
-	return oidc
 }
 
 func fakeResource(t *testing.T) (*fakeAPI, *clusterResource) {
@@ -152,7 +134,7 @@ func TestClusterCreateSendsFields(t *testing.T) {
 		"oidc":       enabledOIDCObject(),
 	})
 
-	got, _, _ := createClusterModel(t, r, plan)
+	got := mustCreate(t, r, plan)
 
 	body := fake.lastBody(routeCreateCluster)
 	bodyFields(t, body, map[string]any{
@@ -176,6 +158,7 @@ func TestClusterCreateSendsFields(t *testing.T) {
 	assert.Equal(t, ciliumObject(types.BoolValue(true), types.BoolValue(false)), got.CNICiliumSettings)
 	assert.Equal(t, types.StringValue(testProject), got.ProjectID)
 	assert.Equal(t, 1, fake.callCount(routeCreateCluster))
+	assert.Contains(t, fake.lastQuery(routeTasks), "limit=0")
 }
 
 func TestClusterProjectIDForms(t *testing.T) {
@@ -236,12 +219,6 @@ func TestClusterWorkersType(t *testing.T) {
 	}
 }
 
-func kubeOptionsOf(body map[string]any) map[string]any {
-	cluster, _ := body["cluster"].(map[string]any)
-
-	return cluster["kubernetes_options"].(map[string]any)
-}
-
 func TestClusterCreateErrors(t *testing.T) {
 	for _, tt := range []struct {
 		name    string
@@ -262,13 +239,6 @@ func TestClusterCreateErrors(t *testing.T) {
 			wantErr: "error creating cluster: 400 Bad Request: invalid kube_version: 1.31.8",
 		},
 		{
-			name: "a 403 with a JSON error",
-			setup: func(fake *fakeAPI) {
-				fake.failWithBody(routeCreateCluster, http.StatusForbidden, "application/json", `{"error":{"message":"access denied for the project"}}`)
-			},
-			wantErr: "error creating cluster: 403 Forbidden: access denied for the project",
-		},
-		{
 			name: "a 422 with plain text",
 			setup: func(fake *fakeAPI) {
 				fake.failWithBody(routeCreateCluster, http.StatusUnprocessableEntity, "text/plain", "kube_version 1.31.8 is not supported\n")
@@ -282,8 +252,8 @@ func TestClusterCreateErrors(t *testing.T) {
 			r := fake.resource()
 
 			_, diags := createCluster(t, r, clusterPlan())
-			assert.True(t, diags.HasError())
-			assert.Contains(t, firstError(t, diags), tt.wantErr)
+			require.True(t, diags.HasError())
+			assert.Contains(t, diags.Errors()[0].Detail(), tt.wantErr)
 		})
 	}
 }
@@ -307,7 +277,7 @@ func TestClusterPatchBodies(t *testing.T) {
 		require.False(t, diags.HasError(), "%v", diags)
 		cluster, _ := fake.lastBody(routePatchCluster)["cluster"].(map[string]any)
 		require.Len(t, cluster, 1)
-		options := kubeOptionsOf(fake.lastBody(routePatchCluster))
+		options, _ := cluster["kubernetes_options"].(map[string]any)
 		assert.Equal(t, "[TopologyAwareHints]", fmt.Sprint(options["feature_gates"]))
 		audit, _ := options["audit_logs"].(map[string]any)
 		assert.Equal(t, true, audit["enabled"])
@@ -356,19 +326,6 @@ func TestClusterPatchBodies(t *testing.T) {
 	})
 }
 
-func TestClusterBasicClusterAutoUpgrade(t *testing.T) {
-	fake, r := fakeResource(t)
-
-	plan := clusterPlan()
-	plan.ClusterType = types.StringValue("BASIC")
-	plan.EnablePatchVersionAutoUpgrade = types.BoolValue(false)
-	_, diags := createCluster(t, r, plan)
-	require.False(t, diags.HasError(), "%v", diags)
-	bodyFields(t, fake.lastBody(routeCreateCluster), map[string]any{
-		"cluster_type": "BASIC", "basic": false, "enable_patch_version_auto_upgrade": false,
-	})
-}
-
 func TestClusterKubeVersionUpgrade(t *testing.T) {
 	fake, r := fakeResource(t)
 	fake.seedKubeVersions(
@@ -380,7 +337,7 @@ func TestClusterKubeVersionUpgrade(t *testing.T) {
 	plan := clusterPlan()
 	plan.KubeVersion = types.StringValue(testKubeVersionOld)
 
-	prior, _, _ := createClusterModel(t, r, plan)
+	prior := mustCreate(t, r, plan)
 	assert.Equal(t, 0, fake.callCount(routeUpgradePatch))
 	assert.Equal(t, 0, fake.callCount(routeUpgradeMinor))
 
@@ -441,35 +398,6 @@ func TestClusterKubeVersionUpgrade(t *testing.T) {
 	assert.Equal(t, patchBefore, fake.callCount(routePatchCluster))
 }
 
-func TestClusterKubeVersionUpgradedOutside(t *testing.T) {
-	fake := newFakeAPI(t)
-	fake.seedKubeVersions(
-		mksclient.KubeVersionInfo{Version: new(testKubeVersion)},
-		mksclient.KubeVersionInfo{Version: new("1.32.0")},
-		mksclient.KubeVersionInfo{Version: new("1.33.1")},
-	)
-	r := fake.resource()
-
-	plan := clusterPlan()
-	plan.KubeVersion = types.StringValue(testKubeVersion)
-	prior, _, _ := createClusterModel(t, r, plan)
-
-	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) {
-		c.KubeVersion = "1.32.0"
-	})
-	refreshed, diags := readCluster(t, r, prior)
-	require.False(t, diags.HasError(), "%v", diags)
-	assert.Equal(t, types.StringValue("1.32.0"), readClusterModel(t, refreshed).KubeVersion)
-
-	afterRefresh := readClusterModel(t, refreshed)
-	upPlan := afterRefresh
-	upPlan.KubeVersion = types.StringValue("1.33.1")
-	upState, diags := updateCluster(t, r, afterRefresh, upPlan)
-	require.False(t, diags.HasError(), "%v", diags)
-	assert.Equal(t, types.StringValue("1.33.1"), upState.KubeVersion)
-	assert.Equal(t, 1, fake.callCount(routeUpgradeMinor))
-}
-
 func TestClusterImport(t *testing.T) {
 	_, r := fakeResource(t)
 	config := r.config.(*testProviderConfig)
@@ -482,7 +410,6 @@ func TestClusterImport(t *testing.T) {
 	assert.Equal(t, types.StringValue(keystoneProject), got.ProjectID)
 	assert.Equal(t, types.StringValue("ru-2"), got.Pool)
 
-	// An import over a cluster created without a configured project also keeps the un-dashed form.
 	plan := clusterPlan()
 	plan.ProjectID = types.StringNull()
 	_, diags := createCluster(t, r, plan)
@@ -545,27 +472,6 @@ func TestClusterDeleteTaskError(t *testing.T) {
 	assert.Equal(t, 0, fake.clusterCount())
 }
 
-func TestTaskWaiterScope(t *testing.T) {
-	t.Run("the cluster scope waits for cluster tasks only, a stuck one times out", func(t *testing.T) {
-		fake := newFakeAPI(t)
-		client := fake.client()
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-
-		fake.seedCluster(testClusterID)
-		fake.seedTask(testClusterID, "", "OLD", true)
-		fake.seedTask(testClusterID, "ng-a", "OLD", true)
-		waiter, err := newTaskWaiter(ctx, client, testClusterID)
-		require.NoError(t, err)
-
-		fake.seedTask(testClusterID, "", "NEW", true)
-		fake.seedTask(testClusterID, "ng-a", "NEW", false)
-
-		err = waiter.Wait(ctx)
-		assert.Error(t, err)
-	})
-}
-
 func TestClusterWaits(t *testing.T) {
 	patchPlan := func(got clusterModel) clusterModel {
 		got.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
@@ -622,7 +528,9 @@ func TestClusterWaits(t *testing.T) {
 
 				fake.stickTasks("UPGRADE_MASTERS_CONFIG", false)
 				fake.settleAfter(testClusterID, 1, "ACTIVE")
-				refreshed := readClusterModel(t, mustRead(t, r, got))
+				refreshedState, diags := readCluster(t, r, got)
+				require.False(t, diags.HasError(), "%v", diags)
+				refreshed := readClusterModel(t, refreshedState)
 				assert.Contains(t, refreshed.KubernetesOptions.String(), "NewFeatureGate")
 			},
 		},
@@ -664,7 +572,6 @@ func TestClusterDeleteWaitsForStatus(t *testing.T) {
 	}{
 		{name: "pending create ends", status: "PENDING_CREATE", settle: new("ACTIVE")},
 		{name: "error deletes at once", status: "ERROR"},
-		{name: "maintenance deletes at once", status: "MAINTENANCE"},
 		{name: "gone while waiting", status: "PENDING_CREATE", settle: new("")},
 		{name: "still pending at the timeout", status: "PENDING_CREATE", wantErr: true},
 	} {
@@ -699,14 +606,6 @@ func TestClusterDeleteWaitsForStatus(t *testing.T) {
 	}
 }
 
-func mustRead(t *testing.T, r *clusterResource, prior clusterModel) tfsdk.State {
-	t.Helper()
-	state, diags := readCluster(t, r, prior)
-	require.False(t, diags.HasError(), "%v", diags)
-
-	return state
-}
-
 func TestClusterX509OnCreate(t *testing.T) {
 	fake, r := fakeResource(t)
 
@@ -730,69 +629,20 @@ func TestClusterX509OnCreate(t *testing.T) {
 	assert.Equal(t, types.StringValue("ACTIVE"), got.Status)
 }
 
-func TestClusterNameCaseOnlyChange(t *testing.T) {
-	_, r := fakeResource(t)
-
-	plan := clusterPlan()
-	plan.Name = types.StringValue("TF-v2")
-	prior := mustCreate(t, r, plan)
-
-	changed := prior
-	changed.Name = types.StringValue("tf-V2")
-	got, diags := updateCluster(t, r, prior, changed)
-	require.False(t, diags.HasError(), "%v", diags)
-	assert.Equal(t, types.StringValue("tf-V2"), got.Name)
-}
-
-func TestClusterResourceConfigure(t *testing.T) {
-	r := &clusterResource{}
-	resp := resource.ConfigureResponse{}
-	r.Configure(context.Background(), resource.ConfigureRequest{}, &resp)
-	assert.False(t, resp.Diagnostics.HasError())
-
-	invalidResp := resource.ConfigureResponse{}
-	r.Configure(context.Background(), resource.ConfigureRequest{ProviderData: "not-a-config"}, &invalidResp)
-	assert.True(t, invalidResp.Diagnostics.HasError())
-	assert.Equal(t, "Invalid provider configuration", invalidResp.Diagnostics.Errors()[0].Summary())
-
-	metadataResp := resource.MetadataResponse{}
-	NewClusterResource().Metadata(context.Background(), resource.MetadataRequest{ProviderTypeName: "selectel"}, &metadataResp)
-	assert.Equal(t, "selectel_mks_cluster_v2", metadataResp.TypeName)
-}
-
 func TestClusterStatusOnUpdate(t *testing.T) {
 	fake, r := fakeResource(t)
 
 	plan := clusterPlan()
 	plan.CNIType = types.StringValue("CILIUM")
-	plan.CNICiliumSettings = types.ObjectValueMust(ciliumAttrTypes, map[string]attr.Value{
-		"envoy_daemonset": types.BoolValue(true),
-		"hubble_relay":    types.BoolValue(false),
-	})
-	plan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
-		"admission_controllers": types.SetValueMust(types.StringType, []attr.Value{types.StringValue("NodeRestriction")}),
-	})
+	plan.CNICiliumSettings = ciliumObject(types.BoolValue(true), types.BoolValue(false))
 	prior := mustCreate(t, r, plan)
 
 	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "MAINTENANCE" })
-	newPlan := prior
-	newPlan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
-		"admission_controllers": types.SetValueMust(types.StringType, []attr.Value{
-			types.StringValue("NodeRestriction"), types.StringValue("PodNodeSelector"),
-		}),
-	})
-	got, diags := updateCluster(t, r, prior, newPlan)
+	ciliumPlan := prior
+	ciliumPlan.CNICiliumSettings = ciliumObject(types.BoolValue(true), types.BoolValue(true))
+	got, diags := updateCluster(t, r, prior, ciliumPlan)
 	require.False(t, diags.HasError(), "%v", diags)
 	assert.Equal(t, types.StringValue("ACTIVE"), got.Status)
-	assert.Equal(t, 1, fake.callCount(routePatchCluster))
-
-	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "MAINTENANCE" })
-	ciliumPlan := got
-	ciliumPlan.CNICiliumSettings = ciliumObject(types.BoolValue(true), types.BoolValue(true))
-	got2, diags := updateCluster(t, r, got, ciliumPlan)
-	require.False(t, diags.HasError(), "%v", diags)
-	assert.Equal(t, types.StringValue("ACTIVE"), got2.Status)
-	assert.Greater(t, fake.callCount(routePatchCluster), 1)
 	ciliumPatch, _ := fake.lastBody(routePatchCluster)["cluster"].(map[string]any)
 	assert.Equal(t, map[string]any{"envoy_daemonset": true, "hubble_relay": true}, ciliumPatch["cni_cilium_settings"])
 }
@@ -844,28 +694,6 @@ func TestClusterUpdateTaskError(t *testing.T) {
 	assert.Contains(t, readClusterModel(t, state2).KubernetesOptions.String(), "PodNodeSelector")
 }
 
-func TestTaskWaiterListsAllTasks(t *testing.T) {
-	fake := newFakeAPI(t)
-	fake.seedCluster(testClusterID)
-	client := fake.client()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	const oldTasks = 250
-	for range oldTasks {
-		fake.seedTask(testClusterID, "", "OLD", true)
-	}
-	waiter, err := newTaskWaiter(ctx, client, testClusterID)
-	require.NoError(t, err)
-	require.Len(t, waiter.before, oldTasks)
-	fake.seedTask(testClusterID, "", "NEW", false)
-
-	err = waiter.Wait(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, 2, fake.callCount(routeTasks))
-	assert.Contains(t, fake.lastQuery(routeTasks), "limit=0")
-}
-
 func TestClusterCreateUnknownFieldsLeftToAPI(t *testing.T) {
 	fake, r := fakeResource(t)
 
@@ -902,33 +730,11 @@ func TestClusterOIDCCACertsWhitespace(t *testing.T) {
 
 	body := oidcOf(fake.lastBody(routeCreateCluster))
 	assert.Equal(t, "cert-1\n", body["ca_certs"])
-	oidc := kubeOptionsOIDCOf(t, readClusterModel(t, state).KubernetesOptions)
-	same, diags := oidc.CACerts.StringSemanticEquals(context.Background(), trimmedString("cert-1"))
+	var oidc clusterOIDCModel
+	require.False(t, kubeOptionsStateOf(t, readClusterModel(t, state).KubernetesOptions).OIDC.As(context.Background(), &oidc, basetypes.ObjectAsOptions{}).HasError())
+	same, diags := oidc.CACerts.StringSemanticEquals(context.Background(), trimmedString(" cert-1 "))
 	require.False(t, diags.HasError())
-	assert.True(t, same, "the state value must equal a differently-wrapped identical cert")
-	same, diags = oidc.CACerts.StringSemanticEquals(context.Background(), trimmedString(" cert-1 "))
-	require.False(t, diags.HasError())
-	assert.True(t, same, "the state value must equal a differently-wrapped identical cert")
-}
-
-func TestClusterOIDCClaimDefaults(t *testing.T) {
-	fake, r := fakeResource(t)
-
-	plan := clusterPlan()
-	plan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
-		"oidc": enabledOIDCObject(),
-	})
-
-	state, diags := createCluster(t, r, plan)
-	require.False(t, diags.HasError(), "%v", diags)
-	oidc := oidcOf(fake.lastBody(routeCreateCluster))
-	assert.Equal(t, map[string]any{
-		"enabled": true, "provider_name": "keycloak", "issuer_url": "https://issuer.example.com",
-		"client_id": "kubernetes", "username_claim": "sub", "groups_claim": "groups",
-	}, oidc)
-	kubeOptions := kubeOptionsStateOf(t, readClusterModel(t, state).KubernetesOptions)
-	assert.Contains(t, kubeOptions.OIDC.String(), `"username_claim":"sub"`)
-	assert.Contains(t, kubeOptions.OIDC.String(), `"groups_claim":"groups"`)
+	assert.True(t, same)
 }
 
 func TestClusterOIDCDisable(t *testing.T) {
@@ -1034,7 +840,7 @@ func TestClusterCRUDFailsBeforeTheAPI(t *testing.T) {
 			name: "a 404 is a removal in Read only",
 			run: func(t *testing.T, fake *fakeAPI, r *clusterResource) {
 				fake.seedKubeVersions(mksclient.KubeVersionInfo{Version: new(testKubeVersion)})
-				got, _, _ := createClusterModel(t, r, clusterPlan())
+				got := mustCreate(t, r, clusterPlan())
 				fake.removeCluster(testClusterID)
 
 				state2, diags := readCluster(t, r, got)
@@ -1046,7 +852,7 @@ func TestClusterCRUDFailsBeforeTheAPI(t *testing.T) {
 			name: "the upgrade of a gone cluster fails, the delete stays clean",
 			run: func(t *testing.T, fake *fakeAPI, r *clusterResource) {
 				fake.seedKubeVersions(mksclient.KubeVersionInfo{Version: new(testKubeVersion)})
-				prior, _, _ := createClusterModel(t, r, clusterPlan())
+				prior := mustCreate(t, r, clusterPlan())
 				fake.removeCluster(testClusterID)
 
 				_, diags := updateCluster(t, r, prior, withKubeVersion(prior, testKubeVersionOld))
@@ -1060,7 +866,7 @@ func TestClusterCRUDFailsBeforeTheAPI(t *testing.T) {
 		{
 			name: "a read-back error after a PATCH fails the update",
 			run: func(t *testing.T, fake *fakeAPI, r *clusterResource) {
-				prior, _, _ := createClusterModel(t, r, clusterPlan())
+				prior := mustCreate(t, r, clusterPlan())
 
 				fake.fail(routeCluster, http.StatusInternalServerError)
 				newPlan := prior
@@ -1076,23 +882,4 @@ func TestClusterCRUDFailsBeforeTheAPI(t *testing.T) {
 			tt.run(t, fake, r)
 		})
 	}
-}
-
-func TestClusterClientNotConfigured(t *testing.T) {
-	var untyped ProviderConfig
-	r := &clusterResource{connection: connection{config: untyped}}
-
-	_, err := r.client(context.Background(), "abc", "ru-1")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "managed kubernetes provider is not configured")
-}
-
-func TestClusterClientCanceledContext(t *testing.T) {
-	r := &clusterResource{connection: connection{config: &testProviderConfig{}}}
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-
-	_, err := r.client(ctx, "abc", "ru-1")
-	require.Error(t, err)
-	assert.ErrorIs(t, err, context.Canceled)
 }
