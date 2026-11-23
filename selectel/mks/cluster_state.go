@@ -89,21 +89,9 @@ func validateKubeVersionChange(current, desired string) error {
 	if err != nil {
 		return err
 	}
-	currentPatch, err := kubeVersionToPatch(current)
-	if err != nil {
-		return err
-	}
-	desiredPatch, err := kubeVersionToPatch(desired)
-	if err != nil {
-		return err
-	}
-
-	switch {
-	case desiredMinor > currentMinor+1:
+	if desiredMinor > currentMinor+1 {
 		return fmt.Errorf("current version %s can't be upgraded to version %s, kubernetes versions must be upgraded one minor version at a time",
 			current, desired)
-	case desiredMinor < currentMinor, desiredMinor == currentMinor && desiredPatch < currentPatch:
-		return fmt.Errorf("current version %s can't be downgraded to version %s", current, desired)
 	}
 
 	return nil
