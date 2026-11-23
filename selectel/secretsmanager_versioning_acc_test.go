@@ -24,25 +24,23 @@ func TestAccSecretsManagerVersioning(t *testing.T) {
 				rotated = testAccSecretsManagerSecretV1BasicConfig(projectName, name, "versioning", "rotated-value")
 				address = "selectel_secretsmanager_secret_v1.secret_tf_acc_test_1"
 			}
-			steps := make([]resource.TestStep, 0, 6)
+			steps := make([]resource.TestStep, 0, 4)
 			for _, step := range []struct {
-				config  string
-				pin     int
-				version string
+				config   string
+				activate bool
+				version  string
 			}{
-				{original, 0, "1"},
-				{rotated, 0, "2"},
-				{rotated, 1, "1"},
-				{original, 1, "1"},
-				{original, 3, "3"},
-				{original, 0, "3"},
+				{original, false, "1"},
+				{rotated, false, "1"},
+				{rotated, true, "1"},
+				{original, true, "3"},
 			} {
-				config := strings.Replace(step.config, "project_id =", fmt.Sprintf("current_version = %d\n project_id =", step.pin), 1)
+				config := strings.Replace(step.config, "project_id =", fmt.Sprintf("is_current = %t\n project_id =", step.activate), 1)
 				steps = append(steps, resource.TestStep{
 					Config: config,
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr(address, "version", step.version),
-						resource.TestCheckResourceAttr(address, "current_version", fmt.Sprint(step.pin)),
+						resource.TestCheckResourceAttr(address, "is_current", fmt.Sprint(step.activate)),
 					),
 				})
 			}

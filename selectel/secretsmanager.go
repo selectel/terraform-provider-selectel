@@ -78,12 +78,3 @@ func convertToInterfaceSlice(sl []string) []any {
 
 	return result
 }
-
-// Keep failed operations retryable without discarding earlier successful updates.
-// Successful version uploads retain their configured payload even if activation fails.
-func restoreSecretsManagerInputs(d *schema.ResourceData, keys ...string) {
-	for _, key := range keys {
-		old, _ := d.GetChange(key)
-		d.Set(key, old)
-	}
-}

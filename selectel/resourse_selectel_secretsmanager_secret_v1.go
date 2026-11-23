@@ -9,8 +9,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/selectel/secretsmanager-go/secretsmanagererrors"
 	"github.com/selectel/secretsmanager-go/service/secrets"
 )
 
@@ -41,7 +39,7 @@ func resourceSecretsManagerSecretV1() *schema.Resource {
 				ForceNew:    false,
 			},
 			"value": {
-				Description: "Sensitive secret value as non-empty plain UTF-8 text, up to 262144 bytes. The SDK handles Base64 encoding. Changing this value creates a version; a positive current_version leaves the uploaded version inactive. Refresh and rollback preserve the last uploaded value. Import does not retrieve plaintext and sets an absent value to UNKNOWN; supply value in the configuration before applying.",
+				Description: "Sensitive secret value as non-empty plain UTF-8 text, up to 262144 bytes. The SDK handles Base64 encoding. Changing this value creates a version; is_current controls activation. Refresh preserves the last uploaded value. Import does not retrieve plaintext and sets an absent value to UNKNOWN; supply value in the configuration before applying.",
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
@@ -68,22 +66,17 @@ func resourceSecretsManagerSecretV1() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 			},
-			"current_version": {
-				Description:  "Desired active version. Defaults to 0, which automatically activates new versions when value changes. Positive values pin an existing version. Must be non-negative; only 0 or 1 is valid on creation. Resetting to 0 does not immediately change the active version.",
-				Type:         schema.TypeInt,
-				Optional:     true,
-				Default:      0,
-				ValidateFunc: validation.IntAtLeast(0),
+			"is_current": {
+				Description: "Whether to activate a new version uploaded on content changes. Defaults to true. The first version is always active. Changing only this flag does not switch the active version.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
 			},
 		},
 	}
 }
 
 func resourceSecretsManagerSecretV1Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	if d.Get("current_version").(int) > 1 {
-		return diag.Errorf("current_version must be 0 or 1 when creating a secret")
-	}
-
 	cl, diagErr := getSecretsManagerClient(d, meta)
 	if diagErr != nil {
 		return diagErr
@@ -139,9 +132,6 @@ func resourceSecretsManagerSecretV1Read(ctx context.Context, d *schema.ResourceD
 	}
 	d.Set("created_at", secret.Version.CreatedAt)
 	d.Set("version", secret.Version.VersionID)
-	if d.Get("current_version").(int) > 0 {
-		d.Set("current_version", secret.Version.VersionID)
-	}
 
 	return nil
 }
@@ -184,42 +174,16 @@ func resourceSecretsManagerSecretV1Update(ctx context.Context, d *schema.Resourc
 		}
 	}
 
-	currentVersion := d.Get("current_version").(int)
 	if d.HasChange("value") {
-		version, err := cl.Secrets.CreateVersion(ctx, key, d.Get("value").(string), currentVersion == 0)
+		activate := d.Get("is_current").(bool)
+		version, err := cl.Secrets.CreateVersion(ctx, key, d.Get("value").(string), activate)
 		if err != nil {
-			restoreSecretsManagerInputs(d, "value", "current_version")
+			d.Partial(true)
 			return diag.FromErr(errUpdatingObject(objectSecret, d.Id(), err))
 		}
-		if currentVersion == 0 {
+		if activate {
 			d.Set("version", version.VersionID)
 			d.Set("created_at", version.CreatedAt)
-		}
-	}
-
-	if currentVersion > 0 {
-		secret, err := cl.Secrets.Get(ctx, key)
-		if err != nil {
-			restoreSecretsManagerInputs(d, "current_version")
-			return diag.FromErr(errGettingObject(objectSecret, d.Id(), err))
-		}
-		d.Set("version", secret.Version.VersionID)
-		d.Set("current_version", secret.Version.VersionID)
-		d.Set("created_at", secret.Version.CreatedAt)
-		if secret.Version.VersionID != uint(currentVersion) {
-			activated, err := cl.Secrets.ActivateVersion(ctx, key, uint64(currentVersion))
-			if errors.Is(err, secretsmanagererrors.ErrConflictStatusText) {
-				refreshed := resourceSecretsManagerSecretV1Read(ctx, d, meta)
-				if !refreshed.HasError() && d.Get("version").(int) == currentVersion {
-					return nil
-				}
-			}
-			if err != nil {
-				return diag.FromErr(errUpdatingObject(objectSecret, d.Id(), err))
-			}
-			d.Set("version", activated.VersionID)
-			d.Set("current_version", activated.VersionID)
-			d.Set("created_at", activated.CreatedAt)
 		}
 	}
 

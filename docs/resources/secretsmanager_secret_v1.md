@@ -1,7 +1,7 @@
 ---
 page_title: "Selectel: selectel_secretsmanager_secret_v1"
 description: |-
-    Creates and manages a secret in Secrets Manager using public API v1.
+  Creates and manages a secret in Secrets Manager using public API v1.
 ---
 
 # selectel\_secretsmanager\_secret_v1
@@ -22,46 +22,33 @@ resource "selectel_secretsmanager_secret_v1" "secret_1" {
 }
 ```
 
-### Pin or roll back an existing secret
-
-Apply this configuration to the same secret. Keep `./secret.txt` unchanged: it must contain the last value uploaded by Terraform, not the value of the version being activated.
+### Upload a new version without activating it
 
 ```terraform
-# Apply this change to an existing secret. Keep its last uploaded value unchanged.
-# Keep ./secret.txt unchanged when pinning or rolling back.
+# Update the value of an existing secret to upload a version without activating it.
 resource "selectel_secretsmanager_secret_v1" "secret_1" {
-  key             = "secret"
-  value           = file("./secret.txt")
-  project_id      = selectel_vpc_project_v2.project_1.id
-  current_version = 1
+  key        = "secret"
+  value      = file("./secret.txt")
+  project_id = selectel_vpc_project_v2.project_1.id
+  is_current = false
 }
-
-# Changing value while pinned uploads an inactive version.
-# Set current_version to that version number in a subsequent apply to activate it.
-# Set current_version to 0 to automatically activate future value changes.
 ```
 
 ## Argument Reference
 
 * `key` - (Required) Secret name, unique within the project. Must contain 1 to 255 ASCII letters, digits, underscores, or hyphens (`[a-zA-Z0-9_-]`). Changing this argument recreates the secret and deletes all its versions.
 
-* `value` - (Required, Sensitive) Non-empty secret value as plain UTF-8 text, for example a password, API key, or certificate key. Maximum size is 262,144 bytes (256 KiB). Supply plain text or use `file("./secret.txt")`; the provider handles API encoding. Changing this argument creates a new version, whose activation depends on `current_version`. Sensitive values are hidden in normal Terraform output but remain stored in Terraform state.
+* `value` - (Required, Sensitive) Non-empty secret value as plain UTF-8 text, for example a password, API key, or certificate key. Maximum size is 262,144 bytes (256 KiB). Supply plain text or use `file("./secret.txt")`; the provider handles API encoding. Changing this argument creates a new version, whose activation depends on `is_current`. Sensitive values are hidden in normal Terraform output but remain stored in Terraform state.
 
-* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Changing this argument recreates the secret and deletes all its versions. Learn more about [projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/). Changing this creates a new secret and deletes the existing secret and all its versions.
 
 * `description` - (Optional) Secret description. Defaults to an empty string. Maximum length is 1024 characters. Each character must use at most three UTF-8 bytes; four-byte characters, such as most emoji, are not supported.
 
-* `current_version` - (Optional) Desired active version. The default value is `0`, which activates new versions when `value` changes. Must be a non-negative integer; only `0` or `1` is valid when creating a secret. Positive values select an existing version and keep new uploads inactive. Setting this argument back to `0` leaves the active version unchanged until the next value change. Learn more about [Secret versioning](https://docs.selectel.ru/en/secrets-manager/secrets/versioning/).
+* `is_current` - (Optional) Whether to activate a new version when you update the resource content. The first version is always active. Changing only this argument does not switch the active version. The default value is `true`.
 
 ## Version Management
 
-Changing `value` creates a new version. With `current_version = 0`, the new version becomes active. Changing only `description` does not create a version.
-
-To roll back, set `current_version` to an existing version number and apply. Keep `value` unchanged during rollback: it represents the last value uploaded by Terraform, not necessarily the active version's value. The provider does not replace it with the rolled-back value during refresh.
-
-When `current_version` is positive, changing `value` uploads an **inactive** version and keeps the selected version active. To activate the uploaded version, set `current_version` to its version number in a subsequent apply. Setting `current_version` back to `0` leaves the active version unchanged; subsequent value changes activate their new versions.
-
-`version` reports the observed active version, not the latest uploaded version. With a positive `current_version`, refresh detects external activation changes and the next apply restores the configured version. With `0`, external activation changes are accepted.
+To activate an existing version, use Secrets Manager outside Terraform. The `value` argument retains the last content uploaded by Terraform. Learn more about [Secret versioning](https://docs.selectel.ru/en/secrets-manager/secrets/versioning/).
 
 Versions cannot be deleted individually through this resource. Destroying the resource deletes the entire secret, including its versions.
 
@@ -73,38 +60,38 @@ Versions cannot be deleted individually through this resource. Destroying the re
 
 * `name` - Secret name, same as the secret key.
 
-* `version` - Active secret version number, not necessarily the latest uploaded version.
+* `version` - Number of the active version, which may differ from the latest uploaded version.
 
 ## Import
 
-Configure the provider with a service user that has access to the project. Use the following environment variables or the corresponding provider arguments `domain_name`, `username`, `password`, `auth_url`, and `auth_region`.
-
-Set `INFRA_PROJECT_ID` to the secret's project ID (or set the provider's `project_id` argument). It must match the project ID in the import identifier. Import the secret using `<project_id>/<key>`:
+You can import a secret:
 
 ```shell
-export OS_DOMAIN_NAME="<account_id>"
-export OS_USERNAME="<service_user_name>"
-export OS_PASSWORD="<service_user_password>"
-export OS_AUTH_URL="<auth_url>"
-export OS_REGION_NAME="<auth_region>"
-export INFRA_PROJECT_ID="<project_id>"
-terraform import selectel_secretsmanager_secret_v1.secret_1 "<project_id>/<key>"
+export OS_DOMAIN_NAME=<account_id>
+export OS_USERNAME=<username>
+export OS_PASSWORD=<password>
+export OS_AUTH_URL=<auth_url>
+export OS_REGION_NAME=<auth_region>
+export INFRA_PROJECT_ID=<selectel_project_id>
+terraform import selectel_secretsmanager_secret_v1.secret_1 <selectel_project_id>/<key>
 ```
 
 where:
 
-* `<account_id>` — Selectel account ID. Available in the account menu in the top right corner of the [Control panel](https://my.selectel.ru/).
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
 
-* `<service_user_name>` — Name of the service user used by the provider. Learn more about [service users](https://docs.selectel.ru/en/access-control/users/about/user-types/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
 
-* `<service_user_password>` — Password of the service user.
+* `<password>` — Password of the service user.
 
 * `<auth_url>` — Authentication endpoint used by the provider. Obtain it from the [list of URLs](https://docs.selectel.ru/en/api/urls/).
 
 * `<auth_region>` — Authentication region matching the selected authentication endpoint. Use the value from your configured provider.
 
-* `<project_id>` - Unique identifier of the project containing the secret. Use the existing project's ID, available from `selectel_vpc_project_v2.project_1.id`. Learn more about [projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
+* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
 
-* `<key>` - Secret name. In the [control panel](https://my.selectel.ru/secrets/), open **Products** → **Secrets Manager** → **Secrets** and copy the existing secret's name.
+* `<key>` — Secret name. In the [Control panel](https://my.selectel.ru/secrets/), open **Products** ⟶ **Secrets Manager** ⟶ **Secrets** and copy the existing secret's name.
 
-Import does not retrieve the existing secret's plaintext value. If `value` is absent from state, the provider sets it to the literal string `UNKNOWN`. Supply the required `value` in the resource configuration before applying. A configured value that differs from the imported state creates a new version on apply, according to `current_version`; import does not recover the original value or guarantee an unchanged first apply.
+The service user must have access to the project. You can set the provider's `project_id` argument instead of `INFRA_PROJECT_ID`. The configured project ID must match the project ID in the import identifier.
+
+Import does not retrieve the existing secret's plaintext value. If `value` is absent from state, the provider sets it to the literal string `UNKNOWN`. Supply the required `value` in the resource configuration before applying. A configured value that differs from the imported state creates a new version on apply, whose activation follows `is_current`; import does not recover the original value or guarantee an unchanged first apply.

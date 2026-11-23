@@ -124,12 +124,11 @@ func testSecretsManagerUploadResponse(kind string, version int) string {
 	return fmt.Sprintf(`{"version_id":%d,"created_at":"2026-01-01"}`, version)
 }
 
-func testSecretsManagerVersionState(t *testing.T, fixture secretsManagerVersionResource, version, pin int) *terraform.InstanceState {
+func testSecretsManagerVersionState(t *testing.T, fixture secretsManagerVersionResource, version int) *terraform.InstanceState {
 	t.Helper()
 	d := schema.TestResourceDataRaw(t, fixture.resource.Schema, fixture.config)
 	d.SetId(fixture.id)
 	require.NoError(t, d.Set("version", version))
-	require.NoError(t, d.Set("current_version", pin))
 
 	return d.State()
 }
@@ -149,25 +148,28 @@ func testSecretsManagerApply(t *testing.T, fixture secretsManagerVersionResource
 func TestSecretsManagerVersioning(t *testing.T) {
 	for _, kind := range []string{"certificate", "secret"} {
 		for _, scenario := range []struct {
-			name       string
-			oldPin     int
-			pin        int
-			oldVersion int
-			version    int
-			rotate     bool
-			activate   bool
+			name     string
+			oldFlag  any
+			flag     any
+			version  int
+			rotate   bool
+			activate bool
 		}{
-			{name: "automatic rotation", oldVersion: 1, version: 2, rotate: true},
-			{name: "pinned rotation", oldPin: 1, pin: 1, oldVersion: 1, version: 1, rotate: true},
-			{name: "rollback", pin: 1, oldVersion: 2, version: 1, activate: true},
-			{name: "pin already active", pin: 2, oldVersion: 2, version: 2},
-			{name: "unpin", oldPin: 1, oldVersion: 1, version: 1},
-			{name: "rotate and rollback", pin: 1, oldVersion: 2, version: 1, rotate: true, activate: true},
+			{name: "default activation", version: 2, rotate: true, activate: true},
+			{name: "upload without activation", flag: false, version: 1, rotate: true},
+			{name: "explicit activation on upload", oldFlag: false, flag: true, version: 2, rotate: true, activate: true},
+			{name: "disable activation without upload", flag: false, version: 1},
+			{name: "enable activation without upload", oldFlag: false, flag: true, version: 1, activate: true},
 		} {
 			t.Run(kind+"/"+scenario.name, func(t *testing.T) {
 				fixture := testSecretsManagerVersionResource(kind)
-				state := testSecretsManagerVersionState(t, fixture, scenario.oldVersion, scenario.oldPin)
-				fixture.config["current_version"] = scenario.pin
+				if scenario.oldFlag != nil {
+					fixture.config["is_current"] = scenario.oldFlag
+				}
+				state := testSecretsManagerVersionState(t, fixture, 1)
+				if scenario.flag != nil {
+					fixture.config["is_current"] = scenario.flag
+				}
 				var requests []secretsManagerRequest
 				if scenario.rotate {
 					fixture.config[fixture.payload] = "new-payload"
@@ -176,21 +178,15 @@ func TestSecretsManagerVersioning(t *testing.T) {
 						body = `{"pem":{"certificates":["old-cert"],"private_key":"new-payload"}}`
 					}
 					requests = append(requests, secretsManagerRequest{
-						method: http.MethodPost, path: fixture.path + "/versions?activate=" + strconv.FormatBool(scenario.pin == 0),
-						body: body, response: testSecretsManagerUploadResponse(kind, scenario.oldVersion+1),
+						method: http.MethodPost, path: fixture.path + "/versions?activate=" + strconv.FormatBool(scenario.activate),
+						body: body, response: testSecretsManagerUploadResponse(kind, 2),
 					})
-				}
-				if scenario.pin > 0 {
-					requests = append(requests, secretsManagerRequest{method: http.MethodGet, path: fixture.path, response: testSecretsManagerVersionResponse(kind, scenario.oldVersion)})
-				}
-				if scenario.activate {
-					requests = append(requests, secretsManagerRequest{method: http.MethodPost, path: fixture.path + "/versions/1/activate", response: testSecretsManagerUploadResponse(kind, 1)})
 				}
 				requests = append(requests, secretsManagerRequest{method: http.MethodGet, path: fixture.path, response: testSecretsManagerVersionResponse(kind, scenario.version)})
 				meta := testSecretsManagerServer(t, requests)
 				next := testSecretsManagerApply(t, fixture, state, meta, false)
 				assert.Equal(t, strconv.Itoa(scenario.version), next.Attributes["version"])
-				assert.Equal(t, strconv.Itoa(scenario.pin), next.Attributes["current_version"])
+				assert.Equal(t, strconv.FormatBool(scenario.activate), next.Attributes["is_current"])
 				assert.Equal(t, fixture.config[fixture.payload], next.Attributes[fixture.payload])
 				diff, err := fixture.resource.Diff(context.Background(), next, terraform.NewResourceConfigRaw(fixture.config), meta)
 				require.NoError(t, err)
@@ -202,11 +198,11 @@ func TestSecretsManagerVersioning(t *testing.T) {
 
 func TestSecretsManagerVersionDrift(t *testing.T) {
 	for _, kind := range []string{"certificate", "secret"} {
-		for _, pin := range []int{0, 1} {
-			t.Run(fmt.Sprintf("%s/pin=%d", kind, pin), func(t *testing.T) {
+		for _, activate := range []bool{true, false} {
+			t.Run(fmt.Sprintf("%s/is_current=%t", kind, activate), func(t *testing.T) {
 				fixture := testSecretsManagerVersionResource(kind)
-				fixture.config["current_version"] = pin
-				state := testSecretsManagerVersionState(t, fixture, 1, pin)
+				fixture.config["is_current"] = activate
+				state := testSecretsManagerVersionState(t, fixture, 1)
 				meta := testSecretsManagerServer(t, []secretsManagerRequest{{method: http.MethodGet, path: fixture.path, response: testSecretsManagerVersionResponse(kind, 2)}})
 				d := fixture.resource.Data(state)
 				require.False(t, fixture.resource.ReadContext(context.Background(), d, meta).HasError())
@@ -214,68 +210,16 @@ func TestSecretsManagerVersionDrift(t *testing.T) {
 				assert.Equal(t, fixture.config[fixture.payload], d.Get(fixture.payload))
 				diff, err := fixture.resource.Diff(context.Background(), d.State(), terraform.NewResourceConfigRaw(fixture.config), meta)
 				require.NoError(t, err)
-				if pin == 0 {
-					assert.Equal(t, 0, d.Get("current_version"))
-					assert.True(t, diff.Empty())
-					return
-				}
-				assert.Equal(t, 2, d.Get("current_version"))
-				require.NotNil(t, diff)
-				assert.Equal(t, "1", diff.Attributes["current_version"].New)
+				assert.Equal(t, activate, d.Get("is_current"))
+				assert.True(t, diff.Empty())
 			})
 		}
 	}
 }
 
-func TestSecretsManagerVersionValidation(t *testing.T) {
-	for _, kind := range []string{"certificate", "secret"} {
-		t.Run(kind, func(t *testing.T) {
-			fixture := testSecretsManagerVersionResource(kind)
-			_, errs := fixture.resource.Schema["current_version"].ValidateFunc(-1, "current_version")
-			require.NotEmpty(t, errs)
-			for _, pin := range []int{0, 1, 2} {
-				_, errs = fixture.resource.Schema["current_version"].ValidateFunc(pin, "current_version")
-				require.Empty(t, errs)
-			}
-			fixture.config["current_version"] = 2
-			d := schema.TestResourceDataRaw(t, fixture.resource.Schema, fixture.config)
-			// A nil client configuration proves validation precedes authentication and remote creation.
-			diags := fixture.resource.CreateContext(context.Background(), d, nil)
-			require.True(t, diags.HasError())
-			assert.Contains(t, diags[0].Summary, "current_version must be 0 or 1")
-			assert.Empty(t, d.Id())
-		})
-	}
-}
-
-func TestSecretsManagerVersionActivationFailureRetry(t *testing.T) {
-	for _, kind := range []string{"certificate", "secret"} {
-		t.Run(kind, func(t *testing.T) {
-			fixture := testSecretsManagerVersionResource(kind)
-			state := testSecretsManagerVersionState(t, fixture, 2, 0)
-			fixture.config[fixture.payload] = "new-payload"
-			fixture.config["current_version"] = 1
-			meta := testSecretsManagerServer(t, []secretsManagerRequest{
-				{method: http.MethodPost, path: fixture.path + "/versions?activate=false", response: testSecretsManagerUploadResponse(kind, 3)},
-				{method: http.MethodGet, path: fixture.path, response: testSecretsManagerVersionResponse(kind, 2)},
-				{method: http.MethodPost, path: fixture.path + "/versions/1/activate", status: http.StatusBadRequest, response: `{"error":"activation failed"}`},
-				{method: http.MethodGet, path: fixture.path, response: testSecretsManagerVersionResponse(kind, 2)},
-				{method: http.MethodPost, path: fixture.path + "/versions/1/activate", response: testSecretsManagerUploadResponse(kind, 1)},
-				{method: http.MethodGet, path: fixture.path, response: testSecretsManagerVersionResponse(kind, 1)},
-			})
-			next := testSecretsManagerApply(t, fixture, state, meta, true)
-			assert.Equal(t, "new-payload", next.Attributes[fixture.payload])
-			assert.Equal(t, "2", next.Attributes["version"])
-			assert.Equal(t, "2", next.Attributes["current_version"])
-			next = testSecretsManagerApply(t, fixture, next, meta, false)
-			assert.Equal(t, "1", next.Attributes["current_version"])
-		})
-	}
-}
-
 func TestSecretsManagerSecretDescriptionOnly(t *testing.T) {
 	fixture := testSecretsManagerVersionResource("secret")
-	state := testSecretsManagerVersionState(t, fixture, 2, 0)
+	state := testSecretsManagerVersionState(t, fixture, 2)
 	fixture.config["description"] = "new-description"
 	meta := testSecretsManagerServer(t, []secretsManagerRequest{
 		{method: http.MethodPut, path: fixture.path, body: `{"description":"new-description","value":""}`},
@@ -287,66 +231,11 @@ func TestSecretsManagerSecretDescriptionOnly(t *testing.T) {
 	assert.Equal(t, "2", next.Attributes["version"])
 }
 
-func TestSecretsManagerVersionActivationConflict(t *testing.T) {
-	for _, kind := range []string{"certificate", "secret"} {
-		t.Run(kind, func(t *testing.T) {
-			fixture := testSecretsManagerVersionResource(kind)
-			state := testSecretsManagerVersionState(t, fixture, 2, 0)
-			fixture.config["current_version"] = 1
-			meta := testSecretsManagerServer(t, []secretsManagerRequest{
-				{method: http.MethodGet, path: fixture.path, response: testSecretsManagerVersionResponse(kind, 2)},
-				{
-					method: http.MethodPost, path: fixture.path + "/versions/1/activate", status: http.StatusConflict,
-					response: `{"status_text":"CONFLICT","error_text":"version already active"}`,
-				},
-				{method: http.MethodGet, path: fixture.path, response: testSecretsManagerVersionResponse(kind, 1)},
-			})
-			next := testSecretsManagerApply(t, fixture, state, meta, false)
-			assert.Equal(t, "1", next.Attributes["version"])
-			assert.Equal(t, "1", next.Attributes["current_version"])
-			assert.Equal(t, fixture.config[fixture.payload], next.Attributes[fixture.payload])
-		})
-	}
-}
-
-func TestSecretsManagerVersionActivationConflictNotConverged(t *testing.T) {
-	for _, kind := range []string{"certificate", "secret"} {
-		for _, active := range []int{2, 3} {
-			t.Run(fmt.Sprintf("%s/active=%d", kind, active), func(t *testing.T) {
-				fixture := testSecretsManagerVersionResource(kind)
-				state := testSecretsManagerVersionState(t, fixture, 2, 0)
-				fixture.config["current_version"] = 1
-				meta := testSecretsManagerServer(t, []secretsManagerRequest{
-					{method: http.MethodGet, path: fixture.path, response: testSecretsManagerVersionResponse(kind, 2)},
-					{
-						method: http.MethodPost, path: fixture.path + "/versions/1/activate", status: http.StatusConflict,
-						response: `{"status_text":"CONFLICT","error_text":"activation conflict"}`,
-					},
-					{method: http.MethodGet, path: fixture.path, response: testSecretsManagerVersionResponse(kind, active)},
-				})
-				config := terraform.NewResourceConfigRaw(fixture.config)
-				diff, err := fixture.resource.Diff(context.Background(), state, config, meta)
-				require.NoError(t, err)
-				next, diags := fixture.resource.Apply(context.Background(), state, diff, meta)
-				require.True(t, diags.HasError())
-				assert.Contains(t, diags[0].Summary, "CONFLICT: activation conflict")
-				require.NotNil(t, next)
-				assert.Equal(t, strconv.Itoa(active), next.Attributes["version"])
-				assert.Equal(t, strconv.Itoa(active), next.Attributes["current_version"])
-				diff, err = fixture.resource.Diff(context.Background(), next, config, meta)
-				require.NoError(t, err)
-				require.NotNil(t, diff)
-				assert.Equal(t, "1", diff.Attributes["current_version"].New)
-			})
-		}
-	}
-}
-
 func TestSecretsManagerVersionUploadFailureRetry(t *testing.T) {
 	for _, kind := range []string{"certificate", "secret"} {
 		t.Run(kind, func(t *testing.T) {
 			fixture := testSecretsManagerVersionResource(kind)
-			state := testSecretsManagerVersionState(t, fixture, 1, 0)
+			state := testSecretsManagerVersionState(t, fixture, 1)
 			fixture.config[fixture.payload] = "new-payload"
 			meta := testSecretsManagerServer(t, []secretsManagerRequest{
 				{
@@ -368,7 +257,7 @@ func TestSecretsManagerVersionUploadFailureRetry(t *testing.T) {
 
 func TestSecretsManagerCertificateNameOnly(t *testing.T) {
 	fixture := testSecretsManagerVersionResource("certificate")
-	state := testSecretsManagerVersionState(t, fixture, 2, 0)
+	state := testSecretsManagerVersionState(t, fixture, 2)
 	fixture.config["name"] = "renamed"
 	meta := testSecretsManagerServer(t, []secretsManagerRequest{
 		{method: http.MethodPut, path: fixture.path, body: `{"name":"renamed"}`},
@@ -381,10 +270,10 @@ func TestSecretsManagerCertificateNameOnly(t *testing.T) {
 
 func TestSecretsManagerVersionCreate(t *testing.T) {
 	for _, kind := range []string{"certificate", "secret"} {
-		for _, pin := range []int{0, 1} {
-			t.Run(fmt.Sprintf("%s/pin=%d", kind, pin), func(t *testing.T) {
+		for _, activate := range []bool{true, false} {
+			t.Run(fmt.Sprintf("%s/is_current=%t", kind, activate), func(t *testing.T) {
 				fixture := testSecretsManagerVersionResource(kind)
-				fixture.config["current_version"] = pin
+				fixture.config["is_current"] = activate
 				path := fixture.path
 				body := `{"description":"old-description","value":"b2xkLXZhbHVl"}`
 				response := ""
@@ -400,7 +289,7 @@ func TestSecretsManagerVersionCreate(t *testing.T) {
 				next := testSecretsManagerApply(t, fixture, nil, meta, false)
 				assert.Equal(t, fixture.id, next.ID)
 				assert.Equal(t, "1", next.Attributes["version"])
-				assert.Equal(t, strconv.Itoa(pin), next.Attributes["current_version"])
+				assert.Equal(t, strconv.FormatBool(activate), next.Attributes["is_current"])
 			})
 		}
 	}
