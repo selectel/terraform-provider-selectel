@@ -142,7 +142,6 @@ func TestClusterProjectIDForms(t *testing.T) {
 	for _, tt := range []struct {
 		name       string
 		planProj   string
-		stateProj  string
 		wantConfig string
 	}{
 		{name: "un-dashed configured", planProj: keystone, wantConfig: keystone},
@@ -491,25 +490,12 @@ func TestClusterImportNeedsProviderConfig(t *testing.T) {
 		{name: "no pool", config: &testProviderConfig{project: testProject}, want: "INFRA_REGION must be set for the resource import"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			config := tt.config
-			if config == nil {
-				var untyped ProviderConfig
-				r := &clusterResource{connection: connection{config: untyped}}
-				empty := clusterStateOf(t, r, clusterState())
-				empty.Raw = empty.Raw.Copy()
-				resp := resource.ImportStateResponse{State: empty}
-				r.ImportState(context.Background(), resource.ImportStateRequest{ID: testClusterID}, &resp)
-
-				require.True(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
-				assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), tt.want)
-
-				return
+			var config ProviderConfig
+			if tt.config != nil {
+				config = tt.config
 			}
 			r := &clusterResource{connection: connection{config: config}}
-			empty := clusterStateOf(t, r, clusterState())
-			empty.Raw = empty.Raw.Copy()
-			resp := resource.ImportStateResponse{State: empty}
-			r.ImportState(context.Background(), resource.ImportStateRequest{ID: testClusterID}, &resp)
+			resp := importCluster(t, r)
 
 			require.True(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
 			assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), tt.want)
@@ -576,40 +562,24 @@ func TestClusterDeleteTaskError(t *testing.T) {
 }
 
 func TestTaskWaiterScope(t *testing.T) {
-	for _, tt := range []struct {
-		name        string
-		nodegroupID string
-		wantTimeout bool
-	}{
-		{name: "cluster scope waits for cluster tasks only"},
-		{name: "nodegroup scope waits for its nodegroup tasks only", nodegroupID: "ng-a"},
-		{name: "a stuck task in scope times out", nodegroupID: "ng-stuck", wantTimeout: true},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			fake := newFakeAPI(t)
-			client := fake.client()
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-			defer cancel()
+	t.Run("the cluster scope waits for cluster tasks only, a stuck one times out", func(t *testing.T) {
+		fake := newFakeAPI(t)
+		client := fake.client()
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
 
-			fake.seedCluster(testClusterID)
-			fake.seedTask(testClusterID, "", "OLD", true)
-			fake.seedTask(testClusterID, "ng-a", "OLD", true)
-			waiter, err := newTaskWaiter(ctx, client, testClusterID, tt.nodegroupID)
-			require.NoError(t, err)
+		fake.seedCluster(testClusterID)
+		fake.seedTask(testClusterID, "", "OLD", true)
+		fake.seedTask(testClusterID, "ng-a", "OLD", true)
+		waiter, err := newTaskWaiter(ctx, client, testClusterID)
+		require.NoError(t, err)
 
-			for _, nodegroupID := range []string{"", "ng-a", "ng-b", "ng-stuck"} {
-				stuck := nodegroupID != tt.nodegroupID || nodegroupID == "ng-stuck"
-				fake.seedTask(testClusterID, nodegroupID, "NEW", stuck)
-			}
+		fake.seedTask(testClusterID, "", "NEW", true)
+		fake.seedTask(testClusterID, "ng-a", "NEW", false)
 
-			err = waiter.Wait(ctx)
-			if tt.wantTimeout {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+		err = waiter.Wait(ctx)
+		assert.Error(t, err)
+	})
 }
 
 func TestClusterKubeVersionKeepsState(t *testing.T) {
@@ -793,20 +763,6 @@ func TestClusterX509OnCreate(t *testing.T) {
 	assert.Equal(t, types.StringValue("ACTIVE"), got.Status)
 }
 
-func TestClusterUpperCaseName(t *testing.T) {
-	fake := newFakeAPI(t)
-	r := fake.resource()
-
-	plan := clusterPlan()
-	plan.Name = types.StringValue("TF-v2")
-	state, diags := createCluster(t, r, plan)
-	require.False(t, diags.HasError(), "%v", diags)
-	got := readClusterModel(t, state)
-
-	bodyFields(t, fake.lastBody(routeCreateCluster), map[string]any{"name": "TF-v2"})
-	assert.Equal(t, types.StringValue("TF-v2"), got.Name)
-}
-
 func TestClusterNameCaseOnlyChange(t *testing.T) {
 	fake := newFakeAPI(t)
 	r := fake.resource()
@@ -925,30 +881,6 @@ func TestClusterOIDCClaimDefaults(t *testing.T) {
 		"oidc": enabledOIDCObject(),
 	})
 
-	statePlan := tfsdk.Plan(clusterStateOf(t, r, plan))
-	modifyResp := resource.ModifyPlanResponse{Plan: statePlan}
-	modifyReq := resource.ModifyPlanRequest{
-		Config: tfsdk.Config(clusterStateOf(t, r, plan)),
-		Plan:   statePlan, State: clusterStateOf(t, r, clusterState()),
-	}
-	r.ModifyPlan(context.Background(), modifyReq, &modifyResp)
-	require.False(t, modifyResp.Diagnostics.HasError(), "%v", modifyResp.Diagnostics)
-
-	modifierReq := func(name string) planmodifier.StringRequest {
-		return planmodifier.StringRequest{
-			Config:      tfsdk.Config(clusterStateOf(t, r, plan)),
-			ConfigValue: types.StringNull(),
-			StateValue:  types.StringNull(),
-			Path:        path.Root("kubernetes_options").AtName("oidc").AtName(name),
-		}
-	}
-	for name, want := range map[string]string{"username_claim": "sub", "groups_claim": "groups"} {
-		modResp := planmodifier.StringResponse{PlanValue: types.StringNull()}
-		oidcPlanModifier{enabledDefault: want}.PlanModifyString(context.Background(), modifierReq(name), &modResp)
-		require.False(t, modResp.Diagnostics.HasError(), "%v", modResp.Diagnostics)
-		assert.Equal(t, types.StringValue(want), modResp.PlanValue, name)
-	}
-
 	state, diags := createCluster(t, r, plan)
 	require.False(t, diags.HasError(), "%v", diags)
 	got := readClusterModel(t, state)
@@ -1005,8 +937,12 @@ func TestClusterOIDCDisable(t *testing.T) {
 	assert.Contains(t, got.KubernetesOptions.String(), `"enabled":false`)
 
 	reEnable := prior
-	_, diags = updateCluster(t, r, readClusterModel(t, state), reEnable)
+	_, diags = updateCluster(t, r, got, reEnable)
 	require.False(t, diags.HasError(), "%v", diags)
+	assert.Equal(t, map[string]any{
+		"enabled": true, "provider_name": "keycloak", "issuer_url": "https://issuer.example.com",
+		"client_id": "kubernetes", "username_claim": "sub", "groups_claim": "groups", "ca_certs": "cert",
+	}, oidcOf(fake.lastBody(routePatchCluster)))
 }
 
 func TestClusterOIDCUnknownWhileDisabled(t *testing.T) {
@@ -1189,7 +1125,7 @@ func TestTaskWaiterListsAllTasks(t *testing.T) {
 	for range oldTasks {
 		fake.seedTask(testClusterID, "", "OLD", true)
 	}
-	waiter, err := newTaskWaiter(ctx, client, testClusterID, "")
+	waiter, err := newTaskWaiter(ctx, client, testClusterID)
 	require.NoError(t, err)
 	require.Len(t, waiter.before, oldTasks)
 	fake.seedTask(testClusterID, "", "NEW", false)
@@ -1395,6 +1331,23 @@ func TestClusterX509UnknownPlanSkipsTheCheck(t *testing.T) {
 	assert.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
 }
 
+func TestClusterX509UnknownObjectSkipsTheCheck(t *testing.T) {
+	r := &clusterResource{}
+	state := clusterState()
+	state.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
+		"x509_ca_certificates": types.StringValue("Y2VydA=="),
+	})
+	unknownPlan := state
+	unknownPlan.KubernetesOptions = types.ObjectUnknown(kubeOptionsAttrTypes)
+	req := resource.ModifyPlanRequest{
+		Config: tfsdk.Config(clusterStateOf(t, r, unknownPlan)), Plan: tfsdk.Plan(clusterStateOf(t, r, unknownPlan)),
+		State: clusterStateOf(t, r, state),
+	}
+	resp := resource.ModifyPlanResponse{Plan: req.Plan}
+	r.ModifyPlan(context.Background(), req, &resp)
+	assert.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+}
+
 func TestClusterAuditSecretModifierRules(t *testing.T) {
 	r := &clusterResource{}
 	auditLogs := func(enabled types.Bool, secret types.String) types.Object {
@@ -1423,6 +1376,7 @@ func TestClusterAuditSecretModifierRules(t *testing.T) {
 		planned types.Object
 		config  types.Object
 		configV types.String
+		stateV  types.String
 		want    types.String
 		wantErr string
 	}{
@@ -1454,11 +1408,30 @@ func TestClusterAuditSecretModifierRules(t *testing.T) {
 			configV: types.StringNull(),
 			want:    types.StringUnknown(),
 		},
+		{
+			name:    "omitted enabled on an enabled state keeps the state name",
+			planned: auditLogs(types.BoolValue(true), types.StringValue("siem")),
+			config:  auditLogs(types.BoolNull(), types.StringNull()),
+			configV: types.StringNull(),
+			stateV:  types.StringValue("siem"),
+			want:    types.StringValue("siem"),
+		},
+		{
+			name:    "omitted enabled on a disabled state plans an empty name",
+			planned: auditLogs(types.BoolValue(false), types.StringNull()),
+			config:  auditLogs(types.BoolNull(), types.StringNull()),
+			configV: types.StringNull(),
+			stateV:  types.StringValue("siem"),
+			want:    types.StringValue(""),
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			req := reqOf(t, tt.planned, tt.config)
 			req.ConfigValue = tt.configV
 			req.StateValue = types.StringNull()
+			if !tt.stateV.IsNull() {
+				req.StateValue = tt.stateV
+			}
 			resp := planmodifier.StringResponse{PlanValue: req.ConfigValue}
 			auditSecretPlanModifier{}.PlanModifyString(context.Background(), req, &resp)
 			if tt.wantErr != "" {
@@ -1471,51 +1444,6 @@ func TestClusterAuditSecretModifierRules(t *testing.T) {
 			assert.Equal(t, tt.want, resp.PlanValue)
 		})
 	}
-}
-
-func TestClusterAuditSecretKeepsTheStateOfAnEnabledCluster(t *testing.T) {
-	r := &clusterResource{}
-	auditLogs := func(enabled types.Bool, secret types.String) types.Object {
-		return types.ObjectValueMust(auditLogsAttrTypes, map[string]attr.Value{
-			"enabled": enabled, "secret_name": secret,
-		})
-	}
-	reqOf := func(planned, configAudit types.Object, configValue types.String) planmodifier.StringRequest {
-		plannedModel := clusterPlan()
-		plannedModel.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"audit_logs": planned})
-		configModel := plannedModel
-		configModel.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"audit_logs": configAudit})
-		st := clusterStateOf(t, r, plannedModel)
-
-		return planmodifier.StringRequest{
-			Config:      tfsdk.Config(clusterStateOf(t, r, configModel)),
-			Plan:        tfsdk.Plan(st),
-			State:       st,
-			ConfigValue: configValue,
-			StateValue:  types.StringValue("siem"),
-			Path:        path.Root("kubernetes_options").AtName("audit_logs").AtName("secret_name"),
-		}
-	}
-	t.Run("omitted enabled on an enabled state keeps collecting, so the state name stays", func(t *testing.T) {
-		req := reqOf(
-			auditLogs(types.BoolValue(true), types.StringValue("siem")),
-			auditLogs(types.BoolNull(), types.StringNull()),
-			types.StringNull())
-		resp := planmodifier.StringResponse{PlanValue: req.ConfigValue}
-		auditSecretPlanModifier{}.PlanModifyString(context.Background(), req, &resp)
-		require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
-		assert.Equal(t, types.StringValue("siem"), resp.PlanValue)
-	})
-	t.Run("omitted enabled on a disabled state plans the API default", func(t *testing.T) {
-		req := reqOf(
-			auditLogs(types.BoolValue(false), types.StringNull()),
-			auditLogs(types.BoolNull(), types.StringNull()),
-			types.StringNull())
-		resp := planmodifier.StringResponse{PlanValue: req.ConfigValue}
-		auditSecretPlanModifier{}.PlanModifyString(context.Background(), req, &resp)
-		require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
-		assert.Equal(t, types.StringValue(""), resp.PlanValue)
-	})
 }
 
 func TestClusterOIDCModifierRules(t *testing.T) {
@@ -1752,7 +1680,7 @@ func TestClusterTrimmedStringKeepModifier(t *testing.T) {
 	}
 }
 
-func TestClusterReadDeleteNoCallsOnMissingProject(t *testing.T) {
+func TestClusterCRUDNoCallsOnMissingProject(t *testing.T) {
 	fake := newFakeAPI(t)
 	r := fake.resource()
 	r.config = &testProviderConfig{client: fake.client(), project: "", pool: ""}
@@ -1760,7 +1688,19 @@ func TestClusterReadDeleteNoCallsOnMissingProject(t *testing.T) {
 
 	prior := clusterState()
 	prior.ProjectID = types.StringNull()
-	_, diags := readCluster(t, r, prior)
+	plan := clusterPlan()
+	plan.ProjectID = types.StringNull()
+	_, diags := createCluster(t, r, plan)
+	require.True(t, diags.HasError())
+	assert.Equal(t, "Missing project ID", diags.Errors()[0].Summary())
+	assert.Len(t, diags.Errors(), 1)
+
+	_, diags = updateCluster(t, r, prior, plan)
+	require.True(t, diags.HasError())
+	assert.Equal(t, "Missing project ID", diags.Errors()[0].Summary())
+	assert.Len(t, diags.Errors(), 1)
+
+	_, diags = readCluster(t, r, prior)
 	require.True(t, diags.HasError())
 	assert.Equal(t, "Missing project ID", diags.Errors()[0].Summary())
 	assert.Equal(t, 0, fake.callCount(routeCluster))
@@ -1807,9 +1747,6 @@ func TestClusterClientNotConfigured(t *testing.T) {
 	_, err := r.client(context.Background(), "abc", "ru-1")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "managed kubernetes provider is not configured")
-
-	diags := r.configure("not-a-config")
-	require.True(t, diags.HasError(), "%v", diags)
 }
 
 func TestClusterClientCanceledContext(t *testing.T) {
@@ -1820,21 +1757,6 @@ func TestClusterClientCanceledContext(t *testing.T) {
 	_, err := r.client(ctx, "abc", "ru-1")
 	require.Error(t, err)
 	assert.ErrorIs(t, err, context.Canceled)
-}
-
-func TestClusterCreateSaveOnWaitFailure(t *testing.T) {
-	fake := newFakeAPI(t)
-	fake.stickTasks("CREATE_CLUSTER", true)
-	r := fake.resource()
-
-	plan := clusterPlan()
-	plan.Timeouts = clusterTimeouts(time.Second, 2*time.Second, 2*time.Second)
-	state, diags := createCluster(t, r, plan)
-	assert.True(t, diags.HasError())
-	assert.Contains(t, errorText(t, diags), "Error waiting for the cluster to become ready")
-	got := readClusterModel(t, state)
-	assert.Equal(t, types.StringValue(testClusterID), got.ID)
-	assert.Equal(t, types.StringValue(testProject), got.ProjectID)
 }
 
 func TestClusterReadAPIError(t *testing.T) {

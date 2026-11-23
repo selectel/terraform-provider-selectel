@@ -54,7 +54,7 @@ var kubeVersionPattern = regexp.MustCompile(`^\d+\.\d+\.\d+$`)
 
 var namePattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9-]*$`)
 
-// workersType is the user-facing name of the API network_type.
+// workersTypes maps each user-facing workers_type to the API network_type.
 var workersTypes = map[string]string{
 	"CLOUD":     "STANDARD",
 	"DEDICATED": "L3VPN",
@@ -157,12 +157,6 @@ func (r *clusterResource) Configure(_ context.Context, req resource.ConfigureReq
 }
 
 func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	optionalString := func() schema.StringAttribute {
-		return schema.StringAttribute{
-			Optional: true, Computed: true,
-			PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-		}
-	}
 	optionalBool := func() schema.BoolAttribute {
 		return schema.BoolAttribute{
 			Optional: true, Computed: true,
@@ -175,11 +169,6 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			Computed:      true,
 			PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), oidcPlanModifier{enabledDefault: enabledDefault}},
 		}
-	}
-	auditLogsSecretParam := schema.StringAttribute{
-		Optional:      true,
-		Computed:      true,
-		PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), auditSecretPlanModifier{}},
 	}
 
 	resp.Schema = schema.Schema{
@@ -302,16 +291,16 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			}, schemadoc.Field{
 				Definition: "Whether the Kube API is available only from the cluster network instead of the Internet.",
 			}),
-			"maintenance_window_start": clusterDocs.String(optionalString(), schemadoc.Field{
+			"maintenance_window_start": clusterDocs.String(schema.StringAttribute{
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			}, schemadoc.Field{
 				Definition: "Time in UTC when maintenance in the cluster starts. The format is `hh:mm:ss`. " +
 					"You can change it only within `48` hours after the last maintenance of the cluster, " +
 					"so the change fails for a cluster without maintenance yet.",
 			}),
-			"enable_autorepair": clusterDocs.Bool(schema.BoolAttribute{
-				Optional:      true,
-				Computed:      true,
-				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
-			}, schemadoc.Field{
+			"enable_autorepair": clusterDocs.Bool(optionalBool(), schemadoc.Field{
 				Definition: "Enables or disables automatic reinstallation of worker nodes that are unavailable or unhealthy. " +
 					"Auto-recovery is unavailable with a single worker node and on dedicated servers, " +
 					"and it deletes all data on the boot disk of the node.",
@@ -393,7 +382,11 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 								Definition: "Enables or disables collection of audit logs.",
 								Behavior:   "If omitted when the cluster is created, the value is `false`.",
 							}),
-							"secret_name": clusterDocs.String(auditLogsSecretParam, schemadoc.Field{
+							"secret_name": clusterDocs.String(schema.StringAttribute{
+								Optional:      true,
+								Computed:      true,
+								PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), auditSecretPlanModifier{}},
+							}, schemadoc.Field{
 								Definition: "Name of the secret in the `kube-system` namespace " +
 									"with the credentials of the logging system. " +
 									"A change of only this field ends in an API error: change it together with `enabled`. " +
@@ -444,8 +437,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 								Definition: "CA certificates of the OIDC provider. The format is PEM. " +
 									"Leading and trailing whitespace is ignored.",
 							}),
-							// ca_certs carries no enabled=false sentence: any PEM content is a
-							// non-empty value the plan rejects, and whitespace is not content.
+							// ca_certs carries no enabled=false sentence: any PEM content is a value the plan rejects.
 						},
 					},
 					"x509_ca_certificates": clusterDocs.String(schema.StringAttribute{
@@ -500,8 +492,7 @@ func (r *clusterResource) ValidateConfig(ctx context.Context, req resource.Valid
 		return
 	}
 
-	// The API stores Cilium settings only for a Cilium cluster and returns
-	// null otherwise.
+	// The API stores Cilium settings only for a Cilium cluster.
 	if !cilium.IsNull() && !cilium.IsUnknown() && !cniType.IsUnknown() &&
 		cniType.ValueString() != string(mksclient.ClusterCniTypeCILIUM) {
 		resp.Diagnostics.AddAttributeError(path.Root("cni_cilium_settings"),
@@ -546,8 +537,7 @@ func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 	if !plan.KubeVersion.IsUnknown() && !plan.KubeVersion.Equal(state.KubeVersion) {
 		order, err := compareKubeVersions(plan.KubeVersion.ValueString(), state.KubeVersion.ValueString())
 		if err == nil && order < 0 {
-			// Like the v1 diff suppress: a lower configured version, which
-			// patch auto-upgrade leaves behind, changes nothing.
+			// Like the v1 diff suppress: a lower configured version, left behind by patch auto-upgrade, changes nothing.
 			plan.KubeVersion = state.KubeVersion
 			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("kube_version"), state.KubeVersion)...)
 		} else {
@@ -560,9 +550,7 @@ func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 		}
 	}
 
-	// Any update can change the status: a task-creating PATCH moves the
-	// cluster to PENDING_UPGRADE_CLUSTER_CONFIG, and a finished task leaves it
-	// ACTIVE or MAINTENANCE, whatever it was at refresh.
+	// Any update can change the status: a task-creating PATCH moves the cluster to PENDING_UPGRADE_CLUSTER_CONFIG, a finished task leaves it ACTIVE or MAINTENANCE.
 	if !resp.Plan.Raw.Equal(req.State.Raw) {
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("status"), types.StringUnknown())...)
 	}
@@ -573,13 +561,11 @@ func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 
 	x509Plan, x509Known := "", false
 	planKubeOptions := plan.KubernetesOptions
-	if planKubeOptions.IsNull() || planKubeOptions.IsUnknown() {
+	if planKubeOptions.IsNull() {
 		x509Known = true
-	} else {
+	} else if !planKubeOptions.IsUnknown() {
 		var options clusterKubeOptionsModel
-		if planKubeOptions.As(ctx, &options, basetypes.ObjectAsOptions{}).HasError() {
-			x509Known = true
-		} else {
+		if !planKubeOptions.As(ctx, &options, basetypes.ObjectAsOptions{}).HasError() {
 			x509Plan = options.X509CACertificates.ValueString()
 			// An unknown planned value reads as "", which would fail the plan.
 			x509Known = !options.X509CACertificates.IsUnknown()
@@ -622,6 +608,9 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	resp.Diagnostics.Append(diags...)
 	projectID, diags := r.projectID(plan.ProjectID)
 	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	pool := plan.Pool.ValueString()
 	client, err := r.client(ctx, projectID, pool)
 	if err != nil {
@@ -634,8 +623,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	// The state keeps the project as configured, see fromAPI, or as
-	// projectID resolved it.
+	// The state keeps the project as configured, see fromAPI, or as projectID resolved it.
 	plan.ProjectID = types.StringValue(projectID)
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
@@ -648,10 +636,9 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	waitErr := newCreatedTaskWaiter(client, created.Id, "").Wait(ctx)
+	waitErr := newCreatedTaskWaiter(client, created.Id).Wait(ctx)
 
-	// Save the cluster even when the wait failed, so Terraform taints it
-	// instead of losing it. The wait may have used up ctx.
+	// Save the cluster even when the wait failed, so Terraform taints it instead of losing it.
 	readCtx, readCancel := readAfterWaitContext(ctx)
 	defer readCancel()
 	got, err := cluster.Get(readCtx, client, created.Id)
@@ -675,9 +662,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	x509Err := applyX509(ctx, client, &state)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	if x509Err != nil {
-		// An error would taint the healthy cluster just created. The state
-		// keeps the planned value, which Terraform requires, and the mark
-		// makes the next refresh drop it, so the next apply sends it.
+		// An error would taint the healthy cluster just created: the state keeps the planned value and the pending mark sends it on the next apply.
 		if resp.Private != nil {
 			resp.Diagnostics.Append(resp.Private.SetKey(ctx, x509PendingKey, []byte("true"))...)
 		}
@@ -801,6 +786,9 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	resp.Diagnostics.Append(diags...)
 	projectID, diags := r.projectID(state.ProjectID)
 	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	pool := state.Pool.ValueString()
 	client, err := r.client(ctx, projectID, pool)
 	if err != nil {
@@ -890,7 +878,7 @@ func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest
 	})
 	var waiter *taskWaiter
 	if err == nil {
-		waiter, err = newTaskWaiter(ctx, client, clusterID, "")
+		waiter, err = newTaskWaiter(ctx, client, clusterID)
 	}
 	if err == nil {
 		err = cluster.Delete(ctx, client, clusterID)
@@ -999,8 +987,7 @@ func upgradeKubeVersion(ctx context.Context, client *mksv2.ServiceClient, cluste
 		return err
 	}
 	if order <= 0 {
-		// Patch auto-upgrade, or an upgrade outside Terraform, got there
-		// first.
+		// Patch auto-upgrade, or an upgrade outside Terraform, got there first.
 		return nil
 	}
 
@@ -1048,8 +1035,7 @@ func upgradeKubeVersion(ctx context.Context, client *mksv2.ServiceClient, cluste
 			current, desired)
 	}
 
-	// The minor upgrade goes to the latest patch of the next minor, so the
-	// desired version has to be that patch.
+	// The minor upgrade goes to the latest patch of the next minor, so the desired version has to be that patch.
 	latestPatchVersions, err := latestKubePatchVersions(ctx, client)
 	if err != nil {
 		return err
@@ -1115,7 +1101,6 @@ func expandClusterCreateOpts(ctx context.Context, plan clusterModel) (*mksclient
 		MaintenanceWindowStart:        plan.MaintenanceWindowStart.ValueString(),
 		EnableAutorepair:              knownBoolPointer(plan.EnableAutorepair),
 		EnablePatchVersionAutoUpgrade: knownBoolPointer(plan.EnablePatchVersionAutoUpgrade),
-		CniType:                       knownStringPointer(plan.CNIType),
 	}
 	if !plan.ClusterType.IsNull() && !plan.ClusterType.IsUnknown() {
 		clusterType := mksclient.ClusterCreateStructClusterType(plan.ClusterType.ValueString())
@@ -1123,6 +1108,11 @@ func expandClusterCreateOpts(ctx context.Context, plan clusterModel) (*mksclient
 	}
 
 	var diags diag.Diagnostics
+	if plan.CNIType.IsUnknown() {
+		opts.CniType = nil
+	} else {
+		opts.CniType = plan.CNIType.ValueStringPointer()
+	}
 	opts.CniCiliumSettings, diags = expandCilium(ctx, plan.CNICiliumSettings)
 	kubeOptions, kubeOptionsDiags := expandKubeOptions(ctx, plan.KubernetesOptions)
 	diags.Append(kubeOptionsDiags...)
@@ -1222,8 +1212,7 @@ func expandKubeOptions(ctx context.Context, obj types.Object) (*mksclient.Kubern
 			CaCerts:       oidc.CACerts.ValueString(),
 		}
 		if !opts.Oidc.Enabled {
-			// The API rejects any parameter of a disabled OIDC and clears
-			// them itself.
+			// The API rejects any parameter of a disabled OIDC and clears them itself.
 			opts.Oidc = mksclient.OIDC{}
 		}
 	}
@@ -1245,9 +1234,7 @@ func (m *clusterModel) fromAPI(ctx context.Context, c *mksclient.ClusterDetailed
 	}
 	m.Pool = types.StringValue(c.Pool)
 	if c.ProjectId != "" && !sameProject(prior.ProjectID.ValueString(), c.ProjectId) {
-		// The API returns the project dashed: the state takes the form the
-		// provider stores, and keeps a configured one, see
-		// keystoneProjectID.
+		// The API returns the project dashed: the state takes the form keystoneProjectID keeps.
 		m.ProjectID = types.StringValue(keystoneProjectID(c.ProjectId))
 	}
 	if !applied {
@@ -1344,14 +1331,6 @@ func knownBoolPointer(v types.Bool) *bool {
 	return v.ValueBoolPointer()
 }
 
-func knownStringPointer(v types.String) *string {
-	if v.IsUnknown() {
-		return nil
-	}
-
-	return v.ValueStringPointer()
-}
-
 // plannedState sets state to the plan with every unknown value null. It saves
 // a created object that could not be read, so Terraform keeps it as tainted
 // instead of losing it.
@@ -1418,8 +1397,7 @@ func (m oidcPlanModifier) PlanModifyString(ctx context.Context, req planmodifier
 	}
 
 	if req.ConfigValue.IsUnknown() {
-		// The plan must keep an unknown configured value; the apply-time plan
-		// sees the known one.
+		// The plan must keep an unknown configured value; the apply-time plan sees the known one.
 		return
 	}
 
@@ -1433,8 +1411,7 @@ func (m oidcPlanModifier) PlanModifyString(ctx context.Context, req planmodifier
 			return
 		}
 		if req.ConfigValue.ValueString() == "" {
-			// The API would store the default instead, and the plan cannot
-			// differ from the configured "".
+			// The plan cannot differ from the configured ""; the API would store the default.
 			name, _ := req.Path.Steps().LastStep()
 			resp.Diagnostics.AddAttributeError(req.Path, "Empty OIDC claim while OIDC is enabled",
 				fmt.Sprintf("%s cannot be empty while OIDC is enabled: omit it to get `%s`.", name, m.enabledDefault))

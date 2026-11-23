@@ -183,9 +183,7 @@ func deleteCluster(t *testing.T, r *clusterResource, prior clusterModel) diag.Di
 
 func importCluster(t *testing.T, r *clusterResource) resource.ImportStateResponse {
 	t.Helper()
-	empty := clusterStateOf(t, r, clusterState())
-	empty.Raw = tftypes.NewValue(empty.Raw.Type(), nil)
-	resp := resource.ImportStateResponse{State: empty}
+	resp := resource.ImportStateResponse{State: emptyState(t, r)}
 	r.ImportState(context.Background(), resource.ImportStateRequest{ID: testClusterID}, &resp)
 
 	return resp

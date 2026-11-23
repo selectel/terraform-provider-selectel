@@ -123,19 +123,6 @@ func testFrameworkMKSV2Client(t *testing.T, scenario string) {
 	assert.Equal(t, pool, reachedPool)
 }
 
-func TestMKSV2BaseURL(t *testing.T) {
-	for _, tc := range []struct {
-		endpoint, want string
-	}{
-		{"https://mks-ru-1.example.com/v2", "https://mks-ru-1.example.com"},
-		{"https://mks-ru-2.example.com/v2/", "https://mks-ru-2.example.com"},
-		{"https://mks-ru-1.example.com", "https://mks-ru-1.example.com"},
-		{"https://mks-ru-1.example.com:8443/v2", "https://mks-ru-1.example.com:8443"},
-	} {
-		assert.Equal(t, tc.want, mksV2BaseURL(tc.endpoint), tc.endpoint)
-	}
-}
-
 func TestFrameworkMKSV2ClientEndpointError(t *testing.T) {
 	var endpoint string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

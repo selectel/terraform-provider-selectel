@@ -48,8 +48,7 @@ type statusValue struct {
 
 // waitDeletable polls get until every status is one the delete takes, so a
 // delete right after an interrupted create waits for the create to end
-// instead of failing with 409. ERROR never changes on its own: where the
-// delete does not take it, it ends the wait, and the delete answers for it.
+// instead of failing with 409.
 func waitDeletable(ctx context.Context, get func() ([]statusValue, error)) error {
 	var unsettled []string
 	err := poll(ctx, func() (bool, error) {
@@ -61,9 +60,6 @@ func waitDeletable(ctx context.Context, get func() ([]statusValue, error)) error
 		unsettled = unsettled[:0]
 		for _, s := range statuses {
 			if !slices.Contains(s.accepted, s.status) {
-				if s.status == "ERROR" {
-					return true, nil
-				}
 				unsettled = append(unsettled, s.object+" status "+s.status)
 			}
 		}
@@ -77,22 +73,18 @@ func waitDeletable(ctx context.Context, get func() ([]statusValue, error)) error
 	return err
 }
 
-// taskWaiter waits for the tasks one mutating API call created. The API
-// returns no task ID: its handlers insert the task rows in the same
-// transaction before they respond, so the call's tasks are the ones listed
-// after it and absent before it.
+// taskWaiter waits for the tasks one mutating API call created: the API
+// returns no task ID, and the call's tasks are the ones listed after it
+// and absent before it.
 type taskWaiter struct {
 	client    *mksv2.ServiceClient
 	clusterID string
-	// nodegroupID is the scope: an empty one counts only the cluster tasks,
-	// which have no nodegroup_id, any other only the tasks of that nodegroup.
-	nodegroupID string
-	before      map[string]struct{}
+	before    map[string]struct{}
 }
 
 // newTaskWaiter remembers the tasks in scope before a mutating call.
-func newTaskWaiter(ctx context.Context, client *mksv2.ServiceClient, clusterID, nodegroupID string) (*taskWaiter, error) {
-	w := newCreatedTaskWaiter(client, clusterID, nodegroupID)
+func newTaskWaiter(ctx context.Context, client *mksv2.ServiceClient, clusterID string) (*taskWaiter, error) {
+	w := newCreatedTaskWaiter(client, clusterID)
 
 	tasks, err := w.list(ctx)
 	if err != nil {
@@ -107,12 +99,11 @@ func newTaskWaiter(ctx context.Context, client *mksv2.ServiceClient, clusterID, 
 
 // newCreatedTaskWaiter counts every task in scope, for an object that did
 // not exist before the call.
-func newCreatedTaskWaiter(client *mksv2.ServiceClient, clusterID, nodegroupID string) *taskWaiter {
+func newCreatedTaskWaiter(client *mksv2.ServiceClient, clusterID string) *taskWaiter {
 	return &taskWaiter{
-		client:      client,
-		clusterID:   clusterID,
-		nodegroupID: nodegroupID,
-		before:      map[string]struct{}{},
+		client:    client,
+		clusterID: clusterID,
+		before:    map[string]struct{}{},
 	}
 }
 
@@ -194,7 +185,7 @@ func (w *taskWaiter) list(ctx context.Context) ([]mksclient.Task, error) {
 	}
 
 	return slices.DeleteFunc(tasks, func(t mksclient.Task) bool {
-		return valueOrZero(t.NodegroupId) != w.nodegroupID
+		return t.NodegroupId != nil
 	}), nil
 }
 
@@ -251,7 +242,7 @@ func waitTaskError(t *mksclient.Task) error {
 // callAndWait runs a mutating call on the cluster and waits for the
 // cluster tasks it created.
 func callAndWait(ctx context.Context, client *mksv2.ServiceClient, clusterID string, call func() error) error {
-	waiter, err := newTaskWaiter(ctx, client, clusterID, "")
+	waiter, err := newTaskWaiter(ctx, client, clusterID)
 	if err != nil {
 		return err
 	}
@@ -284,23 +275,16 @@ func poll(ctx context.Context, check func() (bool, error)) error {
 	}
 }
 
-// isTransient reports whether a failed check may succeed when repeated. Such
-// an error does not end a wait: the cluster keeps changing on the service
-// side. A 4xx other than 429 is a real answer and ends the wait.
+// isTransient reports whether a failed check may succeed when repeated:
+// a 4xx other than 429 is a real answer and ends the wait, the rest does
+// not, since the cluster keeps changing on the service side.
 func isTransient(err error) bool {
 	var mksErr *mksclient.MKSError
 	if errors.As(err, &mksErr) {
 		return mksErr.StatusCode == http.StatusTooManyRequests || mksErr.StatusCode >= 500
 	}
 
-	return errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) || isNetError(err)
-}
-
-// isNetError reports whether err is a transport failure.
-func isNetError(err error) bool {
-	var netErr net.Error
-
-	return errors.As(err, &netErr)
+	return errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) || errors.As(err, new(net.Error))
 }
 
 // valueOrZero dereferences an optional field of an API model.

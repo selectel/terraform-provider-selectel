@@ -101,7 +101,6 @@ func TestClusterCloudSubnetCIDRImportedPlanKeepsTheCluster(t *testing.T) {
 	config.CloudSubnetCIDR = types.StringValue("10.1.0.0/24")
 	proposed := prior
 	proposed.CloudSubnetCIDR = types.StringValue("10.1.0.0/24")
-	prior.CloudSubnetCIDR = types.StringNull()
 
 	encode := func(m clusterModel) *tfprotov6.DynamicValue {
 		value, err := tfprotov6.NewDynamicValue(valueType, clusterStateOf(t, fake.resource(), m).Raw)
@@ -203,7 +202,6 @@ func TestClusterX509PendingKeyThroughProvider(t *testing.T) {
 	config.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
 		"x509_ca_certificates": types.StringValue("Y2VydA=="),
 	})
-	_ = readAttrs
 	updateResp, err := server.ApplyResourceChange(ctx, &tfprotov6.ApplyResourceChangeRequest{
 		TypeName: "selectel_mks_cluster_v2", Config: encode(config), PlannedState: encode(config),
 		PriorState: readResp.NewState, PlannedPrivate: readResp.Private,

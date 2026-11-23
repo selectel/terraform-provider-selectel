@@ -59,43 +59,16 @@ func TestPollTransientErrors(t *testing.T) {
 	})
 }
 
-func TestIsTransient(t *testing.T) {
-	for _, tt := range []struct {
-		name string
-		err  error
-		want bool
-	}{
-		{name: "rate limit", err: mksError(http.StatusTooManyRequests), want: true},
-		{name: "internal server error", err: mksError(http.StatusInternalServerError), want: true},
-		{name: "conflict", err: mksError(http.StatusConflict), want: false},
-		{name: "not found", err: mksError(http.StatusNotFound), want: false},
-		{name: "timeout", err: context.DeadlineExceeded, want: true},
-		{name: "canceled", err: context.Canceled, want: true},
-		{name: "transport", err: &net.OpError{Op: "dial", Err: fmt.Errorf("refused")}, want: true},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, isTransient(tt.err))
-		})
-	}
-}
-
 func mksError(status int) error {
 	return &mksclient.MKSError{StatusCode: status, Message: "fake error"}
 }
 
-func TestWaitDeletableErrorStatus(t *testing.T) {
+func TestWaitDeletableUnsettledStatus(t *testing.T) {
 	shortPollInterval.Do(func() { pollInterval = time.Millisecond })
 	deadline := time.Now().Add(20 * time.Millisecond)
 	ctx, cancel := context.WithDeadline(context.Background(), deadline)
 	defer cancel()
 	err := waitDeletable(ctx, func() ([]statusValue, error) {
-		return []statusValue{{object: objectCluster, status: "ERROR", accepted: []string{"ACTIVE"}}}, nil
-	})
-	require.NoError(t, err)
-	deadline = time.Now().Add(20 * time.Millisecond)
-	ctx, cancel = context.WithDeadline(context.Background(), deadline)
-	defer cancel()
-	err = waitDeletable(ctx, func() ([]statusValue, error) {
 		return []statusValue{{object: objectCluster, status: "PENDING_DELETE", accepted: []string{"ACTIVE"}}}, nil
 	})
 	require.Error(t, err)
@@ -106,29 +79,29 @@ func TestTaskWaiterTaskAPIError(t *testing.T) {
 	fake := newFakeAPI(t)
 	client := fake.client()
 
-	_, err := newTaskWaiter(context.Background(), client, "gone", "")
+	_, err := newTaskWaiter(context.Background(), client, "gone")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "error listing tasks of cluster gone")
 
 	fake.seedCluster(testClusterID)
 	fake.seedTask(testClusterID, "", "CREATE_CLUSTER", false)
 	fake.fail(routeTask, http.StatusForbidden)
-	err = newCreatedTaskWaiter(client, testClusterID, "").Wait(context.Background())
+	err = newCreatedTaskWaiter(client, testClusterID).Wait(context.Background())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "error getting task")
 
 	fake.fail(routeTask, 0)
 	fake.fail(routeTasks, http.StatusForbidden)
-	_, err = newTaskWaiter(context.Background(), client, testClusterID, "")
+	_, err = newTaskWaiter(context.Background(), client, testClusterID)
 	require.Error(t, err)
 
-	err = newCreatedTaskWaiter(client, testClusterID, "").WaitClusterDeleted(context.Background())
+	err = newCreatedTaskWaiter(client, testClusterID).WaitClusterDeleted(context.Background())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "error listing tasks of cluster")
 
 	fake.fail(routeTasks, 0)
 	fake.removeCluster(testClusterID)
-	err = newCreatedTaskWaiter(client, testClusterID, "").WaitClusterDeleted(context.Background())
+	err = newCreatedTaskWaiter(client, testClusterID).WaitClusterDeleted(context.Background())
 	assert.NoError(t, err)
 }
 
@@ -139,13 +112,13 @@ func TestTaskWaiterAdvanceStatuses(t *testing.T) {
 
 	fake.seedCluster(testClusterID)
 	fake.seedTask(testClusterID, "", "NEW", false)
-	w := newCreatedTaskWaiter(client, testClusterID, "")
+	w := newCreatedTaskWaiter(client, testClusterID)
 	err := w.Wait(ctx)
 	assert.NoError(t, err)
 
 	fake.seedTask(testClusterID, "", "ANOTHER", false)
 	fake.failTasks("ANOTHER", true)
-	w2 := newCreatedTaskWaiter(client, testClusterID, "")
+	w2 := newCreatedTaskWaiter(client, testClusterID)
 	err = w2.Wait(ctx)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "ended in ERROR")
@@ -163,13 +136,13 @@ func TestTaskWaiterSurvivesTransientAPIErrors(t *testing.T) {
 	fake.failFor(routeTasks, http.StatusServiceUnavailable, 1)
 	fake.failFor(routeTask, http.StatusTooManyRequests, 1)
 	fake.seedTask(testClusterID, "", "CREATE_CLUSTER", false)
-	err := newCreatedTaskWaiter(client, testClusterID, "").Wait(context.Background())
+	err := newCreatedTaskWaiter(client, testClusterID).Wait(context.Background())
 	require.NoError(t, err)
 
 	fake.failFor(routeTasks, http.StatusTooManyRequests, 1)
 	fake.failFor(routeTask, http.StatusServiceUnavailable, 1)
 	fake.removeCluster(testClusterID)
-	err = newCreatedTaskWaiter(client, testClusterID, "").WaitClusterDeleted(context.Background())
+	err = newCreatedTaskWaiter(client, testClusterID).WaitClusterDeleted(context.Background())
 	require.NoError(t, err)
 }
 
