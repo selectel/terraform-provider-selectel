@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	mksv2 "github.com/selectel/mks-go/v2/pkg"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -55,7 +56,7 @@ func clusterState() clusterModel {
 			"enabled":     types.BoolValue(false),
 			"secret_name": types.StringNull(),
 		}),
-		"oidc":                 oidcObject(),
+		"oidc":                 oidcObjectOf(nil),
 		"x509_ca_certificates": types.StringNull(),
 	})
 
@@ -82,18 +83,6 @@ func clusterState() clusterModel {
 		KubeAPIIP:                     types.StringValue("192.0.2.10"),
 		Timeouts:                      clusterTimeouts(2*time.Second, 2*time.Second, 2*time.Second),
 	}
-}
-
-func oidcObject() types.Object {
-	return types.ObjectValueMust(oidcAttrTypes, map[string]attr.Value{
-		"enabled":        types.BoolValue(false),
-		"provider_name":  types.StringNull(),
-		"issuer_url":     types.StringNull(),
-		"client_id":      types.StringNull(),
-		"username_claim": types.StringNull(),
-		"groups_claim":   types.StringNull(),
-		"ca_certs":       trimmedStringValue{StringValue: types.StringNull()},
-	})
 }
 
 func clusterTimeouts(create, update, del time.Duration) timeouts.Value {
@@ -202,4 +191,11 @@ func errorText(t *testing.T, diags diag.Diagnostics) string {
 	first := diags.Errors()[0]
 
 	return first.Summary() + ": " + first.Detail()
+}
+
+func assertErrorContains(t *testing.T, diags diag.Diagnostics, parts ...string) {
+	t.Helper()
+	for _, part := range parts {
+		assert.Contains(t, errorText(t, diags), part)
+	}
 }

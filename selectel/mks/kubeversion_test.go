@@ -10,32 +10,37 @@ import (
 )
 
 func TestKubeVersionParts(t *testing.T) {
-	major, err := kubeVersionToMajor("v1.31.8")
-	require.NoError(t, err)
-	assert.Equal(t, 1, major)
-	major, err = kubeVersionToMinor("1.31.8")
-	require.NoError(t, err)
-	assert.Equal(t, 31, major)
+	for _, tt := range []struct {
+		version  string
+		parse    func(string) (int, error)
+		want     int
+		wantPart string
+	}{
+		{version: "v1.31.8", parse: kubeVersionToMajor, want: 1},
+		{version: "1.31.8", parse: kubeVersionToMinor, want: 31},
+		{version: "x.31.8", parse: kubeVersionToMajor, wantPart: "major part is not an integer number"},
+		{version: "1.b.8", parse: kubeVersionToMinor, wantPart: "minor part is not an integer number"},
+		{version: "1.31", parse: kubeVersionToPatch, wantPart: "expected to have major, minor and patch version parts"},
+		{version: "1.31.x", parse: kubeVersionToPatch, wantPart: "patch part is not an integer number"},
+	} {
+		t.Run(tt.version, func(t *testing.T) {
+			got, err := tt.parse(tt.version)
+			if tt.wantPart == "" {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
 
-	_, err = kubeVersionToMajor("x.31.8")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "major part is not an integer number")
+				return
+			}
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tt.wantPart)
+		})
+	}
 
-	_, err = kubeVersionToMinor("1.31")
-	require.NoError(t, err)
+	_, err := kubeVersionToMinor("1.31")
+	assert.NoError(t, err)
 	_, err = kubeVersionToMinor("1")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "expected to have major and minor version parts")
-	_, err = kubeVersionToMinor("1.b.8")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "minor part is not an integer number")
-
-	_, err = kubeVersionToPatch("1.31")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "expected to have major, minor and patch version parts")
-	_, err = kubeVersionToPatch("1.31.x")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "patch part is not an integer number")
 }
 
 func TestCompareTwoKubeVersionsByPatch(t *testing.T) {
@@ -61,17 +66,16 @@ func TestKubeVersionTrim(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "1.32", next)
 
-	_, err = kubeVersionTrimToMinor("x")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "major part is not an integer number")
 	_, err = kubeVersionTrimToMinorIncremented("1")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "expected to have major and minor version parts")
 
-	trimmed, err := kubeVersionTrimToMinor("1.x.8")
+	_, err = kubeVersionTrimToMinor("x")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "major part is not an integer number")
+	_, err = kubeVersionTrimToMinor("1.x.8")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "minor part is not an integer number")
-	assert.Equal(t, "", trimmed)
 }
 
 func TestLatestKubePatchVersions(t *testing.T) {

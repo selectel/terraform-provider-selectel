@@ -27,6 +27,7 @@ func TestClusterKubeVersionKeepsState(t *testing.T) {
 		})
 	}
 }
+
 func TestClusterValidateKubeVersionChange(t *testing.T) {
 	for _, tt := range []struct {
 		name    string

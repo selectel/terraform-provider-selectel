@@ -88,20 +88,12 @@ func newFakeAPI(t *testing.T) *fakeAPI {
 	t.Helper()
 
 	f := &fakeAPI{
-		t: t,
-
-		clusters:      map[string]mksclient.ClusterDetailed{},
-		failures:      map[string]int{},
-		failNext:      map[string]fakeFailure{},
-		failureBodies: map[string]fakeBody{},
-
-		failedTaskTypes:    map[string]bool{},
-		stuckTaskTypes:     map[string]bool{},
-		settles:            map[string]fakeSettle{},
-		x509CACertificates: map[string]string{},
-		queries:            map[string]string{},
-		bodies:             map[string][]byte{},
-		calls:              map[string]int{},
+		t:        t,
+		clusters: map[string]mksclient.ClusterDetailed{}, failures: map[string]int{},
+		failNext: map[string]fakeFailure{}, failureBodies: map[string]fakeBody{},
+		failedTaskTypes: map[string]bool{}, stuckTaskTypes: map[string]bool{},
+		settles: map[string]fakeSettle{}, x509CACertificates: map[string]string{},
+		queries: map[string]string{}, bodies: map[string][]byte{}, calls: map[string]int{},
 	}
 
 	mux := http.NewServeMux()
@@ -509,10 +501,7 @@ func (f *fakeAPI) seedCluster(id string) {
 	defer f.mu.Unlock()
 
 	f.clusters[id] = mksclient.ClusterDetailed{
-		Id:        id,
-		ProjectId: fakeAPIProjectID(keystoneProject),
-		Pool:      "ru-1",
-		Status:    "ACTIVE",
+		Id: id, ProjectId: fakeAPIProjectID(keystoneProject), Pool: "ru-1", Status: "ACTIVE",
 	}
 }
 
