@@ -14,9 +14,14 @@ import (
 	mksv2 "github.com/selectel/mks-go/v2/pkg"
 	"github.com/selectel/mks-go/v2/pkg/cluster"
 	mksclient "github.com/selectel/mks-go/v2/pkg/mksclient"
+	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadoc"
 )
 
-const defaultTimeout = 60 * time.Minute
+var clusterTimeouts = schemadoc.Timeouts{
+	Create: 60 * time.Minute,
+	Update: 60 * time.Minute,
+	Delete: 60 * time.Minute,
+}
 
 var (
 	_ resource.ResourceWithConfigure      = &clusterResource{}
@@ -27,11 +32,11 @@ var (
 
 type clusterResource struct {
 	connection
+	pollInterval time.Duration
 }
 
-// NewClusterResource creates the cluster resource.
 func NewClusterResource() resource.Resource {
-	return &clusterResource{}
+	return &clusterResource{pollInterval: 10 * time.Second}
 }
 
 func (r *clusterResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -57,7 +62,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	timeout, diags := plan.Timeouts.Create(ctx, defaultTimeout)
+	timeout, diags := plan.Timeouts.Create(ctx, clusterTimeouts.Create)
 	resp.Diagnostics.Append(diags...)
 	projectID, diags := r.projectID(plan.ProjectID)
 	resp.Diagnostics.Append(diags...)
@@ -89,7 +94,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	waitErr := newCreatedTaskWaiter(client, created.Id).Wait(ctx)
+	waitErr := newCreatedTaskWaiter(client, created.Id, r.pollInterval).Wait(ctx)
 
 	// Save the cluster even when the wait failed, so Terraform taints it instead of losing it.
 	readCtx, readCancel := readAfterWaitContext(ctx)
@@ -112,7 +117,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	x509Err := applyX509(ctx, client, &state)
+	x509Err := applyX509(ctx, client, &state, r.pollInterval)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	if x509Err != nil {
 		// An error would taint the healthy cluster just created: the state keeps the planned value and the pending mark sends it on the next apply.
@@ -125,16 +130,10 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 }
 
-// applyX509 sends the planned x509_ca_certificates of a created cluster: the
-// API ignores them on create and stores them only on a PATCH that carries the
-// whole kubernetes_options.
-func applyX509(ctx context.Context, client *mksv2.ServiceClient, state *clusterModel) error {
-	var options clusterKubeOptionsModel
-	diags := state.KubernetesOptions.As(ctx, &options, basetypes.ObjectAsOptions{})
-	if diags.HasError() {
-		return fmt.Errorf("error reading kubernetes_options: %v", diags)
-	}
-	if options.X509CACertificates.ValueString() == "" {
+// applyX509 sends the planned x509_ca_certificates of a created cluster: the API ignores them on create
+// and stores them only on a PATCH that carries the whole kubernetes_options.
+func applyX509(ctx context.Context, client *mksv2.ServiceClient, state *clusterModel, interval time.Duration) error {
+	if x509Of(ctx, state.KubernetesOptions).ValueString() == "" {
 		return nil
 	}
 
@@ -143,7 +142,7 @@ func applyX509(ctx context.Context, client *mksv2.ServiceClient, state *clusterM
 		return fmt.Errorf("error expanding kubernetes_options: %v", diags)
 	}
 	clusterID := state.ID.ValueString()
-	err := callAndWait(ctx, client, clusterID, func() error {
+	err := callAndWait(ctx, client, clusterID, interval, func() error {
 		_, err := cluster.Patch(ctx, client, clusterID, &mksclient.ClusterUpdateStruct{KubernetesOptions: kubeOptions})
 
 		return err
@@ -235,7 +234,7 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	timeout, diags := plan.Timeouts.Update(ctx, defaultTimeout)
+	timeout, diags := plan.Timeouts.Update(ctx, clusterTimeouts.Update)
 	resp.Diagnostics.Append(diags...)
 	projectID, diags := r.projectID(state.ProjectID)
 	resp.Diagnostics.Append(diags...)
@@ -260,9 +259,9 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	clusterID := state.ID.ValueString()
 	if changed {
-		err = waitStatus(ctx, client, clusterID, clusterUpdate)
+		_, err = waitStatus(ctx, client, clusterID, clusterUpdate, r.pollInterval)
 		if err == nil {
-			err = callAndWait(ctx, client, clusterID, func() error {
+			err = callAndWait(ctx, client, clusterID, r.pollInterval, func() error {
 				_, err := cluster.Patch(ctx, client, clusterID, patch)
 
 				return err
@@ -276,7 +275,7 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	if !plan.KubeVersion.Equal(state.KubeVersion) {
-		err = upgradeKubeVersion(ctx, client, clusterID, plan.KubeVersion.ValueString())
+		err = upgradeKubeVersion(ctx, client, clusterID, plan.KubeVersion.ValueString(), r.pollInterval)
 		if err != nil {
 			resp.Diagnostics.AddError("Error upgrading cluster", errUpdatingObject(objectCluster, clusterID, err).Error())
 
@@ -305,7 +304,7 @@ func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	timeout, diags := state.Timeouts.Delete(ctx, defaultTimeout)
+	timeout, diags := state.Timeouts.Delete(ctx, clusterTimeouts.Delete)
 	resp.Diagnostics.Append(diags...)
 	projectID, diags := r.projectID(state.ProjectID)
 	resp.Diagnostics.Append(diags...)
@@ -324,10 +323,10 @@ func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest
 	defer cancel()
 
 	clusterID := state.ID.ValueString()
-	err = waitStatus(ctx, client, clusterID, clusterDelete)
+	_, err = waitStatus(ctx, client, clusterID, clusterDelete, r.pollInterval)
 	var waiter *taskWaiter
 	if err == nil {
-		waiter, err = newTaskWaiter(ctx, client, clusterID)
+		waiter, err = newTaskWaiter(ctx, client, clusterID, r.pollInterval)
 	}
 	if err == nil {
 		err = cluster.Delete(ctx, client, clusterID)
@@ -362,12 +361,8 @@ func (r *clusterResource) ImportState(ctx context.Context, req resource.ImportSt
 
 // upgradeKubeVersion starts from the version the cluster runs, which patch
 // auto-upgrade can move past the state.
-func upgradeKubeVersion(ctx context.Context, client *mksv2.ServiceClient, clusterID, desired string) error {
-	err := waitStatus(ctx, client, clusterID, clusterUpgrade)
-	if err != nil {
-		return err
-	}
-	got, err := cluster.Get(ctx, client, clusterID)
+func upgradeKubeVersion(ctx context.Context, client *mksv2.ServiceClient, clusterID, desired string, interval time.Duration) error {
+	got, err := waitStatus(ctx, client, clusterID, clusterUpgrade, interval)
 	if err != nil {
 		return err
 	}
@@ -404,7 +399,7 @@ func upgradeKubeVersion(ctx context.Context, client *mksv2.ServiceClient, cluste
 				current, desired, latest)
 		}
 
-		err = callAndWait(ctx, client, clusterID, func() error {
+		err = callAndWait(ctx, client, clusterID, interval, func() error {
 			_, err := cluster.UpgradePatchVersion(ctx, client, clusterID)
 
 			return err
@@ -439,7 +434,7 @@ func upgradeKubeVersion(ctx context.Context, client *mksv2.ServiceClient, cluste
 			current, desired, latest)
 	}
 
-	err = callAndWait(ctx, client, clusterID, func() error {
+	err = callAndWait(ctx, client, clusterID, interval, func() error {
 		_, err := cluster.UpgradeMinorVersion(ctx, client, clusterID)
 
 		return err

@@ -82,8 +82,6 @@ const (
 	routeNodegroups    = "GET /v2/clusters/{cluster_id}/nodegroups"
 )
 
-var shortPollInterval sync.Once
-
 func newFakeAPI(t *testing.T) *fakeAPI {
 	t.Helper()
 
@@ -112,8 +110,6 @@ func newFakeAPI(t *testing.T) *fakeAPI {
 	f.handle(mux, routeNodegroups, f.listNodegroups)
 	f.server = httptest.NewServer(mux)
 	t.Cleanup(f.server.Close)
-
-	shortPollInterval.Do(func() { pollInterval = time.Millisecond })
 
 	return f
 }
@@ -358,9 +354,9 @@ func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 				latest[minor] = valueOrZero(v.Version)
 				continue
 			}
-			newer, err := compareTwoKubeVersionsByPatch(valueOrZero(v.Version), current)
-			if err == nil && newer == valueOrZero(v.Version) {
-				latest[minor] = newer
+			order, err := compareKubeVersions(valueOrZero(v.Version), current)
+			if err == nil && order > 0 {
+				latest[minor] = valueOrZero(v.Version)
 			}
 		}
 		f.addTask(id, taskType, func() {
@@ -372,7 +368,7 @@ func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 	}
 }
 
-// conflict answers 409 the way mk-api-v2 does when the cluster or one of its
+// conflict answers 409 the way the API does when the cluster or one of its
 // nodegroups is in a status the call does not take.
 func (f *fakeAPI) conflict(w http.ResponseWriter, id string, clusterStatuses, nodegroupStatuses []string) bool {
 	allowed := slices.Contains(clusterStatuses, string(f.clusters[id].Status))

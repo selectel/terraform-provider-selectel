@@ -390,7 +390,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			}),
 		},
 		Blocks: map[string]schema.Block{
-			"timeouts": clusterDocs.Timeouts(ctx, schemadoc.Timeouts{Create: defaultTimeout, Update: defaultTimeout, Delete: defaultTimeout}),
+			"timeouts": clusterDocs.Timeouts(ctx, clusterTimeouts),
 		},
 	}
 }

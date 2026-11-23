@@ -65,26 +65,6 @@ func kubeVersionToPatch(kubeVersion string) (int, error) {
 	return patch, nil
 }
 
-// compareTwoKubeVersionsByPatch parses two Kubernetes versions, compares
-// their patch versions and returns the latest one.
-// It doesn't check minor version so it will give a bad result for different
-// minor versions.
-func compareTwoKubeVersionsByPatch(a, b string) (string, error) {
-	aPatch, err := kubeVersionToPatch(a)
-	if err != nil {
-		return "", fmt.Errorf("unable to compare kube versions: %s", err)
-	}
-	bPatch, err := kubeVersionToPatch(b)
-	if err != nil {
-		return "", fmt.Errorf("unable to compare kube versions: %s", err)
-	}
-	if aPatch > bPatch {
-		return a, nil
-	}
-
-	return b, nil
-}
-
 // kubeVersionTrimToMinor returns the version trimmed to its minor part, "x.y".
 func kubeVersionTrimToMinor(kubeVersion string) (string, error) {
 	major, err := kubeVersionToMajor(kubeVersion)
@@ -133,11 +113,13 @@ func latestKubePatchVersions(ctx context.Context, client *mksv2.ServiceClient) (
 			result[minor] = valueOrZero(version.Version)
 			continue
 		}
-		latest, err := compareTwoKubeVersionsByPatch(valueOrZero(version.Version), current)
+		order, err := compareKubeVersions(valueOrZero(version.Version), current)
 		if err != nil {
 			return nil, err
 		}
-		result[minor] = latest
+		if order > 0 {
+			result[minor] = valueOrZero(version.Version)
+		}
 	}
 
 	return result, nil

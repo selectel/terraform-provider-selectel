@@ -17,9 +17,6 @@ import (
 	"github.com/selectel/mks-go/v2/pkg/task"
 )
 
-// pollInterval is how often the waiters poll the API. Tests shorten it.
-var pollInterval = 10 * time.Second
-
 // readAfterWaitTimeout bounds the read that saves a created object after
 // its wait failed, which can be a timeout or an interrupt.
 const readAfterWaitTimeout = 2 * time.Minute
@@ -48,37 +45,37 @@ type clusterOperation struct {
 var (
 	clusterUpdate = clusterOperation{
 		name:            "update",
-		clusterStatuses: []string{"ACTIVE", "PENDING_UPDATE_CONTROL_PLANE_LOGS"},
+		clusterStatuses: []string{string(mksclient.ClusterDetailedStatusACTIVE), "PENDING_UPDATE_CONTROL_PLANE_LOGS"},
 	}
 	clusterUpgrade = clusterOperation{
 		name:              "upgrade",
-		clusterStatuses:   []string{"ACTIVE"},
-		nodegroupStatuses: []string{"ACTIVE", "PENDING_CLEANUP"},
+		clusterStatuses:   []string{string(mksclient.ClusterDetailedStatusACTIVE)},
+		nodegroupStatuses: []string{string(mksclient.NodegroupListItemStatusACTIVE), "PENDING_CLEANUP"},
 	}
 	clusterDelete = clusterOperation{
-		name:              "delete",
-		clusterStatuses:   []string{"ACTIVE", "MAINTENANCE", "ERROR"},
-		nodegroupStatuses: []string{"ACTIVE", "ERROR"},
+		name: "delete",
+		clusterStatuses: []string{
+			string(mksclient.ClusterDetailedStatusACTIVE),
+			string(mksclient.ClusterDetailedStatusMAINTENANCE),
+			string(mksclient.ClusterDetailedStatusERROR),
+		},
+		nodegroupStatuses: []string{string(mksclient.NodegroupListItemStatusACTIVE), string(mksclient.NodegroupListItemStatusERROR)},
 	}
 )
 
-// statusValue is the status of an object and the statuses an operation takes.
-type statusValue struct {
-	object   string
-	status   string
-	accepted []string
-}
-
-// waitStatus polls until the cluster and its nodegroups are in statuses the
-// operation takes, so it does not fail with 409 while an earlier task runs.
-// An object in ERROR the operation does not take ends the wait at once.
-func waitStatus(ctx context.Context, client *mksv2.ServiceClient, clusterID string, op clusterOperation) error {
+// waitStatus polls until the cluster and its nodegroups are in statuses the operation takes and returns
+// the cluster it read last. An object in ERROR the operation does not take ends the wait at once.
+func waitStatus(
+	ctx context.Context, client *mksv2.ServiceClient, clusterID string, op clusterOperation, interval time.Duration,
+) (*mksclient.ClusterDetailed, error) {
+	var got *mksclient.ClusterDetailed
 	var unsettled []string
-	err := poll(ctx, func() (bool, error) {
+	err := poll(ctx, interval, func() (bool, error) {
 		c, err := cluster.Get(ctx, client, clusterID)
 		if err != nil {
 			return false, err
 		}
+		got = c
 		var nodegroups []mksclient.NodegroupListItem
 		if op.nodegroupStatuses != nil {
 			nodegroups, err = nodegroup.List(ctx, client, clusterID)
@@ -86,45 +83,51 @@ func waitStatus(ctx context.Context, client *mksv2.ServiceClient, clusterID stri
 				return false, err
 			}
 		}
-		statuses := []statusValue{{object: objectCluster, status: string(c.Status), accepted: op.clusterStatuses}}
-		for _, ng := range nodegroups {
-			statuses = append(statuses, statusValue{object: "nodegroup " + ng.Id, status: string(ng.Status), accepted: op.nodegroupStatuses})
-		}
 
 		unsettled = unsettled[:0]
-		for _, s := range statuses {
-			if slices.Contains(s.accepted, s.status) {
-				continue
+		failed := ""
+		check := func(object, status string, accepted []string) {
+			switch {
+			case slices.Contains(accepted, status):
+			case status == string(mksclient.ClusterDetailedStatusERROR):
+				if failed == "" {
+					failed = object
+				}
+			default:
+				unsettled = append(unsettled, object+" status "+status)
 			}
-			if s.status == "ERROR" {
-				unsettled = nil
+		}
+		check(objectCluster, string(c.Status), op.clusterStatuses)
+		for _, ng := range nodegroups {
+			check("nodegroup "+ng.Id, string(ng.Status), op.nodegroupStatuses)
+		}
+		if failed != "" {
+			unsettled = nil
 
-				return true, fmt.Errorf("%s status ERROR does not allow the %s", s.object, op.name)
-			}
-			unsettled = append(unsettled, s.object+" status "+s.status)
+			return true, fmt.Errorf("%s status ERROR does not allow the %s", failed, op.name)
 		}
 
 		return len(unsettled) == 0, nil
 	})
 	if err != nil && len(unsettled) > 0 {
-		return fmt.Errorf("%s does not allow the %s yet: %w", strings.Join(unsettled, ", "), op.name, err)
+		return got, fmt.Errorf("%s does not allow the %s yet: %w", strings.Join(unsettled, ", "), op.name, err)
 	}
 
-	return err
+	return got, err
 }
 
-// taskWaiter waits for the tasks one mutating API call created: the API
-// returns no task ID, and the call's tasks are the ones listed after it
-// and absent before it.
+// taskWaiter waits for the tasks one mutating API call created: the API returns no task ID,
+// so the call's tasks are the ones listed after it and absent before it.
 type taskWaiter struct {
 	client    *mksv2.ServiceClient
 	clusterID string
+	interval  time.Duration
 	before    map[string]struct{}
 }
 
 // newTaskWaiter remembers the tasks in scope before a mutating call.
-func newTaskWaiter(ctx context.Context, client *mksv2.ServiceClient, clusterID string) (*taskWaiter, error) {
-	w := newCreatedTaskWaiter(client, clusterID)
+func newTaskWaiter(ctx context.Context, client *mksv2.ServiceClient, clusterID string, interval time.Duration) (*taskWaiter, error) {
+	w := newCreatedTaskWaiter(client, clusterID, interval)
 
 	tasks, err := w.list(ctx)
 	if err != nil {
@@ -139,10 +142,11 @@ func newTaskWaiter(ctx context.Context, client *mksv2.ServiceClient, clusterID s
 
 // newCreatedTaskWaiter counts every task in scope, for an object that did
 // not exist before the call.
-func newCreatedTaskWaiter(client *mksv2.ServiceClient, clusterID string) *taskWaiter {
+func newCreatedTaskWaiter(client *mksv2.ServiceClient, clusterID string, interval time.Duration) *taskWaiter {
 	return &taskWaiter{
 		client:    client,
 		clusterID: clusterID,
+		interval:  interval,
 		before:    map[string]struct{}{},
 	}
 }
@@ -152,7 +156,7 @@ func newCreatedTaskWaiter(client *mksv2.ServiceClient, clusterID string) *taskWa
 func (w *taskWaiter) Wait(ctx context.Context) error {
 	pending := []mksclient.Task(nil)
 
-	return poll(ctx, func() (bool, error) {
+	return poll(ctx, w.interval, func() (bool, error) {
 		if pending == nil {
 			var err error
 			pending, err = w.newTasks(ctx)
@@ -170,13 +174,12 @@ func (w *taskWaiter) Wait(ctx context.Context) error {
 	})
 }
 
-// WaitClusterDeleted polls until the cluster is gone and fails when one of
-// the new tasks fails first. A 404 on the tasks means the cluster, and
-// everything in it, is gone.
+// WaitClusterDeleted polls until the cluster is gone and fails when one of the new tasks fails first.
+// A 404 on the tasks means the cluster, and everything in it, is gone.
 func (w *taskWaiter) WaitClusterDeleted(ctx context.Context) error {
 	pending := []mksclient.Task(nil)
 
-	return poll(ctx, func() (bool, error) {
+	return poll(ctx, w.interval, func() (bool, error) {
 		if pending == nil {
 			var err error
 			pending, err = w.newTasks(ctx)
@@ -205,9 +208,8 @@ func (w *taskWaiter) WaitClusterDeleted(ctx context.Context) error {
 	})
 }
 
-// list returns every task of the cluster in the waiter scope. It takes them
-// in one call: the API orders tasks only by started_at, which tasks of one
-// request share, so LIMIT/OFFSET pages could skip or repeat a task.
+// list returns every task of the cluster in the waiter scope in one call: the API orders tasks
+// only by started_at, which tasks of one request share, so LIMIT/OFFSET pages could skip or repeat one.
 func (w *taskWaiter) list(ctx context.Context) ([]mksclient.Task, error) {
 	// The API turns limit 0 into no LIMIT.
 	tasks, err := task.List(ctx, w.client, w.clusterID, 0, 0)
@@ -272,8 +274,8 @@ func waitTaskError(t *mksclient.Task) error {
 
 // callAndWait runs a mutating call on the cluster and waits for the
 // cluster tasks it created.
-func callAndWait(ctx context.Context, client *mksv2.ServiceClient, clusterID string, call func() error) error {
-	waiter, err := newTaskWaiter(ctx, client, clusterID)
+func callAndWait(ctx context.Context, client *mksv2.ServiceClient, clusterID string, interval time.Duration, call func() error) error {
+	waiter, err := newTaskWaiter(ctx, client, clusterID, interval)
 	if err != nil {
 		return err
 	}
@@ -286,9 +288,9 @@ func callAndWait(ctx context.Context, client *mksv2.ServiceClient, clusterID str
 	return waiter.Wait(ctx)
 }
 
-// poll calls check every pollInterval until it reports done, fails, or ctx
+// poll calls check every interval until it reports done, fails, or ctx
 // ends. A transient failure keeps waiting; any other error ends the wait.
-func poll(ctx context.Context, check func() (bool, error)) error {
+func poll(ctx context.Context, interval time.Duration, check func() (bool, error)) error {
 	for {
 		done, err := check()
 		if done {
@@ -301,21 +303,20 @@ func poll(ctx context.Context, check func() (bool, error)) error {
 		select {
 		case <-ctx.Done():
 			return fmt.Errorf("timeout while waiting: %w", ctx.Err())
-		case <-time.After(pollInterval):
+		case <-time.After(interval):
 		}
 	}
 }
 
-// isTransient reports whether a failed check may succeed when repeated:
-// a 4xx other than 429 is a real answer and ends the wait, the rest does
-// not, since the cluster keeps changing on the service side.
+// isTransient reports whether a failed check may succeed when repeated: a 4xx other than 429
+// is a real answer and ends the wait, the rest does not, since the cluster keeps changing.
 func isTransient(err error) bool {
 	var mksErr *mksclient.MKSError
 	if errors.As(err, &mksErr) {
 		return mksErr.StatusCode == http.StatusTooManyRequests || mksErr.StatusCode >= 500
 	}
 
-	return errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) || errors.As(err, new(net.Error))
+	return errors.As(err, new(net.Error))
 }
 
 // valueOrZero dereferences an optional field of an API model.

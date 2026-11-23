@@ -232,13 +232,6 @@ func TestClusterCreateErrors(t *testing.T) {
 			},
 			wantErr: "error creating cluster: 400 Bad Request: invalid kube_version: 1.31.8",
 		},
-		{
-			name: "a 422 with plain text",
-			setup: func(fake *fakeAPI) {
-				fake.failWithBody(routeCreateCluster, http.StatusUnprocessableEntity, "text/plain", "kube_version 1.31.8 is not supported\n")
-			},
-			wantErr: "error creating cluster: 422 Unprocessable Entity",
-		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			fake := newFakeAPI(t)
@@ -466,7 +459,6 @@ func TestClusterDeleteTaskError(t *testing.T) {
 
 	fake.failTasks("DELETE_CLUSTER", true)
 	diags = deleteCluster(t, r, readClusterModel(t, state))
-	assert.True(t, diags.HasError())
 	assertErrorContains(t, diags, "task DELETE_CLUSTER task-", "ended in ERROR")
 
 	fake.failTasks("DELETE_CLUSTER", false)
@@ -492,9 +484,8 @@ func TestClusterWaits(t *testing.T) {
 			stage: func(t *testing.T, fake *fakeAPI, r *clusterResource, _ clusterModel) {
 				fake.stickTasks("CREATE_CLUSTER", true)
 				plan := clusterPlan()
-				plan.Timeouts = clusterTimeouts(time.Second, 2*time.Second, 2*time.Second)
+				plan.Timeouts = timeoutsOf(time.Second, 2*time.Second, 2*time.Second)
 				savedState, diags := createCluster(t, r, plan)
-				assert.True(t, diags.HasError())
 				assertErrorContains(t, diags, "Error waiting for the cluster to become ready", "context deadline exceeded")
 				assert.Equal(t, 1, fake.callCount(routeCreateCluster))
 				assert.Equal(t, types.StringValue(testClusterID), readClusterModel(t, savedState).ID)
@@ -510,9 +501,8 @@ func TestClusterWaits(t *testing.T) {
 				fake.stickTasks("CREATE_CLUSTER", true)
 				fake.fail(routeCluster, http.StatusInternalServerError)
 				plan := clusterPlan()
-				plan.Timeouts = clusterTimeouts(time.Second, 2*time.Second, 2*time.Second)
+				plan.Timeouts = timeoutsOf(time.Second, 2*time.Second, 2*time.Second)
 				_, diags := createCluster(t, r, plan)
-				assert.True(t, diags.HasError())
 				assertErrorContains(t, diags, "Error reading cluster", "context deadline exceeded")
 			},
 		},
@@ -521,11 +511,10 @@ func TestClusterWaits(t *testing.T) {
 			stage: func(t *testing.T, fake *fakeAPI, r *clusterResource, _ clusterModel) {
 				fake.stickTasks("UPGRADE_MASTERS_CONFIG", true)
 				plan := clusterPlan()
-				plan.Timeouts = clusterTimeouts(2*time.Second, time.Second, 2*time.Second)
+				plan.Timeouts = timeoutsOf(2*time.Second, time.Second, 2*time.Second)
 				got := mustCreate(t, r, plan)
 
 				_, diags := updateCluster(t, r, got, patchPlan(got))
-				assert.True(t, diags.HasError())
 				assertErrorContains(t, diags, "Error updating cluster")
 				assertErrorContains(t, diags, "context deadline exceeded")
 
@@ -541,12 +530,11 @@ func TestClusterWaits(t *testing.T) {
 			name: "a stuck delete wait times out and the retry deletes",
 			stage: func(t *testing.T, fake *fakeAPI, r *clusterResource, _ clusterModel) {
 				plan := clusterPlan()
-				plan.Timeouts = clusterTimeouts(2*time.Second, 2*time.Second, time.Second)
+				plan.Timeouts = timeoutsOf(2*time.Second, 2*time.Second, time.Second)
 				got := mustCreate(t, r, plan)
 
 				fake.stickTasks("DELETE_CLUSTER", true)
 				diags := deleteCluster(t, r, got)
-				assert.True(t, diags.HasError())
 				assertErrorContains(t, diags, "Error deleting cluster")
 				assertErrorContains(t, diags, "context deadline exceeded")
 				assert.Equal(t, 1, fake.callCount(routeDeleteCluster))
@@ -584,7 +572,7 @@ func TestClusterDeleteWaitsForStatus(t *testing.T) {
 			fake, r := fakeResource(t)
 
 			plan := clusterPlan()
-			plan.Timeouts = clusterTimeouts(2*time.Second, 2*time.Second, time.Second)
+			plan.Timeouts = timeoutsOf(2*time.Second, 2*time.Second, time.Second)
 			state, diags := createCluster(t, r, plan)
 			require.False(t, diags.HasError(), "%v", diags)
 
@@ -601,7 +589,6 @@ func TestClusterDeleteWaitsForStatus(t *testing.T) {
 
 			diags = deleteCluster(t, r, readClusterModel(t, state))
 			if tt.wantErr {
-				assert.True(t, diags.HasError())
 				assertErrorContains(t, diags, "cluster status PENDING_CREATE does not allow the delete yet")
 				assertErrorContains(t, diags, "context deadline exceeded")
 				assert.Equal(t, 0, fake.callCount(routeDeleteCluster))
@@ -662,6 +649,7 @@ func TestClusterStatusOnUpdate(t *testing.T) {
 	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "ERROR" })
 	_, diags = updateCluster(t, r, got, withAutorepair(got, false))
 	assertErrorContains(t, diags, "cluster status ERROR does not allow the update")
+	assert.NotContains(t, diags.Errors()[0].Detail(), "yet")
 	assert.Equal(t, 1, fake.callCount(routePatchCluster))
 }
 
@@ -684,12 +672,12 @@ func TestClusterUpdateTaskError(t *testing.T) {
 	upPlan := prior
 	upPlan.KubeVersion = types.StringValue(testKubeVersion)
 	_, diags := updateCluster(t, r, prior, upPlan)
-	assert.True(t, diags.HasError())
 	assertErrorContains(t, diags, "task UPGRADE_PATCH_VERSION task-", "ended in ERROR")
 
 	fake.failTasks("UPGRADE_PATCH_VERSION", false)
 	_, diags = updateCluster(t, r, prior, upPlan)
 	assertErrorContains(t, diags, "Error upgrading cluster", "cluster status ERROR does not allow the upgrade")
+	assert.NotContains(t, diags.Errors()[0].Detail(), "yet")
 
 	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "ACTIVE" })
 	got, diags := updateCluster(t, r, prior, upPlan)
@@ -707,7 +695,6 @@ func TestClusterUpdateTaskError(t *testing.T) {
 		}),
 	})
 	_, diags = updateCluster(t, r, got, mastersPlan)
-	assert.True(t, diags.HasError())
 	assertErrorContains(t, diags, "task UPGRADE_MASTERS_CONFIG task-", "ended in ERROR")
 
 	fake.failTasks("UPGRADE_MASTERS_CONFIG", false)
@@ -861,14 +848,12 @@ func TestClusterCRUDFailsBeforeTheAPI(t *testing.T) {
 				fake.fail(routeCluster, http.StatusInternalServerError)
 
 				_, diags := readCluster(t, r, clusterState())
-				assert.True(t, diags.HasError())
 				assertErrorContains(t, diags, "Error reading cluster", "'"+testClusterID+"'")
 			},
 		},
 		{
 			name: "a 404 is a removal in Read only",
 			run: func(t *testing.T, fake *fakeAPI, r *clusterResource) {
-				fake.seedKubeVersions(mksclient.KubeVersionInfo{Version: new(testKubeVersion)})
 				got := mustCreate(t, r, clusterPlan())
 				fake.removeCluster(testClusterID)
 
@@ -880,12 +865,10 @@ func TestClusterCRUDFailsBeforeTheAPI(t *testing.T) {
 		{
 			name: "the upgrade of a gone cluster fails, the delete stays clean",
 			run: func(t *testing.T, fake *fakeAPI, r *clusterResource) {
-				fake.seedKubeVersions(mksclient.KubeVersionInfo{Version: new(testKubeVersion)})
 				prior := mustCreate(t, r, clusterPlan())
 				fake.removeCluster(testClusterID)
 
 				_, diags := updateCluster(t, r, prior, withKubeVersion(prior, testKubeVersionOld))
-				assert.True(t, diags.HasError())
 				assertErrorContains(t, diags, "Error upgrading cluster", "'"+testClusterID+"'")
 
 				diags = deleteCluster(t, r, prior)

@@ -98,34 +98,31 @@ func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("maintenance_window_end"), types.StringUnknown())...)
 	}
 
-	x509Plan, x509Known := "", false
-	planKubeOptions := plan.KubernetesOptions
-	if planKubeOptions.IsNull() {
-		x509Known = true
-	} else if !planKubeOptions.IsUnknown() {
-		var options clusterKubeOptionsModel
-		if !planKubeOptions.As(ctx, &options, basetypes.ObjectAsOptions{}).HasError() {
-			x509Plan = options.X509CACertificates.ValueString()
-			// An unknown planned value reads as "", which would fail the plan.
-			x509Known = !options.X509CACertificates.IsUnknown()
-		}
+	x509Plan := x509Of(ctx, plan.KubernetesOptions)
+	// An unknown planned value reads as "", which would fail the plan.
+	if !x509Plan.IsUnknown() && x509Plan.ValueString() == "" && x509Of(ctx, state.KubernetesOptions).ValueString() != "" {
+		resp.Diagnostics.AddAttributeError(path.Root("kubernetes_options").AtName("x509_ca_certificates"),
+			"X509 CA certificates cannot be removed",
+			"The API keeps the X509 CA certificates of the cluster: an empty value does not remove them. "+
+				"New certificates can be set instead.")
 	}
-	if x509Known && x509Plan == "" {
-		x509State := ""
-		stateKubeOptions := state.KubernetesOptions
-		if !stateKubeOptions.IsNull() && !stateKubeOptions.IsUnknown() {
-			var options clusterKubeOptionsModel
-			if !stateKubeOptions.As(ctx, &options, basetypes.ObjectAsOptions{}).HasError() {
-				x509State = options.X509CACertificates.ValueString()
-			}
-		}
-		if x509State != "" {
-			resp.Diagnostics.AddAttributeError(path.Root("kubernetes_options").AtName("x509_ca_certificates"),
-				"X509 CA certificates cannot be removed",
-				"The API keeps the X509 CA certificates of the cluster: an empty value does not remove them. "+
-					"New certificates can be set instead.")
-		}
+}
+
+// x509Of returns x509_ca_certificates of a kubernetes_options object, null or unknown when the object is.
+func x509Of(ctx context.Context, kubeOptions types.Object) types.String {
+	if kubeOptions.IsNull() {
+		return types.StringNull()
 	}
+	if kubeOptions.IsUnknown() {
+		return types.StringUnknown()
+	}
+	var options clusterKubeOptionsModel
+	diags := kubeOptions.As(ctx, &options, basetypes.ObjectAsOptions{})
+	if diags.HasError() {
+		return types.StringUnknown()
+	}
+
+	return options.X509CACertificates
 }
 
 // oidcPlanModifier plans an OIDC parameter the way the API stores it: empty
@@ -151,12 +148,12 @@ func (m oidcPlanModifier) PlanModifyString(ctx context.Context, req planmodifier
 		return
 	}
 
-	enabled, known, diags := oidcEnabled(ctx, req, oidc)
+	enabled, diags := oidcEnabled(ctx, req, oidc)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if !known {
+	if enabled.IsUnknown() {
 		if req.ConfigValue.IsNull() {
 			resp.PlanValue = types.StringUnknown()
 		}
@@ -169,7 +166,7 @@ func (m oidcPlanModifier) PlanModifyString(ctx context.Context, req planmodifier
 		return
 	}
 
-	if enabled {
+	if enabled.ValueBool() {
 		if m.enabledDefault == "" {
 			return
 		}
@@ -198,9 +195,8 @@ func (m oidcPlanModifier) PlanModifyString(ctx context.Context, req planmodifier
 	resp.PlanValue = types.StringValue("")
 }
 
-// auditSecretPlanModifier plans audit_logs.secret_name the way the API stores
-// it: empty when audit logs are disabled, the state name or `mks-audit-logs`
-// when they are enabled.
+// auditSecretPlanModifier plans audit_logs.secret_name the way the API stores it: empty when audit logs
+// are disabled, the state name or `mks-audit-logs` when they are enabled.
 type auditSecretPlanModifier struct {
 	schemadoc.Facts
 }
@@ -261,25 +257,22 @@ func (m auditSecretPlanModifier) PlanModifyString(ctx context.Context, req planm
 
 // oidcEnabled is the planned oidc.enabled: the configured value, otherwise
 // the state one, otherwise false, which create sends.
-func oidcEnabled(ctx context.Context, req planmodifier.StringRequest, oidc types.Object) (bool, bool, diag.Diagnostics) {
+func oidcEnabled(ctx context.Context, req planmodifier.StringRequest, oidc types.Object) (types.Bool, diag.Diagnostics) {
 	enabled, _ := oidc.Attributes()["enabled"].(types.Bool)
-	if enabled.IsUnknown() {
-		return false, false, nil
-	}
 	if !enabled.IsNull() {
-		return enabled.ValueBool(), true, nil
+		return enabled, nil
 	}
 	if req.State.Raw.IsNull() {
-		return false, true, nil
+		return types.BoolValue(false), nil
 	}
 
 	var stateEnabled types.Bool
 	diags := req.State.GetAttribute(ctx, req.Path.ParentPath().AtName("enabled"), &stateEnabled)
-	if stateEnabled.IsNull() || stateEnabled.IsUnknown() {
-		return false, false, diags
+	if stateEnabled.IsNull() {
+		return types.BoolUnknown(), diags
 	}
 
-	return stateEnabled.ValueBool(), true, diags
+	return stateEnabled, diags
 }
 
 // nameCase plans the state name for a configured name that differs only in

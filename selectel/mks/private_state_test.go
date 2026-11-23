@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -35,7 +36,9 @@ func (p privateStateTestProvider) Configure(_ context.Context, _ provider.Config
 }
 
 func (p privateStateTestProvider) Resources(_ context.Context) []func() resource.Resource {
-	return []func() resource.Resource{NewClusterResource}
+	return []func() resource.Resource{func() resource.Resource {
+		return &clusterResource{pollInterval: time.Millisecond}
+	}}
 }
 
 func configureClusterProvider(t *testing.T, fake *fakeAPI) (tfprotov6.ProviderServer, tftypes.Type, func(clusterModel) *tfprotov6.DynamicValue) {

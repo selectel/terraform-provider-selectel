@@ -38,7 +38,7 @@ func (c *testProviderConfig) MKSV2Defaults() (string, string) { return c.project
 func (f *fakeAPI) resource() *clusterResource {
 	config := &testProviderConfig{client: f.client(), project: testProject, pool: "ru-1"}
 
-	return &clusterResource{connection: connection{config: config}}
+	return &clusterResource{connection: connection{config: config}, pollInterval: time.Millisecond}
 }
 
 const (
@@ -81,11 +81,11 @@ func clusterState() clusterModel {
 		KubernetesOptions:             kubeOptions,
 		Status:                        types.StringValue("ACTIVE"),
 		KubeAPIIP:                     types.StringValue("192.0.2.10"),
-		Timeouts:                      clusterTimeouts(2*time.Second, 2*time.Second, 2*time.Second),
+		Timeouts:                      timeoutsOf(2*time.Second, 2*time.Second, 2*time.Second),
 	}
 }
 
-func clusterTimeouts(create, update, del time.Duration) timeouts.Value {
+func timeoutsOf(create, update, del time.Duration) timeouts.Value {
 	str := func(d time.Duration) types.String { return types.StringValue(d.String()) }
 
 	return timeouts.Value{Object: types.ObjectValueMust(

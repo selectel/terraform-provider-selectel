@@ -138,11 +138,9 @@ func kubeVersionKeepsState(prior, actual string) string {
 
 func expandClusterCreateOpts(ctx context.Context, plan clusterModel) (*mksclient.ClusterCreateStruct, diag.Diagnostics) {
 	opts := &mksclient.ClusterCreateStruct{
-		Name:        plan.Name.ValueString(),
-		Pool:        plan.Pool.ValueString(),
-		KubeVersion: plan.KubeVersion.ValueString(),
-		// Deprecated in the API, cluster_type wins.
-		Basic:                         false,
+		Name:                          plan.Name.ValueString(),
+		Pool:                          plan.Pool.ValueString(),
+		KubeVersion:                   plan.KubeVersion.ValueString(),
 		NetworkType:                   workersTypes[plan.WorkersType.ValueString()],
 		NetworkId:                     plan.NetworkID.ValueString(),
 		SubnetId:                      plan.SubnetID.ValueString(),
@@ -158,9 +156,7 @@ func expandClusterCreateOpts(ctx context.Context, plan clusterModel) (*mksclient
 	}
 
 	var diags diag.Diagnostics
-	if plan.CNIType.IsUnknown() {
-		opts.CniType = nil
-	} else {
+	if !plan.CNIType.IsUnknown() {
 		opts.CniType = plan.CNIType.ValueStringPointer()
 	}
 	opts.CniCiliumSettings, diags = expandCilium(ctx, plan.CNICiliumSettings)
@@ -313,10 +309,8 @@ func (m *clusterModel) fromAPI(ctx context.Context, c *mksclient.ClusterDetailed
 	}
 
 	x509 := types.StringNull()
-	if !prior.KubernetesOptions.IsNull() && !prior.KubernetesOptions.IsUnknown() {
-		var priorOptions clusterKubeOptionsModel
-		diags.Append(prior.KubernetesOptions.As(ctx, &priorOptions, basetypes.ObjectAsOptions{})...)
-		x509 = priorOptions.X509CACertificates
+	if !prior.KubernetesOptions.IsUnknown() {
+		x509 = x509Of(ctx, prior.KubernetesOptions)
 	}
 	kubeOptions, d := flattenKubeOptions(ctx, c.KubernetesOptions, x509)
 	diags.Append(d...)

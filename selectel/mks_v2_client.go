@@ -12,9 +12,8 @@ import (
 // MKSV2Defaults supplies the scope for UUID-based imports.
 func (c *Config) MKSV2Defaults() (string, string) { return c.ProjectID, c.Region }
 
-// MKSV2Client authenticates for each operation: mks-go takes a token string
-// that it cannot renew, and the pool is checked against the catalog first to
-// list the valid pools.
+// MKSV2Client authenticates for each operation, because mks-go takes a token string it cannot renew.
+// The pool is checked against the catalog first to list the valid pools.
 func (c *Config) MKSV2Client(ctx context.Context, projectID, pool string) (*mksv2.ServiceClient, error) {
 	opts := c.selvpcClientOptions(projectID)
 	opts.Context = ctx
@@ -39,9 +38,8 @@ func (c *Config) MKSV2Client(ctx context.Context, projectID, pool string) (*mksv
 	return client, nil
 }
 
-// mksV2BaseURL turns the catalog endpoint into the base URL of the MKS API
-// v2 client: the endpoint ends with /v2 (https://ru-7.mks.selcloud.ru/v2),
-// while the mks-go v2 request paths start with /v2/, so the suffix is trimmed.
+// mksV2BaseURL trims the /v2 suffix of the catalog endpoint (https://ru-7.mks.selcloud.ru/v2),
+// because the mks-go v2 request paths start with /v2/.
 func mksV2BaseURL(endpoint string) string {
 	return strings.TrimSuffix(strings.TrimSuffix(endpoint, "/"), "/v2")
 }

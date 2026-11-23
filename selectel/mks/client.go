@@ -44,13 +44,10 @@ func (c *connection) configure(data any) diag.Diagnostics {
 // provider configuration, because the cluster ID carries neither.
 func (c connection) importScope() (string, string, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	if c.config == nil {
-		diags.AddError("Missing project ID", "INFRA_PROJECT_ID must be set for the resource import")
-		diags.AddError("Missing pool", "INFRA_REGION must be set for the resource import")
-
-		return "", "", diags
+	var projectID, pool string
+	if c.config != nil {
+		projectID, pool = c.config.MKSV2Defaults()
 	}
-	projectID, pool := c.config.MKSV2Defaults()
 	if projectID == "" {
 		diags.AddError("Missing project ID", "INFRA_PROJECT_ID must be set for the resource import")
 	}
@@ -95,9 +92,8 @@ func (c connection) client(ctx context.Context, projectID, pool string) (*mksv2.
 	return client, nil
 }
 
-// keystoneProjectID returns the project ID in the form Keystone scopes a
-// token by: lower-case hex without dashes. The API v2 returns project_id as
-// a dashed UUID, and Keystone answers 401 for that form.
+// keystoneProjectID returns the project ID as lower-case hex without dashes, the form Keystone scopes a token by.
+// The API v2 returns a dashed UUID, which Keystone answers 401 for.
 func keystoneProjectID(projectID string) string {
 	return strings.ToLower(strings.ReplaceAll(projectID, "-", ""))
 }
