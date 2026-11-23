@@ -1,86 +1,136 @@
 ---
 page_title: "Selectel: selectel_secretsmanager_certificate_v1"
 description: |-
-    Creates and manages a certificate in Selectel Secrets Manager using public API v1.
+  Creates and manages a certificate in Certificates Manager using public API v1.
 ---
 
 # selectel\_secretsmanager\_certificate_v1
 
-Creates and manages a certificate in Selectel Secrets Manager using public API v1. For more information about certificates, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/secrets-manager/certificates/).
+Creates and manages a certificate in Certificates Manager using public API v1. For more information about certificates, see the [official Selectel documentation](https://docs.selectel.ru/en/certificates-manager/certificates/user-certificates/).
 
 ## Example Usage
 
-### Text format
-
-```terraform
-resource "selectel_secretsmanager_certificate_v1" "certificate_1" {
-  name          = "certificate"
-  certificates  = [file("./_cert.pem")]
-  private_key   = file("./_private_key.pem")
-  project_id    = selectel_vpc_project_v2.project_1.id
-}
-```
-
-### EOF
+### Certificate and private key from files
 
 ```terraform
 resource "selectel_secretsmanager_certificate_v1" "certificate_1" {
   name         = "certificate"
+  certificates = [file("./_cert.pem")]
+  private_key  = file("./_private_key.pem")
+  project_id   = selectel_vpc_project_v2.project_1.id
+}
+```
+
+### Certificate and private key using heredoc
+
+```terraform
+resource "selectel_secretsmanager_certificate_v1" "certificate_1" {
+  name = "certificate"
   certificates = [
-      <<-EOF
+    <<-EOF
       -----BEGIN CERTIFICATE-----
       ...
-      ----END CERTIFICATE-----
+      -----END CERTIFICATE-----
       EOF
   ]
-  private_key  = <<-EOF
+  private_key = <<-EOF
   -----BEGIN PRIVATE KEY-----
   ...
   -----END PRIVATE KEY-----
   EOF
+  project_id  = selectel_vpc_project_v2.project_1.id
+}
+```
+
+### Upload a new version without activating it
+
+```terraform
+# Update the PEM of an existing certificate to upload a version without activating it.
+resource "selectel_secretsmanager_certificate_v1" "certificate_1" {
+  name         = "certificate"
+  certificates = [file("./_cert.pem")]
+  private_key  = file("./_private_key.pem")
   project_id   = selectel_vpc_project_v2.project_1.id
+  is_current   = false
 }
 ```
 
 ## Argument Reference
 
-* `name` - (Required) Certificate name.
+* `name` - (Required) Certificate name. Changing only the name does not create a version.
 
-* `certificates` - (Required) Certificate chain in PEM format. The value of each certificate must begin with `-----BEGIN CERTIFICATE-----` and end with `-----END CERTIFICATE-----`.
+* `certificates` - (Required) List of certificates forming the PEM certificate chain, including the primary certificate and any intermediate or root certificates. Each certificate must begin with `-----BEGIN CERTIFICATE-----` and end with `-----END CERTIFICATE-----`. Changing this argument or `private_key` uploads a new version containing both configured values; activation depends on `is_current`.
 
-* `private_key` - (Required, Sensitive) Private key. The value must begin with `-----BEGIN PRIVATE KEY-----` and end with `-----END PRIVATE KEY-----`.
+* `private_key` - (Required, Sensitive) PEM-encoded private key matching the primary certificate. Supported formats include PKCS#8 (`BEGIN PRIVATE KEY`), PKCS#1 (`BEGIN RSA PRIVATE KEY`), and EC (`BEGIN EC PRIVATE KEY`), with matching PEM end markers. Changing the key uploads a new version together with the configured `certificates`; activation depends on `is_current`. The private key is stored in Terraform state, even though it is marked sensitive.
 
-* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
+* `project_id` - (Required) Unique identifier of the associated project. Retrieved from the [selectel_vpc_project_v2](https://registry.terraform.io/providers/selectel/selectel/latest/docs/resources/vpc_project_v2) resource. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/). Changing this creates a new certificate and deletes the existing certificate and all its versions.
+
+* `is_current` - (Optional) Whether to activate a new version when you update the resource content. The first version is always active. Changing only this argument does not switch the active version. The default value is `true`.
+
+## Version Management
+
+To activate an existing version, use Certificates Manager outside Terraform. The `certificates` and `private_key` arguments retain the last content uploaded by Terraform.
+
+Versions cannot be deleted individually through this resource. Destroying the resource deletes the entire certificate, including its versions. The API refuses deletion while consumers are attached; remove the consumer associations before destroying the resource.
 
 ## Attributes Reference
 
-* `dns_names` - Domain names for which the certificate is issued.
+* `dns_names` - Domain names covered by the active leaf certificate. The common name is returned when the certificate has no Subject Alternative Names.
 
 * `id` - Unique identifier of the certificate.
 
-* `issued_by` - Information about the Certificate Authority (CA) which verified and signed the certificate.
+* `issued_by` - Information about the certificate issuer:
+
+  * `country` - List of issuer country names or codes.
+
+  * `locality` - List of issuer localities.
+
+  * `serial_number` - Serial number in the issuer's distinguished name.
+
+  * `street_address` - List of issuer street addresses.
 
 * `serial` - Certificate serial number assigned by the Certificate Authority (CA) which issued the certificate.
 
-* `validity` - Certificate validity in the RFC3339 timestamp format:
+* `validity` - Certificate validity and basic constraints:
 
-  * `not_before` - Effective date and time of the certificate.
+  * `basic_constraints` - Indicates whether the certificate chain satisfies basic certificate authority constraints.
 
-  * `not_after` - Expiration date and time of the certificate.
+  * `not_before` - Effective date and time of the certificate in RFC3339 format.
 
-* `version` - Certificate version.
+  * `not_after` - Expiration date and time of the certificate in RFC3339 format.
+
+* `version` - Number of the active version, which may differ from the latest uploaded version.
 
 ## Import
 
 You can import a certificate:
 
 ```shell
+export OS_DOMAIN_NAME=<account_id>
+export OS_USERNAME=<username>
+export OS_PASSWORD=<password>
+export OS_AUTH_URL=<auth_url>
+export OS_REGION_NAME=<auth_region>
 export INFRA_PROJECT_ID=<selectel_project_id>
 terraform import selectel_secretsmanager_certificate_v1.certificate_1 <certificate_id>
 ```
 
 where:
 
-* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
 
-* `<certificate_id>` — Unique identifier of the certificate. To get the ID of the certificate, in the [Control panel](https://my.selectel.ru/vpc/secrets-manager/), go to **Cloud Platform** ⟶ **Secrets Manager** ⟶ the **Certificates** tab ⟶ in the certificate menu select **Copy UUID**.
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
+
+* `<password>` — Password of the service user.
+
+* `<auth_url>` — Authentication endpoint used by the provider. Obtain it from the [list of URLs](https://docs.selectel.ru/en/api/urls/).
+
+* `<auth_region>` — Authentication region matching the selected authentication endpoint. Use the value from your configured provider.
+
+* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
+
+* `<certificate_id>` — Unique identifier of the certificate. In the [Control panel](https://my.selectel.ru/certificates), open **Products** ⟶ **Certificates Manager** ⟶ **Certificates** and copy the certificate ID.
+
+The service user must have access to the project. You can set the provider's `project_id` argument instead of `INFRA_PROJECT_ID`.
+
+Import reads certificate metadata but does not populate the `certificates` or `private_key` inputs. Restore both PEM inputs in the resource configuration before applying, and review `terraform plan`: supplying missing content after import can upload a new version, whose activation follows `is_current`.
