@@ -185,7 +185,7 @@ func (w *taskWaiter) list(ctx context.Context) ([]mksclient.Task, error) {
 	}
 
 	return slices.DeleteFunc(tasks, func(t mksclient.Task) bool {
-		return t.NodegroupId != nil
+		return valueOrZero(t.NodegroupId) != ""
 	}), nil
 }
 

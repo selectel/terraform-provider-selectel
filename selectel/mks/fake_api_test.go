@@ -411,10 +411,11 @@ func (f *fakeAPI) getTask(w http.ResponseWriter, r *http.Request) {
 func (f *fakeAPI) addTask(clusterID, taskType string, effect func()) {
 	f.tasks = append(f.tasks, &fakeTask{
 		task: mksclient.Task{
-			Id:        fmt.Sprintf("task-%d", len(f.tasks)+1),
-			ClusterId: clusterID,
-			Type:      taskType,
-			Status:    mksclient.INPROGRESS,
+			Id:          fmt.Sprintf("task-%d", len(f.tasks)+1),
+			ClusterId:   clusterID,
+			NodegroupId: new(""),
+			Type:        taskType,
+			Status:      mksclient.INPROGRESS,
 		},
 		effect: effect,
 	})
@@ -436,9 +437,7 @@ func (f *fakeAPI) seedTask(clusterID, nodegroupID, taskType string, stuck bool) 
 	f.addTask(clusterID, taskType, nil)
 	t := f.tasks[len(f.tasks)-1]
 	t.stuck = stuck
-	if nodegroupID != "" {
-		t.task.NodegroupId = &nodegroupID
-	}
+	t.task.NodegroupId = &nodegroupID
 }
 
 func (f *fakeAPI) stickTasks(taskType string, stuck bool) {
