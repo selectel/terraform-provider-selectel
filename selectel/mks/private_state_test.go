@@ -174,6 +174,18 @@ func TestClusterX509PendingKeyThroughProvider(t *testing.T) {
 	config.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
 		"x509_ca_certificates": types.StringValue("Y2VydA=="),
 	})
+	otherChange := config
+	otherChange.EnableAutorepair = types.BoolValue(false)
+	otherResp, err := server.ApplyResourceChange(ctx, &tfprotov6.ApplyResourceChangeRequest{
+		TypeName: "selectel_mks_cluster_v2", Config: encode(otherChange), PlannedState: encode(otherChange),
+		PriorState: encode(config), PlannedPrivate: applyResp.Private,
+	})
+	require.NoError(t, err)
+	require.Empty(t, formatDiagnostics(otherResp.Diagnostics), "%s", formatDiagnostics(otherResp.Diagnostics))
+	pending, ok = privateValue(otherResp.Private, x509PendingKey)
+	assert.True(t, ok, "an update without kubernetes_options must keep the pending x509: %s", otherResp.Private)
+	assert.Equal(t, "true", pending)
+
 	updateResp, err := server.ApplyResourceChange(ctx, &tfprotov6.ApplyResourceChangeRequest{
 		TypeName: "selectel_mks_cluster_v2", Config: encode(config), PlannedState: encode(config),
 		PriorState: readResp.NewState, PlannedPrivate: readResp.Private,

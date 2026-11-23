@@ -122,7 +122,7 @@ func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 		if x509State != "" {
 			resp.Diagnostics.AddAttributeError(path.Root("kubernetes_options").AtName("x509_ca_certificates"),
 				"X509 CA certificates cannot be removed",
-				"The API keeps the X509 CA certificates of the cluster, an empty value does not remove them. "+
+				"The API keeps the X509 CA certificates of the cluster: an empty value does not remove them. "+
 					"New certificates can be set instead.")
 		}
 	}

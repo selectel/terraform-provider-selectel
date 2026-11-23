@@ -246,8 +246,10 @@ func (w *taskWaiter) advance(ctx context.Context, pending []mksclient.Task) ([]m
 		case mksclient.DONE:
 		case mksclient.ERROR, mksclient.CANCELED:
 			return nil, waitTaskError(t)
+		case mksclient.INQUEUE, mksclient.INPROGRESS:
+			running = append(running, *t)
 		default:
-			// INQUEUE, INPROGRESS, and a status newer than the client keep polling.
+			// A status newer than the client keeps polling.
 			running = append(running, *t)
 		}
 	}

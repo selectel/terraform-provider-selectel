@@ -292,8 +292,8 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 	resp.Diagnostics.Append(plan.fromAPI(ctx, got, plan, true)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
-	// The plan carried any pending x509_ca_certificates, see Create.
-	if resp.Private != nil {
+	// Only a PATCH carrying kubernetes_options sent the pending x509_ca_certificates, see Create.
+	if resp.Private != nil && patch.KubernetesOptions != nil {
 		resp.Diagnostics.Append(resp.Private.SetKey(ctx, x509PendingKey, nil)...)
 	}
 }
