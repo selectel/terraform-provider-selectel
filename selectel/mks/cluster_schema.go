@@ -215,9 +215,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			}, schemadoc.Field{
-				Definition: "Time in UTC when maintenance in the cluster starts. The format is `hh:mm:ss`. " +
-					"You can change it only within `48` hours after the last maintenance of the cluster, " +
-					"so the change fails for a cluster without maintenance yet.",
+				Definition: "Time in UTC when maintenance in the cluster starts. The format is `hh:mm:ss`.",
 			}),
 			"enable_autorepair": clusterDocs.Bool(optionalBool(), schemadoc.Field{
 				Definition: "Enables or disables automatic reinstallation of worker nodes that are unavailable or unhealthy. " +
