@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	mksclient "github.com/selectel/mks-go/v2/pkg/mksclient"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadoc"
 )
@@ -93,36 +92,10 @@ func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 	if !resp.Plan.Raw.Equal(req.State.Raw) {
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("status"), types.StringUnknown())...)
 	}
-	// The window end follows these changes and cannot be kept from the state.
-	if !plan.KubeVersion.Equal(state.KubeVersion) || !plan.MaintenanceWindowStart.Equal(state.MaintenanceWindowStart) {
+	// The API derives the window end from the start alone.
+	if !plan.MaintenanceWindowStart.Equal(state.MaintenanceWindowStart) {
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("maintenance_window_end"), types.StringUnknown())...)
 	}
-
-	x509Plan := x509Of(ctx, plan.KubernetesOptions)
-	// An unknown planned value reads as "", which would fail the plan.
-	if !x509Plan.IsUnknown() && x509Plan.ValueString() == "" && x509Of(ctx, state.KubernetesOptions).ValueString() != "" {
-		resp.Diagnostics.AddAttributeError(path.Root("kubernetes_options").AtName("x509_ca_certificates"),
-			"X509 CA certificates cannot be removed",
-			"The API keeps the X509 CA certificates of the cluster: an empty value does not remove them. "+
-				"New certificates can be set instead.")
-	}
-}
-
-// x509Of returns x509_ca_certificates of a kubernetes_options object, null or unknown when the object is.
-func x509Of(ctx context.Context, kubeOptions types.Object) types.String {
-	if kubeOptions.IsNull() {
-		return types.StringNull()
-	}
-	if kubeOptions.IsUnknown() {
-		return types.StringUnknown()
-	}
-	var options clusterKubeOptionsModel
-	diags := kubeOptions.As(ctx, &options, basetypes.ObjectAsOptions{})
-	if diags.HasError() {
-		return types.StringUnknown()
-	}
-
-	return options.X509CACertificates
 }
 
 // oidcPlanModifier plans an OIDC parameter the way the API stores it: empty
@@ -189,66 +162,6 @@ func (m oidcPlanModifier) PlanModifyString(ctx context.Context, req planmodifier
 		resp.Diagnostics.AddAttributeError(req.Path, "OIDC parameter set while OIDC is disabled",
 			fmt.Sprintf("The API rejects it: oidc parameters cannot be configured when it is disabled. "+
 				"Disabling OIDC clears its settings, so remove %s.", req.Path))
-
-		return
-	}
-	resp.PlanValue = types.StringValue("")
-}
-
-// auditSecretPlanModifier plans audit_logs.secret_name the way the API stores it: empty when audit logs
-// are disabled, the state name or `mks-audit-logs` when they are enabled.
-type auditSecretPlanModifier struct {
-	schemadoc.Facts
-}
-
-func (m auditSecretPlanModifier) Description(_ context.Context) string {
-	return "Plans the value the API stores for the audit logs secret."
-}
-
-func (m auditSecretPlanModifier) MarkdownDescription(ctx context.Context) string {
-	return m.Description(ctx)
-}
-
-func (m auditSecretPlanModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-	var auditLogs types.Object
-	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, req.Path.ParentPath(), &auditLogs)...)
-	if resp.Diagnostics.HasError() || auditLogs.IsNull() || auditLogs.IsUnknown() {
-		// An omitted audit_logs object keeps the state, see UseStateForUnknown.
-		return
-	}
-	var planned types.Object
-	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, req.Path.ParentPath(), &planned)...)
-	if resp.Diagnostics.HasError() || planned.IsNull() || planned.IsUnknown() {
-		return
-	}
-	enabled := planned.Attributes()["enabled"].(types.Bool)
-	if enabled.IsUnknown() {
-		if req.ConfigValue.IsNull() || req.ConfigValue.ValueString() == "" {
-			resp.PlanValue = types.StringUnknown()
-		}
-
-		return
-	}
-	if enabled.ValueBool() {
-		if req.ConfigValue.IsUnknown() {
-			// The apply-time plan sees the known value.
-			return
-		}
-		if req.ConfigValue.IsNull() || req.ConfigValue.ValueString() == "" {
-			if !req.StateValue.IsNull() && req.StateValue.ValueString() != "" {
-				// The API keeps the name of a cluster that already collects logs.
-				resp.PlanValue = req.StateValue
-
-				return
-			}
-			resp.PlanValue = types.StringValue("mks-audit-logs")
-		}
-
-		return
-	}
-	if !req.ConfigValue.IsNull() && req.ConfigValue.ValueString() != "" {
-		resp.Diagnostics.AddAttributeError(req.Path, "Audit logs secret name set while audit logs are disabled",
-			"The API rejects it: audit_logs.secret_name cannot be non-empty while audit_logs.enabled is false.")
 
 		return
 	}

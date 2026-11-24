@@ -50,12 +50,10 @@ type clusterKubeOptionsModel struct {
 	AdmissionControllers types.Set    `tfsdk:"admission_controllers"`
 	AuditLogs            types.Object `tfsdk:"audit_logs"`
 	OIDC                 types.Object `tfsdk:"oidc"`
-	X509CACertificates   types.String `tfsdk:"x509_ca_certificates"`
 }
 
 type clusterAuditLogsModel struct {
-	Enabled    types.Bool   `tfsdk:"enabled"`
-	SecretName types.String `tfsdk:"secret_name"`
+	Enabled types.Bool `tfsdk:"enabled"`
 }
 
 type clusterOIDCModel struct {
@@ -114,26 +112,6 @@ func compareKubeVersions(a, b string) (int, error) {
 	}
 
 	return 0, nil
-}
-
-func kubeVersionKeepsState(prior, actual string) string {
-	if prior == "" {
-		return actual
-	}
-	priorMinor, err := kubeVersionTrimToMinor(prior)
-	if err != nil {
-		return actual
-	}
-	actualMinor, err := kubeVersionTrimToMinor(actual)
-	if err != nil || priorMinor != actualMinor {
-		return actual
-	}
-	order, err := compareKubeVersions(prior, actual)
-	if err != nil || order > 0 {
-		return actual
-	}
-
-	return prior
 }
 
 func expandClusterCreateOpts(ctx context.Context, plan clusterModel) (*mksclient.ClusterCreateStruct, diag.Diagnostics) {
@@ -228,7 +206,6 @@ func expandKubeOptions(ctx context.Context, obj types.Object) (*mksclient.Kubern
 	opts := &mksclient.KubernetesOptions{
 		FeatureGates:         []string{},
 		AdmissionControllers: []string{},
-		X509CaCertificates:   m.X509CACertificates.ValueString(),
 	}
 	if !m.FeatureGates.IsNull() && !m.FeatureGates.IsUnknown() {
 		diags.Append(m.FeatureGates.ElementsAs(ctx, &opts.FeatureGates, false)...)
@@ -239,7 +216,7 @@ func expandKubeOptions(ctx context.Context, obj types.Object) (*mksclient.Kubern
 	if !m.AuditLogs.IsNull() && !m.AuditLogs.IsUnknown() {
 		var audit clusterAuditLogsModel
 		diags.Append(m.AuditLogs.As(ctx, &audit, basetypes.ObjectAsOptions{})...)
-		opts.AuditLogs = mksclient.AuditLogs{Enabled: audit.Enabled.ValueBool(), SecretName: audit.SecretName.ValueString()}
+		opts.AuditLogs = mksclient.AuditLogs{Enabled: audit.Enabled.ValueBool()}
 	}
 	if !m.OIDC.IsNull() && !m.OIDC.IsUnknown() {
 		var oidc clusterOIDCModel
@@ -277,7 +254,7 @@ func (m *clusterModel) fromAPI(ctx context.Context, c *mksclient.ClusterDetailed
 		m.ProjectID = types.StringValue(keystoneProjectID(c.ProjectId))
 	}
 	if !applied {
-		m.KubeVersion = types.StringValue(kubeVersionKeepsState(prior.KubeVersion.ValueString(), c.KubeVersion))
+		m.KubeVersion = types.StringValue(c.KubeVersion)
 	}
 	m.ClusterType = types.StringValue(string(c.ClusterType))
 	m.WorkersType = types.StringValue(string(c.NetworkType))
@@ -288,7 +265,7 @@ func (m *clusterModel) fromAPI(ctx context.Context, c *mksclient.ClusterDetailed
 	}
 	m.NetworkID = types.StringValue(c.NetworkId)
 	m.SubnetID = types.StringValue(c.SubnetId)
-	m.CloudSubnetCIDR = prior.CloudSubnetCIDR
+	m.CloudSubnetCIDR = types.StringPointerValue(c.CloudSubnetCidr)
 	m.PrivateKubeAPI = types.BoolValue(c.PrivateKubeApi)
 	m.MaintenanceWindowStart = types.StringValue(c.MaintenanceWindowStart)
 	m.MaintenanceWindowEnd = types.StringValue(c.MaintenanceWindowEnd)
@@ -308,18 +285,14 @@ func (m *clusterModel) fromAPI(ctx context.Context, c *mksclient.ClusterDetailed
 		diags.Append(d...)
 	}
 
-	x509 := types.StringNull()
-	if !prior.KubernetesOptions.IsUnknown() {
-		x509 = x509Of(ctx, prior.KubernetesOptions)
-	}
-	kubeOptions, d := flattenKubeOptions(ctx, c.KubernetesOptions, x509)
+	kubeOptions, d := flattenKubeOptions(ctx, c.KubernetesOptions)
 	diags.Append(d...)
 	m.KubernetesOptions = kubeOptions
 
 	return diags
 }
 
-func flattenKubeOptions(ctx context.Context, o mksclient.KubernetesOptions, x509 types.String) (types.Object, diag.Diagnostics) {
+func flattenKubeOptions(ctx context.Context, o mksclient.KubernetesOptions) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	stringSet := func(values []string) types.Set {
@@ -331,8 +304,7 @@ func flattenKubeOptions(ctx context.Context, o mksclient.KubernetesOptions, x509
 		return set
 	}
 	audit, d := types.ObjectValueFrom(ctx, auditLogsAttrTypes, clusterAuditLogsModel{
-		Enabled:    types.BoolValue(o.AuditLogs.Enabled),
-		SecretName: types.StringValue(o.AuditLogs.SecretName),
+		Enabled: types.BoolValue(o.AuditLogs.Enabled),
 	})
 	diags.Append(d...)
 	oidcObject, d := types.ObjectValueFrom(ctx, oidcAttrTypes, clusterOIDCModel{
@@ -351,7 +323,6 @@ func flattenKubeOptions(ctx context.Context, o mksclient.KubernetesOptions, x509
 		AdmissionControllers: stringSet(o.AdmissionControllers),
 		AuditLogs:            audit,
 		OIDC:                 oidcObject,
-		X509CACertificates:   x509,
 	})
 	diags.Append(d...)
 

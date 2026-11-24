@@ -7,13 +7,11 @@ import (
 	"net"
 	"net/http"
 	"slices"
-	"strings"
 	"time"
 
 	mksv2 "github.com/selectel/mks-go/v2/pkg"
 	"github.com/selectel/mks-go/v2/pkg/cluster"
 	"github.com/selectel/mks-go/v2/pkg/mksclient"
-	"github.com/selectel/mks-go/v2/pkg/nodegroup"
 	"github.com/selectel/mks-go/v2/pkg/task"
 )
 
@@ -34,86 +32,20 @@ func isNotFound(err error) bool {
 	return errors.As(err, &mksErr) && mksErr.StatusCode == http.StatusNotFound
 }
 
-// clusterOperation is a call the API answers 409 to unless the cluster and
-// its nodegroups are in the statuses it names.
-type clusterOperation struct {
-	name              string
-	clusterStatuses   []string
-	nodegroupStatuses []string
-}
-
-var (
-	clusterUpdate = clusterOperation{
-		name:            "update",
-		clusterStatuses: []string{string(mksclient.ClusterDetailedStatusACTIVE), "PENDING_UPDATE_CONTROL_PLANE_LOGS"},
-	}
-	clusterUpgrade = clusterOperation{
-		name:              "upgrade",
-		clusterStatuses:   []string{string(mksclient.ClusterDetailedStatusACTIVE)},
-		nodegroupStatuses: []string{string(mksclient.NodegroupListItemStatusACTIVE), "PENDING_CLEANUP"},
-	}
-	clusterDelete = clusterOperation{
-		name: "delete",
-		clusterStatuses: []string{
-			string(mksclient.ClusterDetailedStatusACTIVE),
-			string(mksclient.ClusterDetailedStatusMAINTENANCE),
-			string(mksclient.ClusterDetailedStatusERROR),
-		},
-		nodegroupStatuses: []string{string(mksclient.NodegroupListItemStatusACTIVE), string(mksclient.NodegroupListItemStatusERROR)},
-	}
-)
-
-// waitStatus polls until the cluster and its nodegroups are in statuses the operation takes and returns
-// the cluster it read last. An object in ERROR the operation does not take ends the wait at once.
-func waitStatus(
-	ctx context.Context, client *mksv2.ServiceClient, clusterID string, op clusterOperation, interval time.Duration,
-) (*mksclient.ClusterDetailed, error) {
-	var got *mksclient.ClusterDetailed
-	var unsettled []string
-	err := poll(ctx, interval, func() (bool, error) {
+// waitActive polls until the cluster is ACTIVE and fails when it is in ERROR. Any other status keeps waiting.
+func waitActive(ctx context.Context, client *mksv2.ServiceClient, clusterID string, interval time.Duration) error {
+	return poll(ctx, interval, func() (bool, error) {
 		c, err := cluster.Get(ctx, client, clusterID)
 		if err != nil {
 			return false, err
 		}
-		got = c
-		var nodegroups []mksclient.NodegroupListItem
-		if op.nodegroupStatuses != nil {
-			nodegroups, err = nodegroup.List(ctx, client, clusterID)
-			if err != nil {
-				return false, err
-			}
+
+		if c.Status == mksclient.ClusterDetailedStatusERROR {
+			return true, fmt.Errorf("cluster %s is in ERROR", clusterID)
 		}
 
-		unsettled = unsettled[:0]
-		failed := ""
-		check := func(object, status string, accepted []string) {
-			switch {
-			case slices.Contains(accepted, status):
-			case status == string(mksclient.ClusterDetailedStatusERROR):
-				if failed == "" {
-					failed = object
-				}
-			default:
-				unsettled = append(unsettled, object+" status "+status)
-			}
-		}
-		check(objectCluster, string(c.Status), op.clusterStatuses)
-		for _, ng := range nodegroups {
-			check("nodegroup "+ng.Id, string(ng.Status), op.nodegroupStatuses)
-		}
-		if failed != "" {
-			unsettled = nil
-
-			return true, fmt.Errorf("%s status ERROR does not allow the %s", failed, op.name)
-		}
-
-		return len(unsettled) == 0, nil
+		return c.Status == mksclient.ClusterDetailedStatusACTIVE, nil
 	})
-	if err != nil && len(unsettled) > 0 {
-		return got, fmt.Errorf("%s does not allow the %s yet: %w", strings.Join(unsettled, ", "), op.name, err)
-	}
-
-	return got, err
 }
 
 // taskWaiter waits for the tasks one mutating API call created: the API returns no task ID,
@@ -272,8 +204,8 @@ func waitTaskError(t *mksclient.Task) error {
 	return errors.New(msg)
 }
 
-// callAndWait runs a mutating call on the cluster and waits for the
-// cluster tasks it created.
+// callAndWait runs a mutating call on the cluster, waits for the cluster
+// tasks it created and for the cluster to become ACTIVE.
 func callAndWait(ctx context.Context, client *mksv2.ServiceClient, clusterID string, interval time.Duration, call func() error) error {
 	waiter, err := newTaskWaiter(ctx, client, clusterID, interval)
 	if err != nil {
@@ -285,7 +217,12 @@ func callAndWait(ctx context.Context, client *mksv2.ServiceClient, clusterID str
 		return err
 	}
 
-	return waiter.Wait(ctx)
+	err = waiter.Wait(ctx)
+	if err != nil {
+		return err
+	}
+
+	return waitActive(ctx, client, clusterID, interval)
 }
 
 // poll calls check every interval until it reports done, fails, or ctx

@@ -12,9 +12,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -54,8 +55,7 @@ var (
 		"hubble_relay":    types.BoolType,
 	}
 	auditLogsAttrTypes = map[string]attr.Type{
-		"enabled":     types.BoolType,
-		"secret_name": types.StringType,
+		"enabled": types.BoolType,
 	}
 	oidcAttrTypes = map[string]attr.Type{
 		"enabled":        types.BoolType,
@@ -71,7 +71,6 @@ var (
 		"admission_controllers": types.SetType{ElemType: types.StringType},
 		"audit_logs":            types.ObjectType{AttrTypes: auditLogsAttrTypes},
 		"oidc":                  types.ObjectType{AttrTypes: oidcAttrTypes},
-		"x509_ca_certificates":  types.StringType,
 	}
 )
 
@@ -139,8 +138,8 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Definition: "Kubernetes version of the cluster. The format is `x.y.z`. Raising it upgrades the cluster. " +
 					"A patch upgrade is possible only to the latest patch version of the current minor version. " +
 					"Another patch version fails the apply. " +
-					"A minor upgrade is possible only to the latest patch version of the next minor version. " +
-					"Another patch version fails the apply. Skipping a minor version fails the plan. " +
+					"A minor upgrade is possible only to the next minor version, and the API picks its patch version. " +
+					"Skipping a minor version fails the plan. " +
 					"The cluster may run a newer version than configured, for example after patch auto-upgrade: " +
 					"a configured version lower than the one in the state is accepted with no change and never downgrades the cluster.",
 				Source: "You can retrieve the available versions with the [selectel_mks_kube_versions_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/mks_kube_versions_v1) data source.",
@@ -189,18 +188,12 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Source:     schemadoc.FromResource("selectel_vpc_network_subnet_v2", "subnet ID"),
 			}),
 			"cloud_subnet_cidr": clusterDocs.String(schema.StringAttribute{
-				Optional: true,
-				PlanModifiers: []planmodifier.String{schemadoc.RequiresReplaceIf(
-					func(ctx context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
-						imported, diags := req.Private.GetKey(ctx, importedKey)
-						resp.Diagnostics.Append(diags...)
-						resp.RequiresReplace = !req.StateValue.IsNull() || len(imported) == 0
-					},
-					"A change from an unset value after import does not replace the cluster.")},
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), schemadoc.RequiresReplace()},
 			}, schemadoc.Field{
 				Definition: "CIDR of the cloud subnet to which the master nodes are connected. " +
-					"Applicable only if `workers_type` is `DEDICATED`. If omitted, the API uses `10.20.0.0/24`. " +
-					"The provider keeps the configured value, so an imported cluster has no value.",
+					"Applicable only if `workers_type` is `DEDICATED`. If omitted, the API uses `10.20.0.0/24`.",
 			}),
 			"private_kube_api": clusterDocs.Bool(schema.BoolAttribute{
 				Optional:      true,
@@ -253,8 +246,13 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 					"envoy_daemonset": clusterDocs.Bool(optionalBool(), schemadoc.Field{
 						Definition: "Enables or disables the Envoy DaemonSet for Cilium. If omitted, the API uses `true`.",
 					}),
-					"hubble_relay": clusterDocs.Bool(optionalBool(), schemadoc.Field{
-						Definition: "Enables or disables Hubble Relay for Cilium. If omitted, the API uses `false`.",
+					"hubble_relay": clusterDocs.Bool(schema.BoolAttribute{
+						Optional:      true,
+						Computed:      true,
+						Default:       schemadoc.StaticBool(true),
+						PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+					}, schemadoc.Field{
+						Definition: "Enables or disables Hubble Relay for Cilium.",
 					}),
 				},
 			},
@@ -266,10 +264,10 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 				Attributes: map[string]schema.Attribute{
 					"feature_gates": clusterDocs.Set(schema.SetAttribute{
-						Optional:      true,
-						Computed:      true,
-						ElementType:   types.StringType,
-						PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+						Optional:    true,
+						Computed:    true,
+						ElementType: types.StringType,
+						Default:     emptySet(),
 					}, schemadoc.Field{
 						Definition: "Enabled feature gates.",
 						Concept: schemadoc.Link{
@@ -278,10 +276,10 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						},
 					}),
 					"admission_controllers": clusterDocs.Set(schema.SetAttribute{
-						Optional:      true,
-						Computed:      true,
-						ElementType:   types.StringType,
-						PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+						Optional:    true,
+						Computed:    true,
+						ElementType: types.StringType,
+						Default:     emptySet(),
 					}, schemadoc.Field{
 						Definition: "Enabled admission controllers.",
 						Concept: schemadoc.Link{
@@ -299,17 +297,6 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 							"enabled": clusterDocs.Bool(optionalBool(), schemadoc.Field{
 								Definition: "Enables or disables collection of audit logs.",
 								Behavior:   "If omitted when the cluster is created, the value is `false`.",
-							}),
-							"secret_name": clusterDocs.String(schema.StringAttribute{
-								Optional:      true,
-								Computed:      true,
-								PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), auditSecretPlanModifier{}},
-							}, schemadoc.Field{
-								Definition: "Name of the secret in the `kube-system` namespace " +
-									"with the credentials of the logging system. " +
-									"A change of only this field ends in an API error: change it together with `enabled`. " +
-									"If omitted while `enabled` is `true`, the cluster keeps its current name, " +
-									"or the API uses `mks-audit-logs` when audit logs are turned on.",
 							}),
 						},
 					},
@@ -359,15 +346,6 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 							// ca_certs carries no enabled=false sentence: any PEM content is a value the plan rejects.
 						},
 					},
-					"x509_ca_certificates": clusterDocs.String(schema.StringAttribute{
-						Optional: true,
-					}, schemadoc.Field{
-						Definition: "Custom X509 CA certificates for the cluster components, base64-encoded. " +
-							"The API does not return them, so an imported cluster has no value. If setting them fails " +
-							"after the cluster is created, the apply ends with a warning and the next apply sets them. " +
-							"The API keeps the certificates of the cluster, so removing them from the configuration " +
-							"or setting an empty value fails the plan. New certificates can be set instead.",
-					}),
 				},
 			},
 			"status": clusterDocs.String(schema.StringAttribute{
@@ -392,6 +370,19 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 		Blocks: map[string]schema.Block{
 			"timeouts": clusterDocs.Timeouts(ctx, clusterTimeouts),
 		},
+	}
+}
+
+type emptySetDefault struct {
+	defaults.Set
+	schemadoc.Facts
+}
+
+// emptySet plans an omitted set as the empty one, which clears it.
+func emptySet() defaults.Set {
+	return emptySetDefault{
+		setdefault.StaticValue(types.SetValueMust(types.StringType, nil)),
+		schemadoc.Facts{Default: "The default value is an empty set."},
 	}
 }
 

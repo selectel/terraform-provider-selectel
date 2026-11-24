@@ -77,23 +77,11 @@ func modifyPlan(t *testing.T, r *clusterResource, state, plan clusterModel) reso
 
 func TestClusterModifyPlanRules(t *testing.T) {
 	r := &clusterResource{}
-	withX509 := func(m *clusterModel) {
-		m.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"x509_ca_certificates": types.StringValue("Y2VydA==")})
-	}
 	for _, tt := range []struct {
 		name    string
 		plan    func(m *clusterModel)
 		wantErr string
 	}{
-		{name: "null x509 over a set one is a removal", plan: func(m *clusterModel) {
-			m.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"x509_ca_certificates": types.StringNull()})
-		}, wantErr: "X509 CA certificates cannot be removed"},
-		{name: "unknown x509 skips the check", plan: func(m *clusterModel) {
-			m.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"x509_ca_certificates": types.StringUnknown()})
-		}},
-		{name: "unknown kubernetes_options skips the check", plan: func(m *clusterModel) {
-			m.KubernetesOptions = types.ObjectUnknown(kubeOptionsAttrTypes)
-		}},
 		{name: "a skipped minor version fails the plan", plan: func(m *clusterModel) {
 			m.KubeVersion = types.StringValue("1.33.1")
 		}, wantErr: "Invalid Kubernetes version change"},
@@ -103,7 +91,6 @@ func TestClusterModifyPlanRules(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			state := clusterState()
-			withX509(&state)
 			plan := state
 			tt.plan(&plan)
 			resp := modifyPlan(t, r, state, plan)
@@ -134,11 +121,20 @@ func TestClusterModifyPlanState(t *testing.T) {
 			assert.Equal(t, types.StringValue("ACTIVE"), plan.Status)
 			assert.Equal(t, types.StringValue("09:00:00"), plan.MaintenanceWindowEnd)
 		}},
-		{name: "a change sets the computed values unknown", mutate: func(m *clusterModel) {
-			m.KubeVersion = types.StringValue(testKubeVersionUp)
-			m.MaintenanceWindowStart = types.StringValue("07:00:00")
+		{name: "a change sets the status unknown", mutate: func(m *clusterModel) {
+			m.EnableAutorepair = types.BoolValue(false)
 		}, check: func(t *testing.T, plan clusterModel) {
 			assert.True(t, plan.Status.IsUnknown())
+			assert.Equal(t, types.StringValue("09:00:00"), plan.MaintenanceWindowEnd)
+		}},
+		{name: "a kube_version change keeps the window end", mutate: func(m *clusterModel) {
+			m.KubeVersion = types.StringValue(testKubeVersionUp)
+		}, check: func(t *testing.T, plan clusterModel) {
+			assert.Equal(t, types.StringValue("09:00:00"), plan.MaintenanceWindowEnd)
+		}},
+		{name: "a window start change sets the window end unknown", mutate: func(m *clusterModel) {
+			m.MaintenanceWindowStart = types.StringValue("07:00:00")
+		}, check: func(t *testing.T, plan clusterModel) {
 			assert.True(t, plan.MaintenanceWindowEnd.IsUnknown())
 		}},
 	} {
@@ -180,59 +176,6 @@ func TestClusterKeepStateModifiers(t *testing.T) {
 				StateValue: tt.stateV, ConfigValue: tt.configV, PlanValue: tt.plan,
 			}, &resp)
 			assert.Equal(t, tt.expected, resp.PlanValue)
-		})
-	}
-}
-
-func TestClusterAuditSecretModifierRules(t *testing.T) {
-	r := &clusterResource{}
-	reqOf := func(t *testing.T, planned, configAudit types.Object) planmodifier.StringRequest {
-		t.Helper()
-		plannedModel := clusterPlan()
-		plannedModel.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"audit_logs": planned})
-		configModel := plannedModel
-		configModel.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"audit_logs": configAudit})
-		st := clusterStateOf(t, r, plannedModel)
-
-		return planmodifier.StringRequest{
-			Config: tfsdk.Config(clusterStateOf(t, r, configModel)),
-			Plan:   tfsdk.Plan(st),
-			State:  st,
-			Path:   path.Root("kubernetes_options").AtName("audit_logs").AtName("secret_name"),
-		}
-	}
-	for _, tt := range []struct {
-		name    string
-		planned types.Object
-		config  types.Object
-		configV types.String
-		stateV  types.String
-		want    types.String
-		wantErr string
-	}{
-		{name: "a non-empty name with audit logs planned disabled fails the plan", planned: auditLogsObject(types.BoolValue(false), types.StringNull()), config: auditLogsObject(types.BoolValue(true), types.StringValue("siem")), configV: types.StringValue("siem"), wantErr: "Audit logs secret name set while audit logs are disabled"},
-		{name: "planned disabled with a null config name plans empty", planned: auditLogsObject(types.BoolValue(false), types.StringNull()), config: auditLogsObject(types.BoolValue(false), types.StringNull()), configV: types.StringNull(), want: types.StringValue("")},
-		{name: "a null name with audit logs planned enabled plans the API default", planned: auditLogsObject(types.BoolValue(true), types.StringNull()), config: auditLogsObject(types.BoolValue(true), types.StringNull()), configV: types.StringNull(), want: types.StringValue("mks-audit-logs")},
-		{name: "planned unknown enabled with a null config name plans unknown", planned: auditLogsObject(types.BoolUnknown(), types.StringNull()), config: auditLogsObject(types.BoolNull(), types.StringNull()), configV: types.StringNull(), want: types.StringUnknown()},
-		{name: "omitted enabled on an enabled state keeps the state name", planned: auditLogsObject(types.BoolValue(true), types.StringValue("siem")), config: auditLogsObject(types.BoolNull(), types.StringNull()), configV: types.StringNull(), stateV: types.StringValue("siem"), want: types.StringValue("siem")},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			req := reqOf(t, tt.planned, tt.config)
-			req.ConfigValue = tt.configV
-			req.StateValue = types.StringNull()
-			if !tt.stateV.IsNull() {
-				req.StateValue = tt.stateV
-			}
-			resp := planmodifier.StringResponse{PlanValue: req.ConfigValue}
-			auditSecretPlanModifier{}.PlanModifyString(context.Background(), req, &resp)
-			if tt.wantErr != "" {
-				require.True(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
-				assert.Equal(t, tt.wantErr, resp.Diagnostics.Errors()[0].Summary())
-
-				return
-			}
-			require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
-			assert.Equal(t, tt.want, resp.PlanValue)
 		})
 	}
 }

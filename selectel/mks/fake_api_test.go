@@ -27,20 +27,19 @@ type fakeAPI struct {
 
 	server *httptest.Server
 
-	clusters           map[string]mksclient.ClusterDetailed
-	nodegroups         map[string][]mksclient.NodegroupListItem
-	kubeVersions       []mksclient.KubeVersionInfo
-	failures           map[string]int
-	failNext           map[string]fakeFailure
-	failureBodies      map[string]fakeBody
-	tasks              []*fakeTask
-	failedTaskTypes    map[string]bool
-	stuckTaskTypes     map[string]bool
-	settles            map[string]fakeSettle
-	x509CACertificates map[string]string
-	queries            map[string]string
-	bodies             map[string][]byte
-	calls              map[string]int
+	clusters        map[string]mksclient.ClusterDetailed
+	nodegroups      map[string][]mksclient.NodegroupListItem
+	kubeVersions    []mksclient.KubeVersionInfo
+	failures        map[string]int
+	failNext        map[string]fakeFailure
+	failureBodies   map[string]fakeBody
+	tasks           []*fakeTask
+	failedTaskTypes map[string]bool
+	stuckTaskTypes  map[string]bool
+	settles         map[string]fakeSettle
+	queries         map[string]string
+	bodies          map[string][]byte
+	calls           map[string]int
 }
 
 type fakeBody struct {
@@ -91,7 +90,7 @@ func newFakeAPI(t *testing.T) *fakeAPI {
 		failures: map[string]int{},
 		failNext: map[string]fakeFailure{}, failureBodies: map[string]fakeBody{},
 		failedTaskTypes: map[string]bool{}, stuckTaskTypes: map[string]bool{},
-		settles: map[string]fakeSettle{}, x509CACertificates: map[string]string{},
+		settles: map[string]fakeSettle{},
 		queries: map[string]string{}, bodies: map[string][]byte{}, calls: map[string]int{},
 	}
 
@@ -209,6 +208,9 @@ func (f *fakeAPI) createCluster(w http.ResponseWriter, r *http.Request) {
 		Status:                        "PENDING_CREATE",
 	}
 	f.setWindow(&c, cmp.Or(opts.MaintenanceWindowStart, "03:00:00"))
+	if opts.NetworkType == "L3VPN" {
+		c.CloudSubnetCidr = new(cmp.Or(opts.CloudSubnetCidr, "10.20.0.0/24"))
+	}
 	if cniType == mksclient.ClusterDetailedCniType(mksclient.ClusterCniTypeCILIUM) {
 		cilium := valueOrZero(opts.CniCiliumSettings)
 		c.CniCiliumSettings = &mksclient.CNICiliumSettings{
@@ -219,7 +221,6 @@ func (f *fakeAPI) createCluster(w http.ResponseWriter, r *http.Request) {
 	if opts.KubernetesOptions != nil {
 		c.KubernetesOptions = *opts.KubernetesOptions
 		c.KubernetesOptions.Oidc = normaliseFakeOIDC(c.KubernetesOptions.Oidc)
-		c.KubernetesOptions.X509CaCertificates = ""
 	}
 	f.clusters[c.Id] = c
 
@@ -251,7 +252,7 @@ func (f *fakeAPI) patchCluster(w http.ResponseWriter, r *http.Request) {
 		f.addTask(id, "UPGRADE_CLUSTER_CONFIG", f.activateCluster(id))
 	}
 	if opts.KubernetesOptions != nil {
-		if f.patchKubeOptions(id, &c, *opts.KubernetesOptions) {
+		if f.patchKubeOptions(&c, *opts.KubernetesOptions) {
 			c.Status = "PENDING_UPGRADE_CLUSTER_CONFIG"
 			f.addTask(id, "UPGRADE_MASTERS_CONFIG", f.activateCluster(id))
 		}
@@ -261,7 +262,7 @@ func (f *fakeAPI) patchCluster(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, mksclient.ClusterResp{Cluster: &c})
 }
 
-func (f *fakeAPI) patchKubeOptions(id string, c *mksclient.ClusterDetailed, requested mksclient.KubernetesOptions) bool {
+func (f *fakeAPI) patchKubeOptions(c *mksclient.ClusterDetailed, requested mksclient.KubernetesOptions) bool {
 	current := &c.KubernetesOptions
 	requested.Oidc = normaliseFakeOIDC(requested.Oidc)
 	changed := false
@@ -282,10 +283,6 @@ func (f *fakeAPI) patchKubeOptions(id string, c *mksclient.ClusterDetailed, requ
 	oidcChanged.ProviderName = requested.Oidc.ProviderName
 	if oidcChanged != requested.Oidc {
 		current.Oidc = requested.Oidc
-		changed = true
-	}
-	if requested.X509CaCertificates != "" {
-		f.x509CACertificates[id] = requested.X509CaCertificates
 		changed = true
 	}
 
@@ -476,15 +473,6 @@ func (f *fakeAPI) seedCluster(id string) {
 	}
 }
 
-func (f *fakeAPI) seedNodegroup(clusterID, id, status string) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
-	f.nodegroups[clusterID] = append(f.nodegroups[clusterID], mksclient.NodegroupListItem{
-		Id: id, ClusterId: clusterID, Status: mksclient.NodegroupListItemStatus(status),
-	})
-}
-
 func (f *fakeAPI) seedTask(clusterID, nodegroupID, taskType string, stuck bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -642,13 +630,6 @@ func (f *fakeAPI) lastQuery(route string) string {
 	defer f.mu.Unlock()
 
 	return f.queries[route]
-}
-
-func (f *fakeAPI) storedX509(id string) string {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
-	return f.x509CACertificates[id]
 }
 
 func fakeAPIProjectID(projectID string) string {

@@ -53,11 +53,9 @@ func clusterState() clusterModel {
 		"feature_gates":         types.SetValueMust(types.StringType, []attr.Value{types.StringValue("CSIMigration")}),
 		"admission_controllers": types.SetValueMust(types.StringType, []attr.Value{types.StringValue("NodeRestriction")}),
 		"audit_logs": types.ObjectValueMust(auditLogsAttrTypes, map[string]attr.Value{
-			"enabled":     types.BoolValue(false),
-			"secret_name": types.StringNull(),
+			"enabled": types.BoolValue(false),
 		}),
-		"oidc":                 oidcObjectOf(nil),
-		"x509_ca_certificates": types.StringNull(),
+		"oidc": oidcObjectOf(nil),
 	})
 
 	return clusterModel{

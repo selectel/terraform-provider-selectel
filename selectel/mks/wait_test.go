@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/selectel/mks-go/v2/pkg/mksclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -53,4 +54,23 @@ func TestTaskWaiterSurvivesTransientAPIErrors(t *testing.T) {
 	defer cancel()
 	err = newCreatedTaskWaiter(client, testClusterID, time.Millisecond).Wait(ctx)
 	require.ErrorIs(t, err, context.DeadlineExceeded)
+}
+
+func TestWaitActive(t *testing.T) {
+	fake := newFakeAPI(t)
+	client := fake.client()
+	fake.seedCluster(testClusterID)
+
+	require.NoError(t, waitActive(context.Background(), client, testClusterID, time.Millisecond))
+
+	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "ERROR" })
+	err := waitActive(context.Background(), client, testClusterID, time.Millisecond)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cluster "+testClusterID+" is in ERROR")
+
+	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "MAINTENANCE" })
+	fake.settleAfter(testClusterID, 3, "ACTIVE")
+	getsBefore := fake.callCount(routeCluster)
+	require.NoError(t, waitActive(context.Background(), client, testClusterID, time.Millisecond))
+	assert.GreaterOrEqual(t, fake.callCount(routeCluster)-getsBefore, 3)
 }
