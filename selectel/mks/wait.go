@@ -26,8 +26,8 @@ func isNotFound(err error) bool {
 	return errors.As(err, &mksErr) && mksErr.StatusCode == http.StatusNotFound
 }
 
-// waitActive polls until the cluster is ACTIVE or in its maintenance window, and returns it.
-// It fails when the cluster is in ERROR. Any other status keeps waiting.
+// waitActive polls until the cluster is ACTIVE, or in MAINTENANCE for its maintenance window, and returns it.
+// ERROR fails the wait, any other status keeps waiting.
 func waitActive(ctx context.Context, client *mksv2.ServiceClient, clusterID string, interval time.Duration) (*mksclient.ClusterDetailed, error) {
 	var got *mksclient.ClusterDetailed
 	err := poll(ctx, interval, func() (string, bool, error) {
@@ -235,8 +235,8 @@ func describeTask(t mksclient.Task) string {
 	return fmt.Sprintf("task %s %s is in %s", t.Type, t.Id, t.Status)
 }
 
-// poll calls check every interval until it reports done, fails, or ctx ends. A transient failure keeps waiting;
-// any other error ends the wait. The state check returns while it is not done is named when ctx ends.
+// poll calls check every interval until it reports done, fails, or ctx ends, and then names the last state from check.
+// A transient failure keeps waiting; any other error ends the wait.
 func poll(ctx context.Context, interval time.Duration, check func() (string, bool, error)) error {
 	last := "unknown"
 	for {
