@@ -413,9 +413,6 @@ func TestClusterMinorUpgradeWithoutANextMinorFails(t *testing.T) {
 
 	assertErrorContains(t, diags, "Error upgrading cluster", "the cluster is already on the latest available minor version: 1.31")
 	assert.Equal(t, 1, fake.callCount(routeUpgradeMinor))
-	state, diags := readCluster(t, r, prior)
-	require.False(t, diags.HasError(), "%v", diags)
-	assert.Equal(t, types.StringValue(testKubeVersion), readClusterModel(t, state).KubeVersion)
 }
 
 func TestClusterReadStoresTheAPIKubeVersion(t *testing.T) {

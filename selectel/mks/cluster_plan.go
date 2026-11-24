@@ -83,9 +83,9 @@ func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 	}
 
 	if kubeOptions.IsNull() {
-		planMinor, planErr := kubeVersionTrimToMinor(plan.KubeVersion.ValueString())
-		stateMinor, stateErr := kubeVersionTrimToMinor(state.KubeVersion.ValueString())
-		if plan.KubeVersion.IsUnknown() || planErr != nil || stateErr != nil || planMinor != stateMinor {
+		planMinor, _ := kubeVersionTrimToMinor(plan.KubeVersion.ValueString())
+		stateMinor, _ := kubeVersionTrimToMinor(state.KubeVersion.ValueString())
+		if plan.KubeVersion.IsUnknown() || planMinor != stateMinor {
 			// On a minor upgrade the API removes the options the new version does not have.
 			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("kubernetes_options"), types.ObjectUnknown(kubeOptionsAttrTypes))...)
 		}

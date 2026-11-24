@@ -83,6 +83,7 @@ func TestClusterStringValidators(t *testing.T) {
 		{name: "an empty project ID is rejected", field: "project_id", value: "", want: "character count must be at least 1"},
 		{name: "an empty network ID is rejected", field: "network_id", value: "", want: "character count must be at least 1"},
 		{name: "an empty subnet ID is rejected", field: "subnet_id", value: "", want: "character count must be at least 1"},
+		{name: "an empty cloud subnet CIDR is rejected", field: "cloud_subnet_cidr", value: "", want: "character count must be at least 1"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			var resp validator.StringResponse

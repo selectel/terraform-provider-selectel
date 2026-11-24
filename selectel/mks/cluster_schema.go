@@ -191,6 +191,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			"cloud_subnet_cidr": clusterDocs.String(schema.StringAttribute{
 				Optional:      true,
 				Computed:      true,
+				Validators:    []validator.String{schemadoc.LengthAtLeast(1)},
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), schemadoc.RequiresReplace()},
 			}, schemadoc.Field{
 				Definition: "CIDR of the cloud subnet to which the master nodes are connected. " +
