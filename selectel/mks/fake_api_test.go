@@ -28,7 +28,6 @@ type fakeAPI struct {
 	server *httptest.Server
 
 	clusters        map[string]mksclient.ClusterDetailed
-	nodegroups      map[string][]mksclient.NodegroupListItem
 	kubeVersions    []mksclient.KubeVersionInfo
 	failures        map[string]int
 	failNext        map[string]fakeFailure
@@ -78,7 +77,6 @@ const (
 	routeUpgradeMinor  = "POST /v2/clusters/{cluster_id}/upgrade-minor-version"
 	routeTasks         = "GET /v2/clusters/{cluster_id}/tasks"
 	routeTask          = "GET /v2/clusters/{cluster_id}/tasks/{task_id}"
-	routeNodegroups    = "GET /v2/clusters/{cluster_id}/nodegroups"
 )
 
 func newFakeAPI(t *testing.T) *fakeAPI {
@@ -86,7 +84,7 @@ func newFakeAPI(t *testing.T) *fakeAPI {
 
 	f := &fakeAPI{
 		t:        t,
-		clusters: map[string]mksclient.ClusterDetailed{}, nodegroups: map[string][]mksclient.NodegroupListItem{},
+		clusters: map[string]mksclient.ClusterDetailed{},
 		failures: map[string]int{},
 		failNext: map[string]fakeFailure{}, failureBodies: map[string]fakeBody{},
 		failedTaskTypes: map[string]bool{}, stuckTaskTypes: map[string]bool{},
@@ -106,7 +104,6 @@ func newFakeAPI(t *testing.T) *fakeAPI {
 	f.handle(mux, routeUpgradeMinor, f.upgradeCluster(true))
 	f.handle(mux, routeTasks, f.listTasks)
 	f.handle(mux, routeTask, f.getTask)
-	f.handle(mux, routeNodegroups, f.listNodegroups)
 	f.server = httptest.NewServer(mux)
 	t.Cleanup(f.server.Close)
 
@@ -230,7 +227,7 @@ func (f *fakeAPI) createCluster(w http.ResponseWriter, r *http.Request) {
 
 func (f *fakeAPI) patchCluster(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("cluster_id")
-	if f.conflict(w, id, []string{"ACTIVE", "PENDING_UPDATE_CONTROL_PLANE_LOGS"}, nil) {
+	if f.conflict(w, id, []string{"ACTIVE", "PENDING_UPDATE_CONTROL_PLANE_LOGS"}) {
 		return
 	}
 	c := f.clusters[id]
@@ -318,7 +315,7 @@ func (f *fakeAPI) deleteCluster(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	if f.conflict(w, id, []string{"ACTIVE", "MAINTENANCE", "ERROR"}, []string{"ACTIVE", "ERROR"}) {
+	if f.conflict(w, id, []string{"ACTIVE", "MAINTENANCE", "ERROR"}) {
 		return
 	}
 
@@ -331,7 +328,7 @@ func (f *fakeAPI) deleteCluster(w http.ResponseWriter, r *http.Request) {
 func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("cluster_id")
-		if f.conflict(w, id, []string{"ACTIVE"}, []string{"ACTIVE", "PENDING_CLEANUP"}) {
+		if f.conflict(w, id, []string{"ACTIVE"}) {
 			return
 		}
 		c := f.clusters[id]
@@ -366,14 +363,10 @@ func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 	}
 }
 
-// conflict answers 409 the way the API does when the cluster or one of its
-// nodegroups is in a status the call does not take.
-func (f *fakeAPI) conflict(w http.ResponseWriter, id string, clusterStatuses, nodegroupStatuses []string) bool {
-	allowed := slices.Contains(clusterStatuses, string(f.clusters[id].Status))
-	for _, ng := range f.nodegroups[id] {
-		allowed = allowed && (nodegroupStatuses == nil || slices.Contains(nodegroupStatuses, string(ng.Status)))
-	}
-	if allowed {
+// conflict answers 409 the way the API does when the cluster is in a status
+// the call does not take.
+func (f *fakeAPI) conflict(w http.ResponseWriter, id string, clusterStatuses []string) bool {
+	if slices.Contains(clusterStatuses, string(f.clusters[id].Status)) {
 		return false
 	}
 
@@ -382,25 +375,6 @@ func (f *fakeAPI) conflict(w http.ResponseWriter, id string, clusterStatuses, no
 	writeJSON(w, http.StatusConflict, body)
 
 	return true
-}
-
-func (f *fakeAPI) listNodegroups(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("cluster_id")
-	_, ok := f.clusters[id]
-	if !ok {
-		writeNotFound(w, id)
-
-		return
-	}
-
-	nodegroups := f.nodegroups[id]
-	for i := range nodegroups {
-		status, settled := f.settle(nodegroups[i].Id)
-		if settled {
-			nodegroups[i].Status = mksclient.NodegroupListItemStatus(status)
-		}
-	}
-	writeJSON(w, http.StatusOK, mksclient.NodegroupList{Nodegroups: nodegroups})
 }
 
 func (f *fakeAPI) listTasks(w http.ResponseWriter, r *http.Request) {
@@ -603,11 +577,6 @@ func (f *fakeAPI) fail(route string, status int) {
 	defer f.mu.Unlock()
 
 	delete(f.failureBodies, route)
-	if status == 0 {
-		delete(f.failures, route)
-
-		return
-	}
 	f.failures[route] = status
 }
 

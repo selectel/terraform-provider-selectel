@@ -87,7 +87,7 @@ func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 		}
 	}
 
-	// Any update can change the status: a task-creating PATCH moves the cluster to PENDING_UPGRADE_CLUSTER_CONFIG, a finished task leaves it ACTIVE or MAINTENANCE.
+	// An update changes the status while it runs.
 	if !resp.Plan.Raw.Equal(req.State.Raw) {
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("status"), types.StringUnknown())...)
 	}

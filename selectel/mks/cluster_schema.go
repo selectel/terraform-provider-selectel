@@ -41,8 +41,8 @@ const (
 
 // workersTypes maps each user-facing workers_type to the API network_type.
 var workersTypes = map[string]string{
-	"CLOUD":     "STANDARD",
-	"DEDICATED": "L3VPN",
+	"CLOUD":     string(mksclient.ClusterNetworkTypeSTANDARD),
+	"DEDICATED": string(mksclient.ClusterNetworkTypeL3VPN),
 }
 
 var (
@@ -234,19 +234,19 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Behavior:   "If omitted, the API uses `CALICO`. To set `cni_cilium_settings`, set this argument to `CILIUM`.",
 			}),
 			"cni_cilium_settings": schema.SingleNestedAttribute{
-				Optional:            true,
-				Computed:            true,
-				MarkdownDescription: "Settings of the Cilium CNI. If you set this argument, set `cni_type` to `CILIUM`.",
-				PlanModifiers:       []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "Settings of the Cilium CNI. If you set this argument, set `cni_type` to `CILIUM`. " +
+					"If omitted when `cni_type` is `CILIUM`, the API uses `true` for `envoy_daemonset` and `false` for `hubble_relay`.",
+				PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 				Attributes: map[string]schema.Attribute{
 					"envoy_daemonset": clusterDocs.Bool(optionalBool(), schemadoc.Field{
 						Definition: "Enables or disables the Envoy DaemonSet for Cilium. If omitted, the API uses `true`.",
 					}),
 					"hubble_relay": clusterDocs.Bool(schema.BoolAttribute{
-						Optional:      true,
-						Computed:      true,
-						Default:       schemadoc.StaticBool(true),
-						PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+						Optional: true,
+						Computed: true,
+						Default:  schemadoc.StaticBool(true),
 					}, schemadoc.Field{
 						Definition: "Enables or disables Hubble Relay for Cilium.",
 					}),

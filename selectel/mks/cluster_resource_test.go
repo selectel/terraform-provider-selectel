@@ -509,11 +509,11 @@ func TestClusterWaits(t *testing.T) {
 	}
 	for _, tt := range []struct {
 		name  string
-		stage func(t *testing.T, fake *fakeAPI, r *clusterResource, state clusterModel)
+		stage func(t *testing.T, fake *fakeAPI, r *clusterResource)
 	}{
 		{
 			name: "a stuck create wait times out and still saves the cluster",
-			stage: func(t *testing.T, fake *fakeAPI, r *clusterResource, _ clusterModel) {
+			stage: func(t *testing.T, fake *fakeAPI, r *clusterResource) {
 				fake.stickTasks("CREATE_CLUSTER", true)
 				plan := clusterPlan()
 				plan.Timeouts = timeoutsOf(time.Second, 2*time.Second, 2*time.Second)
@@ -529,7 +529,7 @@ func TestClusterWaits(t *testing.T) {
 		},
 		{
 			name: "a stuck create wait with a failing read reports both",
-			stage: func(t *testing.T, fake *fakeAPI, r *clusterResource, _ clusterModel) {
+			stage: func(t *testing.T, fake *fakeAPI, r *clusterResource) {
 				fake.stickTasks("CREATE_CLUSTER", true)
 				fake.fail(routeCluster, http.StatusInternalServerError)
 				plan := clusterPlan()
@@ -540,7 +540,7 @@ func TestClusterWaits(t *testing.T) {
 		},
 		{
 			name: "a stuck update wait times out and the next refresh sees the change",
-			stage: func(t *testing.T, fake *fakeAPI, r *clusterResource, _ clusterModel) {
+			stage: func(t *testing.T, fake *fakeAPI, r *clusterResource) {
 				fake.stickTasks("UPGRADE_MASTERS_CONFIG", true)
 				plan := clusterPlan()
 				plan.Timeouts = timeoutsOf(2*time.Second, time.Second, 2*time.Second)
@@ -560,7 +560,7 @@ func TestClusterWaits(t *testing.T) {
 		},
 		{
 			name: "a stuck delete wait times out",
-			stage: func(t *testing.T, fake *fakeAPI, r *clusterResource, _ clusterModel) {
+			stage: func(t *testing.T, fake *fakeAPI, r *clusterResource) {
 				plan := clusterPlan()
 				plan.Timeouts = timeoutsOf(2*time.Second, 2*time.Second, time.Second)
 				got := mustCreate(t, r, plan)
@@ -575,7 +575,7 @@ func TestClusterWaits(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			fake, r := fakeResource(t)
-			tt.stage(t, fake, r, clusterState())
+			tt.stage(t, fake, r)
 		})
 	}
 }

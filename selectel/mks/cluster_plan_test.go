@@ -94,11 +94,6 @@ func TestClusterModifyPlanRules(t *testing.T) {
 			plan := state
 			tt.plan(&plan)
 			resp := modifyPlan(t, r, state, plan)
-			if tt.wantErr == "" {
-				assert.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
-
-				return
-			}
 			require.True(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
 			assert.Equal(t, tt.wantErr, resp.Diagnostics.Errors()[0].Summary())
 		})
