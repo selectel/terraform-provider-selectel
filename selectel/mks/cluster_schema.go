@@ -135,7 +135,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 					"A patch upgrade is possible only to the latest patch version of the current minor version. " +
 					"Another patch version fails the apply. " +
 					"A minor upgrade is possible only to the next minor version, and the API picks its patch version. " +
-					"Skipping a minor version fails the plan. " +
+					"Skipping a minor version fails the apply. " +
 					"The cluster may run a newer version than configured, for example after patch auto-upgrade: " +
 					"a configured version lower than the one in the state is accepted with no change and never downgrades the cluster.",
 				Source: "You can retrieve the available versions with the [selectel_mks_kube_versions_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/mks_kube_versions_v1) data source.",

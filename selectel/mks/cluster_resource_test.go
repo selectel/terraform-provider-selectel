@@ -352,6 +352,8 @@ func TestClusterKubeVersionUpgrade(t *testing.T) {
 	bad.KubeVersion = types.StringValue("1.34.1")
 	_, diags = updateCluster(t, r, got2, bad)
 	assertErrorContains(t, diags, "kubernetes versions must be upgraded one minor version at a time")
+	_, diags = updateCluster(t, r, got2, withKubeVersion(got2, "2.33.1"))
+	assertErrorContains(t, diags, "kubernetes versions must be upgraded one minor version at a time")
 	assert.Equal(t, 1, fake.callCount(routeUpgradeMinor))
 
 	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.KubeVersion = "1.32.5" })

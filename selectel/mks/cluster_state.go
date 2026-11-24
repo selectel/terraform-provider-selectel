@@ -3,7 +3,6 @@ package mks
 import (
 	"cmp"
 	"context"
-	"fmt"
 	"slices"
 	"strings"
 
@@ -64,35 +63,6 @@ type clusterOIDCModel struct {
 	UsernameClaim types.String       `tfsdk:"username_claim"`
 	GroupsClaim   types.String       `tfsdk:"groups_claim"`
 	CACerts       trimmedStringValue `tfsdk:"ca_certs"`
-}
-
-func validateKubeVersionChange(current, desired string) error {
-	currentMajor, err := kubeVersionToMajor(current)
-	if err != nil {
-		return err
-	}
-	desiredMajor, err := kubeVersionToMajor(desired)
-	if err != nil {
-		return err
-	}
-	if currentMajor != desiredMajor {
-		return fmt.Errorf("current version %s can't be upgraded to version %s", current, desired)
-	}
-
-	currentMinor, err := kubeVersionToMinor(current)
-	if err != nil {
-		return err
-	}
-	desiredMinor, err := kubeVersionToMinor(desired)
-	if err != nil {
-		return err
-	}
-	if desiredMinor > currentMinor+1 {
-		return fmt.Errorf("current version %s can't be upgraded to version %s, kubernetes versions must be upgraded one minor version at a time",
-			current, desired)
-	}
-
-	return nil
 }
 
 func compareKubeVersions(a, b string) (int, error) {

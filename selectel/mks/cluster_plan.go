@@ -77,13 +77,6 @@ func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 			// Like the v1 diff suppress: a lower configured version, left behind by patch auto-upgrade, changes nothing.
 			plan.KubeVersion = state.KubeVersion
 			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("kube_version"), state.KubeVersion)...)
-		} else {
-			err = validateKubeVersionChange(state.KubeVersion.ValueString(), plan.KubeVersion.ValueString())
-			if err != nil {
-				resp.Diagnostics.AddAttributeError(path.Root("kube_version"), "Invalid Kubernetes version change", err.Error())
-
-				return
-			}
 		}
 	}
 

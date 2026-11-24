@@ -75,29 +75,16 @@ func modifyPlan(t *testing.T, r *clusterResource, state, plan clusterModel) reso
 	return resp
 }
 
-func TestClusterModifyPlanRules(t *testing.T) {
-	r := &clusterResource{}
-	for _, tt := range []struct {
-		name    string
-		plan    func(m *clusterModel)
-		wantErr string
-	}{
-		{name: "a skipped minor version fails the plan", plan: func(m *clusterModel) {
-			m.KubeVersion = types.StringValue("1.33.1")
-		}, wantErr: "Invalid Kubernetes version change"},
-		{name: "a major version change fails the plan", plan: func(m *clusterModel) {
-			m.KubeVersion = types.StringValue("2.31.1")
-		}, wantErr: "Invalid Kubernetes version change"},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			state := clusterState()
-			plan := state
-			tt.plan(&plan)
-			resp := modifyPlan(t, r, state, plan)
-			require.True(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
-			assert.Equal(t, tt.wantErr, resp.Diagnostics.Errors()[0].Summary())
-		})
-	}
+func TestClusterModifyPlanAcceptsASkippedMinorVersion(t *testing.T) {
+	plan := clusterState()
+	plan.KubeVersion = types.StringValue("1.34.1")
+
+	resp := modifyPlan(t, &clusterResource{}, clusterState(), plan)
+
+	require.Empty(t, resp.Diagnostics)
+	var got clusterModel
+	require.False(t, resp.Plan.Get(context.Background(), &got).HasError())
+	assert.Equal(t, types.StringValue("1.34.1"), got.KubeVersion)
 }
 
 func TestClusterModifyPlanState(t *testing.T) {
