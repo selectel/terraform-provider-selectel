@@ -51,11 +51,11 @@ func (r *clusterResource) ValidateConfig(ctx context.Context, req resource.Valid
 			"Remove cloud_subnet_cidr or set workers_type to DEDICATED.")
 	}
 
-	// The API always disables auto-repair for a dedicated cluster.
+	// The API disables auto-repair when it creates a dedicated cluster.
 	if workersType.ValueString() == "DEDICATED" && autorepair.ValueBool() {
 		resp.Diagnostics.AddAttributeError(path.Root("enable_autorepair"),
 			"Auto-repair is not available for dedicated clusters",
-			"The API always disables enable_autorepair for a DEDICATED cluster, so setting it to true ends in an inconsistent result.")
+			"The API disables enable_autorepair when it creates a DEDICATED cluster, so setting it to true ends in an inconsistent result.")
 	}
 }
 

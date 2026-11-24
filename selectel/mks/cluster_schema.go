@@ -211,7 +211,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Definition: "Enables or disables automatic reinstallation of worker nodes that are unavailable or unhealthy. " +
 					"Auto-recovery is unavailable with a single worker node and on dedicated servers, " +
 					"and it deletes all data on the boot disk of the node.",
-				Behavior: "If omitted, the API enables it, except for `DEDICATED` clusters, where it is always disabled.",
+				Behavior: "If omitted, the API enables it, except for `DEDICATED` clusters, where it is disabled.",
 				Concept: schemadoc.Link{
 					Title: "node auto-recovery",
 					URL:   "https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/reinstall-nodes/",
