@@ -16,7 +16,7 @@ import (
 
 var clusterTimeouts = schemadoc.Timeouts{
 	Create: 60 * time.Minute,
-	Update: 60 * time.Minute,
+	Update: 2 * time.Hour,
 	Delete: 60 * time.Minute,
 }
 
