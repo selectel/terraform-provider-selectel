@@ -356,11 +356,12 @@ func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 				latest[minor] = valueOrZero(v.Version)
 			}
 		}
-		f.addTask(id, taskType, func() {
-			c := f.clusters[id]
-			c.KubeVersion = latest[targetMinor]
+		version, ok := latest[targetMinor]
+		if ok {
+			c.KubeVersion = version
 			f.clusters[id] = c
-		})
+			f.addTask(id, taskType, nil)
+		}
 		writeJSON(w, http.StatusOK, mksclient.ClusterResp{Cluster: &c})
 	}
 }

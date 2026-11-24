@@ -88,7 +88,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Creates and manages a cluster in Managed Kubernetes using the v2 public API. " +
 			"For more information about Managed Kubernetes, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/managed-kubernetes/).\n\n" +
-			"When a `kubernetes_options` or `cni_cilium_settings` task fails, the API has already recorded the new values, " +
+			"When a `kube_version`, `kubernetes_options`, or `cni_cilium_settings` task fails, the API has already recorded the new values, " +
 			"so the next plan shows no change. Check `status`.",
 		Attributes: map[string]schema.Attribute{
 			"id": clusterDocs.ID(),

@@ -298,9 +298,20 @@ func upgradeKubeVersion(ctx context.Context, client *mksv2.ServiceClient, cluste
 	}
 
 	err = callAndWait(ctx, client, clusterID, interval, func() error {
-		_, err := cluster.UpgradeMinorVersion(ctx, client, clusterID)
+		upgraded, err := cluster.UpgradeMinorVersion(ctx, client, clusterID)
+		if err != nil {
+			return err
+		}
+		upgradedMinor, err := kubeVersionTrimToMinor(upgraded.KubeVersion)
+		if err != nil {
+			return err
+		}
+		if upgradedMinor == currentMinor {
+			// The API answers 200 and creates no task when there is no next minor version.
+			return fmt.Errorf("the cluster is already on the latest available minor version: %s", currentMinor)
+		}
 
-		return err
+		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("error upgrading minor version: %w", err)

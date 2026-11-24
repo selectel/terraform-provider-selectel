@@ -379,6 +379,20 @@ func TestClusterMinorUpgradeAcceptsAnyPatchOfTheNextMinor(t *testing.T) {
 	assert.Equal(t, 0, fake.callCount(routeUpgradePatch))
 }
 
+func TestClusterMinorUpgradeWithoutANextMinorFails(t *testing.T) {
+	fake, r := fakeResource(t)
+	fake.seedKubeVersions(mksclient.KubeVersionInfo{Version: new(testKubeVersion)})
+	prior := mustCreate(t, r, clusterPlan())
+
+	_, diags := updateCluster(t, r, prior, withKubeVersion(prior, testKubeVersionUp))
+
+	assertErrorContains(t, diags, "Error upgrading cluster", "the cluster is already on the latest available minor version: 1.31")
+	assert.Equal(t, 1, fake.callCount(routeUpgradeMinor))
+	state, diags := readCluster(t, r, prior)
+	require.False(t, diags.HasError(), "%v", diags)
+	assert.Equal(t, types.StringValue(testKubeVersion), readClusterModel(t, state).KubeVersion)
+}
+
 func TestClusterReadStoresTheAPIKubeVersion(t *testing.T) {
 	fake, r := fakeResource(t)
 	prior := mustCreate(t, r, clusterPlan())
@@ -616,18 +630,16 @@ func TestClusterUpdateTaskError(t *testing.T) {
 	_, diags := updateCluster(t, r, prior, upPlan)
 	assertErrorContains(t, diags, "task UPGRADE_PATCH_VERSION task-", "ended in ERROR")
 
-	fake.failTasks("UPGRADE_PATCH_VERSION", false)
-	_, diags = updateCluster(t, r, prior, upPlan)
-	assertErrorContains(t, diags, "Error upgrading cluster", "cluster or one of nodegroups has invalid status to perform this operation")
-
-	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "ACTIVE" })
-	got, diags := updateCluster(t, r, prior, upPlan)
+	state, diags := readCluster(t, r, prior)
 	require.False(t, diags.HasError(), "%v", diags)
+	got := readClusterModel(t, state)
 	assert.Equal(t, types.StringValue(testKubeVersion), got.KubeVersion)
+	assert.Equal(t, types.StringValue("ERROR"), got.Status)
 
 	assert.Equal(t, 1, fake.callCount(routeCreateCluster))
-	assert.Equal(t, 3, fake.callCount(routeUpgradePatch))
+	assert.Equal(t, 1, fake.callCount(routeUpgradePatch))
 
+	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "ACTIVE" })
 	fake.failTasks("UPGRADE_MASTERS_CONFIG", true)
 	mastersPlan := got
 	mastersPlan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
