@@ -2,37 +2,22 @@ package mks
 
 import (
 	"context"
-	"fmt"
-	"regexp"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	mksclient "github.com/selectel/mks-go/v2/pkg/mksclient"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadoc"
 )
 
 var clusterDocs = schemadoc.Resource{Name: "cluster", Location: "managed-kubernetes"}
-
-// kubeVersionPattern is the x.y.z form of a Kubernetes version.
-var kubeVersionPattern = regexp.MustCompile(`^\d+\.\d+\.\d+$`)
-
-var maintenanceWindowPattern = regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$`)
-
-var namePattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9-]*$`)
 
 // The claims the API sets for an enabled OIDC that omits them.
 const (
@@ -103,7 +88,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				},
 				PlanModifiers: []planmodifier.String{nameCase, schemadoc.RequiresReplace()},
 			}, schemadoc.Field{
-				Definition: "Cluster name. It is included in the names of the cluster entities: " +
+				Definition: "Cluster name. The cluster name is included in the names of the cluster entities: " +
 					"node groups, nodes, load balancers, networks, and volumes. " +
 					"The API stores the name in lower case, so a change of only the letter case is not a change.",
 			}),
@@ -118,7 +103,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 					schemadoc.RequiresReplace(),
 				},
 			}, schemadoc.Field{
-				Definition: "Unique identifier of the associated project, for example, `a07abc12310546f1b9291ab301a7d75b`.",
+				Definition: "Unique identifier of the associated project, for example, `a07abc12310546f1b9291ab3013a7d75`.",
 				Behavior:   "If omitted, the `project_id` of the provider configuration is used.",
 				Source:     schemadoc.FromResource("selectel_vpc_project_v2", "project ID"),
 				Concept: schemadoc.Link{
@@ -133,11 +118,9 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						"The format is `x.y.z`."),
 				},
 			}, schemadoc.Field{
-				Definition: "Kubernetes version of the cluster. Raising it upgrades the cluster. " +
-					"A patch upgrade is possible only to the latest patch version of the current minor version. " +
-					"Another patch version fails the apply. " +
-					"A minor upgrade is possible only to the next minor version, and the API picks its patch version. " +
-					"Skipping a minor version fails the apply. " +
+				Definition: "Kubernetes version of the cluster. Changing this to a later version upgrades the cluster. " +
+					"To upgrade a patch version, the desired version must match the latest available patch version of the current minor version. " +
+					"To upgrade a minor version, the desired version must match the next available minor version. The API picks its patch version. " +
 					"The cluster may run a newer version than configured, for example after patch auto-upgrade: " +
 					"a configured version lower than the one in the state is accepted with no change and never downgrades the cluster.",
 				Source: "You can retrieve the available versions with the [selectel_mks_kube_versions_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/mks_kube_versions_v1) data source.",
@@ -156,6 +139,10 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 					"in one availability zone, and `HIGH_AVAILABILITY_MULTI_AZ` has three master nodes in three availability zones.",
 				Behavior: "If omitted, the API creates a `HIGH_AVAILABILITY` cluster. If `cluster_type` is `BASIC`, " +
 					"set `enable_patch_version_auto_upgrade` to `false` or omit it.",
+				Concept: schemadoc.Link{
+					Title: "Cluster types",
+					URL:   "https://docs.selectel.ru/en/managed-kubernetes/about/about-managed-kubernetes/#cluster-types",
+				},
 			}),
 			"workers_type": clusterDocs.String(schema.StringAttribute{
 				Required:      true,
@@ -173,7 +160,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Validators:    []validator.String{schemadoc.LengthAtLeast(1)},
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), schemadoc.RequiresReplace()},
 			}, schemadoc.Field{
-				Definition: "Unique identifier of the network of the cluster.",
+				Definition: "Unique identifier of the associated network.",
 				Behavior:   "If omitted, the API creates a network.",
 				Source:     schemadoc.FromResource("selectel_vpc_network_v2", "network ID"),
 			}),
@@ -183,7 +170,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Validators:    []validator.String{schemadoc.LengthAtLeast(1)},
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), schemadoc.RequiresReplace()},
 			}, schemadoc.Field{
-				Definition: "Unique identifier of the subnet of the cluster.",
+				Definition: "Unique identifier of the associated subnet.",
 				Behavior:   "If omitted, the API creates a subnet.",
 				Source:     schemadoc.FromResource("selectel_vpc_network_subnet_v2", "subnet ID"),
 			}),
@@ -215,6 +202,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			}, schemadoc.Field{
 				Definition: "Time in UTC when maintenance in the cluster starts.",
 				Behavior:   "If omitted when the cluster is created, the API uses `01:00:00`.",
+				Concept:    maintenanceWindowLink,
 			}),
 			"enable_autorepair": clusterDocs.Bool(optionalBool(), schemadoc.Field{
 				Definition: "Enables or disables automatic reinstallation of worker nodes that are unavailable or unhealthy. " +
@@ -230,6 +218,10 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Definition: "Enables or disables automatic upgrade of the cluster to the latest patch version during the maintenance window. " +
 					"If omitted, the API enables it for all cluster types except `BASIC`. " +
 					"If `cluster_type` is `BASIC`, set this argument to `false` or omit it.",
+				Concept: schemadoc.Link{
+					Title: "patch version auto-upgrade",
+					URL:   "https://docs.selectel.ru/en/managed-kubernetes/clusters/upgrade-version/#enable-patch-release-update",
+				},
 			}),
 			"cni_type": clusterDocs.String(schema.StringAttribute{
 				Optional: true,
@@ -239,18 +231,23 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				)},
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), schemadoc.RequiresReplace()},
 			}, schemadoc.Field{
-				Definition: "Type of the CNI of the cluster.",
+				Definition: "Type of CNI used by the cluster.",
 				Behavior:   "If omitted, the API uses `CALICO`. To set `cni_cilium_settings`, set this argument to `CILIUM`.",
 			}),
 			"cni_cilium_settings": schema.SingleNestedAttribute{
 				Optional: true,
 				Computed: true,
-				MarkdownDescription: "Settings of the Cilium CNI. If you set this argument, set `cni_type` to `CILIUM`. " +
+				MarkdownDescription: "Settings for the Cilium CNI. Can be set only when `cni_type` is `CILIUM`. " +
 					"If omitted when `cni_type` is `CILIUM`, the API uses `true` for `envoy_daemonset` and `false` for `hubble_relay`.",
 				PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 				Attributes: map[string]schema.Attribute{
 					"envoy_daemonset": clusterDocs.Bool(optionalBool(), schemadoc.Field{
 						Definition: "Enables or disables the Envoy DaemonSet for Cilium. If omitted, the API uses `true`.",
+						Concept: schemadoc.Link{
+							Topic:  "the Envoy DaemonSet",
+							URL:    "https://docs.cilium.io/en/stable/security/network/proxy/envoy/#deployment-as-daemonset",
+							Vendor: "Cilium",
+						},
 					}),
 					"hubble_relay": clusterDocs.Bool(schema.BoolAttribute{
 						Optional: true,
@@ -258,6 +255,11 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						Default:  schemadoc.StaticBool(true),
 					}, schemadoc.Field{
 						Definition: "Enables or disables Hubble Relay for Cilium.",
+						Concept: schemadoc.Link{
+							Topic:  "Hubble Relay",
+							URL:    "https://docs.cilium.io/en/stable/internals/hubble/#hubble-relay",
+							Vendor: "Cilium",
+						},
 					}),
 				},
 			},
@@ -274,9 +276,10 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						ElementType: types.StringType,
 						Default:     emptySet(),
 					}, schemadoc.Field{
-						Definition: "Enabled feature gates.",
+						Definition: "Set of feature gates enabled in the cluster.",
 						Behavior: "A minor upgrade removes the feature gates that the new version does not have, " +
 							"so remove them from the configuration in the same change.",
+						Source: schemadoc.FromDataSource("selectel_mks_feature_gates_v1", "available feature gates"),
 						Concept: schemadoc.Link{
 							Title: "Feature gates",
 							URL:   "https://docs.selectel.ru/en/managed-kubernetes/clusters/feature-gates/",
@@ -288,9 +291,10 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						ElementType: types.StringType,
 						Default:     emptySet(),
 					}, schemadoc.Field{
-						Definition: "Enabled admission controllers.",
+						Definition: "Set of admission controllers enabled in the cluster.",
 						Behavior: "A minor upgrade removes the admission controllers that the new version does not have, " +
 							"so remove them from the configuration in the same change.",
+						Source: schemadoc.FromDataSource("selectel_mks_admission_controllers_v1", "available admission controllers"),
 						Concept: schemadoc.Link{
 							Title: "Admission controllers",
 							URL:   "https://docs.selectel.ru/en/managed-kubernetes/clusters/admission-controllers/",
@@ -313,8 +317,8 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						Optional: true,
 						Computed: true,
 						MarkdownDescription: "Connection of an OpenID Connect (OIDC) provider to the cluster. " +
-							"Disabling OIDC clears its settings, so with `enabled = false` omit the other arguments. A non-empty one fails the plan. " +
-							"Learn more about [connecting an OIDC provider to the cluster](https://docs.selectel.ru/en/managed-kubernetes/clusters/access-to-cluster-with-oidc-provider/#configure-oidc-connection).",
+							"Disabling OIDC clears its settings, so if `enabled` is `false`, the other arguments must be omitted. " +
+							"Learn more about [connecting an OIDC provider to the cluster](https://docs.selectel.ru/en/managed-kubernetes/clusters/access-to-cluster-with-oidc-provider/#connect-oidc-provider-to-cluster).",
 						PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 						Attributes: map[string]schema.Attribute{
 							"enabled": clusterDocs.Bool(optionalBool(), schemadoc.Field{
@@ -322,25 +326,26 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 								Behavior:   "If `false`, omit the other arguments of `oidc`. If omitted when the cluster is created, the value is `false`.",
 							}),
 							"provider_name": clusterDocs.String(oidcParam(""), schemadoc.Field{
-								Definition: "Name of the connection, for identification only.",
+								Definition: "Name of the connection that you create. The name is only for identification purposes.",
 								Behavior:   "If `enabled` is `false`, omit this argument.",
 							}),
 							"issuer_url": clusterDocs.String(oidcParam(""), schemadoc.Field{
-								Definition: "URL of the OIDC provider. It must start with `https://`. The host must not be `127.0.0.1`, `localhost`, or `0.0.0.0`.",
-								Behavior:   "If `enabled` is `false`, omit this argument.",
+								Definition: "URL of the OIDC provider used to authenticate users who request access to the cluster. " +
+									"The URL must start with `https://`. The host must not be `127.0.0.1`, `localhost`, or `0.0.0.0`.",
+								Behavior: "If `enabled` is `false`, omit this argument.",
 							}),
 							"client_id": clusterDocs.String(oidcParam(""), schemadoc.Field{
-								Definition: "Client ID that all tokens must be issued for.",
+								Definition: "Service identifier issued by the OIDC provider and used in authentication requests to the resources.",
 								Behavior:   "If `enabled` is `false`, omit this argument.",
 							}),
 							"username_claim": clusterDocs.String(oidcParam(oidcUsernameClaim), schemadoc.Field{
-								Definition: "JWT claim to use as the username. " +
-									"When OIDC is enabled, omit it to get `sub`. An empty value fails the plan.",
+								Definition: "JWT claim to use as the username. The content of the claim must be a unique identifier of the end user. " +
+									"When OIDC is enabled, the value cannot be empty: omit it to get `sub`.",
 								Behavior: "If `enabled` is `false`, omit this argument.",
 							}),
 							"groups_claim": clusterDocs.String(oidcParam(oidcGroupsClaim), schemadoc.Field{
 								Definition: "JWT claim to use as the user's group. " +
-									"When OIDC is enabled, omit it to get `groups`. An empty value fails the plan.",
+									"When OIDC is enabled, the value cannot be empty: omit it to get `groups`.",
 								Behavior: "If `enabled` is `false`, omit this argument.",
 							}),
 							"ca_certs": clusterDocs.String(schema.StringAttribute{
@@ -349,10 +354,11 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 								CustomType:    trimmedStringType{},
 								PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), trimmedStringKeep, oidcPlanModifier{}},
 							}, schemadoc.Field{
-								Definition: "CA certificates of the OIDC provider. The format is PEM. " +
+								Definition: "Certificate in PEM format for the CA that signed your identity provider's web certificate. " +
+									"Optional if the certificate is issued by the public CA that Ubuntu by default considers trustworthy. " +
 									"Leading and trailing whitespace is ignored.",
+								Behavior: "If `enabled` is `false`, omit this argument.",
 							}),
-							// ca_certs carries no enabled=false sentence: any PEM content is a value the plan rejects.
 						},
 					},
 				},
@@ -374,93 +380,11 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			}, schemadoc.Field{
 				Definition: "Time in UTC when maintenance in the cluster ends. The format is `hh:mm:ss`.",
+				Concept:    maintenanceWindowLink,
 			}),
 		},
 		Blocks: map[string]schema.Block{
 			"timeouts": clusterDocs.Timeouts(ctx, clusterTimeouts),
 		},
 	}
-}
-
-type emptySetDefault struct {
-	defaults.Set
-	schemadoc.Facts
-}
-
-// emptySet plans an omitted set as the empty one, which clears it.
-func emptySet() defaults.Set {
-	return emptySetDefault{
-		setdefault.StaticValue(types.SetValueMust(types.StringType, nil)),
-		schemadoc.Facts{Default: "The default value is an empty set."},
-	}
-}
-
-type trimmedStringType struct {
-	basetypes.StringType
-}
-
-var _ basetypes.StringTypable = trimmedStringType{}
-
-func (t trimmedStringType) Equal(o attr.Type) bool {
-	_, ok := o.(trimmedStringType)
-
-	return ok
-}
-
-func (t trimmedStringType) String() string {
-	return "trimmedStringType"
-}
-
-func (t trimmedStringType) ValueFromString(_ context.Context, in basetypes.StringValue) (basetypes.StringValuable, diag.Diagnostics) {
-	return trimmedStringValue{StringValue: in}, nil
-}
-
-func (t trimmedStringType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
-	value, err := t.StringType.ValueFromTerraform(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	stringValue, ok := value.(basetypes.StringValue)
-	if !ok {
-		return nil, fmt.Errorf("unexpected value type %T", value)
-	}
-
-	return trimmedStringValue{StringValue: stringValue}, nil
-}
-
-func (t trimmedStringType) ValueType(_ context.Context) attr.Value {
-	return trimmedStringValue{}
-}
-
-type trimmedStringValue struct {
-	basetypes.StringValue
-}
-
-var _ basetypes.StringValuableWithSemanticEquals = trimmedStringValue{}
-
-func (v trimmedStringValue) Equal(o attr.Value) bool {
-	other, ok := o.(trimmedStringValue)
-
-	return ok && v.StringValue.Equal(other.StringValue)
-}
-
-func (v trimmedStringValue) Type(_ context.Context) attr.Type {
-	return trimmedStringType{}
-}
-
-func (v trimmedStringValue) StringSemanticEquals(_ context.Context, newValuable basetypes.StringValuable) (bool, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	newValue, ok := newValuable.(trimmedStringValue)
-	if !ok {
-		diags.AddError("Semantic Equality Check Error", fmt.Sprintf("Expected trimmedStringValue, got %T.", newValuable))
-
-		return false, diags
-	}
-
-	return strings.TrimSpace(v.ValueString()) == strings.TrimSpace(newValue.ValueString()), diags
-}
-
-func trimmedString(value string) trimmedStringValue {
-	return trimmedStringValue{StringValue: types.StringValue(value)}
 }

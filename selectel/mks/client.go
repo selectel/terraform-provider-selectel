@@ -8,10 +8,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	mksv2 "github.com/selectel/mks-go/v2/pkg"
-	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadoc"
 )
 
 // ProviderConfig is the authentication boundary shared by the resources.
@@ -113,45 +111,4 @@ func keystoneProjectID(projectID string) string {
 // sameProject reports whether two project IDs name the same project.
 func sameProject(a, b string) bool {
 	return keystoneProjectID(a) == keystoneProjectID(b)
-}
-
-// keepState plans the state value when the planned one means the same.
-type keepState struct {
-	description string
-	same        func(a, b string) bool
-	schemadoc.Facts
-}
-
-var (
-	// nameCase exists because the API lower-cases the name, and v1 ignored the case too.
-	nameCase = keepState{
-		description: "A change of only the letter case keeps the state value.",
-		same:        strings.EqualFold,
-	}
-	// sameProjectID exists because a project ID in another form names the same project, see keystoneProjectID.
-	sameProjectID = keepState{
-		description: "A project ID that differs only in dashes or letter case keeps the state value.",
-		same:        sameProject,
-	}
-	trimmedStringKeep = keepState{
-		description: "A change of only the surrounding whitespace keeps the state value.",
-		same:        func(a, b string) bool { return strings.TrimSpace(a) == strings.TrimSpace(b) },
-	}
-)
-
-func (m keepState) Description(_ context.Context) string {
-	return m.description
-}
-
-func (m keepState) MarkdownDescription(ctx context.Context) string {
-	return m.Description(ctx)
-}
-
-func (m keepState) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-	if req.StateValue.IsNull() || req.PlanValue.IsUnknown() || req.PlanValue.IsNull() {
-		return
-	}
-	if m.same(req.PlanValue.ValueString(), req.StateValue.ValueString()) {
-		resp.PlanValue = req.StateValue
-	}
 }
