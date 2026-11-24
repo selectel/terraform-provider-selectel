@@ -186,6 +186,7 @@ func TestClusterModifyPlanKubernetesOptions(t *testing.T) {
 		{name: "omitted options on a minor change are unknown", kubeVersion: types.StringValue(testKubeVersionUp), config: omitted, plan: kept, want: unknown},
 		{name: "omitted options with an unknown kube_version are unknown", kubeVersion: types.StringUnknown(), config: omitted, plan: kept, want: unknown},
 		{name: "omitted options on a patch change keep the state value", kubeVersion: types.StringValue("1.31.9"), config: omitted, plan: kept, want: kept},
+		{name: "omitted options on a lower minor keep the state value", kubeVersion: types.StringValue("1.30.9"), config: omitted, plan: kept, want: kept},
 		{name: "configured options on a minor change keep the configured value", kubeVersion: types.StringValue(testKubeVersionUp), config: configured, plan: configured, want: configured},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -300,6 +301,7 @@ func TestClusterOIDCModifierRules(t *testing.T) {
 		config := clusterPlan()
 		config.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{"oidc": oidcOf(types.BoolNull(), types.StringNull())})
 		req := reqAt(t, r, config, clusterState(), "issuer_url")
+		req.State = emptyState(t, r)
 		req.ConfigValue = types.StringNull()
 		req.StateValue = types.StringNull()
 		resp := planmodifier.StringResponse{PlanValue: types.StringUnknown()}

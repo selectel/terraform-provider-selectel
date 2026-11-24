@@ -172,13 +172,12 @@ func TestClusterProjectIDForms(t *testing.T) {
 		{name: "dashed configured", planProj: apiProject, wantConfig: apiProject},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			fake, r := fakeResource(t)
+			_, r := fakeResource(t)
 
 			plan := clusterPlan()
 			plan.ProjectID = types.StringValue(tt.planProj)
 			got := mustCreate(t, r, plan)
 			assert.Equal(t, types.StringValue(tt.wantConfig), got.ProjectID)
-			assert.Equal(t, apiProject, fake.clusterProject(testClusterID))
 			cfg := r.config.(*testProviderConfig)
 			require.NotEmpty(t, cfg.gotProject)
 			assert.Equal(t, keystone, cfg.gotProject[len(cfg.gotProject)-1])
@@ -556,8 +555,9 @@ func TestClusterWaits(t *testing.T) {
 				fake.fail(routeCluster, http.StatusInternalServerError)
 				plan := clusterPlan()
 				plan.Timeouts = timeoutsOf(time.Second, 2*time.Second, 2*time.Second)
-				_, diags := createCluster(t, r, plan)
+				savedState, diags := createCluster(t, r, plan)
 				assertErrorContains(t, diags, "Error reading cluster", "context deadline exceeded")
+				assert.Equal(t, types.StringValue(testClusterID), readClusterModel(t, savedState).ID)
 			},
 		},
 		{

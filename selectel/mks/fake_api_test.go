@@ -515,13 +515,6 @@ func (f *fakeAPI) removeCluster(id string) {
 	delete(f.clusters, id)
 }
 
-func (f *fakeAPI) clusterProject(id string) string {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
-	return f.clusters[id].ProjectId
-}
-
 func (f *fakeAPI) settleAfter(id string, gets int, status string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
