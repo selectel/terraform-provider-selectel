@@ -7,7 +7,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/assert"
@@ -59,6 +61,42 @@ func TestClusterValidateConfigRules(t *testing.T) {
 			}
 			require.True(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
 			assert.Equal(t, tt.want, resp.Diagnostics.Errors()[0].Summary())
+		})
+	}
+}
+
+func TestClusterStringValidators(t *testing.T) {
+	var s resource.SchemaResponse
+	(&clusterResource{}).Schema(context.Background(), resource.SchemaRequest{}, &s)
+	for _, tt := range []struct {
+		name  string
+		field string
+		value string
+		want  string
+	}{
+		{name: "a window start with a one-digit hour is rejected", field: "maintenance_window_start", value: "7:00:00", want: "must be in the hh:mm:ss form"},
+		{name: "a window start at hour 24 is rejected", field: "maintenance_window_start", value: "24:00:00", want: "must be in the hh:mm:ss form"},
+		{name: "a window start at minute 60 is rejected", field: "maintenance_window_start", value: "07:60:00", want: "must be in the hh:mm:ss form"},
+		{name: "a window start at second 60 is rejected", field: "maintenance_window_start", value: "07:00:60", want: "must be in the hh:mm:ss form"},
+		{name: "a window start in the hh:mm:ss form is accepted", field: "maintenance_window_start", value: "07:00:00"},
+		{name: "the last window start of the day is accepted", field: "maintenance_window_start", value: "23:59:59"},
+		{name: "an empty project ID is rejected", field: "project_id", value: "", want: "character count must be at least 1"},
+		{name: "an empty network ID is rejected", field: "network_id", value: "", want: "character count must be at least 1"},
+		{name: "an empty subnet ID is rejected", field: "subnet_id", value: "", want: "character count must be at least 1"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var resp validator.StringResponse
+			for _, rule := range s.Schema.Attributes[tt.field].(schema.StringAttribute).Validators {
+				rule.ValidateString(context.Background(), validator.StringRequest{
+					Path: path.Root(tt.field), ConfigValue: types.StringValue(tt.value),
+				}, &resp)
+			}
+			if tt.want == "" {
+				assert.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+
+				return
+			}
+			assertErrorContains(t, resp.Diagnostics, tt.want)
 		})
 	}
 }

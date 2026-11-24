@@ -31,6 +31,8 @@ var clusterDocs = schemadoc.Resource{Name: "cluster", Location: "managed-kuberne
 // plain minor version too, and every later plan then fails.
 var kubeVersionPattern = regexp.MustCompile(`^\d+\.\d+\.\d+$`)
 
+var maintenanceWindowPattern = regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$`)
+
 var namePattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9-]*$`)
 
 // The claims the API sets for an enabled OIDC that omits them.
@@ -108,8 +110,9 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			}),
 			"pool": clusterDocs.Region(),
 			"project_id": clusterDocs.String(schema.StringAttribute{
-				Optional: true,
-				Computed: true,
+				Optional:   true,
+				Computed:   true,
+				Validators: []validator.String{schemadoc.LengthAtLeast(1)},
 				PlanModifiers: []planmodifier.String{
 					sameProjectID,
 					stringplanmodifier.UseStateForUnknown(),
@@ -168,6 +171,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			"network_id": clusterDocs.String(schema.StringAttribute{
 				Optional:      true,
 				Computed:      true,
+				Validators:    []validator.String{schemadoc.LengthAtLeast(1)},
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), schemadoc.RequiresReplace()},
 			}, schemadoc.Field{
 				Definition: "Unique identifier of the network of the cluster.",
@@ -177,6 +181,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			"subnet_id": clusterDocs.String(schema.StringAttribute{
 				Optional:      true,
 				Computed:      true,
+				Validators:    []validator.String{schemadoc.LengthAtLeast(1)},
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), schemadoc.RequiresReplace()},
 			}, schemadoc.Field{
 				Definition: "Unique identifier of the subnet of the cluster.",
@@ -200,11 +205,15 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Definition: "Whether the Kube API is available only from the cluster network instead of the Internet.",
 			}),
 			"maintenance_window_start": clusterDocs.String(schema.StringAttribute{
-				Optional:      true,
-				Computed:      true,
+				Optional: true,
+				Computed: true,
+				Validators: []validator.String{
+					schemadoc.DescribeString(stringvalidator.RegexMatches(maintenanceWindowPattern, "must be in the hh:mm:ss form"),
+						"The format is `hh:mm:ss`."),
+				},
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			}, schemadoc.Field{
-				Definition: "Time in UTC when maintenance in the cluster starts. The format is `hh:mm:ss`.",
+				Definition: "Time in UTC when maintenance in the cluster starts.",
 				Behavior:   "If omitted when the cluster is created, the API uses `01:00:00`.",
 			}),
 			"enable_autorepair": clusterDocs.Bool(optionalBool(), schemadoc.Field{
