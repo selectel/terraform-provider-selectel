@@ -101,10 +101,10 @@ func TestClusterStringValidators(t *testing.T) {
 	}
 }
 
-func modifyPlan(t *testing.T, r *clusterResource, state, plan clusterModel) resource.ModifyPlanResponse {
+func modifyPlan(t *testing.T, r *clusterResource, state, config, plan clusterModel) resource.ModifyPlanResponse {
 	t.Helper()
 	req := resource.ModifyPlanRequest{
-		Config: tfsdk.Config(clusterStateOf(t, r, plan)), Plan: tfsdk.Plan(clusterStateOf(t, r, plan)),
+		Config: tfsdk.Config(clusterStateOf(t, r, config)), Plan: tfsdk.Plan(clusterStateOf(t, r, plan)),
 		State: clusterStateOf(t, r, state),
 	}
 	resp := resource.ModifyPlanResponse{Plan: req.Plan}
@@ -117,7 +117,7 @@ func TestClusterModifyPlanAcceptsASkippedMinorVersion(t *testing.T) {
 	plan := clusterState()
 	plan.KubeVersion = types.StringValue("1.34.1")
 
-	resp := modifyPlan(t, &clusterResource{}, clusterState(), plan)
+	resp := modifyPlan(t, &clusterResource{}, clusterState(), plan, plan)
 
 	require.Empty(t, resp.Diagnostics)
 	var got clusterModel
@@ -159,16 +159,45 @@ func TestClusterModifyPlanState(t *testing.T) {
 		}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			resp := modifyPlan(t, r, clusterState(), func() clusterModel {
-				plan := clusterState()
-				tt.mutate(&plan)
-
-				return plan
-			}())
+			plan := clusterState()
+			tt.mutate(&plan)
+			resp := modifyPlan(t, r, clusterState(), plan, plan)
 			require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
 			var got clusterModel
 			require.False(t, resp.Plan.Get(context.Background(), &got).HasError())
 			tt.check(t, got)
+		})
+	}
+}
+
+func TestClusterModifyPlanKubernetesOptions(t *testing.T) {
+	omitted := types.ObjectNull(kubeOptionsAttrTypes)
+	unknown := types.ObjectUnknown(kubeOptionsAttrTypes)
+	kept := clusterState().KubernetesOptions
+	configured := kubeOptionsObject(nil)
+	for _, tt := range []struct {
+		name        string
+		kubeVersion types.String
+		config      types.Object
+		plan        types.Object
+		want        types.Object
+	}{
+		{name: "omitted options on a minor change are unknown", kubeVersion: types.StringValue(testKubeVersionUp), config: omitted, plan: kept, want: unknown},
+		{name: "omitted options with an unknown kube_version are unknown", kubeVersion: types.StringUnknown(), config: omitted, plan: kept, want: unknown},
+		{name: "omitted options on a patch change keep the state value", kubeVersion: types.StringValue("1.31.9"), config: omitted, plan: kept, want: kept},
+		{name: "configured options on a minor change keep the configured value", kubeVersion: types.StringValue(testKubeVersionUp), config: configured, plan: configured, want: configured},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			config, plan := clusterState(), clusterState()
+			config.KubeVersion, plan.KubeVersion = tt.kubeVersion, tt.kubeVersion
+			config.KubernetesOptions, plan.KubernetesOptions = tt.config, tt.plan
+
+			resp := modifyPlan(t, &clusterResource{}, clusterState(), config, plan)
+
+			require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+			var got clusterModel
+			require.False(t, resp.Plan.Get(context.Background(), &got).HasError())
+			assert.Equal(t, tt.want, got.KubernetesOptions)
 		})
 	}
 }

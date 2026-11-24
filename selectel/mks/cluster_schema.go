@@ -28,7 +28,7 @@ import (
 var clusterDocs = schemadoc.Resource{Name: "cluster", Location: "managed-kubernetes"}
 
 // kubeVersionPattern pins the form the API accepts on create: it takes a
-// plain minor version too, and every later plan then fails.
+// plain minor version too, and the next upgrade then fails.
 var kubeVersionPattern = regexp.MustCompile(`^\d+\.\d+\.\d+$`)
 
 var maintenanceWindowPattern = regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$`)
@@ -134,7 +134,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						"The format is `x.y.z`."),
 				},
 			}, schemadoc.Field{
-				Definition: "Kubernetes version of the cluster. The format is `x.y.z`. Raising it upgrades the cluster. " +
+				Definition: "Kubernetes version of the cluster. Raising it upgrades the cluster. " +
 					"A patch upgrade is possible only to the latest patch version of the current minor version. " +
 					"Another patch version fails the apply. " +
 					"A minor upgrade is possible only to the next minor version, and the API picks its patch version. " +
@@ -275,6 +275,8 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						Default:     emptySet(),
 					}, schemadoc.Field{
 						Definition: "Enabled feature gates.",
+						Behavior: "A minor upgrade removes the feature gates that the new version does not have, " +
+							"so remove them from the configuration in the same change.",
 						Concept: schemadoc.Link{
 							Title: "Feature gates",
 							URL:   "https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/feature-gates/",
@@ -287,6 +289,8 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						Default:     emptySet(),
 					}, schemadoc.Field{
 						Definition: "Enabled admission controllers.",
+						Behavior: "A minor upgrade removes the admission controllers that the new version does not have, " +
+							"so remove them from the configuration in the same change.",
 						Concept: schemadoc.Link{
 							Title: "Admission controllers",
 							URL:   "https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/admission-controllers/",

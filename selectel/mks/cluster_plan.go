@@ -67,6 +67,8 @@ func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 	var state, plan clusterModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	var kubeOptions types.Object
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("kubernetes_options"), &kubeOptions)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -77,6 +79,15 @@ func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 			// Like the v1 diff suppress: a lower configured version, left behind by patch auto-upgrade, changes nothing.
 			plan.KubeVersion = state.KubeVersion
 			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("kube_version"), state.KubeVersion)...)
+		}
+	}
+
+	if kubeOptions.IsNull() {
+		planMinor, planErr := kubeVersionTrimToMinor(plan.KubeVersion.ValueString())
+		stateMinor, stateErr := kubeVersionTrimToMinor(state.KubeVersion.ValueString())
+		if plan.KubeVersion.IsUnknown() || planErr != nil || stateErr != nil || planMinor != stateMinor {
+			// On a minor upgrade the API removes the options the new version does not have.
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("kubernetes_options"), types.ObjectUnknown(kubeOptionsAttrTypes))...)
 		}
 	}
 

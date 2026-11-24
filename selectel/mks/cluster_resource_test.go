@@ -381,6 +381,29 @@ func TestClusterMinorUpgradeAcceptsAnyPatchOfTheNextMinor(t *testing.T) {
 	assert.Equal(t, 0, fake.callCount(routeUpgradePatch))
 }
 
+func TestClusterMinorUpgradeStoresTheRemainingKubernetesOptions(t *testing.T) {
+	fake, r := fakeResource(t)
+	fake.seedKubeVersions(
+		mksclient.KubeVersionInfo{Version: new(testKubeVersion)},
+		mksclient.KubeVersionInfo{Version: new(testKubeVersionUp)},
+	)
+	prior := mustCreate(t, r, clusterPlan())
+	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) {
+		c.KubernetesOptions.FeatureGates = []string{}
+	})
+
+	plan := withKubeVersion(prior, testKubeVersionUp)
+	plan.KubernetesOptions = types.ObjectUnknown(kubeOptionsAttrTypes)
+	got, diags := updateCluster(t, r, prior, plan)
+
+	require.False(t, diags.HasError(), "%v", diags)
+	assert.Equal(t, 1, fake.callCount(routeUpgradeMinor))
+	assert.Equal(t, 0, fake.callCount(routePatchCluster))
+	options := kubeOptionsStateOf(t, got.KubernetesOptions)
+	assert.Empty(t, options.FeatureGates.Elements())
+	assert.Len(t, options.AdmissionControllers.Elements(), 1)
+}
+
 func TestClusterMinorUpgradeWithoutANextMinorFails(t *testing.T) {
 	fake, r := fakeResource(t)
 	fake.seedKubeVersions(mksclient.KubeVersionInfo{Version: new(testKubeVersion)})
