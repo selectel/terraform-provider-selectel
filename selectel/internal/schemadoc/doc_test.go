@@ -183,6 +183,17 @@ func TestBoolRequiresReplace(t *testing.T) {
 	}, schemadoc.Field{Definition: "Whether the kube-API endpoint has only a private address."})
 	assert.Equal(t, "Whether the kube-API endpoint has only a private address. Changing this creates a new cluster.",
 		attribute.MarkdownDescription)
+
+	raw := tftypes.NewValue(tftypes.Object{AttributeTypes: map[string]tftypes.Type{}}, map[string]tftypes.Value{})
+	for _, value := range []bool{false, true} {
+		var response planmodifier.BoolResponse
+		attribute.PlanModifiers[0].PlanModifyBool(context.Background(), planmodifier.BoolRequest{
+			State: tfsdk.State{Raw: raw}, Plan: tfsdk.Plan{Raw: raw},
+			StateValue: types.BoolValue(false), PlanValue: types.BoolValue(value),
+		}, &response)
+		require.False(t, response.Diagnostics.HasError())
+		assert.Equal(t, value, response.RequiresReplace)
+	}
 }
 
 func TestEnumInDataSource(t *testing.T) {
