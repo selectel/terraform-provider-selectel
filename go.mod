@@ -94,3 +94,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/selectel/mks-go/v2 => github.com/P3rCh1/mks-go/v2 v2.0.1-0.20261123114827-4c80037f25a1
