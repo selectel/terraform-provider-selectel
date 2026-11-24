@@ -557,7 +557,9 @@ func TestClusterWaits(t *testing.T) {
 				plan.Timeouts = timeoutsOf(time.Second, 2*time.Second, 2*time.Second)
 				savedState, diags := createCluster(t, r, plan)
 				assertErrorContains(t, diags, "Error reading cluster", "context deadline exceeded")
-				assert.Equal(t, types.StringValue(testClusterID), readClusterModel(t, savedState).ID)
+				saved := readClusterModel(t, savedState)
+				assert.Equal(t, types.StringValue(testClusterID), saved.ID)
+				assert.Equal(t, plan.Name, saved.Name)
 			},
 		},
 		{
