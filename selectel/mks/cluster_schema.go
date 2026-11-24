@@ -89,7 +89,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Creates and manages a cluster in Managed Kubernetes using the v2 public API. " +
-			"For more information about Managed Kubernetes, see the [official Selectel documentation](https://docs.selectel.ru/en/cloud/managed-kubernetes/).\n\n" +
+			"For more information about Managed Kubernetes, see the [official Selectel documentation](https://docs.selectel.ru/en/managed-kubernetes/).\n\n" +
 			"When a `kube_version`, `kubernetes_options`, or `cni_cilium_settings` task fails, the API has already recorded the new values, " +
 			"so the next plan shows no change. Check `status`.",
 		Attributes: map[string]schema.Attribute{
@@ -224,7 +224,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Behavior: "If omitted, the API enables it, except for `DEDICATED` clusters, where it is disabled.",
 				Concept: schemadoc.Link{
 					Title: "node auto-recovery",
-					URL:   "https://docs.selectel.ru/en/cloud/managed-kubernetes/node-groups/reinstall-nodes/",
+					URL:   "https://docs.selectel.ru/en/managed-kubernetes/node-groups/reinstall-nodes/",
 				},
 			}),
 			"enable_patch_version_auto_upgrade": clusterDocs.Bool(optionalBool(), schemadoc.Field{
@@ -280,7 +280,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 							"so remove them from the configuration in the same change.",
 						Concept: schemadoc.Link{
 							Title: "Feature gates",
-							URL:   "https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/feature-gates/",
+							URL:   "https://docs.selectel.ru/en/managed-kubernetes/clusters/feature-gates/",
 						},
 					}),
 					"admission_controllers": clusterDocs.Set(schema.SetAttribute{
@@ -294,14 +294,14 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 							"so remove them from the configuration in the same change.",
 						Concept: schemadoc.Link{
 							Title: "Admission controllers",
-							URL:   "https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/admission-controllers/",
+							URL:   "https://docs.selectel.ru/en/managed-kubernetes/clusters/admission-controllers/",
 						},
 					}),
 					"audit_logs": schema.SingleNestedAttribute{
 						Optional: true,
 						Computed: true,
 						MarkdownDescription: "Collection of Kubernetes audit logs. " +
-							"Learn more about [exporting audit logs to a logging system](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/logs/#configure-export-of-audit-logs).",
+							"Learn more about [exporting audit logs to a logging system](https://docs.selectel.ru/en/managed-kubernetes/clusters/logs/#configure-export-of-audit-logs).",
 						PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 						Attributes: map[string]schema.Attribute{
 							"enabled": clusterDocs.Bool(optionalBool(), schemadoc.Field{
@@ -315,7 +315,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						Computed: true,
 						MarkdownDescription: "Connection of an OpenID Connect (OIDC) provider to the cluster. " +
 							"Disabling OIDC clears its settings, so with `enabled = false` omit the other arguments. A non-empty one fails the plan. " +
-							"Learn more about [connecting an OIDC provider to the cluster](https://docs.selectel.ru/en/cloud/managed-kubernetes/clusters/access-to-cluster-with-oidc-provider/#configure-oidc-connection).",
+							"Learn more about [connecting an OIDC provider to the cluster](https://docs.selectel.ru/en/managed-kubernetes/clusters/access-to-cluster-with-oidc-provider/#configure-oidc-connection).",
 						PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 						Attributes: map[string]schema.Attribute{
 							"enabled": clusterDocs.Bool(optionalBool(), schemadoc.Field{
@@ -327,7 +327,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 								Behavior:   "If `enabled` is `false`, omit this argument.",
 							}),
 							"issuer_url": clusterDocs.String(oidcParam(""), schemadoc.Field{
-								Definition: "URL of the OIDC provider. It must start with `https://`.",
+								Definition: "URL of the OIDC provider. It must start with `https://`. The host must not be `127.0.0.1`, `localhost`, or `0.0.0.0`.",
 								Behavior:   "If `enabled` is `false`, omit this argument.",
 							}),
 							"client_id": clusterDocs.String(oidcParam(""), schemadoc.Field{
