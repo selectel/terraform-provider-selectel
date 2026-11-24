@@ -25,11 +25,7 @@ import (
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadoc"
 )
 
-// clusterLocation is the managed kubernetes section of the product
-// availability page.
-const clusterLocation = "managed-kubernetes"
-
-var clusterDocs = schemadoc.Resource{Name: "cluster", Location: clusterLocation}
+var clusterDocs = schemadoc.Resource{Name: "cluster", Location: "managed-kubernetes"}
 
 // kubeVersionPattern pins the form the API accepts on create: it takes a
 // plain minor version too, and every later plan then fails.
@@ -104,7 +100,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						"The name can contain Latin letters, digits, and hyphens and cannot start with a hyphen. "+
 							"If `workers_type` is `DEDICATED`, the name must start with a letter."),
 				},
-				PlanModifiers: []planmodifier.String{nameCase{}, schemadoc.RequiresReplace()},
+				PlanModifiers: []planmodifier.String{nameCase, schemadoc.RequiresReplace()},
 			}, schemadoc.Field{
 				Definition: "Cluster name. It is included in the names of the cluster entities: " +
 					"node groups, nodes, load balancers, networks, and volumes. " +
@@ -115,7 +111,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
-					sameProjectID{},
+					sameProjectID,
 					stringplanmodifier.UseStateForUnknown(),
 					schemadoc.RequiresReplace(),
 				},
@@ -338,7 +334,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 								Optional:      true,
 								Computed:      true,
 								CustomType:    trimmedStringType{},
-								PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), trimmedStringKeep{}, oidcPlanModifier{}},
+								PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), trimmedStringKeep, oidcPlanModifier{}},
 							}, schemadoc.Field{
 								Definition: "CA certificates of the OIDC provider. The format is PEM. " +
 									"Leading and trailing whitespace is ignored.",
@@ -383,27 +379,6 @@ func emptySet() defaults.Set {
 	return emptySetDefault{
 		setdefault.StaticValue(types.SetValueMust(types.StringType, nil)),
 		schemadoc.Facts{Default: "The default value is an empty set."},
-	}
-}
-
-type trimmedStringKeep struct {
-	schemadoc.Facts
-}
-
-func (m trimmedStringKeep) Description(_ context.Context) string {
-	return "A change of only the surrounding whitespace keeps the state value."
-}
-
-func (m trimmedStringKeep) MarkdownDescription(ctx context.Context) string {
-	return m.Description(ctx)
-}
-
-func (m trimmedStringKeep) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-	if req.StateValue.IsNull() || req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
-		return
-	}
-	if strings.TrimSpace(req.ConfigValue.ValueString()) == strings.TrimSpace(req.StateValue.ValueString()) {
-		resp.PlanValue = req.StateValue
 	}
 }
 

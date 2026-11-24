@@ -19,12 +19,6 @@ import (
 // its wait failed, which can be a timeout or an interrupt.
 const readAfterWaitTimeout = 2 * time.Minute
 
-// readAfterWaitContext outlives ctx, so a created object can still be read
-// and saved when the wait for it ran out of time or was interrupted.
-func readAfterWaitContext(ctx context.Context) (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.WithoutCancel(ctx), readAfterWaitTimeout)
-}
-
 // isNotFound reports whether the API answered 404.
 func isNotFound(err error) bool {
 	var mksErr *mksclient.MKSError
@@ -57,7 +51,7 @@ type taskWaiter struct {
 	before    map[string]struct{}
 }
 
-// newTaskWaiter remembers the tasks in scope before a mutating call.
+// newTaskWaiter remembers the tasks of the cluster before a mutating call.
 func newTaskWaiter(ctx context.Context, client *mksv2.ServiceClient, clusterID string, interval time.Duration) (*taskWaiter, error) {
 	w := newCreatedTaskWaiter(client, clusterID, interval)
 
@@ -72,7 +66,7 @@ func newTaskWaiter(ctx context.Context, client *mksv2.ServiceClient, clusterID s
 	return w, nil
 }
 
-// newCreatedTaskWaiter counts every task in scope, for an object that did
+// newCreatedTaskWaiter counts every task of the cluster, for an object that did
 // not exist before the call.
 func newCreatedTaskWaiter(client *mksv2.ServiceClient, clusterID string, interval time.Duration) *taskWaiter {
 	return &taskWaiter{
@@ -89,18 +83,11 @@ func (w *taskWaiter) Wait(ctx context.Context) error {
 	pending := []mksclient.Task(nil)
 
 	return poll(ctx, w.interval, func() (bool, error) {
-		if pending == nil {
-			var err error
-			pending, err = w.newTasks(ctx)
-			if err != nil {
-				return false, err
-			}
-		}
-		advanced, err := w.advance(ctx, pending)
+		var err error
+		pending, err = w.advance(ctx, pending)
 		if err != nil {
 			return false, err
 		}
-		pending = advanced
 
 		return len(pending) == 0, nil
 	})
@@ -112,24 +99,14 @@ func (w *taskWaiter) WaitClusterDeleted(ctx context.Context) error {
 	pending := []mksclient.Task(nil)
 
 	return poll(ctx, w.interval, func() (bool, error) {
-		if pending == nil {
-			var err error
-			pending, err = w.newTasks(ctx)
-			if isNotFound(err) {
-				return true, nil
-			}
-			if err != nil {
-				return false, err
-			}
-		}
-		advanced, err := w.advance(ctx, pending)
+		var err error
+		pending, err = w.advance(ctx, pending)
 		if isNotFound(err) {
 			return true, nil
 		}
 		if err != nil {
 			return false, err
 		}
-		pending = advanced
 
 		_, err = cluster.Get(ctx, w.client, w.clusterID)
 		if isNotFound(err) {
@@ -140,7 +117,7 @@ func (w *taskWaiter) WaitClusterDeleted(ctx context.Context) error {
 	})
 }
 
-// list returns every task of the cluster in the waiter scope in one call: the API orders tasks
+// list returns every task of the cluster in one call: the API orders tasks
 // only by started_at, which tasks of one request share, so LIMIT/OFFSET pages could skip or repeat one.
 func (w *taskWaiter) list(ctx context.Context) ([]mksclient.Task, error) {
 	// The API turns limit 0 into no LIMIT.
@@ -167,8 +144,17 @@ func (w *taskWaiter) newTasks(ctx context.Context) ([]mksclient.Task, error) {
 	}), nil
 }
 
-// advance refreshes the pending tasks and returns the ones still running.
+// advance refreshes the pending tasks, the new ones when pending is nil, and returns the ones still running.
+// When a refresh fails, it returns the tasks it was refreshing.
 func (w *taskWaiter) advance(ctx context.Context, pending []mksclient.Task) ([]mksclient.Task, error) {
+	if pending == nil {
+		var err error
+		pending, err = w.newTasks(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	var running []mksclient.Task
 	for _, p := range pending {
 		t, err := task.Get(ctx, w.client, w.clusterID, p.Id)

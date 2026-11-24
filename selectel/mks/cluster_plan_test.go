@@ -162,13 +162,13 @@ func TestClusterKeepStateModifiers(t *testing.T) {
 		plan     types.String
 		expected types.String
 	}{
-		{name: "a case-only name change keeps the state name", modify: nameCase{}, stateV: types.StringValue("test-cluster"), configV: types.StringNull(), plan: types.StringValue("Test-Cluster"), expected: types.StringValue("test-cluster")},
-		{name: "a case-only name change against another name is not rewritten", modify: nameCase{}, stateV: types.StringValue("test-cluster"), configV: types.StringNull(), plan: types.StringValue("other-cluster"), expected: types.StringValue("other-cluster")},
-		{name: "a dash-only project change keeps the state project", modify: sameProjectID{}, stateV: types.StringValue("a07abc12310546f1b9291ab301a7d75b"), configV: types.StringValue("a07abc12-3105-46f1-b929-1ab301a7d75b"), plan: types.StringValue("a07abc12-3105-46f1-b929-1ab301a7d75b"), expected: types.StringValue("a07abc12310546f1b9291ab301a7d75b")},
-		{name: "another project is not rewritten", modify: sameProjectID{}, stateV: types.StringValue("a07abc12310546f1b9291ab301a7d75b"), configV: types.StringValue("c07abc12310546f1b9291ab301a7d75b"), plan: types.StringValue("c07abc12310546f1b9291ab301a7d75b"), expected: types.StringValue("c07abc12310546f1b9291ab301a7d75b")},
-		{name: "a null state project keeps the plan", modify: sameProjectID{}, stateV: types.StringNull(), configV: types.StringValue("x"), plan: types.StringValue("x"), expected: types.StringValue("x")},
-		{name: "whitespace-only ca_certs keeps the state value", modify: trimmedStringKeep{}, stateV: types.StringValue("cert-1"), configV: types.StringValue("cert-1\n"), plan: types.StringValue("cert-1\n"), expected: types.StringValue("cert-1")},
-		{name: "another ca_certs value is not rewritten", modify: trimmedStringKeep{}, stateV: types.StringValue("cert-1"), configV: types.StringValue("cert-2"), plan: types.StringValue("cert-2"), expected: types.StringValue("cert-2")},
+		{name: "a case-only name change keeps the state name", modify: nameCase, stateV: types.StringValue("test-cluster"), configV: types.StringNull(), plan: types.StringValue("Test-Cluster"), expected: types.StringValue("test-cluster")},
+		{name: "a case-only name change against another name is not rewritten", modify: nameCase, stateV: types.StringValue("test-cluster"), configV: types.StringNull(), plan: types.StringValue("other-cluster"), expected: types.StringValue("other-cluster")},
+		{name: "a dash-only project change keeps the state project", modify: sameProjectID, stateV: types.StringValue("a07abc12310546f1b9291ab301a7d75b"), configV: types.StringValue("a07abc12-3105-46f1-b929-1ab301a7d75b"), plan: types.StringValue("a07abc12-3105-46f1-b929-1ab301a7d75b"), expected: types.StringValue("a07abc12310546f1b9291ab301a7d75b")},
+		{name: "another project is not rewritten", modify: sameProjectID, stateV: types.StringValue("a07abc12310546f1b9291ab301a7d75b"), configV: types.StringValue("c07abc12310546f1b9291ab301a7d75b"), plan: types.StringValue("c07abc12310546f1b9291ab301a7d75b"), expected: types.StringValue("c07abc12310546f1b9291ab301a7d75b")},
+		{name: "a null state project keeps the plan", modify: sameProjectID, stateV: types.StringNull(), configV: types.StringValue("x"), plan: types.StringValue("x"), expected: types.StringValue("x")},
+		{name: "whitespace-only ca_certs keeps the state value", modify: trimmedStringKeep, stateV: types.StringValue("cert-1"), configV: types.StringValue("cert-1\n"), plan: types.StringValue("cert-1\n"), expected: types.StringValue("cert-1")},
+		{name: "another ca_certs value is not rewritten", modify: trimmedStringKeep, stateV: types.StringValue("cert-1"), configV: types.StringValue("cert-2"), plan: types.StringValue("cert-2"), expected: types.StringValue("cert-2")},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			resp := planmodifier.StringResponse{PlanValue: tt.plan}

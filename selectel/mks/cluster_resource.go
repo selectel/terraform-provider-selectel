@@ -53,16 +53,9 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 
 	timeout, diags := plan.Timeouts.Create(ctx, clusterTimeouts.Create)
 	resp.Diagnostics.Append(diags...)
-	projectID, diags := r.projectID(plan.ProjectID)
+	client, projectID, diags := r.client(ctx, plan.ProjectID, plan.Pool.ValueString())
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-		return
-	}
-	pool := plan.Pool.ValueString()
-	client, err := r.client(ctx, projectID, pool)
-	if err != nil {
-		resp.Diagnostics.AddError("Error initializing MKS client", err.Error())
-
 		return
 	}
 	opts, diags := expandClusterCreateOpts(ctx, plan)
@@ -88,8 +81,8 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		waitErr = waitActive(ctx, client, created.Id, r.pollInterval)
 	}
 
-	// Save the cluster even when the wait failed, so Terraform taints it instead of losing it.
-	readCtx, readCancel := readAfterWaitContext(ctx)
+	// Save the cluster even when the wait failed, which can be ctx ending, so Terraform taints it instead of losing it.
+	readCtx, readCancel := context.WithTimeout(context.WithoutCancel(ctx), readAfterWaitTimeout)
 	defer readCancel()
 	got, err := cluster.Get(readCtx, client, created.Id)
 	if err != nil {
@@ -102,14 +95,10 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 	state := plan
 	resp.Diagnostics.Append(state.fromAPI(ctx, got, plan, true)...)
-	if waitErr != nil {
-		resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
-		resp.Diagnostics.AddError("Error waiting for the cluster to become ready", waitErr.Error())
-
-		return
-	}
-
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	if waitErr != nil {
+		resp.Diagnostics.AddError("Error waiting for the cluster to become ready", waitErr.Error())
+	}
 }
 
 func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -119,16 +108,9 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	projectID, diags := r.projectID(state.ProjectID)
+	client, _, diags := r.client(ctx, state.ProjectID, state.Pool.ValueString())
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-		return
-	}
-	pool := state.Pool.ValueString()
-	client, err := r.client(ctx, projectID, pool)
-	if err != nil {
-		resp.Diagnostics.AddError("Error initializing MKS client", err.Error())
-
 		return
 	}
 
@@ -159,16 +141,9 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	timeout, diags := plan.Timeouts.Update(ctx, clusterTimeouts.Update)
 	resp.Diagnostics.Append(diags...)
-	projectID, diags := r.projectID(state.ProjectID)
+	client, _, diags := r.client(ctx, state.ProjectID, state.Pool.ValueString())
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-		return
-	}
-	pool := state.Pool.ValueString()
-	client, err := r.client(ctx, projectID, pool)
-	if err != nil {
-		resp.Diagnostics.AddError("Error initializing MKS client", err.Error())
-
 		return
 	}
 	patch, changed, diags := expandClusterPatch(ctx, plan, state)
@@ -182,7 +157,7 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	clusterID := state.ID.ValueString()
 	if !plan.KubeVersion.Equal(state.KubeVersion) {
-		err = upgradeKubeVersion(ctx, client, clusterID, plan.KubeVersion.ValueString(), r.pollInterval)
+		err := upgradeKubeVersion(ctx, client, clusterID, plan.KubeVersion.ValueString(), r.pollInterval)
 		if err != nil {
 			resp.Diagnostics.AddError("Error upgrading cluster", errUpdatingObject(objectCluster, clusterID, err).Error())
 
@@ -191,7 +166,7 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	if changed {
-		err = callAndWait(ctx, client, clusterID, r.pollInterval, func() error {
+		err := callAndWait(ctx, client, clusterID, r.pollInterval, func() error {
 			_, err := cluster.Patch(ctx, client, clusterID, patch)
 
 			return err
@@ -222,16 +197,9 @@ func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 	timeout, diags := state.Timeouts.Delete(ctx, clusterTimeouts.Delete)
 	resp.Diagnostics.Append(diags...)
-	projectID, diags := r.projectID(state.ProjectID)
+	client, _, diags := r.client(ctx, state.ProjectID, state.Pool.ValueString())
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-		return
-	}
-	pool := state.Pool.ValueString()
-	client, err := r.client(ctx, projectID, pool)
-	if err != nil {
-		resp.Diagnostics.AddError("Error initializing MKS client", err.Error())
-
 		return
 	}
 

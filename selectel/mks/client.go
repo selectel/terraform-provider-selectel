@@ -75,21 +75,33 @@ func (c connection) projectID(attr types.String) (string, diag.Diagnostics) {
 		"Set project_id in the resource or data source, or in the provider configuration.")}
 }
 
-// client builds the MKS API v2 client for the Keystone form of projectID.
-func (c connection) client(ctx context.Context, projectID, pool string) (*mksv2.ServiceClient, error) {
+// client returns the MKS API v2 client for the pool and for the project of the
+// project_id attribute, and that project ID as projectID resolves it.
+func (c connection) client(ctx context.Context, attr types.String, pool string) (*mksv2.ServiceClient, string, diag.Diagnostics) {
+	projectID, diags := c.projectID(attr)
+	if diags.HasError() {
+		return nil, "", diags
+	}
 	err := ctx.Err()
 	if err != nil {
-		return nil, err
+		diags.AddError("Error initializing MKS client", err.Error())
+
+		return nil, "", diags
 	}
 	if c.config == nil {
-		return nil, fmt.Errorf("managed kubernetes provider is not configured")
+		diags.AddError("Error initializing MKS client", "managed kubernetes provider is not configured")
+
+		return nil, "", diags
 	}
 	client, err := c.config.MKSV2Client(ctx, keystoneProjectID(projectID), pool)
 	if err != nil {
-		return nil, fmt.Errorf("connect to Managed Kubernetes (project_id=%s, pool=%s): %w", projectID, pool, err)
+		diags.AddError("Error initializing MKS client",
+			fmt.Sprintf("connect to Managed Kubernetes (project_id=%s, pool=%s): %s", projectID, pool, err))
+
+		return nil, "", diags
 	}
 
-	return client, nil
+	return client, projectID, diags
 }
 
 // keystoneProjectID returns the project ID as lower-case hex without dashes, the form Keystone scopes a token by.
@@ -103,25 +115,43 @@ func sameProject(a, b string) bool {
 	return keystoneProjectID(a) == keystoneProjectID(b)
 }
 
-// sameProjectID plans the state project_id for a configured one that names
-// the same project in another form, see keystoneProjectID.
-type sameProjectID struct {
+// keepState plans the state value when the planned one means the same.
+type keepState struct {
+	description string
+	same        func(a, b string) bool
 	schemadoc.Facts
 }
 
-func (m sameProjectID) Description(_ context.Context) string {
-	return "A project ID that differs only in dashes or letter case keeps the state value."
+var (
+	// nameCase exists because the API lower-cases the name, and v1 ignored the case too.
+	nameCase = keepState{
+		description: "A change of only the letter case keeps the state value.",
+		same:        strings.EqualFold,
+	}
+	// sameProjectID exists because a project ID in another form names the same project, see keystoneProjectID.
+	sameProjectID = keepState{
+		description: "A project ID that differs only in dashes or letter case keeps the state value.",
+		same:        sameProject,
+	}
+	trimmedStringKeep = keepState{
+		description: "A change of only the surrounding whitespace keeps the state value.",
+		same:        func(a, b string) bool { return strings.TrimSpace(a) == strings.TrimSpace(b) },
+	}
+)
+
+func (m keepState) Description(_ context.Context) string {
+	return m.description
 }
 
-func (m sameProjectID) MarkdownDescription(ctx context.Context) string {
+func (m keepState) MarkdownDescription(ctx context.Context) string {
 	return m.Description(ctx)
 }
 
-func (m sameProjectID) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+func (m keepState) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
 	if req.StateValue.IsNull() || req.PlanValue.IsUnknown() || req.PlanValue.IsNull() {
 		return
 	}
-	if sameProject(req.PlanValue.ValueString(), req.StateValue.ValueString()) {
+	if m.same(req.PlanValue.ValueString(), req.StateValue.ValueString()) {
 		resp.PlanValue = req.StateValue
 	}
 }

@@ -3,7 +3,6 @@ package mks
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -186,27 +185,4 @@ func oidcEnabled(ctx context.Context, req planmodifier.StringRequest, oidc types
 	}
 
 	return stateEnabled, diags
-}
-
-// nameCase plans the state name for a configured name that differs only in
-// letter case: the API lower-cases the name, and v1 ignored the case too.
-type nameCase struct {
-	schemadoc.Facts
-}
-
-func (m nameCase) Description(_ context.Context) string {
-	return "A change of only the letter case keeps the state value."
-}
-
-func (m nameCase) MarkdownDescription(ctx context.Context) string {
-	return m.Description(ctx)
-}
-
-func (m nameCase) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-	if req.StateValue.IsNull() || req.PlanValue.IsUnknown() || req.PlanValue.IsNull() {
-		return
-	}
-	if strings.EqualFold(req.PlanValue.ValueString(), req.StateValue.ValueString()) {
-		resp.PlanValue = req.StateValue
-	}
 }
