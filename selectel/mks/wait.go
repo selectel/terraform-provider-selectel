@@ -26,20 +26,30 @@ func isNotFound(err error) bool {
 	return errors.As(err, &mksErr) && mksErr.StatusCode == http.StatusNotFound
 }
 
-// waitActive polls until the cluster is ACTIVE and fails when it is in ERROR. Any other status keeps waiting.
-func waitActive(ctx context.Context, client *mksv2.ServiceClient, clusterID string, interval time.Duration) error {
-	return poll(ctx, interval, func() (bool, error) {
-		c, err := cluster.Get(ctx, client, clusterID)
+// waitActive polls until the cluster is ACTIVE or in its maintenance window, and returns it.
+// It fails when the cluster is in ERROR. Any other status keeps waiting.
+func waitActive(ctx context.Context, client *mksv2.ServiceClient, clusterID string, interval time.Duration) (*mksclient.ClusterDetailed, error) {
+	var got *mksclient.ClusterDetailed
+	err := poll(ctx, interval, func() (string, bool, error) {
+		var err error
+		got, err = cluster.Get(ctx, client, clusterID)
 		if err != nil {
-			return false, err
+			return "", false, err
 		}
 
-		if c.Status == mksclient.ClusterDetailedStatusERROR {
-			return true, fmt.Errorf("cluster %s is in ERROR", clusterID)
+		if got.Status == mksclient.ClusterDetailedStatusERROR {
+			return "", true, fmt.Errorf("cluster %s is in ERROR", clusterID)
 		}
 
-		return c.Status == mksclient.ClusterDetailedStatusACTIVE, nil
+		ready := got.Status == mksclient.ClusterDetailedStatusACTIVE || got.Status == mksclient.ClusterDetailedStatusMAINTENANCE
+
+		return describeCluster(got), ready, nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return got, nil
 }
 
 // taskWaiter waits for the tasks one mutating API call created: the ones listed after it and absent before it.
@@ -81,14 +91,14 @@ func newCreatedTaskWaiter(client *mksv2.ServiceClient, clusterID string, interva
 func (w *taskWaiter) Wait(ctx context.Context) error {
 	pending := []mksclient.Task(nil)
 
-	return poll(ctx, w.interval, func() (bool, error) {
+	return poll(ctx, w.interval, func() (string, bool, error) {
 		var err error
 		pending, err = w.advance(ctx, pending)
-		if err != nil {
-			return false, err
+		if err != nil || len(pending) == 0 {
+			return "", err == nil, err
 		}
 
-		return len(pending) == 0, nil
+		return describeTask(pending[0]), false, nil
 	})
 }
 
@@ -97,22 +107,28 @@ func (w *taskWaiter) Wait(ctx context.Context) error {
 func (w *taskWaiter) WaitClusterDeleted(ctx context.Context) error {
 	pending := []mksclient.Task(nil)
 
-	return poll(ctx, w.interval, func() (bool, error) {
+	return poll(ctx, w.interval, func() (string, bool, error) {
 		var err error
 		pending, err = w.advance(ctx, pending)
 		if isNotFound(err) {
-			return true, nil
+			return "", true, nil
 		}
 		if err != nil {
-			return false, err
+			return "", false, err
 		}
 
-		_, err = cluster.Get(ctx, w.client, w.clusterID)
+		got, err := cluster.Get(ctx, w.client, w.clusterID)
 		if isNotFound(err) {
-			return true, nil
+			return "", true, nil
+		}
+		if err != nil {
+			return "", false, err
+		}
+		if len(pending) > 0 {
+			return describeTask(pending[0]), false, nil
 		}
 
-		return false, err
+		return describeCluster(got), false, nil
 	})
 }
 
@@ -206,24 +222,40 @@ func callAndWait(ctx context.Context, client *mksv2.ServiceClient, clusterID str
 		return err
 	}
 
-	return waitActive(ctx, client, clusterID, interval)
+	_, err = waitActive(ctx, client, clusterID, interval)
+
+	return err
 }
 
-// poll calls check every interval until it reports done, fails, or ctx
-// ends. A transient failure keeps waiting; any other error ends the wait.
-func poll(ctx context.Context, interval time.Duration, check func() (bool, error)) error {
+func describeCluster(c *mksclient.ClusterDetailed) string {
+	return fmt.Sprintf("cluster %s is in %s", c.Id, c.Status)
+}
+
+func describeTask(t mksclient.Task) string {
+	return fmt.Sprintf("task %s %s is in %s", t.Type, t.Id, t.Status)
+}
+
+// poll calls check every interval until it reports done, fails, or ctx ends. A transient failure keeps waiting;
+// any other error ends the wait. The state check returns while it is not done is named when ctx ends.
+func poll(ctx context.Context, interval time.Duration, check func() (string, bool, error)) error {
+	last := "unknown"
 	for {
-		done, err := check()
+		state, done, err := check()
 		if done {
 			return err
 		}
 		if err != nil && !isTransient(err) {
 			return err
 		}
+		if err == nil {
+			last = state
+		} else if ctx.Err() == nil {
+			last = err.Error()
+		}
 
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("timeout while waiting: %w", ctx.Err())
+			return fmt.Errorf("stopped waiting, last state: %s: %w", last, ctx.Err())
 		case <-time.After(interval):
 		}
 	}

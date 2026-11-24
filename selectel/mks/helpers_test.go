@@ -70,7 +70,7 @@ func clusterState() clusterModel {
 		SubnetID:                      types.StringValue("fake-subnet"),
 		CloudSubnetCIDR:               types.StringValue("10.0.0.0/24"),
 		MaintenanceWindowStart:        types.StringValue("06:00:00"),
-		MaintenanceWindowEnd:          types.StringValue("09:00:00"),
+		MaintenanceWindowEnd:          types.StringValue("08:00:00"),
 		PrivateKubeAPI:                types.BoolValue(false),
 		EnableAutorepair:              types.BoolValue(true),
 		EnablePatchVersionAutoUpgrade: types.BoolValue(false),

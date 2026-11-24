@@ -204,7 +204,7 @@ func (f *fakeAPI) createCluster(w http.ResponseWriter, r *http.Request) {
 		KubeApiIp:                     "192.0.2.10",
 		Status:                        "PENDING_CREATE",
 	}
-	f.setWindow(&c, cmp.Or(opts.MaintenanceWindowStart, "03:00:00"))
+	f.setWindow(&c, cmp.Or(opts.MaintenanceWindowStart, "01:00:00"))
 	if opts.NetworkType == "L3VPN" {
 		c.CloudSubnetCidr = new(cmp.Or(opts.CloudSubnetCidr, "10.20.0.0/24"))
 	}
@@ -244,6 +244,15 @@ func (f *fakeAPI) patchCluster(w http.ResponseWriter, r *http.Request) {
 		cilium := valueOrZero(c.CniCiliumSettings)
 		cilium.EnvoyDaemonset = cmp.Or(opts.CniCiliumSettings.EnvoyDaemonset, cilium.EnvoyDaemonset)
 		cilium.HubbleRelay = cmp.Or(opts.CniCiliumSettings.HubbleRelay, cilium.HubbleRelay)
+		current := valueOrZero(c.CniCiliumSettings)
+		if valueOrZero(cilium.EnvoyDaemonset) == valueOrZero(current.EnvoyDaemonset) &&
+			valueOrZero(cilium.HubbleRelay) == valueOrZero(current.HubbleRelay) {
+			var rejected mksclient.GenericError
+			rejected.Error.Message = "cni_cilium_settings cannot be changed for already set value"
+			writeJSON(w, http.StatusBadRequest, rejected)
+
+			return
+		}
 		c.CniCiliumSettings = &cilium
 		c.Status = "PENDING_UPGRADE_CLUSTER_CONFIG"
 		f.addTask(id, "UPGRADE_CLUSTER_CONFIG", f.activateCluster(id))
@@ -354,7 +363,7 @@ func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 			}
 		}
 		version, ok := latest[targetMinor]
-		if ok {
+		if ok && version != c.KubeVersion {
 			c.KubeVersion = version
 			f.clusters[id] = c
 			f.addTask(id, taskType, nil)
@@ -555,7 +564,7 @@ func (f *fakeAPI) updateClusterLocked(id, status string) {
 func (f *fakeAPI) setWindow(c *mksclient.ClusterDetailed, start string) {
 	c.MaintenanceWindowStart = start
 	parsed, _ := time.Parse(time.TimeOnly, start)
-	c.MaintenanceWindowEnd = parsed.Add(3 * time.Hour).Format(time.TimeOnly)
+	c.MaintenanceWindowEnd = parsed.Add(2 * time.Hour).Format(time.TimeOnly)
 }
 
 func (f *fakeAPI) seedKubeVersions(versions ...mksclient.KubeVersionInfo) {

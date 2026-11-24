@@ -61,16 +61,33 @@ func TestWaitActive(t *testing.T) {
 	client := fake.client()
 	fake.seedCluster(testClusterID)
 
-	require.NoError(t, waitActive(context.Background(), client, testClusterID, time.Millisecond))
+	got, err := waitActive(context.Background(), client, testClusterID, time.Millisecond)
+	require.NoError(t, err)
+	assert.Equal(t, testClusterID, got.Id)
 
 	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "ERROR" })
-	err := waitActive(context.Background(), client, testClusterID, time.Millisecond)
+	_, err = waitActive(context.Background(), client, testClusterID, time.Millisecond)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "cluster "+testClusterID+" is in ERROR")
 
-	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "MAINTENANCE" })
+	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "PENDING_UPDATE" })
 	fake.settleAfter(testClusterID, 3, "ACTIVE")
 	getsBefore := fake.callCount(routeCluster)
-	require.NoError(t, waitActive(context.Background(), client, testClusterID, time.Millisecond))
+	_, err = waitActive(context.Background(), client, testClusterID, time.Millisecond)
+	require.NoError(t, err)
 	assert.GreaterOrEqual(t, fake.callCount(routeCluster)-getsBefore, 3)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "MAINTENANCE" })
+	got, err = waitActive(ctx, client, testClusterID, time.Millisecond)
+	require.NoError(t, err)
+	assert.Equal(t, mksclient.ClusterDetailedStatusMAINTENANCE, got.Status)
+
+	fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.Status = "PENDING_UPDATE" })
+	ctx, cancel = context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	_, err = waitActive(ctx, client, testClusterID, time.Millisecond)
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+	assert.Contains(t, err.Error(), "last state: cluster "+testClusterID+" is in PENDING_UPDATE")
 }

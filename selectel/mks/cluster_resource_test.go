@@ -158,6 +158,7 @@ func TestClusterCreateSendsFields(t *testing.T) {
 	assert.Equal(t, ciliumObject(types.BoolValue(true), types.BoolValue(false)), got.CNICiliumSettings)
 	assert.Equal(t, types.StringValue(testProject), got.ProjectID)
 	assert.Equal(t, 1, fake.callCount(routeCreateCluster))
+	assert.Equal(t, 1, fake.callCount(routeCluster))
 	assert.Contains(t, fake.lastQuery(routeTasks), "limit=0")
 }
 
@@ -539,7 +540,7 @@ func TestClusterWaits(t *testing.T) {
 				plan := clusterPlan()
 				plan.Timeouts = timeoutsOf(time.Second, 2*time.Second, 2*time.Second)
 				savedState, diags := createCluster(t, r, plan)
-				assertErrorContains(t, diags, "Error waiting for the cluster to become ready", "context deadline exceeded")
+				assertErrorContains(t, diags, "Error waiting for the cluster to become ready", "last state: task CREATE_CLUSTER", "context deadline exceeded")
 				assert.Equal(t, 1, fake.callCount(routeCreateCluster))
 				assert.Equal(t, types.StringValue(testClusterID), readClusterModel(t, savedState).ID)
 

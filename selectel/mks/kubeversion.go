@@ -125,7 +125,7 @@ func latestKubePatchVersions(ctx context.Context, client *mksv2.ServiceClient) (
 	return result, nil
 }
 
-// The verbatim provider error texts the package cannot import.
+// errCreatingObject and the helpers below repeat the error texts of package selectel, which this package cannot import.
 func errCreatingObject(object string, err error) error {
 	return fmt.Errorf("error creating %s: %s", object, err)
 }

@@ -123,7 +123,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 					"To upgrade a minor version, the desired version must match the next available minor version. The API picks its patch version. " +
 					"The cluster may run a newer version than configured, for example after patch auto-upgrade: " +
 					"a configured version lower than the one in the state is accepted with no change and never downgrades the cluster.",
-				Source: "You can retrieve the available versions with the [selectel_mks_kube_versions_v1](https://registry.terraform.io/providers/selectel/selectel/latest/docs/data-sources/mks_kube_versions_v1) data source.",
+				Source: schemadoc.FromDataSource("selectel_mks_kube_versions_v1", "available versions"),
 			}),
 			"cluster_type": clusterDocs.String(schema.StringAttribute{
 				Optional: true,
@@ -157,7 +157,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			"network_id": clusterDocs.String(schema.StringAttribute{
 				Optional:      true,
 				Computed:      true,
-				Validators:    []validator.String{schemadoc.LengthAtLeast(1)},
+				Validators:    []validator.String{schemadoc.UUID()},
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), schemadoc.RequiresReplace()},
 			}, schemadoc.Field{
 				Definition: "Unique identifier of the associated network.",
@@ -167,7 +167,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			"subnet_id": clusterDocs.String(schema.StringAttribute{
 				Optional:      true,
 				Computed:      true,
-				Validators:    []validator.String{schemadoc.LengthAtLeast(1)},
+				Validators:    []validator.String{schemadoc.UUID()},
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown(), schemadoc.RequiresReplace()},
 			}, schemadoc.Field{
 				Definition: "Unique identifier of the associated subnet.",
@@ -201,8 +201,9 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			}, schemadoc.Field{
 				Definition: "Time in UTC when maintenance in the cluster starts.",
-				Behavior:   "If omitted when the cluster is created, the API uses `01:00:00`.",
-				Concept:    maintenanceWindowLink,
+				Behavior: "If omitted when the cluster is created, the API uses `01:00:00`. " +
+					"During the window the cluster can have the `MAINTENANCE` status, in which the API rejects changes to the cluster.",
+				Concept: maintenanceWindowLink,
 			}),
 			"enable_autorepair": clusterDocs.Bool(optionalBool(), schemadoc.Field{
 				Definition: "Enables or disables automatic reinstallation of worker nodes that are unavailable or unhealthy. " +
@@ -327,16 +328,16 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 							}),
 							"provider_name": clusterDocs.String(oidcParam(""), schemadoc.Field{
 								Definition: "Name of the connection that you create. The name is only for identification purposes.",
-								Behavior:   "If `enabled` is `false`, omit this argument.",
+								Behavior:   "Required if `enabled` is `true`. If `enabled` is `false`, omit this argument.",
 							}),
 							"issuer_url": clusterDocs.String(oidcParam(""), schemadoc.Field{
 								Definition: "URL of the OIDC provider used to authenticate users who request access to the cluster. " +
 									"The URL must start with `https://`. The host must not be `127.0.0.1`, `localhost`, or `0.0.0.0`.",
-								Behavior: "If `enabled` is `false`, omit this argument.",
+								Behavior: "Required if `enabled` is `true`. If `enabled` is `false`, omit this argument.",
 							}),
 							"client_id": clusterDocs.String(oidcParam(""), schemadoc.Field{
 								Definition: "Service identifier issued by the OIDC provider and used in authentication requests to the resources.",
-								Behavior:   "If `enabled` is `false`, omit this argument.",
+								Behavior:   "Required if `enabled` is `true`. If `enabled` is `false`, omit this argument.",
 							}),
 							"username_claim": clusterDocs.String(oidcParam(oidcUsernameClaim), schemadoc.Field{
 								Definition: "JWT claim to use as the username. The content of the claim must be a unique identifier of the end user. " +

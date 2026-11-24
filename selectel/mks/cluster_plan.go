@@ -37,7 +37,7 @@ func (r *clusterResource) ValidateConfig(ctx context.Context, req resource.Valid
 			"Set cni_type to CILIUM or remove cni_cilium_settings.")
 	}
 
-	// The API rejects it.
+	// The API rejects auto-upgrade for a BASIC cluster.
 	if clusterType.ValueString() == string(mksclient.ClusterCreateStructClusterTypeBASIC) && autoUpgrade.ValueBool() {
 		resp.Diagnostics.AddAttributeError(path.Root("enable_patch_version_auto_upgrade"),
 			"Patch version auto-upgrade is not available for BASIC clusters",

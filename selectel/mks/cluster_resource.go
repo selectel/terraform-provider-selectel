@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	mksv2 "github.com/selectel/mks-go/v2/pkg"
 	"github.com/selectel/mks-go/v2/pkg/cluster"
+	"github.com/selectel/mks-go/v2/pkg/mksclient"
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadoc"
 )
 
@@ -76,22 +77,24 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
+	var got *mksclient.ClusterDetailed
 	waitErr := newCreatedTaskWaiter(client, created.Id, r.pollInterval).Wait(ctx)
 	if waitErr == nil {
-		waitErr = waitActive(ctx, client, created.Id, r.pollInterval)
+		got, waitErr = waitActive(ctx, client, created.Id, r.pollInterval)
 	}
+	if waitErr != nil {
+		// Save the cluster even when the wait failed, which can be ctx ending, so Terraform taints it instead of losing it.
+		readCtx, readCancel := context.WithTimeout(context.WithoutCancel(ctx), readAfterWaitTimeout)
+		defer readCancel()
+		got, err = cluster.Get(readCtx, client, created.Id)
+		if err != nil {
+			resp.Diagnostics.Append(plannedState(req.Plan, &resp.State)...)
+			resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), created.Id)...)
+			resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), projectID)...)
+			resp.Diagnostics.AddError("Error reading cluster", errGettingObject(objectCluster, created.Id, errors.Join(waitErr, err)).Error())
 
-	// Save the cluster even when the wait failed, which can be ctx ending, so Terraform taints it instead of losing it.
-	readCtx, readCancel := context.WithTimeout(context.WithoutCancel(ctx), readAfterWaitTimeout)
-	defer readCancel()
-	got, err := cluster.Get(readCtx, client, created.Id)
-	if err != nil {
-		resp.Diagnostics.Append(plannedState(req.Plan, &resp.State)...)
-		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), created.Id)...)
-		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), projectID)...)
-		resp.Diagnostics.AddError("Error reading cluster", errGettingObject(objectCluster, created.Id, errors.Join(waitErr, err)).Error())
-
-		return
+			return
+		}
 	}
 	state := plan
 	resp.Diagnostics.Append(state.fromAPI(ctx, got, plan, true)...)

@@ -2,6 +2,7 @@ package mks
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -81,8 +82,11 @@ func TestClusterStringValidators(t *testing.T) {
 		{name: "a window start in the hh:mm:ss form is accepted", field: "maintenance_window_start", value: "07:00:00"},
 		{name: "the last window start of the day is accepted", field: "maintenance_window_start", value: "23:59:59"},
 		{name: "an empty project ID is rejected", field: "project_id", value: "", want: "character count must be at least 1"},
-		{name: "an empty network ID is rejected", field: "network_id", value: "", want: "character count must be at least 1"},
-		{name: "an empty subnet ID is rejected", field: "subnet_id", value: "", want: "character count must be at least 1"},
+		{name: "an empty network ID is rejected", field: "network_id", value: "", want: "must be a lowercase UUID"},
+		{name: "an upper-case network ID is rejected", field: "network_id", value: strings.ToUpper(testClusterID), want: "must be a lowercase UUID"},
+		{name: "a lower-case network ID is accepted", field: "network_id", value: testClusterID},
+		{name: "an empty subnet ID is rejected", field: "subnet_id", value: "", want: "must be a lowercase UUID"},
+		{name: "a subnet ID without dashes is rejected", field: "subnet_id", value: strings.ReplaceAll(testClusterID, "-", ""), want: "must be a lowercase UUID"},
 		{name: "an empty cloud subnet CIDR is rejected", field: "cloud_subnet_cidr", value: "", want: "character count must be at least 1"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -140,18 +144,18 @@ func TestClusterModifyPlanState(t *testing.T) {
 		}},
 		{name: "plan equal to state keeps the known values", mutate: func(_ *clusterModel) {}, check: func(t *testing.T, plan clusterModel) {
 			assert.Equal(t, types.StringValue("ACTIVE"), plan.Status)
-			assert.Equal(t, types.StringValue("09:00:00"), plan.MaintenanceWindowEnd)
+			assert.Equal(t, types.StringValue("08:00:00"), plan.MaintenanceWindowEnd)
 		}},
 		{name: "a change sets the status unknown", mutate: func(m *clusterModel) {
 			m.EnableAutorepair = types.BoolValue(false)
 		}, check: func(t *testing.T, plan clusterModel) {
 			assert.True(t, plan.Status.IsUnknown())
-			assert.Equal(t, types.StringValue("09:00:00"), plan.MaintenanceWindowEnd)
+			assert.Equal(t, types.StringValue("08:00:00"), plan.MaintenanceWindowEnd)
 		}},
 		{name: "a kube_version change keeps the window end", mutate: func(m *clusterModel) {
 			m.KubeVersion = types.StringValue(testKubeVersionUp)
 		}, check: func(t *testing.T, plan clusterModel) {
-			assert.Equal(t, types.StringValue("09:00:00"), plan.MaintenanceWindowEnd)
+			assert.Equal(t, types.StringValue("08:00:00"), plan.MaintenanceWindowEnd)
 		}},
 		{name: "a window start change sets the window end unknown", mutate: func(m *clusterModel) {
 			m.MaintenanceWindowStart = types.StringValue("07:00:00")
