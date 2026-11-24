@@ -44,7 +44,7 @@ func (r *clusterResource) ValidateConfig(ctx context.Context, req resource.Valid
 			"Set enable_patch_version_auto_upgrade to false or omit it when cluster_type is BASIC.")
 	}
 
-	// The API ignores the CIDR for a non-dedicated cluster.
+	// The CIDR applies only to dedicated clusters.
 	if !cloudSubnetCIDR.IsNull() && !cloudSubnetCIDR.IsUnknown() && workersType.ValueString() == "CLOUD" {
 		resp.Diagnostics.AddAttributeError(path.Root("cloud_subnet_cidr"),
 			"Cloud subnet CIDR is not available for cloud clusters",

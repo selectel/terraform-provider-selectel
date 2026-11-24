@@ -105,7 +105,7 @@ func (c connection) client(ctx context.Context, attr types.String, pool string) 
 }
 
 // keystoneProjectID returns the project ID as lower-case hex without dashes, the form Keystone scopes a token by.
-// The API v2 returns a dashed UUID, which Keystone answers 401 for.
+// The API returns a dashed UUID.
 func keystoneProjectID(projectID string) string {
 	return strings.ToLower(strings.ReplaceAll(projectID, "-", ""))
 }

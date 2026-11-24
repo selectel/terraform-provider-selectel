@@ -27,8 +27,7 @@ import (
 
 var clusterDocs = schemadoc.Resource{Name: "cluster", Location: "managed-kubernetes"}
 
-// kubeVersionPattern pins the form the API accepts on create: it takes a
-// plain minor version too, and the next upgrade then fails.
+// kubeVersionPattern is the x.y.z form of a Kubernetes version.
 var kubeVersionPattern = regexp.MustCompile(`^\d+\.\d+\.\d+$`)
 
 var maintenanceWindowPattern = regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$`)

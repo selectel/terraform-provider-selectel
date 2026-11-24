@@ -307,7 +307,7 @@ func upgradeKubeVersion(ctx context.Context, client *mksv2.ServiceClient, cluste
 			return err
 		}
 		if upgradedMinor == currentMinor {
-			// The API answers 200 and creates no task when there is no next minor version.
+			// An unchanged minor version means there is no next one.
 			return fmt.Errorf("the cluster is already on the latest available minor version: %s", currentMinor)
 		}
 

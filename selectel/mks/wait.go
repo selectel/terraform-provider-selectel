@@ -42,8 +42,7 @@ func waitActive(ctx context.Context, client *mksv2.ServiceClient, clusterID stri
 	})
 }
 
-// taskWaiter waits for the tasks one mutating API call created: the API returns no task ID,
-// so the call's tasks are the ones listed after it and absent before it.
+// taskWaiter waits for the tasks one mutating API call created: the ones listed after it and absent before it.
 type taskWaiter struct {
 	client    *mksv2.ServiceClient
 	clusterID string
@@ -117,10 +116,9 @@ func (w *taskWaiter) WaitClusterDeleted(ctx context.Context) error {
 	})
 }
 
-// list returns every task of the cluster in one call: the API orders tasks
-// only by started_at, which tasks of one request share, so LIMIT/OFFSET pages could skip or repeat one.
+// list returns every task of the cluster in one call.
 func (w *taskWaiter) list(ctx context.Context) ([]mksclient.Task, error) {
-	// The API turns limit 0 into no LIMIT.
+	// Limit 0 means no limit.
 	tasks, err := task.List(ctx, w.client, w.clusterID, 0, 0)
 	if err != nil {
 		return nil, fmt.Errorf("error listing tasks of cluster %s: %w", w.clusterID, err)
