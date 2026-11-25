@@ -412,13 +412,13 @@ func TestClusterMinorUpgradeNamesTheRemovedKubernetesOptions(t *testing.T) {
 	}{
 		{
 			name:   "feature gates",
-			remove: func(o *mksclient.KubernetesOptions) { o.FeatureGates = []string{} },
-			want:   "The cluster runs Kubernetes 1.32.3 without CSIMigration. Remove them from feature_gates.",
+			remove: func(o *mksclient.KubernetesOptions) { o.FeatureGates = []string{"GateB"} },
+			want:   "The cluster runs Kubernetes 1.32.3 without GateA, GateC. If the new version does not have them, remove them from feature_gates.",
 		},
 		{
 			name:   "admission controllers",
 			remove: func(o *mksclient.KubernetesOptions) { o.AdmissionControllers = []string{} },
-			want:   "The cluster runs Kubernetes 1.32.3 without NodeRestriction. Remove them from admission_controllers.",
+			want:   "The cluster runs Kubernetes 1.32.3 without NodeRestriction. If the new version does not have them, remove them from admission_controllers.",
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -427,12 +427,18 @@ func TestClusterMinorUpgradeNamesTheRemovedKubernetesOptions(t *testing.T) {
 				mksclient.KubeVersionInfo{Version: new(testKubeVersion)},
 				mksclient.KubeVersionInfo{Version: new(testKubeVersionUp)},
 			)
-			prior := mustCreate(t, r, clusterPlan())
+			plan := clusterPlan()
+			plan.KubernetesOptions = kubeOptionsObject(map[string]attr.Value{
+				"feature_gates": types.SetValueMust(types.StringType, []attr.Value{
+					types.StringValue("GateA"), types.StringValue("GateB"), types.StringValue("GateC"),
+				}),
+			})
+			prior := mustCreate(t, r, plan)
 			fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { tt.remove(&c.KubernetesOptions) })
 
 			got, diags := updateCluster(t, r, prior, withKubeVersion(prior, testKubeVersionUp))
 
-			assertErrorContains(t, diags, tt.want)
+			assertErrorContains(t, diags, "Kubernetes options are missing after the upgrade", tt.want)
 			assert.Len(t, diags.Errors(), 1)
 			assert.Equal(t, types.StringValue(testKubeVersionUp), got.KubeVersion)
 			assert.False(t, got.KubernetesOptions.Equal(prior.KubernetesOptions))

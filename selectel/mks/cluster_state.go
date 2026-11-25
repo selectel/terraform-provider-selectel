@@ -271,7 +271,7 @@ func (m *clusterModel) fromAPI(ctx context.Context, c *mksclient.ClusterDetailed
 	return diags
 }
 
-// checkRemovedKubeOptions fails for the planned options that a minor upgrade removed.
+// checkRemovedKubeOptions fails for the planned options that the upgraded cluster does not have.
 func checkRemovedKubeOptions(ctx context.Context, planned types.Object, got *mksclient.ClusterDetailed) diag.Diagnostics {
 	want, diags := expandKubeOptions(ctx, planned)
 	if want == nil {
@@ -290,8 +290,8 @@ func checkRemovedKubeOptions(ctx context.Context, planned types.Object, got *mks
 		})
 		if len(removed) > 0 {
 			diags.AddAttributeError(path.Root("kubernetes_options").AtName(option.name),
-				"Minor upgrade removed "+option.name,
-				fmt.Sprintf("The cluster runs Kubernetes %s without %s. Remove them from %s.",
+				"Kubernetes options are missing after the upgrade",
+				fmt.Sprintf("The cluster runs Kubernetes %s without %s. If the new version does not have them, remove them from %s.",
 					got.KubeVersion, strings.Join(removed, ", "), option.name))
 		}
 	}
