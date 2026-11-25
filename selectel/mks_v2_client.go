@@ -3,7 +3,6 @@ package selectel
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/selectel/go-selvpcclient/v5/selvpcclient"
 	mksv2 "github.com/selectel/mks-go/v2/pkg"
@@ -29,17 +28,11 @@ func (c *Config) MKSV2Client(ctx context.Context, projectID, pool string) (*mksv
 	if err != nil {
 		return nil, err
 	}
-	client, err := mksv2.NewMKSClientV2(selvpcClient.GetXAuthToken(), mksV2BaseURL(endpoint.URL))
+	client, err := mksv2.NewMKSClientV2(selvpcClient.GetXAuthToken(), endpoint.URL)
 	if err != nil {
 		return nil, err
 	}
 	client.UserAgent = c.UserAgent
 
 	return client, nil
-}
-
-// mksV2BaseURL trims the /v2 suffix of the catalog endpoint (https://ru-7.mks.selcloud.ru/v2),
-// because the mks-go v2 request paths start with /v2/.
-func mksV2BaseURL(endpoint string) string {
-	return strings.TrimSuffix(strings.TrimSuffix(endpoint, "/"), "/v2")
 }

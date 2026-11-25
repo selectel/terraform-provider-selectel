@@ -2,8 +2,6 @@ dario.cat/mergo v1.0.0 h1:AGCNq9Evsj31mOgNPcLyXc+4PNABt905YmuqPYYpBWk=
 dario.cat/mergo v1.0.0/go.mod h1:uNxQE+84aUszobStD9th8a29P2fMDhsBdgRYvZOxGmk=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
-github.com/P3rCh1/mks-go/v2 v2.0.1-0.20261123114827-4c80037f25a1 h1:u8W5oEr1FUG3Td2v4tWdDtvuTw1sk+I4GHC5BGTIYrU=
-github.com/P3rCh1/mks-go/v2 v2.0.1-0.20261123114827-4c80037f25a1/go.mod h1:ELaNwk6TuLlKZLO96quwO+wwXHe6gbxf9NpLEgxRDjk=
 github.com/ProtonMail/go-crypto v1.4.1 h1:9RfcZHqEQUvP8RzecWEUafnZVtEvrBVL9BiF67IQOfM=
 github.com/ProtonMail/go-crypto v1.4.1/go.mod h1:e1OaTyu5SYVrO9gKOEhTc+5UcXtTUa+P3uLudwcgPqo=
 github.com/RaveNoX/go-jsoncommentstrip v1.0.0/go.mod h1:78ihd09MekBnJnxpICcwzCMzGrKSKYe4AqU6PDYYpjk=
@@ -192,6 +190,8 @@ github.com/selectel/images-go v0.1.0 h1:zaR+hJpyb0rhBpJzwNJnB8OMMirb1rkRRmj++Yhr
 github.com/selectel/images-go v0.1.0/go.mod h1:z8ZsA88iy6/q7HEuNBN+pSVPjEcsVTPocyONxqioCmU=
 github.com/selectel/mks-go v1.1.0 h1:puJW2uuleAwsVyJaaAeRBwrK8+1cQ8tL7deBjLOyToQ=
 github.com/selectel/mks-go v1.1.0/go.mod h1:VxtV3dzwgOEzZc+9VMQb9DvxfSlej2ZQ8jnT8kqIGgU=
+github.com/selectel/mks-go/v2 v2.1.0 h1:GTdwZWuW4bbDzKlqpufbDqDPMYxWUJT3bdtnZOgBjUQ=
+github.com/selectel/mks-go/v2 v2.1.0/go.mod h1:ELaNwk6TuLlKZLO96quwO+wwXHe6gbxf9NpLEgxRDjk=
 github.com/selectel/private-dns-go v1.1.0 h1:wFJx+XX8VFWwaKI3a7Mboep+iJcXMuAEUT75KYV801s=
 github.com/selectel/private-dns-go v1.1.0/go.mod h1:cLVpLbPIJTqP/Wnp/nyTRBP9MTSqoyLvonrjrxbRiYE=
 github.com/selectel/public-net-api-go v1.0.1 h1:oHkh96+osdXNpi/khyEcovBUZr9y8XfretHLs4QpAXI=

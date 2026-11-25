@@ -24,7 +24,7 @@ require (
 	github.com/selectel/iam-go v0.10.0
 	github.com/selectel/images-go v0.1.0
 	github.com/selectel/mks-go v1.1.0
-	github.com/selectel/mks-go/v2 v2.0.0
+	github.com/selectel/mks-go/v2 v2.1.0
 	github.com/selectel/private-dns-go v1.1.0
 	github.com/selectel/public-net-api-go v1.0.1
 	github.com/selectel/secretsmanager-go v0.2.1
@@ -94,5 +94,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/selectel/mks-go/v2 => github.com/P3rCh1/mks-go/v2 v2.0.1-0.20261123114827-4c80037f25a1
