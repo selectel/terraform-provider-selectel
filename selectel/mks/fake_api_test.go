@@ -191,7 +191,7 @@ func (f *fakeAPI) createCluster(w http.ResponseWriter, r *http.Request) {
 		Name:                          strings.ToLower(opts.Name),
 		Pool:                          opts.Pool,
 		ProjectId:                     fakeAPIProjectID(keystoneProject),
-		KubeVersion:                   opts.KubeVersion,
+		KubeVersion:                   cmp.Or(f.latestPatches()[opts.KubeVersion], opts.KubeVersion),
 		ClusterType:                   clusterType,
 		Basic:                         clusterType == mksclient.BASIC,
 		NetworkType:                   mksclient.ClusterDetailedNetworkType(opts.NetworkType),
@@ -334,6 +334,27 @@ func (f *fakeAPI) deleteCluster(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (f *fakeAPI) latestPatches() map[string]string {
+	latest := map[string]string{}
+	for _, v := range f.kubeVersions {
+		minor, err := kubeVersionTrimToMinor(valueOrZero(v.Version))
+		if err != nil {
+			continue
+		}
+		current, ok := latest[minor]
+		if !ok {
+			latest[minor] = valueOrZero(v.Version)
+			continue
+		}
+		order, err := compareKubeVersions(valueOrZero(v.Version), current)
+		if err == nil && order > 0 {
+			latest[minor] = valueOrZero(v.Version)
+		}
+	}
+
+	return latest
+}
+
 func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("cluster_id")
@@ -346,23 +367,7 @@ func (f *fakeAPI) upgradeCluster(minor bool) http.HandlerFunc {
 			target, taskType = kubeVersionTrimToMinorIncremented, "UPGRADE_MINOR_VERSION"
 		}
 		targetMinor, _ := target(c.KubeVersion)
-		latest := map[string]string{}
-		for _, v := range f.kubeVersions {
-			minor, err := kubeVersionTrimToMinor(valueOrZero(v.Version))
-			if err != nil {
-				continue
-			}
-			current, ok := latest[minor]
-			if !ok {
-				latest[minor] = valueOrZero(v.Version)
-				continue
-			}
-			order, err := compareKubeVersions(valueOrZero(v.Version), current)
-			if err == nil && order > 0 {
-				latest[minor] = valueOrZero(v.Version)
-			}
-		}
-		version, ok := latest[targetMinor]
+		version, ok := f.latestPatches()[targetMinor]
 		if ok && version != c.KubeVersion {
 			c.KubeVersion = version
 			f.clusters[id] = c

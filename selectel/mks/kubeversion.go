@@ -94,6 +94,11 @@ func kubeVersionTrimToMinorIncremented(kubeVersion string) (string, error) {
 	return fmt.Sprintf("%d.%d", major, minor+1), nil
 }
 
+// kubeVersionIsMinor reports whether a version is in the x.y form.
+func kubeVersionIsMinor(kubeVersion string) bool {
+	return strings.Count(kubeVersion, ".") == 1
+}
+
 // latestKubePatchVersions returns the latest patch version of every minor
 // version the API serves.
 func latestKubePatchVersions(ctx context.Context, client *mksv2.ServiceClient) (map[string]string, error) {

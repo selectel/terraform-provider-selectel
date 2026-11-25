@@ -75,8 +75,8 @@ func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 
 	if !plan.KubeVersion.IsUnknown() && !plan.KubeVersion.Equal(state.KubeVersion) {
 		order, err := compareKubeVersions(plan.KubeVersion.ValueString(), state.KubeVersion.ValueString())
-		if err == nil && order < 0 {
-			// Like the v1 diff suppress: a lower configured version, left behind by patch auto-upgrade, changes nothing.
+		if err == nil && (order < 0 || order == 0 && kubeVersionIsMinor(plan.KubeVersion.ValueString())) {
+			// Like the v1 diff suppress: a lower version, left behind by patch auto-upgrade, or the minor of the state version changes nothing.
 			plan.KubeVersion = state.KubeVersion
 			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("kube_version"), state.KubeVersion)...)
 		}

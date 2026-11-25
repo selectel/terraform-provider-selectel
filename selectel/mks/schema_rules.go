@@ -17,8 +17,8 @@ import (
 	"github.com/terraform-providers/terraform-provider-selectel/selectel/internal/schemadoc"
 )
 
-// kubeVersionPattern is the x.y.z form of a Kubernetes version.
-var kubeVersionPattern = regexp.MustCompile(`^\d+\.\d+\.\d+$`)
+// kubeVersionPattern is the x.y or x.y.z form of a Kubernetes version.
+var kubeVersionPattern = regexp.MustCompile(`^\d+\.\d+(\.\d+)?$`)
 
 var maintenanceWindowPattern = regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$`)
 

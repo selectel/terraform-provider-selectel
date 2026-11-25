@@ -427,6 +427,42 @@ func TestClusterReadStoresTheAPIKubeVersion(t *testing.T) {
 	}
 }
 
+func TestClusterMinorKubeVersion(t *testing.T) {
+	fake, r := fakeResource(t)
+	fake.seedKubeVersions(
+		mksclient.KubeVersionInfo{Version: new(testKubeVersionOld)},
+		mksclient.KubeVersionInfo{Version: new(testKubeVersionUp)},
+	)
+	readAt := func(prior clusterModel, actual string) types.String {
+		fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { c.KubeVersion = actual })
+		state, diags := readCluster(t, r, prior)
+		require.False(t, diags.HasError(), "%v", diags)
+
+		return readClusterModel(t, state).KubeVersion
+	}
+
+	prior := mustCreate(t, r, withKubeVersion(clusterPlan(), "1.31"))
+	bodyFields(t, fake.lastBody(routeCreateCluster), map[string]any{"kube_version": "1.31"})
+	assert.Equal(t, types.StringValue("1.31"), prior.KubeVersion)
+	assert.Equal(t, types.StringValue("1.31"), readAt(prior, testKubeVersionOld))
+	assert.Equal(t, types.StringValue("1.31"), readAt(prior, testKubeVersion))
+
+	fake.seedKubeVersions(
+		mksclient.KubeVersionInfo{Version: new("1.31.9")},
+		mksclient.KubeVersionInfo{Version: new(testKubeVersionUp)},
+	)
+	patched, diags := updateCluster(t, r, prior, withKubeVersion(prior, "1.31.9"))
+	require.False(t, diags.HasError(), "%v", diags)
+	assert.Equal(t, types.StringValue("1.31.9"), patched.KubeVersion)
+	assert.Equal(t, 1, fake.callCount(routeUpgradePatch))
+
+	upgraded, diags := updateCluster(t, r, prior, withKubeVersion(prior, "1.32"))
+	require.False(t, diags.HasError(), "%v", diags)
+	assert.Equal(t, types.StringValue("1.32"), upgraded.KubeVersion)
+	assert.Equal(t, 1, fake.callCount(routeUpgradeMinor))
+	assert.Equal(t, types.StringValue("1.33.1"), readAt(upgraded, "1.33.1"))
+}
+
 func TestClusterUpdateUpgradesBeforeThePatch(t *testing.T) {
 	fake, r := fakeResource(t)
 	fake.seedKubeVersions(

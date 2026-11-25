@@ -65,8 +65,13 @@ type clusterOIDCModel struct {
 	CACerts       trimmedStringValue `tfsdk:"ca_certs"`
 }
 
+// compareKubeVersions ignores the patch version when one of the versions has none.
 func compareKubeVersions(a, b string) (int, error) {
-	for _, part := range []func(string) (int, error){kubeVersionToMajor, kubeVersionToMinor, kubeVersionToPatch} {
+	parts := []func(string) (int, error){kubeVersionToMajor, kubeVersionToMinor}
+	if !kubeVersionIsMinor(a) && !kubeVersionIsMinor(b) {
+		parts = append(parts, kubeVersionToPatch)
+	}
+	for _, part := range parts {
 		partA, err := part(a)
 		if err != nil {
 			return 0, err
@@ -223,7 +228,9 @@ func (m *clusterModel) fromAPI(ctx context.Context, c *mksclient.ClusterDetailed
 		// The API returns the project dashed: the state takes the form keystoneProjectID keeps.
 		m.ProjectID = types.StringValue(keystoneProjectID(c.ProjectId))
 	}
-	if !applied {
+	apiMinor, _ := kubeVersionTrimToMinor(c.KubeVersion)
+	if !applied && (apiMinor == "" || prior.KubeVersion.ValueString() != apiMinor) {
+		// A state version without the patch stands for any patch of its minor.
 		m.KubeVersion = types.StringValue(c.KubeVersion)
 	}
 	m.ClusterType = types.StringValue(string(c.ClusterType))

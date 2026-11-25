@@ -81,6 +81,11 @@ func TestClusterStringValidators(t *testing.T) {
 		{name: "a window start at second 60 is rejected", field: "maintenance_window_start", value: "07:00:60", want: "must be in the hh:mm:ss form"},
 		{name: "a window start in the hh:mm:ss form is accepted", field: "maintenance_window_start", value: "07:00:00"},
 		{name: "the last window start of the day is accepted", field: "maintenance_window_start", value: "23:59:59"},
+		{name: "a kube version without the patch is accepted", field: "kube_version", value: "1.31"},
+		{name: "a kube version with the patch is accepted", field: "kube_version", value: "1.31.8"},
+		{name: "a kube version without the minor is rejected", field: "kube_version", value: "1", want: "must be in the x.y or x.y.z form"},
+		{name: "a kube version with a placeholder is rejected", field: "kube_version", value: "1.31.x", want: "must be in the x.y or x.y.z form"},
+		{name: "a kube version with a prefix is rejected", field: "kube_version", value: "v1.31.8", want: "must be in the x.y or x.y.z form"},
 		{name: "an empty project ID is rejected", field: "project_id", value: "", want: "character count must be at least 1"},
 		{name: "an empty network ID is rejected", field: "network_id", value: "", want: "must be a lowercase UUID"},
 		{name: "an upper-case network ID is rejected", field: "network_id", value: strings.ToUpper(testClusterID), want: "must be a lowercase UUID"},
@@ -128,6 +133,32 @@ func TestClusterModifyPlanAcceptsASkippedMinorVersion(t *testing.T) {
 	var got clusterModel
 	require.False(t, resp.Plan.Get(context.Background(), &got).HasError())
 	assert.Equal(t, types.StringValue("1.34.1"), got.KubeVersion)
+}
+
+func TestClusterModifyPlanMinorKubeVersion(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		state  string
+		config string
+		want   string
+	}{
+		{name: "the minor version of the state changes nothing", state: "1.31.8", config: "1.31", want: "1.31.8"},
+		{name: "a lower minor version changes nothing", state: "1.32.3", config: "1.31", want: "1.32.3"},
+		{name: "a lower minor version against a minor state changes nothing", state: "1.32", config: "1.31", want: "1.32"},
+		{name: "a higher minor version is planned", state: "1.31", config: "1.32", want: "1.32"},
+		{name: "a patch version against a minor state is planned", state: "1.31", config: "1.31.8", want: "1.31.8"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			plan := withKubeVersion(clusterState(), tt.config)
+
+			resp := modifyPlan(t, &clusterResource{}, withKubeVersion(clusterState(), tt.state), plan, plan)
+
+			require.False(t, resp.Diagnostics.HasError(), "%v", resp.Diagnostics)
+			var got clusterModel
+			require.False(t, resp.Plan.Get(context.Background(), &got).HasError())
+			assert.Equal(t, types.StringValue(tt.want), got.KubeVersion)
+		})
+	}
 }
 
 func TestClusterModifyPlanState(t *testing.T) {

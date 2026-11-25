@@ -114,13 +114,14 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			"kube_version": clusterDocs.String(schema.StringAttribute{
 				Required: true,
 				Validators: []validator.String{
-					schemadoc.DescribeString(stringvalidator.RegexMatches(kubeVersionPattern, "must be in the x.y.z form"),
-						"The format is `x.y.z`."),
+					schemadoc.DescribeString(stringvalidator.RegexMatches(kubeVersionPattern, "must be in the x.y or x.y.z form"),
+						"The format is `x.y` or `x.y.z`."),
 				},
 			}, schemadoc.Field{
 				Definition: "Kubernetes version of the cluster. Changing this to a later version upgrades the cluster. " +
 					"To upgrade a patch version, the desired version must match the latest available patch version of the current minor version. " +
 					"To upgrade a minor version, the desired version must match the next available minor version. The API picks its patch version. " +
+					"If the patch version is omitted, the API uses the latest one when it creates the cluster, and a later patch upgrade is not a change. " +
 					"The cluster may run a newer version than configured, for example after patch auto-upgrade: " +
 					"a configured version lower than the one in the state is accepted with no change and never downgrades the cluster.",
 				Source: schemadoc.FromDataSource("selectel_mks_kube_versions_v1", "available versions"),
