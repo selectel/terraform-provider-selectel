@@ -3,11 +3,13 @@ package mks
 import (
 	"cmp"
 	"context"
+	"fmt"
 	"slices"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -229,8 +231,8 @@ func (m *clusterModel) fromAPI(ctx context.Context, c *mksclient.ClusterDetailed
 		m.ProjectID = types.StringValue(keystoneProjectID(c.ProjectId))
 	}
 	apiMinor, _ := kubeVersionTrimToMinor(c.KubeVersion)
+	// A state version without the patch stays: it stands for any patch of its minor.
 	if !applied && (apiMinor == "" || prior.KubeVersion.ValueString() != apiMinor) {
-		// A state version without the patch stands for any patch of its minor.
 		m.KubeVersion = types.StringValue(c.KubeVersion)
 	}
 	m.ClusterType = types.StringValue(string(c.ClusterType))
@@ -265,6 +267,34 @@ func (m *clusterModel) fromAPI(ctx context.Context, c *mksclient.ClusterDetailed
 	kubeOptions, d := flattenKubeOptions(ctx, c.KubernetesOptions)
 	diags.Append(d...)
 	m.KubernetesOptions = kubeOptions
+
+	return diags
+}
+
+// checkRemovedKubeOptions fails for the planned options that a minor upgrade removed.
+func checkRemovedKubeOptions(ctx context.Context, planned types.Object, got *mksclient.ClusterDetailed) diag.Diagnostics {
+	want, diags := expandKubeOptions(ctx, planned)
+	if want == nil {
+		return diags
+	}
+
+	for _, option := range []struct {
+		name          string
+		planned, kept []string
+	}{
+		{name: "feature_gates", planned: want.FeatureGates, kept: got.KubernetesOptions.FeatureGates},
+		{name: "admission_controllers", planned: want.AdmissionControllers, kept: got.KubernetesOptions.AdmissionControllers},
+	} {
+		removed := slices.DeleteFunc(option.planned, func(name string) bool {
+			return slices.Contains(option.kept, name)
+		})
+		if len(removed) > 0 {
+			diags.AddAttributeError(path.Root("kubernetes_options").AtName(option.name),
+				"Minor upgrade removed "+option.name,
+				fmt.Sprintf("The cluster runs Kubernetes %s without %s. Remove them from %s.",
+					got.KubeVersion, strings.Join(removed, ", "), option.name))
+		}
+	}
 
 	return diags
 }

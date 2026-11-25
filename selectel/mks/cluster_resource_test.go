@@ -404,6 +404,42 @@ func TestClusterMinorUpgradeStoresTheRemainingKubernetesOptions(t *testing.T) {
 	assert.Len(t, options.AdmissionControllers.Elements(), 1)
 }
 
+func TestClusterMinorUpgradeNamesTheRemovedKubernetesOptions(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		remove func(o *mksclient.KubernetesOptions)
+		want   string
+	}{
+		{
+			name:   "feature gates",
+			remove: func(o *mksclient.KubernetesOptions) { o.FeatureGates = []string{} },
+			want:   "The cluster runs Kubernetes 1.32.3 without CSIMigration. Remove them from feature_gates.",
+		},
+		{
+			name:   "admission controllers",
+			remove: func(o *mksclient.KubernetesOptions) { o.AdmissionControllers = []string{} },
+			want:   "The cluster runs Kubernetes 1.32.3 without NodeRestriction. Remove them from admission_controllers.",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			fake, r := fakeResource(t)
+			fake.seedKubeVersions(
+				mksclient.KubeVersionInfo{Version: new(testKubeVersion)},
+				mksclient.KubeVersionInfo{Version: new(testKubeVersionUp)},
+			)
+			prior := mustCreate(t, r, clusterPlan())
+			fake.updateCluster(testClusterID, func(c *mksclient.ClusterDetailed) { tt.remove(&c.KubernetesOptions) })
+
+			got, diags := updateCluster(t, r, prior, withKubeVersion(prior, testKubeVersionUp))
+
+			assertErrorContains(t, diags, tt.want)
+			assert.Len(t, diags.Errors(), 1)
+			assert.Equal(t, types.StringValue(testKubeVersionUp), got.KubeVersion)
+			assert.False(t, got.KubernetesOptions.Equal(prior.KubernetesOptions))
+		})
+	}
+}
+
 func TestClusterMinorUpgradeWithoutANextMinorFails(t *testing.T) {
 	fake, r := fakeResource(t)
 	fake.seedKubeVersions(mksclient.KubeVersionInfo{Version: new(testKubeVersion)})

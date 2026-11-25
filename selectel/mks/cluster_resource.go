@@ -187,6 +187,9 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 
 		return
 	}
+	if !plan.KubeVersion.Equal(state.KubeVersion) {
+		resp.Diagnostics.Append(checkRemovedKubeOptions(ctx, plan.KubernetesOptions, got)...)
+	}
 	resp.Diagnostics.Append(plan.fromAPI(ctx, got, plan, true)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }

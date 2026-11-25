@@ -55,7 +55,7 @@ func (r *clusterResource) ValidateConfig(ctx context.Context, req resource.Valid
 	if workersType.ValueString() == "DEDICATED" && autorepair.ValueBool() {
 		resp.Diagnostics.AddAttributeError(path.Root("enable_autorepair"),
 			"Auto-repair is not available for dedicated clusters",
-			"The API disables enable_autorepair when it creates a DEDICATED cluster, so setting it to true ends in an inconsistent result.")
+			"Set enable_autorepair to false or omit it when workers_type is DEDICATED.")
 	}
 }
 

@@ -75,6 +75,10 @@ func TestClusterStringValidators(t *testing.T) {
 		value string
 		want  string
 	}{
+		{name: "a 32-character name is accepted", field: "name", value: strings.Repeat("a", 32)},
+		{name: "a 33-character name is rejected", field: "name", value: strings.Repeat("a", 33), want: "at most 32"},
+		{name: "a name with a leading hyphen is rejected", field: "name", value: "-cluster", want: "not start with a hyphen"},
+		{name: "a name with an underscore is rejected", field: "name", value: "my_cluster", want: "must contain Latin letters, digits, and hyphens"},
 		{name: "a window start with a one-digit hour is rejected", field: "maintenance_window_start", value: "7:00:00", want: "must be in the hh:mm:ss form"},
 		{name: "a window start at hour 24 is rejected", field: "maintenance_window_start", value: "24:00:00", want: "must be in the hh:mm:ss form"},
 		{name: "a window start at minute 60 is rejected", field: "maintenance_window_start", value: "07:60:00", want: "must be in the hh:mm:ss form"},
@@ -133,6 +137,28 @@ func TestClusterModifyPlanAcceptsASkippedMinorVersion(t *testing.T) {
 	var got clusterModel
 	require.False(t, resp.Plan.Get(context.Background(), &got).HasError())
 	assert.Equal(t, types.StringValue("1.34.1"), got.KubeVersion)
+}
+
+func TestCompareKubeVersions(t *testing.T) {
+	for _, tt := range []struct {
+		a, b string
+		want int
+	}{
+		{a: "1.31.10", b: "1.31.9", want: 1},
+		{a: "1.31.9", b: "1.31.10", want: -1},
+		{a: "1.31.9", b: "1.31.9", want: 0},
+		{a: "1.31", b: "1.31.9", want: 0},
+		{a: "1.31.9", b: "1.31", want: 0},
+		{a: "1.10", b: "1.9.5", want: 1},
+		{a: "1.9.5", b: "1.10", want: -1},
+		{a: "1.31", b: "2.1", want: -1},
+	} {
+		t.Run(tt.a+" and "+tt.b, func(t *testing.T) {
+			got, err := compareKubeVersions(tt.a, tt.b)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }
 
 func TestClusterModifyPlanMinorKubeVersion(t *testing.T) {
