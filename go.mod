@@ -24,7 +24,7 @@ require (
 	github.com/selectel/iam-go v0.10.0
 	github.com/selectel/images-go v0.1.0
 	github.com/selectel/mks-go v1.1.0
-	github.com/selectel/mks-go/v2 v2.1.0
+	github.com/selectel/mks-go/v2 v2.1.1
 	github.com/selectel/private-dns-go v1.1.0
 	github.com/selectel/public-net-api-go v1.0.1
 	github.com/selectel/secretsmanager-go v0.2.1

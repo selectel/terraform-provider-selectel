@@ -190,8 +190,8 @@ github.com/selectel/images-go v0.1.0 h1:zaR+hJpyb0rhBpJzwNJnB8OMMirb1rkRRmj++Yhr
 github.com/selectel/images-go v0.1.0/go.mod h1:z8ZsA88iy6/q7HEuNBN+pSVPjEcsVTPocyONxqioCmU=
 github.com/selectel/mks-go v1.1.0 h1:puJW2uuleAwsVyJaaAeRBwrK8+1cQ8tL7deBjLOyToQ=
 github.com/selectel/mks-go v1.1.0/go.mod h1:VxtV3dzwgOEzZc+9VMQb9DvxfSlej2ZQ8jnT8kqIGgU=
-github.com/selectel/mks-go/v2 v2.1.0 h1:GTdwZWuW4bbDzKlqpufbDqDPMYxWUJT3bdtnZOgBjUQ=
-github.com/selectel/mks-go/v2 v2.1.0/go.mod h1:ELaNwk6TuLlKZLO96quwO+wwXHe6gbxf9NpLEgxRDjk=
+github.com/selectel/mks-go/v2 v2.1.1 h1:IuTwXSuTlrkdvTZ1Ify6HohkWKc3dioXf92nAnPdAso=
+github.com/selectel/mks-go/v2 v2.1.1/go.mod h1:ELaNwk6TuLlKZLO96quwO+wwXHe6gbxf9NpLEgxRDjk=
 github.com/selectel/private-dns-go v1.1.0 h1:wFJx+XX8VFWwaKI3a7Mboep+iJcXMuAEUT75KYV801s=
 github.com/selectel/private-dns-go v1.1.0/go.mod h1:cLVpLbPIJTqP/Wnp/nyTRBP9MTSqoyLvonrjrxbRiYE=
 github.com/selectel/public-net-api-go v1.0.1 h1:oHkh96+osdXNpi/khyEcovBUZr9y8XfretHLs4QpAXI=
