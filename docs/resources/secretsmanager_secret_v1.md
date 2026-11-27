@@ -4,7 +4,7 @@ description: |-
   Creates and manages a secret in Secrets Manager using public API v1.
 ---
 
-# selectel\_secretsmanager\_secret_v1
+# selectel\_secretsmanager\_secret\_v1
 
 Creates and manages a secret in Secrets Manager using public API v1. For more information about Secrets Manager, see the [official Selectel documentation](https://docs.selectel.ru/en/secrets-manager/secrets/).
 
@@ -56,13 +56,15 @@ Versions cannot be deleted individually through this resource. Destroying the re
 
 * `id` - Unique identifier of the secret in the `<project_id>/<key>` format.
 
-* `created_at` - Time when the active secret version was created, in RFC3339 format.
+* `created_at` - Time when the active secret version was created in RFC3339 format.
 
 * `name` - Secret name, same as the secret key.
 
 * `version` - Number of the active version, which may differ from the latest uploaded version.
 
 ## Import
+
+Import does not retrieve the existing secret's plaintext value. If value is missing from state, the provider sets it to the literal string `UNKNOWN`. Set the required value in the resource configuration before applying. If the configured value differs from the imported state, apply creates a new secret version; whether that version is activated depends on `is_current`. Import does not recover the original value and does not guarantee that the first apply will leave the secret unchanged.
 
 You can import a secret:
 
@@ -78,9 +80,9 @@ terraform import selectel_secretsmanager_secret_v1.secret_1 <selectel_project_id
 
 where:
 
-* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/control-panel-actions/account/registration/).
+* `<account_id>` — Selectel account ID. The account ID is in the top right corner of the [Control panel](https://my.selectel.ru/). Learn more about [Registration](https://docs.selectel.ru/en/account/registration/).
 
-* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/users_management/users?type=service), go to **Identity & Access Management** ⟶ **User management** ⟶ the **Service users** tab ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/control-panel-actions/users-and-roles/user-types-and-roles/).
+* `<username>` — Name of the service user. To get the name, in the [Control panel](https://my.selectel.ru/iam/service-users), go to **IAM** ⟶ **Service users** ⟶ copy the name of the required user. Learn more about [Service users](https://docs.selectel.ru/en/access-control/users/about/user-types/).
 
 * `<password>` — Password of the service user.
 
@@ -88,10 +90,6 @@ where:
 
 * `<auth_region>` — Authentication region matching the selected authentication endpoint. Use the value from your configured provider.
 
-* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/vpc/), go to **Cloud Platform** ⟶ project name ⟶ copy the ID of the required project. Learn more about [Projects](https://docs.selectel.ru/en/control-panel-actions/projects/about-projects/).
+* `<selectel_project_id>` — Unique identifier of the associated project. To get the ID, in the [Control panel](https://my.selectel.ru/iam/projects), go to **IAM** ⟶ **Projects** ⟶ copy the ID of the required project. The configured project ID must match the project ID in the import identifier. The service user must have access to this project. You can set the provider's `project_id` argument instead of `INFRA_PROJECT_ID`. Learn more about [Projects](https://docs.selectel.ru/en/access-control/projects/about-projects/).
 
 * `<key>` — Secret name. In the [Control panel](https://my.selectel.ru/secrets/), open **Products** ⟶ **Secrets Manager** ⟶ **Secrets** and copy the existing secret's name.
-
-The service user must have access to the project. You can set the provider's `project_id` argument instead of `INFRA_PROJECT_ID`. The configured project ID must match the project ID in the import identifier.
-
-Import does not retrieve the existing secret's plaintext value. If `value` is absent from state, the provider sets it to the literal string `UNKNOWN`. Supply the required `value` in the resource configuration before applying. A configured value that differs from the imported state creates a new version on apply, whose activation follows `is_current`; import does not recover the original value or guarantee an unchanged first apply.

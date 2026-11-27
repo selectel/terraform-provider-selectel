@@ -1,3 +1,9 @@
+## 9.8.0 (November 27, 2026)
+
+FEATURES:
+
+* Add the `is_current` argument to `selectel_secretsmanager_certificate_v1` and `selectel_secretsmanager_secret_v1` to upload new versions without activating them ([#450](https://github.com/selectel/terraform-provider-selectel/pull/450)).
+
 ## 9.7.0 (November 11, 2026)
 
 FEATURES:

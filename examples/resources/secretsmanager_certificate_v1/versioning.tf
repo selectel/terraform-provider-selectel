@@ -1,4 +1,3 @@
-# Update the PEM of an existing certificate to upload a version without activating it.
 resource "selectel_secretsmanager_certificate_v1" "certificate_1" {
   name         = "certificate"
   certificates = [file("./_cert.pem")]
