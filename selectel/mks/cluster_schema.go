@@ -251,12 +251,8 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 							Vendor: "Cilium",
 						},
 					}),
-					"hubble_relay": clusterDocs.Bool(schema.BoolAttribute{
-						Optional: true,
-						Computed: true,
-						Default:  schemadoc.StaticBool(true),
-					}, schemadoc.Field{
-						Definition: "Enables or disables Hubble Relay for Cilium.",
+					"hubble_relay": clusterDocs.Bool(optionalBool(), schemadoc.Field{
+						Definition: "Enables or disables Hubble Relay for Cilium. If omitted, the API uses `false`.",
 						Concept: schemadoc.Link{
 							Topic:  "Hubble Relay",
 							URL:    "https://docs.cilium.io/en/stable/internals/hubble/#hubble-relay",

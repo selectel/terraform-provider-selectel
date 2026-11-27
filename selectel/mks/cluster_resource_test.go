@@ -976,9 +976,7 @@ func TestClusterSchemaDefaults(t *testing.T) {
 	cilium := resp.Schema.Attributes["cni_cilium_settings"].(schema.SingleNestedAttribute)
 	options := resp.Schema.Attributes["kubernetes_options"].(schema.SingleNestedAttribute)
 
-	var hubble defaults.BoolResponse
-	cilium.Attributes["hubble_relay"].(schema.BoolAttribute).Default.DefaultBool(context.Background(), defaults.BoolRequest{}, &hubble)
-	assert.Equal(t, types.BoolValue(true), hubble.PlanValue)
+	assert.Nil(t, cilium.Attributes["hubble_relay"].(schema.BoolAttribute).Default)
 
 	for _, name := range []string{"feature_gates", "admission_controllers"} {
 		var set defaults.SetResponse
