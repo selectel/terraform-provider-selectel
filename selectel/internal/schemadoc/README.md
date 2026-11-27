@@ -72,7 +72,7 @@ Describer'ы пишут текст в `MarkdownDescription`. Для атрибу
 | `UUID`, `Trimmed`, `NonEmptyTrimmed` | формат |
 | `ConflictsWith`, `ExactlyOneOf`, `AlsoRequires` | зависимость; подходят для атрибута любого вида |
 | `StaticString`, `StaticBool`, `StaticInt64` | default |
-| `RequiresReplace` | «Changing this creates a new …» |
+| `RequiresReplace`, `BoolRequiresReplace` | «Changing this creates a new …» |
 | `RequiresReplaceIf` | исключение отдельным предложением и «Changing this creates a new …» последним |
 
 `UseStateForUnknown` ничего не меняет для пользователя и используется как есть.

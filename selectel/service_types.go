@@ -5,6 +5,7 @@ const (
 	DBaaS              = "managed-database"
 	DBaaSv2            = "managed-database-v2"
 	MKS                = "managed-kubernetes"
+	MKSV2              = "managed-kubernetes-v2"
 	CRaaS              = "container-registry"
 	IAM                = "iam"
 	SecretsManager     = "secrets-manager"

@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -53,6 +54,11 @@ type int64Default struct {
 
 type stringReplacement struct {
 	planmodifier.String
+	Facts
+}
+
+type boolReplacement struct {
+	planmodifier.Bool
 	Facts
 }
 
@@ -194,6 +200,11 @@ func StaticInt64(value int64) defaults.Int64 {
 // RequiresReplace has the same behavior as stringplanmodifier.RequiresReplace.
 func RequiresReplace() planmodifier.String {
 	return stringReplacement{stringplanmodifier.RequiresReplace(), Facts{ReplacesResource: true}}
+}
+
+// BoolRequiresReplace has the same behavior as boolplanmodifier.RequiresReplace.
+func BoolRequiresReplace() planmodifier.Bool {
+	return boolReplacement{boolplanmodifier.RequiresReplace(), Facts{ReplacesResource: true}}
 }
 
 // RequiresReplaceIf has the same behavior as stringplanmodifier.RequiresReplaceIf.

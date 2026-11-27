@@ -24,6 +24,7 @@ require (
 	github.com/selectel/iam-go v0.10.0
 	github.com/selectel/images-go v0.1.0
 	github.com/selectel/mks-go v1.1.0
+	github.com/selectel/mks-go/v2 v2.1.1
 	github.com/selectel/private-dns-go v1.1.0
 	github.com/selectel/public-net-api-go v1.0.1
 	github.com/selectel/secretsmanager-go v0.2.1
@@ -34,6 +35,7 @@ require (
 require (
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
+	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -68,6 +70,7 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
+	github.com/oapi-codegen/runtime v1.4.0 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/selectel/vpc-go v1.1.0
